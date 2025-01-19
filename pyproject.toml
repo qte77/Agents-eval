@@ -1,7 +1,7 @@
 [project]
 version = "0.0.0"
-name = "<PROJECT_NAME>"
-description = "<PROJECT_DESCRIPTION"
+name = "Agents-eval"
+description = "Assess the effectiveness of agentic AI systems across various use cases focusing on agnostic metrics that measure core agentic capabilities."
 authors = [
     {name = "qte77", email = "qte@77.gh"}
 ]
@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "loguru==0.7.3",
-    "pydantic==2.10.5",
+    "pydantic==2.10.4",
 ]
 
 # https://docs.astral.sh/uv/concepts/projects/dependencies/#optional-dependencies
@@ -21,9 +21,8 @@ dependencies = [
 # https://docs.astral.sh/uv/concepts/projects/dependencies/#default-groups
 [dependency-groups]
 dev = [
-    "pydantic>=2.10.4",
-    "pytest>=7.0.0",
-    "ruff>=0.8.0",
+    "pytest>=8.3.4",
+    "ruff<=0.8.4",
     # "pytest-asyncio==0.15.1",
     # "pytest-mock==3.6.1"
     # "git-changelog>=2.5.2"
@@ -45,12 +44,12 @@ docs = [
 
 [tool.uv]
 package = true
-exclude-newer = "2024-12-31T00:00:00Z"
+exclude-newer = "2025-01-18T00:00:00Z"
 
 # https://docs.astral.sh/ruff/configuration/
 [tool.ruff]
 target-version = "py312"
-src = ["scripts", "src", "tests"]
+src = ["src", "tests"]
 
 [tool.ruff.format]
 docstring-code-format = true
