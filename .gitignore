@@ -1,0 +1,54 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
+.env
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Testing
+.pytest_cache/
+.coverage
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE specific files (adjust as needed)
+# .vscode/
+# .idea/
+
+# Project specific
+runtime/
+models/
+tokenizers/
+datasets/
+wandb/
+
+# mkdocs
+reference/
+site/
+
+# Large model files
+*.bin
+*.pt
+*.pth
+
+# Dataset files
+*.h5
+*.hdf5
+*.npz
+
+# linting
+.ruff_cache

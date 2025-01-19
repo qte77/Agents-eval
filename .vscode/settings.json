@@ -1,0 +1,13 @@
+{
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.wordWrap": "on",
+    "files.autoSave": "onFocusChange",
+    "terminal.integrated.fontSize": 14,
+    "explorer.confirmDelete": false,
+    "workbench.colorTheme": "Visual Studio Dark",
+    "workbench.iconTheme": "vs-seti",
+    "markdownlint.config": {
+        "MD024": false
+    }
+}    
