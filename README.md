@@ -61,6 +61,7 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 - [CrewAI](https://github.com/crewAIInc/crewAI)
 - [LangGraph](https://github.com/langchain-ai/langgraph)
 - [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
+- [smolAgents](https://github.com/huggingface/smolagents)
 
 ### Evaluation Tools and Frameworks
 
@@ -71,7 +72,7 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
 - [DeepEval](https://github.com/confident-ai/deepeval)
 
-### Core Agentic System Metrics
+### Core Agentic Evaluation Metrics
 
 - Task Decomposition and Planning
   - Structural Similarity Index (SSI)
@@ -116,4 +117,4 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 ## Further Reading
 
-`#TODO`
+- [Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
