@@ -35,12 +35,8 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 ### Architecture
 
-`#TODO`
-
-<!--
-<img src="assets/images/c4-arch.dark.png#gh-dark-mode-only" alt="C4-Arch" title="C4-Arch" width="60%" />
-<img src="assets/images/c4-arch.light.png#gh-light-mode-only" alt="C4-Arch" title="C4-Arch" width="60%" />
--->
+<img src="assets/images/Agents-eval.C4.System.mono.png" alt="C4-Arch" title="C4-Arch" width="60%" />
+<img src="assets/images/Agents-eval.C4.Code.mono.png" alt="C4-Arch" title="C4-Arch" width="60%" />
 
 ### Project Structure
 
@@ -118,3 +114,4 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 ## Further Reading
 
 - [Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
+

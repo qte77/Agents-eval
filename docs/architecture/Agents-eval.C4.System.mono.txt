@@ -1,0 +1,46 @@
+@startuml
+!theme amiga
+'https://www.plantuml.com
+!include <c4/C4_Component.puml>
+
+skinparam monochrome true
+
+LAYOUT_WITH_LEGEND()
+title Agents-eval Code
+
+Container_Boundary(ollama_modules, "Ollama") {
+    Component(ollama_server, "Ollama Server", "Python, FastAPI", "Local server for hosting and managing AI models")
+    'Component(ollama_db, "Ollama Database", "SQLite", "Stores model metadata and user data")
+    Component(ollama_models, "Ollama Models", "Python", "Manages model downloads and usage")
+}
+
+Container_Boundary(agents_eval, "App") {
+    Component(app, "App", "Python", "Entrypoint for user interaction")
+    Component(docs, "Documentation", "Python, MkDocs", "Documentation generation and deployment")
+    Component(tests, "Tests", "Python", "Tests for system functionality and performance")
+    Component(ollama_utils, "Ollama Utilities", "Python", "Utilities for interacting with Ollama server")
+    together {
+        Component(agents, "Agents", "Python", "Agentic AI systems for evaluation")
+        Component(tools, "Tools", "Python", "Tools used by agents for various tasks")
+    }
+}
+
+Person(user, "User", "Interacts with the system for evaluation of agents")
+Person(developer, "Developer", "Interacts with the tests")
+
+Rel(user, app, "Interacts with", "HTTP")
+Rel(user, docs, "Views documentation", "HTTP")
+Rel(developer, tests, "Views documentation", "HTTP")
+
+Rel(ollama_utils, ollama_server, "Interacts with", "HTTP")
+Rel(agents, ollama_server, "Uses models for evaluation", "Python API")
+Rel(agents, tools, "Utilizes tools", "Python API")
+Rel(app, agents, "Tests agent functionality", "Python API")
+Rel(tests, agents, "Creates agents", "Python API")
+Rel(tests, ollama_utils, "Tests server health and model downloads", "Python API")
+Rel(ollama_server, ollama_models, "Downloads and manages models", "HTTP")
+
+tools -[hidden]> agents
+
+@enduml
+
