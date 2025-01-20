@@ -2,13 +2,16 @@
 Tests for evaluating a Pydantic-AI agent.
 """
 
+import json
 from pydantic_ai import Agent
 from pydantic_ai.result import RunResult
 from utils.agents import create_agent_with_tool
 from utils.eval import evaluate_agent_response
 from utils.tools import roll_die  # , get_player_name
 
-MODEL_NAME: str = "ollama:llama3.1"
+
+with open("tests/config.json", "r") as config_file:
+    config = json.load(config_file)
 
 
 def test_evaluate_agent_response():
@@ -16,7 +19,7 @@ def test_evaluate_agent_response():
     Test the evaluation of an agent's response for correctness, relevance, coherence, politeness, and tool usage.
     """
 
-    agent: Agent = create_agent_with_tool(roll_die, MODEL_NAME)
+    agent: Agent = create_agent_with_tool(roll_die, config["model_name"])
     result: RunResult = agent.run_sync("1")
     metrics = evaluate_agent_response(result)
 

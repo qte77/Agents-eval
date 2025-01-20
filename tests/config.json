@@ -1,0 +1,5 @@
+{
+    "model_name": "llama3.1",
+    "chat_user_message": "Hello! Can you explain what the Pig Game is?",
+    "chat_expected_contains": "Response should mention Pig Game"
+}

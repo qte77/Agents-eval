@@ -2,6 +2,7 @@
 Tests for starting and checking the status of a local Ollama server.
 """
 
+import json
 from utils.ollama import (
     check_server_health,
     get_server_version,
@@ -13,7 +14,8 @@ from ollama import list, Response
 
 # "llama3.1" # 4.9 GB, RAM 11.2 GiB
 # "phi4" # 9.1 GB, RAM 6.1 GiB
-MODEL_NAME: str = "llama3.3"
+with open("tests/config.json", "r") as config_file:
+    config = json.load(config_file)
 
 
 def test_check_server_health() -> None:
@@ -39,17 +41,18 @@ def test_get_server_version() -> None:
 
 
 def test_download_ollama_model() -> None:
-    """Verify successful download of model `MODEL_NAME`."""
+    """Verify successful download of model `config['model_name']`."""
 
-    download_ollama_model(MODEL_NAME)
-    assert list()["models"], f"Failed to download {MODEL_NAME}"
+    download_ollama_model(config["model_name"])
+    assert list()["models"], f"Failed to download {config['model_name']}"
 
 
 def test_chat_with_ollama_model() -> None:
-    """Ensure chat functionality works with model `MODEL_NAME`."""
+    """Ensure chat functionality works with model `config['model_name']`."""
 
-    user_message: str = "Hello! Can you explain what the Pig Game is?"
-    response: Response = chat_with_ollama_model(MODEL_NAME, user_message)
-    assert "Pig Game" in response["message"]["content"], (
-        "Response should mention Pig Game"
+    response: Response = chat_with_ollama_model(
+        config["model_name"], config["chat_user_message"]
     )
+    assert "Pig Game" in response["message"]["content"], config[
+        "chat_expected_contains"
+    ]

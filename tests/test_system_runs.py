@@ -2,13 +2,15 @@
 Tests for SimpleAgent creation and tool usage.
 """
 
+import json
 from pydantic_ai import Agent
 from pydantic_ai.result import RunResult
 from utils.tools import roll_die  # , get_player_name
 from utils.agents import create_agent_with_tool, SimpleAgent
 
 
-MODEL_NAME: str = "ollama:llama3.1"
+with open("tests/config.json", "r") as config_file:
+    config = json.load(config_file)
 
 
 def test_agent_existence() -> None:
@@ -21,7 +23,7 @@ def test_agent_existence() -> None:
 def test_create_agent_with_tool() -> None:
     """Ensure that Agent can add and use a correctly."""
 
-    agent: Agent = create_agent_with_tool(roll_die, MODEL_NAME)
+    agent: Agent = create_agent_with_tool(roll_die, config["model_name"])
     result: RunResult = agent.run_sync("1")
     data: str = result.data
     assert 1 <= int(data) <= 6, "Tool should return a number between 1 and 6."
