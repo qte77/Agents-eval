@@ -1,0 +1,7 @@
+{
+  "image": "ghcr.io/devcontainers/features/python:1",
+  "features": {
+    "version": "3.12",
+    "optimize": true    
+  }
+}
