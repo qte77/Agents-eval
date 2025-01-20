@@ -17,17 +17,11 @@ This project aims to implement an evaluation pipeline to assess the effectivenes
 
 For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
-## Setup
+## Setup and Usage
 
-`make setup`
-
-## Usage
-
-`uv run python -m src`
-
-## Testing
-
-`make test` or `uv run pytest`
+- `make setup_env`
+- `make run_app`
+- `make test_all`
 
 ## Documentation
 
@@ -65,10 +59,9 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 ### Evaluation Tools and Frameworks
 
 - Focusing on agentic systems
-  - [Agentic Application Evaluation Framework (AAEF)](https://docs.raga.ai/ragaai-aaef-agentic-application-evaluation-framework)
-  - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
   - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
   - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
+  - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
   - [AgentNeo](https://github.com/raga-ai-hub/agentneo)
 - More RAG oriented
   - [DeepEval](https://github.com/confident-ai/deepeval)
