@@ -20,6 +20,8 @@ def test_evaluate_agent_response():
     result: RunResult = agent.run_sync("1")
     metrics = evaluate_agent_response(result)
 
+    assert print(result)
+
     # Assert that the response contains the expected data
     assert metrics["correctness"] == 1, "Response does not contain expected data."
     assert metrics["relevance"] == 1, "Response is not relevant to the query."
@@ -27,5 +29,4 @@ def test_evaluate_agent_response():
     assert metrics["politeness"] == 1, "Response is not polite."
 
     # Assert that the tool was used correctly
-    # assert metrics["tool_usage"] == 1, "Tool 'Roll Die' was not used correctly."
-    assert print(result)
+    assert metrics["tool_usage"] == 1, "Tool 'Roll Die' was not used correctly."
