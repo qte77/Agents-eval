@@ -20,6 +20,16 @@ Types of changes:
 
 ## [0.0.2] - 2025-01-20
 
+### Added
+
+- PRD.md
+- C4 architecture diagrams: system context, code
+- tests: basic agent evals, config.json
+
+### Changed
+
+- make recipes
+
 ---
 
 ## [0.0.1] - 2025-01-20
