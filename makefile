@@ -2,7 +2,6 @@
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 # Ollama available at 127.0.0.1:11434
 
-
 OLLAMA_SETUP := https://ollama.com/install.sh
 
 .PHONY: all ollama_setup_start ollama_start ollama_stop ollama_clean
@@ -38,3 +37,10 @@ ollama_clean:
 	done
 	@echo "Cleaning up..."
 	@rm -f $(BIN)
+
+ruff:
+	@uv run ruff format
+	@uv run ruff check
+
+test:
+	@uv run pytest

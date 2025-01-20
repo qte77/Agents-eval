@@ -19,7 +19,7 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 ## Setup
 
-`uv sync`
+`make setup`
 
 ## Usage
 
@@ -27,7 +27,7 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 ## Testing
 
-`uv run pytest`
+`make test` or `uv run pytest`
 
 ## Documentation
 
@@ -50,23 +50,31 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 `#TODO`
 
+## Landscape overview
+
 ### Agentic System Frameworks
 
-- [LangChain](https://github.com/langchain-ai/langchain)
-- [AutoGen](https://github.com/microsoft/autogen)
-- [CrewAI](https://github.com/crewAIInc/crewAI)
-- [LangGraph](https://github.com/langchain-ai/langgraph)
-- [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
+- [PydanticAI](https://github.com/pydantic/pydantic-ai)
 - [smolAgents](https://github.com/huggingface/smolagents)
+- [AutoGen](https://github.com/microsoft/autogen)
+- [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
+- [CrewAI](https://github.com/crewAIInc/crewAI)
+- [LangChain](https://github.com/langchain-ai/langchain)
+- [Langflow](github.com/langflow-ai/langflow)
 
 ### Evaluation Tools and Frameworks
 
-- [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
-- [AgentNeo](https://github.com/raga-ai-hub/agentneo)
-- [PydanticAI](https://github.com/pydantic/pydantic-ai)
-- [RAGAs](https://github.com/explodinggradients/ragas)
-- [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
-- [DeepEval](https://github.com/confident-ai/deepeval)
+- Focusing on agentic systems
+  - [Agentic Application Evaluation Framework (AAEF)](https://docs.raga.ai/ragaai-aaef-agentic-application-evaluation-framework)
+  - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
+  - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
+  - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
+  - [AgentNeo](https://github.com/raga-ai-hub/agentneo)
+- More RAG oriented
+  - [DeepEval](https://github.com/confident-ai/deepeval)
+  - [RAGAs](https://github.com/explodinggradients/ragas)
+- LLM apps
+  - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
 
 ### Core Agentic Evaluation Metrics
 
@@ -114,4 +122,3 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 ## Further Reading
 
 - [Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
-

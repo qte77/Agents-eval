@@ -22,9 +22,9 @@ def test_check_server_health() -> None:
 
     try:
         response: Dict[str, Any] = check_server_health()
-        assert (
-            response.status_code == 200
-        ), "Ollama server is not running or not responding."
+        assert response.status_code == 200, (
+            "Ollama server is not running or not responding."
+        )
     except ConnectionError as e:
         fail(e)
 
@@ -51,6 +51,6 @@ def test_chat_with_ollama_model() -> None:
 
     user_message: str = "Hello! Can you explain what the Pig Game is?"
     response: Dict[str, Any] = chat_with_ollama_model(MODEL_NAME, user_message)
-    assert (
-        "Pig Game" in response["message"]["content"]
-    ), "Response should mention Pig Game"
+    assert "Pig Game" in response["message"]["content"], (
+        "Response should mention Pig Game"
+    )
