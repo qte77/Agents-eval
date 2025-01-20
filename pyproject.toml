@@ -47,7 +47,7 @@ docs = [
 
 [tool.uv]
 package = true
-exclude-newer = "2025-01-18T00:00:00Z"
+exclude-newer = "2025-01-20T00:00:00Z"
 
 # https://docs.astral.sh/ruff/configuration/
 [tool.ruff]
