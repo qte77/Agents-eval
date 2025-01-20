@@ -7,7 +7,7 @@ import random
 from pydantic_ai import Agent, RunContext
 
 agent = Agent(
-    "gemini-1.5-flash",
+    "ollama:llama3.1",
     deps_type=str,
     system_prompt=(
         "You're a dice game, you should roll the die and see if the number "

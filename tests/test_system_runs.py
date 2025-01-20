@@ -4,7 +4,7 @@ Tests for SimpleAgent creation and tool usage.
 
 from pydantic_ai import Agent
 from app import DummyTool, SimpleAgent
-from tools import roll_die
+from utils.tools import roll_die
 
 
 def test_agent_existence():

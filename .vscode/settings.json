@@ -9,5 +9,6 @@
     "workbench.iconTheme": "vs-seti",
     "markdownlint.config": {
         "MD024": false
-    }
+    },
+    "makefile.configureOnOpen": true
 }    
