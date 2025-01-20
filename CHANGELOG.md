@@ -20,3 +20,12 @@ Types of changes:
 
 ## [0.0.1] - 2025-01-20
 
+### Added
+
+- Makefile: setup, test, ruff
+- devcontainer: python only, w/o Jetbrains clutter from default devcontainer
+- ollama: server and model download successful
+- agent: tools use full run red
+- pytest: e2e runm final result red
+- Readme: basic project info
+- pyproject.toml

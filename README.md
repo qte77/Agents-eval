@@ -17,17 +17,11 @@ This project aims to implement an evaluation pipeline to assess the effectivenes
 
 For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
-## Setup
+## Setup and Usage
 
-`uv sync`
-
-## Usage
-
-`uv run python -m src`
-
-## Testing
-
-`uv run pytest`
+- `make setup_env`
+- `make run_app`
+- `make test_all`
 
 ## Documentation
 
@@ -35,12 +29,8 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 ### Architecture
 
-`#TODO`
-
-<!--
-<img src="assets/images/c4-arch.dark.png#gh-dark-mode-only" alt="C4-Arch" title="C4-Arch" width="60%" />
-<img src="assets/images/c4-arch.light.png#gh-light-mode-only" alt="C4-Arch" title="C4-Arch" width="60%" />
--->
+<img src="assets/images/Agents-eval.C4.System.mono.png" alt="C4-Arch" title="C4-Arch" width="60%" />
+<img src="assets/images/Agents-eval.C4.Code.mono.png" alt="C4-Arch" title="C4-Arch" width="60%" />
 
 ### Project Structure
 
@@ -54,23 +44,30 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 `#TODO`
 
+## Landscape overview
+
 ### Agentic System Frameworks
 
-- [LangChain](https://github.com/langchain-ai/langchain)
-- [AutoGen](https://github.com/microsoft/autogen)
-- [CrewAI](https://github.com/crewAIInc/crewAI)
-- [LangGraph](https://github.com/langchain-ai/langgraph)
-- [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
+- [PydanticAI](https://github.com/pydantic/pydantic-ai)
 - [smolAgents](https://github.com/huggingface/smolagents)
+- [AutoGen](https://github.com/microsoft/autogen)
+- [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
+- [CrewAI](https://github.com/crewAIInc/crewAI)
+- [LangChain](https://github.com/langchain-ai/langchain)
+- [Langflow](github.com/langflow-ai/langflow)
 
 ### Evaluation Tools and Frameworks
 
-- [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
-- [AgentNeo](https://github.com/raga-ai-hub/agentneo)
-- [PydanticAI](https://github.com/pydantic/pydantic-ai)
-- [RAGAs](https://github.com/explodinggradients/ragas)
-- [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
-- [DeepEval](https://github.com/confident-ai/deepeval)
+- Focusing on agentic systems
+  - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
+  - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
+  - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
+  - [AgentNeo](https://github.com/raga-ai-hub/agentneo)
+- More RAG oriented
+  - [DeepEval](https://github.com/confident-ai/deepeval)
+  - [RAGAs](https://github.com/explodinggradients/ragas)
+- LLM apps
+  - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
 
 ### Core Agentic Evaluation Metrics
 
