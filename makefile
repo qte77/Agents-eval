@@ -2,16 +2,21 @@
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 # Ollama available at 127.0.0.1:11434
 
-.PHONY: all download_start search start stop clean
+.PHONY: all ollama_setup_start ollama_start ollama_stop ollama_clean
 
 # Default target
 all: start
 
-download_start:
+setup:
+	@echo "Setting up tools..."
+	@pip install uv
+	@$(MAKE) ollama_setup_start
+
+ollama_setup_start:
 	@echo "Downloading Ollama binary..."
 	@curl -fsSL https://ollama.com/install.sh | sh
 
-start:
+ollama_start:
 	@echo "Searching for Ollama binary..."
 	@for BINDIR in /usr/local/bin /usr/bin /bin; do \
 		if echo $$PATH | grep -q $$BINDIR; then \
@@ -23,11 +28,11 @@ start:
 	done
 	@echo $(BIN)
 
-stop:
+ollama_stop:
 	@echo "Stopping Ollama server..."
 	@pkill ollama
 
-clean:
+ollama_clean:
 	@$(MAKE) search
 	@echo "Cleaning up..."
 	@rm -f $(BINDIR)
