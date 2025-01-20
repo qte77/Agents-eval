@@ -11,6 +11,7 @@
         "ms-python.debugpy",
         "ms-python.python",
         "ms-python.vscode-pylance",
+        "ms-vscode.makefile-tools",
         "ms-vsliveshare.vsliveshare",
         "mhutchie.git-graph",
         "PKief.material-icon-theme",

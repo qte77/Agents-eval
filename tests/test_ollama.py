@@ -12,7 +12,9 @@ from utils.ollama import (
 from pytest import fail
 from ollama import list
 
-MODEL_NAME: str = "phi4"
+# "llama3.1" # 4.9 GB, RAM 11.2 GiB
+# "phi4" # 9.1 GB, RAM 6.1 GiB
+MODEL_NAME: str = "llama3.3"
 
 
 def test_check_server_health() -> None:
@@ -38,14 +40,14 @@ def test_get_server_version() -> None:
 
 
 def test_download_ollama_model() -> None:
-    """Verify successful download of the llama3.1 model."""
+    """Verify successful download of model `MODEL_NAME`."""
 
     download_ollama_model(MODEL_NAME)
     assert list()["models"], f"Failed to download {MODEL_NAME}"
 
 
 def test_chat_with_ollama_model() -> None:
-    """Ensure chat functionality works with the llama3.1 model."""
+    """Ensure chat functionality works with model `MODEL_NAME`."""
 
     user_message: str = "Hello! Can you explain what the Pig Game is?"
     response: Dict[str, Any] = chat_with_ollama_model(MODEL_NAME, user_message)
