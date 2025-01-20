@@ -35,3 +35,10 @@ ollama_clean:
 	done
 	@echo "Cleaning up..."
 	@rm -f $(BIN)
+
+ruff:
+	@uv run ruff format
+	@uv run ruff check
+
+test:
+	@uv run pytest

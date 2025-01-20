@@ -14,7 +14,7 @@ from ollama import list
 
 # "llama3.1" # 4.9 GB, RAM 11.2 GiB
 # "phi4" # 9.1 GB, RAM 6.1 GiB
-MODEL_NAME: str = "llama3.1"
+MODEL_NAME: str = "llama3.3"
 
 
 def test_check_server_health() -> None:
