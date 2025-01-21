@@ -2,4 +2,5 @@
 Entrypoint
 """
 
-raise NotImplementedError("Entrypoint not yet implemented")
+def main() -> None:
+    raise NotImplementedError("Entrypoint not yet implemented")
