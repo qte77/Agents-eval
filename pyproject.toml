@@ -30,6 +30,9 @@ dev = [
     # "pytest-mock==3.6.1"
     # "git-changelog>=2.5.2"
 ]
+logparser = [
+    "pytz>=2024.2"
+]
 docs = [
     "griffe>=1.5.1",
     "mkdocs>=1.6.1",

@@ -7,7 +7,7 @@ OLLAMA_SETUP := https://ollama.com/install.sh
 .PHONY: all ollama_setup_start ollama_start ollama_stop ollama_clean
 
 # Default target
-# all: setup
+all: setup_env
 
 setup_env:
 	@echo "Setting up tools..."

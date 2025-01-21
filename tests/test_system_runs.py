@@ -24,7 +24,7 @@ def test_agent_existence() -> None:
 def test_create_agent_with_tool() -> None:
     """Ensure that Agent can add and use a correctly."""
 
-    agent: Agent = create_agent_with_tool(roll_die, config["model_name"])
+    agent: Agent = create_agent_with_tool(roll_die, config["model_name_full"])
     result: RunResult = agent.run_sync("1")
     data: str = result.data
 

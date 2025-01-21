@@ -19,7 +19,7 @@ def test_evaluate_agent_response():
     Test the evaluation of an agent's response for correctness, relevance, coherence, politeness, and tool usage.
     """
 
-    agent: Agent = create_agent_with_tool(roll_die, config["model_name"])
+    agent: Agent = create_agent_with_tool(roll_die, config["model_name_full"])
     result: RunResult = agent.run_sync("1")
     metrics = evaluate_agent_response(result)
 
