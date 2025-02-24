@@ -112,6 +112,64 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
   - Object Detection
   - Image Classification
 
+### Python Tools
+
+- [`commitizen`](https://pypi.org/project/commitizen/)
+  - Instead of [`bump-my-version`](https://pypi.org/project/bump-my-version/).
+  - Python commitizen client tool.
+  - Commitizen is release management tool designed for teams.
+  - [Documentation](https://commitizen-tools.github.io/commitizen/)
+- [`httpx`](https://pypi.org/project/httpx/)
+  - Instead of [`requests`](https://pypi.org/project/requests/).
+  - The next generation HTTP client.
+  - HTTPX is a fully featured HTTP client library for Python 3. It includes an integrated command line client, has support for both HTTP/1.1 and HTTP/2, and provides both sync and async APIs.
+- [`justfile`](https://pypi.org/project/justfile/)
+  - Instead of `with`-context.
+  - JustFile is a Python library that provides a function to either read, write, or append.
+  - It’s pretty straight-foward. No creating a file handle. no `with`-syntax. Just reading from a path.
+  - [https://python-justfile.readthedocs.io/](https://python-justfile.readthedocs.io/)
+- [`loguru`](https://pypi.org/project/loguru/)
+  - Instead of `logger`.
+  - Python logging made (stupidly) simple
+  - Loguru is a library which aims to bring enjoyable logging in Python.
+  - [API Reference](https://loguru.readthedocs.io/en/stable/api/logger.html)
+  - See also: [Security considerations when using Loguru](https://loguru.readthedocs.io/en/stable/resources/recipes.html#security-considerations-when-using-loguru). 
+- [`pdoc`](https://pypi.org/project/pdoc/)
+  - Instead of [`mkdocs`]https://pypi.org/project/mkdocs/).
+  - API Documentation for Python Projects
+  - pdoc's main feature is a focus on simplicity: pdoc aims to do one thing and do it well.
+  - [pdoc.dev/docs](https://pdoc.dev/docs/pdoc.html)
+- [`pre-commit`](https://pypi.org/project/pre-commit/) (again)
+  - Instead of gh-actions.
+  - A framework for managing and maintaining multi-language pre-commit hooks.
+  - For more information see: https://pre-commit.com/.
+- [`pydantic-settings`](https://pypi.org/project/pydantic-settings/)
+  - Instead of [`OmegaConf`](https://pypi.org/project/omegaconf/) or `dotenv`.
+  - Settings management using Pydantic, this is the new official home of Pydantic's BaseSettings.
+  - See [documentation](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) for more details.
+- [`pyright`](https://pypi.org/project/pyright/)
+  - Instead of [`pydantic`](https://pypi.org/project/pydantic/) or [`mypy`](https://pypi.org/project/mypy/).
+  - Pyright for Python is a Python command-line wrapper over [pyright](https://github.com/microsoft/pyright), a static type checker for Python.
+- [`rich`](https://pypi.org/project/rich/)
+  - Instead of [`tqdm`](https://pypi.org/project/tqdm/).
+  - Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal
+  - Rich is a Python library for _rich_ text and beautiful formatting in the terminal.
+  - [Documentation](https://rich.readthedocs.io/en/latest/)
+- [`Tenacity`](https://pypi.org/project/tenacity/)
+  - Retry code until it succeeds.
+  - Tenacity is a general-purpose retrying library to simplify the task of adding retry behavior to just about anything.
+- [`Typer`](https://pypi.org/project/typer/)
+  - Instead of [`argparse`](https://pypi.org/project/argparse/).
+  - Typer, build great CLIs. Easy to code. Based on Python type hints.
+  - Documentation: https://typer.tiangolo.com
+
 ## Further Reading
 
-- [Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
+- [[2501.16150] AI Agents for Computer Use: A Review of Instruction-based Computer Control, GUI Automation, and Operator Assistants](https://arxiv.org/abs/2501.16150)
+- [[2408.06361] Large Language Model Agent in Financial Trading: A Survey](https://arxiv.org/abs/2408.06361)
+- [[2411.10478] Large Language Models for Constructing and Optimizing Machine Learning Workflows: A Survey](https://arxiv.org/abs/2411.10478)
+- [[2410.22457] Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
+- [[2404.13501] A Survey on the Memory Mechanism of Large Language Model based Agents](https://arxiv.org/pdf/2404.13501)
+- [[2402.02716] Understanding the planning of LLM agents: A survey](https://arxiv.org/abs/2402.02716)
+- [[2402.01030] Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/abs/2402.01030)
+- [[2308.11432] A Survey on Large Language Model based Autonomous Agents](https://arxiv.org/abs/2308.11432)

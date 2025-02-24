@@ -1,6 +1,6 @@
 {
-    "model_name": "llama3.1",
-    "model_name_full": "ollama:llama3.1",
+    "model_name": "llama3.2:1b",
+    "model_name_full": "ollama:llama3.2:1b",
     "chat_user_message": "Hello! Can you explain what the Pig Game is?",
     "chat_expected_contains": "Response should mention Pig Game"
 }
