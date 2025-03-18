@@ -16,6 +16,10 @@ Types of changes:
 
 ## [Unreleased]
 
+---
+
+## [1.0.0] - 2025-03-18
+
 ### 2025-03-18
 
 - refactor(agent,streamlit): Convert main and run_manager functions again to async for streamli output
