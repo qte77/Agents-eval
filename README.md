@@ -132,11 +132,6 @@ Some contenders from the current landscape.
   - Instead of [`requests`](https://pypi.org/project/requests/).
   - The next generation HTTP client.
   - HTTPX is a fully featured HTTP client library for Python 3. It includes an integrated command line client, has support for both HTTP/1.1 and HTTP/2, and provides both sync and async APIs.
-- [`justfile`](https://pypi.org/project/justfile/)
-  - Instead of `with`-context.
-  - JustFile is a Python library that provides a function to either read, write, or append.
-  - It’s pretty straight-foward. No creating a file handle. no `with`-syntax. Just reading from a path.
-  - [https://python-justfile.readthedocs.io/](https://python-justfile.readthedocs.io/)
 - [`logfire`](https://pypi.org/project/logfire/)
   - Instead of `logger` or `loguru`. With OpenTelemetry.
   - The best Python observability tool!
@@ -181,7 +176,7 @@ Some contenders from the current landscape.
 
 - [[2501.16150] AI Agents for Computer Use: A Review of Instruction-based Computer Control, GUI Automation, and Operator Assistants](https://arxiv.org/abs/2501.16150)
 - [[2501.06590] ChemAgent](https://arxiv.org/abs/2501.06590)
-- [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/2501.04227)
+- [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/abs/2501.04227)
 - [[2412.04093] Practical Considerations for Agentic LLM Systems](https://arxiv.org/abs/2412.04093)
 - [[2411.13768] Evaluation-driven Approach to LLM Agents](https://arxiv.org/abs/2411.13768)
 - [[2411.10478] Large Language Models for Constructing and Optimizing Machine Learning Workflows: A Survey](https://arxiv.org/abs/2411.10478)
