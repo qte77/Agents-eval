@@ -6,22 +6,24 @@ Commands:
 """
 
 from .main import main as start_app
-from typer import Option, Typer
+from asyncio import run
+# from typer import Option, Typer
 
 
-app = Typer()
+# TODO back to argparse,  Typer w/o native async support
+# app = Typer()
 
 
-@app.callback()
+# @app.callback()
 def callback():
     """Global vars"""
     pass
 
 
-@app.command()
-def main(
-    provider: str = Option("", help="The inference provider to be used."),
-    query: str = Option("", help="The query to be processed by the agent."),
+# @app.command()
+async def main(
+    provider: str = "",  # Option("", help="The inference provider to be used."),
+    query: str = "",  # Option("", help="The query to be processed by the agent."),
     include_analyst: bool = True,
     include_synthesiser: bool = False,
     pydantic_ai_stream: bool = False,
@@ -41,7 +43,7 @@ def main(
     Returns:
         None
     """
-    start_app(
+    await start_app(
         provider,
         query,
         include_analyst,
@@ -52,4 +54,4 @@ def main(
 
 
 if __name__ == "__main__":
-    app()
+    run(main())

@@ -190,7 +190,7 @@ def get_manager(
         )
 
 
-def run_manager(
+async def run_manager(
     manager: SystemAgent,
     query: str,  # List[Dict[str, str]],
     provider: str,
@@ -226,7 +226,7 @@ def run_manager(
             #    for message in result.stream_text(delta=True, debounce_by=0.01):
             #        print(message, end="", flush=True)
         else:
-            result = manager.run_sync(**mgr_cfg)
+            result = await manager.run(**mgr_cfg)
 
         if console is None:
             print("\nResult:")
@@ -238,6 +238,8 @@ def run_manager(
             console.print(result)
             console.print("\n[info]Usage[/info]")
             console.print(result.usage())
+
+    print("exit:run_manager()")
 
 
 def setup_agent_env(

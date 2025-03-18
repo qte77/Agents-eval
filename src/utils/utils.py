@@ -29,7 +29,6 @@ from pydantic_ai.exceptions import (
 )
 from pydantic_ai.usage import Usage
 from rich.console import Console
-from sys import exit
 from typing import Dict
 
 
@@ -127,4 +126,4 @@ def error_handling_context(operation_name: str, console: Console = None):
                     f"[except]{reason} {msg_type}caught in {operation_name}: [bold]{msg}[/bold][/except]"
                 )
             # raise  # BaseException(error_msg)
-            exit()
+            # sys.exit()

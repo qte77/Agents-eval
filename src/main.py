@@ -38,7 +38,7 @@ console = Console(theme=CONSOLE_THEME)
 
 
 @weave.op()
-def main(
+async def main(
     # TODO error Missing configuration for <typer.models.OptionInfo object at 0x7dc819510050>
     provider: str = "",  # Option(..., help="The inference provider to be used."),
     query: str = "",  # , help="The query to be processed by the agent."),
@@ -65,33 +65,45 @@ def main(
     load_dotenv()  # TODO replace with pydantic-settings ?
     login(PROJECT_NAME)  # TODO enhance login, not every run?
 
-    with span("main()"):
-        config_path = path.join(path.dirname(__file__), config_file)
-        config = load_config(config_path)
+    try:
+        with span("main()"):
+            config_path = path.join(path.dirname(__file__), config_file)
+            config = load_config(config_path)
 
-        if not provider:
-            provider = input("Which inference provider to use? ")
-        if not query:
-            query = input("What would you like to research? ")
+            if not provider:
+                provider = input("Which inference provider to use? ")
+            if not query:
+                query = input("What would you like to research? ")
 
-        agent_env = setup_agent_env(provider, query, config, console)
-        manager = get_manager(
-            agent_env.provider,
-            agent_env.provider_config,
-            agent_env.api_key,
-            agent_env.prompts,
-            include_analyst,
-            include_synthesiser,
-            console,
-        )
-        run_manager(
-            manager,
-            agent_env.query,
-            agent_env.provider,
-            agent_env.usage_limits,
-            pydantic_ai_stream,
-            console,
-        )
+            agent_env = setup_agent_env(provider, query, config, console)
+
+            print("main.main(get_manager)")
+
+            manager = get_manager(
+                agent_env.provider,
+                agent_env.provider_config,
+                agent_env.api_key,
+                agent_env.prompts,
+                include_analyst,
+                include_synthesiser,
+                console,
+            )
+
+            print("main.main(run_manager)")
+
+            await run_manager(
+                manager,
+                agent_env.query,
+                agent_env.provider,
+                agent_env.usage_limits,
+                pydantic_ai_stream,
+                console,
+            )
+
+        print("exit:main.main()")
+
+    except Exception as e:
+        print(e)
 
 
 if __name__ == "__main__":
