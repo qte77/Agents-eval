@@ -76,9 +76,6 @@ async def main(
                 query = input("What would you like to research? ")
 
             agent_env = setup_agent_env(provider, query, config, console)
-
-            print("main.main(get_manager)")
-
             manager = get_manager(
                 agent_env.provider,
                 agent_env.provider_config,
@@ -88,9 +85,6 @@ async def main(
                 include_synthesiser,
                 console,
             )
-
-            print("main.main(run_manager)")
-
             await run_manager(
                 manager,
                 agent_env.query,
