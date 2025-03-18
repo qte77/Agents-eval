@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 
-# Virtual environment
+# environment
 .venv/
 .env
 
@@ -11,15 +11,17 @@ build/
 dist/
 *.egg-info/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
 # Testing
 .pytest_cache/
 .coverage
 
 # Logs
 *.log
+
+# Traces
+scalene-profiles
+profile.html
+profile.json
 
 # OS generated files
 .DS_Store
@@ -29,26 +31,16 @@ Thumbs.db
 # .vscode/
 # .idea/
 
-# Project specific
-runtime/
-models/
-tokenizers/
-datasets/
-wandb/
-
 # mkdocs
 reference/
 site/
 
-# Large model files
-*.bin
-*.pt
-*.pth
-
-# Dataset files
-*.h5
-*.hdf5
-*.npz
-
 # linting
 .ruff_cache
+
+# type checking
+.mypy_cache/
+
+# project specific
+wandb/
+

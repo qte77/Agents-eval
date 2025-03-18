@@ -1,0 +1,17 @@
+[theme]
+primaryColor="#f92aad"
+backgroundColor="#0b0c10"
+secondaryBackgroundColor="#1f2833"
+textColor="#66fcf1"
+font="monospace"
+
+[server]
+# enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# toolbarMode = "minimal"
+showErrorDetails = true

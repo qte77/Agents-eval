@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 version = "0.0.2"
 name = "Agents-eval"
@@ -7,28 +11,39 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.12"
+license = "bsd-3-clause"
 dependencies = [
-    "loguru>=0.7.3",
-    "ollama>=0.4.6",
-    "pydantic>=2.10.4",
-    "pydantic-ai-slim[openai]>=0.0.19",
+    "agentops>=0.3.26",
+    "logfire>=0.8.0",
+    "pydantic>=2.10.6",
+    # "pydantic-ai>=0.0.36",
+    "pydantic-ai-slim[duckduckgo,openai,tavily]>=0.0.36",
+    "pydantic-settings>=2.8.1",
+    "python-dotenv>=1.0.0",
+    "rich>=13.9.4",
+    "scalene>=1.5.51",
+    "typer>=0.15.2",
+    "weave>=0.51.36",
 ]
 
-# https://docs.astral.sh/uv/concepts/projects/dependencies/#optional-dependencies
-# [project.optional-dependencies]
+# [project.urls]
+# Documentation = ""
 
-# Dependency groups
-# https://docs.astral.sh/uv/concepts/projects/dependencies/#development-dependencies
-# By default, uv includes the dev dependency group in the environment
-# https://docs.astral.sh/uv/concepts/projects/dependencies/#default-groups
 [dependency-groups]
 dev = [
+    "mypy>=1.15.0",
+    "ruff>=0.1.0",
+]
+gui = [
+    "streamlit>=1.43.1",
+]
+test = [
     "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "pytest-asyncio>=0.25.3",
+    "pytest-bdd>=8.1.0",
     "requests>=2.32.3",
     "ruff>=0.9.2",
-    # "pytest-asyncio==0.15.1",
-    # "pytest-mock==3.6.1"
-    # "git-changelog>=2.5.2"
 ]
 docs = [
     "griffe>=1.5.1",
@@ -40,16 +55,21 @@ docs = [
     "mkdocs-section-index>=0.3.8",
     "mkdocstrings[python]>=0.27.0",
 ]
-# [tool.uv.optional-dependencies]
-# streamlit = [
-#    "streamlit==1.2.0"
-# ]
 
 [tool.uv]
 package = true
-exclude-newer = "2025-01-20T00:00:00Z"
+exclude-newer = "2025-03-13T00:00:00Z"
 
-# https://docs.astral.sh/ruff/configuration/
+[tool.hatch.build.targets.wheel]
+only-include = ["/README.md"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/README.md", "/Makefile", "/tests"]
+
+[tool.logfire]
+ignore_no_config=true
+send_to_logfire="if-token-present"
+
 [tool.ruff]
 target-version = "py312"
 src = ["src", "tests"]
@@ -63,6 +83,13 @@ unfixable = ["B"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[tool.coverage.run]
+include = [
+    "tests/**/*.py",
+]
+# omit = []
+# branch = true
 
 [tool.bumpversion]
 current_version = "0.0.2"

@@ -29,10 +29,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 #    WANDB_KEY=${WANDB_KEY} \
 #    WANDB_DISABLE_CODE=true
 
-RUN set -xe \
-    && useradd --create-home ${USER} \
-    && pip install --no-cache-dir uv
-    
 USER ${USER}
 WORKDIR ${APP_ROOT}
 COPY --from=builder /.venv .venv
