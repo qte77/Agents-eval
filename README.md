@@ -20,17 +20,48 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 ## Setup and Usage
 
 - `make setup_env`
-- `make run_app`
+- `make run_cli`
+- `make run_gui`
 - `make test_all`
+
+## Configuration
+
+[config.json](./src/config.json) contains . Inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
+
+## Environment
+
+[.env.example](./.env.example) contains example for usage of API keys and variables.
+
+```text
+# inference EP
+GEMINI_API_KEY="xyz"
+
+# tools
+TAVILY_API_KEY=""
+
+# log/mon/trace
+WANDB_API_KEY="xyz"
+```
 
 ## Documentation
 
 [Agents-eval](https://qte77.github.io/Agents-eval)
 
+### Project outline
+
+`#TODO`
+
+#### Metrics used
+
+`#TODO`
+
+#### Tools used
+
+`#TODO`
+
 ### Architecture
 
-<img src="assets/images/Agents-eval.C4.System.mono.png" alt="C4-Arch" title="C4-Arch" width="60%" />
-<img src="assets/images/Agents-eval.C4.Code.mono.png" alt="C4-Arch" title="C4-Arch" width="60%" />
+<img src="assets/images/c4-multi-agent-system.png" alt="C4-Arch" title="C4-Arch" width="60%" />
 
 ### Project Structure
 
@@ -38,81 +69,59 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 #TODO
 ```
 
-## TODO
-
-### Project outline
-
-`#TODO`
-
 ## Landscape overview
+
+Some contenders from the current landscape.
 
 ### Agentic System Frameworks
 
 - [PydanticAI](https://github.com/pydantic/pydantic-ai)
+- [restack](https://www.restack.io/)
 - [smolAgents](https://github.com/huggingface/smolagents)
 - [AutoGen](https://github.com/microsoft/autogen)
 - [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
 - [CrewAI](https://github.com/crewAIInc/crewAI)
-- [LangChain](https://github.com/langchain-ai/langchain)
+- [Langchain](https://github.com/langchain-ai/langchain)
 - [Langflow](github.com/langflow-ai/langflow)
 
-### Evaluation Tools and Frameworks
+### Agent-builder
+
+- [Archon](https://github.com/coleam00/Archon)
+- [Agentstack](https://github.com/AgentOps-AI/AgentStack)
+
+### Evaluation
 
 - Focusing on agentic systems
-  - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
-  - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
-  - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
   - [AgentNeo](https://github.com/raga-ai-hub/agentneo)
-- More RAG oriented
-  - [DeepEval](https://github.com/confident-ai/deepeval)
+  - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
+  - [Langchain AgentEvals](https://github.com/langchain-ai/agentevals)
+  - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
+  - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
+- RAG oriented
   - [RAGAs](https://github.com/explodinggradients/ragas)
 - LLM apps
+  - [DeepEval](https://github.com/confident-ai/deepeval)
+  - [Langchain OpenEvals](https://github.com/langchain-ai/openevals)
   - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
 
-### Core Agentic Evaluation Metrics
+### Observation, Monitoring, Tracing
 
-- Task Decomposition and Planning
-  - Structural Similarity Index (SSI)
-  - Node F1 Score
-- Tool Integration and Utilization
-  - Tool F1 Score
-  - Tool Utilisation Efficacy (TUE)
-  - Tool Integration Effectiveness
-- Memory and Context Management
-  - Memory Coherence and Retrieval (MCR)
-- System Adaptability and Learning Rate
-- Automation Rate
-- Overall System Performance
-  - Task Success Rate
-  - Latency and Efficiency (computational overhead)
-  - Component Synergy Score (CSS)
-  - Strategic Planning Index (SPI)
-- LLM-as-a-judge, eval by LLM
+- [AgentOps - Agency](https://www.agentops.ai/)
+- [arize](https://arize.com/)
+- [Langtrace](https://www.langtrace.ai/)
+- [LangSmith - Langchain](https://www.langchain.com/langsmith)
+- [Weave - Weights & Biases](https://wandb.ai/site/weave/)
 
-### Possible Use Cases
+### Benchmarks
 
-- Financial Services
-  - Automated Trading Strategies
-  - Fraud Detection
-- Supply Chain Management
-  - Inventory Optimization
-  - Demand Forecasting
-- Customer Service
-  - AI Chatbots
-  - Virtual Assistants
-- Intelligent Document Processing (IDP)
-  - Contract Management
-  - Financial Statement Processing
-  - Insurance Claims Processing
-- Healthcare
-  - Treatment planning
-  - Drug discovery
-- Image Processing
-  - Medical Imaging
-  - Object Detection
-  - Image Classification
+- [AgentEvals CORE-Bench Leaderboard](https://huggingface.co/spaces/agent-evals/core_leaderboard)
+- [Berkeley Function-Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html)
+- [Chatbot Arena LLM Leaderboard](https://lmsys.org/projects/)
+- [GAIA Leaderboard](https://gaia-benchmark-leaderboard.hf.space/)
+- [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
+- [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
 
-### Python Tools
+## Python Tools
 
 - [`commitizen`](https://pypi.org/project/commitizen/)
   - Instead of [`bump-my-version`](https://pypi.org/project/bump-my-version/).
@@ -128,21 +137,26 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
   - JustFile is a Python library that provides a function to either read, write, or append.
   - It’s pretty straight-foward. No creating a file handle. no `with`-syntax. Just reading from a path.
   - [https://python-justfile.readthedocs.io/](https://python-justfile.readthedocs.io/)
+- [`logfire`](https://pypi.org/project/logfire/)
+  - Instead of `logger` or `loguru`. With OpenTelemetry.
+  - The best Python observability tool!
+  - Pydantic Logfire — Uncomplicated Observability
+  - [logfire Docs](https://logfire.pydantic.dev/docs/)
 - [`loguru`](https://pypi.org/project/loguru/)
   - Instead of `logger`.
   - Python logging made (stupidly) simple
   - Loguru is a library which aims to bring enjoyable logging in Python.
   - [API Reference](https://loguru.readthedocs.io/en/stable/api/logger.html)
-  - See also: [Security considerations when using Loguru](https://loguru.readthedocs.io/en/stable/resources/recipes.html#security-considerations-when-using-loguru). 
+  - See also: [Security considerations when using Loguru](https://loguru.readthedocs.io/en/stable/resources/recipes.html#security-considerations-when-using-loguru).
 - [`pdoc`](https://pypi.org/project/pdoc/)
-  - Instead of [`mkdocs`]https://pypi.org/project/mkdocs/).
+  - Instead of [`mkdocs`](https://pypi.org/project/mkdocs/).
   - API Documentation for Python Projects
   - pdoc's main feature is a focus on simplicity: pdoc aims to do one thing and do it well.
   - [pdoc.dev/docs](https://pdoc.dev/docs/pdoc.html)
 - [`pre-commit`](https://pypi.org/project/pre-commit/) (again)
   - Instead of gh-actions.
   - A framework for managing and maintaining multi-language pre-commit hooks.
-  - For more information see: https://pre-commit.com/.
+  - [more information](https://pre-commit.com/)
 - [`pydantic-settings`](https://pypi.org/project/pydantic-settings/)
   - Instead of [`OmegaConf`](https://pypi.org/project/omegaconf/) or `dotenv`.
   - Settings management using Pydantic, this is the new official home of Pydantic's BaseSettings.
@@ -161,14 +175,19 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 - [`Typer`](https://pypi.org/project/typer/)
   - Instead of [`argparse`](https://pypi.org/project/argparse/).
   - Typer, build great CLIs. Easy to code. Based on Python type hints.
-  - Documentation: https://typer.tiangolo.com
+  - [Typer Docs](https://typer.tiangolo.com)
 
 ## Further Reading
 
 - [[2501.16150] AI Agents for Computer Use: A Review of Instruction-based Computer Control, GUI Automation, and Operator Assistants](https://arxiv.org/abs/2501.16150)
-- [[2408.06361] Large Language Model Agent in Financial Trading: A Survey](https://arxiv.org/abs/2408.06361)
+- [[2501.06590] ChemAgent](https://arxiv.org/abs/2501.06590)
+- [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/2501.04227)
+- [[2412.04093] Practical Considerations for Agentic LLM Systems](https://arxiv.org/abs/2412.04093)
+- [[2411.13768] Evaluation-driven Approach to LLM Agents](https://arxiv.org/abs/2411.13768)
 - [[2411.10478] Large Language Models for Constructing and Optimizing Machine Learning Workflows: A Survey](https://arxiv.org/abs/2411.10478)
+- [[2411.05285] A taxonomy of agentops for enabling observability of foundation model based agents](https://arxiv.org/abs/2411.05285)
 - [[2410.22457] Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
+- [[2408.06361] Large Language Model Agent in Financial Trading: A Survey](https://arxiv.org/abs/2408.06361)
 - [[2404.13501] A Survey on the Memory Mechanism of Large Language Model based Agents](https://arxiv.org/pdf/2404.13501)
 - [[2402.02716] Understanding the planning of LLM agents: A survey](https://arxiv.org/abs/2402.02716)
 - [[2402.01030] Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/abs/2402.01030)
