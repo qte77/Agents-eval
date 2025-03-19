@@ -21,7 +21,7 @@ from .data_models import (
     ResearchResult,
     ResearchSummary,
 )
-from .models import get_api_key, get_models, get_provider_config
+from .llm_models import get_api_key, get_models, get_provider_config
 from .utils import error_handling_context
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
