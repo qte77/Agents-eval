@@ -1,0 +1,41 @@
+@startuml "Multi-Agent Research System - C4 System Context"
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title "Multi-Agent Research System"
+Person(user, "User", "Submits research queries")
+
+System_Boundary(research_system, "Supporting System") {
+    Container(main_module, "Main Module", "Python", "Entry point that configures and runs the agent system")
+    Container(utils, "Utilities", "Python", "Helper functions and data models")
+    Container(config, "Configuration", "JSON", "Provider and model settings")
+}
+    
+System_Boundary(agent_system, "Agent System") {
+    Container(manager_agent, "Manager Agent", "pydantic-ai", "Coordinates research and analysis tasks")
+    Container(research_agent, "Research Agent", "pydantic-ai", "Gathers information on topics")
+    Container(analysis_agent, "Analysis Agent", "pydantic-ai", "Analyzes research")
+}
+
+System_Ext(llm_provider, "LLM Provider", "External inference service for AI models")
+System_Ext(search_api, "DuckDuckGo Search", "External search API")
+
+Rel(user, main_module, "Submits query", "CLI Input")
+Rel(main_module, config, "Loads", "Read JSON")
+Rel(main_module, agent_system, "Initializes and runs")
+
+Rel(manager_agent, research_agent, "Delegates research tasks to", "Tool call")
+Rel(manager_agent, analysis_agent, "Delegates analysis tasks to", "Tool call")
+Rel(research_agent, search_api, "Searches for information", "API call")
+
+Rel(manager_agent, llm_provider, "Generates responses", "API call")
+Rel(research_agent, llm_provider, "Generates responses", "API call")
+Rel(analysis_agent, llm_provider, "Generates responses", "API call")
+
+Rel(agent_system, utils, "Uses", "Import")
+Rel(main_module, utils, "Uses", "Import")
+
+@enduml
