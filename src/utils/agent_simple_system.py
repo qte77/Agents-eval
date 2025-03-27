@@ -1,16 +1,28 @@
 """
-This module defines the SystemAgent class and related functions for creating and managing agents
-that can research, analyze, and synthesize data using various models and tools.
+This module defines the SystemAgent class and related functions for creating and
+managing agents that can research, analyze, and synthesize data using various models
+and tools.
 
 Classes:
     SystemAgent: A generic system agent for research and analysis tasks.
 
 Functions:
-    _add_tools_to_manager_agent: Adds tools to the manager agent for delegating tasks to other agents.
-    _create_manager: Creates and configures a manager SystemAgent with associated researcher, analyst, and synthesiser agents.
-    get_manager: Initializes and returns a SystemAgent manager with the specified configuration.
-    run_manager: Asynchronously runs the manager with the given query and provider, handling errors and printing results.
+    _add_tools_to_manager_agent: Adds tools to the manager agent for delegating tasks to
+        other agents.
+    _create_manager: Creates and configures a manager SystemAgent with associated
+        researcher, analyst, and synthesiser agents.
+    get_manager: Initializes and returns a SystemAgent manager with the specified
+        configuration.
+    run_manager: Asynchronously runs the manager with the given query and provider,
+        handling errors and printing results.
 """
+
+from pydantic_ai import Agent, RunContext
+from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
+from pydantic_ai.models.gemini import GeminiModel
+from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.usage import UsageLimits
+from rich.console import Console
 
 from .data_models import (
     AgentConfig,
@@ -23,13 +35,6 @@ from .data_models import (
 )
 from .llm_models import get_api_key, get_models, get_provider_config
 from .utils import error_handling_context
-from pydantic_ai import Agent, RunContext
-from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
-from pydantic_ai.models.gemini import GeminiModel
-from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.usage import UsageLimits
-from rich.console import Console
-from typing import List, Dict
 
 
 class SystemAgent(Agent):
@@ -41,7 +46,7 @@ class SystemAgent(Agent):
         result_type: str | ResearchResult | AnalysisResult | ResearchSummary,
         system_prompt: str,
         result_retries: int = 3,
-        tools: List = [],
+        tools: list = [],
     ):
         super().__init__(
             model=model,
@@ -59,12 +64,15 @@ def _add_tools_to_manager_agent(
     synthesis_agent: SystemAgent | None = None,
 ) -> None:
     """
-    Adds tools to the manager agent for delegating tasks to research, analysis, and synthesis agents.
+    Adds tools to the manager agent for delegating tasks to research, analysis, and
+        synthesis agents.
     Args:
         manager_agent (SystemAgent): The manager agent to which tools will be added.
         research_agent (SystemAgent): The agent responsible for handling research tasks.
-        analysis_agent (SystemAgent, optional): The agent responsible for handling analysis tasks. Defaults to None.
-        synthesis_agent (SystemAgent, optional): The agent responsible for handling synthesis tasks. Defaults to None.
+        analysis_agent (SystemAgent, optional): The agent responsible for handling
+            analysis tasks. Defaults to None.
+        synthesis_agent (SystemAgent, optional): The agent responsible for handling
+            synthesis tasks. Defaults to None.
     Returns:
         None
     """
@@ -95,7 +103,7 @@ def _add_tools_to_manager_agent(
 
 
 def _create_manager(
-    prompts: Dict[str, str],
+    prompts: dict[str, str],
     model_manager: GeminiModel | OpenAIModel,
     model_researcher: GeminiModel | OpenAIModel,
     model_analyst: GeminiModel | OpenAIModel | None = None,
@@ -106,10 +114,14 @@ def _create_manager(
     and optionally synthesiser agents.
     Args:
         prompts (Dict[str, str]): Dictionary containing system prompts for each agent.
-        model_manager (GeminiModel | OpenAIModel): Model to be used by the manager agent.
-        model_researcher (GeminiModel | OpenAIModel): Model to be used by the researcher agent.
-        model_analyst (GeminiModel | OpenAIModel | None, optional): Model to be used by the analyst agent. Defaults to None.
-        model_synthesiser (GeminiModel | OpenAIModel | None, optional): Model to be used by the synthesiser agent. Defaults to None.
+        model_manager (GeminiModel | OpenAIModel): Model to be used by the manager
+            agent.
+        model_researcher (GeminiModel | OpenAIModel): Model to be used by the researcher
+            agent.
+        model_analyst (GeminiModel | OpenAIModel | None, optional): Model to be used by
+            the analyst agent. Defaults to None.
+        model_synthesiser (GeminiModel | OpenAIModel | None, optional): Model to be used
+            by the synthesiser agent. Defaults to None.
     Returns:
         SystemAgent: Configured manager agent with associated tools and agents.
     """
@@ -157,7 +169,7 @@ def get_manager(
     provider: str,
     provider_config: ProviderConfig,
     api_key: str,
-    prompts: Dict[str, str],
+    prompts: dict[str, str],
     include_analyst: bool = False,
     include_synthesiser: bool = False,
     console: Console = None,
@@ -170,8 +182,10 @@ def get_manager(
         api_key (str): API key for authentication with the provider.
         prompts (PromptsConfig): Configuration for prompts.
         console (Console): Console object for logging and output.
-        include_analyst (bool, optional): Flag to include analyst model. Defaults to False.
-        include_synthesiser (bool, optional): Flag to include synthesiser model. Defaults to False.
+        include_analyst (bool, optional): Flag to include analyst model.
+            Defaults to False.
+        include_synthesiser (bool, optional): Flag to include synthesiser model.
+            Defaults to False.
     Returns:
         SystemAgent: The initialized SystemAgent manager.
     """
@@ -199,14 +213,18 @@ async def run_manager(
     console: Console = None,
 ) -> None:
     """
-    Asynchronously runs the manager with the given query and provider, handling errors and printing results.
+    Asynchronously runs the manager with the given query and provider, handling errors
+        and printing results.
     Args:
         manager (SystemAgent): The system agent responsible for running the query.
         query (str): The query to be processed by the manager.
         provider (str): The provider to be used for the query.
-        usage_limits (UsageLimits): The usage limits to be applied during the query execution.
-        pydantic_ai_stream (bool, optional): Flag to enable or disable Pydantic AI stream. Defaults to False.
-        console (Console, optional): The console object for printing messages. Defaults to None.
+        usage_limits (UsageLimits): The usage limits to be applied during the query
+            execution.
+        pydantic_ai_stream (bool, optional): Flag to enable or disable Pydantic AI
+            stream. Defaults to False.
+        console (Console, optional): The console object for printing messages.
+            Defaults to None.
     Returns:
         None
     """
@@ -215,7 +233,8 @@ async def run_manager(
         model_name = manager.model._model_name
         mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
         console.print(
-            f"\n ==> Researching with [info][bold]{provider}({model_name})[/bold][/info] "
+            f"\n ==> Researching with "
+            f"[info][bold]{provider}({model_name})[/bold][/info] "
             f"and Topic: [debug]{query}[/debug] ...\n"
         )
         if pydantic_ai_stream:
@@ -255,8 +274,10 @@ def setup_agent_env(
     Args:
         provider (str): The name of the provider.
         messages (str): The messages or queries to be sent to the agent.
-        config (Config): The configuration object containing provider and prompt settings.
-        console (Console, optional): The console object for logging and error handling. Defaults to None.
+        config (Config): The configuration object containing provider and prompt
+            settings.
+        console (Console, optional): The console object for logging and error handling.
+            Defaults to None.
 
     Returns:
         AgentConfig: The configuration object for the agent.

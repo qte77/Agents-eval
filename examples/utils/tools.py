@@ -1,6 +1,7 @@
 """Example tools for the utils example."""
 
 from random import randint
+
 from pydantic_ai import RunContext
 
 

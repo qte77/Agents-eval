@@ -1,11 +1,12 @@
 """Simple agent for the dice game example."""
 
-from .utils import create_model
-from .tools import roll_die, get_player_name
 from openai import APIConnectionError
 from pydantic_ai import Agent, Tool
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.models.openai import OpenAIModel
+
+from .tools import get_player_name, roll_die
+from .utils import create_model
 
 
 class _DiceGameAgent(Agent):

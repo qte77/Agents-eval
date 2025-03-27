@@ -1,12 +1,16 @@
 """
-This script serves as the entry point for the application, utilizing Typer for CLI commands.
+This script serves as the entry point for the application, utilizing Typer for CLI
+commands.
 
 Commands:
-- main: Executes the application with configurable options such as provider, query, and additional flags.
+- main: Executes the application with configurable options such as provider, query,
+    and additional flags.
 """
 
-from .main import main as start_app
 from asyncio import run
+
+from .main import main as start_app
+
 # from typer import Option, Typer
 
 

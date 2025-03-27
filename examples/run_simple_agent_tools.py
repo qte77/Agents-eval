@@ -1,12 +1,13 @@
 """Run the dice game agent using simple tools."""
 
+from os import path
+
 from .utils.agent_simple_tools import get_dice
 from .utils.utils import (
-    load_config,
     get_api_key,
     get_provider_config,
+    load_config,
 )
-from os import path
 
 CONFIG_FILE = "config.json"
 system_prompt = (

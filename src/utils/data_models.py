@@ -10,27 +10,27 @@ Classes:
     ResearchSummary: Represents the expected model response of research on a topic.
     ProviderConfig: Represents the configuration for a model provider.
     ModelConfig: Represents the configuration for a model provider with API key.
-    Config: Represents the overall configuration settings for agents and model providers.
+    Config: Represents the overall configuration settings for agents and model
+        providers.
 """
 
 from pydantic import BaseModel
 from pydantic_ai.usage import UsageLimits
-from typing import Dict, List
 
 
 class ResearchResult(BaseModel):
     """Research results from the research agent."""
 
-    topic: str | Dict[str, str]
-    findings: List[str] | Dict[str, str | List[str]]
-    sources: List[str] | Dict[str, str | List[str]]
+    topic: str | dict[str, str]
+    findings: list[str] | dict[str, str | list[str]]
+    sources: list[str] | dict[str, str | list[str]]
 
 
 class AnalysisResult(BaseModel):
     """Analysis results from the analysis agent."""
 
-    insights: List[str]
-    recommendations: List[str]
+    insights: list[str]
+    recommendations: list[str]
     approval: bool
 
 
@@ -38,10 +38,10 @@ class ResearchSummary(BaseModel):
     """Expected model response of research on a topic"""
 
     topic: str
-    key_points: List[str]
-    key_points_explanation: List[str]
+    key_points: list[str]
+    key_points_explanation: list[str]
     conclusion: str
-    sources: List[str]
+    sources: list[str]
 
 
 class ProviderConfig(BaseModel):
@@ -54,18 +54,18 @@ class ProviderConfig(BaseModel):
 class Config(BaseModel):
     """Configuration settings for agents and model providers"""
 
-    providers: Dict[str, ProviderConfig]
-    inference: Dict[str, str | int]
-    prompts: Dict[str, str]
+    providers: dict[str, ProviderConfig]
+    inference: dict[str, str | int]
+    prompts: dict[str, str]
 
 
 class AgentConfig(BaseModel):
     """Configuration for an agent"""
 
     provider: str
-    query: str | List[Dict[str, str]]  # (1) messages
+    query: str | list[dict[str, str]]  # (1) messages
     api_key: str | None
-    prompts: Dict[str, str]
+    prompts: dict[str, str]
     provider_config: ProviderConfig
     usage_limits: UsageLimits
 

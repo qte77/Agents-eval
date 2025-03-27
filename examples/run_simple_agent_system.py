@@ -1,24 +1,28 @@
 """
-This example demonstrates how to run a simple agent system that consists of a manager agent, a research agent, and an analysis agent. The manager agent delegates research and analysis tasks to the corresponding agents and combines the results to provide a comprehensive answer to the user query.
+This example demonstrates how to run a simple agent system that consists of a manager
+agent, a research agent, and an analysis agent. The manager agent delegates research
+and analysis tasks to the corresponding agents and combines the results to provide a
+comprehensive answer to the user query.
 https://ai.pydantic.dev/multi-agent-applications/#agent-delegation
 """
 
-from .utils.data_models import ResearchResult, AnalysisResult
-from .utils.agent_simple_system import SystemAgent, add_tools_to_manager_agent
-from .utils.utils import create_model, load_config, get_api_key, get_provider_config
 from asyncio import run
 from os import path
+
 from openai import UnprocessableEntityError
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.exceptions import UnexpectedModelBehavior, UsageLimitExceeded
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.usage import UsageLimits
-from typing import Dict
+
+from .utils.agent_simple_system import SystemAgent, add_tools_to_manager_agent
+from .utils.data_models import AnalysisResult, ResearchResult
+from .utils.utils import create_model, get_api_key, get_provider_config, load_config
 
 CONFIG_FILE = "config.json"
 
 
-def get_models(model_config: Dict) -> tuple[OpenAIModel]:
+def get_models(model_config: dict) -> tuple[OpenAIModel]:
     """Get the models for the system agents."""
     model_researcher = create_model(**model_config)
     model_analyst = create_model(**model_config)
@@ -30,7 +34,7 @@ def get_manager(
     model_manager: OpenAIModel,
     model_researcher: OpenAIModel,
     model_analyst: OpenAIModel,
-    prompts: Dict[str, str],
+    prompts: dict[str, str],
 ) -> SystemAgent:
     """Get the agents for the system."""
     researcher = SystemAgent(

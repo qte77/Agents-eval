@@ -1,15 +1,17 @@
 """
-A simple example of using a Pydantic AI agent to generate a structured summary of a research topic.
+A simple example of using a Pydantic AI agent to generate a structured summary of a
+research topic.
 """
+
+from os import path
 
 from .utils.agent_simple_no_tools import get_research
 from .utils.utils import (
-    load_config,
     get_api_key,
     get_provider_config,
+    load_config,
     print_research_Result,
 )
-from os import path
 
 CONFIG_FILE = "config.json"
 

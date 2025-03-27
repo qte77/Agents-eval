@@ -1,30 +1,29 @@
 """Example of a module with data models"""
 
 from pydantic import BaseModel
-from typing import Dict, List
 
 
 class ResearchResult(BaseModel):
     """Research results from the research agent."""
 
     topic: str
-    findings: List[str]
-    sources: List[str]
+    findings: list[str]
+    sources: list[str]
 
 
 class AnalysisResult(BaseModel):
     """Analysis results from the analysis agent."""
 
-    insights: List[str]
-    recommendations: List[str]
+    insights: list[str]
+    recommendations: list[str]
 
 
 class ResearchSummary(BaseModel):
     """Expected model response of research on a topic"""
 
     topic: str
-    key_points: List[str]
-    key_points_explanation: List[str]
+    key_points: list[str]
+    key_points_explanation: list[str]
     conclusion: str
 
 
@@ -38,5 +37,5 @@ class ProviderConfig(BaseModel):
 class Config(BaseModel):
     """Configuration settings for the research agent and model providers"""
 
-    providers: Dict[str, ProviderConfig]
-    prompts: Dict[str, str]
+    providers: dict[str, ProviderConfig]
+    prompts: dict[str, str]

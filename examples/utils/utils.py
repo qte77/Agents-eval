@@ -1,16 +1,16 @@
 """Utility functions for running the research agent example."""
 
-from .data_models import Config
-from dotenv import load_dotenv
 from json import load
 from os import getenv
+from sys import exit
+
+from dotenv import load_dotenv
 from pydantic import ValidationError
-from pydantic_ai.usage import Usage
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
-from sys import exit
-from typing import Optional, Dict
+from pydantic_ai.usage import Usage
 
+from .data_models import Config
 
 API_SUFFIX = "_API_KEY"
 
@@ -19,7 +19,7 @@ def load_config(config_path: str) -> Config:
     """Load and validate configuration from a JSON file."""
 
     try:
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             config_data = load(file)
         config = Config.model_validate(config_data)
     except FileNotFoundError:
@@ -35,7 +35,7 @@ def load_config(config_path: str) -> Config:
         return config
 
 
-def get_api_key(provider: str) -> Optional[str]:
+def get_api_key(provider: str) -> str | None:
     """Retrieve API key from environment variable."""
 
     # TODO replace with pydantic-settings ?
@@ -47,7 +47,7 @@ def get_api_key(provider: str) -> Optional[str]:
         return getenv(f"{provider.upper()}{API_SUFFIX}")
 
 
-def get_provider_config(provider: str, config: Config) -> Dict[str, str]:
+def get_provider_config(provider: str, config: Config) -> dict[str, str]:
     """Retrieve configuration settings for the specified provider."""
 
     try:
@@ -69,8 +69,8 @@ def get_provider_config(provider: str, config: Config) -> Dict[str, str]:
 def create_model(
     base_url: str,
     model_name: str,
-    api_key: Optional[str] = None,
-    provider: Optional[str] = None,
+    api_key: str | None = None,
+    provider: str | None = None,
 ) -> OpenAIModel:
     """Create a model that uses base_url as inference API"""
 
@@ -83,7 +83,7 @@ def create_model(
         )
 
 
-def print_research_Result(summary: Dict, usage: Usage) -> None:
+def print_research_Result(summary: dict, usage: Usage) -> None:
     """Output structured summary of the research topic."""
 
     print(f"\n=== Research Summary: {summary.topic} ===")

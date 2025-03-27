@@ -1,6 +1,7 @@
+from streamlit import button, header, info, text_input, warning
+
 from src.main import main
 from streamlit_gui.components.output import render_output
-from streamlit import button, header, info, text_input, warning
 
 
 async def render_app(config):

@@ -1,9 +1,10 @@
 """
 This script serves as the main entry point for running a simple agent-based system.
 
-It initializes the environment, loads configurations, and manages the execution of agents
-based on user inputs or predefined settings. The script supports optional inclusion of
-analyst and synthesizer agents, as well as integration with Pydantic AI streaming.
+It initializes the environment, loads configurations, and manages the execution of
+agents based on user inputs or predefined settings. The script supports optional
+inclusion of analyst and synthesizer agents, as well as integration with Pydantic
+AI streaming.
 
 Modules:
 - agent_simple_system: Provides agent environment setup and management utilities.
@@ -17,17 +18,18 @@ Usage:
 Run the script directly to start the agent system.
 """
 
+from asyncio import run
+from os import path
+
+import weave
+from dotenv import load_dotenv
+from logfire import span
+from rich.console import Console
+from rich.theme import Theme
+
 from .utils.agent_simple_system import get_manager, run_manager, setup_agent_env
 from .utils.login import login
 from .utils.utils import load_config
-from asyncio import run
-from dotenv import load_dotenv
-from logfire import span
-from os import path
-from rich.console import Console
-from rich.theme import Theme
-import weave
-
 
 PROJECT_NAME = "rd-mas-example"
 CONSOLE_THEME = Theme(
@@ -39,7 +41,6 @@ console = Console(theme=CONSOLE_THEME)
 
 @weave.op()
 async def main(
-    # TODO error Missing configuration for <typer.models.OptionInfo object at 0x7dc819510050>
     provider: str = "",  # Option(..., help="The inference provider to be used."),
     query: str = "",  # , help="The query to be processed by the agent."),
     include_analyst: bool = False,

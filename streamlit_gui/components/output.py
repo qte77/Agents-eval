@@ -1,4 +1,5 @@
 from typing import Any
+
 from streamlit import code, info, json, markdown, subheader, text
 
 
@@ -7,9 +8,11 @@ def render_output(result: Any = None, info_str: str = None, type: str = None):
     Renders the output in a Streamlit app based on the provided type.
 
     Args:
-        result (Any, optional): The content to be displayed. Can be JSON, code, markdown, or plain text.
+        result (Any, optional): The content to be displayed. Can be JSON, code
+            markdown, or plain text.
         info (str, optional): The information message to be displayed if result is None.
-        type (str, optional): The type of the result content. Can be 'json', 'code', 'md', or other for plain text.
+        type (str, optional): The type of the result content. Can be 'json', 'code',
+            'md', or other for plain text.
 
     Returns:
         Out: None

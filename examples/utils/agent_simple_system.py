@@ -1,11 +1,12 @@
 """
-This module contains a simple system of agents that can be used to research and analyze data.
+This module contains a simple system of agents that can be used to research and analyze
+data.
 """
 
-from .data_models import ResearchResult, AnalysisResult
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIModel
-from typing import Optional
+
+from .data_models import AnalysisResult, ResearchResult
 
 
 class SystemAgent(Agent):
@@ -17,7 +18,7 @@ class SystemAgent(Agent):
         result_type: ResearchResult | AnalysisResult,
         system_prompt: str,
         result_retries: int = 3,
-        tools: Optional[list] = [],
+        tools: list | None = [],
     ):
         super().__init__(
             model,

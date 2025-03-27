@@ -79,17 +79,53 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 ignore = ["E203"]  # Whitespace before ':'
+# ignore = ["E501", "D1", "D415"]
 unfixable = ["B"]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # isort
+    "I",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "streamlit_gui", "examples", "tests"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+testpaths = ["tests/"]
+addopts = "--strict-markers"
 
+[tool.coverage]
 [tool.coverage.run]
 include = [
     "tests/**/*.py",
 ]
 # omit = []
 # branch = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    # 'pragma: no cover',
+    'raise AssertionError',
+    'raise NotImplementedError',
+]
+omit = [
+    'env/*',
+    'venv/*',
+    '.venv/*',
+    '*/virtualenv/*',
+    '*/virtualenvs/*',
+    '*/tests/*',
+]
 
 [tool.bumpversion]
 current_version = "1.0.0"

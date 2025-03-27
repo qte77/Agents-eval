@@ -1,4 +1,5 @@
 import streamlit as st
+
 from streamlit_gui.components.prompts import render_prompt_editor
 
 TA_HEIGHT = 50
@@ -13,10 +14,18 @@ def render_prompts(prompts):
     # Default prompts if none exist
     if not prompts:
         prompts = {
-            "system_prompt_manager": "You are a manager overseeing research and analysis tasks...",
-            "system_prompt_researcher": "You are a researcher. Gather and analyze data...",
-            "system_prompt_analyst": "You are a research analyst. Use your analytical skills...",
-            "system_prompt_synthesiser": "You are a research synthesiser. Use your analytical skills...",
+            "system_prompt_manager": (
+                "You are a manager overseeing research and analysis tasks..."
+            ),
+            "system_prompt_researcher": (
+                "You are a researcher. Gather and analyze data..."
+            ),
+            "system_prompt_analyst": (
+                "You are a research analyst. Use your analytical skills..."
+            ),
+            "system_prompt_synthesiser": (
+                "You are a research synthesiser. Use your analytical skills..."
+            ),
         }
 
     # Edit prompts

@@ -6,23 +6,25 @@ Functions:
         Retrieve API key from environment variable based on the provider name.
 
     get_provider_config(provider: str, config: Config) -> Dict[str, str]:
-        Retrieve configuration settings for the specified provider from the given config.
+        Retrieve configuration settings for the specified provider from the
+            given config.
 
     create_model(model_config: ModelConfig) -> GeminiModel | OpenAIModel:
-        Create and return an AI model instance based on the provided model configuration.
+        Create and return an AI model instance based on the provided model
+            configuration.
 
 Classes:
     ModelConfig:
         Configuration class for model settings.
 """
 
-from .data_models import Config, ModelConfig
 from os import getenv
+
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
-from typing import Dict
 
+from .data_models import Config, ModelConfig
 
 API_SUFFIX = "_API_KEY"
 
@@ -36,7 +38,7 @@ def get_api_key(provider: str) -> str | None:
         return getenv(f"{provider.upper()}{API_SUFFIX}")
 
 
-def get_provider_config(provider: str, providers: Config) -> Dict[str, str]:
+def get_provider_config(provider: str, providers: Config) -> dict[str, str]:
     """Retrieve configuration settings for the specified provider."""
 
     try:
@@ -73,15 +75,18 @@ def get_models(
     model_config: ModelConfig,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
-) -> Dict[str, GeminiModel | OpenAIModel]:
+) -> dict[str, GeminiModel | OpenAIModel]:
     """
     Get the models for the system agents.
     Args:
         model_config (ModelConfig): Configuration for the model.
-        include_analyist (Optional[bool]): Whether to include the analyst model. Defaults to False.
-        include_synthesiser (Optional[bool]): Whether to include the synthesiser model. Defaults to False.
+        include_analyist (Optional[bool]): Whether to include the analyst model.
+            Defaults to False.
+        include_synthesiser (Optional[bool]): Whether to include the synthesiser model.
+            Defaults to False.
     Returns:
-        Dict[str, GeminiModel | OpenAIModel]: A dictionary containing the models for the system agents.
+        Dict[str, GeminiModel | OpenAIModel]: A dictionary containing the models for the
+            system agents.
     """
 
     model = create_model(model_config)
