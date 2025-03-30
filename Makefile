@@ -4,10 +4,10 @@
 
 OLLAMA_SETUP := https://ollama.com/install.sh
 
-.PHONY: all ollama_setup_start ollama_start ollama_stop ollama_clean
+.PHONY: all
 
 # Default target
-all: setup_env_ollama
+all: setup_dev_ollama
 
 setup_prod: ## Install uv and deps, Download and start Ollama 
 	@echo "Setting up tools..."
