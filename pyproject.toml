@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-version = "1.0.0"
+version = "1.1.0"
 name = "Agents-eval"
 description = "Assess the effectiveness of agentic AI systems across various use cases focusing on agnostic metrics that measure core agentic capabilities."
 authors = [
@@ -129,7 +129,7 @@ omit = [
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.0.0"
+version = "1.1.0"
 version_files = [
     # "src/__version__.py",
     "pyproject.toml:version",
@@ -141,7 +141,7 @@ changelog_incremental = true
 
 
 [tool.bumpversion]
-current_version = "1.0.0"
+current_version = "1.1.0"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 commit = true
