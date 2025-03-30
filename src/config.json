@@ -27,6 +27,10 @@
         "restack": {
             "model_name": "deepseek-chat",
             "base_url": "https://ai.restack.io"
+        },
+        "together": {
+            "model_name": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            "base_url": "https://api.together.xyz/v1"
         }
     },
     "inference": {
