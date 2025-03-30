@@ -72,7 +72,7 @@ send_to_logfire="if-token-present"
 
 [tool.ruff]
 target-version = "py312"
-src = ["src", "tests"]
+src = ["src", "streamlit_gui", "examples", "tests"]
 
 [tool.ruff.format]
 docstring-code-format = true
