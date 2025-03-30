@@ -137,8 +137,6 @@ version_files = [
 ]
 tag_format = "v$version"
 update_changelog_on_bump = true
-changelog_incremental = true
-
 
 [tool.bumpversion]
 current_version = "1.1.0"
