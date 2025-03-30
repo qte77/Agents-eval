@@ -130,5 +130,7 @@ def error_handling_context(operation_name: str, console: Console = None):
                     f"[except]{reason} {msg_type}caught in {operation_name}:"
                     f"[bold]{msg}[/bold][/except]"
                 )
-            # raise  # BaseException(error_msg)
-            # sys.exit()
+        if console is None:
+            print(f"exit:{operation_name}")
+        else:
+            console.print(f"[info]exit:{operation_name}[/info]")

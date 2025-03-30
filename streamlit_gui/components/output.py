@@ -1,6 +1,6 @@
 from typing import Any
 
-from streamlit import code, info, json, markdown, subheader, text
+from streamlit import empty, info, subheader
 
 
 def render_output(result: Any = None, info_str: str = None, type: str = None):
@@ -21,15 +21,17 @@ def render_output(result: Any = None, info_str: str = None, type: str = None):
     subheader("Output")
 
     if result:
-        match type:
-            case "json":
-                json(result)
-            case "code":
-                code(result)
-            case "md":
-                markdown(result)
-            case _:
-                text(result)
-                # st.write(result)
+        output_container = empty()
+        output_container.write(result)
+        # match type:
+        #     case "json":
+        #         json(result)
+        #     case "code":
+        #         code(result)
+        #     case "md":
+        #         markdown(result)
+        #     case _:
+        #         text(result)
+        #         # st.write(result)
     else:
         info_str(info)

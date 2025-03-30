@@ -59,7 +59,7 @@ docs = [
 
 [tool.uv]
 package = true
-exclude-newer = "2025-03-13T00:00:00Z"
+exclude-newer = "2025-03-31T00:00:00Z"
 
 [tool.hatch.build.targets.wheel]
 only-include = ["/README.md"]

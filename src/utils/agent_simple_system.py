@@ -248,17 +248,15 @@ async def run_manager(
             result = await manager.run(**mgr_cfg)
 
         if console is None:
-            print("\nResult:")
+            print("\n ==> Result")
             print(result)
-            print("\nUsage statistics:")
+            print("\n ==> Usage statistics")
             print(result.usage())
         else:
-            console.print("\n[info]Result[/info]")
+            console.print("\n ==> [info]Result[/info]")
             console.print(result)
-            console.print("\n[info]Usage[/info]")
+            console.print("\n ==> [info]Usage statistics[/info]")
             console.print(result.usage())
-
-    print("exit:run_manager()")
 
 
 def setup_agent_env(

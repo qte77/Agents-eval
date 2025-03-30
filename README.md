@@ -26,8 +26,8 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 ### Customer Journey
 
-<img src="assets/images/customer-journey-activity-light#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
-<img src="assets/images/customer-journey-activity-dark#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+<img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+<img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
 
 ## Configuration
 

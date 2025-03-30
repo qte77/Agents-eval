@@ -94,11 +94,10 @@ async def main(
                 pydantic_ai_stream,
                 console,
             )
-
-        print("exit:main.main()")
+            console.print("[info]exit:main.main()[/info]")
 
     except Exception as e:
-        print(e)
+        console.print(f"[except]{e}[/except]")
 
 
 if __name__ == "__main__":
