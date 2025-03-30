@@ -4,7 +4,7 @@ ARG USER="appuser"
 
 
 # Stage 1: Builder Image
-FROM python:${PYTHON_VERSION}-slim AS AS builder
+FROM python:${PYTHON_VERSION}-slim AS builder
 LABEL author="qte77"
 LABEL builder=true
 ENV PYTHONDONTWRITEBYTECODE=1 \

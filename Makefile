@@ -1,13 +1,10 @@
-# Makefile for downloading and starting Ollama server locally
-# Ollama BINDIR in /usr/local/bin /usr/bin /bin 
-# Ollama available at 127.0.0.1:11434
 
 OLLAMA_SETUP := https://ollama.com/install.sh
 
-.PHONY: all ollama_setup_start ollama_start ollama_stop ollama_clean
+.PHONY: all
 
 # Default target
-all: setup_env_ollama
+all: setup_dev_ollama
 
 setup_prod: ## Install uv and deps, Download and start Ollama 
 	@echo "Setting up tools..."
@@ -29,12 +26,13 @@ setup_dev_ollama:
 	@$(MAKE) setup_ollama
 	@$(MAKE) start_ollama
 
+# Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama: ## Download Ollama, script does start local Ollama server
 	@echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP)'."
 	# script does start server but not consistently
 	@curl -fsSL $(OLLAMA_SETUP) | sh
 
-start_ollama: ## Start local Ollama server
+start_ollama: ## Start local Ollama server, default 127.0.0.1:11434
 	@ollama serve
 
 stop_ollama: ## Stop local Ollama server
@@ -64,7 +62,7 @@ run_gui: ## Run app with Streamlit GUI
 	@uv run streamlit run streamlit.py
 
 run_profile: ## Profile app with scalene
-	@uv scalene --outfile "src/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" "src/main.py"
+	@uv run scalene --outfile "src/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" "src/main.py"
 
 test_all: ## Run all tests
 	@uv run pytest
