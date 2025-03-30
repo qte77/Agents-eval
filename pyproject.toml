@@ -127,18 +127,6 @@ omit = [
     '*/tests/*',
 ]
 
-[tool.commitizen]
-name = "cz_conventional_commits"
-version = "1.0.0"
-version_files = [
-    # "src/__version__.py",
-    "pyproject.toml:version",
-    "README.md:version-[0-9]+\\.[0-9]+\\.[0-9]+-8A2BE2"
-]
-tag_format = "v$version"
-update_changelog_on_bump = true
-changelog_incremental = true
-
 [tool.bumpversion]
 current_version = "1.0.0"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
@@ -170,8 +158,6 @@ search = """
 """
 replace = """
 ## [Unreleased]
-
----
 
 ## [{new_version}] - {now:%Y-%m-%d}
 """
