@@ -24,6 +24,11 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 - `make run_gui`
 - `make test_all`
 
+### Customer Journey
+
+<img src="assets/images/customer-journey-activity-light#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+<img src="assets/images/customer-journey-activity-dark#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+
 ## Configuration
 
 [config.json](./src/config.json) contains . Inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
@@ -61,7 +66,7 @@ WANDB_API_KEY="xyz"
 
 ### Architecture
 
-<img src="assets/images/c4-multi-agent-system.png" alt="C4-Arch" title="C4-Arch" width="60%" />
+<img src="assets/images/c4-multi-agent-system.png#gh-dark-mode-only" alt="C4-Arch" title="C4-Arch" width="60%" />
 
 ### Project Structure
 
