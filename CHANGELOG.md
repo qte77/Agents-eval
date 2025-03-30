@@ -115,3 +115,13 @@ Types of changes:
 - pytest: e2e runm final result red
 - Readme: basic project info
 - pyproject.toml
+
+## v1.0.1 (2025-03-30)
+
+### Feat
+
+- Added file
+
+### Fix
+
+- **test,main**: Config model full name for create agent, main func in app (#7)
