@@ -79,8 +79,7 @@ src = ["src", "streamlit_gui", "examples", "tests"]
 docstring-code-format = true
 
 [tool.ruff.lint]
-ignore = ["E203"]  # Whitespace before ':'
-# ignore = ["E501", "D1", "D415"]
+# ignore = ["E203"]  # Whitespace before ':'
 unfixable = ["B"]
 select = [
     # pycodestyle
