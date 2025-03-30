@@ -12,7 +12,18 @@
 
 ## Functional Requirements
 
-### Backend (FastAPI)
+### CLI
+
+- **Command Line Interface:**
+  - Commands to start, stop, and check the status of the Ollama server or remote inference endpoints.
+  - Commands to download or call models and run tests.
+
+### Frontend (Streamlit)
+
+- **User Interface:**
+  - Display test results and system performance metrics.
+
+### (Optional) Backend (FastAPI)
 
 - **Agentic System Integration:**
   - Support for adding tools to agents using Pydantic-AI.
@@ -23,17 +34,6 @@
   - Endpoint to start and check the status of the Ollama server.
   - Endpoint to download and manage models.
   - Endpoint to run tests and return results.
-
-### Frontend (Streamlit)
-
-- **User Interface:**
-  - Display test results and system performance metrics.
-
-### CLI
-
-- **Command Line Interface:**
-  - Commands to start, stop, and check the status of the Ollama server or remote inference endpoints.
-  - Commands to download or call models and run tests.
 
 ## Non-Functional Requirements
 
@@ -53,22 +53,22 @@
 
 ## Assumptions
 
-- **Remote Inference Endpoints:** The project ca use remote inference endpoints provided within a `config.json` and using API keys from `.env`.
+- **Remote Inference Endpoints:** The project can use remote inference endpoints provided within a `config.json` and using API keys from `.env`.
 - **Local Ollama Server:** The project can make use of a local Ollama server for model hosting and inference.
 - **Python Environment:** The project uses Python 3.12 and related tools like `uv` for dependency management.
 - **GitHub Actions:** CI/CD pipelines are set up using GitHub Actions for automated testing, version bumping, and documentation deployment.
 
 ## Constraints
 
-- **Hardware:** The project assumes access to hardware capable of running the Ollama server and models, including sufficient RAM and GPU capabilities.
+- **Hardware:** The project assumes access to appropriate hardwareif running the Ollama server and models, including sufficient RAM and GPU capabilities.
 - **Software:** Requires Python 3.12, `uv`, and other dependencies listed in `pyproject.toml`.
 
 ## Main Dependencies
 
-- **Ollama:** For local model hosting and inference.
 - **Pydantic-AI:** For agent and tool management.
-- **Streamlit:** For frontend dashboard.
 - **Pytest:** For testing.
+- **Ollama:** For local model hosting and inference.
+- **Streamlit:** For frontend dashboard.
 - **Ruff:** For code linting.
 - **MkDocs:** For documentation generation.
 

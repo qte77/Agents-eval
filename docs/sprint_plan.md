@@ -1,6 +1,6 @@
 # Project Plan Outline
 
-## Week 1: Metric Development and CLI Enhancements
+## Week 1 starting 2025-03-31: Metric Development and CLI Enhancements
 
 ### Milestones
 
@@ -26,7 +26,7 @@
   - Sequence: After completing metric implementation and CLI enhancements.
   - Definition of Done: PRD.md includes detailed descriptions of new metrics, and README.md provides instructions on how to use the enhanced CLI.
 
-## Week 2: Streamlit GUI Enhancements and Testing
+## Week 2 starting 2025-03-07: Streamlit GUI Enhancements and Testing
 
 ### Milestones
 
@@ -55,5 +55,4 @@
 ## Additional Considerations
 
 - Code Reviews: Schedule regular code reviews to ensure quality and adherence to project standards.
-- Continuous Integration/Continuous Deployment (CI/CD): Use GitHub Actions to automate testing and deployment processes.
 - Feedback Loop: Establish a feedback loop with stakeholders to gather input on the new metrics and GUI enhancements.
