@@ -1,3 +1,7 @@
+# This Makefile automates the build, test, and clean processes for the project.
+# It provides a convenient way to run common tasks using the 'make' command.
+# It is designed to work with the 'uv' tool for managing Python environments and dependencies.
+# Run `make help` to see all available recipes.
 
 OLLAMA_SETUP := https://ollama.com/install.sh
 
