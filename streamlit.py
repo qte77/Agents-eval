@@ -16,40 +16,42 @@ Functions:
 """
 
 from asyncio import run
+from os import path
 
-from streamlit_gui.app_config import load_app_config  # , save_config
+from src.utils.utils import load_config
 from streamlit_gui.components.sidebar import render_sidebar
 from streamlit_gui.pages.home import render_home
 from streamlit_gui.pages.prompts import render_prompts
 from streamlit_gui.pages.run_app import render_app
 from streamlit_gui.pages.settings import render_settings
-from streamlit_gui.styling import add_custom_styling
+from streamlit_gui.utils.styling import add_custom_styling
 
 # TODO create sidebar tabs, move settings to page,
 # set readme.md as home, separate prompts into page
 
 
-page_title = "MAS Eval 👾⚗️🧠💡"
+PAGE_TITLE = "MAS Eval 👾⚗️🧠💡"
+CONFIG_PATH = path.join(path.dirname(__file__), "src/config.json")
+CONFIG = load_config(CONFIG_PATH)
+provider = "huggingface"
+
+print(f"Selected provider: {provider}")
 
 
 async def main():
-    add_custom_styling(page_title)
-    config = load_app_config()
+    add_custom_styling(PAGE_TITLE)
+    selected_page = render_sidebar(PAGE_TITLE)
 
-    selected_page = render_sidebar(page_title)
     if selected_page == "Home":
         render_home()
     elif selected_page == "Settings":
-        render_settings(config)
-        # if updated_config:
-        #    save_config(updated_config)
+        provider = render_settings(CONFIG)
+        print(f"provider: {provider}")
     elif selected_page == "Prompts":
-        render_prompts(config.get("prompts", {}))
-        # if updated_prompts:
-        #    config["prompts"] = updated_prompts
-        #    save_config(config)
+        render_prompts(CONFIG.prompts)  # prompts =
     elif selected_page == "App":
-        await render_app(config)
+        print(f"provider: {provider}")
+        await render_app(provider)
 
 
 if __name__ == "__main__":

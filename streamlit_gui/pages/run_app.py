@@ -4,9 +4,10 @@ from src.main import main
 from streamlit_gui.components.output import render_output
 
 
-async def render_app(config):
+async def render_app(provider: str = None):
     header("Run Research Query")
-    provider = text_input("Provider?")
+    if provider is None:
+        provider = text_input("Provider?")
     query = text_input("What would you like to research?")
 
     if button("Run Query"):

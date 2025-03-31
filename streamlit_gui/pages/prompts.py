@@ -11,7 +11,6 @@ def render_prompts(prompts):
     updated = False
     updated_prompts = prompts.copy()
 
-    # Default prompts if none exist
     if not prompts:
         prompts = {
             "system_prompt_manager": (
@@ -35,4 +34,4 @@ def render_prompts(prompts):
             updated_prompts[prompt_key] = new_value
             updated = True
 
-    return updated_prompts if updated else None
+    return updated_prompts if updated else prompts
