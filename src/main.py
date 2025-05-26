@@ -43,6 +43,7 @@ console = Console(theme=CONSOLE_THEME)
 async def main(
     provider: str = "",  # Option(..., help="The inference provider to be used."),
     query: str = "",  # , help="The query to be processed by the agent."),
+    include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
     pydantic_ai_stream: bool = False,
@@ -82,6 +83,7 @@ async def main(
                 agent_env.provider_config,
                 agent_env.api_key,
                 agent_env.prompts,
+                include_researcher,
                 include_analyst,
                 include_synthesiser,
                 console,

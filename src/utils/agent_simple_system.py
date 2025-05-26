@@ -170,6 +170,7 @@ def get_manager(
     provider_config: ProviderConfig,
     api_key: str,
     prompts: dict[str, str],
+    include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
     console: Console = None,
@@ -182,6 +183,8 @@ def get_manager(
         api_key (str): API key for authentication with the provider.
         prompts (PromptsConfig): Configuration for prompts.
         console (Console): Console object for logging and output.
+        include_researcher (bool, optional): Flag to include analyst model.
+            Defaults to False.
         include_analyst (bool, optional): Flag to include analyst model.
             Defaults to False.
         include_synthesiser (bool, optional): Flag to include synthesiser model.
@@ -197,7 +200,9 @@ def get_manager(
             base_url=provider_config.base_url,
             api_key=api_key,
         )
-        models = get_models(model_config, include_analyst, include_synthesiser)
+        models = get_models(
+            model_config, include_researcher, include_analyst, include_synthesiser
+        )
         return _create_manager(
             prompts,
             **models,

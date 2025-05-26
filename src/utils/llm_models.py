@@ -73,6 +73,7 @@ def create_model(model_config: ModelConfig) -> GeminiModel | OpenAIModel:
 
 def get_models(
     model_config: ModelConfig,
+    include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
 ) -> dict[str, GeminiModel | OpenAIModel]:
@@ -92,7 +93,7 @@ def get_models(
     model = create_model(model_config)
     return {
         "model_manager": model,
-        "model_researcher": model,
+        "model_researcher": model if include_researcher else None,
         "model_analyst": model if include_analyst else None,
         "model_synthesiser": model if include_synthesiser else None,
     }
