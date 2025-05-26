@@ -4,8 +4,6 @@ the environment for a given project. It includes functionality to load and save
 login state, perform a one-time login, and check if the user is logged in.
 """
 
-from sys import exit
-
 from agentops import init as ainit
 from logfire import configure
 from wandb import login as wlogin

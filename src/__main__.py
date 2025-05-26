@@ -28,6 +28,7 @@ def callback():
 async def main(
     provider: str = "",  # Option("", help="The inference provider to be used."),
     query: str = "",  # Option("", help="The query to be processed by the agent."),
+    include_researcher: bool = True,
     include_analyst: bool = True,
     include_synthesiser: bool = False,
     pydantic_ai_stream: bool = False,
@@ -50,6 +51,7 @@ async def main(
     await start_app(
         provider,
         query,
+        include_researcher,
         include_analyst,
         include_synthesiser,
         pydantic_ai_stream,
