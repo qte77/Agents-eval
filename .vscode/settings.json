@@ -1,11 +1,23 @@
 {
-    "editor.tabSize": 4,
+    "editor.lineNumbers": "on",
     "editor.insertSpaces": true,
+    "editor.tabSize": 4,
     "editor.wordWrap": "on",
-    "files.autoSave": "onFocusChange",
     "explorer.confirmDelete": false,
+    "files.autoSave": "onFocusChange",
+    "git.autofetch": true,
+    "git.enableSmartCommit": true,
+    "makefile.configureOnOpen": false,
     "markdownlint.config": {
-        "MD024": false
+        "MD024": false  // ignore no-duplicate-headings
     },
-    "makefile.configureOnOpen": false
+    "python.analysis.extraPaths": ["./venv/lib/python3.11/site-packages"],
+    "python.defaultInterpreterPath": "./.venv/bin/python",
+    "python.analysis.typeCheckingMode": "strict",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingTypeStubs": "none",
+        "reportUnknownMemberType": "none",
+        "reportUnknownVariableType": "none"
+    },
+    "redhat.telemetry.enabled": false
 }
