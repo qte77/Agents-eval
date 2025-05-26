@@ -28,4 +28,4 @@ def login(project_name: str) -> None:
         wvinit(project_name)
     except Exception as e:
         print(e)
-        exit()
+        # exit()
