@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Moved streamlit_gui and examples to /src
 - Moved app to /src/app
+- Refactor and clarify docstrings to include Args, Functions, and Classes sections.
+- Improve type safety and validation in data models.
+- Enhance documentation for agent system utilities and configuration loading.
+- Updated docstrings
 
 ## [1.0.0] - 2025-03-18
 
