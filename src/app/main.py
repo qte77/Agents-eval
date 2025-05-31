@@ -24,6 +24,7 @@ from os import path
 import weave
 from dotenv import load_dotenv
 from logfire import span
+from utils.log import logger
 
 from .config import CHAT_CONFIG_FILE, PROJECT_NAME
 from .utils.agent_simple_system import get_manager, run_manager, setup_agent_env
@@ -87,13 +88,10 @@ async def main(
                 agent_env.usage_limits,
                 pydantic_ai_stream,
             )
-            # TODO use logger
-            # console.print("[info]exit:main.main()[/info]")
+            logger.info("Exiting app")
 
-    except Exception as e:
-        # TODO use logger
-        print(e)
-        # console.print(f"[except]{e}[/except]")
+    except Exception:
+        logger.exception("Exiting app")
 
 
 if __name__ == "__main__":
