@@ -17,53 +17,21 @@ Functions:
 """
 
 from contextlib import contextmanager
-from json import load
 
 from logfire import error, span
 from openai import APIConnectionError, RateLimitError, UnprocessableEntityError
-from pydantic import ValidationError
 from pydantic_ai.exceptions import (
     ModelHTTPError,
     UnexpectedModelBehavior,
     UsageLimitExceeded,
 )
 from pydantic_ai.usage import Usage
-from rich.console import Console
 
-from .data_models import Config
-
-
-def load_config(config_path: str) -> Config:
-    """
-    Load and validate the configuration from the given file path.
-
-    Args:
-        config_path (str): The path to the configuration file.
-
-    Returns:
-        Config: The validated configuration object.
-
-    Raises:
-        FileNotFoundError: If the configuration file is not found.
-        ValueError: If the configuration format is invalid.
-        Exception: If there is an error loading the configuration.
-    """
-
-    try:
-        with open(config_path) as file:
-            config_data = load(file)
-        config = Config.model_validate(config_data)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    except ValidationError as e:
-        raise ValueError(f"Invalid configuration format: {e}")
-    except Exception as e:
-        raise Exception(f"Error loading configuration: {e}")
-    else:
-        return config
+from .data_models import ResearchSummary
+from .log import logger
 
 
-def print_research_Result(summary: dict, usage: Usage) -> None:
+def log_research_result(summary: ResearchSummary, usage: Usage) -> None:
     """
     Prints the research summary and usage details in a formatted manner.
 
@@ -73,28 +41,25 @@ def print_research_Result(summary: dict, usage: Usage) -> None:
         usage (Usage): An object containing usage details to be printed.
     """
 
-    print(f"\n=== Research Summary: {summary.topic} ===")
-    print("\nKey Points:")
+    logger.info(f"\n=== Research Summary: {summary.topic} ===")
+    logger.info("\nKey Points:")
     for i, point in enumerate(summary.key_points, 1):
-        print(f"{i}. {point}")
-    print("\nKey Points Explanation:")
+        logger.info(f"{i}. {point}")
+    logger.info("\nKey Points Explanation:")
     for i, point in enumerate(summary.key_points_explanation, 1):
-        print(f"{i}. {point}")
-    print(f"\nConclusion: {summary.conclusion}")
-
-    print(f"\nResponse structure: {list(dict(summary).keys())}")
-    print(usage)
+        logger.info(f"{i}. {point}")
+    logger.info(f"\nConclusion: {summary.conclusion}")
+    logger.info(f"\nResponse structure: {list(dict(summary).keys())}")
+    logger.info(usage)
 
 
 @contextmanager
-def error_handling_context(operation_name: str, console: Console = None):
+def error_handling_context(operation_name: str):
     """
     Context manager for handling errors during an operation and logging them
         appropriately.
     Args:
         operation_name (str): The name of the operation being performed.
-        console (Console, optional): An optional console object for printing
-            error messages.
     Yields:
         None
     Raises:
@@ -123,14 +88,5 @@ def error_handling_context(operation_name: str, console: Console = None):
             msg_type = f"(Type: {msg.__dict__['type']}) " if is_msg_type else ""
             error_msg = f"{reason} {msg_type}caught in {operation_name}: {msg}"
             error(f"{error_msg}")
-            if console is None:
-                print(error_msg)
-            else:
-                console.print(
-                    f"[except]{reason} {msg_type}caught in {operation_name}:"
-                    f"[bold]{msg}[/bold][/except]"
-                )
-        if console is None:
-            print(f"exit:{operation_name}")
-        else:
-            console.print(f"[info]exit:{operation_name}[/info]")
+            logger.error(error_msg)
+        logger.info(f"exit:{operation_name}")

@@ -27,15 +27,17 @@ from logfire import span
 
 from .config import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
 from .utils.agent_simple_system import get_manager, run_manager, setup_agent_env
+from .utils.load_settings import load_config
 from .utils.log import logger
 from .utils.login import login
-from .utils.utils import load_config
 
 
 @weave.op()
 async def main(
-    chat_provider: str = CHAT_DEFAULT_PROVIDER,  # help="The inference chat_provider to be used."),
-    query: str = "",  # , help="The query to be processed by the agent."),
+    # argparse/typer: help="The inference chat_provider to be used."),
+    chat_provider: str = CHAT_DEFAULT_PROVIDER,
+    # argparse/typer: help="The query to be processed by the agent."),
+    query: str = "",
     include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
@@ -74,7 +76,7 @@ async def main(
             # TODO remove
             logger.debug(f"{chat_config_path=}")
             logger.debug(f"{chat_provider=}")
-            logger.debug(f"{chat_config.chat_provider=}")
+            logger.debug(type(chat_config))
 
             agent_env = setup_agent_env(chat_provider, query, chat_config)
             manager = get_manager(

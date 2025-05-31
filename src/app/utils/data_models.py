@@ -10,7 +10,7 @@ Classes:
     ResearchSummary: Represents the expected model response of research on a topic.
     ProviderConfig: Represents the configuration for a model provider.
     ModelConfig: Represents the configuration for a model provider with API key.
-    Config: Represents the overall configuration settings for agents and model
+    ChatConfig: Represents the overall configuration settings for agents and model
         providers.
 """
 
@@ -51,7 +51,7 @@ class ProviderConfig(BaseModel):
     base_url: str
 
 
-class Config(BaseModel):
+class ChatConfig(BaseModel):
     """Configuration settings for agents and model providers"""
 
     providers: dict[str, ProviderConfig]

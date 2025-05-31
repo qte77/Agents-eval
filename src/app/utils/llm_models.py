@@ -24,9 +24,8 @@ from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
+from ..config import API_SUFFIX
 from .data_models import Config, ModelConfig
-
-API_SUFFIX = "_API_KEY"
 
 
 def get_api_key(provider: str) -> str | None:
@@ -42,8 +41,8 @@ def get_provider_config(provider: str, providers: Config) -> dict[str, str]:
     """Retrieve configuration settings for the specified provider."""
 
     try:
-        model_name = providers[provider].model_name
-        base_url = providers[provider].base_url
+        model_name = getattr(providers, provider).model_name
+        base_url = getattr(providers, provider).base_url
     except KeyError as e:
         raise ValueError(f"Missing configuration for {provider}: {e}.")
     except Exception as e:
@@ -59,7 +58,8 @@ def create_model(model_config: ModelConfig) -> GeminiModel | OpenAIModel:
     """Create a model that uses base_url as inference API"""
 
     if model_config.provider.lower() == "gemini":
-        return GeminiModel(model_config.model_name, api_key=model_config.api_key)
+        # FIXME missing ctr signature: api_key=model_config.api_key
+        return GeminiModel(model_config.model_name)
     else:
         return OpenAIModel(
             model_config.model_name,
