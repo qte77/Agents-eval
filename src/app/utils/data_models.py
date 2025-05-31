@@ -64,7 +64,7 @@ class AgentConfig(BaseModel):
 
     provider: str
     query: (
-        str | list[dict[str, str]] | list[dict[str, str | list[dict[str, str]]]]
+        str | list[dict[str, str]]
     )  # (1) messages
     api_key: str | None
     prompts: dict[str, str]
