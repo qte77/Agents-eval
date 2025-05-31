@@ -5,7 +5,7 @@ Functions:
     get_api_key(provider: str) -> Optional[str]:
         Retrieve API key from environment variable based on the provider name.
 
-    get_provider_config(provider: str, config: Config) -> Dict[str, str]:
+    get_provider_config(provider: str, config: ChatConfig) -> Dict[str, str]:
         Retrieve configuration settings for the specified provider from the
             given config.
 
@@ -25,7 +25,8 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from ..config import API_SUFFIX
-from .data_models import Config, ModelConfig
+from .data_models import ModelConfig, ProviderConfig
+from .log import logger
 
 
 def get_api_key(provider: str) -> str | None:
@@ -37,16 +38,22 @@ def get_api_key(provider: str) -> str | None:
         return getenv(f"{provider.upper()}{API_SUFFIX}")
 
 
-def get_provider_config(provider: str, providers: Config) -> dict[str, str]:
+def get_provider_config(
+    provider: str, providers: dict[str, ProviderConfig]
+) -> dict[str, str]:
     """Retrieve configuration settings for the specified provider."""
 
     try:
-        model_name = getattr(providers, provider).model_name
-        base_url = getattr(providers, provider).base_url
+        model_name = providers[provider].model_name
+        base_url = providers[provider].base_url
     except KeyError as e:
-        raise ValueError(f"Missing configuration for {provider}: {e}.")
+        msg = f"Provider '{provider}' not found in configuration: {e}"
+        logger.error(msg)
+        raise KeyError(msg)
     except Exception as e:
-        raise Exception(f"Error loading provider configuration: {e}")
+        msg = f"Error loading provider configuration: {e}"
+        logger.exception(msg)
+        raise Exception(msg)
     else:
         return {
             "model_name": model_name,

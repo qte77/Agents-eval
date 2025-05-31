@@ -73,12 +73,8 @@ async def main(
             if not query:
                 query = input("What would you like to research? ")
 
-            # TODO remove
-            logger.debug(f"{chat_config_path=}")
-            logger.debug(f"{chat_provider=}")
-            logger.debug(type(chat_config))
-
             agent_env = setup_agent_env(chat_provider, query, chat_config)
+
             manager = get_manager(
                 agent_env.provider,
                 agent_env.provider_config,

@@ -89,4 +89,4 @@ def error_handling_context(operation_name: str):
             error_msg = f"{reason} {msg_type}caught in {operation_name}: {msg}"
             error(f"{error_msg}")
             logger.error(error_msg)
-        logger.info(f"exit:{operation_name}")
+        logger.info(f"exiting operation '{operation_name}'")

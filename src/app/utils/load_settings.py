@@ -45,7 +45,7 @@ class AppEnv(BaseSettings):
     )
 
 
-settings = AppEnv()
+chat_config = AppEnv()
 
 
 def load_config(config_path: str) -> ChatConfig:
