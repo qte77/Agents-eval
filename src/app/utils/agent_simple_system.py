@@ -48,14 +48,14 @@ class SystemAgent(Agent):
     def __init__(
         self,
         model: OpenAIModel,
-        result_type: str | ResearchResult | AnalysisResult | ResearchSummary,
+        output_type: str | ResearchResult | AnalysisResult | ResearchSummary,
         system_prompt: str,
         result_retries: int = 3,
         tools: list = [],
     ):
         super().__init__(
             model=model,
-            result_type=result_type,
+            output_type=output_type,
             system_prompt=system_prompt,
             result_retries=result_retries,
             tools=tools,
@@ -158,7 +158,7 @@ def _create_manager(
         status += " with agents: "
     manager = SystemAgent(
         model=model_manager,
-        result_type=ResearchResult,
+        output_type=ResearchResult,
         system_prompt=prompts["system_prompt_manager"],
     )
     if model_researcher is None:
@@ -166,7 +166,7 @@ def _create_manager(
     else:
         researcher = SystemAgent(
             model=model_researcher,
-            result_type=ResearchResult,
+            output_type=ResearchResult,
             system_prompt=prompts["system_prompt_researcher"],
             tools=[duckduckgo_search_tool()],
         )
@@ -176,7 +176,7 @@ def _create_manager(
     else:
         analyst = SystemAgent(
             model=model_analyst,
-            result_type=AnalysisResult,
+            output_type=AnalysisResult,
             system_prompt=prompts["system_prompt_analyst"],
         )
         status = f"{status}, analyst({model_analyst.model_name})"
@@ -185,7 +185,7 @@ def _create_manager(
     else:
         synthesiser = SystemAgent(
             model=model_synthesiser,
-            result_type=ResearchSummary,
+            output_type=ResearchSummary,
             system_prompt=prompts["system_prompt_synthesiser"],
         )
         status = f"{status} and synthesiser({model_synthesiser.model_name})"
@@ -267,24 +267,22 @@ async def run_manager(
     model_name = getattr(manager, "model")._model_name
     mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
     logger.info(
-        f"\n ==> Researching with "
-        f"[info][bold]{provider}({model_name})[/bold][/info] "
-        f"and Topic: [debug]{query}[/debug] ...\n"
+        f"Researching with {provider}({model_name}) and Topic: {query} ..."
     )
-    if pydantic_ai_stream:
-        print("Streaming model responses...\n")
-        raise NotImplementedError
-        # TODO stream output: requires async functions and await
-        # with manager.run_stream(**mgr_cfg) as result:
-        #    for message in result.stream_text(delta=True, debounce_by=0.01):
-        #        print(message, end="", flush=True)
-    else:
-        result = await manager.run(**mgr_cfg)
 
-    logger.info("\n ==> Result")
-    logger.info(result)
-    logger.info("\n ==> Usage statistics")
-    logger.info(result.usage())
+    if pydantic_ai_stream:
+        logger.info("Streaming model response ...")
+        async with manager.run_async(**mgr_cfg) as result:
+            async for chunk in result.stream_text():
+                print(chunk, end="", flush=True)
+    else:
+        # FIXME deprecate sync run
+        # logger.info("Waiting for model response ...")
+        # result = await manager.run_sync(**mgr_cfg)
+        raise NotImplementedError
+
+    logger.info(f"Result: {result}")
+    logger.info(f"Usage statistics: {result.usage()}")
 
 
 def setup_agent_env(
@@ -313,6 +311,7 @@ def setup_agent_env(
         api_key = get_api_key(provider)
 
         if provider.lower() == "ollama":
+            # TODO move usage limits to config
             usage_limits = UsageLimits(request_limit=10, total_tokens_limit=100000)
         else:
             if api_key is None:
@@ -331,6 +330,7 @@ def setup_agent_env(
                     msg = f"Unsupported query type for Gemini: {type(query)}"
                     logger.error(msg)
                     raise TypeError(msg)
+            # TODO move usage limits to config
             usage_limits = UsageLimits(request_limit=10, total_tokens_limit=10000)
 
         return AgentConfig.model_validate(

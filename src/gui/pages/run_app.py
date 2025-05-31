@@ -25,7 +25,7 @@ async def render_app(provider: str | None = None):
         if query:
             info(f"{RUN_APP_QUERY_RUN_INFO} {query}")
             try:
-                result = await main(provider=provider, query=query)
+                result = await main(chat_provider=provider, query=query)
                 render_output(result)
             except Exception as e:
                 warning(e)

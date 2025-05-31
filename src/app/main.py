@@ -40,7 +40,7 @@ async def main(
     include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
-    pydantic_ai_stream: bool = False,
+    pydantic_ai_stream: bool = True,
     chat_config_file: str = CHAT_CONFIG_FILE,
 ) -> None:
     """

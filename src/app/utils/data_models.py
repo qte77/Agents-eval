@@ -63,9 +63,7 @@ class AgentConfig(BaseModel):
     """Configuration for an agent"""
 
     provider: str
-    query: (
-        str | list[dict[str, str]]
-    )  # (1) messages
+    query: str | list[dict[str, str]]  # (1) messages
     api_key: str | None
     prompts: dict[str, str]
     provider_config: ProviderConfig
