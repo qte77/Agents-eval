@@ -22,7 +22,6 @@ from asyncio import run
 from os import path
 
 import weave
-from dotenv import load_dotenv
 from logfire import span
 
 from .config import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
@@ -60,7 +59,6 @@ async def main(
         None
     """
 
-    load_dotenv()  # TODO replace with pydantic-settings ?
     login(PROJECT_NAME)  # TODO enhance login, not every run?
 
     try:
