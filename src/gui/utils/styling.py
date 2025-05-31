@@ -1,8 +1,8 @@
-import streamlit as st
+from streamlit import markdown, set_page_config
 
 
-def add_custom_styling(page_title):
-    st.set_page_config(
+def add_custom_styling(page_title: str):
+    set_page_config(
         page_title=f"{page_title}",
         page_icon="🤖",
         layout="wide",
@@ -17,4 +17,4 @@ def add_custom_styling(page_title):
     }
     </style>
     """
-    st.markdown(custom_css, unsafe_allow_html=True)
+    markdown(custom_css, unsafe_allow_html=True)

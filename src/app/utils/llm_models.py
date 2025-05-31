@@ -1,21 +1,9 @@
 """
-This module provides utility functions and classes for working with different AI models.
+Utility functions and classes for managing and instantiating LLM models and providers.
 
-Functions:
-    get_api_key(provider: str) -> Optional[str]:
-        Retrieve API key from environment variable based on the provider name.
-
-    get_provider_config(provider: str, config: ChatConfig) -> Dict[str, str]:
-        Retrieve configuration settings for the specified provider from the
-            given config.
-
-    create_model(model_config: ModelConfig) -> GeminiModel | OpenAIModel:
-        Create and return an AI model instance based on the provided model
-            configuration.
-
-Classes:
-    ModelConfig:
-        Configuration class for model settings.
+This module provides functions to retrieve API keys, provider configurations, and
+to create model instances for supported LLM providers such as Gemini and OpenAI.
+It also includes logic for assembling model dictionaries for system agents.
 """
 
 from os import getenv
@@ -25,7 +13,7 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from ..config import API_SUFFIX
-from .data_models import ModelConfig, ProviderConfig
+from .data_models import EndpointConfig, ModelDict, ProviderConfig
 from .log import logger
 
 
@@ -61,31 +49,32 @@ def get_provider_config(
         }
 
 
-def create_model(model_config: ModelConfig) -> GeminiModel | OpenAIModel:
-    """Create a model that uses base_url as inference API"""
+def _create_model(endpoint_config: EndpointConfig) -> GeminiModel | OpenAIModel:
+    """Create a model that uses model_name and base_url for inference API"""
 
-    if model_config.provider.lower() == "gemini":
+    if endpoint_config.provider.lower() == "gemini":
         # FIXME missing ctr signature: api_key=model_config.api_key
-        return GeminiModel(model_config.model_name)
+        return GeminiModel(endpoint_config.provider_config.model_name)
     else:
         return OpenAIModel(
-            model_config.model_name,
+            model_name=endpoint_config.provider_config.model_name,
             provider=OpenAIProvider(
-                base_url=model_config.base_url, api_key=model_config.api_key
+                base_url=endpoint_config.provider_config.base_url,
+                api_key=endpoint_config.api_key,
             ),
         )
 
 
 def get_models(
-    model_config: ModelConfig,
+    endpoint_config: EndpointConfig,
     include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
-) -> dict[str, GeminiModel | OpenAIModel | None]:
+) -> ModelDict:
     """
     Get the models for the system agents.
     Args:
-        model_config (ModelConfig): Configuration for the model.
+        endpoint_config (EndpointConfig): Configuration for the model.
         include_analyist (Optional[bool]): Whether to include the analyst model.
             Defaults to False.
         include_synthesiser (Optional[bool]): Whether to include the synthesiser model.
@@ -95,10 +84,12 @@ def get_models(
             system agents.
     """
 
-    model = create_model(model_config)
-    return {
-        "model_manager": model,
-        "model_researcher": model if include_researcher else None,
-        "model_analyst": model if include_analyst else None,
-        "model_synthesiser": model if include_synthesiser else None,
-    }
+    model = _create_model(endpoint_config)
+    return ModelDict.model_validate(
+        {
+            "model_manager": model,
+            "model_researcher": model if include_researcher else None,
+            "model_analyst": model if include_analyst else None,
+            "model_synthesiser": model if include_synthesiser else None,
+        }
+    )

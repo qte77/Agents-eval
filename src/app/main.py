@@ -1,21 +1,21 @@
 """
-This script serves as the main entry point for running a simple agent-based system.
+Main entry point for the agent application.
 
-It initializes the environment, loads configurations, and manages the execution of
-agents based on user inputs or predefined settings. The script supports optional
-inclusion of analyst and synthesizer agents, as well as integration with Pydantic
-AI streaming.
+This module initializes the application, loads configuration, handles user input,
+and orchestrates the agent system workflow. It uses async execution and integrates
+with logging, tracing, and authentication utilities.
 
-Modules:
-- agent_simple_system: Provides agent environment setup and management utilities.
-- login: Handles project-specific login functionality.
-- utils: Loads configuration files and other utilities.
+Args:
+    chat_provider (str): The inference chat provider to be used.
+    query (str): The query to be processed by the agent.
+    include_researcher (bool): Whether to include the researcher agent.
+    include_analyst (bool): Whether to include the analyst agent.
+    include_synthesiser (bool): Whether to include the synthesiser agent.
+    pydantic_ai_stream (bool): Whether to use Pydantic AI streaming.
+    chat_config_file (str): Path to the configuration file.
 
 Functions:
-- main: Orchestrates the setup and execution of the agent system.
-
-Usage:
-Run the script directly to start the agent system.
+    main: Main async function to run the agent system.
 """
 
 from asyncio import run
@@ -25,7 +25,7 @@ import weave
 from logfire import span
 
 from .config import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
-from .utils.agent_simple_system import get_manager, run_manager, setup_agent_env
+from .utils.agent_system import get_manager, run_manager, setup_agent_env
 from .utils.load_settings import load_config
 from .utils.log import logger
 from .utils.login import login
@@ -33,9 +33,9 @@ from .utils.login import login
 
 @weave.op()
 async def main(
-    # argparse/typer: help="The inference chat_provider to be used."),
+    # TODO argparse/typer: help="The inference chat_provider to be used."),
     chat_provider: str = CHAT_DEFAULT_PROVIDER,
-    # argparse/typer: help="The query to be processed by the agent."),
+    # TODO argparse/typer: help="The query to be processed by the agent."),
     query: str = "",
     include_researcher: bool = False,
     include_analyst: bool = False,

@@ -1,20 +1,16 @@
 """
-This module defines data models using Pydantic's BaseModel for various components
-of the application, including research results, analysis results, research summaries,
-provider configurations, model configurations, prompt configurations, and overall
-configuration settings for agents and model providers.
+Data models for agent system configuration and results.
 
-Classes:
-    ResearchResult: Represents research results from the research agent.
-    AnalysisResult: Represents analysis results from the analysis agent.
-    ResearchSummary: Represents the expected model response of research on a topic.
-    ProviderConfig: Represents the configuration for a model provider.
-    ModelConfig: Represents the configuration for a model provider with API key.
-    ChatConfig: Represents the overall configuration settings for agents and model
-        providers.
+This module defines Pydantic models for representing research and analysis results,
+summaries, provider and agent configurations, and model dictionaries used throughout
+the application. These models ensure type safety and validation for data exchanged
+between agents and system components.
 """
 
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
+from pydantic_ai.models import Model
 from pydantic_ai.usage import UsageLimits
 
 
@@ -59,21 +55,37 @@ class ChatConfig(BaseModel):
     prompts: dict[str, str]
 
 
-class AgentConfig(BaseModel):
+class EndpointConfig(BaseModel):
     """Configuration for an agent"""
 
     provider: str
-    query: str | list[dict[str, str]]  # (1) messages
+    query: str | list[dict[str, str]] | None = None  # (1) messages
     api_key: str | None
     prompts: dict[str, str]
     provider_config: ProviderConfig
-    usage_limits: UsageLimits
+    usage_limits: UsageLimits | None = None
 
 
-class ModelConfig(BaseModel):
-    """Configuration for a model provider"""
+class AgentConfig(BaseModel):
+    """Configuration for an agent"""
 
-    provider: str
-    model_name: str
-    base_url: str
-    api_key: str | None
+    model: Model
+    output_type: type[BaseModel]  # class expected
+    system_prompt: str
+    tools: list[Any] = []  # FIXME Callable[..., Awaitab le[Any]]
+    retries: int = 3
+
+    # Avoid pydantic.errors.PydanticSchemaGenerationError:
+    # Unable to generate pydantic-core schema for <class 'openai.AsyncOpenAI'>.
+    # Avoid Pydantic errors related to non-Pydantic types
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+class ModelDict(BaseModel):
+    """Dictionary of models used to create agent systems"""
+
+    model_manager: Model
+    model_researcher: Model | None
+    model_analyst: Model | None
+    model_synthesiser: Model | None
+    model_config = ConfigDict(arbitrary_types_allowed=True)

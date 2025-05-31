@@ -1,17 +1,18 @@
-import streamlit as st
+from streamlit import header, selectbox
 
+from ...app.utils.data_models import ChatConfig
 from ..utils.text import SETTINGS_HEADER, SETTINGS_PROVIDER_LABEL
 
 
-def render_settings(config) -> str:
-    st.header(SETTINGS_HEADER)
+def render_settings(chat_config: ChatConfig) -> str:
+    header(SETTINGS_HEADER)
 
     # updated = False
     # updated_config = config.copy()
 
-    provider = st.selectbox(
+    provider = selectbox(
         SETTINGS_PROVIDER_LABEL,
-        config.providers,
+        chat_config.providers,
     )
 
     # Run options
