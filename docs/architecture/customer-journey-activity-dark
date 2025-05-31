@@ -1,0 +1,22 @@
+@startuml
+!theme amiga
+skinparam monochrome true
+
+title Customer Journey Activity Diagram for CLI and Streamlit
+
+start
+:Discover Agents-eval;
+if (Choose CLI?) then (yes)
+  :Run CLI with `make run_cli`;
+  :Interact with CLI for agent setup and execution;
+  :View results and metrics in CLI output;
+else (no)
+  :Run Streamlit GUI with `make run_gui`;
+  :Interact with Streamlit for agent setup and execution;
+  :View results and metrics in Streamlit dashboard;
+endif
+:Continue using and provide feedback;
+:Improve based on feedback;
+
+stop
+@enduml

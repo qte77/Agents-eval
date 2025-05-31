@@ -1,14 +1,21 @@
 {
-    "editor.tabSize": 4,
-    "editor.insertSpaces": true,
+    "editor.lineNumbers": "on",
     "editor.wordWrap": "on",
+    "explorer.confirmDelete": true,
     "files.autoSave": "onFocusChange",
-    "terminal.integrated.fontSize": 14,
-    "explorer.confirmDelete": false,
-    "workbench.colorTheme": "Visual Studio Dark",
-    "workbench.iconTheme": "vs-seti",
+    "git.autofetch": true,
+    "git.enableSmartCommit": true,
+    "makefile.configureOnOpen": false,
     "markdownlint.config": {
         "MD024": false
     },
-    "makefile.configureOnOpen": true
+    "python.analysis.extraPaths": ["./venv/lib/python3.11/site-packages"],
+    "python.defaultInterpreterPath": "./.venv/bin/python",
+    "python.analysis.typeCheckingMode": "strict",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingTypeStubs": "none",
+        "reportUnknownMemberType": "none",
+        "reportUnknownVariableType": "none"
+    },
+    "redhat.telemetry.enabled": false
 }

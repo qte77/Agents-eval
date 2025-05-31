@@ -24,6 +24,11 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 - `make run_gui`
 - `make test_all`
 
+### Customer Journey
+
+<img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+<img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+
 ## Configuration
 
 [config.json](./src/config.json) contains . Inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
@@ -61,7 +66,7 @@ WANDB_API_KEY="xyz"
 
 ### Architecture
 
-<img src="assets/images/c4-multi-agent-system.png" alt="C4-Arch" title="C4-Arch" width="60%" />
+<img src="assets/images/c4-multi-agent-system.png#gh-dark-mode-only" alt="C4-Arch" title="C4-Arch" width="60%" />
 
 ### Project Structure
 
@@ -70,8 +75,6 @@ WANDB_API_KEY="xyz"
 ```
 
 ## Landscape overview
-
-Some contenders from the current landscape.
 
 ### Agentic System Frameworks
 
@@ -121,59 +124,11 @@ Some contenders from the current landscape.
 - [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
 - [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
 
-## Python Tools
-
-- [`commitizen`](https://pypi.org/project/commitizen/)
-  - Instead of [`bump-my-version`](https://pypi.org/project/bump-my-version/).
-  - Python commitizen client tool.
-  - Commitizen is release management tool designed for teams.
-  - [Documentation](https://commitizen-tools.github.io/commitizen/)
-- [`httpx`](https://pypi.org/project/httpx/)
-  - Instead of [`requests`](https://pypi.org/project/requests/).
-  - The next generation HTTP client.
-  - HTTPX is a fully featured HTTP client library for Python 3. It includes an integrated command line client, has support for both HTTP/1.1 and HTTP/2, and provides both sync and async APIs.
-- [`logfire`](https://pypi.org/project/logfire/)
-  - Instead of `logger` or `loguru`. With OpenTelemetry.
-  - The best Python observability tool!
-  - Pydantic Logfire — Uncomplicated Observability
-  - [logfire Docs](https://logfire.pydantic.dev/docs/)
-- [`loguru`](https://pypi.org/project/loguru/)
-  - Instead of `logger`.
-  - Python logging made (stupidly) simple
-  - Loguru is a library which aims to bring enjoyable logging in Python.
-  - [API Reference](https://loguru.readthedocs.io/en/stable/api/logger.html)
-  - See also: [Security considerations when using Loguru](https://loguru.readthedocs.io/en/stable/resources/recipes.html#security-considerations-when-using-loguru).
-- [`pdoc`](https://pypi.org/project/pdoc/)
-  - Instead of [`mkdocs`](https://pypi.org/project/mkdocs/).
-  - API Documentation for Python Projects
-  - pdoc's main feature is a focus on simplicity: pdoc aims to do one thing and do it well.
-  - [pdoc.dev/docs](https://pdoc.dev/docs/pdoc.html)
-- [`pre-commit`](https://pypi.org/project/pre-commit/) (again)
-  - Instead of gh-actions.
-  - A framework for managing and maintaining multi-language pre-commit hooks.
-  - [more information](https://pre-commit.com/)
-- [`pydantic-settings`](https://pypi.org/project/pydantic-settings/)
-  - Instead of [`OmegaConf`](https://pypi.org/project/omegaconf/) or `dotenv`.
-  - Settings management using Pydantic, this is the new official home of Pydantic's BaseSettings.
-  - See [documentation](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) for more details.
-- [`pyright`](https://pypi.org/project/pyright/)
-  - Instead of [`pydantic`](https://pypi.org/project/pydantic/) or [`mypy`](https://pypi.org/project/mypy/).
-  - Pyright for Python is a Python command-line wrapper over [pyright](https://github.com/microsoft/pyright), a static type checker for Python.
-- [`rich`](https://pypi.org/project/rich/)
-  - Instead of [`tqdm`](https://pypi.org/project/tqdm/).
-  - Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal
-  - Rich is a Python library for _rich_ text and beautiful formatting in the terminal.
-  - [Documentation](https://rich.readthedocs.io/en/latest/)
-- [`Tenacity`](https://pypi.org/project/tenacity/)
-  - Retry code until it succeeds.
-  - Tenacity is a general-purpose retrying library to simplify the task of adding retry behavior to just about anything.
-- [`Typer`](https://pypi.org/project/typer/)
-  - Instead of [`argparse`](https://pypi.org/project/argparse/).
-  - Typer, build great CLIs. Easy to code. Based on Python type hints.
-  - [Typer Docs](https://typer.tiangolo.com)
-
 ## Further Reading
 
+- [[2503.13657] Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657)
+- [[2502.14776] SurveyX: Academic Survey Automation via Large Language Models](https://arxiv.org/abs/2502.14776)
+- [[2502.05957] AutoAgent: A Fully-Automated and Zero-Code Framework for LLM Agents](https://arxiv.org/abs/2502.05957)
 - [[2501.16150] AI Agents for Computer Use: A Review of Instruction-based Computer Control, GUI Automation, and Operator Assistants](https://arxiv.org/abs/2501.16150)
 - [[2501.06590] ChemAgent](https://arxiv.org/abs/2501.06590)
 - [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/abs/2501.04227)

@@ -2,10 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html), i.e. MAJOR.MINOR.PATCH (Breaking.Feature.Patch).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Types of changes:
+## Guiding Principles
+
+- Changelogs are for humans, not machines.
+- There should be an entry for every single version.
+- The same types of changes should be grouped.
+- Versions and sections should be linkable.
+- The latest version comes first.
+- The release date of each version is displayed.
+- Mention whether you follow Semantic Versioning.
+
+## Types of changes
 
 - `Added` for new features.
 - `Changed` for changes in existing functionality.
@@ -16,7 +26,14 @@ Types of changes:
 
 ## [Unreleased]
 
----
+### Changed
+
+- Moved streamlit_gui and examples to /src
+- Moved app to /src/app
+- Refactor and clarify docstrings to include Args, Functions, and Classes sections.
+- Improve type safety and validation in data models.
+- Enhance documentation for agent system utilities and configuration loading.
+- Updated docstrings
 
 ## [1.0.0] - 2025-03-18
 
@@ -92,8 +109,6 @@ Types of changes:
 - feat(agent): update environment configuration, enhance logging, and refine agent management functionality
 - feat(agent): refactor login handling, update model retrieval, and enhance agent configuration
 
----
-
 ## [0.0.2] - 2025-01-20
 
 ### Added
@@ -105,8 +120,6 @@ Types of changes:
 ### Changed
 
 - make recipes
-
----
 
 ## [0.0.1] - 2025-01-20
 

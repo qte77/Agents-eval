@@ -10,20 +10,19 @@ authors = [
     {name = "qte77", email = "qte@77.gh"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "==3.12.*"
 license = "bsd-3-clause"
 dependencies = [
-    "agentops>=0.3.26",
-    "logfire>=0.8.0",
+    "agentops>=0.4.14",
+    "logfire>=3.16.1",
+    "loguru>=0.7.3",
     "pydantic>=2.10.6",
     # "pydantic-ai>=0.0.36",
-    "pydantic-ai-slim[duckduckgo,openai,tavily]>=0.0.36",
-    "pydantic-settings>=2.8.1",
-    "python-dotenv>=1.0.0",
-    "rich>=13.9.4",
+    "pydantic-ai-slim[duckduckgo,openai,tavily]>=0.2.12",
+    "pydantic-settings>=2.9.1",
     "scalene>=1.5.51",
-    "typer>=0.15.2",
-    "weave>=0.51.36",
+    "typer>=0.16.0",
+    "weave>=0.51.49",
 ]
 
 # [project.urls]
@@ -31,8 +30,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "mypy>=1.15.0",
-    "ruff>=0.1.0",
+    # "commitizen>=4.4.1",
+    "mypy>=1.16.0",
+    "ruff>=0.11.12",
 ]
 gui = [
     "streamlit>=1.43.1",
@@ -58,7 +58,7 @@ docs = [
 
 [tool.uv]
 package = true
-exclude-newer = "2025-03-13T00:00:00Z"
+exclude-newer = "2025-05-31T00:00:00Z"
 
 [tool.hatch.build.targets.wheel]
 only-include = ["/README.md"]
@@ -78,18 +78,53 @@ src = ["src", "tests"]
 docstring-code-format = true
 
 [tool.ruff.lint]
-ignore = ["E203"]  # Whitespace before ':'
+# ignore = ["E203"]  # Whitespace before ':'
 unfixable = ["B"]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # isort
+    "I",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "tests"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src/app"]
+testpaths = ["tests/"]
+addopts = "--strict-markers"
 
+[tool.coverage]
 [tool.coverage.run]
 include = [
     "tests/**/*.py",
 ]
 # omit = []
 # branch = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    # 'pragma: no cover',
+    'raise AssertionError',
+    'raise NotImplementedError',
+]
+omit = [
+    'env/*',
+    'venv/*',
+    '.venv/*',
+    '*/virtualenv/*',
+    '*/virtualenvs/*',
+    '*/tests/*',
+]
 
 [tool.bumpversion]
 current_version = "1.0.0"
@@ -111,6 +146,11 @@ search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 
 [[tool.bumpversion.files]]
+filename = "src/app/__version__.py"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
 filename = "README.md"
 search = "![Version](https://img.shields.io/badge/version-{current_version}-8A2BE2)"
 replace = "![Version](https://img.shields.io/badge/version-{new_version}-8A2BE2)"
@@ -122,8 +162,6 @@ search = """
 """
 replace = """
 ## [Unreleased]
-
----
 
 ## [{new_version}] - {now:%Y-%m-%d}
 """

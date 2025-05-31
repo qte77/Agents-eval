@@ -4,7 +4,7 @@ __pycache__/
 
 # environment
 .venv/
-.env
+*.env
 
 # Distribution / packaging
 build/
@@ -17,6 +17,7 @@ dist/
 
 # Logs
 *.log
+/logs
 
 # Traces
 scalene-profiles
