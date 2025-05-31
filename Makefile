@@ -24,7 +24,7 @@ setup_prod: ## Install uv and deps, Download and start Ollama
 setup_dev: ## Install uv and deps, Download and start Ollama 
 	echo "Setting up tools..."
 	pip install uv -q
-	uv sync --all-groups --frozen
+	uv sync --all-groups
 
 setup_prod_ollama:
 	$(MAKE) -s setup_prod

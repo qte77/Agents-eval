@@ -15,6 +15,7 @@ license = "bsd-3-clause"
 dependencies = [
     "agentops>=0.3.26",
     "logfire>=0.8.0",
+    "loguru>=0.7.3",
     "pydantic>=2.10.6",
     # "pydantic-ai>=0.0.36",
     "pydantic-ai-slim[duckduckgo,openai,tavily]>=0.0.36",
@@ -59,7 +60,7 @@ docs = [
 
 [tool.uv]
 package = true
-exclude-newer = "2025-05-26T00:00:00Z"
+exclude-newer = "2025-05-31T00:00:00Z"
 
 [tool.hatch.build.targets.wheel]
 only-include = ["/README.md"]
