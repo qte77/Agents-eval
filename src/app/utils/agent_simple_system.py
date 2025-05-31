@@ -22,7 +22,6 @@ from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.usage import UsageLimits
-from rich.console import Console
 
 from .data_models import (
     AgentConfig,
@@ -34,6 +33,7 @@ from .data_models import (
     ResearchSummary,
 )
 from .llm_models import get_api_key, get_models, get_provider_config
+from .log import logger
 from .utils import error_handling_context
 
 
@@ -168,12 +168,11 @@ def _create_manager(
 def get_manager(
     provider: str,
     provider_config: ProviderConfig,
-    api_key: str,
+    api_key: str | None,
     prompts: dict[str, str],
     include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
-    console: Console = None,
 ) -> SystemAgent:
     """
     Initializes and returns a SystemAgent manager with the specified configuration.
@@ -182,7 +181,6 @@ def get_manager(
         provider_config (ProviderConfig): Configuration settings for the provider.
         api_key (str): API key for authentication with the provider.
         prompts (PromptsConfig): Configuration for prompts.
-        console (Console): Console object for logging and output.
         include_researcher (bool, optional): Flag to include analyst model.
             Defaults to False.
         include_analyst (bool, optional): Flag to include analyst model.
@@ -193,7 +191,7 @@ def get_manager(
         SystemAgent: The initialized SystemAgent manager.
     """
 
-    with error_handling_context("get_manager()", console):
+    with error_handling_context("get_manager()"):
         model_config = ModelConfig(  # TODO .model_validate
             provider=provider,
             model_name=provider_config.model_name,
@@ -211,11 +209,10 @@ def get_manager(
 
 async def run_manager(
     manager: SystemAgent,
-    query: str,  # List[Dict[str, str]],
+    query: str | list[dict[str, str]],
     provider: str,
     usage_limits: UsageLimits,
     pydantic_ai_stream: bool = False,
-    console: Console = None,
 ) -> None:
     """
     Asynchronously runs the manager with the given query and provider, handling errors
@@ -228,16 +225,14 @@ async def run_manager(
             execution.
         pydantic_ai_stream (bool, optional): Flag to enable or disable Pydantic AI
             stream. Defaults to False.
-        console (Console, optional): The console object for printing messages.
-            Defaults to None.
     Returns:
         None
     """
 
-    with error_handling_context("run_manager()", console):
+    with error_handling_context("run_manager()"):
         model_name = manager.model._model_name
         mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
-        console.print(
+        logger.info(
             f"\n ==> Researching with "
             f"[info][bold]{provider}({model_name})[/bold][/info] "
             f"and Topic: [debug]{query}[/debug] ...\n"
@@ -252,23 +247,16 @@ async def run_manager(
         else:
             result = await manager.run(**mgr_cfg)
 
-        if console is None:
-            print("\n ==> Result")
-            print(result)
-            print("\n ==> Usage statistics")
-            print(result.usage())
-        else:
-            console.print("\n ==> [info]Result[/info]")
-            console.print(result)
-            console.print("\n ==> [info]Usage statistics[/info]")
-            console.print(result.usage())
+        logger.info("\n ==> Result")
+        logger.info(result)
+        logger.info("\n ==> Usage statistics")
+        logger.info(result.usage())
 
 
 def setup_agent_env(
     provider: str,
-    query: str,  # List[Dict[str, str]],
+    query: str | list[dict[str, str]],
     config: Config,
-    console: Console = None,
 ) -> AgentConfig:
     """
     Sets up the environment for an agent by configuring provider settings, prompts,
@@ -279,14 +267,12 @@ def setup_agent_env(
         messages (str): The messages or queries to be sent to the agent.
         config (Config): The configuration object containing provider and prompt
             settings.
-        console (Console, optional): The console object for logging and error handling.
-            Defaults to None.
 
     Returns:
         AgentConfig: The configuration object for the agent.
     """
 
-    with error_handling_context("setup_agent_env()", console):
+    with error_handling_context("setup_agent_env()"):
         provider_config = get_provider_config(provider, config.providers)
         prompts = config.prompts
         api_key = get_api_key(provider)
