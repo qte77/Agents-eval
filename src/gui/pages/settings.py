@@ -1,14 +1,16 @@
 import streamlit as st
 
+from ..utils.text import SETTINGS_HEADER, SETTINGS_PROVIDER_LABEL
+
 
 def render_settings(config) -> str:
-    st.header("Settings")
+    st.header(SETTINGS_HEADER)
 
     # updated = False
     # updated_config = config.copy()
 
     provider = st.selectbox(
-        "Select Provider",
+        SETTINGS_PROVIDER_LABEL,
         config.providers,
     )
 

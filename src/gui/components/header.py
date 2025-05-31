@@ -1,7 +1,7 @@
-import streamlit as st
+from streamlit import divider, title
 
 
-def render_header(title):
+def render_header(header_title: str):
     """Render the page header with title."""
-    st.title(title)
-    st.divider()
+    title(header_title)
+    divider()

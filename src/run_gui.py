@@ -16,7 +16,6 @@ Functions:
 """
 
 from asyncio import run
-from pathlib import Path
 
 from app.config import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER
 from app.utils.load_settings import load_config
@@ -26,14 +25,13 @@ from gui.pages.home import render_home
 from gui.pages.prompts import render_prompts
 from gui.pages.run_app import render_app
 from gui.pages.settings import render_settings
+from gui.utils.config import APP_PATH
 from gui.utils.styling import add_custom_styling
+from gui.utils.text import PAGE_TITLE
 
 # TODO create sidebar tabs, move settings to page,
 # set readme.md as home, separate prompts into page
 
-
-PAGE_TITLE = "MAS Eval 👾⚗️🧠💡"
-APP_PATH = Path(__file__).parent / "app"
 
 chat_config = load_config(APP_PATH / CHAT_CONFIG_FILE)
 provider = CHAT_DEFAULT_PROVIDER

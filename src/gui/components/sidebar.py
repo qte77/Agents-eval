@@ -1,10 +1,11 @@
-import streamlit as st
+from streamlit import sidebar
+
+from ..utils.config import PAGES
 
 
 def render_sidebar(sidebar_title: str):
-    st.sidebar.title(sidebar_title)
-    pages = ["Home", "Settings", "Prompts", "App"]
-    selected_page = st.sidebar.radio(" ", pages)
+    sidebar.title(sidebar_title)
+    selected_page = sidebar.radio(" ", PAGES)
 
     # st.sidebar.divider()
     # st.sidebar.info(" ")

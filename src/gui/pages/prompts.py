@@ -1,36 +1,25 @@
-import streamlit as st
+from streamlit import header, warning
 
 from ..components.prompts import render_prompt_editor
+from ..utils.config import PROMPTS_DEFAULT
+from ..utils.text import PROMPTS_HEADER, PROMPTS_WARNING
 
-TA_HEIGHT = 50
 
-
-def render_prompts(prompts):
-    st.header("Agent Prompts")
+def render_prompts(prompts: dict[str, str]) -> dict[str, str]:
+    header(PROMPTS_HEADER)
 
     updated = False
-    updated_prompts = prompts.copy()
 
     if not prompts:
-        prompts = {
-            "system_prompt_manager": (
-                "You are a manager overseeing research and analysis tasks..."
-            ),
-            "system_prompt_researcher": (
-                "You are a researcher. Gather and analyze data..."
-            ),
-            "system_prompt_analyst": (
-                "You are a research analyst. Use your analytical skills..."
-            ),
-            "system_prompt_synthesiser": (
-                "You are a research synthesiser. Use your analytical skills..."
-            ),
-        }
+        warning(PROMPTS_WARNING)
+        prompts = PROMPTS_DEFAULT
+
+    updated_prompts = prompts.copy()
 
     # Edit prompts
     for prompt_key, prompt_value in prompts.items():
         new_value = render_prompt_editor(prompt_key, prompt_value, height=200)
-        if new_value != prompt_value:
+        if new_value != prompt_value and new_value is not None:
             updated_prompts[prompt_key] = new_value
             updated = True
 

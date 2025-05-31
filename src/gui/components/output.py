@@ -2,6 +2,8 @@ from typing import Any
 
 from streamlit import empty, info, subheader
 
+from ..utils.text import OUTPUT_SUBHEADER
+
 
 def render_output(
     result: Any = None, info_str: str | None = None, type: str | None = None
@@ -20,7 +22,7 @@ def render_output(
         Out: None
     """
 
-    subheader("Output")
+    subheader(OUTPUT_SUBHEADER)
 
     if result:
         output_container = empty()
