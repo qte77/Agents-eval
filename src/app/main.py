@@ -24,17 +24,17 @@ from os import path
 import weave
 from dotenv import load_dotenv
 from logfire import span
-from utils.log import logger
 
-from .config import CHAT_CONFIG_FILE, PROJECT_NAME
+from .config import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
 from .utils.agent_simple_system import get_manager, run_manager, setup_agent_env
+from .utils.log import logger
 from .utils.login import login
 from .utils.utils import load_config
 
 
 @weave.op()
 async def main(
-    provider: str = "",  # Option(..., help="The inference provider to be used."),
+    chat_provider: str = CHAT_DEFAULT_PROVIDER,  # help="The inference chat_provider to be used."),
     query: str = "",  # , help="The query to be processed by the agent."),
     include_researcher: bool = False,
     include_analyst: bool = False,
@@ -46,7 +46,7 @@ async def main(
     Main entry point for the application.
 
     Args:
-        provider (str): The inference provider to be used.
+        chat_provider (str): The inference chat_provider to be used.
         query (str): The query to be processed by the agent.
         include_researcher (bool): Whether to include the researcher in the process.
         include_analyst (bool): Whether to include the analyst in the process.
@@ -64,14 +64,19 @@ async def main(
     try:
         with span("main()"):
             chat_config_path = path.join(path.dirname(__file__), chat_config_file)
-            config = load_config(chat_config_path)
+            chat_config = load_config(chat_config_path)
 
-            if not provider:
-                provider = input("Which inference provider to use? ")
+            if not chat_provider:
+                chat_provider = input("Which inference chat_provider to use? ")
             if not query:
                 query = input("What would you like to research? ")
 
-            agent_env = setup_agent_env(provider, query, config)
+            # TODO remove
+            logger.debug(f"{chat_config_path=}")
+            logger.debug(f"{chat_provider=}")
+            logger.debug(f"{chat_config.chat_provider=}")
+
+            agent_env = setup_agent_env(chat_provider, query, chat_config)
             manager = get_manager(
                 agent_env.provider,
                 agent_env.provider_config,
@@ -88,10 +93,10 @@ async def main(
                 agent_env.usage_limits,
                 pydantic_ai_stream,
             )
-            logger.info("Exiting app")
+            logger.info(f"Exiting app '{PROJECT_NAME}'")
 
-    except Exception:
-        logger.exception("Exiting app")
+    except Exception as e:
+        logger.exception(f"Aborting with: {e}")
 
 
 if __name__ == "__main__":

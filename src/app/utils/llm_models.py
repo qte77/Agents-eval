@@ -46,10 +46,8 @@ def get_provider_config(provider: str, providers: Config) -> dict[str, str]:
         base_url = providers[provider].base_url
     except KeyError as e:
         raise ValueError(f"Missing configuration for {provider}: {e}.")
-        exit()
     except Exception as e:
         raise Exception(f"Error loading provider configuration: {e}")
-        exit()
     else:
         return {
             "model_name": model_name,
@@ -76,7 +74,7 @@ def get_models(
     include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
-) -> dict[str, GeminiModel | OpenAIModel]:
+) -> dict[str, GeminiModel | OpenAIModel | None]:
     """
     Get the models for the system agents.
     Args:
