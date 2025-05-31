@@ -17,6 +17,9 @@ Functions:
         handling errors and printing results.
 """
 
+from typing import TypeVar
+
+from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.models.gemini import GeminiModel
@@ -35,6 +38,8 @@ from .data_models import (
 from .llm_models import get_api_key, get_models, get_provider_config
 from .log import logger
 from .utils import error_handling_context
+
+ResultBaseType = TypeVar("ResultBaseType", bound=BaseModel)
 
 
 class SystemAgent(Agent):
@@ -62,7 +67,7 @@ def _add_tools_to_manager_agent(
     research_agent: SystemAgent | None = None,
     analysis_agent: SystemAgent | None = None,
     synthesis_agent: SystemAgent | None = None,
-) -> None:
+):
     """
     Adds tools to the manager agent for delegating tasks to research, analysis, and
         synthesis agents.
@@ -77,29 +82,51 @@ def _add_tools_to_manager_agent(
         None
     """
 
-    @manager_agent.tool
-    async def delegate_research(ctx: RunContext[None], query: str) -> ResearchResult:
-        """Delegate research task to ResearchAgent."""
-        result = await research_agent.run(query, usage=ctx.usage)
-        return result.data
+    def _validate_model_return(
+        result_output: str,
+        result_model: type[ResultBaseType],
+    ) -> ResultBaseType:
+        """Validates the output against the expected model."""
+        try:
+            return result_model.model_validate(result_output)
+        except ValidationError as e:
+            msg = f"Invalid output format: {e}"
+            logger.error(msg)
+            raise ValueError(msg)
+        except Exception as e:
+            msg = f"Failed to parse output: {e}"
+            logger.exception(msg)
+            raise RuntimeError(msg)
+
+    if research_agent is not None:
+
+        @manager_agent.tool
+        async def delegate_research(
+            ctx: RunContext[None], query: str
+        ) -> ResearchResult:
+            """Delegate research task to ResearchAgent."""
+            result = await research_agent.run(query, usage=ctx.usage)
+            return _validate_model_return(result.output, ResearchResult)
 
     if analysis_agent is not None:
 
         @manager_agent.tool
-        async def delegate_analysis(ctx: RunContext[None], data: str) -> AnalysisResult:
+        async def delegate_analysis(
+            ctx: RunContext[None], query: str
+        ) -> AnalysisResult:
             """Delegate analysis task to AnalysisAgent."""
-            result = await analysis_agent.run(data, usage=ctx.usage)
-            return result.data
+            result = await analysis_agent.run(query, usage=ctx.usage)
+            return _validate_model_return(result.output, AnalysisResult)
 
     if synthesis_agent is not None:
 
         @manager_agent.tool
         async def delegate_synthesis(
-            ctx: RunContext[None], data: str
+            ctx: RunContext[None], query: str
         ) -> ResearchSummary:
             """Delegate synthesis task to AnalysisAgent."""
-            result = await synthesis_agent.run(data, usage=ctx.usage)
-            return result.data
+            result = await synthesis_agent.run(query, usage=ctx.usage)
+            return _validate_model_return(result.output, ResearchSummary)
 
 
 def _create_manager(
