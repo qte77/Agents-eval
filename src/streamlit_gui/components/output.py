@@ -1,6 +1,6 @@
 from typing import Any
 
-from streamlit import empty, info, subheader
+from src.streamlit import empty, info, subheader
 
 
 def render_output(result: Any = None, info_str: str = None, type: str = None):

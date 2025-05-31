@@ -1,4 +1,4 @@
-import streamlit as st
+import src.streamlit as st
 
 
 def render_prompt_editor(prompt_name, prompt_value, height=150):

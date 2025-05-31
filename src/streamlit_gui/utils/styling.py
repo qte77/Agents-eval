@@ -1,4 +1,4 @@
-import streamlit as st
+import src.streamlit as st
 
 
 def add_custom_styling(page_title):

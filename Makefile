@@ -10,15 +10,19 @@
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := setup_dev_ollama
 
-OLLAMA_SETUP := https://ollama.com/install.sh
+SRC_PATH := src
+APP_PATH := $(SRC_PATH)/app
+APP_CFG_FILE := $(APP_PATH)/config.json
+STREAMLIT_APP := $(APP_PATH)/streamlit.py
+OLLAMA_SETUP_URL := https://ollama.com/install.sh
 
 setup_prod: ## Install uv and deps, Download and start Ollama 
-	@echo "Setting up tools..."
+	echo "Setting up tools..."
 	pip install uv -q
 	uv sync --frozen
 
 setup_dev: ## Install uv and deps, Download and start Ollama 
-	@echo "Setting up tools..."
+	echo "Setting up tools..."
 	pip install uv -q
 	uv sync --all-groups --frozen
 
@@ -34,11 +38,11 @@ setup_dev_ollama:
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama: ## Download Ollama, script does start local Ollama server
-	@echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP)'."
+	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
 	# script does start server but not consistently
-	curl -fsSL $(OLLAMA_SETUP) | sh
-	model_name=$$(jq -r '.providers.ollama.model_name' ./src/config.json)
-	@echo "Pulling model '$${model_name}' ..."
+	curl -fsSL $(OLLAMA_SETUP_URL) | sh
+	model_name=$$(jq -r '.providers.ollama.model_name' $(APP_CFG_FILE))
+	echo "Pulling model '$${model_name}' ..."
 	ollama pull $$model_name
 
 start_ollama: ## Start local Ollama server, default 127.0.0.1:11434
@@ -65,15 +69,15 @@ ruff: ## Lint: Format and check with ruff
 	uv run ruff check --fix
 
 run_cli: ## Run app on CLI only
-	uv run python -m src main
+	uv run python $(APP_PATH)/main
 
 run_gui: ## Run app with Streamlit GUI
-	uv run streamlit run streamlit.py
+	uv run streamlit run $(STREAMLIT_APP)
 
 run_profile: ## Profile app with scalene
 	uv run scalene --outfile \
-		"src/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
-		"src/main.py"
+		"$(APP_PATH)/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
+		"$(APP_PATH)/main.py"
 
 test_all: ## Run all tests
 	uv run pytest
@@ -83,7 +87,7 @@ coverage_all: ## Get test coverage
 	uv run coverage report -m
 
 type_check: ## Check for static typing errors
-	uv run mypy src
+	uv run mypy $(APP_PATH)
 
 help:
 	@echo "Usage: make [recipe]"

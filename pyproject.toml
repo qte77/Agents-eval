@@ -10,7 +10,7 @@ authors = [
     {name = "qte77", email = "qte@77.gh"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "==3.12.*"
 license = "bsd-3-clause"
 dependencies = [
     "agentops>=0.3.26",
@@ -73,7 +73,7 @@ send_to_logfire="if-token-present"
 
 [tool.ruff]
 target-version = "py312"
-src = ["src", "streamlit_gui", "examples", "tests"]
+src = ["src", "tests"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -93,13 +93,13 @@ select = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["src", "streamlit_gui", "examples", "tests"]
+known-first-party = ["src", "tests"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src/app"]
 testpaths = ["tests/"]
 addopts = "--strict-markers"
 
@@ -143,6 +143,11 @@ commit_args = ""
 
 [[tool.bumpversion.files]]
 filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "src/app/__version__.py"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 

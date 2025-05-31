@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Moved streamlit_gui and examples to /src
+- Moved app to /src/app
+
 ## [1.0.0] - 2025-03-18
 
 ### 2025-03-18

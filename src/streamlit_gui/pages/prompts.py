@@ -1,4 +1,4 @@
-import streamlit as st
+import src.streamlit as st
 
 from streamlit_gui.components.prompts import render_prompt_editor
 
