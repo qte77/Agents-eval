@@ -1,6 +1,4 @@
-from pathlib import Path
-
-APP_PATH = Path(__file__).parent / "app"
+APP_PATH = "app"
 PAGES = ["Home", "Settings", "Prompts", "App"]
 PROMPTS_DEFAULT = {
     "system_prompt_manager": (

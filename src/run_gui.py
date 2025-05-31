@@ -16,6 +16,7 @@ Functions:
 """
 
 from asyncio import run
+from pathlib import Path
 
 from app.config import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER
 from app.utils.load_settings import load_config
@@ -32,10 +33,9 @@ from gui.utils.text import PAGE_TITLE
 # TODO create sidebar tabs, move settings to page,
 # set readme.md as home, separate prompts into page
 
-
-chat_config = load_config(APP_PATH / CHAT_CONFIG_FILE)
+chat_config_pfile = Path(__file__).parent / APP_PATH / CHAT_CONFIG_FILE
+chat_config = load_config(chat_config_pfile)
 provider = CHAT_DEFAULT_PROVIDER
-
 logger.info(f"Default provider: {CHAT_DEFAULT_PROVIDER}")
 
 
