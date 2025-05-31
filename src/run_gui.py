@@ -48,11 +48,11 @@ async def main():
     elif selected_page == "Settings":
         # TODO temp save settings to be used in gui
         provider = render_settings(chat_config)
-        logger.info(f"provider: {provider}")
+        logger.info(f"Page 'Settings' provider: {provider}")
     elif selected_page == "Prompts":
         render_prompts(chat_config.prompts)  # prompts =
     elif selected_page == "App":
-        logger.info(f"provider: {CHAT_DEFAULT_PROVIDER}")
+        logger.info(f"Page 'App' provider: {CHAT_DEFAULT_PROVIDER}")
         await render_app(CHAT_DEFAULT_PROVIDER)
 
 
