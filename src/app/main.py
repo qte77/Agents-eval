@@ -40,7 +40,7 @@ async def main(
     include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
-    pydantic_ai_stream: bool = True,
+    pydantic_ai_stream: bool = False,
     chat_config_file: str = CHAT_CONFIG_FILE,
 ) -> None:
     """
@@ -59,6 +59,7 @@ async def main(
         None
     """
 
+    logger.info(f"Starting app '{PROJECT_NAME}'")
     login(PROJECT_NAME)  # TODO enhance login, not every run?
 
     try:

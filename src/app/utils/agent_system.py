@@ -1,20 +1,30 @@
 """
-This module defines the Agent class and related functions for creating and
-managing agents that can research, analyze, and synthesize data using various models
-and tools.
+Agent system utilities for orchestrating multi-agent workflows.
 
-Classes:
-    Agent: A generic system agent for research and analysis tasks.
+This module provides functions and helpers to create, configure, and run agent systems
+using Pydantic AI. It supports delegation of tasks to research, analysis, and synthesis
+agents, and manages agent configuration, environment setup, and execution.
+
+Args:
+    provider (str): The name of the provider.
+    provider_config (ProviderConfig): Configuration settings for the provider.
+    api_key (str): API key for authentication with the provider.
+    prompts (dict[str, str]): Configuration for prompts.
+    include_researcher (bool): Flag to include the researcher agent.
+    include_analyst (bool): Flag to include the analyst agent.
+    include_synthesiser (bool): Flag to include the synthesiser agent.
+    query (str | list[dict[str, str]]): The query or messages for the agent.
+    chat_config (ChatConfig): The configuration object for agents and providers.
+    usage_limits (UsageLimits): Usage limits for agent execution.
+    pydantic_ai_stream (bool): Whether to use Pydantic AI streaming.
 
 Functions:
-    _add_tools_to_manager_agent: Adds tools to the manager agent for delegating tasks to
-        other agents.
-    _create_manager: Creates and configures a manager Agent with associated
-        researcher, analyst, and synthesiser agents.
-    get_manager: Initializes and returns a Agent manager with the specified
+    get_manager: Initializes and returns a manager agent with the specified
         configuration.
-    run_manager: Asynchronously runs the manager with the given query and provider,
-        handling errors and printing results.
+    run_manager: Asynchronously runs the manager agent with the given query and
+        provider.
+    setup_agent_env: Sets up the environment for an agent by configuring provider
+        settings, prompts, API key, and usage limits.
 """
 
 from typing import TypeVar
@@ -34,7 +44,7 @@ from .data_models import (
     ResearchResult,
     ResearchSummary,
 )
-from .llm_models import get_api_key, get_models, get_provider_config
+from .llm_model_funs import get_api_key, get_models, get_provider_config
 from .log import logger
 
 # FIXME remove after testting without
@@ -159,7 +169,7 @@ def _create_manager(
         ]
         if agent
     ]
-    status += f" with agents: {', '.join(active_agents)}"
+    status += f" with agents: {', '.join(active_agents)}" if active_agents else ""
     logger.info(status)
 
     manager = _create_agent(
@@ -260,9 +270,9 @@ def get_manager(
 
 async def run_manager(
     manager: Agent[None, BaseModel],
-    query: str | list[dict[str, str]],
+    query: str | list[dict[str, str]] | None,
     provider: str,
-    usage_limits: UsageLimits,
+    usage_limits: UsageLimits | None,
     pydantic_ai_stream: bool = False,
 ) -> None:
     """
@@ -281,21 +291,26 @@ async def run_manager(
     """
 
     # FIXME context manager try-catch
-    # with error_handling_context("run_manager()"):
+    # with out ? error_handling_context("run_manager()"):
     model_name = getattr(manager, "model")._model_name
     mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
 
     if pydantic_ai_stream:
-        logger.info("Streaming model response ...")
-        result = await manager.run(**mgr_cfg)
-        async for chunk in result.stream_text():  # .run(**mgr_cfg) as result:
-            logger.info(str(chunk))  # FIXME end="", flush=True)
+        raise NotImplementedError(
+            "Streaming currently only possible for Agents with "
+            "output_type str not pydantic model"
+        )
+        # logger.info("Streaming model response ...")
+        # result = await manager.run(**mgr_cfg)
+        # aync for chunk in result.stream_text():  # .run(**mgr_cfg) as result:
+        # async with manager.run_stream(user_prompt=query) as stream:
+        #    async for chunk in stream.stream_text():
+        #        logger.info(str(chunk))
     else:
-        # FIXME deprecate sync run
-        # logger.info("Waiting for model response ...")
-        # result = await manager.run_sync(**mgr_cfg)
-        raise NotImplementedError("deprecate sync run")
+        logger.info("Waiting for model response ...")
+        # FIXME run() deprecated, query unknown type
+        result = await manager.run(**mgr_cfg)
 
     logger.info(f"Result: {result}")
     logger.info(f"Usage statistics: {result.usage()}")
