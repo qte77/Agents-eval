@@ -13,16 +13,16 @@ readme = "README.md"
 requires-python = "==3.12.*"
 license = "bsd-3-clause"
 dependencies = [
-    "agentops>=0.3.26",
-    "logfire>=0.8.0",
+    "agentops>=0.4.14",
+    "logfire>=3.16.1",
     "loguru>=0.7.3",
     "pydantic>=2.10.6",
     # "pydantic-ai>=0.0.36",
-    "pydantic-ai-slim[duckduckgo,openai,tavily]>=0.0.36",
+    "pydantic-ai-slim[duckduckgo,openai,tavily]>=0.2.12",
     "pydantic-settings>=2.9.1",
     "scalene>=1.5.51",
-    # "typer>=0.15.2",
-    "weave>=0.51.36",
+    "typer>=0.16.0",
+    "weave>=0.51.49",
 ]
 
 # [project.urls]
@@ -30,9 +30,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "commitizen>=4.4.1",
-    "mypy>=1.15.0",
-    "ruff>=0.1.0",
+    # "commitizen>=4.4.1",
+    "mypy>=1.16.0",
+    "ruff>=0.11.12",
 ]
 gui = [
     "streamlit>=1.43.1",
