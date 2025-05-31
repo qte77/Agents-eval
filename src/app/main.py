@@ -24,19 +24,11 @@ from os import path
 import weave
 from dotenv import load_dotenv
 from logfire import span
-from rich.console import Console
-from rich.theme import Theme
 
+from .config import CHAT_CONFIG_FILE, PROJECT_NAME
 from .utils.agent_simple_system import get_manager, run_manager, setup_agent_env
 from .utils.login import login
 from .utils.utils import load_config
-
-PROJECT_NAME = "rd-mas-example"
-CONSOLE_THEME = Theme(
-    {"info": "green", "debug": "bold", "warn": "magenta", "except": "red"}
-)
-
-console = Console(theme=CONSOLE_THEME)
 
 
 @weave.op()
@@ -47,7 +39,7 @@ async def main(
     include_analyst: bool = False,
     include_synthesiser: bool = False,
     pydantic_ai_stream: bool = False,
-    config_file: str = "config.json",
+    chat_config_file: str = CHAT_CONFIG_FILE,
 ) -> None:
     """
     Main entry point for the application.
@@ -55,10 +47,11 @@ async def main(
     Args:
         provider (str): The inference provider to be used.
         query (str): The query to be processed by the agent.
+        include_researcher (bool): Whether to include the researcher in the process.
         include_analyst (bool): Whether to include the analyst in the process.
         include_synthesiser (bool): Whether to include the synthesiser in the process.
         pydantic_ai_stream (bool): Whether to use Pydantic AI streaming.
-        config_file (str): Path to the configuration file.
+        chat_config_file (str): Full path to the configuration file.
 
     Returns:
         None
@@ -69,15 +62,15 @@ async def main(
 
     try:
         with span("main()"):
-            config_path = path.join(path.dirname(__file__), config_file)
-            config = load_config(config_path)
+            chat_config_path = path.join(path.dirname(__file__), chat_config_file)
+            config = load_config(chat_config_path)
 
             if not provider:
                 provider = input("Which inference provider to use? ")
             if not query:
                 query = input("What would you like to research? ")
 
-            agent_env = setup_agent_env(provider, query, config, console)
+            agent_env = setup_agent_env(provider, query, config)
             manager = get_manager(
                 agent_env.provider,
                 agent_env.provider_config,
@@ -86,7 +79,6 @@ async def main(
                 include_researcher,
                 include_analyst,
                 include_synthesiser,
-                console,
             )
             await run_manager(
                 manager,
@@ -94,12 +86,14 @@ async def main(
                 agent_env.provider,
                 agent_env.usage_limits,
                 pydantic_ai_stream,
-                console,
             )
-            console.print("[info]exit:main.main()[/info]")
+            # TODO use logger
+            # console.print("[info]exit:main.main()[/info]")
 
     except Exception as e:
-        console.print(f"[except]{e}[/except]")
+        # TODO use logger
+        print(e)
+        # console.print(f"[except]{e}[/except]")
 
 
 if __name__ == "__main__":

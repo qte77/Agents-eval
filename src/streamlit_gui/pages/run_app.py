@@ -1,6 +1,5 @@
-from src.streamlit import button, header, info, text_input, warning
-
 from src.app.main import main
+from src.streamlit import button, header, info, text_input, warning
 from streamlit_gui.components.output import render_output
 
 

@@ -17,6 +17,7 @@ dist/
 
 # Logs
 *.log
+/logs
 
 # Traces
 scalene-profiles
