@@ -13,7 +13,7 @@
 SRC_PATH := src
 APP_PATH := $(SRC_PATH)/app
 APP_CFG_FILE := $(APP_PATH)/config.json
-SL_GUI_PATH := $(SRC_PATH)/streamlit.py
+ST_GUI_PATH := $(SRC_PATH)/run_gui.py
 OLLAMA_SETUP_URL := https://ollama.com/install.sh
 
 setup_prod: ## Install uv and deps, Download and start Ollama 
@@ -73,7 +73,7 @@ run_cli: ## Run app on CLI only
 	uv run python -m $${path}.main
 
 run_gui: ## Run app with Streamlit GUI
-	uv run streamlit run $(SL_GUI_PATH)
+	uv run streamlit run $(ST_GUI_PATH)
 
 run_profile: ## Profile app with scalene
 	uv run scalene --outfile \

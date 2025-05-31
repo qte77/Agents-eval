@@ -1,5 +1,6 @@
-import src.streamlit as st
-from streamlit_gui.components.prompts import render_prompt_editor
+import streamlit as st
+
+from ..components.prompts import render_prompt_editor
 
 TA_HEIGHT = 50
 

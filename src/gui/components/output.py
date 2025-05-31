@@ -1,9 +1,11 @@
 from typing import Any
 
-from src.streamlit import empty, info, subheader
+from streamlit import empty, info, subheader
 
 
-def render_output(result: Any = None, info_str: str = None, type: str = None):
+def render_output(
+    result: Any = None, info_str: str | None = None, type: str | None = None
+):
     """
     Renders the output in a Streamlit app based on the provided type.
 
@@ -34,4 +36,4 @@ def render_output(result: Any = None, info_str: str = None, type: str = None):
         #         text(result)
         #         # st.write(result)
     else:
-        info_str(info)
+        info(info_str)

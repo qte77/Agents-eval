@@ -1,9 +1,11 @@
-from src.app.main import main
-from src.streamlit import button, header, info, text_input, warning
-from streamlit_gui.components.output import render_output
+from streamlit import button, header, info, text_input, warning
+
+from app.main import main
+
+from ..components.output import render_output
 
 
-async def render_app(provider: str = None):
+async def render_app(provider: str | None = None):
     header("Run Research Query")
     if provider is None:
         provider = text_input("Provider?")

@@ -16,26 +16,29 @@ Functions:
 """
 
 from asyncio import run
-from os import path
+from pathlib import Path
 
-from src.utils.utils import load_config
-from streamlit_gui.components.sidebar import render_sidebar
-from streamlit_gui.pages.home import render_home
-from streamlit_gui.pages.prompts import render_prompts
-from streamlit_gui.pages.run_app import render_app
-from streamlit_gui.pages.settings import render_settings
-from streamlit_gui.utils.styling import add_custom_styling
+from app.config import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER
+from app.utils.load_settings import load_config
+from app.utils.log import logger
+from gui.components.sidebar import render_sidebar
+from gui.pages.home import render_home
+from gui.pages.prompts import render_prompts
+from gui.pages.run_app import render_app
+from gui.pages.settings import render_settings
+from gui.utils.styling import add_custom_styling
 
 # TODO create sidebar tabs, move settings to page,
 # set readme.md as home, separate prompts into page
 
 
 PAGE_TITLE = "MAS Eval 👾⚗️🧠💡"
-CONFIG_PATH = path.join(path.dirname(__file__), "src/config.json")
-CONFIG = load_config(CONFIG_PATH)
-provider = "huggingface"
+APP_PATH = Path(__file__).parent / "app"
 
-print(f"Selected provider: {provider}")
+chat_config = load_config(APP_PATH / CHAT_CONFIG_FILE)
+provider = CHAT_DEFAULT_PROVIDER
+
+logger.info(f"Default provider: {CHAT_DEFAULT_PROVIDER}")
 
 
 async def main():
@@ -45,13 +48,14 @@ async def main():
     if selected_page == "Home":
         render_home()
     elif selected_page == "Settings":
-        provider = render_settings(CONFIG)
-        print(f"provider: {provider}")
+        # TODO temp save settings to be used in gui
+        provider = render_settings(chat_config)
+        logger.info(f"provider: {provider}")
     elif selected_page == "Prompts":
-        render_prompts(CONFIG.prompts)  # prompts =
+        render_prompts(chat_config.prompts)  # prompts =
     elif selected_page == "App":
-        print(f"provider: {provider}")
-        await render_app(provider)
+        logger.info(f"provider: {CHAT_DEFAULT_PROVIDER}")
+        await render_app(CHAT_DEFAULT_PROVIDER)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ and provides a function to load and validate application configuration from a JS
 """
 
 import json
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -48,7 +49,7 @@ class AppEnv(BaseSettings):
 chat_config = AppEnv()
 
 
-def load_config(config_path: str) -> ChatConfig:
+def load_config(config_path: str | Path) -> ChatConfig:
     """
     Load and validate application configuration from a JSON file.
 
