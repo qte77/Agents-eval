@@ -74,13 +74,15 @@ class AgentConfig(BaseModel):
     output_type: type[BaseModel]  # (2) Class expected
     system_prompt: str
     # FIXME tools: list[Callable[..., Awaitable[Any]]]
-    tools: list[Any] = []  
+    tools: list[Any] = []
     retries: int = 3
 
     # Avoid pydantic.errors.PydanticSchemaGenerationError:
     # Unable to generate pydantic-core schema for <class 'openai.AsyncOpenAI'>.
     # Avoid Pydantic errors related to non-Pydantic types
-    model_config = ConfigDict(arbitrary_types_allowed=True)  # (1) Suppress Error non-Pydantic types
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True
+    )  # (1) Suppress pydantic Error non-Pydantic types
 
 
 class ModelDict(BaseModel):
