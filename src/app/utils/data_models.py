@@ -7,10 +7,13 @@ the application. These models ensure type safety and validation for data exchang
 between agents and system components.
 """
 
+from collections.abc import Sequence
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic_ai.messages import UserContent
 from pydantic_ai.models import Model
+from pydantic_ai.tools import Tool
 from pydantic_ai.usage import UsageLimits
 
 
@@ -59,8 +62,7 @@ class EndpointConfig(BaseModel):
     """Configuration for an agent"""
 
     provider: str
-    # FIXME add pydantic-ai query type Sequence[UserContent]
-    query: str | list[dict[str, str]] | None = None
+    query: str | list[dict[str, str]] | Sequence[UserContent] | None = None
     api_key: str | None
     prompts: dict[str, str]
     provider_config: ProviderConfig
@@ -74,7 +76,7 @@ class AgentConfig(BaseModel):
     output_type: type[BaseModel]  # (2) Class expected
     system_prompt: str
     # FIXME tools: list[Callable[..., Awaitable[Any]]]
-    tools: list[Any] = []
+    tools: list[Any] = []  # (3) List of tools will be validated at creation
     retries: int = 3
 
     # Avoid pydantic.errors.PydanticSchemaGenerationError:
@@ -83,6 +85,15 @@ class AgentConfig(BaseModel):
     model_config = ConfigDict(
         arbitrary_types_allowed=True
     )  # (1) Suppress pydantic Error non-Pydantic types
+
+    @field_validator("tools", mode="before")
+    def validate_tools(cls, v: list[Any]) -> list[Tool | None]:
+        """Validate that all tools are instances of Tool."""
+        if not v:
+            return []
+        if not all(isinstance(t, Tool) for t in v):
+            raise ValueError("All tools must be Tool instances")
+        return v
 
 
 class ModelDict(BaseModel):

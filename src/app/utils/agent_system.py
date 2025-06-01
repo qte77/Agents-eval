@@ -27,11 +27,13 @@ Functions:
         settings, prompts, API key, and usage limits.
 """
 
+from collections.abc import Sequence
 from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
+from pydantic_ai.messages import UserContent
 from pydantic_ai.usage import UsageLimits
 
 from .data_models import (
@@ -92,7 +94,8 @@ def _add_tools_to_manager_agent(
     if research_agent is not None:
 
         @manager_agent.tool
-        async def delegate_research(  # type: ignore (not accessed)
+        # ignore "delegate_research" is not accessed because of decorator
+        async def delegate_research(  # type: ignore
             ctx: RunContext[None], query: str
         ) -> ResearchResult:
             """Delegate research task to ResearchAgent."""
@@ -102,7 +105,8 @@ def _add_tools_to_manager_agent(
     if analysis_agent is not None:
 
         @manager_agent.tool
-        async def delegate_analysis(  # type: ignore (not accessed)
+        # ignore "delegate_research" is not accessed because of decorator
+        async def delegate_analysis(  # type: ignore
             ctx: RunContext[None], query: str
         ) -> AnalysisResult:
             """Delegate analysis task to AnalysisAgent."""
@@ -112,7 +116,8 @@ def _add_tools_to_manager_agent(
     if synthesis_agent is not None:
 
         @manager_agent.tool
-        async def delegate_synthesis(  # type: ignore (not accessed)
+        # ignore "delegate_research" is not accessed because of decorator
+        async def delegate_synthesis(  # type: ignore
             ctx: RunContext[None], query: str
         ) -> ResearchSummary:
             """Delegate synthesis task to AnalysisAgent."""
@@ -270,7 +275,7 @@ def get_manager(
 
 async def run_manager(
     manager: Agent[None, BaseModel],
-    query: str | list[dict[str, str]] | None,
+    query: str | list[dict[str, str]] | Sequence[UserContent] | None,
     provider: str,
     usage_limits: UsageLimits | None,
     pydantic_ai_stream: bool = False,
@@ -307,10 +312,15 @@ async def run_manager(
         # async with manager.run_stream(user_prompt=query) as stream:
         #    async for chunk in stream.stream_text():
         #        logger.info(str(chunk))
+        # result = await stream.get_result()
     else:
         logger.info("Waiting for model response ...")
-        # FIXME run() deprecated, query unknown type
-        result = await manager.run(**mgr_cfg)
+        # FIXME deprecated warning manager.run(), query unknown type
+        # FIXME [call-overload] error: No overload variant of "run" of "Agent"
+        # matches argument type "dict[str, list[dict[str, str]] |
+        # Sequence[str | ImageUrl | AudioUrl | DocumentUrl | VideoUrl |
+        # BinaryContent] | UsageLimits | None]"
+        result = await manager.run(**mgr_cfg)  # type: ignore[reportDeprecated,reportUnknownArgumentType,reportCallOverload,call-overload]
 
     logger.info(f"Result: {result}")
     logger.info(f"Usage statistics: {result.usage()}")
@@ -335,6 +345,8 @@ def setup_agent_env(
         EndpointConfig: The configuration object for the agent.
     """
 
+    msg: str | None
+
     # FIXME context manager try-catch
     # with error_handling_context("setup_agent_env()"):
     provider_config = get_provider_config(provider, chat_config.providers)
@@ -353,13 +365,13 @@ def setup_agent_env(
         if provider.lower() == "gemini":
             if isinstance(query, str):
                 query = [{"role": "user", "content": query}]
-            elif isinstance(query, list):  # type: ignore (unnecessary check)
-                for msg in query:
+            elif isinstance(query, list):  # type: ignore[reportUnnecessaryIsInstance]
+                for q in query:
                     if (
-                        not isinstance(msg, dict)  # type: ignore (unnecessary check)
-                        or "role" not in msg
-                        or "content" not in msg
-                        or isinstance(msg["content"], str)  # type: ignore (unnecessary check)
+                        not isinstance(q, dict)  # type: ignore[reportUnnecessaryIsInstance]
+                        or "role" not in q
+                        or "content" not in q
+                        or isinstance(q["content"], str)  # type: ignore[reportUnnecessaryIsInstance]
                     ):
                         msg = "Invalid message format for Gemini provider"
                         logger.error(msg)

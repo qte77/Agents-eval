@@ -66,7 +66,9 @@ def error_handling_context(operation_name: str):
         Various exceptions based on the error encountered during the operation.
     """
 
-    reason, msg = None, None
+    reason: str | None = None
+    msg: Exception | None = None
+
     try:
         with span(operation_name):
             yield
@@ -84,9 +86,14 @@ def error_handling_context(operation_name: str):
         reason, msg = "Exception", e
     finally:
         if reason is not None or msg is not None:
-            is_msg_type = "type" in msg.__dict__ and msg.__dict__["type"] is not None
-            msg_type = f"(Type: {msg.__dict__['type']}) " if is_msg_type else ""
-            error_msg = f"{reason} {msg_type}caught in {operation_name}: {msg}"
-            error(f"{error_msg}")
-            logger.error(error_msg)
+            if isinstance(msg, Exception):
+                logger.exception(msg)
+            else:
+                is_msg_type = (
+                    "type" in msg.__dict__ and msg.__dict__["type"] is not None
+                )
+                msg_type = f"(Type: {msg.__dict__['type']}) " if is_msg_type else ""
+                error_msg = f"{reason} {msg_type}caught in {operation_name}: {msg}"
+                error(f"{error_msg}")
+                logger.error(error_msg)
         logger.info(f"exiting operation '{operation_name}'")
