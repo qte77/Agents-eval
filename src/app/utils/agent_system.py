@@ -27,13 +27,10 @@ Functions:
         settings, prompts, API key, and usage limits.
 """
 
-from collections.abc import Sequence
-from typing import TypeVar
-
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
-from pydantic_ai.messages import UserContent
+from pydantic_ai.messages import ModelRequest
 from pydantic_ai.usage import UsageLimits
 
 from .data_models import (
@@ -45,15 +42,12 @@ from .data_models import (
     ProviderConfig,
     ResearchResult,
     ResearchSummary,
+    ResultBaseType,
+    UserPromptType,
 )
 from .llm_model_funs import get_api_key, get_models, get_provider_config
 from .load_configs import AppEnv
 from .log import logger
-
-# FIXME remove after testing without
-# from .utils import error_handling_context
-
-ResultBaseType = TypeVar("ResultBaseType", bound=BaseModel)
 
 
 def _add_tools_to_manager_agent(
@@ -276,7 +270,7 @@ def get_manager(
 
 async def run_manager(
     manager: Agent[None, BaseModel],
-    query: str | list[dict[str, str]] | Sequence[UserContent] | None,
+    query: UserPromptType,
     provider: str,
     usage_limits: UsageLimits | None,
     pydantic_ai_stream: bool = False,
@@ -329,7 +323,7 @@ async def run_manager(
 
 def setup_agent_env(
     provider: str,
-    query: str | list[dict[str, str]],
+    query: UserPromptType,
     chat_config: ChatConfig,
     chat_env_config: AppEnv,
 ) -> EndpointConfig:
@@ -339,9 +333,11 @@ def setup_agent_env(
 
     Args:
         provider (str): The name of the provider.
-        messages (str): The messages or queries to be sent to the agent.
-        config (ChatConfig): The configuration object containing provider and prompt
-            settings.
+        query (UserPromptType): The messages or queries to be sent to the agent.
+        chat_config (ChatConfig): The configuration object containing provider and
+            prompt settings.
+        chat_env_config (AppEnv): The application environment configuration
+            containing API keys.
 
     Returns:
         EndpointConfig: The configuration object for the agent.
@@ -364,20 +360,20 @@ def setup_agent_env(
             msg = f"API key for provider '{provider}' is not set."
             logger.error(msg)
             raise ValueError(msg)
+        # TODO Separate Gemini request into function
         if provider.lower() == "gemini":
             if isinstance(query, str):
-                query = [{"role": "user", "content": query}]
+                query = ModelRequest.user_text_prompt(query)
             elif isinstance(query, list):  # type: ignore[reportUnnecessaryIsInstance]
-                for q in query:
-                    if (
-                        not isinstance(q, dict)  # type: ignore[reportUnnecessaryIsInstance]
-                        or "role" not in q
-                        or "content" not in q
-                        or isinstance(q["content"], str)  # type: ignore[reportUnnecessaryIsInstance]
-                    ):
-                        msg = "Invalid message format for Gemini provider"
-                        logger.error(msg)
-                        raise ValueError(msg)
+                # query = [
+                #    ModelRequest.user_text_prompt(
+                #        str(msg.get("content", ""))
+                #    )  # type: ignore[reportUnknownArgumentType]
+                #    if isinstance(msg, dict)
+                #    else msg
+                #    for msg in query
+                # ]
+                raise NotImplementedError("Currently conflicting with UserPromptType")
             else:
                 msg = f"Unsupported query type for Gemini: {type(query)}"
                 logger.error(msg)

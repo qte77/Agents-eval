@@ -8,15 +8,21 @@ between agents and system components.
 """
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict, field_validator
-from pydantic_ai.messages import UserContent
+from pydantic_ai.messages import ModelRequest, UserContent
 from pydantic_ai.models import Model
 from pydantic_ai.tools import Tool
 from pydantic_ai.usage import UsageLimits
 
-type UserPromptType = str | list[dict[str, str]] | Sequence[UserContent] | None
+#  | list[dict[str, str]]
+type UserPromptType = (
+    str | Sequence[UserContent] | ModelRequest | None
+)  #  (1) Input validation
+ResultBaseType = TypeVar(
+    "ResultBaseType", bound=BaseModel
+)  # (2) Generic type for model results
 
 
 class ResearchResult(BaseModel):

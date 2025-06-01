@@ -19,9 +19,8 @@ Functions:
 """
 
 from asyncio import run
-from sys import argv
-
 from pathlib import Path
+from sys import argv
 
 import weave
 from logfire import span
@@ -61,9 +60,6 @@ async def main(
     """
 
     logger.info(f"Starting app '{PROJECT_NAME}'")
-    # FIXME enhance login, not every run?
-    login(PROJECT_NAME)
-
     try:
         with span("main()"):
             if not chat_provider:
@@ -77,6 +73,9 @@ async def main(
             agent_env = setup_agent_env(
                 chat_provider, query, chat_config, chat_env_config
             )
+
+            # FIXME enhance login, not every run?
+            login(PROJECT_NAME, chat_env_config)
 
             manager = get_manager(
                 agent_env.provider,
