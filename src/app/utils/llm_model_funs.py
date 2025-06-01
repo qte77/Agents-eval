@@ -12,7 +12,7 @@ from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
-from ..config import API_SUFFIX
+from ..config_app import API_SUFFIX
 from .data_models import EndpointConfig, ModelDict, ProviderConfig
 from .log import logger
 

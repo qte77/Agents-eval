@@ -24,7 +24,7 @@ from os import path
 import weave
 from logfire import span
 
-from .config import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
+from .config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
 from .utils.agent_system import get_manager, run_manager, setup_agent_env
 from .utils.load_settings import load_config
 from .utils.log import logger

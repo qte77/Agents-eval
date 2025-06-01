@@ -12,9 +12,10 @@
 
 SRC_PATH := src
 APP_PATH := $(SRC_PATH)/app
-APP_CFG_FILE := $(APP_PATH)/config.json
-ST_GUI_PATH := $(SRC_PATH)/run_gui.py
+GUI_PATH_ST := $(SRC_PATH)/run_gui.py
+CHAT_CFG_FILE := $(APP_PATH)/config_chat.json
 OLLAMA_SETUP_URL := https://ollama.com/install.sh
+OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
 
 setup_prod: ## Install uv and deps, Download and start Ollama 
 	echo "Setting up tools..."
@@ -41,9 +42,8 @@ setup_ollama: ## Download Ollama, script does start local Ollama server
 	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
 	# script does start server but not consistently
 	curl -fsSL $(OLLAMA_SETUP_URL) | sh
-	model_name=$$(jq -r '.providers.ollama.model_name' $(APP_CFG_FILE))
-	echo "Pulling model '$${model_name}' ..."
-	ollama pull $$model_name
+	echo "Pulling model '$(OLLAMA_MODEL_NAME)' ..."
+	ollama pull $(OLLAMA_MODEL_NAME)
 
 start_ollama: ## Start local Ollama server, default 127.0.0.1:11434
 	ollama serve
@@ -61,7 +61,7 @@ clean_ollama: ## Remove local Ollama from system
 			break
 		fi
 	done
-	@echo "Cleaning up..."
+	echo "Cleaning up..."
 	rm -f $(BIN)
 
 ruff: ## Lint: Format and check with ruff
@@ -73,7 +73,7 @@ run_cli: ## Run app on CLI only
 	uv run python -m $${path}.main
 
 run_gui: ## Run app with Streamlit GUI
-	uv run streamlit run $(ST_GUI_PATH)
+	uv run streamlit run $(GUI_PATH_ST)
 
 run_profile: ## Profile app with scalene
 	uv run scalene --outfile \
@@ -91,9 +91,10 @@ type_check: ## Check for static typing errors
 	uv run mypy $(APP_PATH)
 
 help:
-	@echo "Usage: make [recipe]"
-	@echo "Recipes:"
-	@awk '/^[a-zA-Z0-9_-]+:.*?##/ {
+	# TODO add stackoverflow source
+	echo "Usage: make [recipe]"
+	echo "Recipes:"
+	awk '/^[a-zA-Z0-9_-]+:.*?##/ {
 		helpMessage = match($$0, /## (.*)/)
 		if (helpMessage) {
 			recipe = $$1

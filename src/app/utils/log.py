@@ -5,7 +5,7 @@ Logs are written to a file with automatic rotation.
 
 from loguru import logger
 
-from ..config import LOGS_PATH
+from ..config_app import LOGS_PATH
 
 logger.add(
     f"{LOGS_PATH}/{{time}}.log",
