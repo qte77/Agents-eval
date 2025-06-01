@@ -19,7 +19,8 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 ## Setup and Usage
 
-- `make setup_env`
+- `make setup_prod`
+- `make setup_dev`
 - `make run_cli`
 - `make run_gui`
 - `make test_all`
