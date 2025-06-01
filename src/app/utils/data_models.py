@@ -16,6 +16,8 @@ from pydantic_ai.models import Model
 from pydantic_ai.tools import Tool
 from pydantic_ai.usage import UsageLimits
 
+type UserPromptType = str | list[dict[str, str]] | Sequence[UserContent] | None
+
 
 class ResearchResult(BaseModel):
     """Research results from the research agent."""
@@ -62,7 +64,7 @@ class EndpointConfig(BaseModel):
     """Configuration for an agent"""
 
     provider: str
-    query: str | list[dict[str, str]] | Sequence[UserContent] | None = None
+    query: UserPromptType = None
     api_key: str | None
     prompts: dict[str, str]
     provider_config: ProviderConfig
@@ -84,7 +86,7 @@ class AgentConfig(BaseModel):
     # Avoid Pydantic errors related to non-Pydantic types
     model_config = ConfigDict(
         arbitrary_types_allowed=True
-    )  # (1) Suppress pydantic Error non-Pydantic types
+    )  # (4) Suppress Error non-Pydantic types caused by <class 'openai.AsyncOpenAI'>
 
     @field_validator("tools", mode="before")
     def validate_tools(cls, v: list[Any]) -> list[Tool | None]:
