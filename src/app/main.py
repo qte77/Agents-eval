@@ -19,23 +19,24 @@ Functions:
 """
 
 from asyncio import run
-from os import path
+from sys import argv
+
+from pathlib import Path
 
 import weave
 from logfire import span
 
 from .config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
 from .utils.agent_system import get_manager, run_manager, setup_agent_env
-from .utils.load_settings import load_config
+from .utils.load_configs import AppEnv, load_app_config
 from .utils.log import logger
 from .utils.login import login
+from .utils.utils import parse_args
 
 
 @weave.op()
 async def main(
-    # TODO argparse/typer: help="The inference chat_provider to be used."),
     chat_provider: str = CHAT_DEFAULT_PROVIDER,
-    # TODO argparse/typer: help="The query to be processed by the agent."),
     query: str = "",
     include_researcher: bool = False,
     include_analyst: bool = False,
@@ -60,19 +61,22 @@ async def main(
     """
 
     logger.info(f"Starting app '{PROJECT_NAME}'")
-    login(PROJECT_NAME)  # TODO enhance login, not every run?
+    # FIXME enhance login, not every run?
+    login(PROJECT_NAME)
 
     try:
         with span("main()"):
-            chat_config_path = path.join(path.dirname(__file__), chat_config_file)
-            chat_config = load_config(chat_config_path)
-
             if not chat_provider:
                 chat_provider = input("Which inference chat_provider to use? ")
             if not query:
                 query = input("What would you like to research? ")
 
-            agent_env = setup_agent_env(chat_provider, query, chat_config)
+            chat_config_path = Path(__file__).parent / chat_config_file
+            chat_config = load_app_config(chat_config_path)
+            chat_env_config = AppEnv()
+            agent_env = setup_agent_env(
+                chat_provider, query, chat_config, chat_env_config
+            )
 
             manager = get_manager(
                 agent_env.provider,
@@ -97,4 +101,5 @@ async def main(
 
 
 if __name__ == "__main__":
-    run(main())
+    args = parse_args(argv[1:])
+    run(main(**args))

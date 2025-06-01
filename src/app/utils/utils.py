@@ -53,6 +53,41 @@ def log_research_result(summary: ResearchSummary, usage: Usage) -> None:
     logger.info(usage)
 
 
+def parse_args(argv: list[str]) -> dict[str, str | bool]:
+    """Parse command line arguments."""
+
+    commands = {
+        "--help": "Display help information",
+        "--version": "Display version information",
+        "--chat-provider": "Specify the chat provider to use",
+        "--query": "Specify the query to process",
+        "--include-researcher": "Include the researcher agent",
+        "--include-analyst": "Include the analyst agent",
+        "--include-synthesiser": "Include the synthesiser agent",
+        "--no-stream": "Disable streaming output",
+        "--chat-config-file": "Specify the path to the chat configuration file",
+    }
+
+    parsed_args: dict[str, str | bool] = {}
+    if "--help" in argv:
+        print("Available commands:")
+        for cmd, desc in commands.items():
+            print(f"{cmd}: {desc}")
+        return parsed_args
+
+    for arg in argv:
+        if arg.split("=", 1)[0] in commands.keys():
+            key, value = arg.split("=", 1) if "=" in arg else (arg, True)
+            # Normalize keys to remove leading dashes
+            key = key.lstrip("-").replace("-", "_")
+            parsed_args[key] = value
+
+    if parsed_args:
+        logger.info(f"Used arguments: {parsed_args}")
+
+    return parsed_args
+
+
 @contextmanager
 def error_handling_context(operation_name: str):
     """

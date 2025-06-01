@@ -19,7 +19,7 @@ from asyncio import run
 from pathlib import Path
 
 from app.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER
-from app.utils.load_settings import load_config
+from app.utils.load_configs import load_app_config
 from app.utils.log import logger
 from gui.components.sidebar import render_sidebar
 from gui.pages.home import render_home
@@ -34,7 +34,7 @@ from gui.utils.text import PAGE_TITLE
 # set readme.md as home, separate prompts into page
 
 chat_config_pfile = Path(__file__).parent / APP_PATH / CHAT_CONFIG_FILE
-chat_config = load_config(chat_config_pfile)
+chat_config = load_app_config(chat_config_pfile)
 provider = CHAT_DEFAULT_PROVIDER
 logger.info(f"Default provider: {CHAT_DEFAULT_PROVIDER}")
 

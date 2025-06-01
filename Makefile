@@ -70,7 +70,7 @@ ruff: ## Lint: Format and check with ruff
 
 run_cli: ## Run app on CLI only
 	path=$$(echo "$(APP_PATH)" | tr '/' '.')
-	uv run python -m $${path}.main
+	uv run python -m $${path}.main $(ARGS)
 
 run_gui: ## Run app with Streamlit GUI
 	uv run streamlit run $(GUI_PATH_ST)

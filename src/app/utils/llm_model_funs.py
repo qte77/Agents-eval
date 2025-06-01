@@ -6,24 +6,27 @@ to create model instances for supported LLM providers such as Gemini and OpenAI.
 It also includes logic for assembling model dictionaries for system agents.
 """
 
-from os import getenv
-
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from ..config_app import API_SUFFIX
 from .data_models import EndpointConfig, ModelDict, ProviderConfig
+from .load_configs import AppEnv
 from .log import logger
 
 
-def get_api_key(provider: str) -> str | None:
-    """Retrieve API key from environment variable."""
+def get_api_key(
+    provider: str,
+    chat_env_config: AppEnv,
+) -> str | None:
+    """Retrieve API key from chat env config variable."""
 
-    if provider.lower() == "ollama":
+    provider = provider.upper()
+    if provider == "OLLAMA":
         return None
     else:
-        return getenv(f"{provider.upper()}{API_SUFFIX}")
+        return getattr(chat_env_config, f"{provider}{API_SUFFIX}")
 
 
 def get_provider_config(

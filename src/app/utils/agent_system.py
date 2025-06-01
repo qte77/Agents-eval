@@ -47,6 +47,7 @@ from .data_models import (
     ResearchSummary,
 )
 from .llm_model_funs import get_api_key, get_models, get_provider_config
+from .load_configs import AppEnv
 from .log import logger
 
 # FIXME remove after testing without
@@ -330,6 +331,7 @@ def setup_agent_env(
     provider: str,
     query: str | list[dict[str, str]],
     chat_config: ChatConfig,
+    chat_env_config: AppEnv,
 ) -> EndpointConfig:
     """
     Sets up the environment for an agent by configuring provider settings, prompts,
@@ -352,7 +354,7 @@ def setup_agent_env(
     provider_config = get_provider_config(provider, chat_config.providers)
 
     prompts = chat_config.prompts
-    api_key = get_api_key(provider)
+    api_key = get_api_key(provider, chat_env_config)
 
     if provider.lower() == "ollama":
         # TODO move usage limits to config
