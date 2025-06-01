@@ -47,7 +47,7 @@ from .data_models import (
 from .llm_model_funs import get_api_key, get_models, get_provider_config
 from .log import logger
 
-# FIXME remove after testting without
+# FIXME remove after testing without
 # from .utils import error_handling_context
 
 ResultBaseType = TypeVar("ResultBaseType", bound=BaseModel)

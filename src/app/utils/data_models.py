@@ -59,7 +59,8 @@ class EndpointConfig(BaseModel):
     """Configuration for an agent"""
 
     provider: str
-    query: str | list[dict[str, str]] | None = None  # (1) messages
+    # FIXME add pydantic-ai query type Sequence[UserContent]
+    query: str | list[dict[str, str]] | None = None
     api_key: str | None
     prompts: dict[str, str]
     provider_config: ProviderConfig
@@ -69,16 +70,17 @@ class EndpointConfig(BaseModel):
 class AgentConfig(BaseModel):
     """Configuration for an agent"""
 
-    model: Model
-    output_type: type[BaseModel]  # class expected
+    model: Model  # (1) Instance expected
+    output_type: type[BaseModel]  # (2) Class expected
     system_prompt: str
-    tools: list[Any] = []  # FIXME Callable[..., Awaitab le[Any]]
+    # FIXME tools: list[Callable[..., Awaitable[Any]]]
+    tools: list[Any] = []  
     retries: int = 3
 
     # Avoid pydantic.errors.PydanticSchemaGenerationError:
     # Unable to generate pydantic-core schema for <class 'openai.AsyncOpenAI'>.
     # Avoid Pydantic errors related to non-Pydantic types
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True)  # (1) Suppress Error non-Pydantic types
 
 
 class ModelDict(BaseModel):
