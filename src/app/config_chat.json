@@ -1,8 +1,8 @@
 {
     "providers": {
         "huggingface": {
-            "model_name": "meta-llama/Meta-Llama-3-8B-Instruct",
-            "base_url": "https://api-inference.huggingface.co/v1"
+            "model_name": "facebook/bart-large-mnli",
+            "base_url": "https://router.huggingface.co/hf-inference/models"
         },
         "gemini": {
             "model_name": "gemini-1.5-flash-8b",
@@ -21,8 +21,12 @@
             "base_url": "http://localhost:11434/v1"
         },
         "openrouter": {
-            "model_name": "google/gemini-2.0-flash-lite-preview-02-05:free",
+            "model_name": "google/gemini-2.0-flash-exp:free",
             "base_url": "https://openrouter.ai/api/v1"
+        },
+        "perplexity": {
+            "model_name": "sonar",
+            "base_url": "https://api.perplexity.ai"
         },
         "restack": {
             "model_name": "deepseek-chat",

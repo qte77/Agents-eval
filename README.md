@@ -23,7 +23,7 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 - `make setup_prod`
 - `make setup_dev`
-- `make run_cli` or `make run_cli ARGS="--chat_provider=huggingface --include_researcher --query='What is AI?'"`
+- `make run_cli` or `make run_cli ARGS="--help"`
 - `make run_gui`
 - `make test_all`
 

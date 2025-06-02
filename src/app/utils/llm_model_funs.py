@@ -26,7 +26,14 @@ def get_api_key(
     if provider == "OLLAMA":
         return None
     else:
-        return getattr(chat_env_config, f"{provider}{API_SUFFIX}")
+        key_name = f"{provider}{API_SUFFIX}"
+        if hasattr(chat_env_config, key_name):
+            logger.info(f"Found API key for provider '{provider}'")
+            return getattr(chat_env_config, key_name)
+        else:
+            raise KeyError(
+                f"API key for provider '{provider}' not found in configuration."
+            )
 
 
 def get_provider_config(
@@ -56,8 +63,22 @@ def _create_model(endpoint_config: EndpointConfig) -> GeminiModel | OpenAIModel:
     """Create a model that uses model_name and base_url for inference API"""
 
     if endpoint_config.provider.lower() == "gemini":
-        # FIXME missing ctr signature: api_key=model_config.api_key
-        return GeminiModel(endpoint_config.provider_config.model_name)
+        # FIXME EndpointConfig: TypeError: 'ModelRequest' object is not iterable.
+        raise NotImplementedError(
+            "Current typing raises TypeError: 'ModelRequest' object is not iterable."
+        )
+    elif endpoint_config.provider.lower() == "huggingface":
+        # FIXME HF not working with pydantic-ai OpenAI model
+        raise NotImplementedError(
+            "Hugging Face provider is not implemented yet. Please use Gemini or OpenAI."
+        )
+        # headers = {
+        #    "Authorization": f"Bearer {endpoint_config.api_key}",
+        # }
+        # def query(payload):
+        #    response = requests.post(API_URL, headers=headers, json=payload)
+        #    return response.json()
+        # query({"inputs": "", "parameters": {},})
     else:
         return OpenAIModel(
             model_name=endpoint_config.provider_config.model_name,

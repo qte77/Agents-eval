@@ -38,7 +38,7 @@ class AppEnv(BaseSettings):
 
     # Logging/Monitoring/Tracing
     AGENTOPS_API_KEY: str = ""
-    LOGFIRE_TOKEN: str = ""
+    LOGFIRE_API_KEY: str = ""
     WANDB_API_KEY: str = ""
 
     model_config = SettingsConfigDict(

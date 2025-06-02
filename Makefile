@@ -90,6 +90,15 @@ coverage_all: ## Get test coverage
 type_check: ## Check for static typing errors
 	uv run mypy $(APP_PATH)
 
+unset_app_env: ## Unset app environment variables
+	echo "Unsetting environment variables..."
+	uf="./unset_env.sh"
+	awk 'NF && $$1 !~ /^#/ {
+		sub(/=.*/,""); print "unset " $$1
+	}' .env.example > $$uf
+	. $$uf
+	rm $$uf
+
 help:
 	# TODO add stackoverflow source
 	echo "Usage: make [recipe]"

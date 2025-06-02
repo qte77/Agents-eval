@@ -67,8 +67,8 @@ def parse_args(argv: list[str]) -> dict[str, str | bool]:
         "--no-stream": "Disable streaming output",
         "--chat-config-file": "Specify the path to the chat configuration file",
     }
-
     parsed_args: dict[str, str | bool] = {}
+
     if "--help" in argv:
         print("Available commands:")
         for cmd, desc in commands.items():
@@ -78,8 +78,7 @@ def parse_args(argv: list[str]) -> dict[str, str | bool]:
     for arg in argv:
         if arg.split("=", 1)[0] in commands.keys():
             key, value = arg.split("=", 1) if "=" in arg else (arg, True)
-            # Normalize keys to remove leading dashes
-            key = key.lstrip("-").replace("-", "_")
+            key = key.lstrip("--").replace("-", "_")
             parsed_args[key] = value
 
     if parsed_args:
