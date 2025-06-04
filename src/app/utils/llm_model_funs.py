@@ -71,6 +71,7 @@ def _create_model(endpoint_config: EndpointConfig) -> GeminiModel | OpenAIModel:
         # FIXME HF not working with pydantic-ai OpenAI model
         raise NotImplementedError(
             "Hugging Face provider is not implemented yet. Please use Gemini or OpenAI."
+            " https://huggingface.co/docs/inference-providers/providers/hf-inference"
         )
         # headers = {
         #    "Authorization": f"Bearer {endpoint_config.api_key}",

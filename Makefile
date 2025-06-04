@@ -6,7 +6,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile test_all coverage_all type_check help
+.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile test_all coverage_all type_check output_unset_app_env_sh help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := setup_dev_ollama
 
@@ -90,14 +90,10 @@ coverage_all: ## Get test coverage
 type_check: ## Check for static typing errors
 	uv run mypy $(APP_PATH)
 
-unset_app_env: ## Unset app environment variables
-	echo "Unsetting environment variables..."
+output_unset_app_env_sh: ## Unset app environment variables
 	uf="./unset_env.sh"
-	awk 'NF && $$1 !~ /^#/ {
-		sub(/=.*/,""); print "unset " $$1
-	}' .env.example > $$uf
-	. $$uf
-	rm $$uf
+	echo "Outputing '$${uf}' ..."
+	printenv | awk -F= '/_API_KEY=/ {print "unset " $$1}' > $$uf
 
 help:
 	# TODO add stackoverflow source

@@ -4,6 +4,8 @@ the environment for a given project. It includes functionality to load and save
 login state, perform a one-time login, and check if the user is logged in.
 """
 
+from os import environ
+
 from agentops import init as agentops_init
 from logfire import configure as logfire_conf
 from wandb import login as wandb_login
@@ -27,6 +29,7 @@ def login(project_name: str, chat_env_config: AppEnv):
 
     try:
         logger.info(f"Logging in to the workspaces for project: {project_name}")
+        environ["AGENTOPS_LOGGING_TO_FILE"] = "FALSE"
         agentops_init(
             default_tags=[project_name],
             api_key=get_api_key("AGENTOPS", chat_env_config),
