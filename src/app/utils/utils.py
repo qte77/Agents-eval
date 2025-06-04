@@ -102,7 +102,6 @@ def error_handling_context(operation_name: str):
 
     reason: str | None = None
     msg: Exception | None = None
-
     try:
         with span(operation_name):
             yield

@@ -344,7 +344,6 @@ def setup_agent_env(
     """
 
     msg: str | None
-
     # FIXME context manager try-catch
     # with error_handling_context("setup_agent_env()"):
     provider_config = get_provider_config(provider, chat_config.providers)
