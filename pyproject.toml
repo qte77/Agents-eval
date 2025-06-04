@@ -101,7 +101,7 @@ known-first-party = ["src", "tests"]
 convention = "google"
 
 [tool.pytest.ini_options]
-pythonpath = ["src/app"]
+pythonpath = ["src"]
 testpaths = ["tests/"]
 addopts = "--strict-markers"
 
