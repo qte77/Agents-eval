@@ -6,24 +6,34 @@ to create model instances for supported LLM providers such as Gemini and OpenAI.
 It also includes logic for assembling model dictionaries for system agents.
 """
 
-from os import getenv
-
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
-from ..config import API_SUFFIX
+from ..config_app import API_SUFFIX
 from .data_models import EndpointConfig, ModelDict, ProviderConfig
+from .load_configs import AppEnv
 from .log import logger
 
 
-def get_api_key(provider: str) -> str | None:
-    """Retrieve API key from environment variable."""
+def get_api_key(
+    provider: str,
+    chat_env_config: AppEnv,
+) -> str | None:
+    """Retrieve API key from chat env config variable."""
 
-    if provider.lower() == "ollama":
+    provider = provider.upper()
+    if provider == "OLLAMA":
         return None
     else:
-        return getenv(f"{provider.upper()}{API_SUFFIX}")
+        key_name = f"{provider}{API_SUFFIX}"
+        if hasattr(chat_env_config, key_name):
+            logger.info(f"Found API key for provider '{provider}'")
+            return getattr(chat_env_config, key_name)
+        else:
+            raise KeyError(
+                f"API key for provider '{provider}' not found in configuration."
+            )
 
 
 def get_provider_config(
@@ -53,8 +63,23 @@ def _create_model(endpoint_config: EndpointConfig) -> GeminiModel | OpenAIModel:
     """Create a model that uses model_name and base_url for inference API"""
 
     if endpoint_config.provider.lower() == "gemini":
-        # FIXME missing ctr signature: api_key=model_config.api_key
-        return GeminiModel(endpoint_config.provider_config.model_name)
+        # FIXME EndpointConfig: TypeError: 'ModelRequest' object is not iterable.
+        raise NotImplementedError(
+            "Current typing raises TypeError: 'ModelRequest' object is not iterable."
+        )
+    elif endpoint_config.provider.lower() == "huggingface":
+        # FIXME HF not working with pydantic-ai OpenAI model
+        raise NotImplementedError(
+            "Hugging Face provider is not implemented yet. Please use Gemini or OpenAI."
+            " https://huggingface.co/docs/inference-providers/providers/hf-inference"
+        )
+        # headers = {
+        #    "Authorization": f"Bearer {endpoint_config.api_key}",
+        # }
+        # def query(payload):
+        #    response = requests.post(API_URL, headers=headers, json=payload)
+        #    return response.json()
+        # query({"inputs": "", "parameters": {},})
     else:
         return OpenAIModel(
             model_name=endpoint_config.provider_config.model_name,

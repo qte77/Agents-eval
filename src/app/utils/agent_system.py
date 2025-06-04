@@ -27,11 +27,10 @@ Functions:
         settings, prompts, API key, and usage limits.
 """
 
-from typing import TypeVar
-
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
+from pydantic_ai.messages import ModelRequest
 from pydantic_ai.usage import UsageLimits
 
 from .data_models import (
@@ -43,14 +42,12 @@ from .data_models import (
     ProviderConfig,
     ResearchResult,
     ResearchSummary,
+    ResultBaseType,
+    UserPromptType,
 )
 from .llm_model_funs import get_api_key, get_models, get_provider_config
+from .load_configs import AppEnv
 from .log import logger
-
-# FIXME remove after testting without
-# from .utils import error_handling_context
-
-ResultBaseType = TypeVar("ResultBaseType", bound=BaseModel)
 
 
 def _add_tools_to_manager_agent(
@@ -92,7 +89,8 @@ def _add_tools_to_manager_agent(
     if research_agent is not None:
 
         @manager_agent.tool
-        async def delegate_research(  # type: ignore (not accessed)
+        # ignore "delegate_research" is not accessed because of decorator
+        async def delegate_research(  # type: ignore
             ctx: RunContext[None], query: str
         ) -> ResearchResult:
             """Delegate research task to ResearchAgent."""
@@ -102,7 +100,8 @@ def _add_tools_to_manager_agent(
     if analysis_agent is not None:
 
         @manager_agent.tool
-        async def delegate_analysis(  # type: ignore (not accessed)
+        # ignore "delegate_research" is not accessed because of decorator
+        async def delegate_analysis(  # type: ignore
             ctx: RunContext[None], query: str
         ) -> AnalysisResult:
             """Delegate analysis task to AnalysisAgent."""
@@ -112,7 +111,8 @@ def _add_tools_to_manager_agent(
     if synthesis_agent is not None:
 
         @manager_agent.tool
-        async def delegate_synthesis(  # type: ignore (not accessed)
+        # ignore "delegate_research" is not accessed because of decorator
+        async def delegate_synthesis(  # type: ignore
             ctx: RunContext[None], query: str
         ) -> ResearchSummary:
             """Delegate synthesis task to AnalysisAgent."""
@@ -270,7 +270,7 @@ def get_manager(
 
 async def run_manager(
     manager: Agent[None, BaseModel],
-    query: str | list[dict[str, str]] | None,
+    query: UserPromptType,
     provider: str,
     usage_limits: UsageLimits | None,
     pydantic_ai_stream: bool = False,
@@ -307,10 +307,15 @@ async def run_manager(
         # async with manager.run_stream(user_prompt=query) as stream:
         #    async for chunk in stream.stream_text():
         #        logger.info(str(chunk))
+        # result = await stream.get_result()
     else:
         logger.info("Waiting for model response ...")
-        # FIXME run() deprecated, query unknown type
-        result = await manager.run(**mgr_cfg)
+        # FIXME deprecated warning manager.run(), query unknown type
+        # FIXME [call-overload] error: No overload variant of "run" of "Agent"
+        # matches argument type "dict[str, list[dict[str, str]] |
+        # Sequence[str | ImageUrl | AudioUrl | DocumentUrl | VideoUrl |
+        # BinaryContent] | UsageLimits | None]"
+        result = await manager.run(**mgr_cfg)  # type: ignore[reportDeprecated,reportUnknownArgumentType,reportCallOverload,call-overload]
 
     logger.info(f"Result: {result}")
     logger.info(f"Usage statistics: {result.usage()}")
@@ -318,8 +323,9 @@ async def run_manager(
 
 def setup_agent_env(
     provider: str,
-    query: str | list[dict[str, str]],
+    query: UserPromptType,
     chat_config: ChatConfig,
+    chat_env_config: AppEnv,
 ) -> EndpointConfig:
     """
     Sets up the environment for an agent by configuring provider settings, prompts,
@@ -327,20 +333,23 @@ def setup_agent_env(
 
     Args:
         provider (str): The name of the provider.
-        messages (str): The messages or queries to be sent to the agent.
-        config (ChatConfig): The configuration object containing provider and prompt
-            settings.
+        query (UserPromptType): The messages or queries to be sent to the agent.
+        chat_config (ChatConfig): The configuration object containing provider and
+            prompt settings.
+        chat_env_config (AppEnv): The application environment configuration
+            containing API keys.
 
     Returns:
         EndpointConfig: The configuration object for the agent.
     """
 
+    msg: str | None
     # FIXME context manager try-catch
     # with error_handling_context("setup_agent_env()"):
     provider_config = get_provider_config(provider, chat_config.providers)
 
     prompts = chat_config.prompts
-    api_key = get_api_key(provider)
+    api_key = get_api_key(provider, chat_env_config)
 
     if provider.lower() == "ollama":
         # TODO move usage limits to config
@@ -350,20 +359,20 @@ def setup_agent_env(
             msg = f"API key for provider '{provider}' is not set."
             logger.error(msg)
             raise ValueError(msg)
+        # TODO Separate Gemini request into function
         if provider.lower() == "gemini":
             if isinstance(query, str):
-                query = [{"role": "user", "content": query}]
-            elif isinstance(query, list):  # type: ignore (unnecessary check)
-                for msg in query:
-                    if (
-                        not isinstance(msg, dict)  # type: ignore (unnecessary check)
-                        or "role" not in msg
-                        or "content" not in msg
-                        or isinstance(msg["content"], str)  # type: ignore (unnecessary check)
-                    ):
-                        msg = "Invalid message format for Gemini provider"
-                        logger.error(msg)
-                        raise ValueError(msg)
+                query = ModelRequest.user_text_prompt(query)
+            elif isinstance(query, list):  # type: ignore[reportUnnecessaryIsInstance]
+                # query = [
+                #    ModelRequest.user_text_prompt(
+                #        str(msg.get("content", ""))
+                #    )  # type: ignore[reportUnknownArgumentType]
+                #    if isinstance(msg, dict)
+                #    else msg
+                #    for msg in query
+                # ]
+                raise NotImplementedError("Currently conflicting with UserPromptType")
             else:
                 msg = f"Unsupported query type for Gemini: {type(query)}"
                 logger.error(msg)

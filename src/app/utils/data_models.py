@@ -7,11 +7,20 @@ the application. These models ensure type safety and validation for data exchang
 between agents and system components.
 """
 
-from typing import Any
+from typing import Any, TypeVar
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic_ai.messages import ModelRequest
 from pydantic_ai.models import Model
+from pydantic_ai.tools import Tool
 from pydantic_ai.usage import UsageLimits
+
+type UserPromptType = (
+    str | list[dict[str, str]] | ModelRequest | None
+)  #  (1) Input validation
+ResultBaseType = TypeVar(
+    "ResultBaseType", bound=BaseModel
+)  # (2) Generic type for model results
 
 
 class ResearchResult(BaseModel):
@@ -59,7 +68,7 @@ class EndpointConfig(BaseModel):
     """Configuration for an agent"""
 
     provider: str
-    query: str | list[dict[str, str]] | None = None  # (1) messages
+    query: UserPromptType = None
     api_key: str | None
     prompts: dict[str, str]
     provider_config: ProviderConfig
@@ -69,16 +78,28 @@ class EndpointConfig(BaseModel):
 class AgentConfig(BaseModel):
     """Configuration for an agent"""
 
-    model: Model
-    output_type: type[BaseModel]  # class expected
+    model: Model  # (1) Instance expected
+    output_type: type[BaseModel]  # (2) Class expected
     system_prompt: str
-    tools: list[Any] = []  # FIXME Callable[..., Awaitab le[Any]]
+    # FIXME tools: list[Callable[..., Awaitable[Any]]]
+    tools: list[Any] = []  # (3) List of tools will be validated at creation
     retries: int = 3
 
     # Avoid pydantic.errors.PydanticSchemaGenerationError:
     # Unable to generate pydantic-core schema for <class 'openai.AsyncOpenAI'>.
     # Avoid Pydantic errors related to non-Pydantic types
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True
+    )  # (4) Suppress Error non-Pydantic types caused by <class 'openai.AsyncOpenAI'>
+
+    @field_validator("tools", mode="before")
+    def validate_tools(cls, v: list[Any]) -> list[Tool | None]:
+        """Validate that all tools are instances of Tool."""
+        if not v:
+            return []
+        if not all(isinstance(t, Tool) for t in v):
+            raise ValueError("All tools must be Tool instances")
+        return v
 
 
 class ModelDict(BaseModel):

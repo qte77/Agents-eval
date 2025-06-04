@@ -5,6 +5,7 @@ __pycache__/
 # environment
 .venv/
 *.env
+unset_env.sh
 
 # Distribution / packaging
 build/
@@ -44,4 +45,3 @@ site/
 
 # project specific
 wandb/
-
