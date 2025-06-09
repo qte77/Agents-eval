@@ -1,13 +1,12 @@
 """
 Agent system utilities for orchestrating multi-agent workflows.
 
-This module provides functions and helpers to create, configure, and run agent systems
-using Pydantic AI. It supports delegation of tasks to research, analysis, and synthesis
-agents, and manages agent configuration, environment setup, and execution.
-
+This module provides functions and helpers to create, configure, and run agent
+systems using Pydantic AI. It supports delegation of tasks to research, analysis, and
+synthesis agents, and manages agent configuration, environment setup, and execution.
 Args:
-    provider (str): The name of the provider.
-    provider_config (ProviderConfig): Configuration settings for the provider.
+    provider (str): The name of the provider. provider_config (ProviderConfig):
+        Configuration settings for the provider.
     api_key (str): API key for authentication with the provider.
     prompts (dict[str, str]): Configuration for prompts.
     include_researcher (bool): Flag to include the researcher agent.
