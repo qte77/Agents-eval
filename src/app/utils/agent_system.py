@@ -79,11 +79,11 @@ def _add_tools_to_manager_agent(
         except ValidationError as e:
             msg = f"Invalid output format: {e}"
             logger.error(msg)
-            raise ValueError(msg)
+            raise ValidationError(msg)
         except Exception as e:
             msg = f"Failed to parse output: {e}"
             logger.exception(msg)
-            raise RuntimeError(msg)
+            raise Exception(msg)
 
     if research_agent is not None:
 
