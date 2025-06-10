@@ -34,11 +34,11 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 ## Configuration
 
-[config.json](./src/config.json) contains . Inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
+[config_chat.json](./src/config_chat.json) contains inference provder configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
 
 ## Environment
 
-[.env.example](./.env.example) contains example for usage of API keys and variables.
+[.env.example](./.env.example) contains examples for usage of API keys and variables.
 
 ```text
 # inference EP
@@ -56,6 +56,10 @@ WANDB_API_KEY="xyz"
 [Agents-eval](https://qte77.github.io/Agents-eval)
 
 ### Project outline
+
+`#TODO`
+
+#### Datasets used
 
 `#TODO`
 
@@ -117,6 +121,15 @@ WANDB_API_KEY="xyz"
 - [Langtrace](https://www.langtrace.ai/)
 - [LangSmith - Langchain](https://www.langchain.com/langsmith)
 - [Weave - Weights & Biases](https://wandb.ai/site/weave/)
+
+### Datasets
+
+- [FEVER](https://fever.ai/dataset/fever.html), Fact Extraction and VERification
+- [X-Fact](https://github.com/utahnlp/x-fact/), Benchmark Dataset for Multilingual Fact Checking
+- [LIAR](https://www.cs.ucsb.edu/~william/data/liar_dataset.zip), fake news detection
+- [PDEBench](https://github.com/pdebench/PDEBench), set of benchmarks for scientific machine learning
+- [MatSci-NLP](https://arxiv.org/abs/2305.08264), evaluating the performance of natural language processing (NLP) models on materials science text
+- [StatLLM](https://arxiv.org/abs/2502.17657), statistical analysis tasks, LLM-generated SAS code, and human evaluation scores
 
 ### Benchmarks
 
