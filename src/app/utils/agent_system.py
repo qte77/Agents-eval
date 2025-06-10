@@ -88,8 +88,9 @@ def _add_tools_to_manager_agent(
     if research_agent is not None:
 
         @manager_agent.tool
+        # TODO remove redundant tool creation
         # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_research(  # type: ignore
+        async def delegate_research(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
         ) -> ResearchResult:
             """Delegate research task to ResearchAgent."""
@@ -100,7 +101,7 @@ def _add_tools_to_manager_agent(
 
         @manager_agent.tool
         # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_analysis(  # type: ignore
+        async def delegate_analysis(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
         ) -> AnalysisResult:
             """Delegate analysis task to AnalysisAgent."""
@@ -111,7 +112,7 @@ def _add_tools_to_manager_agent(
 
         @manager_agent.tool
         # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_synthesis(  # type: ignore
+        async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
         ) -> ResearchSummary:
             """Delegate synthesis task to AnalysisAgent."""
