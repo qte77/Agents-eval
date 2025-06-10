@@ -20,22 +20,26 @@ System_Boundary(agent_system, "Agent System") {
     Container(manager_agent, "Manager Agent", "pydantic-ai", "Coordinates research and analysis tasks")
     Container(research_agent, "Research Agent", "pydantic-ai", "Gathers information on topics")
     Container(analysis_agent, "Analysis Agent", "pydantic-ai", "Analyzes research")
+    Container(synthesiser_agent, "Synthesiser Agent", "pydantic-ai", "Produces scientific reports")
 }
 
 System_Ext(llm_provider, "LLM Provider", "External inference service for AI models")
 System_Ext(search_api, "DuckDuckGo Search", "External search API")
 
-Rel(user, main_module, "Submits query", "CLI Input")
-Rel(main_module, config, "Loads", "Read JSON")
+Rel(user, main_module, "Submits query", "CLI Input or GUI")
+Rel(main_module, config, "Loads", "Reads JSON config")
 Rel(main_module, agent_system, "Initializes and runs")
 
-Rel(manager_agent, research_agent, "Delegates research tasks to", "Tool call")
-Rel(manager_agent, analysis_agent, "Delegates analysis tasks to", "Tool call")
+Rel(manager_agent, research_agent, "Delegates research tasks to", "Optional Tool call")
+Rel(manager_agent, analysis_agent, "Delegates analysis tasks to", "Optional Tool call")
+Rel(manager_agent, synthesiser_agent, "Delegates synthesis tasks to", "Optional Tool call")
+
 Rel(research_agent, search_api, "Searches for information", "API call")
 
 Rel(manager_agent, llm_provider, "Generates responses", "API call")
 Rel(research_agent, llm_provider, "Generates responses", "API call")
 Rel(analysis_agent, llm_provider, "Generates responses", "API call")
+Rel(synthesiser_agent, llm_provider, "Generates responses", "API call")
 
 Rel(agent_system, utils, "Uses", "Import")
 Rel(main_module, utils, "Uses", "Import")
