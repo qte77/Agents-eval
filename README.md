@@ -36,7 +36,12 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 ## Configuration
 
-[config_chat.json](./src/config_chat.json) contains inference provder configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
+[config_chat.json](./src/config_chat.json) contains inference provider configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
+
+### Note
+
+1. The contained configuration uses free inference endpoints which are subject to change by the providers. See lists such as [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) to find other providers.
+2. The contained configuration uses models which are also subject to change by the providers and have to be updated from time to time.
 
 ## Environment
 
