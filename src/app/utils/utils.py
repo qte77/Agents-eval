@@ -27,7 +27,7 @@ from pydantic_ai.exceptions import (
 )
 from pydantic_ai.usage import Usage
 
-from app.utils.data_models import ResearchSummary
+from app.config.data_models import ResearchSummary
 from app.utils.log import logger
 
 
