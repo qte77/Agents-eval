@@ -3,7 +3,7 @@ from streamlit import button, exception, header, info, subheader, text_input, wa
 from app.main import main
 from app.utils.log import logger
 from gui.components.output import render_output
-from gui.utils.text import (
+from gui.config.text import (
     OUTPUT_SUBHEADER,
     RUN_APP_BUTTON,
     RUN_APP_HEADER,

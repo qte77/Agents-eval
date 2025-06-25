@@ -1,6 +1,6 @@
 from streamlit import sidebar
 
-from gui.utils.config import PAGES
+from gui.config.config import PAGES
 
 
 def render_sidebar(sidebar_title: str):
