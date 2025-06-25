@@ -36,7 +36,7 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 
 ## Configuration
 
-[config_chat.json](./src/config_chat.json) contains inference provider configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
+[config_chat.json](./src/app/config/config_chat.json) contains inference provider configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
 
 ### Note
 
@@ -99,7 +99,7 @@ WANDB_API_KEY="xyz"
 - [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
 - [CrewAI](https://github.com/crewAIInc/crewAI)
 - [Langchain](https://github.com/langchain-ai/langchain)
-- [Langflow](github.com/langflow-ai/langflow)
+- [Langflow](https://github.com/langflow-ai/langflow)
 
 ### Agent-builder
 
