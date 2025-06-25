@@ -1,7 +1,7 @@
 from streamlit import header, selectbox
 
 from app.config.data_models import ChatConfig
-from gui.utils.text import SETTINGS_HEADER, SETTINGS_PROVIDER_LABEL
+from gui.config.text import SETTINGS_HEADER, SETTINGS_PROVIDER_LABEL
 
 
 def render_settings(chat_config: ChatConfig) -> str:
