@@ -25,12 +25,12 @@ from sys import argv
 import weave
 from logfire import span
 
-from .agents.agent_system import get_manager, run_manager, setup_agent_env
-from .config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
-from .utils.load_configs import AppEnv, load_app_config
-from .utils.log import logger
-from .utils.login import login
-from .utils.utils import parse_args
+from app.agents.agent_system import get_manager, run_manager, setup_agent_env
+from app.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
+from app.utils.load_configs import AppEnv, load_app_config
+from app.utils.log import logger
+from app.utils.login import login
+from app.utils.utils import parse_args
 
 
 @weave.op()

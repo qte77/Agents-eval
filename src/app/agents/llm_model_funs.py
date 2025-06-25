@@ -11,10 +11,10 @@ from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
-from ..config_app import API_SUFFIX
-from ..utils.data_models import EndpointConfig, ModelDict, ProviderConfig
-from ..utils.load_configs import AppEnv
-from ..utils.log import logger
+from app.config_app import API_SUFFIX
+from app.utils.data_models import EndpointConfig, ModelDict, ProviderConfig
+from app.utils.load_configs import AppEnv
+from app.utils.log import logger
 
 
 def get_api_key(

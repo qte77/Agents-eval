@@ -11,9 +11,9 @@ from logfire import configure as logfire_conf
 from wandb import login as wandb_login
 from weave import init as weave_init
 
-from ..agents.llm_model_funs import get_api_key
-from .load_configs import AppEnv
-from .log import logger
+from app.agents.llm_model_funs import get_api_key
+from app.utils.load_configs import AppEnv
+from app.utils.log import logger
 
 
 def login(project_name: str, chat_env_config: AppEnv):

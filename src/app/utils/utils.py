@@ -27,8 +27,8 @@ from pydantic_ai.exceptions import (
 )
 from pydantic_ai.usage import Usage
 
-from .data_models import ResearchSummary
-from .log import logger
+from app.utils.data_models import ResearchSummary
+from app.utils.log import logger
 
 
 def log_research_result(summary: ResearchSummary, usage: Usage) -> None:
