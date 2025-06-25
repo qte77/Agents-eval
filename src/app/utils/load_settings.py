@@ -10,8 +10,8 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .data_models import ChatConfig
-from .log import logger
+from app.config.data_models import ChatConfig
+from app.utils.log import logger
 
 
 class AppEnv(BaseSettings):

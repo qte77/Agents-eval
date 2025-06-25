@@ -6,14 +6,15 @@ to create model instances for supported LLM providers such as Gemini and OpenAI.
 It also includes logic for assembling model dictionaries for system agents.
 """
 
+from pydantic import HttpUrl
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
-from ..config_app import API_SUFFIX
-from .data_models import EndpointConfig, ModelDict, ProviderConfig
-from .load_configs import AppEnv
-from .log import logger
+from app.config.config_app import API_SUFFIX
+from app.config.data_models import EndpointConfig, ModelDict, ProviderConfig
+from app.utils.load_configs import AppEnv
+from app.utils.log import logger
 
 
 def get_api_key(
@@ -38,7 +39,7 @@ def get_api_key(
 
 def get_provider_config(
     provider: str, providers: dict[str, ProviderConfig]
-) -> dict[str, str]:
+) -> dict[str, str | HttpUrl]:
     """Retrieve configuration settings for the specified provider."""
 
     try:
@@ -81,10 +82,11 @@ def _create_model(endpoint_config: EndpointConfig) -> GeminiModel | OpenAIModel:
         #    return response.json()
         # query({"inputs": "", "parameters": {},})
     else:
+        base_url_str = str(endpoint_config.provider_config.base_url)
         return OpenAIModel(
             model_name=endpoint_config.provider_config.model_name,
             provider=OpenAIProvider(
-                base_url=endpoint_config.provider_config.base_url,
+                base_url=base_url_str,
                 api_key=endpoint_config.api_key,
             ),
         )

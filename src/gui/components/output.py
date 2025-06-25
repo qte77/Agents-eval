@@ -1,8 +1,6 @@
 from typing import Any
 
-from streamlit import empty, info, subheader
-
-from ..utils.text import OUTPUT_SUBHEADER
+from streamlit import empty, info
 
 
 def render_output(
@@ -21,8 +19,6 @@ def render_output(
     Returns:
         Out: None
     """
-
-    subheader(OUTPUT_SUBHEADER)
 
     if result:
         output_container = empty()

@@ -1,13 +1,12 @@
 """
 Agent system utilities for orchestrating multi-agent workflows.
 
-This module provides functions and helpers to create, configure, and run agent systems
-using Pydantic AI. It supports delegation of tasks to research, analysis, and synthesis
-agents, and manages agent configuration, environment setup, and execution.
-
+This module provides functions and helpers to create, configure, and run agent
+systems using Pydantic AI. It supports delegation of tasks to research, analysis, and
+synthesis agents, and manages agent configuration, environment setup, and execution.
 Args:
-    provider (str): The name of the provider.
-    provider_config (ProviderConfig): Configuration settings for the provider.
+    provider (str): The name of the provider. provider_config (ProviderConfig):
+        Configuration settings for the provider.
     api_key (str): API key for authentication with the provider.
     prompts (dict[str, str]): Configuration for prompts.
     include_researcher (bool): Flag to include the researcher agent.
@@ -33,7 +32,8 @@ from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.messages import ModelRequest
 from pydantic_ai.usage import UsageLimits
 
-from .data_models import (
+from app.agents.llm_model_funs import get_api_key, get_models, get_provider_config
+from app.config.data_models import (
     AgentConfig,
     AnalysisResult,
     ChatConfig,
@@ -45,9 +45,8 @@ from .data_models import (
     ResultBaseType,
     UserPromptType,
 )
-from .llm_model_funs import get_api_key, get_models, get_provider_config
-from .load_configs import AppEnv
-from .log import logger
+from app.utils.load_configs import AppEnv
+from app.utils.log import logger
 
 
 def _add_tools_to_manager_agent(
@@ -80,17 +79,18 @@ def _add_tools_to_manager_agent(
         except ValidationError as e:
             msg = f"Invalid output format: {e}"
             logger.error(msg)
-            raise ValueError(msg)
+            raise ValidationError(msg)
         except Exception as e:
             msg = f"Failed to parse output: {e}"
             logger.exception(msg)
-            raise RuntimeError(msg)
+            raise Exception(msg)
 
     if research_agent is not None:
 
         @manager_agent.tool
+        # TODO remove redundant tool creation
         # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_research(  # type: ignore
+        async def delegate_research(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
         ) -> ResearchResult:
             """Delegate research task to ResearchAgent."""
@@ -101,7 +101,7 @@ def _add_tools_to_manager_agent(
 
         @manager_agent.tool
         # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_analysis(  # type: ignore
+        async def delegate_analysis(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
         ) -> AnalysisResult:
             """Delegate analysis task to AnalysisAgent."""
@@ -112,7 +112,7 @@ def _add_tools_to_manager_agent(
 
         @manager_agent.tool
         # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_synthesis(  # type: ignore
+        async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
         ) -> ResearchSummary:
             """Delegate synthesis task to AnalysisAgent."""

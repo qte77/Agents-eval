@@ -17,12 +17,12 @@ CHAT_CFG_FILE := $(APP_PATH)/config_chat.json
 OLLAMA_SETUP_URL := https://ollama.com/install.sh
 OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
 
-setup_prod: ## Install uv and deps, Download and start Ollama 
+setup_prod:  ## Install uv and deps, Download and start Ollama 
 	echo "Setting up tools..."
 	pip install uv -q
 	uv sync --frozen
 
-setup_dev: ## Install uv and deps, Download and start Ollama 
+setup_dev:  ## Install uv and deps, Download and start Ollama 
 	echo "Setting up tools..."
 	pip install uv -q
 	uv sync --all-groups
@@ -38,21 +38,21 @@ setup_dev_ollama:
 	$(MAKE) -s start_ollama
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
-setup_ollama: ## Download Ollama, script does start local Ollama server
+setup_ollama:  ## Download Ollama, script does start local Ollama server
 	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
 	# script does start server but not consistently
 	curl -fsSL $(OLLAMA_SETUP_URL) | sh
 	echo "Pulling model '$(OLLAMA_MODEL_NAME)' ..."
 	ollama pull $(OLLAMA_MODEL_NAME)
 
-start_ollama: ## Start local Ollama server, default 127.0.0.1:11434
+start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
 	ollama serve
 
-stop_ollama: ## Stop local Ollama server
+stop_ollama:  ## Stop local Ollama server
 	echo "Stopping Ollama server..."
 	pkill ollama
 
-clean_ollama: ## Remove local Ollama from system
+clean_ollama:  ## Remove local Ollama from system
 	echo "Searching for Ollama binary..."
 	for BINDIR in /usr/local/bin /usr/bin /bin; do
 		if echo $$PATH | grep -q $$BINDIR; then
@@ -64,33 +64,33 @@ clean_ollama: ## Remove local Ollama from system
 	echo "Cleaning up..."
 	rm -f $(BIN)
 
-ruff: ## Lint: Format and check with ruff
+ruff:  ## Lint: Format and check with ruff
 	uv run ruff format
 	uv run ruff check --fix
 
-run_cli: ## Run app on CLI only
+run_cli:  ## Run app on CLI only
 	path=$$(echo "$(APP_PATH)" | tr '/' '.')
 	uv run python -m $${path}.main $(ARGS)
 
-run_gui: ## Run app with Streamlit GUI
+run_gui:  ## Run app with Streamlit GUI
 	uv run streamlit run $(GUI_PATH_ST)
 
-run_profile: ## Profile app with scalene
+run_profile:  ## Profile app with scalene
 	uv run scalene --outfile \
 		"$(APP_PATH)/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
 		"$(APP_PATH)/main.py"
 
-test_all: ## Run all tests
+test_all:  ## Run all tests
 	uv run pytest
 	
-coverage_all: ## Get test coverage
+coverage_all:  ## Get test coverage
 	uv run coverage run -m pytest || true
 	uv run coverage report -m
 
-type_check: ## Check for static typing errors
+type_check:  ## Check for static typing errors
 	uv run mypy $(APP_PATH)
 
-output_unset_app_env_sh: ## Unset app environment variables
+output_unset_app_env_sh:  ## Unset app environment variables
 	uf="./unset_env.sh"
 	echo "Outputing '$${uf}' ..."
 	printenv | awk -F= '/_API_KEY=/ {print "unset " $$1}' > $$uf

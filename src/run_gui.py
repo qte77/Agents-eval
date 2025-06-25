@@ -18,17 +18,17 @@ Functions:
 from asyncio import run
 from pathlib import Path
 
-from app.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER
+from app.config.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER
 from app.utils.load_configs import load_app_config
 from app.utils.log import logger
 from gui.components.sidebar import render_sidebar
+from gui.config.config import APP_PATH
+from gui.config.styling import add_custom_styling
+from gui.config.text import PAGE_TITLE
 from gui.pages.home import render_home
 from gui.pages.prompts import render_prompts
 from gui.pages.run_app import render_app
 from gui.pages.settings import render_settings
-from gui.utils.config import APP_PATH
-from gui.utils.styling import add_custom_styling
-from gui.utils.text import PAGE_TITLE
 
 # TODO create sidebar tabs, move settings to page,
 # set readme.md as home, separate prompts into page

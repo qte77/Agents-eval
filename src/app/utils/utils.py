@@ -27,8 +27,8 @@ from pydantic_ai.exceptions import (
 )
 from pydantic_ai.usage import Usage
 
-from .data_models import ResearchSummary
-from .log import logger
+from app.config.data_models import ResearchSummary
+from app.utils.log import logger
 
 
 def log_research_result(summary: ResearchSummary, usage: Usage) -> None:
@@ -54,7 +54,39 @@ def log_research_result(summary: ResearchSummary, usage: Usage) -> None:
 
 
 def parse_args(argv: list[str]) -> dict[str, str | bool]:
-    """Parse command line arguments."""
+    """
+    Parse command line arguments into a dictionary.
+
+    This function processes a list of command-line arguments,
+    extracting recognized options and their values.
+    Supported arguments include flags (e.g., --help, --include-researcher
+    and key-value pairs (e.g., `--chat-provider=ollama`).
+    If the `--help` flag is present, a list of available commands and their
+    descriptions is printed, and an empty dictionary is returned.
+
+    Recognized arguments as list[str]
+    ```
+        --help                   Display help information and exit.
+        --version                Display version information.
+        --chat-provider=<str>    Specify the chat provider to use.
+        --query=<str>            Specify the query to process.
+        --include-researcher     Include the researcher agent.
+        --include-analyst        Include the analyst agent.
+        --include-synthesiser    Include the synthesiser agent.
+        --no-stream              Disable streaming output.
+        --chat-config-file=<str> Specify the path to the chat configuration file.
+    ```
+
+    Returns:
+        `dict[str, str | bool]`: A dictionary mapping argument names
+        (with leading '--' removed and hyphens replaced by underscores)
+        to their values (`str` for key-value pairs, `bool` for flags).
+        Returns an empty dict if `--help` is specified.
+
+    Example:
+        >>> `parse_args(['--chat-provider=ollama', '--include-researcher'])`
+        returns `{'chat_provider': 'ollama', 'include_researcher': True}`
+    """
 
     commands = {
         "--help": "Display help information",

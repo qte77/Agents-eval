@@ -9,7 +9,7 @@ between agents and system components.
 
 from typing import Any, TypeVar
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, HttpUrl, field_validator
 from pydantic_ai.messages import ModelRequest
 from pydantic_ai.models import Model
 from pydantic_ai.tools import Tool
@@ -53,7 +53,7 @@ class ProviderConfig(BaseModel):
     """Configuration for a model provider"""
 
     model_name: str
-    base_url: str
+    base_url: HttpUrl
 
 
 class ChatConfig(BaseModel):

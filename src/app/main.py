@@ -25,12 +25,13 @@ from sys import argv
 import weave
 from logfire import span
 
-from .config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
-from .utils.agent_system import get_manager, run_manager, setup_agent_env
-from .utils.load_configs import AppEnv, load_app_config
-from .utils.log import logger
-from .utils.login import login
-from .utils.utils import parse_args
+from app.__init__ import __version__
+from app.agents.agent_system import get_manager, run_manager, setup_agent_env
+from app.config.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
+from app.utils.load_configs import AppEnv, load_app_config
+from app.utils.log import logger
+from app.utils.login import login
+from app.utils.utils import parse_args
 
 
 @weave.op()
@@ -59,7 +60,7 @@ async def main(
         None
     """
 
-    logger.info(f"Starting app '{PROJECT_NAME}'")
+    logger.info(f"Starting app '{PROJECT_NAME}' v{__version__}")
     try:
         with span("main()"):
             if not chat_provider:
@@ -96,7 +97,9 @@ async def main(
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 
     except Exception as e:
-        logger.exception(f"Aborting with: {e}")
+        msg = f"Aborting app '{PROJECT_NAME}' with: {e}"
+        logger.exception(msg)
+        raise Exception(msg) from e
 
 
 if __name__ == "__main__":
