@@ -2,9 +2,8 @@ from streamlit import button, header, info, text_input, warning
 
 from app.main import main
 from app.utils.log import logger
-
-from ..components.output import render_output
-from ..utils.text import (
+from gui.components.output import render_output
+from gui.utils.text import (
     RUN_APP_BUTTON,
     RUN_APP_HEADER,
     RUN_APP_OUTPUT_PLACEHOLDER,
