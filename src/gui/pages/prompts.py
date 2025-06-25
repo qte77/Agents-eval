@@ -1,8 +1,8 @@
 from streamlit import header, warning
 
-from ..components.prompts import render_prompt_editor
-from ..utils.config import PROMPTS_DEFAULT
-from ..utils.text import PROMPTS_HEADER, PROMPTS_WARNING
+from gui.components.prompts import render_prompt_editor
+from gui.utils.config import PROMPTS_DEFAULT
+from gui.utils.text import PROMPTS_HEADER, PROMPTS_WARNING
 
 
 def render_prompts(prompts: dict[str, str]) -> dict[str, str]:

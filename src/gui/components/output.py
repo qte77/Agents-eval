@@ -2,7 +2,7 @@ from typing import Any
 
 from streamlit import empty, info, subheader
 
-from ..utils.text import OUTPUT_SUBHEADER
+from gui.utils.text import OUTPUT_SUBHEADER
 
 
 def render_output(

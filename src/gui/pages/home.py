@@ -1,6 +1,6 @@
 from streamlit import header, info, markdown
 
-from ..utils.text import HOME_DESCRIPTION, HOME_HEADER, HOME_INFO
+from gui.utils.text import HOME_DESCRIPTION, HOME_HEADER, HOME_INFO
 
 
 def render_home():
