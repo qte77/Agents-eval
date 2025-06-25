@@ -96,7 +96,9 @@ async def main(
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 
     except Exception as e:
-        logger.exception(f"Aborting with: {e}")
+        msg = f"Aborting app '{PROJECT_NAME}' with: {e}"
+        logger.exception(msg)
+        raise Exception(msg) from e
 
 
 if __name__ == "__main__":

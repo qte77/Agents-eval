@@ -1,9 +1,10 @@
-from streamlit import button, header, info, text_input, warning
+from streamlit import button, exception, header, info, subheader, text_input, warning
 
 from app.main import main
 from app.utils.log import logger
 from gui.components.output import render_output
 from gui.utils.text import (
+    OUTPUT_SUBHEADER,
     RUN_APP_BUTTON,
     RUN_APP_HEADER,
     RUN_APP_OUTPUT_PLACEHOLDER,
@@ -20,6 +21,7 @@ async def render_app(provider: str | None = None):
         provider = text_input(RUN_APP_PROVIDER_PLACEHOLDER)
     query = text_input(RUN_APP_QUERY_PLACEHOLDER)
 
+    subheader(OUTPUT_SUBHEADER)
     if button(RUN_APP_BUTTON):
         if query:
             info(f"{RUN_APP_QUERY_RUN_INFO} {query}")
@@ -27,7 +29,8 @@ async def render_app(provider: str | None = None):
                 result = await main(chat_provider=provider, query=query)
                 render_output(result)
             except Exception as e:
-                warning(e)
+                render_output(None)
+                exception(e)
                 logger.exception(e)
         else:
             warning(RUN_APP_QUERY_WARNING)
