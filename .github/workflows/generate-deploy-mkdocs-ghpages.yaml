@@ -73,10 +73,10 @@ jobs:
       run: |
         # TODO copy only files in nav of mkdocs.yaml
         CFG_PATH="src/app/config"
-        mkdir -p "${DOC_DIR}/{CFG_PATH}"
+        mkdir -p "${DOC_DIR}/${CFG_PATH}"
         cp README.md "${DOC_DIR}/index.md"
         cp .env.example "${DOC_DIR}"
-        cp "{CFG_PATH}/config_chat.json" "${DOC_DIR}/{CFG_PATH}"
+        cp "${CFG_PATH}/config_chat.json" "${DOC_DIR}/${CFG_PATH}"
         cp {CHANGELOG,LICENSE}.md "${DOC_DIR}"
 
     - name: Generate code docstrings concat file
