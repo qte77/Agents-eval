@@ -25,6 +25,7 @@ from sys import argv
 import weave
 from logfire import span
 
+from app.__init__ import __version__
 from app.agents.agent_system import get_manager, run_manager, setup_agent_env
 from app.config.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
 from app.utils.load_configs import AppEnv, load_app_config
@@ -59,7 +60,7 @@ async def main(
         None
     """
 
-    logger.info(f"Starting app '{PROJECT_NAME}'")
+    logger.info(f"Starting app '{PROJECT_NAME}' v{__version__}")
     try:
         with span("main()"):
             if not chat_provider:
