@@ -29,28 +29,14 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 - `make run_gui`
 - `make test_all`
 
-### Customer Journey
-
-<details>
-  <summary>Show Customer Journey</summary>
-  <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
-  <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
-</details>
-
-## Configuration
+### Configuration
 
 - [config_app.py](src/app/config/config_app.py) contains configuration constants for the application.
 - [config_chat.json](src/app/config/config_chat.json) contains inference provider configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
 - [config_eval.json](src/app/config/config_eval.json) contains evaluation metrics and their weights.
 - [data_models.py](src/app/config/data_models.py) contains the pydantic data models for agent system configuration and results.
 
-### Note
-
-1. The contained chat configuration uses free inference endpoints which are subject to change by the providers. See lists such as [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) to find other providers.
-2. The contained chat configuration uses models which are also subject to change by the providers and have to be updated from time to time.
-3. LLM-as-judge is also subject to the chat configuration.
-
-## Environment
+### Environment
 
 [.env.example](.env.example) contains examples for usage of API keys and variables.
 
@@ -65,6 +51,20 @@ TAVILY_API_KEY=""
 WANDB_API_KEY="xyz"
 ```
 
+### Customer Journey
+
+<details>
+  <summary>Show Customer Journey</summary>
+  <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+  <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+</details>
+
+### Note
+
+1. The contained chat configuration uses free inference endpoints which are subject to change by the providers. See lists such as [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) to find other providers.
+2. The contained chat configuration uses models which are also subject to change by the providers and have to be updated from time to time.
+3. LLM-as-judge is also subject to the chat configuration.
+
 ## Documentation
 
 [Agents-eval](https://qte77.github.io/Agents-eval)
@@ -73,11 +73,11 @@ WANDB_API_KEY="xyz"
 
 `#TODO`
 
-#### Datasets used
+### Datasets used
 
 `#TODO`
 
-#### Evaluations Metrics Baseline
+### Evaluations Metrics Baseline
 
 As configured in [config_eval.json](src/app/config/config_eval.json).
 
@@ -100,7 +100,7 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
   <img src="assets/images/metrics-eval-sweep.png" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
 </details>
 
-#### Tools available
+### Tools available
 
 Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
 
