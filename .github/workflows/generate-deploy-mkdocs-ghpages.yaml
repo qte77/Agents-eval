@@ -87,6 +87,7 @@ jobs:
           sed 's/\//./g'| sed 's/\.py$//' | \
           sed "s/^/${PREFIX}/" | sort > \
           "${DOC_DIR}/${DOCSTRINGS_FILE}"
+          cat "${DOC_DIR}/${DOCSTRINGS_FILE}"
 
     - name: Build documentation
       run: uv run --locked --only-group docs mkdocs build
