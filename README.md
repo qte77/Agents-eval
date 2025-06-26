@@ -29,23 +29,16 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 - `make run_gui`
 - `make test_all`
 
-### Customer Journey
+### Configuration
 
-<img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
-<img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+- [config_app.py](src/app/config/config_app.py) contains configuration constants for the application.
+- [config_chat.json](src/app/config/config_chat.json) contains inference provider configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
+- [config_eval.json](src/app/config/config_eval.json) contains evaluation metrics and their weights.
+- [data_models.py](src/app/config/data_models.py) contains the pydantic data models for agent system configuration and results.
 
-## Configuration
+### Environment
 
-[config_chat.json](./src/config_chat.json) contains inference provider configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
-
-### Note
-
-1. The contained configuration uses free inference endpoints which are subject to change by the providers. See lists such as [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) to find other providers.
-2. The contained configuration uses models which are also subject to change by the providers and have to be updated from time to time.
-
-## Environment
-
-[.env.example](./.env.example) contains examples for usage of API keys and variables.
+[.env.example](.env.example) contains examples for usage of API keys and variables.
 
 ```text
 # inference EP
@@ -58,35 +51,98 @@ TAVILY_API_KEY=""
 WANDB_API_KEY="xyz"
 ```
 
+### Customer Journey
+
+<details>
+  <summary>Show Customer Journey</summary>
+  <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+  <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+</details>
+
+### Note
+
+1. The contained chat configuration uses free inference endpoints which are subject to change by the providers. See lists such as [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) to find other providers.
+2. The contained chat configuration uses models which are also subject to change by the providers and have to be updated from time to time.
+3. LLM-as-judge is also subject to the chat configuration.
+
 ## Documentation
 
 [Agents-eval](https://qte77.github.io/Agents-eval)
 
-### Project outline
+### Project Outline
 
 `#TODO`
 
-#### Datasets used
+### Datasets used
 
 `#TODO`
 
-#### Metrics used
+### Evaluations Metrics Baseline
 
-`#TODO`
+As configured in [config_eval.json](src/app/config/config_eval.json).
 
-#### Tools used
-
-`#TODO`
-
-### Architecture
-
-<img src="assets/images/c4-multi-agent-system.png#gh-dark-mode-only" alt="C4-Arch" title="C4-Arch" width="60%" />
-
-### Project Structure
-
-```sh
-#TODO
+```json
+{
+    "evaluators_and_weights": {
+        "planning_rational": 0.25,
+        "tool_efficiency": 0.25,
+        "coordination_quality": 0.25,
+        "time_taken": 0.25,
+        "text_similarity": 0.25
+    }
+}
 ```
+
+### Eval Metrics Sweep
+
+<details>
+  <summary>Eval Metrics Sweep</summary>
+  <img src="assets/images/metrics-eval-sweep.png" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
+</details>
+
+### Tools available
+
+Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
+
+### Agentic System Architecture
+
+<details>
+  <summary>Show Agentic System Architecture</summary>
+  <img src="assets/images/c4-multi-agent-system.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="60%" />
+</details>
+
+### Project Repo Structure
+
+<details>
+  <summary>Show Repo Structure</summary>
+```sh
+|- .devcontainer  # pre-configured dev env
+|- .github  # workflows
+|- .streamlit  # config.toml
+|- .vscode  # extensions, settings
+|- assets/images
+|- docs
+|- src  # source code
+   |- app
+      |- agents
+      |- config
+      |- evals
+      |- utils
+      \- main.py
+   |- examples
+   |- gui
+   \- run_gui.py
+|- tests
+|- .env.example  # example env vars
+|- CHANGEOG.md  # short project history
+|- Dockerfile  # create app image
+|- Makefile  # helper scripts
+|- mkdocs.yaml  # docu from docstrings
+|- pyproject.toml  # project settings
+|- README.md  # project description
+\- uv.lock  # resolved package versions
+```
+</details>
 
 ## Landscape overview
 
@@ -99,7 +155,7 @@ WANDB_API_KEY="xyz"
 - [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
 - [CrewAI](https://github.com/crewAIInc/crewAI)
 - [Langchain](https://github.com/langchain-ai/langchain)
-- [Langflow](github.com/langflow-ai/langflow)
+- [Langflow](https://github.com/langflow-ai/langflow)
 
 ### Agent-builder
 
@@ -128,15 +184,42 @@ WANDB_API_KEY="xyz"
 - [Langtrace](https://www.langtrace.ai/)
 - [LangSmith - Langchain](https://www.langchain.com/langsmith)
 - [Weave - Weights & Biases](https://wandb.ai/site/weave/)
+- [Pydantic- Logfire](https://pydantic.dev/logfire)
 
 ### Datasets
 
-- [FEVER](https://fever.ai/dataset/fever.html), Fact Extraction and VERification
-- [X-Fact](https://github.com/utahnlp/x-fact/), Benchmark Dataset for Multilingual Fact Checking
-- [LIAR](https://www.cs.ucsb.edu/~william/data/liar_dataset.zip), fake news detection
+- [awesome-reasoning - Collection of datasets](https://github.com/neurallambda/awesome-reasoning)
+
+#### Scientific
+
+- [SWIF2T](https://arxiv.org/abs/2405.20477), Automated Focused Feedback Generation for Scientific Writing Assistance, 2024, 300 peer reviews citing weaknesses in scientific papers and conduct human evaluation
+- [PeerRead](https://github.com/allenai/PeerRead), A Dataset of Peer Reviews (PeerRead): Collection, Insights and NLP Applications, 2018, 14K paper drafts and the corresponding accept/reject decisions, over 10K textual peer reviews written by experts for a subset of the papers, structured JSONL, clear labels
+- [BigSurvey](https://www.ijcai.org/proceedings/2022/0591.pdf), Generating a Structured Summary of Numerous Academic Papers: Dataset and Method, 2022, 7K survey papers and 430K referenced papers abstracts
+- [SciXGen](https://arxiv.org/abs/2110.10774), A Scientific Paper Dataset for Context-Aware Text Generation, 2021, 205k papers
+- [scientific_papers](https://huggingface.co/datasets/armanc/scientific_papers), 2018, two sets of long and structured documents, obtained from ArXiv and PubMed OpenAccess, 300k+ papers, total disk 7GB
+
+#### Reasoning, Deduction, Commonsense, Logic
+
+- [LIAR](https://www.cs.ucsb.edu/~william/data/liar_dataset.zip), fake news detection, only 12.8k records, single label
+- [X-Fact](https://github.com/utahnlp/x-fact/), Benchmark Dataset for Multilingual Fact Checking, 31.1k records, large, multilingual
+- [MultiFC](https://www.copenlu.com/publication/2019_emnlp_augenstein/), A Real-World Multi-Domain Dataset for Evidence-Based Fact Checking of Claims, 34.9k records
+- [FEVER](https://fever.ai/dataset/fever.html), Fact Extraction and VERification, 185.4k records
+- TODO GSM8K, bAbI, CommonsenseQA, DROP, LogiQA, MNLI
+
+#### Planning, Execution
+
+- [Plancraft](https://arxiv.org/abs/2412.21033), an evaluation dataset for planning with LLM agents, both a text-only and multi-modal interface
+- [IDAT](https://arxiv.org/abs/2407.08898), A Multi-Modal Dataset and Toolkit for Building and Evaluating Interactive Task-Solving Agents
 - [PDEBench](https://github.com/pdebench/PDEBench), set of benchmarks for scientific machine learning
 - [MatSci-NLP](https://arxiv.org/abs/2305.08264), evaluating the performance of natural language processing (NLP) models on materials science text
+- TODO BigBench Hard, FSM Game
+
+#### Tool Use, Function Invocation
+
+- [Trelis Function Calling](https://huggingface.co/datasets/Trelis/function_calling_v3)
+- [KnowLM Tool](https://huggingface.co/datasets/zjunlp/KnowLM-Tool)
 - [StatLLM](https://arxiv.org/abs/2502.17657), statistical analysis tasks, LLM-generated SAS code, and human evaluation scores
+- TODO ToolComp
 
 ### Benchmarks
 
