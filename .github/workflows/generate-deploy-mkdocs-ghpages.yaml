@@ -71,33 +71,21 @@ jobs:
 
     - name: Copy text files to be included
       run: |
-        # TODO copy only files in nav of mkdocs.yaml
         CFG_PATH="src/app/config"
         mkdir -p "${DOC_DIR}/${CFG_PATH}"
         cp README.md "${DOC_DIR}/index.md"
+        cp {CHANGELOG,LICENSE}.md "${DOC_DIR}"
+        # Auxiliary files
         cp .env.example "${DOC_DIR}"
         cp "${CFG_PATH}/config_chat.json" "${DOC_DIR}/${CFG_PATH}"
-        cp {CHANGELOG,LICENSE}.md "${DOC_DIR}"
 
     - name: Generate code docstrings concat file
       run: |
-        set -ex
-        # TODO remove debug log
-        ls -aR "${SRC_DIR}"
-
         PREFIX="::: "
         find "${SRC_DIR}" -type f -name "*.py" \
           -type f -not -name "__*__*" -printf "%P\n" | \
-          # TODO remove debug log
-          tee /dev/stderr | \  # Debug: Output raw paths to stderr
-          # TODO remove debug log
-          tee /dev/stderr | \  # Debug: Output raw paths to stderr
-          sed 's/\//./g'| sed 's/\.py$//' | \
-          # TODO remove debug log
-          tee /dev/stderr | \  # Debug: Output raw paths to stderr
+          sed 's/\//./g' | sed 's/\.py$//' | \
           sed "s/^/${PREFIX}/" | sort > \
-          # TODO remove debug log
-          tee /dev/stderr | \  # Debug: Output raw paths to stderr
           "${DOC_DIR}/${DOCSTRINGS_FILE}"
 
     - name: Build documentation
