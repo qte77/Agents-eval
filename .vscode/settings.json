@@ -7,7 +7,8 @@
     "git.enableSmartCommit": true,
     "makefile.configureOnOpen": false,
     "markdownlint.config": {
-        "MD024": false
+        "MD024": false,
+        "MD033": false
     },
     "python.analysis.extraPaths": ["./venv/lib/python3.13/site-packages"],
     "python.defaultInterpreterPath": "./.venv/bin/python",
