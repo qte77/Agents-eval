@@ -82,9 +82,8 @@ jobs:
     - name: Generate code docstrings concat file
       run: |
         set -ex
-        CFG_PATH="src/app/config"
         # TODO remove debug log
-        ls -aR "${DOC_DIR}"
+        ls -aR "${SRC_DIR}"
 
         PREFIX="::: "
         find "${SRC_DIR}" -type f -name "*.py" \
