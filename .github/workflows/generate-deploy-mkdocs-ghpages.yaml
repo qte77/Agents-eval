@@ -78,11 +78,14 @@ jobs:
         cp .env.example "${DOC_DIR}"
         cp "${CFG_PATH}/config_chat.json" "${DOC_DIR}/${CFG_PATH}"
         cp {CHANGELOG,LICENSE}.md "${DOC_DIR}"
-        # TODO remove debug log
-        ls -aR "${DOC_DIR}"
 
     - name: Generate code docstrings concat file
       run: |
+        set -ex
+        CFG_PATH="src/app/config"
+        # TODO remove debug log
+        ls -aR "${DOC_DIR}"
+
         PREFIX="::: "
         find "${SRC_DIR}" -type f -name "*.py" \
           -type f -not -name "__*__*" -printf "%P\n" | \
