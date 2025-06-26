@@ -1,9 +1,9 @@
 {
     "evaluators_and_weights": {
-            "planning_rational": 0.25,
-            "tool_efficiency": 0.25,
-            "coordination_quality": 0.25,
-            "time_taken": 0.25,
-            "text_similarity": 0.25
+        "planning_rational": 0.25,
+        "tool_efficiency": 0.25,
+        "coordination_quality": 0.25,
+        "time_taken": 0.25,
+        "text_similarity": 0.25
     }
 }
