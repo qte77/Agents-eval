@@ -1,0 +1,32 @@
+@startuml
+!theme plain
+skinparam ConditionEndStyle diamond
+skinparam ParticipantPadding 20
+skinparam BoxPadding 20
+
+participant "Sweep Engine" as SE
+participant "Agentic System" as AS
+participant "Evaluation Engine" as EE
+
+SE -> EE: Set baseline parameters
+
+group Sweep over parameter variations [Independent runs]
+
+    group Vary number of runs [ numbers of runs ]
+        loop for each run_number
+            SE -> AS: Start runs
+            AS -> EE: Execute runs
+            EE--> SE: Send results
+        end
+    end
+
+    group Sweep metrics weights [ metrics weights ]
+        loop for each weight_config
+            SE -> AS: Set weights and start runs
+            AS -> EE: Execute runs
+            EE--> SE: Send results
+        end
+    end
+
+end
+@enduml
