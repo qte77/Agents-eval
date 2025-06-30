@@ -77,6 +77,20 @@ WANDB_API_KEY="xyz"
 
 `#TODO`
 
+### Evalutions metrics
+
+# TODO 
+
+- Time to complete task (time_taken)
+- Task success rate (task_success)
+- Agent coordination (coordination_quality)
+- Tool usage efficiency (tool_efficiency)
+- Plan coherence (planning_rational)
+- Text response quality (text_similarity)
+- Autonomy vs. human intervention (HITL, user feedback)
+- Reactivity (adapt to changes of tasks and environments)
+- Memory consistency
+
 ### Evaluations Metrics Baseline
 
 As configured in [config_eval.json](src/app/config/config_eval.json).
@@ -84,11 +98,12 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 ```json
 {
     "evaluators_and_weights": {
-        "planning_rational": 0.25,
-        "tool_efficiency": 0.25,
-        "coordination_quality": 0.25,
-        "time_taken": 0.25,
-        "text_similarity": 0.25
+        "planning_rational": 1/6,
+        "task_success": 1/6,
+        "tool_efficiency": 1/6,
+        "coordination_quality": 1/6,
+        "time_taken": 1/6,
+        "text_similarity": 1/6
     }
 }
 ```
@@ -170,12 +185,14 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
   - [Langchain AgentEvals](https://github.com/langchain-ai/agentevals)
   - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
   - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
+  - [AgentBench](https://github.com/THUDM/AgentBench)
 - RAG oriented
   - [RAGAs](https://github.com/explodinggradients/ragas)
 - LLM apps
   - [DeepEval](https://github.com/confident-ai/deepeval)
   - [Langchain OpenEvals](https://github.com/langchain-ai/openevals)
   - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
+  - [DeepEval (DeepSeek)]( github.com/confident-ai/deepeval)
 
 ### Observation, Monitoring, Tracing
 
@@ -229,6 +246,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - [GAIA Leaderboard](https://gaia-benchmark-leaderboard.hf.space/)
 - [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
 - [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
+- [MiniWoB++: a web interaction benchmark for reinforcement learning](https://miniwob.farama.org/)
 
 ## Further Reading
 
