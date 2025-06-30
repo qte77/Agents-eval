@@ -98,12 +98,12 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 ```json
 {
     "evaluators_and_weights": {
-        "planning_rational": 1/6,
-        "task_success": 1/6,
-        "tool_efficiency": 1/6,
-        "coordination_quality": 1/6,
-        "time_taken": 1/6,
-        "text_similarity": 1/6
+        "planning_rational": "1/6",
+        "task_success": "1/6",
+        "tool_efficiency": "1/6",
+        "coordination_quality": "1/6",
+        "time_taken": "1/6",
+        "text_similarity": "1/6"
     }
 }
 ```
