@@ -101,9 +101,11 @@ known-first-party = ["src", "tests"]
 convention = "google"
 
 [tool.pytest.ini_options]
+addopts = "--strict-markers"
+# "function", "class", "module", "package", "session"
+asyncio_default_fixture_loop_scope = "function"
 pythonpath = ["src"]
 testpaths = ["tests/"]
-addopts = "--strict-markers"
 
 [tool.coverage]
 [tool.coverage.run]
