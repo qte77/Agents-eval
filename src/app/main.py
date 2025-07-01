@@ -11,8 +11,8 @@ from asyncio import run
 from pathlib import Path
 from sys import argv
 
-import weave
 from logfire import span
+from weave import op
 
 from app.__init__ import __version__
 from app.agents.agent_system import get_manager, run_manager, setup_agent_env
@@ -29,7 +29,7 @@ from app.utils.login import login
 from app.utils.utils import parse_args
 
 
-@weave.op()
+@op()
 async def main(
     chat_provider: str = CHAT_DEFAULT_PROVIDER,
     query: str = "",
