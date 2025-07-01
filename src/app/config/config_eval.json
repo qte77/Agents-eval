@@ -5,6 +5,6 @@
         "coordination_quality": 0.167,
         "tool_efficiency": 0.167,
         "planning_rational": 0.167,
-        "text_similarity": 0.167
+        "output_similarity": 0.167
     }
 }
