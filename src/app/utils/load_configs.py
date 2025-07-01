@@ -46,7 +46,7 @@ class AppEnv(BaseSettings):
     )
 
 
-def load_app_config(config_path: str | Path) -> ChatConfig:
+def load_chat_config(config_path: str | Path) -> ChatConfig:
     """
     Load and validate application configuration from a JSON file.
 

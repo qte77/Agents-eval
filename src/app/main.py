@@ -28,7 +28,7 @@ from logfire import span
 from app.__init__ import __version__
 from app.agents.agent_system import get_manager, run_manager, setup_agent_env
 from app.config.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
-from app.utils.load_configs import AppEnv, load_app_config
+from app.utils.load_configs import AppEnv, load_chat_config
 from app.utils.log import logger
 from app.utils.login import login
 from app.utils.utils import parse_args
@@ -69,7 +69,7 @@ async def main(
                 query = input("What would you like to research? ")
 
             chat_config_path = Path(__file__).parent / chat_config_file
-            chat_config = load_app_config(chat_config_path)
+            chat_config = load_chat_config(chat_config_path)
             chat_env_config = AppEnv()
             agent_env = setup_agent_env(
                 chat_provider, query, chat_config, chat_env_config
