@@ -36,6 +36,7 @@ from app.agents.llm_model_funs import get_api_key, get_models, get_provider_conf
 from app.config.data_models import (
     AgentConfig,
     AnalysisResult,
+    AppEnv,
     ChatConfig,
     EndpointConfig,
     ModelDict,
@@ -45,7 +46,6 @@ from app.config.data_models import (
     ResultBaseType,
     UserPromptType,
 )
-from app.utils.load_configs import AppEnv
 from app.utils.log import logger
 
 
@@ -324,7 +324,7 @@ async def run_manager(
 def setup_agent_env(
     provider: str,
     query: UserPromptType,
-    chat_config: ChatConfig,
+    chat_config: ChatConfig | BaseModel,
     chat_env_config: AppEnv,
 ) -> EndpointConfig:
     """
@@ -334,8 +334,8 @@ def setup_agent_env(
     Args:
         provider (str): The name of the provider.
         query (UserPromptType): The messages or queries to be sent to the agent.
-        chat_config (ChatConfig): The configuration object containing provider and
-            prompt settings.
+        chat_config (ChatConfig | BaseModel): The configuration object containing
+            provider and prompt settings.
         chat_env_config (AppEnv): The application environment configuration
             containing API keys.
 
@@ -343,6 +343,8 @@ def setup_agent_env(
         EndpointConfig: The configuration object for the agent.
     """
 
+    if not isinstance(chat_config, ChatConfig):
+        raise TypeError("'chat_config' of invalid type: ChatConfig expected")
     msg: str | None
     # FIXME context manager try-catch
     # with error_handling_context("setup_agent_env()"):

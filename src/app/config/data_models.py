@@ -14,6 +14,7 @@ from pydantic_ai.messages import ModelRequest
 from pydantic_ai.models import Model
 from pydantic_ai.tools import Tool
 from pydantic_ai.usage import UsageLimits
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 type UserPromptType = (
     str | list[dict[str, str]] | ModelRequest | None
@@ -110,3 +111,39 @@ class ModelDict(BaseModel):
     model_analyst: Model | None
     model_synthesiser: Model | None
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+class EvalConfig(BaseModel):
+    metrics_and_weights: dict[str, float]
+
+
+class AppEnv(BaseSettings):
+    """
+    Application environment settings loaded from environment variables or .env file.
+
+    This class uses Pydantic's BaseSettings to manage API keys and configuration
+    for various inference endpoints, tools, and logging/monitoring services.
+    Environment variables are loaded from a .env file by default.
+    """
+
+    # Inference endpoints
+    GEMINI_API_KEY: str = ""
+    GITHUB_API_KEY: str = ""
+    GROK_API_KEY: str = ""
+    HUGGINGFACE_API_KEY: str = ""
+    OPENROUTER_API_KEY: str = ""
+    PERPLEXITY_API_KEY: str = ""
+    RESTACK_API_KEY: str = ""
+    TOGETHER_API_KEY: str = ""
+
+    # Tools
+    TAVILY_API_KEY: str = ""
+
+    # Logging/Monitoring/Tracing
+    AGENTOPS_API_KEY: str = ""
+    LOGFIRE_API_KEY: str = ""
+    WANDB_API_KEY: str = ""
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )

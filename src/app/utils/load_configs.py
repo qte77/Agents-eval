@@ -1,81 +1,47 @@
 """
-Utility functions and classes for loading application settings and configuration.
+Configuration loading utilities.
 
-This module defines the AppEnv class for managing environment variables using Pydantic,
-and provides a function to load and validate application configuration from a JSON file.
+Provides a generic function for loading and validating JSON configuration
+files against Pydantic models, with error handling and logging support.
 """
 
 import json
 from pathlib import Path
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseModel, ValidationError
 
-from app.config.data_models import ChatConfig
 from app.utils.log import logger
 
 
-class AppEnv(BaseSettings):
+def load_config(config_path: str | Path, data_model: type[BaseModel]) -> BaseModel:
     """
-    Application environment settings loaded from environment variables or .env file.
-
-    This class uses Pydantic's BaseSettings to manage API keys and configuration
-    for various inference endpoints, tools, and logging/monitoring services.
-    Environment variables are loaded from a .env file by default.
-    """
-
-    # Inference endpoints
-    GEMINI_API_KEY: str = ""
-    GITHUB_API_KEY: str = ""
-    GROK_API_KEY: str = ""
-    HUGGINGFACE_API_KEY: str = ""
-    OPENROUTER_API_KEY: str = ""
-    PERPLEXITY_API_KEY: str = ""
-    RESTACK_API_KEY: str = ""
-    TOGETHER_API_KEY: str = ""
-
-    # Tools
-    TAVILY_API_KEY: str = ""
-
-    # Logging/Monitoring/Tracing
-    AGENTOPS_API_KEY: str = ""
-    LOGFIRE_API_KEY: str = ""
-    WANDB_API_KEY: str = ""
-
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
-    )
-
-
-def load_chat_config(config_path: str | Path) -> ChatConfig:
-    """
-    Load and validate application configuration from a JSON file.
+    Generic configuration loader that validates against any Pydantic model.
 
     Args:
-        config_path (str): Path to the JSON configuration file.
+        config_path: Path to the JSON configuration file
+        model: Pydantic model class for validation
 
     Returns:
-        ChatConfig: An instance of ChatConfig with validated configuration data.
-
-    Raises:
-        FileNotFoundError: If the configuration file does not exist.
-        json.JSONDecodeError: If the file contains invalid JSON.
-        Exception: For any other unexpected errors during loading or validation.
+        Validated configuration instance
     """
 
     try:
-        with open(config_path) as f:
-            config_data = json.load(f)
-    except FileNotFoundError:
-        msg = f"Configuration file not found: {config_path}"
+        with open(config_path, encoding="utf-8") as f:
+            data = json.load(f)
+        return data_model.model_validate(data)
+    except FileNotFoundError as e:
+        msg = f"Config file not found: {config_path}"
         logger.error(msg)
-        raise FileNotFoundError(msg)
+        raise FileNotFoundError(msg) from e
     except json.JSONDecodeError as e:
-        msg = f"Error decoding JSON from {config_path}: {e}"
+        msg = f"Invalid JSON in config: {e}"
         logger.error(msg)
-        raise json.JSONDecodeError(msg, str(config_path), 0)
+        raise ValueError(msg) from e
+    except ValidationError as e:
+        msg = f"Invalid config format: {e}"
+        logger.error(msg)
+        raise ValidationError(msg) from e
     except Exception as e:
-        msg = f"Unexpected error loading config from {config_path}: {e}"
+        msg = f"Failed to load config: {e}"
         logger.exception(msg)
-        raise Exception(msg)
-
-    return ChatConfig.model_validate(config_data)
+        raise Exception(msg) from e
