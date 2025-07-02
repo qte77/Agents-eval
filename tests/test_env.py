@@ -1,6 +1,6 @@
 from pytest import MonkeyPatch
 
-from app.utils.load_configs import AppEnv
+from app.config.data_models import AppEnv
 
 
 def test_app_env_loads_env_vars(monkeypatch: MonkeyPatch):

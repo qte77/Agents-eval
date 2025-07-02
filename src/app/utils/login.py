@@ -13,6 +13,7 @@ from weave import init as weave_init
 
 from app.agents.llm_model_funs import get_api_key
 from app.config.data_models import AppEnv
+from app.utils.error_messages import generic_exception
 from app.utils.log import logger
 
 
@@ -38,4 +39,6 @@ def login(project_name: str, chat_env_config: AppEnv):
         wandb_login(key=get_api_key("WANDB", chat_env_config))
         weave_init(project_name)
     except Exception as e:
+        msg = generic_exception(str(e))
         logger.exception(e)
+        raise Exception(msg) from e

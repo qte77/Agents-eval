@@ -23,6 +23,7 @@ from app.config.config_app import (
     PROJECT_NAME,
 )
 from app.config.data_models import AppEnv, ChatConfig, EvalConfig
+from app.utils.error_messages import generic_exception
 from app.utils.load_configs import load_config
 from app.utils.log import logger
 from app.utils.login import login
@@ -96,7 +97,7 @@ async def main(
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 
     except Exception as e:
-        msg = f"Aborting app '{PROJECT_NAME}' with: {e}"
+        msg = generic_exception(f"Aborting app '{PROJECT_NAME}' with: {e}")
         logger.exception(msg)
         raise Exception(msg) from e
 

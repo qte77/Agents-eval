@@ -1,18 +1,40 @@
-from streamlit import header, selectbox
+"""
+Streamlit settings UI for provider and agent configuration.
 
-from app.config.data_models import ChatConfig
+This module provides a function to render and edit agent system settings,
+including provider selection and related options, within the Streamlit GUI.
+It validates the input configuration and ensures correct typing before rendering.
+"""
+
+from streamlit import error, header, selectbox
+
+from app.config.data_models import BaseModel, ChatConfig
+from app.utils.error_messages import invalid_type
+from app.utils.log import logger
 from gui.config.text import SETTINGS_HEADER, SETTINGS_PROVIDER_LABEL
 
 
-def render_settings(chat_config: ChatConfig) -> str:
+def render_settings(chat_config: ChatConfig | BaseModel) -> str:
+    """
+    Render and edit agent system settings in the Streamlit UI.
+
+    Displays a header and a selectbox for choosing the inference provider.
+    Validates that the input is a ChatConfig instance and displays an error if not.
+    """
     header(SETTINGS_HEADER)
 
     # updated = False
     # updated_config = config.copy()
 
+    if not isinstance(chat_config, ChatConfig):
+        msg = invalid_type("ChatConfig", type(chat_config).__name__)
+        logger.error(msg)
+        error(msg)
+        return msg
+
     provider = selectbox(
-        SETTINGS_PROVIDER_LABEL,
-        chat_config.providers,
+        label=SETTINGS_PROVIDER_LABEL,
+        options=chat_config.providers.keys(),
     )
 
     # Run options

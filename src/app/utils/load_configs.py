@@ -10,6 +10,12 @@ from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
 
+from app.utils.error_messages import (
+    failed_to_load_config,
+    file_not_found,
+    invalid_data_model_format,
+    invalid_json,
+)
 from app.utils.log import logger
 
 
@@ -30,18 +36,18 @@ def load_config(config_path: str | Path, data_model: type[BaseModel]) -> BaseMod
             data = json.load(f)
         return data_model.model_validate(data)
     except FileNotFoundError as e:
-        msg = f"Config file not found: {config_path}"
+        msg = file_not_found(config_path)
         logger.error(msg)
         raise FileNotFoundError(msg) from e
     except json.JSONDecodeError as e:
-        msg = f"Invalid JSON in config: {e}"
+        msg = invalid_json(str(e))
         logger.error(msg)
         raise ValueError(msg) from e
     except ValidationError as e:
-        msg = f"Invalid config format: {e}"
+        msg = invalid_data_model_format(str(e))
         logger.error(msg)
         raise ValidationError(msg) from e
     except Exception as e:
-        msg = f"Failed to load config: {e}"
+        msg = failed_to_load_config(str(e))
         logger.exception(msg)
         raise Exception(msg) from e

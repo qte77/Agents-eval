@@ -11,6 +11,11 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.config.data_models import ChatConfig
+from app.utils.error_messages import (
+    failed_to_load_config,
+    file_not_found,
+    invalid_json,
+)
 from app.utils.log import logger
 
 
@@ -68,17 +73,17 @@ def load_config(config_path: str | Path) -> ChatConfig:
     try:
         with open(config_path) as f:
             config_data = json.load(f)
-    except FileNotFoundError:
-        msg = f"Configuration file not found: {config_path}"
+    except FileNotFoundError as e:
+        msg = file_not_found(config_path)
         logger.error(msg)
-        raise FileNotFoundError(msg)
+        raise FileNotFoundError(msg) from e
     except json.JSONDecodeError as e:
-        msg = f"Error decoding JSON from {config_path}: {e}"
+        msg = invalid_json(str(e))
         logger.error(msg)
-        raise json.JSONDecodeError(msg, str(config_path), 0)
+        raise json.JSONDecodeError(msg, str(config_path), 0) from e
     except Exception as e:
-        msg = f"Unexpected error loading config from {config_path}: {e}"
+        msg = failed_to_load_config(str(e))
         logger.exception(msg)
-        raise Exception(msg)
+        raise Exception(msg) from e
 
     return ChatConfig.model_validate(config_data)

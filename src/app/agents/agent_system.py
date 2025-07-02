@@ -46,6 +46,7 @@ from app.config.data_models import (
     ResultBaseType,
     UserPromptType,
 )
+from app.utils.error_messages import generic_exception, invalid_data_model_format
 from app.utils.log import logger
 
 
@@ -77,11 +78,11 @@ def _add_tools_to_manager_agent(
         try:
             return result_model.model_validate(result_output)
         except ValidationError as e:
-            msg = f"Invalid output format: {e}"
+            msg = invalid_data_model_format(str(e))
             logger.error(msg)
             raise ValidationError(msg)
         except Exception as e:
-            msg = f"Failed to parse output: {e}"
+            msg = generic_exception(str(e))
             logger.exception(msg)
             raise Exception(msg)
 

@@ -1,3 +1,11 @@
+"""
+Streamlit interface for running the agentic system interactively.
+
+This module defines the render_app function, which provides a Streamlit-based UI
+for users to select a provider, enter a query, and execute the main agent workflow.
+Results and errors are displayed in real time, supporting asynchronous execution.
+"""
+
 from streamlit import button, exception, header, info, subheader, text_input, warning
 
 from app.main import main
@@ -16,6 +24,14 @@ from gui.config.text import (
 
 
 async def render_app(provider: str | None = None):
+    """
+    Render the main app interface for running agentic queries via Streamlit.
+
+    Displays input fields for provider and query, a button to trigger execution,
+    and an area for output or error messages. Handles async invocation of the
+    main agent workflow and logs any exceptions.
+    """
+
     header(RUN_APP_HEADER)
     if provider is None:
         provider = text_input(RUN_APP_PROVIDER_PLACEHOLDER)
