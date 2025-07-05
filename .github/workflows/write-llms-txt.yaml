@@ -33,14 +33,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Constructin llms.txt path
+      - name: Construct and create llms.txt path
         id: construct_and_create_llms_txt_path
         run: |
           PATH="${{ inputs.LLMS_TXT_PATH }}"
           PATH="${PATH:-docs}"
           NAME="${{ inputs.LLMS_TXT_NAME }}"
           NAME="${NAME:-llms.txt}"
-          echo "LLMS_TXT_FULL=${PATH}/${NAME}" >> $GITHUB_OUTPUT
+          echo "LLMS_TXT_FULL=${PATH}/${NAME} >> $GITHUB_OUTPUT"
           mkdir -p "${PATH}"
 
       - name: Fetch content from uithub URL
