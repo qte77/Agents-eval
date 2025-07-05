@@ -77,6 +77,47 @@ WANDB_API_KEY="xyz"
 
 `# TODO`
 
+### Agents
+
+#### Manager Agent
+
+- **Description**: Oversees research and analysis tasks, coordinating the efforts of the research, analysis, and synthesizer agents to provide comprehensive answers to user queries. Delegates tasks and ensures the accuracy of the information.
+- **Responsibilities**:
+  - Coordinates the research, analysis, and synthesis agents.
+  - Delegates research tasks to the Research Agent.
+  - Delegates analysis tasks to the Analysis Agent.
+  - Delegates synthesis tasks to the Synthesizer Agent.
+  - Ensures the accuracy of the information.
+- **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+
+#### Researcher Agent
+
+- **Description**: Gathers and analyzes data relevant to a given topic, utilizing search tools to collect data and verifying the accuracy of assumptions, facts, and conclusions.
+- **Responsibilities**:
+  - Gathers and analyzes data relevant to the topic.
+  - Uses search tools to collect data.
+  - Checks the accuracy of assumptions, facts, and conclusions.
+- **Tools**:
+  - [DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool)
+- **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+
+#### Analyst Agent
+
+- **Description**: Checks the accuracy of assumptions, facts, and conclusions in the provided data, providing relevant feedback and ensuring data integrity.
+- **Responsibilities**:
+  - Checks the accuracy of assumptions, facts, and conclusions.
+  - Provides relevant feedback if the result is not approved.
+  - Ensures data integrity.
+- **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+
+#### Synthesizer Agent
+
+- **Description**: Outputs a well-formatted scientific report using the data provided, maintaining the original facts, conclusions, and sources.
+- **Responsibilities**:
+  - Outputs a well-formatted scientific report using the provided data.
+  - Maintains the original facts, conclusions, and sources.
+- **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+
 ### Datasets used
 
 `# TODO`
