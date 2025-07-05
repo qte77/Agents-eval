@@ -46,18 +46,10 @@ jobs:
       - name: Fetch content from uithub URL
         run: |
           LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
-          # if [ "${{ inputs.CONVERTER_URL }}" = "repo2txt.com" ]; then
-          #  BASE_URL=$(
-          #      echo "${{ github.repository }}" | \
-          #      sed "s|github.com|repo2txt.com/repo=|"
-          #  )
-          BASE_URL=$(
-            echo "${{ github.repository }}" | \
-            sed "s|github.com|${{ inputs.CONVERTER_URL }}|"
-          )
-          echo "Fetching content from: ${BASE_URL}"
+          URL="https://${{ inputs.CONVERTER_URL }}/${{ github.repository }}"
+          echo "Fetching content from: ${URL}"
           echo "Saving content to: ${LLMS_TXT_FULL}"
-          curl -s "${BASE_URL}" > "${LLMS_TXT_FULL}"
+          curl -s "${URL}" > "${LLMS_TXT_FULL}"
 
       - name: Commit and push file
         run: |
