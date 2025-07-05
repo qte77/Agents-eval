@@ -1,6 +1,8 @@
 ├── .devcontainer
     ├── setup_dev
     │   └── devcontainer.json
+    ├── setup_dev_claude
+    │   └── devcontainer.json
     └── setup_dev_ollama
     │   └── devcontainer.json
 ├── .env.example
@@ -40,11 +42,12 @@
     ├── PRD.md
     ├── SprintPlan.md
     ├── UserStory.md
-    └── architecture
+    ├── architecture
     │   ├── c4-multi-agent-system.plantuml
     │   ├── customer-journey-activity-dark
     │   ├── customer-journey-activity-light.plantuml
     │   └── metrics-eval-sweep.plantuml
+    └── llms.txt
 ├── mkdocs.yaml
 ├── pyproject.toml
 ├── src
@@ -59,7 +62,6 @@
     │   │   ├── config_app.py
     │   │   ├── config_chat.json
     │   │   ├── config_eval.json
-    │   │   ├── config_eval.py
     │   │   └── data_models.py
     │   ├── evals
     │   │   ├── __init__.py
@@ -68,6 +70,7 @@
     │   ├── py.typed
     │   └── utils
     │   │   ├── __init__.py
+    │   │   ├── error_messages.py
     │   │   ├── load_configs.py
     │   │   ├── load_settings.py
     │   │   ├── log.py
@@ -105,6 +108,8 @@
 ├── tests
     ├── test_agent_system.py
     ├── test_env.py
+    ├── test_metrics_output_similarity.py
+    ├── test_metrics_time_taken.py
     └── test_provider_config.py
 └── uv.lock
 
@@ -113,9 +118,22 @@
 --------------------------------------------------------------------------------
 1 | {
 2 |   "name": "make setup_dev",
-3 |   "image": "mcr.microsoft.com/vscode/devcontainers/python:3.12",
+3 |   "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
 4 |   "postCreateCommand": "make setup_dev"
 5 | }
+
+
+--------------------------------------------------------------------------------
+/.devcontainer/setup_dev_claude/devcontainer.json:
+--------------------------------------------------------------------------------
+1 | {
+2 |   "name": "make setup_dev_claude",
+3 |   "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
+4 |   "features": {
+5 |     "ghcr.io/devcontainers/features/node:1": {}
+6 |   },
+7 |   "postCreateCommand": "make setup_dev_claude"
+8 | }
 
 
 --------------------------------------------------------------------------------
@@ -123,7 +141,7 @@
 --------------------------------------------------------------------------------
 1 | {
 2 |     "name": "make setup_dev_ollama",
-3 |     "image": "mcr.microsoft.com/vscode/devcontainers/python:3.12",
+3 |     "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
 4 |     "postCreateCommand": "make setup_dev_ollama"
 5 | }
 
@@ -132,25 +150,26 @@
 /.env.example:
 --------------------------------------------------------------------------------
  1 | # inference EP
- 2 | GEMINI_API_KEY="xyz"
- 3 | GITHUB_API_KEY="ghp_xyz"
- 4 | GROK_API_KEY="xai-xyz"
- 5 | HUGGINGFACE_API_KEY="hf_xyz"
- 6 | OPENROUTER_API_KEY="sk-or-v1-xyz"
- 7 | PERPLEXITY_API_KEY=""
- 8 | RESTACK_API_KEY="xyz"
- 9 | TOGETHER_API_KEY="xyz"
-10 | 
-11 | # tools
-12 | TAVILY_API_KEY=""
-13 | 
-14 | # log/mon/trace
-15 | AGENTOPS_API_KEY="x-y-z-x-y"
-16 | LOGFIRE_API_KEY="pylf_v1_xx_y"  # LOGFIRE_TOKEN
-17 | WANDB_API_KEY="xyz"
-18 | 
-19 | # eval
-20 | 
+ 2 | ANTHROPIC_API_KEY="sk-abc-xyz"
+ 3 | GEMINI_API_KEY="xyz"
+ 4 | GITHUB_API_KEY="ghp_xyz"
+ 5 | GROK_API_KEY="xai-xyz"
+ 6 | HUGGINGFACE_API_KEY="hf_xyz"
+ 7 | OPENROUTER_API_KEY="sk-or-v1-xyz"
+ 8 | PERPLEXITY_API_KEY=""
+ 9 | RESTACK_API_KEY="xyz"
+10 | TOGETHER_API_KEY="xyz"
+11 | 
+12 | # tools
+13 | TAVILY_API_KEY=""
+14 | 
+15 | # log/mon/trace
+16 | AGENTOPS_API_KEY="x-y-z-x-y"
+17 | LOGFIRE_API_KEY="pylf_v1_xx_y"  # LOGFIRE_TOKEN
+18 | WANDB_API_KEY="xyz"
+19 | 
+20 | # eval
+21 | 
 
 
 --------------------------------------------------------------------------------
@@ -718,71 +737,70 @@
 --------------------------------------------------------------------------------
 /.github/workflows/write-llms-txt.yaml:
 --------------------------------------------------------------------------------
- 1 | name: Write a flattened to llms.txt
- 2 | 
- 3 | on:
- 4 |   push:
- 5 |     branches: [main]
- 6 |   workflow_dispatch:
- 7 |     inputs:
- 8 |       LLMS_TXT_PATH:
- 9 |         description: 'Path to the directory to save llsm.txt'
-10 |         required: true
-11 |         default: 'docs'
-12 |         type: string
-13 |       LLMS_TXT_NAME:
-14 |         description: 'Path to the directory to save llsm.txt'
-15 |         required: true
-16 |         default: 'llms.txt'
-17 |         type: string
-18 |       CONVERTER_URL:
-19 |         description: '[uithub|gittodoc|repo2txt]'
-20 |         required: true
-21 |         default: 'uithub.com'
-22 |         type: choice
-23 |         options:
-24 |         - 'uithub.com'
-25 |         - 'gittodoc.com'
-26 |         # - 'repo2txt.com'
-27 | 
-28 | jobs:
-29 |   generate-file:
-30 |     runs-on: ubuntu-latest
-31 | 
-32 |     steps:
-33 |       - name: Checkout repo
-34 |         uses: actions/checkout@v4
-35 | 
-36 |       - name: Constructin llms.txt path
-37 |         id: construct_llms_txt_path
-38 |         run: |
-39 |           echo "LLMS_TXT_FULL="${{ inputs.LLMS_TXT_PATH }}/${{ inputs.LLMS_TXT_NAME }}"" >> $GITHUB_OUTPUT
-40 | 
-41 |       - name: Fetch content from uithub URL
-42 |         run: |
-43 |           LLMS_TXT_FULL=${{ steps.construct_llms_txt_path.outputs.LLMS_TXT_FULL }}
-44 |           # if [ "${{ inputs.CONVERTER_URL }}" = "repo2txt.com" ]; then
-45 |           #  BASE_URL=$(
-46 |           #      echo "${{ github.repository }}" | \
-47 |           #      sed "s|github.com|repo2txt.com/repo=|"
-48 |           #  )
-49 |           BASE_URL=$(
-50 |             echo "${{ github.repository }}" | \
-51 |             sed "s|github.com|${{ inputs.CONVERTER_URL }}|"
-52 |           )
-53 |           echo "Fetching content from: ${BASE_URL}"
-54 |           echo "Saving content to: ${LLMS_TXT_FULL}"
-55 |           curl -s "${BASE_URL}" > "${LLMS_TXT_FULL}"
-56 | 
-57 |       - name: Commit and push file
-58 |         run: |
-59 |           LLMS_TXT_FULL=${{ steps.construct_llms_txt_path.outputs.LLMS_TXT_FULL }}
-60 |           git config user.name "github-actions"
-61 |           git config user.email "github-actions@github.com"
-62 |           git add "${LLMS_TXT_FULL}"
-63 |           git commit -m "feat(docs): Add/Update ${LLMS_TXT_FULL}"
-64 |           git push
-65 | 
+ 1 | # TODO use local installation of repo to text
+ 2 | # https://github.com/itsitgroup/repo2txt
+ 3 | name: Write flattened repo to llms.txt
+ 4 | 
+ 5 | on:
+ 6 |   push:
+ 7 |     branches: [main]
+ 8 |   workflow_dispatch:
+ 9 |     inputs:
+10 |       LLMS_TXT_PATH:
+11 |         description: 'Path to the directory to save llsm.txt'
+12 |         required: true
+13 |         default: 'docs'
+14 |         type: string
+15 |       LLMS_TXT_NAME:
+16 |         description: 'Path to the directory to save llsm.txt'
+17 |         required: true
+18 |         default: 'llms.txt'
+19 |         type: string
+20 |       CONVERTER_URL:
+21 |         description: '[uithub|gittodoc]'  # |repo2txt
+22 |         required: true
+23 |         default: 'uithub.com'
+24 |         type: choice
+25 |         options:
+26 |         - 'uithub.com'
+27 |         - 'gittodoc.com'
+28 |         # - 'repo2txt.com'
+29 | 
+30 | jobs:
+31 |   generate-file:
+32 |     runs-on: ubuntu-latest
+33 | 
+34 |     steps:
+35 |       - name: Checkout repo
+36 |         uses: actions/checkout@v4
+37 | 
+38 |       - name: Construct and create llms.txt path
+39 |         id: construct_and_create_llms_txt_path
+40 |         run: |
+41 |           LLMS_TXT_PATH="${{ inputs.LLMS_TXT_PATH }}"
+42 |           LLMS_TXT_PATH="${LLMS_TXT_PATH:-docs}"
+43 |           LLMS_TXT_NAME="${{ inputs.LLMS_TXT_NAME }}"
+44 |           LLMS_TXT_NAME="${LLMS_TXT_NAME:-llms.txt}"
+45 |           echo "LLMS_TXT_FULL=${LLMS_TXT_PATH}/${LLMS_TXT_NAME}" >> $GITHUB_OUTPUT
+46 |           mkdir -p "${LLMS_TXT_PATH}"
+47 | 
+48 |       - name: Fetch TXT from URL
+49 |         run: |
+50 |           LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
+51 |           URL="https://${{ inputs.CONVERTER_URL }}/${{ github.repository }}"
+52 |           echo "Fetching content from: ${URL}"
+53 |           echo "Saving content to: ${LLMS_TXT_FULL}"
+54 |           curl -s "${URL}" > "${LLMS_TXT_FULL}"
+55 | 
+56 |       - name: Commit and push file
+57 |         run: |
+58 |           LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
+59 |           git config user.name "github-actions"
+60 |           git config user.email "github-actions@github.com"
+61 |           git add "${LLMS_TXT_FULL}"
+62 |           git commit -m "feat(docs): Add/Update ${LLMS_TXT_FULL} adhering to [llmstxt.org](https://llmstxt.org/)."
+63 |           git push
+64 | 
 
 
 --------------------------------------------------------------------------------
@@ -920,15 +938,16 @@
 11 |         "tamasfe.even-better-toml",
 12 |         "yzhang.markdown-all-in-one",
 13 | 
-14 |         "GitHub.copilot",
-15 |         "github.vscode-github-actions",
-16 |         "ms-azuretools.vscode-docker",
-17 |         "ms-python.debugpy",
-18 |         "ms-python.python",
-19 |         "ms-python.vscode-pylance",
-20 |         "ms-vscode.makefile-tools",
-21 |     ]
-22 | }
+14 |         "github.copilot",
+15 |         "github.copilot-chat",
+16 |         "github.vscode-github-actions",
+17 |         "ms-azuretools.vscode-docker",
+18 |         "ms-python.debugpy",
+19 |         "ms-python.python",
+20 |         "ms-python.vscode-pylance",
+21 |         "ms-vscode.makefile-tools",
+22 |     ]
+23 | }
 
 
 --------------------------------------------------------------------------------
@@ -1198,12 +1217,12 @@
  18 | OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
  19 | 
  20 | setup_prod:  ## Install uv and deps, Download and start Ollama 
- 21 | 	echo "Setting up tools..."
+ 21 | 	echo "Setting up prod environment ..."
  22 | 	pip install uv -q
  23 | 	uv sync --frozen
  24 | 
  25 | setup_dev:  ## Install uv and deps, Download and start Ollama 
- 26 | 	echo "Setting up tools..."
+ 26 | 	echo "Setting up dev environment ..."
  27 | 	pip install uv -q
  28 | 	uv sync --all-groups
  29 | 
@@ -1217,77 +1236,88 @@
  37 | 	$(MAKE) -s setup_ollama
  38 | 	$(MAKE) -s start_ollama
  39 | 
- 40 | # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
- 41 | setup_ollama:  ## Download Ollama, script does start local Ollama server
- 42 | 	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
- 43 | 	# script does start server but not consistently
- 44 | 	curl -fsSL $(OLLAMA_SETUP_URL) | sh
- 45 | 	echo "Pulling model '$(OLLAMA_MODEL_NAME)' ..."
- 46 | 	ollama pull $(OLLAMA_MODEL_NAME)
- 47 | 
- 48 | start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
- 49 | 	ollama serve
+ 40 | setup_dev_claude:
+ 41 | 	$(MAKE) -s setup_dev
+ 42 | 	$(MAKE) -s setup_claude_code
+ 43 | 
+ 44 | setup_claude_code:  ## Setup claude code CLI, node.js and npm have to be present
+ 45 | 	echo "Setting up claude code ..."
+ 46 | 	npm install -g @anthropic-ai/claude-code
+ 47 | 	claude config set --global preferredNotifChannel terminal_bell
+ 48 | 	echo "npm version: $$(npm --version)"
+ 49 | 	claude --version
  50 | 
- 51 | stop_ollama:  ## Stop local Ollama server
- 52 | 	echo "Stopping Ollama server..."
- 53 | 	pkill ollama
- 54 | 
- 55 | clean_ollama:  ## Remove local Ollama from system
- 56 | 	echo "Searching for Ollama binary..."
- 57 | 	for BINDIR in /usr/local/bin /usr/bin /bin; do
- 58 | 		if echo $$PATH | grep -q $$BINDIR; then
- 59 | 			echo "Ollama binary found in '$$BINDIR'"
- 60 | 			BIN="$$BINDIR/ollama"
- 61 | 			break
- 62 | 		fi
- 63 | 	done
- 64 | 	echo "Cleaning up..."
- 65 | 	rm -f $(BIN)
- 66 | 
- 67 | ruff:  ## Lint: Format and check with ruff
- 68 | 	uv run ruff format
- 69 | 	uv run ruff check --fix
- 70 | 
- 71 | run_cli:  ## Run app on CLI only
- 72 | 	path=$$(echo "$(APP_PATH)" | tr '/' '.')
- 73 | 	uv run python -m $${path}.main $(ARGS)
- 74 | 
- 75 | run_gui:  ## Run app with Streamlit GUI
- 76 | 	uv run streamlit run $(GUI_PATH_ST)
+ 51 | # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
+ 52 | setup_ollama:  ## Download Ollama, script does start local Ollama server
+ 53 | 	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
+ 54 | 	# script does start server but not consistently
+ 55 | 	curl -fsSL $(OLLAMA_SETUP_URL) | sh
+ 56 | 	echo "Pulling model '$(OLLAMA_MODEL_NAME)' ..."
+ 57 | 	ollama pull $(OLLAMA_MODEL_NAME)
+ 58 | 
+ 59 | start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
+ 60 | 	ollama serve
+ 61 | 
+ 62 | stop_ollama:  ## Stop local Ollama server
+ 63 | 	echo "Stopping Ollama server..."
+ 64 | 	pkill ollama
+ 65 | 
+ 66 | clean_ollama:  ## Remove local Ollama from system
+ 67 | 	echo "Searching for Ollama binary..."
+ 68 | 	for BINDIR in /usr/local/bin /usr/bin /bin; do
+ 69 | 		if echo $$PATH | grep -q $$BINDIR; then
+ 70 | 			echo "Ollama binary found in '$$BINDIR'"
+ 71 | 			BIN="$$BINDIR/ollama"
+ 72 | 			break
+ 73 | 		fi
+ 74 | 	done
+ 75 | 	echo "Cleaning up..."
+ 76 | 	rm -f $(BIN)
  77 | 
- 78 | run_profile:  ## Profile app with scalene
- 79 | 	uv run scalene --outfile \
- 80 | 		"$(APP_PATH)/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
- 81 | 		"$(APP_PATH)/main.py"
- 82 | 
- 83 | test_all:  ## Run all tests
- 84 | 	uv run pytest
- 85 | 	
- 86 | coverage_all:  ## Get test coverage
- 87 | 	uv run coverage run -m pytest || true
- 88 | 	uv run coverage report -m
- 89 | 
- 90 | type_check:  ## Check for static typing errors
- 91 | 	uv run mypy $(APP_PATH)
- 92 | 
- 93 | output_unset_app_env_sh:  ## Unset app environment variables
- 94 | 	uf="./unset_env.sh"
- 95 | 	echo "Outputing '$${uf}' ..."
- 96 | 	printenv | awk -F= '/_API_KEY=/ {print "unset " $$1}' > $$uf
- 97 | 
- 98 | help:
- 99 | 	# TODO add stackoverflow source
-100 | 	echo "Usage: make [recipe]"
-101 | 	echo "Recipes:"
-102 | 	awk '/^[a-zA-Z0-9_-]+:.*?##/ {
-103 | 		helpMessage = match($$0, /## (.*)/)
-104 | 		if (helpMessage) {
-105 | 			recipe = $$1
-106 | 			sub(/:/, "", recipe)
-107 | 			printf "  \033[36m%-20s\033[0m %s\n", recipe, substr($$0, RSTART + 3, RLENGTH)
-108 | 		}
-109 | 	}' $(MAKEFILE_LIST)
-110 | 
+ 78 | ruff:  ## Lint: Format and check with ruff
+ 79 | 	uv run ruff format
+ 80 | 	uv run ruff check --fix
+ 81 | 
+ 82 | run_cli:  ## Run app on CLI only
+ 83 | 	path=$$(echo "$(APP_PATH)" | tr '/' '.')
+ 84 | 	uv run python -m $${path}.main $(ARGS)
+ 85 | 
+ 86 | run_gui:  ## Run app with Streamlit GUI
+ 87 | 	uv run streamlit run $(GUI_PATH_ST)
+ 88 | 
+ 89 | run_profile:  ## Profile app with scalene
+ 90 | 	uv run scalene --outfile \
+ 91 | 		"$(APP_PATH)/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
+ 92 | 		"$(APP_PATH)/main.py"
+ 93 | 
+ 94 | test_all:  ## Run all tests
+ 95 | 	uv run pytest
+ 96 | 	
+ 97 | coverage_all:  ## Get test coverage
+ 98 | 	uv run coverage run -m pytest || true
+ 99 | 	uv run coverage report -m
+100 | 
+101 | type_check:  ## Check for static typing errors
+102 | 	uv run mypy $(APP_PATH)
+103 | 
+104 | output_unset_app_env_sh:  ## Unset app environment variables
+105 | 	uf="./unset_env.sh"
+106 | 	echo "Outputing '$${uf}' ..."
+107 | 	printenv | awk -F= '/_API_KEY=/ {print "unset " $$1}' > $$uf
+108 | 
+109 | help:
+110 | 	# TODO add stackoverflow source
+111 | 	echo "Usage: make [recipe]"
+112 | 	echo "Recipes:"
+113 | 	awk '/^[a-zA-Z0-9_-]+:.*?##/ {
+114 | 		helpMessage = match($$0, /## (.*)/)
+115 | 		if (helpMessage) {
+116 | 			recipe = $$1
+117 | 			sub(/:/, "", recipe)
+118 | 			printf "  \033[36m%-20s\033[0m %s\n", recipe, substr($$0, RSTART + 3, RLENGTH)
+119 | 		}
+120 | 	}' $(MAKEFILE_LIST)
+121 | 
 
 
 --------------------------------------------------------------------------------
@@ -1305,275 +1335,301 @@
  10 | [![pytest](https://github.com/qte77/Agents-eval/actions/workflows/pytest.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/pytest.yaml)
  11 | [![Link Checker](https://github.com/qte77/Agents-eval/actions/workflows/links-fail-fast.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/links-fail-fast.yaml)
  12 | [![Deploy Docs](https://github.com/qte77/Agents-eval/actions/workflows/generate-deploy-mkdocs-ghpages.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/generate-deploy-mkdocs-ghpages.yaml)
- 13 | [![vscode.dev](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=vscode.dev&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://vscode.dev/github/qte77/Agents-eval)
- 14 | [![Codespace Dev](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Codespace%20Dev&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://github.com/codespaces/new?repo=qte77/Agents-eval&devcontainer_path=.devcontainer/setup_dev/devcontainer.json)
- 15 | [![Codespace Dev Ollama](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Codespace%20Dev%20Ollama&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://github.com/codespaces/new?repo=qte77/Agents-eval&devcontainer_path=.devcontainer/setup_dev_ollama/devcontainer.json)
- 16 | [![TalkToGithub](https://img.shields.io/badge/TalkToGithub-7a83ff.svg)](https://talktogithub.com/qte77/Agents-eval)
- 17 | 
- 18 | ## Status
- 19 | 
- 20 | (DRAFT) (WIP) ----> Not fully implemented yet
+ 13 | 
+ 14 | **DevEx** [![vscode.dev](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=vscode.dev&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://vscode.dev/github/qte77/Agents-eval)
+ 15 | [![Codespace Dev](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Codespace%20Dev&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://github.com/codespaces/new?repo=qte77/Agents-eval&devcontainer_path=.devcontainer/setup_dev/devcontainer.json)
+ 16 | [![Codespace Dev Claude Code](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Codespace%20Dev%20Claude%20Code&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://github.com/codespaces/new?repo=qte77/Agents-eval&devcontainer_path=.devcontainer/setup_dev_claude/devcontainer.json)
+ 17 | [![Codespace Dev Ollama](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Codespace%20Dev%20Ollama&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://github.com/codespaces/new?repo=qte77/Agents-eval&devcontainer_path=.devcontainer/setup_dev_ollama/devcontainer.json)
+ 18 | [![TalkToGithub](https://img.shields.io/badge/TalkToGithub-7a83ff.svg)](https://talktogithub.com/qte77/Agents-eval)
+ 19 | [![llms.txt (UitHub)](https://img.shields.io/badge/llms.txt-uithub-800080.svg)](https://github.com/qte77/Agents-eval)
+ 20 | [![llms.txt (GitToDoc)](https://img.shields.io/badge/llms.txt-GitToDoc-fe4a60.svg)](https://gittodoc.com/qte77/Agents-eval)
  21 | 
- 22 | For version history have a look at the [CHANGELOG](CHANGELOG.md).
+ 22 | ## Status
  23 | 
- 24 | ## Setup and Usage
+ 24 | (DRAFT) (WIP) ----> Not fully implemented yet
  25 | 
- 26 | - `make setup_prod`
- 27 | - `make setup_dev`
- 28 | - `make run_cli` or `make run_cli ARGS="--help"`
- 29 | - `make run_gui`
- 30 | - `make test_all`
- 31 | 
- 32 | ### Configuration
- 33 | 
- 34 | - [config_app.py](src/app/config/config_app.py) contains configuration constants for the application.
- 35 | - [config_chat.json](src/app/config/config_chat.json) contains inference provider configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
- 36 | - [config_eval.json](src/app/config/config_eval.json) contains evaluation metrics and their weights.
- 37 | - [data_models.py](src/app/config/data_models.py) contains the pydantic data models for agent system configuration and results.
- 38 | 
- 39 | ### Environment
- 40 | 
- 41 | [.env.example](.env.example) contains examples for usage of API keys and variables.
+ 26 | For version history have a look at the [CHANGELOG](CHANGELOG.md).
+ 27 | 
+ 28 | ## Setup and Usage
+ 29 | 
+ 30 | - `make setup_prod`
+ 31 | - `make setup_dev` or `make setup_dev_claude` or `make setup_dev_ollama`
+ 32 | - `make run_cli` or `make run_cli ARGS="--help"`
+ 33 | - `make run_gui`
+ 34 | - `make test_all`
+ 35 | 
+ 36 | ### Configuration
+ 37 | 
+ 38 | - [config_app.py](src/app/config/config_app.py) contains configuration constants for the application.
+ 39 | - [config_chat.json](src/app/config/config_chat.json) contains inference provider configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
+ 40 | - [config_eval.json](src/app/config/config_eval.json) contains evaluation metrics and their weights.
+ 41 | - [data_models.py](src/app/config/data_models.py) contains the pydantic data models for agent system configuration and results.
  42 | 
- 43 | ```text
- 44 | # inference EP
- 45 | GEMINI_API_KEY="xyz"
+ 43 | ### Environment
+ 44 | 
+ 45 | [.env.example](.env.example) contains examples for usage of API keys and variables.
  46 | 
- 47 | # tools
- 48 | TAVILY_API_KEY=""
- 49 | 
- 50 | # log/mon/trace
- 51 | WANDB_API_KEY="xyz"
- 52 | ```
+ 47 | ```text
+ 48 | # inference EP
+ 49 | GEMINI_API_KEY="xyz"
+ 50 | 
+ 51 | # tools
+ 52 | TAVILY_API_KEY=""
  53 | 
- 54 | ### Customer Journey
- 55 | 
- 56 | <details>
- 57 |   <summary>Show Customer Journey</summary>
- 58 |   <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
- 59 |   <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
- 60 | </details>
- 61 | 
- 62 | ### Note
- 63 | 
- 64 | 1. The contained chat configuration uses free inference endpoints which are subject to change by the providers. See lists such as [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) to find other providers.
- 65 | 2. The contained chat configuration uses models which are also subject to change by the providers and have to be updated from time to time.
- 66 | 3. LLM-as-judge is also subject to the chat configuration.
+ 54 | # log/mon/trace
+ 55 | WANDB_API_KEY="xyz"
+ 56 | ```
+ 57 | 
+ 58 | ### Customer Journey
+ 59 | 
+ 60 | <details>
+ 61 |   <summary>Show Customer Journey</summary>
+ 62 |   <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+ 63 |   <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+ 64 | </details>
+ 65 | 
+ 66 | ### Note
  67 | 
- 68 | ## Documentation
- 69 | 
- 70 | [Agents-eval](https://qte77.github.io/Agents-eval)
+ 68 | 1. The contained chat configuration uses free inference endpoints which are subject to change by the providers. See lists such as [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) to find other providers.
+ 69 | 2. The contained chat configuration uses models which are also subject to change by the providers and have to be updated from time to time.
+ 70 | 3. LLM-as-judge is also subject to the chat configuration.
  71 | 
- 72 | ### Project Outline
+ 72 | ## Documentation
  73 | 
- 74 | `#TODO`
+ 74 | [Agents-eval](https://qte77.github.io/Agents-eval)
  75 | 
- 76 | ### Datasets used
+ 76 | ### Project Outline
  77 | 
- 78 | `#TODO`
+ 78 | `# TODO`
  79 | 
- 80 | ### Evaluations Metrics Baseline
+ 80 | ### Datasets used
  81 | 
- 82 | As configured in [config_eval.json](src/app/config/config_eval.json).
+ 82 | `# TODO`
  83 | 
- 84 | ```json
- 85 | {
- 86 |     "evaluators_and_weights": {
- 87 |         "planning_rational": 0.25,
- 88 |         "tool_efficiency": 0.25,
- 89 |         "coordination_quality": 0.25,
- 90 |         "time_taken": 0.25,
- 91 |         "text_similarity": 0.25
- 92 |     }
- 93 | }
- 94 | ```
- 95 | 
- 96 | ### Eval Metrics Sweep
+ 84 | ### Evalutions metrics
+ 85 | 
+ 86 | #### # TODO
+ 87 | 
+ 88 | - Time to complete task (time_taken)
+ 89 | - Task success rate (task_success)
+ 90 | - Agent coordination (coordination_quality)
+ 91 | - Tool usage efficiency (tool_efficiency)
+ 92 | - Plan coherence (planning_rational)
+ 93 | - Text response quality (text_similarity)
+ 94 | - Autonomy vs. human intervention (HITL, user feedback)
+ 95 | - Reactivity (adapt to changes of tasks and environments)
+ 96 | - Memory consistency
  97 | 
- 98 | <details>
- 99 |   <summary>Eval Metrics Sweep</summary>
-100 |   <img src="assets/images/metrics-eval-sweep.png" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
-101 | </details>
-102 | 
-103 | ### Tools available
-104 | 
-105 | Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
-106 | 
-107 | ### Agentic System Architecture
-108 | 
-109 | <details>
-110 |   <summary>Show Agentic System Architecture</summary>
-111 |   <img src="assets/images/c4-multi-agent-system.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="60%" />
-112 | </details>
-113 | 
-114 | ### Project Repo Structure
-115 | 
-116 | <details>
-117 |   <summary>Show Repo Structure</summary>
-118 | ```sh
-119 | |- .devcontainer  # pre-configured dev env
-120 | |- .github  # workflows
-121 | |- .streamlit  # config.toml
-122 | |- .vscode  # extensions, settings
-123 | |- assets/images
-124 | |- docs
-125 | |- src  # source code
-126 |    |- app
-127 |       |- agents
-128 |       |- config
-129 |       |- evals
-130 |       |- utils
-131 |       \- main.py
-132 |    |- examples
-133 |    |- gui
-134 |    \- run_gui.py
-135 | |- tests
-136 | |- .env.example  # example env vars
-137 | |- CHANGEOG.md  # short project history
-138 | |- Dockerfile  # create app image
-139 | |- Makefile  # helper scripts
-140 | |- mkdocs.yaml  # docu from docstrings
-141 | |- pyproject.toml  # project settings
-142 | |- README.md  # project description
-143 | \- uv.lock  # resolved package versions
-144 | ```
-145 | </details>
-146 | 
-147 | ## Landscape overview
-148 | 
-149 | ### Agentic System Frameworks
-150 | 
-151 | - [PydanticAI](https://github.com/pydantic/pydantic-ai)
-152 | - [restack](https://www.restack.io/)
-153 | - [smolAgents](https://github.com/huggingface/smolagents)
-154 | - [AutoGen](https://github.com/microsoft/autogen)
-155 | - [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
-156 | - [CrewAI](https://github.com/crewAIInc/crewAI)
-157 | - [Langchain](https://github.com/langchain-ai/langchain)
-158 | - [Langflow](https://github.com/langflow-ai/langflow)
-159 | 
-160 | ### Agent-builder
-161 | 
-162 | - [Archon](https://github.com/coleam00/Archon)
-163 | - [Agentstack](https://github.com/AgentOps-AI/AgentStack)
-164 | 
-165 | ### Evaluation
-166 | 
-167 | - Focusing on agentic systems
-168 |   - [AgentNeo](https://github.com/raga-ai-hub/agentneo)
-169 |   - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
-170 |   - [Langchain AgentEvals](https://github.com/langchain-ai/agentevals)
-171 |   - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
-172 |   - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
-173 | - RAG oriented
-174 |   - [RAGAs](https://github.com/explodinggradients/ragas)
-175 | - LLM apps
-176 |   - [DeepEval](https://github.com/confident-ai/deepeval)
-177 |   - [Langchain OpenEvals](https://github.com/langchain-ai/openevals)
-178 |   - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
-179 | 
-180 | ### Observation, Monitoring, Tracing
-181 | 
-182 | - [AgentOps - Agency](https://www.agentops.ai/)
-183 | - [arize](https://arize.com/)
-184 | - [Langtrace](https://www.langtrace.ai/)
-185 | - [LangSmith - Langchain](https://www.langchain.com/langsmith)
-186 | - [Weave - Weights & Biases](https://wandb.ai/site/weave/)
-187 | - [Pydantic- Logfire](https://pydantic.dev/logfire)
-188 | 
-189 | ### Datasets
-190 | 
-191 | - [awesome-reasoning - Collection of datasets](https://github.com/neurallambda/awesome-reasoning)
-192 | 
-193 | #### Scientific
-194 | 
-195 | - [SWIF2T](https://arxiv.org/abs/2405.20477), Automated Focused Feedback Generation for Scientific Writing Assistance, 2024, 300 peer reviews citing weaknesses in scientific papers and conduct human evaluation
-196 | - [PeerRead](https://github.com/allenai/PeerRead), A Dataset of Peer Reviews (PeerRead): Collection, Insights and NLP Applications, 2018, 14K paper drafts and the corresponding accept/reject decisions, over 10K textual peer reviews written by experts for a subset of the papers, structured JSONL, clear labels
-197 | - [BigSurvey](https://www.ijcai.org/proceedings/2022/0591.pdf), Generating a Structured Summary of Numerous Academic Papers: Dataset and Method, 2022, 7K survey papers and 430K referenced papers abstracts
-198 | - [SciXGen](https://arxiv.org/abs/2110.10774), A Scientific Paper Dataset for Context-Aware Text Generation, 2021, 205k papers
-199 | - [scientific_papers](https://huggingface.co/datasets/armanc/scientific_papers), 2018, two sets of long and structured documents, obtained from ArXiv and PubMed OpenAccess, 300k+ papers, total disk 7GB
+ 98 | ### Evaluations Metrics Baseline
+ 99 | 
+100 | As configured in [config_eval.json](src/app/config/config_eval.json).
+101 | 
+102 | ```json
+103 | {
+104 |     "evaluators_and_weights": {
+105 |         "planning_rational": "1/6",
+106 |         "task_success": "1/6",
+107 |         "tool_efficiency": "1/6",
+108 |         "coordination_quality": "1/6",
+109 |         "time_taken": "1/6",
+110 |         "text_similarity": "1/6"
+111 |     }
+112 | }
+113 | ```
+114 | 
+115 | ### Eval Metrics Sweep
+116 | 
+117 | <details>
+118 |   <summary>Eval Metrics Sweep</summary>
+119 |   <img src="assets/images/metrics-eval-sweep.png" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
+120 | </details>
+121 | 
+122 | ### Tools available
+123 | 
+124 | Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
+125 | 
+126 | ### Agentic System Architecture
+127 | 
+128 | <details>
+129 |   <summary>Show Agentic System Architecture</summary>
+130 |   <img src="assets/images/c4-multi-agent-system.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="60%" />
+131 | </details>
+132 | 
+133 | ### Project Repo Structure
+134 | 
+135 | <details>
+136 |   <summary>Show Repo Structure</summary>
+137 | ```sh
+138 | |- .devcontainer  # pre-configured dev env
+139 | |- .github  # workflows
+140 | |- .streamlit  # config.toml
+141 | |- .vscode  # extensions, settings
+142 | |- assets/images
+143 | |- docs
+144 | |- src  # source code
+145 |    |- app
+146 |       |- agents
+147 |       |- config
+148 |       |- evals
+149 |       |- utils
+150 |       \- main.py
+151 |    |- examples
+152 |    |- gui
+153 |    \- run_gui.py
+154 | |- tests
+155 | |- .env.example  # example env vars
+156 | |- CHANGEOG.md  # short project history
+157 | |- Dockerfile  # create app image
+158 | |- Makefile  # helper scripts
+159 | |- mkdocs.yaml  # docu from docstrings
+160 | |- pyproject.toml  # project settings
+161 | |- README.md  # project description
+162 | \- uv.lock  # resolved package versions
+163 | ```
+164 | </details>
+165 | 
+166 | ## Landscape overview
+167 | 
+168 | ### Agentic System Frameworks
+169 | 
+170 | - [PydanticAI](https://github.com/pydantic/pydantic-ai)
+171 | - [restack](https://www.restack.io/)
+172 | - [smolAgents](https://github.com/huggingface/smolagents)
+173 | - [AutoGen](https://github.com/microsoft/autogen)
+174 | - [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
+175 | - [CrewAI](https://github.com/crewAIInc/crewAI)
+176 | - [Langchain](https://github.com/langchain-ai/langchain)
+177 | - [Langflow](https://github.com/langflow-ai/langflow)
+178 | 
+179 | ### Agent-builder
+180 | 
+181 | - [Archon](https://github.com/coleam00/Archon)
+182 | - [Agentstack](https://github.com/AgentOps-AI/AgentStack)
+183 | 
+184 | ### Evaluation
+185 | 
+186 | - Focusing on agentic systems
+187 |   - [AgentNeo](https://github.com/raga-ai-hub/agentneo)
+188 |   - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
+189 |   - [Langchain AgentEvals](https://github.com/langchain-ai/agentevals)
+190 |   - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
+191 |   - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
+192 |   - [AgentBench](https://github.com/THUDM/AgentBench)
+193 | - RAG oriented
+194 |   - [RAGAs](https://github.com/explodinggradients/ragas)
+195 | - LLM apps
+196 |   - [DeepEval](https://github.com/confident-ai/deepeval)
+197 |   - [Langchain OpenEvals](https://github.com/langchain-ai/openevals)
+198 |   - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
+199 |   - [DeepEval (DeepSeek)]( github.com/confident-ai/deepeval)
 200 | 
-201 | #### Reasoning, Deduction, Commonsense, Logic
+201 | ### Observation, Monitoring, Tracing
 202 | 
-203 | - [LIAR](https://www.cs.ucsb.edu/~william/data/liar_dataset.zip), fake news detection, only 12.8k records, single label
-204 | - [X-Fact](https://github.com/utahnlp/x-fact/), Benchmark Dataset for Multilingual Fact Checking, 31.1k records, large, multilingual
-205 | - [MultiFC](https://www.copenlu.com/publication/2019_emnlp_augenstein/), A Real-World Multi-Domain Dataset for Evidence-Based Fact Checking of Claims, 34.9k records
-206 | - [FEVER](https://fever.ai/dataset/fever.html), Fact Extraction and VERification, 185.4k records
-207 | - TODO GSM8K, bAbI, CommonsenseQA, DROP, LogiQA, MNLI
-208 | 
-209 | #### Planning, Execution
-210 | 
-211 | - [Plancraft](https://arxiv.org/abs/2412.21033), an evaluation dataset for planning with LLM agents, both a text-only and multi-modal interface
-212 | - [IDAT](https://arxiv.org/abs/2407.08898), A Multi-Modal Dataset and Toolkit for Building and Evaluating Interactive Task-Solving Agents
-213 | - [PDEBench](https://github.com/pdebench/PDEBench), set of benchmarks for scientific machine learning
-214 | - [MatSci-NLP](https://arxiv.org/abs/2305.08264), evaluating the performance of natural language processing (NLP) models on materials science text
-215 | - TODO BigBench Hard, FSM Game
-216 | 
-217 | #### Tool Use, Function Invocation
-218 | 
-219 | - [Trelis Function Calling](https://huggingface.co/datasets/Trelis/function_calling_v3)
-220 | - [KnowLM Tool](https://huggingface.co/datasets/zjunlp/KnowLM-Tool)
-221 | - [StatLLM](https://arxiv.org/abs/2502.17657), statistical analysis tasks, LLM-generated SAS code, and human evaluation scores
-222 | - TODO ToolComp
+203 | - [AgentOps - Agency](https://www.agentops.ai/)
+204 | - [arize](https://arize.com/)
+205 | - [Langtrace](https://www.langtrace.ai/)
+206 | - [LangSmith - Langchain](https://www.langchain.com/langsmith)
+207 | - [Weave - Weights & Biases](https://wandb.ai/site/weave/)
+208 | - [Pydantic- Logfire](https://pydantic.dev/logfire)
+209 | 
+210 | ### Datasets
+211 | 
+212 | - [awesome-reasoning - Collection of datasets](https://github.com/neurallambda/awesome-reasoning)
+213 | 
+214 | #### Scientific
+215 | 
+216 | - [SWIF2T](https://arxiv.org/abs/2405.20477), Automated Focused Feedback Generation for Scientific Writing Assistance, 2024, 300 peer reviews citing weaknesses in scientific papers and conduct human evaluation
+217 | - [PeerRead](https://github.com/allenai/PeerRead), A Dataset of Peer Reviews (PeerRead): Collection, Insights and NLP Applications, 2018, 14K paper drafts and the corresponding accept/reject decisions, over 10K textual peer reviews written by experts for a subset of the papers, structured JSONL, clear labels
+218 | - [BigSurvey](https://www.ijcai.org/proceedings/2022/0591.pdf), Generating a Structured Summary of Numerous Academic Papers: Dataset and Method, 2022, 7K survey papers and 430K referenced papers abstracts
+219 | - [SciXGen](https://arxiv.org/abs/2110.10774), A Scientific Paper Dataset for Context-Aware Text Generation, 2021, 205k papers
+220 | - [scientific_papers](https://huggingface.co/datasets/armanc/scientific_papers), 2018, two sets of long and structured documents, obtained from ArXiv and PubMed OpenAccess, 300k+ papers, total disk 7GB
+221 | 
+222 | #### Reasoning, Deduction, Commonsense, Logic
 223 | 
-224 | ### Benchmarks
-225 | 
-226 | - [AgentEvals CORE-Bench Leaderboard](https://huggingface.co/spaces/agent-evals/core_leaderboard)
-227 | - [Berkeley Function-Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html)
-228 | - [Chatbot Arena LLM Leaderboard](https://lmsys.org/projects/)
-229 | - [GAIA Leaderboard](https://gaia-benchmark-leaderboard.hf.space/)
-230 | - [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
-231 | - [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
-232 | 
-233 | ## Further Reading
-234 | 
-235 | - [[2504.19678] From LLM Reasoning to Autonomous AI Agents: A Comprehensive Review](https://arxiv.org/abs/2504.19678)
-236 | - [[2503.21460] Large Language Model Agent: A Survey on Methodology, Applications and Challenges](https://arxiv.org/abs/2503.21460)
-237 | - [[2503.16416] Survey on Evaluation of LLM-based Agents](https://arxiv.org/abs/2503.16416)
-238 | - [[2503.13657] Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657)
-239 | - [[2502.14776] SurveyX: Academic Survey Automation via Large Language Models](https://arxiv.org/abs/2502.14776)
-240 | - [[2502.05957] AutoAgent: A Fully-Automated and Zero-Code Framework for LLM Agents](https://arxiv.org/abs/2502.05957)
-241 | - [[2502.02649] Fully Autonomous AI Agents Should Not be Developed](https://arxiv.org/abs/2502.02649)
-242 | - [[2501.16150] AI Agents for Computer Use: A Review of Instruction-based Computer Control, GUI Automation, and Operator Assistants](https://arxiv.org/abs/2501.16150)
-243 | - [[2501.06590] ChemAgent](https://arxiv.org/abs/2501.06590)
-244 | - [[2501.06322] Multi-Agent Collaboration Mechanisms: A Survey of LLMs](https://arxiv.org/abs/2501.06322)
-245 | - [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/abs/2501.04227)
-246 | - [[2501.00881] Agentic Systems: A Guide to Transforming Industries with Vertical AI Agents](https://arxiv.org/abs/2501.00881)
-247 | - [[2412.04093] Practical Considerations for Agentic LLM Systems](https://arxiv.org/abs/2412.04093)
-248 | - [[2411.13768] Evaluation-driven Approach to LLM Agents](https://arxiv.org/abs/2411.13768)
-249 | - [[2411.10478] Large Language Models for Constructing and Optimizing Machine Learning Workflows: A Survey](https://arxiv.org/abs/2411.10478)
-250 | - [[2411.05285] A taxonomy of agentops for enabling observability of foundation model based agents](https://arxiv.org/abs/2411.05285)
-251 | - [[2410.22457] Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
-252 | - [[2408.06361] Large Language Model Agent in Financial Trading: A Survey](https://arxiv.org/abs/2408.06361)
-253 | - [[2404.13501] A Survey on the Memory Mechanism of Large Language Model based Agents](https://arxiv.org/pdf/2404.13501)
-254 | - [[2402.02716] Understanding the planning of LLM agents: A survey](https://arxiv.org/abs/2402.02716)
-255 | - [[2402.01030] Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/abs/2402.01030)
-256 | - [[2308.11432] A Survey on Large Language Model based Autonomous Agents](https://arxiv.org/abs/2308.11432)
+224 | - [LIAR](https://www.cs.ucsb.edu/~william/data/liar_dataset.zip), fake news detection, only 12.8k records, single label
+225 | - [X-Fact](https://github.com/utahnlp/x-fact/), Benchmark Dataset for Multilingual Fact Checking, 31.1k records, large, multilingual
+226 | - [MultiFC](https://www.copenlu.com/publication/2019_emnlp_augenstein/), A Real-World Multi-Domain Dataset for Evidence-Based Fact Checking of Claims, 34.9k records
+227 | - [FEVER](https://fever.ai/dataset/fever.html), Fact Extraction and VERification, 185.4k records
+228 | - TODO GSM8K, bAbI, CommonsenseQA, DROP, LogiQA, MNLI
+229 | 
+230 | #### Planning, Execution
+231 | 
+232 | - [Plancraft](https://arxiv.org/abs/2412.21033), an evaluation dataset for planning with LLM agents, both a text-only and multi-modal interface
+233 | - [IDAT](https://arxiv.org/abs/2407.08898), A Multi-Modal Dataset and Toolkit for Building and Evaluating Interactive Task-Solving Agents
+234 | - [PDEBench](https://github.com/pdebench/PDEBench), set of benchmarks for scientific machine learning
+235 | - [MatSci-NLP](https://arxiv.org/abs/2305.08264), evaluating the performance of natural language processing (NLP) models on materials science text
+236 | - TODO BigBench Hard, FSM Game
+237 | 
+238 | #### Tool Use, Function Invocation
+239 | 
+240 | - [Trelis Function Calling](https://huggingface.co/datasets/Trelis/function_calling_v3)
+241 | - [KnowLM Tool](https://huggingface.co/datasets/zjunlp/KnowLM-Tool)
+242 | - [StatLLM](https://arxiv.org/abs/2502.17657), statistical analysis tasks, LLM-generated SAS code, and human evaluation scores
+243 | - TODO ToolComp
+244 | 
+245 | ### Benchmarks
+246 | 
+247 | - [SciArena: A New Platform for Evaluating Foundation Models in Scientific Literature Tasks](https://allenai.org/blog/sciarena)
+248 | - [AgentEvals CORE-Bench Leaderboard](https://huggingface.co/spaces/agent-evals/core_leaderboard)
+249 | - [Berkeley Function-Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html)
+250 | - [Chatbot Arena LLM Leaderboard](https://lmsys.org/projects/)
+251 | - [GAIA Leaderboard](https://gaia-benchmark-leaderboard.hf.space/)
+252 | - [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
+253 | - [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
+254 | - [MiniWoB++: a web interaction benchmark for reinforcement learning](https://miniwob.farama.org/)
+255 | 
+256 | ## Further Reading
 257 | 
+258 | - [[2506.18096] Deep Research Agents: A Systematic Examination And Roadmap](https://arxiv.org/abs/2506.18096), [gh / ai-agents-2030 / awesome-deep-research-agent](https://github.com/ai-agents-2030/awesome-deep-research-agent)
+259 | - [[2504.19678] From LLM Reasoning to Autonomous AI Agents: A Comprehensive Review](https://arxiv.org/abs/2504.19678)
+260 | - [[2503.21460] Large Language Model Agent: A Survey on Methodology, Applications and Challenges](https://arxiv.org/abs/2503.21460)
+261 | - [[2503.16416] Survey on Evaluation of LLM-based Agents](https://arxiv.org/abs/2503.16416)
+262 | - [[2503.13657] Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657)
+263 | - [[2502.14776] SurveyX: Academic Survey Automation via Large Language Models](https://arxiv.org/abs/2502.14776)
+264 | - [[2502.05957] AutoAgent: A Fully-Automated and Zero-Code Framework for LLM Agents](https://arxiv.org/abs/2502.05957)
+265 | - [[2502.02649] Fully Autonomous AI Agents Should Not be Developed](https://arxiv.org/abs/2502.02649)
+266 | - [[2501.16150] AI Agents for Computer Use: A Review of Instruction-based Computer Control, GUI Automation, and Operator Assistants](https://arxiv.org/abs/2501.16150)
+267 | - [[2501.06590] ChemAgent](https://arxiv.org/abs/2501.06590)
+268 | - [[2501.06322] Multi-Agent Collaboration Mechanisms: A Survey of LLMs](https://arxiv.org/abs/2501.06322)
+269 | - [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/abs/2501.04227), [AgentRxiv:Towards Collaborative Autonomous Research](https://agentrxiv.github.io/)
+270 | - [[2501.00881] Agentic Systems: A Guide to Transforming Industries with Vertical AI Agents](https://arxiv.org/abs/2501.00881)
+271 | - [[2412.04093] Practical Considerations for Agentic LLM Systems](https://arxiv.org/abs/2412.04093)
+272 | - [[2411.13768] Evaluation-driven Approach to LLM Agents](https://arxiv.org/abs/2411.13768)
+273 | - [[2411.10478] Large Language Models for Constructing and Optimizing Machine Learning Workflows: A Survey](https://arxiv.org/abs/2411.10478)
+274 | - [[2411.05285] A taxonomy of agentops for enabling observability of foundation model based agents](https://arxiv.org/abs/2411.05285)
+275 | - [[2410.22457] Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
+276 | - [[2408.06361] Large Language Model Agent in Financial Trading: A Survey](https://arxiv.org/abs/2408.06361)
+277 | - [[2408.06292] The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery](https://arxiv.org/abs/2408.06292)
+278 | - [[2404.13501] A Survey on the Memory Mechanism of Large Language Model based Agents](https://arxiv.org/pdf/2404.13501)
+279 | - [[2402.06360] CoSearchAgent: A Lightweight Collaborative Search Agent with Large Language Models](https://arxiv.org/abs/2402.06360)
+280 | - [[2402.02716] Understanding the planning of LLM agents: A survey](https://arxiv.org/abs/2402.02716)
+281 | - [[2402.01030] Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/abs/2402.01030)
+282 | - [[2308.11432] A Survey on Large Language Model based Autonomous Agents](https://arxiv.org/abs/2308.11432)
+283 | 
 
 
 --------------------------------------------------------------------------------
 /assets/images/c4-multi-agent-system.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54dab8adaa7fe9/assets/images/c4-multi-agent-system.png
+https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/assets/images/c4-multi-agent-system.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/customer-journey-activity-dark.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54dab8adaa7fe9/assets/images/customer-journey-activity-dark.png
+https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/assets/images/customer-journey-activity-dark.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/customer-journey-activity-light.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54dab8adaa7fe9/assets/images/customer-journey-activity-light.png
+https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/assets/images/customer-journey-activity-light.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/metrics-eval-sweep.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54dab8adaa7fe9/assets/images/metrics-eval-sweep.png
+https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/assets/images/metrics-eval-sweep.png
 
 
 --------------------------------------------------------------------------------
@@ -1977,46 +2033,47 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 41 |   - Code: docstrings.md
 42 |   - Change Log: CHANGELOG.md
 43 |   - License: LICENSE.md
-44 | plugins:
-45 |   - search:
-46 |       lang: en
-47 |   - autorefs
-48 |   - mkdocstrings:
-49 |       handlers:
-50 |         python:
-51 |           paths: [src]
-52 |           options:
-53 |             show_root_heading: true
-54 |             show_root_full_path: true
-55 |             show_object_full_path: false
-56 |             show_root_members_full_path: false
-57 |             show_category_heading: true
-58 |             show_submodules: true
-59 | markdown_extensions:
-60 |   - attr_list
-61 |   - pymdownx.magiclink
-62 |   - pymdownx.tabbed
-63 |   - pymdownx.highlight:
-64 |       anchor_linenums: true
-65 |   - pymdownx.superfences
-66 |   - pymdownx.snippets:
-67 |       check_paths: true
-68 |   - pymdownx.tasklist:
-69 |       custom_checkbox: true
-70 |   - sane_lists
-71 |   - smarty
-72 |   - toc:
-73 |       permalink: true
-74 | validation:
-75 |   links:
-76 |     not_found: warn
-77 |     anchors: warn
-78 | # builds only if validation succeeds while
-79 | # threating warnings as errors
-80 | # also checks for broken links
-81 | # strict: true
-82 | ...
-83 | 
+44 |   - llms.txt: llms.txt
+45 | plugins:
+46 |   - search:
+47 |       lang: en
+48 |   - autorefs
+49 |   - mkdocstrings:
+50 |       handlers:
+51 |         python:
+52 |           paths: [src]
+53 |           options:
+54 |             show_root_heading: true
+55 |             show_root_full_path: true
+56 |             show_object_full_path: false
+57 |             show_root_members_full_path: false
+58 |             show_category_heading: true
+59 |             show_submodules: true
+60 | markdown_extensions:
+61 |   - attr_list
+62 |   - pymdownx.magiclink
+63 |   - pymdownx.tabbed
+64 |   - pymdownx.highlight:
+65 |       anchor_linenums: true
+66 |   - pymdownx.superfences
+67 |   - pymdownx.snippets:
+68 |       check_paths: true
+69 |   - pymdownx.tasklist:
+70 |       custom_checkbox: true
+71 |   - sane_lists
+72 |   - smarty
+73 |   - toc:
+74 |       permalink: true
+75 | validation:
+76 |   links:
+77 |     not_found: warn
+78 |     anchors: warn
+79 | # builds only if validation succeeds while
+80 | # threating warnings as errors
+81 | # also checks for broken links
+82 | # strict: true
+83 | ...
+84 | 
 
 
 --------------------------------------------------------------------------------
@@ -2125,74 +2182,76 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 101 | convention = "google"
 102 | 
 103 | [tool.pytest.ini_options]
-104 | pythonpath = ["src"]
-105 | testpaths = ["tests/"]
-106 | addopts = "--strict-markers"
-107 | 
-108 | [tool.coverage]
-109 | [tool.coverage.run]
-110 | include = [
-111 |     "tests/**/*.py",
-112 | ]
-113 | # omit = []
-114 | # branch = true
-115 | 
-116 | [tool.coverage.report]
-117 | show_missing = true
-118 | exclude_lines = [
-119 |     # 'pragma: no cover',
-120 |     'raise AssertionError',
-121 |     'raise NotImplementedError',
-122 | ]
-123 | omit = [
-124 |     'env/*',
-125 |     'venv/*',
-126 |     '.venv/*',
-127 |     '*/virtualenv/*',
-128 |     '*/virtualenvs/*',
-129 |     '*/tests/*',
-130 | ]
-131 | 
-132 | [tool.bumpversion]
-133 | current_version = "1.0.0"
-134 | parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
-135 | serialize = ["{major}.{minor}.{patch}"]
-136 | commit = true
-137 | tag = true
-138 | allow_dirty = false
-139 | ignore_missing_version = false
-140 | sign_tags = false
-141 | tag_name = "v{new_version}"
-142 | tag_message = "Bump version: {current_version} → {new_version}"
-143 | message = "Bump version: {current_version} → {new_version}"
-144 | commit_args = ""
-145 | 
-146 | [[tool.bumpversion.files]]
-147 | filename = "pyproject.toml"
-148 | search = 'version = "{current_version}"'
-149 | replace = 'version = "{new_version}"'
-150 | 
-151 | [[tool.bumpversion.files]]
-152 | filename = "src/app/__init__.py"
-153 | search = '__version__ = "{current_version}"'
-154 | replace = '__version__ = "{new_version}"'
-155 | 
-156 | [[tool.bumpversion.files]]
-157 | filename = "README.md"
-158 | search = "version-{current_version}-58f4c2"
-159 | replace = "version-{new_version}-58f4c2"
-160 | 
-161 | [[tool.bumpversion.files]]
-162 | filename = "CHANGELOG.md"
-163 | search = """
-164 | ## [Unreleased]
-165 | """
-166 | replace = """
-167 | ## [Unreleased]
-168 | 
-169 | ## [{new_version}] - {now:%Y-%m-%d}
-170 | """
-171 | 
+104 | addopts = "--strict-markers"
+105 | # "function", "class", "module", "package", "session"
+106 | asyncio_default_fixture_loop_scope = "function"
+107 | pythonpath = ["src"]
+108 | testpaths = ["tests/"]
+109 | 
+110 | [tool.coverage]
+111 | [tool.coverage.run]
+112 | include = [
+113 |     "tests/**/*.py",
+114 | ]
+115 | # omit = []
+116 | # branch = true
+117 | 
+118 | [tool.coverage.report]
+119 | show_missing = true
+120 | exclude_lines = [
+121 |     # 'pragma: no cover',
+122 |     'raise AssertionError',
+123 |     'raise NotImplementedError',
+124 | ]
+125 | omit = [
+126 |     'env/*',
+127 |     'venv/*',
+128 |     '.venv/*',
+129 |     '*/virtualenv/*',
+130 |     '*/virtualenvs/*',
+131 |     '*/tests/*',
+132 | ]
+133 | 
+134 | [tool.bumpversion]
+135 | current_version = "1.0.0"
+136 | parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+137 | serialize = ["{major}.{minor}.{patch}"]
+138 | commit = true
+139 | tag = true
+140 | allow_dirty = false
+141 | ignore_missing_version = false
+142 | sign_tags = false
+143 | tag_name = "v{new_version}"
+144 | tag_message = "Bump version: {current_version} → {new_version}"
+145 | message = "Bump version: {current_version} → {new_version}"
+146 | commit_args = ""
+147 | 
+148 | [[tool.bumpversion.files]]
+149 | filename = "pyproject.toml"
+150 | search = 'version = "{current_version}"'
+151 | replace = 'version = "{new_version}"'
+152 | 
+153 | [[tool.bumpversion.files]]
+154 | filename = "src/app/__init__.py"
+155 | search = '__version__ = "{current_version}"'
+156 | replace = '__version__ = "{new_version}"'
+157 | 
+158 | [[tool.bumpversion.files]]
+159 | filename = "README.md"
+160 | search = "version-{current_version}-58f4c2"
+161 | replace = "version-{new_version}-58f4c2"
+162 | 
+163 | [[tool.bumpversion.files]]
+164 | filename = "CHANGELOG.md"
+165 | search = """
+166 | ## [Unreleased]
+167 | """
+168 | replace = """
+169 | ## [Unreleased]
+170 | 
+171 | ## [{new_version}] - {now:%Y-%m-%d}
+172 | """
+173 | 
 
 
 --------------------------------------------------------------------------------
@@ -2207,7 +2266,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 --------------------------------------------------------------------------------
 /src/app/agents/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54dab8adaa7fe9/src/app/agents/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/src/app/agents/__init__.py
 
 
 --------------------------------------------------------------------------------
@@ -2251,361 +2310,364 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
  36 | from app.config.data_models import (
  37 |     AgentConfig,
  38 |     AnalysisResult,
- 39 |     ChatConfig,
- 40 |     EndpointConfig,
- 41 |     ModelDict,
- 42 |     ProviderConfig,
- 43 |     ResearchResult,
- 44 |     ResearchSummary,
- 45 |     ResultBaseType,
- 46 |     UserPromptType,
- 47 | )
- 48 | from app.utils.load_configs import AppEnv
- 49 | from app.utils.log import logger
- 50 | 
+ 39 |     AppEnv,
+ 40 |     ChatConfig,
+ 41 |     EndpointConfig,
+ 42 |     ModelDict,
+ 43 |     ProviderConfig,
+ 44 |     ResearchResult,
+ 45 |     ResearchSummary,
+ 46 |     ResultBaseType,
+ 47 |     UserPromptType,
+ 48 | )
+ 49 | from app.utils.error_messages import generic_exception, invalid_data_model_format
+ 50 | from app.utils.log import logger
  51 | 
- 52 | def _add_tools_to_manager_agent(
- 53 |     manager_agent: Agent[None, BaseModel],
- 54 |     research_agent: Agent[None, BaseModel] | None = None,
- 55 |     analysis_agent: Agent[None, BaseModel] | None = None,
- 56 |     synthesis_agent: Agent[None, BaseModel] | None = None,
- 57 | ):
- 58 |     """
- 59 |     Adds tools to the manager agent for delegating tasks to research, analysis, and
- 60 |         synthesis agents.
- 61 |     Args:
- 62 |         manager_agent (Agent): The manager agent to which tools will be added.
- 63 |         research_agent (Agent): The agent responsible for handling research tasks.
- 64 |         analysis_agent (Agent, optional): The agent responsible for handling
- 65 |             analysis tasks. Defaults to None.
- 66 |         synthesis_agent (Agent, optional): The agent responsible for handling
- 67 |             synthesis tasks. Defaults to None.
- 68 |     Returns:
- 69 |         None
- 70 |     """
- 71 | 
- 72 |     def _validate_model_return(
- 73 |         result_output: str,
- 74 |         result_model: type[ResultBaseType],
- 75 |     ) -> ResultBaseType:
- 76 |         """Validates the output against the expected model."""
- 77 |         try:
- 78 |             return result_model.model_validate(result_output)
- 79 |         except ValidationError as e:
- 80 |             msg = f"Invalid output format: {e}"
- 81 |             logger.error(msg)
- 82 |             raise ValidationError(msg)
- 83 |         except Exception as e:
- 84 |             msg = f"Failed to parse output: {e}"
- 85 |             logger.exception(msg)
- 86 |             raise Exception(msg)
- 87 | 
- 88 |     if research_agent is not None:
- 89 | 
- 90 |         @manager_agent.tool
- 91 |         # TODO remove redundant tool creation
- 92 |         # ignore "delegate_research" is not accessed because of decorator
- 93 |         async def delegate_research(  # type: ignore[reportUnusedFunction]
- 94 |             ctx: RunContext[None], query: str
- 95 |         ) -> ResearchResult:
- 96 |             """Delegate research task to ResearchAgent."""
- 97 |             result = await research_agent.run(query, usage=ctx.usage)
- 98 |             return _validate_model_return(str(result.output), ResearchResult)
- 99 | 
-100 |     if analysis_agent is not None:
-101 | 
-102 |         @manager_agent.tool
-103 |         # ignore "delegate_research" is not accessed because of decorator
-104 |         async def delegate_analysis(  # type: ignore[reportUnusedFunction]
-105 |             ctx: RunContext[None], query: str
-106 |         ) -> AnalysisResult:
-107 |             """Delegate analysis task to AnalysisAgent."""
-108 |             result = await analysis_agent.run(query, usage=ctx.usage)
-109 |             return _validate_model_return(str(result.output), AnalysisResult)
-110 | 
-111 |     if synthesis_agent is not None:
-112 | 
-113 |         @manager_agent.tool
-114 |         # ignore "delegate_research" is not accessed because of decorator
-115 |         async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
-116 |             ctx: RunContext[None], query: str
-117 |         ) -> ResearchSummary:
-118 |             """Delegate synthesis task to AnalysisAgent."""
-119 |             result = await synthesis_agent.run(query, usage=ctx.usage)
-120 |             return _validate_model_return(str(result.output), ResearchSummary)
-121 | 
+ 52 | 
+ 53 | def _add_tools_to_manager_agent(
+ 54 |     manager_agent: Agent[None, BaseModel],
+ 55 |     research_agent: Agent[None, BaseModel] | None = None,
+ 56 |     analysis_agent: Agent[None, BaseModel] | None = None,
+ 57 |     synthesis_agent: Agent[None, BaseModel] | None = None,
+ 58 | ):
+ 59 |     """
+ 60 |     Adds tools to the manager agent for delegating tasks to research, analysis, and
+ 61 |         synthesis agents.
+ 62 |     Args:
+ 63 |         manager_agent (Agent): The manager agent to which tools will be added.
+ 64 |         research_agent (Agent): The agent responsible for handling research tasks.
+ 65 |         analysis_agent (Agent, optional): The agent responsible for handling
+ 66 |             analysis tasks. Defaults to None.
+ 67 |         synthesis_agent (Agent, optional): The agent responsible for handling
+ 68 |             synthesis tasks. Defaults to None.
+ 69 |     Returns:
+ 70 |         None
+ 71 |     """
+ 72 | 
+ 73 |     def _validate_model_return(
+ 74 |         result_output: str,
+ 75 |         result_model: type[ResultBaseType],
+ 76 |     ) -> ResultBaseType:
+ 77 |         """Validates the output against the expected model."""
+ 78 |         try:
+ 79 |             return result_model.model_validate(result_output)
+ 80 |         except ValidationError as e:
+ 81 |             msg = invalid_data_model_format(str(e))
+ 82 |             logger.error(msg)
+ 83 |             raise ValidationError(msg)
+ 84 |         except Exception as e:
+ 85 |             msg = generic_exception(str(e))
+ 86 |             logger.exception(msg)
+ 87 |             raise Exception(msg)
+ 88 | 
+ 89 |     if research_agent is not None:
+ 90 | 
+ 91 |         @manager_agent.tool
+ 92 |         # TODO remove redundant tool creation
+ 93 |         # ignore "delegate_research" is not accessed because of decorator
+ 94 |         async def delegate_research(  # type: ignore[reportUnusedFunction]
+ 95 |             ctx: RunContext[None], query: str
+ 96 |         ) -> ResearchResult:
+ 97 |             """Delegate research task to ResearchAgent."""
+ 98 |             result = await research_agent.run(query, usage=ctx.usage)
+ 99 |             return _validate_model_return(str(result.output), ResearchResult)
+100 | 
+101 |     if analysis_agent is not None:
+102 | 
+103 |         @manager_agent.tool
+104 |         # ignore "delegate_research" is not accessed because of decorator
+105 |         async def delegate_analysis(  # type: ignore[reportUnusedFunction]
+106 |             ctx: RunContext[None], query: str
+107 |         ) -> AnalysisResult:
+108 |             """Delegate analysis task to AnalysisAgent."""
+109 |             result = await analysis_agent.run(query, usage=ctx.usage)
+110 |             return _validate_model_return(str(result.output), AnalysisResult)
+111 | 
+112 |     if synthesis_agent is not None:
+113 | 
+114 |         @manager_agent.tool
+115 |         # ignore "delegate_research" is not accessed because of decorator
+116 |         async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
+117 |             ctx: RunContext[None], query: str
+118 |         ) -> ResearchSummary:
+119 |             """Delegate synthesis task to AnalysisAgent."""
+120 |             result = await synthesis_agent.run(query, usage=ctx.usage)
+121 |             return _validate_model_return(str(result.output), ResearchSummary)
 122 | 
-123 | def _create_agent(agent_config: AgentConfig) -> Agent[None, BaseModel]:
-124 |     """Factory for creating configured agents"""
-125 | 
-126 |     return Agent(
-127 |         model=agent_config.model,
-128 |         output_type=agent_config.output_type,
-129 |         system_prompt=agent_config.system_prompt,
-130 |         tools=agent_config.tools,
-131 |         retries=agent_config.retries,
-132 |     )
-133 | 
+123 | 
+124 | def _create_agent(agent_config: AgentConfig) -> Agent[None, BaseModel]:
+125 |     """Factory for creating configured agents"""
+126 | 
+127 |     return Agent(
+128 |         model=agent_config.model,
+129 |         output_type=agent_config.output_type,
+130 |         system_prompt=agent_config.system_prompt,
+131 |         tools=agent_config.tools,
+132 |         retries=agent_config.retries,
+133 |     )
 134 | 
-135 | def _create_manager(
-136 |     prompts: dict[str, str],
-137 |     models: ModelDict,
-138 | ) -> Agent[None, BaseModel]:
-139 |     """
-140 |     Creates and configures a manager Agent with associated researcher, analyst,
-141 |     and optionally synthesiser agents.
-142 |     Args:
-143 |         prompts (Dict[str, str]): Dictionary containing system prompts for each agent.
-144 |         model_manager (GeminiModel | OpenAIModel): Model to be used by the manager
-145 |             agent.
-146 |         model_researcher (GeminiModel | OpenAIModel | None, optional): Model to be used
-147 |             by the researcher agent.
-148 |         model_analyst (GeminiModel | OpenAIModel | None, optional): Model to be used by
-149 |             the analyst agent. Defaults to None.
-150 |         model_synthesiser (GeminiModel | OpenAIModel | None, optional): Model to be used
-151 |             by the synthesiser agent. Defaults to None.
-152 |     Returns:
-153 |         Agent: Configured manager agent with associated tools and agents.
-154 |     """
-155 | 
-156 |     status = f"Creating manager({models.model_manager.model_name})"
-157 |     active_agents = [
-158 |         agent
-159 |         for agent in [
-160 |             f"researcher({models.model_researcher.model_name})"
-161 |             if models.model_researcher
-162 |             else None,
-163 |             f"analyst({models.model_analyst.model_name})"
-164 |             if models.model_analyst
-165 |             else None,
-166 |             f"synthesiser({models.model_synthesiser.model_name})"
-167 |             if models.model_synthesiser
-168 |             else None,
-169 |         ]
-170 |         if agent
-171 |     ]
-172 |     status += f" with agents: {', '.join(active_agents)}" if active_agents else ""
-173 |     logger.info(status)
-174 | 
-175 |     manager = _create_agent(
-176 |         AgentConfig.model_validate(
-177 |             {
-178 |                 "model": models.model_manager,
-179 |                 "output_type": ResearchResult,
-180 |                 "system_prompt": prompts["system_prompt_manager"],
-181 |             }
-182 |         )
-183 |     )
-184 | 
-185 |     if models.model_researcher is None:
-186 |         researcher = None
-187 |     else:
-188 |         researcher = _create_agent(
-189 |             AgentConfig.model_validate(
-190 |                 {
-191 |                     "model": models.model_researcher,
-192 |                     "output_type": ResearchResult,
-193 |                     "system_prompt": prompts["system_prompt_researcher"],
-194 |                     "tools": [duckduckgo_search_tool()],
-195 |                 }
-196 |             )
-197 |         )
-198 | 
-199 |     if models.model_analyst is None:
-200 |         analyst = None
-201 |     else:
-202 |         analyst = _create_agent(
-203 |             AgentConfig.model_validate(
-204 |                 {
-205 |                     "model": models.model_analyst,
-206 |                     "output_type": AnalysisResult,
-207 |                     "system_prompt": prompts["system_prompt_analyst"],
-208 |                 }
-209 |             )
-210 |         )
-211 | 
-212 |     if models.model_synthesiser is None:
-213 |         synthesiser = None
-214 |     else:
-215 |         synthesiser = _create_agent(
-216 |             AgentConfig.model_validate(
-217 |                 {
-218 |                     "model": models.model_synthesiser,
-219 |                     "output_type": AnalysisResult,
-220 |                     "system_prompt": prompts["system_prompt_synthesiser"],
-221 |                 }
-222 |             )
-223 |         )
-224 | 
-225 |     _add_tools_to_manager_agent(manager, researcher, analyst, synthesiser)
-226 |     return manager
-227 | 
+135 | 
+136 | def _create_manager(
+137 |     prompts: dict[str, str],
+138 |     models: ModelDict,
+139 | ) -> Agent[None, BaseModel]:
+140 |     """
+141 |     Creates and configures a manager Agent with associated researcher, analyst,
+142 |     and optionally synthesiser agents.
+143 |     Args:
+144 |         prompts (Dict[str, str]): Dictionary containing system prompts for each agent.
+145 |         model_manager (GeminiModel | OpenAIModel): Model to be used by the manager
+146 |             agent.
+147 |         model_researcher (GeminiModel | OpenAIModel | None, optional): Model to be used
+148 |             by the researcher agent.
+149 |         model_analyst (GeminiModel | OpenAIModel | None, optional): Model to be used by
+150 |             the analyst agent. Defaults to None.
+151 |         model_synthesiser (GeminiModel | OpenAIModel | None, optional): Model to be used
+152 |             by the synthesiser agent. Defaults to None.
+153 |     Returns:
+154 |         Agent: Configured manager agent with associated tools and agents.
+155 |     """
+156 | 
+157 |     status = f"Creating manager({models.model_manager.model_name})"
+158 |     active_agents = [
+159 |         agent
+160 |         for agent in [
+161 |             f"researcher({models.model_researcher.model_name})"
+162 |             if models.model_researcher
+163 |             else None,
+164 |             f"analyst({models.model_analyst.model_name})"
+165 |             if models.model_analyst
+166 |             else None,
+167 |             f"synthesiser({models.model_synthesiser.model_name})"
+168 |             if models.model_synthesiser
+169 |             else None,
+170 |         ]
+171 |         if agent
+172 |     ]
+173 |     status += f" with agents: {', '.join(active_agents)}" if active_agents else ""
+174 |     logger.info(status)
+175 | 
+176 |     manager = _create_agent(
+177 |         AgentConfig.model_validate(
+178 |             {
+179 |                 "model": models.model_manager,
+180 |                 "output_type": ResearchResult,
+181 |                 "system_prompt": prompts["system_prompt_manager"],
+182 |             }
+183 |         )
+184 |     )
+185 | 
+186 |     if models.model_researcher is None:
+187 |         researcher = None
+188 |     else:
+189 |         researcher = _create_agent(
+190 |             AgentConfig.model_validate(
+191 |                 {
+192 |                     "model": models.model_researcher,
+193 |                     "output_type": ResearchResult,
+194 |                     "system_prompt": prompts["system_prompt_researcher"],
+195 |                     "tools": [duckduckgo_search_tool()],
+196 |                 }
+197 |             )
+198 |         )
+199 | 
+200 |     if models.model_analyst is None:
+201 |         analyst = None
+202 |     else:
+203 |         analyst = _create_agent(
+204 |             AgentConfig.model_validate(
+205 |                 {
+206 |                     "model": models.model_analyst,
+207 |                     "output_type": AnalysisResult,
+208 |                     "system_prompt": prompts["system_prompt_analyst"],
+209 |                 }
+210 |             )
+211 |         )
+212 | 
+213 |     if models.model_synthesiser is None:
+214 |         synthesiser = None
+215 |     else:
+216 |         synthesiser = _create_agent(
+217 |             AgentConfig.model_validate(
+218 |                 {
+219 |                     "model": models.model_synthesiser,
+220 |                     "output_type": AnalysisResult,
+221 |                     "system_prompt": prompts["system_prompt_synthesiser"],
+222 |                 }
+223 |             )
+224 |         )
+225 | 
+226 |     _add_tools_to_manager_agent(manager, researcher, analyst, synthesiser)
+227 |     return manager
 228 | 
-229 | def get_manager(
-230 |     provider: str,
-231 |     provider_config: ProviderConfig,
-232 |     api_key: str | None,
-233 |     prompts: dict[str, str],
-234 |     include_researcher: bool = False,
-235 |     include_analyst: bool = False,
-236 |     include_synthesiser: bool = False,
-237 | ) -> Agent[None, BaseModel]:
-238 |     """
-239 |     Initializes and returns a Agent manager with the specified configuration.
-240 |     Args:
-241 |         provider (str): The name of the provider.
-242 |         provider_config (ProviderConfig): Configuration settings for the provider.
-243 |         api_key (str): API key for authentication with the provider.
-244 |         prompts (PromptsConfig): Configuration for prompts.
-245 |         include_researcher (bool, optional): Flag to include analyst model.
-246 |             Defaults to False.
-247 |         include_analyst (bool, optional): Flag to include analyst model.
-248 |             Defaults to False.
-249 |         include_synthesiser (bool, optional): Flag to include synthesiser model.
-250 |             Defaults to False.
-251 |     Returns:
-252 |         Agent: The initialized Agent manager.
-253 |     """
-254 | 
-255 |     # FIXME context manager try-catch
-256 |     # with error_handling_context("get_manager()"):
-257 |     model_config = EndpointConfig.model_validate(
-258 |         {
-259 |             "provider": provider,
-260 |             "prompts": prompts,
-261 |             "api_key": api_key,
-262 |             "provider_config": provider_config,
-263 |         }
-264 |     )
-265 |     models = get_models(
-266 |         model_config, include_researcher, include_analyst, include_synthesiser
-267 |     )
-268 |     return _create_manager(prompts, models)
-269 | 
+229 | 
+230 | def get_manager(
+231 |     provider: str,
+232 |     provider_config: ProviderConfig,
+233 |     api_key: str | None,
+234 |     prompts: dict[str, str],
+235 |     include_researcher: bool = False,
+236 |     include_analyst: bool = False,
+237 |     include_synthesiser: bool = False,
+238 | ) -> Agent[None, BaseModel]:
+239 |     """
+240 |     Initializes and returns a Agent manager with the specified configuration.
+241 |     Args:
+242 |         provider (str): The name of the provider.
+243 |         provider_config (ProviderConfig): Configuration settings for the provider.
+244 |         api_key (str): API key for authentication with the provider.
+245 |         prompts (PromptsConfig): Configuration for prompts.
+246 |         include_researcher (bool, optional): Flag to include analyst model.
+247 |             Defaults to False.
+248 |         include_analyst (bool, optional): Flag to include analyst model.
+249 |             Defaults to False.
+250 |         include_synthesiser (bool, optional): Flag to include synthesiser model.
+251 |             Defaults to False.
+252 |     Returns:
+253 |         Agent: The initialized Agent manager.
+254 |     """
+255 | 
+256 |     # FIXME context manager try-catch
+257 |     # with error_handling_context("get_manager()"):
+258 |     model_config = EndpointConfig.model_validate(
+259 |         {
+260 |             "provider": provider,
+261 |             "prompts": prompts,
+262 |             "api_key": api_key,
+263 |             "provider_config": provider_config,
+264 |         }
+265 |     )
+266 |     models = get_models(
+267 |         model_config, include_researcher, include_analyst, include_synthesiser
+268 |     )
+269 |     return _create_manager(prompts, models)
 270 | 
-271 | async def run_manager(
-272 |     manager: Agent[None, BaseModel],
-273 |     query: UserPromptType,
-274 |     provider: str,
-275 |     usage_limits: UsageLimits | None,
-276 |     pydantic_ai_stream: bool = False,
-277 | ) -> None:
-278 |     """
-279 |     Asynchronously runs the manager with the given query and provider, handling errors
-280 |         and printing results.
-281 |     Args:
-282 |         manager (Agent): The system agent responsible for running the query.
-283 |         query (str): The query to be processed by the manager.
-284 |         provider (str): The provider to be used for the query.
-285 |         usage_limits (UsageLimits): The usage limits to be applied during the query
-286 |             execution.
-287 |         pydantic_ai_stream (bool, optional): Flag to enable or disable Pydantic AI
-288 |             stream. Defaults to False.
-289 |     Returns:
-290 |         None
-291 |     """
-292 | 
-293 |     # FIXME context manager try-catch
-294 |     # with out ? error_handling_context("run_manager()"):
-295 |     model_name = getattr(manager, "model")._model_name
-296 |     mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
-297 |     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
-298 | 
-299 |     if pydantic_ai_stream:
-300 |         raise NotImplementedError(
-301 |             "Streaming currently only possible for Agents with "
-302 |             "output_type str not pydantic model"
-303 |         )
-304 |         # logger.info("Streaming model response ...")
-305 |         # result = await manager.run(**mgr_cfg)
-306 |         # aync for chunk in result.stream_text():  # .run(**mgr_cfg) as result:
-307 |         # async with manager.run_stream(user_prompt=query) as stream:
-308 |         #    async for chunk in stream.stream_text():
-309 |         #        logger.info(str(chunk))
-310 |         # result = await stream.get_result()
-311 |     else:
-312 |         logger.info("Waiting for model response ...")
-313 |         # FIXME deprecated warning manager.run(), query unknown type
-314 |         # FIXME [call-overload] error: No overload variant of "run" of "Agent"
-315 |         # matches argument type "dict[str, list[dict[str, str]] |
-316 |         # Sequence[str | ImageUrl | AudioUrl | DocumentUrl | VideoUrl |
-317 |         # BinaryContent] | UsageLimits | None]"
-318 |         result = await manager.run(**mgr_cfg)  # type: ignore[reportDeprecated,reportUnknownArgumentType,reportCallOverload,call-overload]
-319 | 
-320 |     logger.info(f"Result: {result}")
-321 |     logger.info(f"Usage statistics: {result.usage()}")
-322 | 
+271 | 
+272 | async def run_manager(
+273 |     manager: Agent[None, BaseModel],
+274 |     query: UserPromptType,
+275 |     provider: str,
+276 |     usage_limits: UsageLimits | None,
+277 |     pydantic_ai_stream: bool = False,
+278 | ) -> None:
+279 |     """
+280 |     Asynchronously runs the manager with the given query and provider, handling errors
+281 |         and printing results.
+282 |     Args:
+283 |         manager (Agent): The system agent responsible for running the query.
+284 |         query (str): The query to be processed by the manager.
+285 |         provider (str): The provider to be used for the query.
+286 |         usage_limits (UsageLimits): The usage limits to be applied during the query
+287 |             execution.
+288 |         pydantic_ai_stream (bool, optional): Flag to enable or disable Pydantic AI
+289 |             stream. Defaults to False.
+290 |     Returns:
+291 |         None
+292 |     """
+293 | 
+294 |     # FIXME context manager try-catch
+295 |     # with out ? error_handling_context("run_manager()"):
+296 |     model_name = getattr(manager, "model")._model_name
+297 |     mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
+298 |     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
+299 | 
+300 |     if pydantic_ai_stream:
+301 |         raise NotImplementedError(
+302 |             "Streaming currently only possible for Agents with "
+303 |             "output_type str not pydantic model"
+304 |         )
+305 |         # logger.info("Streaming model response ...")
+306 |         # result = await manager.run(**mgr_cfg)
+307 |         # aync for chunk in result.stream_text():  # .run(**mgr_cfg) as result:
+308 |         # async with manager.run_stream(user_prompt=query) as stream:
+309 |         #    async for chunk in stream.stream_text():
+310 |         #        logger.info(str(chunk))
+311 |         # result = await stream.get_result()
+312 |     else:
+313 |         logger.info("Waiting for model response ...")
+314 |         # FIXME deprecated warning manager.run(), query unknown type
+315 |         # FIXME [call-overload] error: No overload variant of "run" of "Agent"
+316 |         # matches argument type "dict[str, list[dict[str, str]] |
+317 |         # Sequence[str | ImageUrl | AudioUrl | DocumentUrl | VideoUrl |
+318 |         # BinaryContent] | UsageLimits | None]"
+319 |         result = await manager.run(**mgr_cfg)  # type: ignore[reportDeprecated,reportUnknownArgumentType,reportCallOverload,call-overload]
+320 | 
+321 |     logger.info(f"Result: {result}")
+322 |     logger.info(f"Usage statistics: {result.usage()}")
 323 | 
-324 | def setup_agent_env(
-325 |     provider: str,
-326 |     query: UserPromptType,
-327 |     chat_config: ChatConfig,
-328 |     chat_env_config: AppEnv,
-329 | ) -> EndpointConfig:
-330 |     """
-331 |     Sets up the environment for an agent by configuring provider settings, prompts,
-332 |     API key, and usage limits.
-333 | 
-334 |     Args:
-335 |         provider (str): The name of the provider.
-336 |         query (UserPromptType): The messages or queries to be sent to the agent.
-337 |         chat_config (ChatConfig): The configuration object containing provider and
-338 |             prompt settings.
-339 |         chat_env_config (AppEnv): The application environment configuration
-340 |             containing API keys.
-341 | 
-342 |     Returns:
-343 |         EndpointConfig: The configuration object for the agent.
-344 |     """
-345 | 
-346 |     msg: str | None
-347 |     # FIXME context manager try-catch
-348 |     # with error_handling_context("setup_agent_env()"):
-349 |     provider_config = get_provider_config(provider, chat_config.providers)
-350 | 
-351 |     prompts = chat_config.prompts
-352 |     api_key = get_api_key(provider, chat_env_config)
+324 | 
+325 | def setup_agent_env(
+326 |     provider: str,
+327 |     query: UserPromptType,
+328 |     chat_config: ChatConfig | BaseModel,
+329 |     chat_env_config: AppEnv,
+330 | ) -> EndpointConfig:
+331 |     """
+332 |     Sets up the environment for an agent by configuring provider settings, prompts,
+333 |     API key, and usage limits.
+334 | 
+335 |     Args:
+336 |         provider (str): The name of the provider.
+337 |         query (UserPromptType): The messages or queries to be sent to the agent.
+338 |         chat_config (ChatConfig | BaseModel): The configuration object containing
+339 |             provider and prompt settings.
+340 |         chat_env_config (AppEnv): The application environment configuration
+341 |             containing API keys.
+342 | 
+343 |     Returns:
+344 |         EndpointConfig: The configuration object for the agent.
+345 |     """
+346 | 
+347 |     if not isinstance(chat_config, ChatConfig):
+348 |         raise TypeError("'chat_config' of invalid type: ChatConfig expected")
+349 |     msg: str | None
+350 |     # FIXME context manager try-catch
+351 |     # with error_handling_context("setup_agent_env()"):
+352 |     provider_config = get_provider_config(provider, chat_config.providers)
 353 | 
-354 |     if provider.lower() == "ollama":
-355 |         # TODO move usage limits to config
-356 |         usage_limits = UsageLimits(request_limit=10, total_tokens_limit=100000)
-357 |     else:
-358 |         if api_key is None:
-359 |             msg = f"API key for provider '{provider}' is not set."
-360 |             logger.error(msg)
-361 |             raise ValueError(msg)
-362 |         # TODO Separate Gemini request into function
-363 |         if provider.lower() == "gemini":
-364 |             if isinstance(query, str):
-365 |                 query = ModelRequest.user_text_prompt(query)
-366 |             elif isinstance(query, list):  # type: ignore[reportUnnecessaryIsInstance]
-367 |                 # query = [
-368 |                 #    ModelRequest.user_text_prompt(
-369 |                 #        str(msg.get("content", ""))
-370 |                 #    )  # type: ignore[reportUnknownArgumentType]
-371 |                 #    if isinstance(msg, dict)
-372 |                 #    else msg
-373 |                 #    for msg in query
-374 |                 # ]
-375 |                 raise NotImplementedError("Currently conflicting with UserPromptType")
-376 |             else:
-377 |                 msg = f"Unsupported query type for Gemini: {type(query)}"
-378 |                 logger.error(msg)
-379 |                 raise TypeError(msg)
-380 |         # TODO move usage limits to config
-381 |         usage_limits = UsageLimits(request_limit=10, total_tokens_limit=10000)
-382 | 
-383 |     return EndpointConfig.model_validate(
-384 |         {
-385 |             "provider": provider,
-386 |             "query": query,
-387 |             "api_key": api_key,
-388 |             "prompts": prompts,
-389 |             "provider_config": provider_config,
-390 |             "usage_limits": usage_limits,
-391 |         }
-392 |     )
-393 | 
+354 |     prompts = chat_config.prompts
+355 |     api_key = get_api_key(provider, chat_env_config)
+356 | 
+357 |     if provider.lower() == "ollama":
+358 |         # TODO move usage limits to config
+359 |         usage_limits = UsageLimits(request_limit=10, total_tokens_limit=100000)
+360 |     else:
+361 |         if api_key is None:
+362 |             msg = f"API key for provider '{provider}' is not set."
+363 |             logger.error(msg)
+364 |             raise ValueError(msg)
+365 |         # TODO Separate Gemini request into function
+366 |         if provider.lower() == "gemini":
+367 |             if isinstance(query, str):
+368 |                 query = ModelRequest.user_text_prompt(query)
+369 |             elif isinstance(query, list):  # type: ignore[reportUnnecessaryIsInstance]
+370 |                 # query = [
+371 |                 #    ModelRequest.user_text_prompt(
+372 |                 #        str(msg.get("content", ""))
+373 |                 #    )  # type: ignore[reportUnknownArgumentType]
+374 |                 #    if isinstance(msg, dict)
+375 |                 #    else msg
+376 |                 #    for msg in query
+377 |                 # ]
+378 |                 raise NotImplementedError("Currently conflicting with UserPromptType")
+379 |             else:
+380 |                 msg = f"Unsupported query type for Gemini: {type(query)}"
+381 |                 logger.error(msg)
+382 |                 raise TypeError(msg)
+383 |         # TODO move usage limits to config
+384 |         usage_limits = UsageLimits(request_limit=10, total_tokens_limit=10000)
+385 | 
+386 |     return EndpointConfig.model_validate(
+387 |         {
+388 |             "provider": provider,
+389 |             "query": query,
+390 |             "api_key": api_key,
+391 |             "prompts": prompts,
+392 |             "provider_config": provider_config,
+393 |             "usage_limits": usage_limits,
+394 |         }
+395 |     )
+396 | 
 
 
 --------------------------------------------------------------------------------
@@ -2625,8 +2687,8 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
  12 | from pydantic_ai.providers.openai import OpenAIProvider
  13 | 
  14 | from app.config.config_app import API_SUFFIX
- 15 | from app.config.data_models import EndpointConfig, ModelDict, ProviderConfig
- 16 | from app.utils.load_configs import AppEnv
+ 15 | from app.config.data_models import AppEnv, EndpointConfig, ModelDict, ProviderConfig
+ 16 | from app.utils.error_messages import generic_exception, get_key_error
  17 | from app.utils.log import logger
  18 | 
  19 | 
@@ -2659,11 +2721,11 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
  46 |         model_name = providers[provider].model_name
  47 |         base_url = providers[provider].base_url
  48 |     except KeyError as e:
- 49 |         msg = f"Provider '{provider}' not found in configuration: {e}"
+ 49 |         msg = get_key_error(str(e))
  50 |         logger.error(msg)
  51 |         raise KeyError(msg)
  52 |     except Exception as e:
- 53 |         msg = f"Error loading provider configuration: {e}"
+ 53 |         msg = generic_exception(str(e))
  54 |         logger.exception(msg)
  55 |         raise Exception(msg)
  56 |     else:
@@ -2739,20 +2801,28 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 --------------------------------------------------------------------------------
 /src/app/config/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54dab8adaa7fe9/src/app/config/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/src/app/config/__init__.py
 
 
 --------------------------------------------------------------------------------
 /src/app/config/config_app.py:
 --------------------------------------------------------------------------------
-1 | """Configuration constants for the application."""
-2 | 
-3 | API_SUFFIX = "_API_KEY"
-4 | CHAT_CONFIG_FILE = "config/config_chat.json"
-5 | CHAT_DEFAULT_PROVIDER = "github"
-6 | LOGS_PATH = "logs"
-7 | PROJECT_NAME = "rd-mas-example"
-8 | 
+ 1 | """Configuration constants for the application."""
+ 2 | 
+ 3 | # MARK: chat env
+ 4 | API_SUFFIX = "_API_KEY"
+ 5 | CHAT_DEFAULT_PROVIDER = "github"
+ 6 | 
+ 7 | 
+ 8 | # MARK: project
+ 9 | PROJECT_NAME = "rd-mas-example"
+10 | 
+11 | 
+12 | # MARK: paths
+13 | CHAT_CONFIG_FILE = "config/config_chat.json"
+14 | LOGS_PATH = "logs"
+15 | EVAL_CONFIG_FILE = "config/config_eval.json"
+16 | 
 
 
 --------------------------------------------------------------------------------
@@ -2815,28 +2885,16 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 --------------------------------------------------------------------------------
 /src/app/config/config_eval.json:
 --------------------------------------------------------------------------------
-1 | {
-2 |     "evaluators_and_weights": {
-3 |         "planning_rational": 0.25,
-4 |         "tool_efficiency": 0.25,
-5 |         "coordination_quality": 0.25,
-6 |         "time_taken": 0.25,
-7 |         "text_similarity": 0.25
-8 |     }
-9 | }
-
-
---------------------------------------------------------------------------------
-/src/app/config/config_eval.py:
---------------------------------------------------------------------------------
-1 | weights = {
-2 |             "decision_quality": 0.3,
-3 |             "response_time": 0.15,
-4 |             "execution_efficiency": 0.15,
-5 |             "adaptability_score": 0.2,
-6 |             "coordination_quality": 0.15,
-7 |             "user_satisfaction": 0.05,
-8 |         }
+ 1 | {
+ 2 |     "metrics_and_weights": {
+ 3 |         "time_taken": 0.167,
+ 4 |         "task_success": 0.167,
+ 5 |         "coordination_quality": 0.167,
+ 6 |         "tool_efficiency": 0.167,
+ 7 |         "planning_rational": 0.167,
+ 8 |         "output_similarity": 0.167
+ 9 |     }
+10 | }
 
 
 --------------------------------------------------------------------------------
@@ -2858,196 +2916,262 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
  14 | from pydantic_ai.models import Model
  15 | from pydantic_ai.tools import Tool
  16 | from pydantic_ai.usage import UsageLimits
- 17 | 
- 18 | type UserPromptType = (
- 19 |     str | list[dict[str, str]] | ModelRequest | None
- 20 | )  #  (1) Input validation
- 21 | ResultBaseType = TypeVar(
- 22 |     "ResultBaseType", bound=BaseModel
- 23 | )  # (2) Generic type for model results
- 24 | 
+ 17 | from pydantic_settings import BaseSettings, SettingsConfigDict
+ 18 | 
+ 19 | type UserPromptType = (
+ 20 |     str | list[dict[str, str]] | ModelRequest | None
+ 21 | )  #  (1) Input validation
+ 22 | ResultBaseType = TypeVar(
+ 23 |     "ResultBaseType", bound=BaseModel
+ 24 | )  # (2) Generic type for model results
  25 | 
- 26 | class ResearchResult(BaseModel):
- 27 |     """Research results from the research agent."""
- 28 | 
- 29 |     topic: str | dict[str, str]
- 30 |     findings: list[str] | dict[str, str | list[str]]
- 31 |     sources: list[str] | dict[str, str | list[str]]
- 32 | 
+ 26 | 
+ 27 | class ResearchResult(BaseModel):
+ 28 |     """Research results from the research agent."""
+ 29 | 
+ 30 |     topic: str | dict[str, str]
+ 31 |     findings: list[str] | dict[str, str | list[str]]
+ 32 |     sources: list[str] | dict[str, str | list[str]]
  33 | 
- 34 | class AnalysisResult(BaseModel):
- 35 |     """Analysis results from the analysis agent."""
- 36 | 
- 37 |     insights: list[str]
- 38 |     recommendations: list[str]
- 39 |     approval: bool
- 40 | 
+ 34 | 
+ 35 | class AnalysisResult(BaseModel):
+ 36 |     """Analysis results from the analysis agent."""
+ 37 | 
+ 38 |     insights: list[str]
+ 39 |     recommendations: list[str]
+ 40 |     approval: bool
  41 | 
- 42 | class ResearchSummary(BaseModel):
- 43 |     """Expected model response of research on a topic"""
- 44 | 
- 45 |     topic: str
- 46 |     key_points: list[str]
- 47 |     key_points_explanation: list[str]
- 48 |     conclusion: str
- 49 |     sources: list[str]
- 50 | 
+ 42 | 
+ 43 | class ResearchSummary(BaseModel):
+ 44 |     """Expected model response of research on a topic"""
+ 45 | 
+ 46 |     topic: str
+ 47 |     key_points: list[str]
+ 48 |     key_points_explanation: list[str]
+ 49 |     conclusion: str
+ 50 |     sources: list[str]
  51 | 
- 52 | class ProviderConfig(BaseModel):
- 53 |     """Configuration for a model provider"""
- 54 | 
- 55 |     model_name: str
- 56 |     base_url: HttpUrl
- 57 | 
+ 52 | 
+ 53 | class ProviderConfig(BaseModel):
+ 54 |     """Configuration for a model provider"""
+ 55 | 
+ 56 |     model_name: str
+ 57 |     base_url: HttpUrl
  58 | 
- 59 | class ChatConfig(BaseModel):
- 60 |     """Configuration settings for agents and model providers"""
- 61 | 
- 62 |     providers: dict[str, ProviderConfig]
- 63 |     inference: dict[str, str | int]
- 64 |     prompts: dict[str, str]
- 65 | 
+ 59 | 
+ 60 | class ChatConfig(BaseModel):
+ 61 |     """Configuration settings for agents and model providers"""
+ 62 | 
+ 63 |     providers: dict[str, ProviderConfig]
+ 64 |     inference: dict[str, str | int]
+ 65 |     prompts: dict[str, str]
  66 | 
- 67 | class EndpointConfig(BaseModel):
- 68 |     """Configuration for an agent"""
- 69 | 
- 70 |     provider: str
- 71 |     query: UserPromptType = None
- 72 |     api_key: str | None
- 73 |     prompts: dict[str, str]
- 74 |     provider_config: ProviderConfig
- 75 |     usage_limits: UsageLimits | None = None
- 76 | 
+ 67 | 
+ 68 | class EndpointConfig(BaseModel):
+ 69 |     """Configuration for an agent"""
+ 70 | 
+ 71 |     provider: str
+ 72 |     query: UserPromptType = None
+ 73 |     api_key: str | None
+ 74 |     prompts: dict[str, str]
+ 75 |     provider_config: ProviderConfig
+ 76 |     usage_limits: UsageLimits | None = None
  77 | 
- 78 | class AgentConfig(BaseModel):
- 79 |     """Configuration for an agent"""
- 80 | 
- 81 |     model: Model  # (1) Instance expected
- 82 |     output_type: type[BaseModel]  # (2) Class expected
- 83 |     system_prompt: str
- 84 |     # FIXME tools: list[Callable[..., Awaitable[Any]]]
- 85 |     tools: list[Any] = []  # (3) List of tools will be validated at creation
- 86 |     retries: int = 3
- 87 | 
- 88 |     # Avoid pydantic.errors.PydanticSchemaGenerationError:
- 89 |     # Unable to generate pydantic-core schema for <class 'openai.AsyncOpenAI'>.
- 90 |     # Avoid Pydantic errors related to non-Pydantic types
- 91 |     model_config = ConfigDict(
- 92 |         arbitrary_types_allowed=True
- 93 |     )  # (4) Suppress Error non-Pydantic types caused by <class 'openai.AsyncOpenAI'>
- 94 | 
- 95 |     @field_validator("tools", mode="before")
- 96 |     def validate_tools(cls, v: list[Any]) -> list[Tool | None]:
- 97 |         """Validate that all tools are instances of Tool."""
- 98 |         if not v:
- 99 |             return []
-100 |         if not all(isinstance(t, Tool) for t in v):
-101 |             raise ValueError("All tools must be Tool instances")
-102 |         return v
-103 | 
+ 78 | 
+ 79 | class AgentConfig(BaseModel):
+ 80 |     """Configuration for an agent"""
+ 81 | 
+ 82 |     model: Model  # (1) Instance expected
+ 83 |     output_type: type[BaseModel]  # (2) Class expected
+ 84 |     system_prompt: str
+ 85 |     # FIXME tools: list[Callable[..., Awaitable[Any]]]
+ 86 |     tools: list[Any] = []  # (3) List of tools will be validated at creation
+ 87 |     retries: int = 3
+ 88 | 
+ 89 |     # Avoid pydantic.errors.PydanticSchemaGenerationError:
+ 90 |     # Unable to generate pydantic-core schema for <class 'openai.AsyncOpenAI'>.
+ 91 |     # Avoid Pydantic errors related to non-Pydantic types
+ 92 |     model_config = ConfigDict(
+ 93 |         arbitrary_types_allowed=True
+ 94 |     )  # (4) Suppress Error non-Pydantic types caused by <class 'openai.AsyncOpenAI'>
+ 95 | 
+ 96 |     @field_validator("tools", mode="before")
+ 97 |     def validate_tools(cls, v: list[Any]) -> list[Tool | None]:
+ 98 |         """Validate that all tools are instances of Tool."""
+ 99 |         if not v:
+100 |             return []
+101 |         if not all(isinstance(t, Tool) for t in v):
+102 |             raise ValueError("All tools must be Tool instances")
+103 |         return v
 104 | 
-105 | class ModelDict(BaseModel):
-106 |     """Dictionary of models used to create agent systems"""
-107 | 
-108 |     model_manager: Model
-109 |     model_researcher: Model | None
-110 |     model_analyst: Model | None
-111 |     model_synthesiser: Model | None
-112 |     model_config = ConfigDict(arbitrary_types_allowed=True)
-113 | 
+105 | 
+106 | class ModelDict(BaseModel):
+107 |     """Dictionary of models used to create agent systems"""
+108 | 
+109 |     model_manager: Model
+110 |     model_researcher: Model | None
+111 |     model_analyst: Model | None
+112 |     model_synthesiser: Model | None
+113 |     model_config = ConfigDict(arbitrary_types_allowed=True)
+114 | 
+115 | 
+116 | class EvalConfig(BaseModel):
+117 |     metrics_and_weights: dict[str, float]
+118 | 
+119 | 
+120 | class AppEnv(BaseSettings):
+121 |     """
+122 |     Application environment settings loaded from environment variables or .env file.
+123 | 
+124 |     This class uses Pydantic's BaseSettings to manage API keys and configuration
+125 |     for various inference endpoints, tools, and logging/monitoring services.
+126 |     Environment variables are loaded from a .env file by default.
+127 |     """
+128 | 
+129 |     # Inference endpoints
+130 |     GEMINI_API_KEY: str = ""
+131 |     GITHUB_API_KEY: str = ""
+132 |     GROK_API_KEY: str = ""
+133 |     HUGGINGFACE_API_KEY: str = ""
+134 |     OPENROUTER_API_KEY: str = ""
+135 |     PERPLEXITY_API_KEY: str = ""
+136 |     RESTACK_API_KEY: str = ""
+137 |     TOGETHER_API_KEY: str = ""
+138 | 
+139 |     # Tools
+140 |     TAVILY_API_KEY: str = ""
+141 | 
+142 |     # Logging/Monitoring/Tracing
+143 |     AGENTOPS_API_KEY: str = ""
+144 |     LOGFIRE_API_KEY: str = ""
+145 |     WANDB_API_KEY: str = ""
+146 | 
+147 |     model_config = SettingsConfigDict(
+148 |         env_file=".env", env_file_encoding="utf-8", extra="ignore"
+149 |     )
+150 | 
 
 
 --------------------------------------------------------------------------------
 /src/app/evals/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54dab8adaa7fe9/src/app/evals/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/src/app/evals/__init__.py
 
 
 --------------------------------------------------------------------------------
 /src/app/evals/metrics.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54dab8adaa7fe9/src/app/evals/metrics.py
+ 1 | def time_taken(start_time: float, end_time: float) -> float:
+ 2 |     """Calculate duration between start and end timestamps
+ 3 | 
+ 4 |     Args:
+ 5 |         start_time: Timestamp when execution started
+ 6 |         end_time: Timestamp when execution completed
+ 7 | 
+ 8 |     Returns:
+ 9 |         Duration in seconds with microsecond precision
+10 |     """
+11 | 
+12 |     # TODO implement
+13 |     return end_time - start_time
+14 | 
+15 | 
+16 | def output_similarity(agent_output: str, expected_answer: str) -> bool:
+17 |     """
+18 |     Determine to what degree the agent's output matches the expected answer.
+19 | 
+20 |     Args:
+21 |         agent_output (str): The output produced by the agent.
+22 |         expected_answer (str): The correct or expected answer.
+23 | 
+24 |     Returns:
+25 |         bool: True if the output matches the expected answer, False otherwise.
+26 |     """
+27 | 
+28 |     # TODO score instead of bool
+29 |     return agent_output.strip() == expected_answer.strip()
+30 | 
 
 
 --------------------------------------------------------------------------------
 /src/app/main.py:
 --------------------------------------------------------------------------------
   1 | """
-  2 | Main entry point for the agent application.
+  2 | Main entry point for the Agents-eval application.
   3 | 
-  4 | This module initializes the application, loads configuration, handles user input,
-  5 | and orchestrates the agent system workflow. It uses async execution and integrates
-  6 | with logging, tracing, and authentication utilities.
-  7 | 
-  8 | Args:
-  9 |     chat_provider (str): The inference chat provider to be used.
- 10 |     query (str): The query to be processed by the agent.
- 11 |     include_researcher (bool): Whether to include the researcher agent.
- 12 |     include_analyst (bool): Whether to include the analyst agent.
- 13 |     include_synthesiser (bool): Whether to include the synthesiser agent.
- 14 |     pydantic_ai_stream (bool): Whether to use Pydantic AI streaming.
- 15 |     chat_config_file (str): Path to the configuration file.
+  4 | This module initializes the agentic system, loads configuration files,
+  5 | handles user input, and orchestrates the multi-agent workflow using
+  6 | asynchronous execution. It integrates logging, tracing, and authentication,
+  7 | and supports both CLI and programmatic execution.
+  8 | """
+  9 | 
+ 10 | from asyncio import run
+ 11 | from pathlib import Path
+ 12 | from sys import argv
+ 13 | 
+ 14 | from logfire import span
+ 15 | from weave import op
  16 | 
- 17 | Functions:
- 18 |     main: Main async function to run the agent system.
- 19 | """
- 20 | 
- 21 | from asyncio import run
- 22 | from pathlib import Path
- 23 | from sys import argv
- 24 | 
- 25 | import weave
- 26 | from logfire import span
- 27 | 
- 28 | from app.__init__ import __version__
- 29 | from app.agents.agent_system import get_manager, run_manager, setup_agent_env
- 30 | from app.config.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
- 31 | from app.utils.load_configs import AppEnv, load_app_config
- 32 | from app.utils.log import logger
- 33 | from app.utils.login import login
- 34 | from app.utils.utils import parse_args
- 35 | 
- 36 | 
- 37 | @weave.op()
- 38 | async def main(
- 39 |     chat_provider: str = CHAT_DEFAULT_PROVIDER,
- 40 |     query: str = "",
- 41 |     include_researcher: bool = False,
- 42 |     include_analyst: bool = False,
- 43 |     include_synthesiser: bool = False,
- 44 |     pydantic_ai_stream: bool = False,
- 45 |     chat_config_file: str = CHAT_CONFIG_FILE,
- 46 | ) -> None:
- 47 |     """
- 48 |     Main entry point for the application.
- 49 | 
- 50 |     Args:
- 51 |         chat_provider (str): The inference chat_provider to be used.
- 52 |         query (str): The query to be processed by the agent.
- 53 |         include_researcher (bool): Whether to include the researcher in the process.
- 54 |         include_analyst (bool): Whether to include the analyst in the process.
- 55 |         include_synthesiser (bool): Whether to include the synthesiser in the process.
- 56 |         pydantic_ai_stream (bool): Whether to use Pydantic AI streaming.
- 57 |         chat_config_file (str): Full path to the configuration file.
+ 17 | from app.__init__ import __version__
+ 18 | from app.agents.agent_system import get_manager, run_manager, setup_agent_env
+ 19 | from app.config.config_app import (
+ 20 |     CHAT_CONFIG_FILE,
+ 21 |     CHAT_DEFAULT_PROVIDER,
+ 22 |     EVAL_CONFIG_FILE,
+ 23 |     PROJECT_NAME,
+ 24 | )
+ 25 | from app.config.data_models import AppEnv, ChatConfig, EvalConfig
+ 26 | from app.utils.error_messages import generic_exception
+ 27 | from app.utils.load_configs import load_config
+ 28 | from app.utils.log import logger
+ 29 | from app.utils.login import login
+ 30 | from app.utils.utils import parse_args
+ 31 | 
+ 32 | 
+ 33 | @op()
+ 34 | async def main(
+ 35 |     chat_provider: str = CHAT_DEFAULT_PROVIDER,
+ 36 |     query: str = "",
+ 37 |     include_researcher: bool = False,
+ 38 |     include_analyst: bool = False,
+ 39 |     include_synthesiser: bool = False,
+ 40 |     pydantic_ai_stream: bool = False,
+ 41 |     chat_config_file: str = CHAT_CONFIG_FILE,
+ 42 | ) -> None:
+ 43 |     """
+ 44 |     Main entry point for the application.
+ 45 | 
+ 46 |     Args:
+ 47 |         chat_provider (str): The inference chat_provider to be used.
+ 48 |         query (str): The query to be processed by the agent.
+ 49 |         include_researcher (bool): Whether to include the researcher in the process.
+ 50 |         include_analyst (bool): Whether to include the analyst in the process.
+ 51 |         include_synthesiser (bool): Whether to include the synthesiser in the process.
+ 52 |         pydantic_ai_stream (bool): Whether to use Pydantic AI streaming.
+ 53 |         chat_config_file (str): Full path to the configuration file.
+ 54 | 
+ 55 |     Returns:
+ 56 |         None
+ 57 |     """
  58 | 
- 59 |     Returns:
- 60 |         None
- 61 |     """
- 62 | 
- 63 |     logger.info(f"Starting app '{PROJECT_NAME}' v{__version__}")
- 64 |     try:
- 65 |         with span("main()"):
- 66 |             if not chat_provider:
- 67 |                 chat_provider = input("Which inference chat_provider to use? ")
- 68 |             if not query:
- 69 |                 query = input("What would you like to research? ")
- 70 | 
- 71 |             chat_config_path = Path(__file__).parent / chat_config_file
- 72 |             chat_config = load_app_config(chat_config_path)
- 73 |             chat_env_config = AppEnv()
- 74 |             agent_env = setup_agent_env(
- 75 |                 chat_provider, query, chat_config, chat_env_config
- 76 |             )
+ 59 |     logger.info(f"Starting app '{PROJECT_NAME}' v{__version__}")
+ 60 |     try:
+ 61 |         with span("main()"):
+ 62 |             if not chat_provider:
+ 63 |                 chat_provider = input("Which inference chat_provider to use? ")
+ 64 |             if not query:
+ 65 |                 query = input("What would you like to research? ")
+ 66 | 
+ 67 |             chat_config_path = Path(__file__).parent / CHAT_CONFIG_FILE
+ 68 |             eval_config_path = Path(__file__).parent / EVAL_CONFIG_FILE
+ 69 |             chat_config = load_config(chat_config_path, ChatConfig)
+ 70 |             eval_config = load_config(eval_config_path, EvalConfig)
+ 71 |             chat_env_config = AppEnv()
+ 72 |             agent_env = setup_agent_env(
+ 73 |                 chat_provider, query, chat_config, chat_env_config
+ 74 |             )
+ 75 |             # TODO remove noqa and type ignore for unused variable
+ 76 |             metrics_and_weights = eval_config.metrics_and_weights  # noqa: F841  # type: ignore[reportUnusedVariable]
  77 | 
  78 |             # FIXME enhance login, not every run?
  79 |             login(PROJECT_NAME, chat_env_config)
@@ -3071,7 +3195,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
  97 |             logger.info(f"Exiting app '{PROJECT_NAME}'")
  98 | 
  99 |     except Exception as e:
-100 |         msg = f"Aborting app '{PROJECT_NAME}' with: {e}"
+100 |         msg = generic_exception(f"Aborting app '{PROJECT_NAME}' with: {e}")
 101 |         logger.exception(msg)
 102 |         raise Exception(msg) from e
 103 | 
@@ -3092,94 +3216,136 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 --------------------------------------------------------------------------------
 /src/app/utils/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54dab8adaa7fe9/src/app/utils/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/src/app/utils/__init__.py
+
+
+--------------------------------------------------------------------------------
+/src/app/utils/error_messages.py:
+--------------------------------------------------------------------------------
+ 1 | """
+ 2 | Error message utilities for the Agents-eval application.
+ 3 | 
+ 4 | This module provides concise helper functions for generating standardized
+ 5 | error messages related to configuration loading and validation.
+ 6 | """
+ 7 | 
+ 8 | from pathlib import Path
+ 9 | 
+10 | 
+11 | def api_connection_error(error: str) -> str:
+12 |     """
+13 |     Generate a error message for API connection error.
+14 |     """
+15 |     return f"API connection error: {error}"
+16 | 
+17 | 
+18 | def failed_to_load_config(error: str) -> str:
+19 |     """
+20 |     Generate a error message for configuration loading failure.
+21 |     """
+22 |     return f"Failed to load config: {error}"
+23 | 
+24 | 
+25 | def file_not_found(file_path: str | Path) -> str:
+26 |     """
+27 |     Generate an error message for a missing configuration file.
+28 |     """
+29 |     return f"File not found: {file_path}"
+30 | 
+31 | 
+32 | def generic_exception(error: str) -> str:
+33 |     """
+34 |     Generate a generic error message.
+35 |     """
+36 |     return f"Exception: {error}"
+37 | 
+38 | 
+39 | def invalid_data_model_format(error: str) -> str:
+40 |     """
+41 |     Generate an error message for invalid pydantic data model format.
+42 |     """
+43 |     return f"Invalid pydantic data model format: {error}"
+44 | 
+45 | 
+46 | def invalid_json(error: str) -> str:
+47 |     """
+48 |     Generate an error message for invalid JSON in a configuration file.
+49 |     """
+50 |     return f"Invalid JSON: {error}"
+51 | 
+52 | 
+53 | def invalid_type(expected_type: str, actual_type: str) -> str:
+54 |     """
+55 |     Generate an error message for invalid Type.
+56 |     """
+57 |     return f"Type Error: Expected {expected_type}, got {actual_type} instead."
+58 | 
+59 | 
+60 | def get_key_error(error: str) -> str:
+61 |     """
+62 |     Generate a generic error message.
+63 |     """
+64 |     return f"Key Error: {error}"
+65 | 
 
 
 --------------------------------------------------------------------------------
 /src/app/utils/load_configs.py:
 --------------------------------------------------------------------------------
  1 | """
- 2 | Utility functions and classes for loading application settings and configuration.
+ 2 | Configuration loading utilities.
  3 | 
- 4 | This module defines the AppEnv class for managing environment variables using Pydantic,
- 5 | and provides a function to load and validate application configuration from a JSON file.
+ 4 | Provides a generic function for loading and validating JSON configuration
+ 5 | files against Pydantic models, with error handling and logging support.
  6 | """
  7 | 
  8 | import json
  9 | from pathlib import Path
 10 | 
-11 | from pydantic_settings import BaseSettings, SettingsConfigDict
+11 | from pydantic import BaseModel, ValidationError
 12 | 
-13 | from app.config.data_models import ChatConfig
-14 | from app.utils.log import logger
-15 | 
-16 | 
-17 | class AppEnv(BaseSettings):
-18 |     """
-19 |     Application environment settings loaded from environment variables or .env file.
+13 | from app.utils.error_messages import (
+14 |     failed_to_load_config,
+15 |     file_not_found,
+16 |     invalid_data_model_format,
+17 |     invalid_json,
+18 | )
+19 | from app.utils.log import logger
 20 | 
-21 |     This class uses Pydantic's BaseSettings to manage API keys and configuration
-22 |     for various inference endpoints, tools, and logging/monitoring services.
-23 |     Environment variables are loaded from a .env file by default.
-24 |     """
+21 | 
+22 | def load_config(config_path: str | Path, data_model: type[BaseModel]) -> BaseModel:
+23 |     """
+24 |     Generic configuration loader that validates against any Pydantic model.
 25 | 
-26 |     # Inference endpoints
-27 |     GEMINI_API_KEY: str = ""
-28 |     GITHUB_API_KEY: str = ""
-29 |     GROK_API_KEY: str = ""
-30 |     HUGGINGFACE_API_KEY: str = ""
-31 |     OPENROUTER_API_KEY: str = ""
-32 |     PERPLEXITY_API_KEY: str = ""
-33 |     RESTACK_API_KEY: str = ""
-34 |     TOGETHER_API_KEY: str = ""
-35 | 
-36 |     # Tools
-37 |     TAVILY_API_KEY: str = ""
-38 | 
-39 |     # Logging/Monitoring/Tracing
-40 |     AGENTOPS_API_KEY: str = ""
-41 |     LOGFIRE_API_KEY: str = ""
-42 |     WANDB_API_KEY: str = ""
-43 | 
-44 |     model_config = SettingsConfigDict(
-45 |         env_file=".env", env_file_encoding="utf-8", extra="ignore"
-46 |     )
-47 | 
-48 | 
-49 | def load_app_config(config_path: str | Path) -> ChatConfig:
-50 |     """
-51 |     Load and validate application configuration from a JSON file.
-52 | 
-53 |     Args:
-54 |         config_path (str): Path to the JSON configuration file.
-55 | 
-56 |     Returns:
-57 |         ChatConfig: An instance of ChatConfig with validated configuration data.
-58 | 
-59 |     Raises:
-60 |         FileNotFoundError: If the configuration file does not exist.
-61 |         json.JSONDecodeError: If the file contains invalid JSON.
-62 |         Exception: For any other unexpected errors during loading or validation.
-63 |     """
-64 | 
-65 |     try:
-66 |         with open(config_path) as f:
-67 |             config_data = json.load(f)
-68 |     except FileNotFoundError:
-69 |         msg = f"Configuration file not found: {config_path}"
-70 |         logger.error(msg)
-71 |         raise FileNotFoundError(msg)
-72 |     except json.JSONDecodeError as e:
-73 |         msg = f"Error decoding JSON from {config_path}: {e}"
-74 |         logger.error(msg)
-75 |         raise json.JSONDecodeError(msg, str(config_path), 0)
-76 |     except Exception as e:
-77 |         msg = f"Unexpected error loading config from {config_path}: {e}"
-78 |         logger.exception(msg)
-79 |         raise Exception(msg)
-80 | 
-81 |     return ChatConfig.model_validate(config_data)
-82 | 
+26 |     Args:
+27 |         config_path: Path to the JSON configuration file
+28 |         model: Pydantic model class for validation
+29 | 
+30 |     Returns:
+31 |         Validated configuration instance
+32 |     """
+33 | 
+34 |     try:
+35 |         with open(config_path, encoding="utf-8") as f:
+36 |             data = json.load(f)
+37 |         return data_model.model_validate(data)
+38 |     except FileNotFoundError as e:
+39 |         msg = file_not_found(config_path)
+40 |         logger.error(msg)
+41 |         raise FileNotFoundError(msg) from e
+42 |     except json.JSONDecodeError as e:
+43 |         msg = invalid_json(str(e))
+44 |         logger.error(msg)
+45 |         raise ValueError(msg) from e
+46 |     except ValidationError as e:
+47 |         msg = invalid_data_model_format(str(e))
+48 |         logger.error(msg)
+49 |         raise ValidationError(msg) from e
+50 |     except Exception as e:
+51 |         msg = failed_to_load_config(str(e))
+52 |         logger.exception(msg)
+53 |         raise Exception(msg) from e
+54 | 
 
 
 --------------------------------------------------------------------------------
@@ -3198,78 +3364,83 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 11 | from pydantic_settings import BaseSettings, SettingsConfigDict
 12 | 
 13 | from app.config.data_models import ChatConfig
-14 | from app.utils.log import logger
-15 | 
-16 | 
-17 | class AppEnv(BaseSettings):
-18 |     """
-19 |     Application environment settings loaded from environment variables or .env file.
+14 | from app.utils.error_messages import (
+15 |     failed_to_load_config,
+16 |     file_not_found,
+17 |     invalid_json,
+18 | )
+19 | from app.utils.log import logger
 20 | 
-21 |     This class uses Pydantic's BaseSettings to manage API keys and configuration
-22 |     for various inference endpoints, tools, and logging/monitoring services.
-23 |     Environment variables are loaded from a .env file by default.
-24 |     """
+21 | 
+22 | class AppEnv(BaseSettings):
+23 |     """
+24 |     Application environment settings loaded from environment variables or .env file.
 25 | 
-26 |     # Inference endpoints
-27 |     GEMINI_API_KEY: str = ""
-28 |     GITHUB_API_KEY: str = ""
-29 |     GROK_API_KEY: str = ""
-30 |     HUGGINGFACE_API_KEY: str = ""
-31 |     OPENROUTER_API_KEY: str = ""
-32 |     PERPLEXITY_API_KEY: str = ""
-33 |     RESTACK_API_KEY: str = ""
-34 |     TOGETHER_API_KEY: str = ""
-35 | 
-36 |     # Tools
-37 |     TAVILY_API_KEY: str = ""
-38 | 
-39 |     # Logging/Monitoring/Tracing
-40 |     AGENTOPS_API_KEY: str = ""
-41 |     LOGFIRE_TOKEN: str = ""
-42 |     WANDB_API_KEY: str = ""
+26 |     This class uses Pydantic's BaseSettings to manage API keys and configuration
+27 |     for various inference endpoints, tools, and logging/monitoring services.
+28 |     Environment variables are loaded from a .env file by default.
+29 |     """
+30 | 
+31 |     # Inference endpoints
+32 |     GEMINI_API_KEY: str = ""
+33 |     GITHUB_API_KEY: str = ""
+34 |     GROK_API_KEY: str = ""
+35 |     HUGGINGFACE_API_KEY: str = ""
+36 |     OPENROUTER_API_KEY: str = ""
+37 |     PERPLEXITY_API_KEY: str = ""
+38 |     RESTACK_API_KEY: str = ""
+39 |     TOGETHER_API_KEY: str = ""
+40 | 
+41 |     # Tools
+42 |     TAVILY_API_KEY: str = ""
 43 | 
-44 |     model_config = SettingsConfigDict(
-45 |         env_file=".env", env_file_encoding="utf-8", extra="ignore"
-46 |     )
-47 | 
+44 |     # Logging/Monitoring/Tracing
+45 |     AGENTOPS_API_KEY: str = ""
+46 |     LOGFIRE_TOKEN: str = ""
+47 |     WANDB_API_KEY: str = ""
 48 | 
-49 | chat_config = AppEnv()
-50 | 
-51 | 
-52 | def load_config(config_path: str | Path) -> ChatConfig:
-53 |     """
-54 |     Load and validate application configuration from a JSON file.
+49 |     model_config = SettingsConfigDict(
+50 |         env_file=".env", env_file_encoding="utf-8", extra="ignore"
+51 |     )
+52 | 
+53 | 
+54 | chat_config = AppEnv()
 55 | 
-56 |     Args:
-57 |         config_path (str): Path to the JSON configuration file.
-58 | 
-59 |     Returns:
-60 |         ChatConfig: An instance of ChatConfig with validated configuration data.
-61 | 
-62 |     Raises:
-63 |         FileNotFoundError: If the configuration file does not exist.
-64 |         json.JSONDecodeError: If the file contains invalid JSON.
-65 |         Exception: For any other unexpected errors during loading or validation.
-66 |     """
-67 | 
-68 |     try:
-69 |         with open(config_path) as f:
-70 |             config_data = json.load(f)
-71 |     except FileNotFoundError:
-72 |         msg = f"Configuration file not found: {config_path}"
-73 |         logger.error(msg)
-74 |         raise FileNotFoundError(msg)
-75 |     except json.JSONDecodeError as e:
-76 |         msg = f"Error decoding JSON from {config_path}: {e}"
-77 |         logger.error(msg)
-78 |         raise json.JSONDecodeError(msg, str(config_path), 0)
-79 |     except Exception as e:
-80 |         msg = f"Unexpected error loading config from {config_path}: {e}"
-81 |         logger.exception(msg)
-82 |         raise Exception(msg)
-83 | 
-84 |     return ChatConfig.model_validate(config_data)
-85 | 
+56 | 
+57 | def load_config(config_path: str | Path) -> ChatConfig:
+58 |     """
+59 |     Load and validate application configuration from a JSON file.
+60 | 
+61 |     Args:
+62 |         config_path (str): Path to the JSON configuration file.
+63 | 
+64 |     Returns:
+65 |         ChatConfig: An instance of ChatConfig with validated configuration data.
+66 | 
+67 |     Raises:
+68 |         FileNotFoundError: If the configuration file does not exist.
+69 |         json.JSONDecodeError: If the file contains invalid JSON.
+70 |         Exception: For any other unexpected errors during loading or validation.
+71 |     """
+72 | 
+73 |     try:
+74 |         with open(config_path) as f:
+75 |             config_data = json.load(f)
+76 |     except FileNotFoundError as e:
+77 |         msg = file_not_found(config_path)
+78 |         logger.error(msg)
+79 |         raise FileNotFoundError(msg) from e
+80 |     except json.JSONDecodeError as e:
+81 |         msg = invalid_json(str(e))
+82 |         logger.error(msg)
+83 |         raise json.JSONDecodeError(msg, str(config_path), 0) from e
+84 |     except Exception as e:
+85 |         msg = failed_to_load_config(str(e))
+86 |         logger.exception(msg)
+87 |         raise Exception(msg) from e
+88 | 
+89 |     return ChatConfig.model_validate(config_data)
+90 | 
 
 
 --------------------------------------------------------------------------------
@@ -3311,34 +3482,37 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 12 | from weave import init as weave_init
 13 | 
 14 | from app.agents.llm_model_funs import get_api_key
-15 | from app.utils.load_configs import AppEnv
-16 | from app.utils.log import logger
-17 | 
+15 | from app.config.data_models import AppEnv
+16 | from app.utils.error_messages import generic_exception
+17 | from app.utils.log import logger
 18 | 
-19 | def login(project_name: str, chat_env_config: AppEnv):
-20 |     """
-21 |     Logs in to the workspace and initializes the environment for the given project.
-22 |     Args:
-23 |         project_name (str): The name of the project to initialize.
-24 |         chat_env_config (AppEnv): The application environment configuration
-25 |             containing the API keys.
-26 |     Returns:
-27 |         None
-28 |     """
-29 | 
-30 |     try:
-31 |         logger.info(f"Logging in to the workspaces for project: {project_name}")
-32 |         environ["AGENTOPS_LOGGING_TO_FILE"] = "FALSE"
-33 |         agentops_init(
-34 |             default_tags=[project_name],
-35 |             api_key=get_api_key("AGENTOPS", chat_env_config),
-36 |         )
-37 |         logfire_conf(token=get_api_key("LOGFIRE", chat_env_config))
-38 |         wandb_login(key=get_api_key("WANDB", chat_env_config))
-39 |         weave_init(project_name)
-40 |     except Exception as e:
-41 |         logger.exception(e)
-42 | 
+19 | 
+20 | def login(project_name: str, chat_env_config: AppEnv):
+21 |     """
+22 |     Logs in to the workspace and initializes the environment for the given project.
+23 |     Args:
+24 |         project_name (str): The name of the project to initialize.
+25 |         chat_env_config (AppEnv): The application environment configuration
+26 |             containing the API keys.
+27 |     Returns:
+28 |         None
+29 |     """
+30 | 
+31 |     try:
+32 |         logger.info(f"Logging in to the workspaces for project: {project_name}")
+33 |         environ["AGENTOPS_LOGGING_TO_FILE"] = "FALSE"
+34 |         agentops_init(
+35 |             default_tags=[project_name],
+36 |             api_key=get_api_key("AGENTOPS", chat_env_config),
+37 |         )
+38 |         logfire_conf(token=get_api_key("LOGFIRE", chat_env_config))
+39 |         wandb_login(key=get_api_key("WANDB", chat_env_config))
+40 |         weave_init(project_name)
+41 |     except Exception as e:
+42 |         msg = generic_exception(str(e))
+43 |         logger.exception(e)
+44 |         raise Exception(msg) from e
+45 | 
 
 
 --------------------------------------------------------------------------------
@@ -3362,153 +3536,99 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
  16 |         Set up the agent environment based on the provided configuration.
  17 | """
  18 | 
- 19 | from contextlib import contextmanager
+ 19 | from pydantic_ai.usage import Usage
  20 | 
- 21 | from logfire import error, span
- 22 | from openai import APIConnectionError, RateLimitError, UnprocessableEntityError
- 23 | from pydantic_ai.exceptions import (
- 24 |     ModelHTTPError,
- 25 |     UnexpectedModelBehavior,
- 26 |     UsageLimitExceeded,
- 27 | )
- 28 | from pydantic_ai.usage import Usage
- 29 | 
- 30 | from app.config.data_models import ResearchSummary
- 31 | from app.utils.log import logger
- 32 | 
- 33 | 
- 34 | def log_research_result(summary: ResearchSummary, usage: Usage) -> None:
- 35 |     """
- 36 |     Prints the research summary and usage details in a formatted manner.
- 37 | 
- 38 |     Args:
- 39 |         summary (Dict): A dictionary containing the research summary with keys 'topic',
- 40 |             'key_points', 'key_points_explanation', and 'conclusion'.
- 41 |         usage (Usage): An object containing usage details to be printed.
- 42 |     """
- 43 | 
- 44 |     logger.info(f"\n=== Research Summary: {summary.topic} ===")
- 45 |     logger.info("\nKey Points:")
- 46 |     for i, point in enumerate(summary.key_points, 1):
- 47 |         logger.info(f"{i}. {point}")
- 48 |     logger.info("\nKey Points Explanation:")
- 49 |     for i, point in enumerate(summary.key_points_explanation, 1):
- 50 |         logger.info(f"{i}. {point}")
- 51 |     logger.info(f"\nConclusion: {summary.conclusion}")
- 52 |     logger.info(f"\nResponse structure: {list(dict(summary).keys())}")
- 53 |     logger.info(usage)
- 54 | 
- 55 | 
- 56 | def parse_args(argv: list[str]) -> dict[str, str | bool]:
- 57 |     """
- 58 |     Parse command line arguments into a dictionary.
- 59 | 
- 60 |     This function processes a list of command-line arguments,
- 61 |     extracting recognized options and their values.
- 62 |     Supported arguments include flags (e.g., --help, --include-researcher
- 63 |     and key-value pairs (e.g., `--chat-provider=ollama`).
- 64 |     If the `--help` flag is present, a list of available commands and their
- 65 |     descriptions is printed, and an empty dictionary is returned.
- 66 | 
- 67 |     Recognized arguments as list[str]
- 68 |     ```
- 69 |         --help                   Display help information and exit.
- 70 |         --version                Display version information.
- 71 |         --chat-provider=<str>    Specify the chat provider to use.
- 72 |         --query=<str>            Specify the query to process.
- 73 |         --include-researcher     Include the researcher agent.
- 74 |         --include-analyst        Include the analyst agent.
- 75 |         --include-synthesiser    Include the synthesiser agent.
- 76 |         --no-stream              Disable streaming output.
- 77 |         --chat-config-file=<str> Specify the path to the chat configuration file.
- 78 |     ```
- 79 | 
- 80 |     Returns:
- 81 |         `dict[str, str | bool]`: A dictionary mapping argument names
- 82 |         (with leading '--' removed and hyphens replaced by underscores)
- 83 |         to their values (`str` for key-value pairs, `bool` for flags).
- 84 |         Returns an empty dict if `--help` is specified.
- 85 | 
- 86 |     Example:
- 87 |         >>> `parse_args(['--chat-provider=ollama', '--include-researcher'])`
- 88 |         returns `{'chat_provider': 'ollama', 'include_researcher': True}`
- 89 |     """
- 90 | 
- 91 |     commands = {
- 92 |         "--help": "Display help information",
- 93 |         "--version": "Display version information",
- 94 |         "--chat-provider": "Specify the chat provider to use",
- 95 |         "--query": "Specify the query to process",
- 96 |         "--include-researcher": "Include the researcher agent",
- 97 |         "--include-analyst": "Include the analyst agent",
- 98 |         "--include-synthesiser": "Include the synthesiser agent",
- 99 |         "--no-stream": "Disable streaming output",
-100 |         "--chat-config-file": "Specify the path to the chat configuration file",
-101 |     }
-102 |     parsed_args: dict[str, str | bool] = {}
-103 | 
-104 |     if "--help" in argv:
-105 |         print("Available commands:")
-106 |         for cmd, desc in commands.items():
-107 |             print(f"{cmd}: {desc}")
-108 |         return parsed_args
+ 21 | from app.config.data_models import ResearchSummary
+ 22 | from app.utils.log import logger
+ 23 | 
+ 24 | 
+ 25 | def log_research_result(summary: ResearchSummary, usage: Usage) -> None:
+ 26 |     """
+ 27 |     Prints the research summary and usage details in a formatted manner.
+ 28 | 
+ 29 |     Args:
+ 30 |         summary (Dict): A dictionary containing the research summary with keys 'topic',
+ 31 |             'key_points', 'key_points_explanation', and 'conclusion'.
+ 32 |         usage (Usage): An object containing usage details to be printed.
+ 33 |     """
+ 34 | 
+ 35 |     logger.info(f"\n=== Research Summary: {summary.topic} ===")
+ 36 |     logger.info("\nKey Points:")
+ 37 |     for i, point in enumerate(summary.key_points, 1):
+ 38 |         logger.info(f"{i}. {point}")
+ 39 |     logger.info("\nKey Points Explanation:")
+ 40 |     for i, point in enumerate(summary.key_points_explanation, 1):
+ 41 |         logger.info(f"{i}. {point}")
+ 42 |     logger.info(f"\nConclusion: {summary.conclusion}")
+ 43 |     logger.info(f"\nResponse structure: {list(dict(summary).keys())}")
+ 44 |     logger.info(usage)
+ 45 | 
+ 46 | 
+ 47 | def parse_args(argv: list[str]) -> dict[str, str | bool]:
+ 48 |     """
+ 49 |     Parse command line arguments into a dictionary.
+ 50 | 
+ 51 |     This function processes a list of command-line arguments,
+ 52 |     extracting recognized options and their values.
+ 53 |     Supported arguments include flags (e.g., --help, --include-researcher
+ 54 |     and key-value pairs (e.g., `--chat-provider=ollama`).
+ 55 |     If the `--help` flag is present, a list of available commands and their
+ 56 |     descriptions is printed, and an empty dictionary is returned.
+ 57 | 
+ 58 |     Recognized arguments as list[str]
+ 59 |     ```
+ 60 |         --help                   Display help information and exit.
+ 61 |         --version                Display version information.
+ 62 |         --chat-provider=<str>    Specify the chat provider to use.
+ 63 |         --query=<str>            Specify the query to process.
+ 64 |         --include-researcher     Include the researcher agent.
+ 65 |         --include-analyst        Include the analyst agent.
+ 66 |         --include-synthesiser    Include the synthesiser agent.
+ 67 |         --no-stream              Disable streaming output.
+ 68 |         --chat-config-file=<str> Specify the path to the chat configuration file.
+ 69 |     ```
+ 70 | 
+ 71 |     Returns:
+ 72 |         `dict[str, str | bool]`: A dictionary mapping argument names
+ 73 |         (with leading '--' removed and hyphens replaced by underscores)
+ 74 |         to their values (`str` for key-value pairs, `bool` for flags).
+ 75 |         Returns an empty dict if `--help` is specified.
+ 76 | 
+ 77 |     Example:
+ 78 |         >>> `parse_args(['--chat-provider=ollama', '--include-researcher'])`
+ 79 |         returns `{'chat_provider': 'ollama', 'include_researcher': True}`
+ 80 |     """
+ 81 | 
+ 82 |     commands = {
+ 83 |         "--help": "Display help information",
+ 84 |         "--version": "Display version information",
+ 85 |         "--chat-provider": "Specify the chat provider to use",
+ 86 |         "--query": "Specify the query to process",
+ 87 |         "--include-researcher": "Include the researcher agent",
+ 88 |         "--include-analyst": "Include the analyst agent",
+ 89 |         "--include-synthesiser": "Include the synthesiser agent",
+ 90 |         "--no-stream": "Disable streaming output",
+ 91 |         "--chat-config-file": "Specify the path to the chat configuration file",
+ 92 |     }
+ 93 |     parsed_args: dict[str, str | bool] = {}
+ 94 | 
+ 95 |     if "--help" in argv:
+ 96 |         print("Available commands:")
+ 97 |         for cmd, desc in commands.items():
+ 98 |             print(f"{cmd}: {desc}")
+ 99 |         return parsed_args
+100 | 
+101 |     for arg in argv:
+102 |         if arg.split("=", 1)[0] in commands.keys():
+103 |             key, value = arg.split("=", 1) if "=" in arg else (arg, True)
+104 |             key = key.lstrip("--").replace("-", "_")
+105 |             parsed_args[key] = value
+106 | 
+107 |     if parsed_args:
+108 |         logger.info(f"Used arguments: {parsed_args}")
 109 | 
-110 |     for arg in argv:
-111 |         if arg.split("=", 1)[0] in commands.keys():
-112 |             key, value = arg.split("=", 1) if "=" in arg else (arg, True)
-113 |             key = key.lstrip("--").replace("-", "_")
-114 |             parsed_args[key] = value
-115 | 
-116 |     if parsed_args:
-117 |         logger.info(f"Used arguments: {parsed_args}")
-118 | 
-119 |     return parsed_args
-120 | 
-121 | 
-122 | @contextmanager
-123 | def error_handling_context(operation_name: str):
-124 |     """
-125 |     Context manager for handling errors during an operation and logging them
-126 |         appropriately.
-127 |     Args:
-128 |         operation_name (str): The name of the operation being performed.
-129 |     Yields:
-130 |         None
-131 |     Raises:
-132 |         Various exceptions based on the error encountered during the operation.
-133 |     """
-134 | 
-135 |     reason: str | None = None
-136 |     msg: Exception | None = None
-137 |     try:
-138 |         with span(operation_name):
-139 |             yield
-140 |     except APIConnectionError as e:
-141 |         reason, msg = "API connection error", e
-142 |     except ModelHTTPError as e:
-143 |         reason, msg = "Model error", e
-144 |     except RateLimitError as e:
-145 |         reason, msg = "Rate limit exceeded", e
-146 |     except (UnexpectedModelBehavior, UnprocessableEntityError) as e:
-147 |         reason, msg = "Model returned unexpected result", e
-148 |     except UsageLimitExceeded as e:
-149 |         reason, msg = "Usage limit exceeded", e
-150 |     except Exception as e:
-151 |         reason, msg = "Exception", e
-152 |     finally:
-153 |         if reason is not None or msg is not None:
-154 |             if isinstance(msg, Exception):
-155 |                 logger.exception(msg)
-156 |             else:
-157 |                 is_msg_type = (
-158 |                     "type" in msg.__dict__ and msg.__dict__["type"] is not None
-159 |                 )
-160 |                 msg_type = f"(Type: {msg.__dict__['type']}) " if is_msg_type else ""
-161 |                 error_msg = f"{reason} {msg_type}caught in {operation_name}: {msg}"
-162 |                 error(f"{error_msg}")
-163 |                 logger.error(error_msg)
-164 |         logger.info(f"exiting operation '{operation_name}'")
-165 | 
+110 |     return parsed_args
+111 | 
 
 
 --------------------------------------------------------------------------------
@@ -4281,131 +4401,192 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 --------------------------------------------------------------------------------
 /src/gui/pages/prompts.py:
 --------------------------------------------------------------------------------
- 1 | from streamlit import header, warning
- 2 | 
- 3 | from gui.components.prompts import render_prompt_editor
- 4 | from gui.config.config import PROMPTS_DEFAULT
- 5 | from gui.config.text import PROMPTS_HEADER, PROMPTS_WARNING
- 6 | 
- 7 | 
- 8 | def render_prompts(prompts: dict[str, str]) -> dict[str, str]:
- 9 |     header(PROMPTS_HEADER)
-10 | 
-11 |     updated = False
-12 | 
-13 |     if not prompts:
-14 |         warning(PROMPTS_WARNING)
-15 |         prompts = PROMPTS_DEFAULT
-16 | 
-17 |     updated_prompts = prompts.copy()
+ 1 | """
+ 2 | Streamlit component for editing agent system prompts.
+ 3 | 
+ 4 | This module provides a function to render and edit prompt configurations
+ 5 | for agent roles using a Streamlit-based UI. It validates the input configuration,
+ 6 | displays warnings if prompts are missing, and allows interactive editing of each prompt.
+ 7 | """
+ 8 | 
+ 9 | from pydantic import BaseModel
+10 | from streamlit import error, header, warning
+11 | 
+12 | from app.config.data_models import ChatConfig
+13 | from app.utils.error_messages import invalid_type
+14 | from app.utils.log import logger
+15 | from gui.components.prompts import render_prompt_editor
+16 | from gui.config.config import PROMPTS_DEFAULT
+17 | from gui.config.text import PROMPTS_HEADER, PROMPTS_WARNING
 18 | 
-19 |     # Edit prompts
-20 |     for prompt_key, prompt_value in prompts.items():
-21 |         new_value = render_prompt_editor(prompt_key, prompt_value, height=200)
-22 |         if new_value != prompt_value and new_value is not None:
-23 |             updated_prompts[prompt_key] = new_value
-24 |             updated = True
-25 | 
-26 |     return updated_prompts if updated else prompts
-27 | 
+19 | 
+20 | def render_prompts(chat_config: ChatConfig | BaseModel):  # -> dict[str, str]:
+21 |     """
+22 |     Render and edit the prompt configuration for agent roles in the Streamlit UI.
+23 |     """
+24 | 
+25 |     header(PROMPTS_HEADER)
+26 | 
+27 |     if not isinstance(chat_config, ChatConfig):
+28 |         msg = invalid_type("ChatConfig", type(chat_config).__name__)
+29 |         logger.error(msg)
+30 |         error(msg)
+31 |         return None
+32 | 
+33 |     # updated = False
+34 |     prompts = chat_config.prompts
+35 | 
+36 |     if not prompts:
+37 |         warning(PROMPTS_WARNING)
+38 |         prompts = PROMPTS_DEFAULT
+39 | 
+40 |     updated_prompts = prompts.copy()
+41 | 
+42 |     # Edit prompts
+43 |     for prompt_key, prompt_value in prompts.items():
+44 |         new_value = render_prompt_editor(prompt_key, prompt_value, height=200)
+45 |         if new_value != prompt_value and new_value is not None:
+46 |             updated_prompts[prompt_key] = new_value
+47 |             # updated = True
+48 | 
+49 |     # return updated_prompts if updated else prompts
+50 | 
 
 
 --------------------------------------------------------------------------------
 /src/gui/pages/run_app.py:
 --------------------------------------------------------------------------------
- 1 | from streamlit import button, exception, header, info, subheader, text_input, warning
- 2 | 
- 3 | from app.main import main
- 4 | from app.utils.log import logger
- 5 | from gui.components.output import render_output
- 6 | from gui.config.text import (
- 7 |     OUTPUT_SUBHEADER,
- 8 |     RUN_APP_BUTTON,
- 9 |     RUN_APP_HEADER,
-10 |     RUN_APP_OUTPUT_PLACEHOLDER,
-11 |     RUN_APP_PROVIDER_PLACEHOLDER,
-12 |     RUN_APP_QUERY_PLACEHOLDER,
-13 |     RUN_APP_QUERY_RUN_INFO,
-14 |     RUN_APP_QUERY_WARNING,
-15 | )
-16 | 
-17 | 
-18 | async def render_app(provider: str | None = None):
-19 |     header(RUN_APP_HEADER)
-20 |     if provider is None:
-21 |         provider = text_input(RUN_APP_PROVIDER_PLACEHOLDER)
-22 |     query = text_input(RUN_APP_QUERY_PLACEHOLDER)
-23 | 
-24 |     subheader(OUTPUT_SUBHEADER)
-25 |     if button(RUN_APP_BUTTON):
-26 |         if query:
-27 |             info(f"{RUN_APP_QUERY_RUN_INFO} {query}")
-28 |             try:
-29 |                 result = await main(chat_provider=provider, query=query)
-30 |                 render_output(result)
-31 |             except Exception as e:
-32 |                 render_output(None)
-33 |                 exception(e)
-34 |                 logger.exception(e)
-35 |         else:
-36 |             warning(RUN_APP_QUERY_WARNING)
-37 |     else:
-38 |         render_output(RUN_APP_OUTPUT_PLACEHOLDER)
+ 1 | """
+ 2 | Streamlit interface for running the agentic system interactively.
+ 3 | 
+ 4 | This module defines the render_app function, which provides a Streamlit-based UI
+ 5 | for users to select a provider, enter a query, and execute the main agent workflow.
+ 6 | Results and errors are displayed in real time, supporting asynchronous execution.
+ 7 | """
+ 8 | 
+ 9 | from streamlit import button, exception, header, info, subheader, text_input, warning
+10 | 
+11 | from app.main import main
+12 | from app.utils.log import logger
+13 | from gui.components.output import render_output
+14 | from gui.config.text import (
+15 |     OUTPUT_SUBHEADER,
+16 |     RUN_APP_BUTTON,
+17 |     RUN_APP_HEADER,
+18 |     RUN_APP_OUTPUT_PLACEHOLDER,
+19 |     RUN_APP_PROVIDER_PLACEHOLDER,
+20 |     RUN_APP_QUERY_PLACEHOLDER,
+21 |     RUN_APP_QUERY_RUN_INFO,
+22 |     RUN_APP_QUERY_WARNING,
+23 | )
+24 | 
+25 | 
+26 | async def render_app(provider: str | None = None):
+27 |     """
+28 |     Render the main app interface for running agentic queries via Streamlit.
+29 | 
+30 |     Displays input fields for provider and query, a button to trigger execution,
+31 |     and an area for output or error messages. Handles async invocation of the
+32 |     main agent workflow and logs any exceptions.
+33 |     """
+34 | 
+35 |     header(RUN_APP_HEADER)
+36 |     if provider is None:
+37 |         provider = text_input(RUN_APP_PROVIDER_PLACEHOLDER)
+38 |     query = text_input(RUN_APP_QUERY_PLACEHOLDER)
 39 | 
+40 |     subheader(OUTPUT_SUBHEADER)
+41 |     if button(RUN_APP_BUTTON):
+42 |         if query:
+43 |             info(f"{RUN_APP_QUERY_RUN_INFO} {query}")
+44 |             try:
+45 |                 result = await main(chat_provider=provider, query=query)
+46 |                 render_output(result)
+47 |             except Exception as e:
+48 |                 render_output(None)
+49 |                 exception(e)
+50 |                 logger.exception(e)
+51 |         else:
+52 |             warning(RUN_APP_QUERY_WARNING)
+53 |     else:
+54 |         render_output(RUN_APP_OUTPUT_PLACEHOLDER)
+55 | 
 
 
 --------------------------------------------------------------------------------
 /src/gui/pages/settings.py:
 --------------------------------------------------------------------------------
- 1 | from streamlit import header, selectbox
- 2 | 
- 3 | from app.config.data_models import ChatConfig
- 4 | from gui.config.text import SETTINGS_HEADER, SETTINGS_PROVIDER_LABEL
- 5 | 
- 6 | 
- 7 | def render_settings(chat_config: ChatConfig) -> str:
- 8 |     header(SETTINGS_HEADER)
- 9 | 
-10 |     # updated = False
-11 |     # updated_config = config.copy()
-12 | 
-13 |     provider = selectbox(
-14 |         SETTINGS_PROVIDER_LABEL,
-15 |         chat_config.providers,
-16 |     )
-17 | 
-18 |     # Run options
-19 |     # col1, col2 = st.columns(2)
-20 |     # with col1:
-21 |     #     streamed_output = st.checkbox(
-22 |     #         "Stream Output", value=config.get("streamed_output", False)
-23 |     #     )
-24 |     # with col2:
-25 |     #     st.checkbox("Include Sources", value=True)  # include_sources
-26 | 
-27 |     # Allow adding new providers
-28 |     # new_provider = st.text_input("Add New Provider")
-29 |     # api_key = st.text_input(f"{provider} API Key", type="password")
-30 |     # if st.button("Add Provider") and new_provider and new_provider not in providers:
-31 |     #     providers.append(new_provider)
-32 |     #     updated_config["providers"] = providers
-33 |     #     updated_config["api_key"] = api_key
-34 |     #     updated = True
-35 |     #     st.success(f"Added provider: {new_provider}")
-36 | 
-37 |     # # Update config if changed
-38 |     # if (
-39 |     #     include_a != config.get("include_a", False)
-40 |     #     or include_b != config.get("include_b", False)
-41 |     #     or streamed_output != config.get("streamed_output", False)
-42 |     # ):
-43 |     #     updated_config["include_a"] = include_a
-44 |     #     updated_config["include_b"] = include_b
-45 |     #     updated_config["streamed_output"] = streamed_output
-46 |     #     updated = True
-47 | 
-48 |     return provider
-49 | 
+ 1 | """
+ 2 | Streamlit settings UI for provider and agent configuration.
+ 3 | 
+ 4 | This module provides a function to render and edit agent system settings,
+ 5 | including provider selection and related options, within the Streamlit GUI.
+ 6 | It validates the input configuration and ensures correct typing before rendering.
+ 7 | """
+ 8 | 
+ 9 | from streamlit import error, header, selectbox
+10 | 
+11 | from app.config.data_models import BaseModel, ChatConfig
+12 | from app.utils.error_messages import invalid_type
+13 | from app.utils.log import logger
+14 | from gui.config.text import SETTINGS_HEADER, SETTINGS_PROVIDER_LABEL
+15 | 
+16 | 
+17 | def render_settings(chat_config: ChatConfig | BaseModel) -> str:
+18 |     """
+19 |     Render and edit agent system settings in the Streamlit UI.
+20 | 
+21 |     Displays a header and a selectbox for choosing the inference provider.
+22 |     Validates that the input is a ChatConfig instance and displays an error if not.
+23 |     """
+24 |     header(SETTINGS_HEADER)
+25 | 
+26 |     # updated = False
+27 |     # updated_config = config.copy()
+28 | 
+29 |     if not isinstance(chat_config, ChatConfig):
+30 |         msg = invalid_type("ChatConfig", type(chat_config).__name__)
+31 |         logger.error(msg)
+32 |         error(msg)
+33 |         return msg
+34 | 
+35 |     provider = selectbox(
+36 |         label=SETTINGS_PROVIDER_LABEL,
+37 |         options=chat_config.providers.keys(),
+38 |     )
+39 | 
+40 |     # Run options
+41 |     # col1, col2 = st.columns(2)
+42 |     # with col1:
+43 |     #     streamed_output = st.checkbox(
+44 |     #         "Stream Output", value=config.get("streamed_output", False)
+45 |     #     )
+46 |     # with col2:
+47 |     #     st.checkbox("Include Sources", value=True)  # include_sources
+48 | 
+49 |     # Allow adding new providers
+50 |     # new_provider = st.text_input("Add New Provider")
+51 |     # api_key = st.text_input(f"{provider} API Key", type="password")
+52 |     # if st.button("Add Provider") and new_provider and new_provider not in providers:
+53 |     #     providers.append(new_provider)
+54 |     #     updated_config["providers"] = providers
+55 |     #     updated_config["api_key"] = api_key
+56 |     #     updated = True
+57 |     #     st.success(f"Added provider: {new_provider}")
+58 | 
+59 |     # # Update config if changed
+60 |     # if (
+61 |     #     include_a != config.get("include_a", False)
+62 |     #     or include_b != config.get("include_b", False)
+63 |     #     or streamed_output != config.get("streamed_output", False)
+64 |     # ):
+65 |     #     updated_config["include_a"] = include_a
+66 |     #     updated_config["include_b"] = include_b
+67 |     #     updated_config["streamed_output"] = streamed_output
+68 |     #     updated = True
+69 | 
+70 |     return provider
+71 | 
 
 
 --------------------------------------------------------------------------------
@@ -4432,46 +4613,47 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 19 | from pathlib import Path
 20 | 
 21 | from app.config.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER
-22 | from app.utils.load_configs import load_app_config
-23 | from app.utils.log import logger
-24 | from gui.components.sidebar import render_sidebar
-25 | from gui.config.config import APP_PATH
-26 | from gui.config.styling import add_custom_styling
-27 | from gui.config.text import PAGE_TITLE
-28 | from gui.pages.home import render_home
-29 | from gui.pages.prompts import render_prompts
-30 | from gui.pages.run_app import render_app
-31 | from gui.pages.settings import render_settings
-32 | 
-33 | # TODO create sidebar tabs, move settings to page,
-34 | # set readme.md as home, separate prompts into page
-35 | 
-36 | chat_config_pfile = Path(__file__).parent / APP_PATH / CHAT_CONFIG_FILE
-37 | chat_config = load_app_config(chat_config_pfile)
-38 | provider = CHAT_DEFAULT_PROVIDER
-39 | logger.info(f"Default provider: {CHAT_DEFAULT_PROVIDER}")
-40 | 
+22 | from app.config.data_models import ChatConfig
+23 | from app.utils.load_configs import load_config
+24 | from app.utils.log import logger
+25 | from gui.components.sidebar import render_sidebar
+26 | from gui.config.config import APP_PATH
+27 | from gui.config.styling import add_custom_styling
+28 | from gui.config.text import PAGE_TITLE
+29 | from gui.pages.home import render_home
+30 | from gui.pages.prompts import render_prompts
+31 | from gui.pages.run_app import render_app
+32 | from gui.pages.settings import render_settings
+33 | 
+34 | # TODO create sidebar tabs, move settings to page,
+35 | # set readme.md as home, separate prompts into page
+36 | 
+37 | chat_config_pfile = Path(__file__).parent / APP_PATH / CHAT_CONFIG_FILE
+38 | chat_config = load_config(chat_config_pfile, ChatConfig)
+39 | provider = CHAT_DEFAULT_PROVIDER
+40 | logger.info(f"Default provider: {CHAT_DEFAULT_PROVIDER}")
 41 | 
-42 | async def main():
-43 |     add_custom_styling(PAGE_TITLE)
-44 |     selected_page = render_sidebar(PAGE_TITLE)
-45 | 
-46 |     if selected_page == "Home":
-47 |         render_home()
-48 |     elif selected_page == "Settings":
-49 |         # TODO temp save settings to be used in gui
-50 |         provider = render_settings(chat_config)
-51 |         logger.info(f"Page 'Settings' provider: {provider}")
-52 |     elif selected_page == "Prompts":
-53 |         render_prompts(chat_config.prompts)  # prompts =
-54 |     elif selected_page == "App":
-55 |         logger.info(f"Page 'App' provider: {CHAT_DEFAULT_PROVIDER}")
-56 |         await render_app(CHAT_DEFAULT_PROVIDER)
-57 | 
+42 | 
+43 | async def main():
+44 |     add_custom_styling(PAGE_TITLE)
+45 |     selected_page = render_sidebar(PAGE_TITLE)
+46 | 
+47 |     if selected_page == "Home":
+48 |         render_home()
+49 |     elif selected_page == "Settings":
+50 |         # TODO temp save settings to be used in gui
+51 |         provider = render_settings(chat_config)
+52 |         logger.info(f"Page 'Settings' provider: {provider}")
+53 |     elif selected_page == "Prompts":
+54 |         render_prompts(chat_config)
+55 |     elif selected_page == "App":
+56 |         logger.info(f"Page 'App' provider: {CHAT_DEFAULT_PROVIDER}")
+57 |         await render_app(CHAT_DEFAULT_PROVIDER)
 58 | 
-59 | if __name__ == "__main__":
-60 |     run(main())
-61 | 
+59 | 
+60 | if __name__ == "__main__":
+61 |     run(main())
+62 | 
 
 
 --------------------------------------------------------------------------------
@@ -4498,7 +4680,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
 --------------------------------------------------------------------------------
  1 | from pytest import MonkeyPatch
  2 | 
- 3 | from app.utils.load_configs import AppEnv
+ 3 | from app.config.data_models import AppEnv
  4 | 
  5 | 
  6 | def test_app_env_loads_env_vars(monkeypatch: MonkeyPatch):
@@ -4506,6 +4688,68 @@ https://raw.githubusercontent.com/qte77/Agents-eval/626f02eb98c8c6fbe82a3c2dee54
  8 |     env = AppEnv()
  9 |     assert env.GEMINI_API_KEY == "test-gemini"
 10 | 
+
+
+--------------------------------------------------------------------------------
+/tests/test_metrics_output_similarity.py:
+--------------------------------------------------------------------------------
+ 1 | """
+ 2 | Tests for the output_similarity metric.
+ 3 | 
+ 4 | This module verifies that the output_similarity metric correctly identifies when
+ 5 | an agent's output matches the expected answer.
+ 6 | """
+ 7 | 
+ 8 | from app.evals.metrics import output_similarity
+ 9 | 
+10 | 
+11 | def test_output_similarity_exact_match():
+12 |     assert output_similarity("42", "42") is True
+13 | 
+14 | 
+15 | def test_output_similarity_whitespace():
+16 |     assert output_similarity("  answer  ", "answer") is True
+17 | 
+18 | 
+19 | def test_output_similarity_incorrect():
+20 |     assert output_similarity("foo", "bar") is False
+21 | 
+
+
+--------------------------------------------------------------------------------
+/tests/test_metrics_time_taken.py:
+--------------------------------------------------------------------------------
+ 1 | """
+ 2 | Tests for the time_taken metric.
+ 3 | 
+ 4 | This module verifies that the time_taken metric correctly computes the elapsed
+ 5 | time between two timestamps, ensuring accurate measurement of agent execution
+ 6 | duration for evaluation purposes.
+ 7 | """
+ 8 | 
+ 9 | import asyncio
+10 | import time
+11 | 
+12 | import pytest
+13 | 
+14 | from app.evals.metrics import time_taken
+15 | 
+16 | 
+17 | @pytest.mark.asyncio
+18 | async def test_time_taken_metric():
+19 |     """Scenario: Calculate time taken for agent execution"""
+20 | 
+21 |     # Given: Start and end timestamps
+22 |     start_time = time.perf_counter()
+23 |     await asyncio.sleep(0.1)
+24 |     end_time = time.perf_counter()
+25 | 
+26 |     # When: Calculating time taken
+27 |     result = time_taken(start_time, end_time)
+28 | 
+29 |     # Then: Verify correct duration calculation
+30 |     assert result == pytest.approx(0.1, abs=0.05)
+31 | 
 
 
 --------------------------------------------------------------------------------
