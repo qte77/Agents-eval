@@ -18,12 +18,12 @@ OLLAMA_SETUP_URL := https://ollama.com/install.sh
 OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
 
 setup_prod:  ## Install uv and deps, Download and start Ollama 
-	echo "Setting up tools..."
+	echo "Setting up prod environment ..."
 	pip install uv -q
 	uv sync --frozen
 
 setup_dev:  ## Install uv and deps, Download and start Ollama 
-	echo "Setting up tools..."
+	echo "Setting up dev environment ..."
 	pip install uv -q
 	uv sync --all-groups
 
@@ -39,9 +39,7 @@ setup_dev_ollama:
 
 setup_dev_claude:
 	$(MAKE) -s setup_dev
-	npm install -g @anthropic-ai/claude-code
-	claude config set --global preferredNotifChannel terminal_bell
-	claude --version
+	$(MAKE) -s setup_claude_code
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
@@ -50,6 +48,12 @@ setup_ollama:  ## Download Ollama, script does start local Ollama server
 	curl -fsSL $(OLLAMA_SETUP_URL) | sh
 	echo "Pulling model '$(OLLAMA_MODEL_NAME)' ..."
 	ollama pull $(OLLAMA_MODEL_NAME)
+
+setup_claude_code:
+	echo "Setting up claude code ..."
+	npm install -g @anthropic-ai/claude-code
+	claude config set --global preferredNotifChannel terminal_bell
+	claude --version
 
 start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
 	ollama serve
