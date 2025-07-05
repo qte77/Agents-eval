@@ -4,5 +4,12 @@
   "features": {
     "ghcr.io/devcontainers/features/node:1": {}
   },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code"
+      ]
+    }
+  },
   "postCreateCommand": "make setup_dev_claude"
 }
