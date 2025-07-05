@@ -37,6 +37,12 @@ setup_dev_ollama:
 	$(MAKE) -s setup_ollama
 	$(MAKE) -s start_ollama
 
+setup_dev_claude:
+	$(MAKE) -s setup_dev
+	npm install -g @anthropic-ai/claude-code
+	claude config set --global preferredNotifChannel terminal_bell
+	claude --version
+
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
 	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
