@@ -35,14 +35,13 @@ jobs:
 
       - name: Construct and create llms.txt path
         id: construct_and_create_llms_txt_path
-        shell: bash
         run: |
-          PATH="${{ inputs.LLMS_TXT_PATH }}"
-          PATH="${PATH:-docs}"
-          NAME="${{ inputs.LLMS_TXT_NAME }}"
-          NAME="${NAME:-llms.txt}"
-          echo "LLMS_TXT_FULL=${PATH}/${NAME} >> $GITHUB_OUTPUT"
-          mkdir -p "${PATH}"
+          LLMS_TXT_PATH="${{ inputs.LLMS_TXT_PATH }}"
+          LLMS_TXT_PATH="${LLMS_TXT_PATH:-docs}"
+          LLMS_TXT_NAME="${{ inputs.LLMS_TXT_NAME }}"
+          LLMS_TXT_NAME="${LLMS_TXT_NAME:-llms.txt}"
+          echo "LLMS_TXT_FULL=${LLMS_TXT_PATH}/${LLMS_TXT_NAME} >> $GITHUB_OUTPUT"
+          mkdir -p "${LLMS_TXT_PATH}"
 
       - name: Fetch TXT from URL
         run: |
