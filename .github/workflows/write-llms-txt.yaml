@@ -35,6 +35,7 @@ jobs:
 
       - name: Construct and create llms.txt path
         id: construct_and_create_llms_txt_path
+        shell: bash
         run: |
           PATH="${{ inputs.LLMS_TXT_PATH }}"
           PATH="${PATH:-docs}"
@@ -43,7 +44,7 @@ jobs:
           echo "LLMS_TXT_FULL=${PATH}/${NAME} >> $GITHUB_OUTPUT"
           mkdir -p "${PATH}"
 
-      - name: Fetch content from uithub URL
+      - name: Fetch TXT from URL
         run: |
           LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
           URL="https://${{ inputs.CONVERTER_URL }}/${{ github.repository }}"
