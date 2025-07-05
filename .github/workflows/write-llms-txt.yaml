@@ -1,6 +1,6 @@
 # TODO use local installation of repo to text
 # https://github.com/itsitgroup/repo2txt
-name: Write flattened repo to llms.txt
+name: Write repo llms.txt
 
 on:
   push:
@@ -56,8 +56,9 @@ jobs:
       - name: Commit and push file
         run: |
           LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
+          commit_msg="feat(docs): Add/Update ${LLMS_TXT_FULL}, a flattened repo as single text file, inspired by [llmstxt.org](https://llmstxt.org/)."
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add "${LLMS_TXT_FULL}"
-          git commit -m "feat(docs): Add/Update ${LLMS_TXT_FULL} adhering to [llmstxt.org](https://llmstxt.org/)."
+          git commit -m "${commit_msg}"
           git push
