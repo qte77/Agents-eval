@@ -7,7 +7,7 @@ As proposed by [agentsmd.net](https://agentsmd.net/) and used by [wandb weave AG
 * When you learn something new about the codebase or introduce a new concept, **update this file (`AGENTS.md`)** to reflect the new knowledge. This is YOUR FILE! It should grow and evolve with you.
 * If there is something that doesn't make sense architecturally, from a developer experience standpoint, or product-wise, please add it to the **`Requests to Humans`** section below.
 * Always follow the established coding patterns and conventions in the codebase, particularly the use of **Pydantic** for data contracts and the modular structure.
-* Document any significant architectural decisions or changes in the `docs/` directory.
+* Always document changes according to the **`Documentation`** section below.
 
 ## Development Setup
 
@@ -90,6 +90,8 @@ Testing is managed by **pytest** and orchestrated via the `Makefile`. Key comman
 
 * Add end-user documentation to the `docs/` directory when creating new features. The documentation site is built using **MkDocs** and is automatically deployed via a GitHub Actions workflow (`generate-deploy-mkdocs-ghpages.yaml`).
 * Update this `AGENTS.md` file when introducing new patterns or concepts.
+* Document any significant architectural decisions or changes in the `docs/` directory.
+* Document any significant changes, features, bug fixes, or improvements in the `docs/CHANGELOG.md` file. This helps keep track of the project's evolution and provides context for future developers.
 
 ## Requests to Humans
 
