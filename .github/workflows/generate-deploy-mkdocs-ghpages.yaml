@@ -75,10 +75,10 @@ jobs:
         mkdir -p "${DOC_DIR}/${CFG_PATH}"
         cp README.md "${DOC_DIR}/index.md"
         cp {CHANGELOG,LICENSE}.md "${DOC_DIR}"
-        if [ -f "llms.txt" ]; then
-          cp llms.txt llms.md
+        if [ -f "${DOC_DIR}/llms.txt" ]; then
+          cp "${DOC_DIR}/llms.txt" "${DOC_DIR}/llms.md"
         else
-          echo "llms.txt not found, skipping copy."
+          echo "'${DOC_DIR}/llms.txt' not found, skipping copy."
         fi
         # Auxiliary files
         cp .env.example "${DOC_DIR}"
