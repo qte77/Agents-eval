@@ -40,7 +40,7 @@ jobs:
           LLMS_TXT_PATH="${LLMS_TXT_PATH:-docs}"
           LLMS_TXT_NAME="${{ inputs.LLMS_TXT_NAME }}"
           LLMS_TXT_NAME="${LLMS_TXT_NAME:-llms.txt}"
-          echo "LLMS_TXT_FULL=${LLMS_TXT_PATH}/${LLMS_TXT_NAME} >> $GITHUB_OUTPUT"
+          echo "LLMS_TXT_FULL=${LLMS_TXT_PATH}/${LLMS_TXT_NAME}" >> $GITHUB_OUTPUT
           mkdir -p "${LLMS_TXT_PATH}"
 
       - name: Fetch TXT from URL
