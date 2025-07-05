@@ -1,0 +1,64 @@
+name: Write a flattened to llms.txt
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      LLMS_TXT_PATH:
+        description: 'Path to the directory to save llsm.txt'
+        required: true
+        default: 'docs'
+        type: string
+      LLMS_TXT_NAME:
+        description: 'Path to the directory to save llsm.txt'
+        required: true
+        default: 'llms.txt'
+        type: string
+      CONVERTER_URL:
+        description: '[uithub|gittodoc|repo2txt]'
+        required: true
+        default: 'uithub.com'
+        type: choice
+        options:
+        - 'uithub.com'
+        - 'gittodoc.com'
+        # - 'repo2txt.com'
+
+jobs:
+  generate-file:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Constructin llms.txt path
+        id: construct_llms_txt_path
+        run: |
+          echo "LLMS_TXT_FULL="${{ inputs.LLMS_TXT_PATH }}/${{ inputs.LLMS_TXT_NAME }}"" >> $GITHUB_OUTPUT
+
+      - name: Fetch content from uithub URL
+        run: |
+          LLMS_TXT_FULL=${{ steps.construct_llms_txt_path.outputs.LLMS_TXT_FULL }}
+          # if [ "${{ inputs.CONVERTER_URL }}" = "repo2txt.com" ]; then
+          #  BASE_URL=$(
+          #      echo "${{ github.repository }}" | \
+          #      sed "s|github.com|repo2txt.com/repo=|"
+          #  )
+          BASE_URL=$(
+            echo "${{ github.repository }}" | \
+            sed "s|github.com|${{ inputs.CONVERTER_URL }}|"
+          )
+          echo "Fetching content from: ${BASE_URL}"
+          echo "Saving content to: ${LLMS_TXT_FULL}"
+          curl -s "${BASE_URL}" > "${LLMS_TXT_FULL}"
+
+      - name: Commit and push file
+        run: |
+          LLMS_TXT_FULL=${{ steps.construct_llms_txt_path.outputs.LLMS_TXT_FULL }}
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add "${LLMS_TXT_FULL}"
+          git commit -m "feat(docs): Add/Update ${LLMS_TXT_FULL}"
+          git push
