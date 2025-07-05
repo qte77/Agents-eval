@@ -1,4 +1,6 @@
-name: Write a flattened to llms.txt
+# TODO use local installation of repo to text
+# https://github.com/itsitgroup/repo2txt
+name: Write flattened repo to llms.txt
 
 on:
   push:
@@ -16,7 +18,7 @@ on:
         default: 'llms.txt'
         type: string
       CONVERTER_URL:
-        description: '[uithub|gittodoc|repo2txt]'
+        description: '[uithub|gittodoc]'  # |repo2txt
         required: true
         default: 'uithub.com'
         type: choice
@@ -33,32 +35,29 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Constructin llms.txt path
-        id: construct_llms_txt_path
+      - name: Construct and create llms.txt path
+        id: construct_and_create_llms_txt_path
         run: |
-          echo "LLMS_TXT_FULL="${{ inputs.LLMS_TXT_PATH }}/${{ inputs.LLMS_TXT_NAME }}"" >> $GITHUB_OUTPUT
+          LLMS_TXT_PATH="${{ inputs.LLMS_TXT_PATH }}"
+          LLMS_TXT_PATH="${LLMS_TXT_PATH:-docs}"
+          LLMS_TXT_NAME="${{ inputs.LLMS_TXT_NAME }}"
+          LLMS_TXT_NAME="${LLMS_TXT_NAME:-llms.txt}"
+          echo "LLMS_TXT_FULL=${LLMS_TXT_PATH}/${LLMS_TXT_NAME}" >> $GITHUB_OUTPUT
+          mkdir -p "${LLMS_TXT_PATH}"
 
-      - name: Fetch content from uithub URL
+      - name: Fetch TXT from URL
         run: |
-          LLMS_TXT_FULL=${{ steps.construct_llms_txt_path.outputs.LLMS_TXT_FULL }}
-          # if [ "${{ inputs.CONVERTER_URL }}" = "repo2txt.com" ]; then
-          #  BASE_URL=$(
-          #      echo "${{ github.repository }}" | \
-          #      sed "s|github.com|repo2txt.com/repo=|"
-          #  )
-          BASE_URL=$(
-            echo "${{ github.repository }}" | \
-            sed "s|github.com|${{ inputs.CONVERTER_URL }}|"
-          )
-          echo "Fetching content from: ${BASE_URL}"
+          LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
+          URL="https://${{ inputs.CONVERTER_URL }}/${{ github.repository }}"
+          echo "Fetching content from: ${URL}"
           echo "Saving content to: ${LLMS_TXT_FULL}"
-          curl -s "${BASE_URL}" > "${LLMS_TXT_FULL}"
+          curl -s "${URL}" > "${LLMS_TXT_FULL}"
 
       - name: Commit and push file
         run: |
-          LLMS_TXT_FULL=${{ steps.construct_llms_txt_path.outputs.LLMS_TXT_FULL }}
+          LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add "${LLMS_TXT_FULL}"
-          git commit -m "feat(docs): Add/Update ${LLMS_TXT_FULL}"
+          git commit -m "feat(docs): Add/Update ${LLMS_TXT_FULL} adhering to [llmstxt.org](https://llmstxt.org/)."
           git push

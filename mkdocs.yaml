@@ -41,6 +41,7 @@ nav:
   - Code: docstrings.md
   - Change Log: CHANGELOG.md
   - License: LICENSE.md
+  - llms.txt: llms.txt
 plugins:
   - search:
       lang: en
