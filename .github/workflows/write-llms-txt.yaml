@@ -1,4 +1,4 @@
-name: Write a flattened to llms.txt
+name: Write flattened repo to llms.txt
 
 on:
   push:
@@ -16,7 +16,7 @@ on:
         default: 'llms.txt'
         type: string
       CONVERTER_URL:
-        description: '[uithub|gittodoc|repo2txt]'
+        description: '[uithub|gittodoc]'  # |repo2txt
         required: true
         default: 'uithub.com'
         type: choice
@@ -36,7 +36,11 @@ jobs:
       - name: Constructin llms.txt path
         id: construct_llms_txt_path
         run: |
-          echo "LLMS_TXT_FULL="${{ inputs.LLMS_TXT_PATH }}/${{ inputs.LLMS_TXT_NAME }}"" >> $GITHUB_OUTPUT
+          PATH="${{ inputs.LLMS_TXT_PATH }}"
+          PATH="${PATH:-docs}"
+          NAME="${{ inputs.LLMS_TXT_NAME }}"
+          PATH="${NAME:-llms.txt}"
+          echo "LLMS_TXT_FULL=${PATH}/${NAME}" >> $GITHUB_OUTPUT
 
       - name: Fetch content from uithub URL
         run: |
