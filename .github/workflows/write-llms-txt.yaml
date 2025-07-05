@@ -34,17 +34,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Constructin llms.txt path
-        id: construct_llms_txt_path
+        id: construct_and_create_llms_txt_path
         run: |
           PATH="${{ inputs.LLMS_TXT_PATH }}"
           PATH="${PATH:-docs}"
           NAME="${{ inputs.LLMS_TXT_NAME }}"
-          PATH="${NAME:-llms.txt}"
+          NAME="${NAME:-llms.txt}"
           echo "LLMS_TXT_FULL=${PATH}/${NAME}" >> $GITHUB_OUTPUT
+          mkdir -p "${PATH}"
 
       - name: Fetch content from uithub URL
         run: |
-          LLMS_TXT_FULL=${{ steps.construct_llms_txt_path.outputs.LLMS_TXT_FULL }}
+          LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
           # if [ "${{ inputs.CONVERTER_URL }}" = "repo2txt.com" ]; then
           #  BASE_URL=$(
           #      echo "${{ github.repository }}" | \
@@ -60,7 +61,7 @@ jobs:
 
       - name: Commit and push file
         run: |
-          LLMS_TXT_FULL=${{ steps.construct_llms_txt_path.outputs.LLMS_TXT_FULL }}
+          LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add "${LLMS_TXT_FULL}"
