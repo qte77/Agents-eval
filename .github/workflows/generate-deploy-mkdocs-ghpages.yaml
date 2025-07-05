@@ -75,6 +75,7 @@ jobs:
         mkdir -p "${DOC_DIR}/${CFG_PATH}"
         cp README.md "${DOC_DIR}/index.md"
         cp {CHANGELOG,LICENSE}.md "${DOC_DIR}"
+        cp llms.txt llms.md
         # Auxiliary files
         cp .env.example "${DOC_DIR}"
         cp "${CFG_PATH}/config_chat.json" "${DOC_DIR}/${CFG_PATH}"
