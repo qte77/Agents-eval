@@ -16,15 +16,6 @@ Functions:
         Set up the agent environment based on the provided configuration.
 """
 
-from contextlib import contextmanager
-
-from logfire import error, span
-from openai import APIConnectionError, RateLimitError, UnprocessableEntityError
-from pydantic_ai.exceptions import (
-    ModelHTTPError,
-    UnexpectedModelBehavior,
-    UsageLimitExceeded,
-)
 from pydantic_ai.usage import Usage
 
 from app.config.data_models import ResearchSummary
@@ -117,48 +108,3 @@ def parse_args(argv: list[str]) -> dict[str, str | bool]:
         logger.info(f"Used arguments: {parsed_args}")
 
     return parsed_args
-
-
-@contextmanager
-def error_handling_context(operation_name: str):
-    """
-    Context manager for handling errors during an operation and logging them
-        appropriately.
-    Args:
-        operation_name (str): The name of the operation being performed.
-    Yields:
-        None
-    Raises:
-        Various exceptions based on the error encountered during the operation.
-    """
-
-    reason: str | None = None
-    msg: Exception | None = None
-    try:
-        with span(operation_name):
-            yield
-    except APIConnectionError as e:
-        reason, msg = "API connection error", e
-    except ModelHTTPError as e:
-        reason, msg = "Model error", e
-    except RateLimitError as e:
-        reason, msg = "Rate limit exceeded", e
-    except (UnexpectedModelBehavior, UnprocessableEntityError) as e:
-        reason, msg = "Model returned unexpected result", e
-    except UsageLimitExceeded as e:
-        reason, msg = "Usage limit exceeded", e
-    except Exception as e:
-        reason, msg = "Exception", e
-    finally:
-        if reason is not None or msg is not None:
-            if isinstance(msg, Exception):
-                logger.exception(msg)
-            else:
-                is_msg_type = (
-                    "type" in msg.__dict__ and msg.__dict__["type"] is not None
-                )
-                msg_type = f"(Type: {msg.__dict__['type']}) " if is_msg_type else ""
-                error_msg = f"{reason} {msg_type}caught in {operation_name}: {msg}"
-                error(f"{error_msg}")
-                logger.error(error_msg)
-        logger.info(f"exiting operation '{operation_name}'")

@@ -1,40 +1,36 @@
 """
-Main entry point for the agent application.
+Main entry point for the Agents-eval application.
 
-This module initializes the application, loads configuration, handles user input,
-and orchestrates the agent system workflow. It uses async execution and integrates
-with logging, tracing, and authentication utilities.
-
-Args:
-    chat_provider (str): The inference chat provider to be used.
-    query (str): The query to be processed by the agent.
-    include_researcher (bool): Whether to include the researcher agent.
-    include_analyst (bool): Whether to include the analyst agent.
-    include_synthesiser (bool): Whether to include the synthesiser agent.
-    pydantic_ai_stream (bool): Whether to use Pydantic AI streaming.
-    chat_config_file (str): Path to the configuration file.
-
-Functions:
-    main: Main async function to run the agent system.
+This module initializes the agentic system, loads configuration files,
+handles user input, and orchestrates the multi-agent workflow using
+asynchronous execution. It integrates logging, tracing, and authentication,
+and supports both CLI and programmatic execution.
 """
 
 from asyncio import run
 from pathlib import Path
 from sys import argv
 
-import weave
 from logfire import span
+from weave import op
 
 from app.__init__ import __version__
 from app.agents.agent_system import get_manager, run_manager, setup_agent_env
-from app.config.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER, PROJECT_NAME
-from app.utils.load_configs import AppEnv, load_app_config
+from app.config.config_app import (
+    CHAT_CONFIG_FILE,
+    CHAT_DEFAULT_PROVIDER,
+    EVAL_CONFIG_FILE,
+    PROJECT_NAME,
+)
+from app.config.data_models import AppEnv, ChatConfig, EvalConfig
+from app.utils.error_messages import generic_exception
+from app.utils.load_configs import load_config
 from app.utils.log import logger
 from app.utils.login import login
 from app.utils.utils import parse_args
 
 
-@weave.op()
+@op()
 async def main(
     chat_provider: str = CHAT_DEFAULT_PROVIDER,
     query: str = "",
@@ -68,12 +64,16 @@ async def main(
             if not query:
                 query = input("What would you like to research? ")
 
-            chat_config_path = Path(__file__).parent / chat_config_file
-            chat_config = load_app_config(chat_config_path)
+            chat_config_path = Path(__file__).parent / CHAT_CONFIG_FILE
+            eval_config_path = Path(__file__).parent / EVAL_CONFIG_FILE
+            chat_config = load_config(chat_config_path, ChatConfig)
+            eval_config = load_config(eval_config_path, EvalConfig)
             chat_env_config = AppEnv()
             agent_env = setup_agent_env(
                 chat_provider, query, chat_config, chat_env_config
             )
+            # TODO remove noqa and type ignore for unused variable
+            metrics_and_weights = eval_config.metrics_and_weights  # noqa: F841  # type: ignore[reportUnusedVariable]
 
             # FIXME enhance login, not every run?
             login(PROJECT_NAME, chat_env_config)
@@ -97,7 +97,7 @@ async def main(
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 
     except Exception as e:
-        msg = f"Aborting app '{PROJECT_NAME}' with: {e}"
+        msg = generic_exception(f"Aborting app '{PROJECT_NAME}' with: {e}")
         logger.exception(msg)
         raise Exception(msg) from e
 

@@ -10,10 +10,14 @@ This project aims to implement an evaluation pipeline to assess the effectivenes
 [![pytest](https://github.com/qte77/Agents-eval/actions/workflows/pytest.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/pytest.yaml)
 [![Link Checker](https://github.com/qte77/Agents-eval/actions/workflows/links-fail-fast.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/links-fail-fast.yaml)
 [![Deploy Docs](https://github.com/qte77/Agents-eval/actions/workflows/generate-deploy-mkdocs-ghpages.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/generate-deploy-mkdocs-ghpages.yaml)
-[![vscode.dev](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=vscode.dev&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://vscode.dev/github/qte77/Agents-eval)
+
+**DevEx** [![vscode.dev](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=vscode.dev&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://vscode.dev/github/qte77/Agents-eval)
 [![Codespace Dev](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Codespace%20Dev&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://github.com/codespaces/new?repo=qte77/Agents-eval&devcontainer_path=.devcontainer/setup_dev/devcontainer.json)
+[![Codespace Dev Claude Code](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Codespace%20Dev%20Claude%20Code&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://github.com/codespaces/new?repo=qte77/Agents-eval&devcontainer_path=.devcontainer/setup_dev_claude/devcontainer.json)
 [![Codespace Dev Ollama](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Codespace%20Dev%20Ollama&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://github.com/codespaces/new?repo=qte77/Agents-eval&devcontainer_path=.devcontainer/setup_dev_ollama/devcontainer.json)
 [![TalkToGithub](https://img.shields.io/badge/TalkToGithub-7a83ff.svg)](https://talktogithub.com/qte77/Agents-eval)
+[![llms.txt (UitHub)](https://img.shields.io/badge/llms.txt-uithub-800080.svg)](https://github.com/qte77/Agents-eval)
+[![llms.txt (GitToDoc)](https://img.shields.io/badge/llms.txt-GitToDoc-fe4a60.svg)](https://gittodoc.com/qte77/Agents-eval)
 
 ## Status
 
@@ -24,7 +28,7 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 ## Setup and Usage
 
 - `make setup_prod`
-- `make setup_dev`
+- `make setup_dev` or `make setup_dev_claude` or `make setup_dev_ollama`
 - `make run_cli` or `make run_cli ARGS="--help"`
 - `make run_gui`
 - `make test_all`
@@ -71,11 +75,25 @@ WANDB_API_KEY="xyz"
 
 ### Project Outline
 
-`#TODO`
+`# TODO`
 
 ### Datasets used
 
-`#TODO`
+`# TODO`
+
+### Evalutions metrics
+
+#### # TODO
+
+- Time to complete task (time_taken)
+- Task success rate (task_success)
+- Agent coordination (coordination_quality)
+- Tool usage efficiency (tool_efficiency)
+- Plan coherence (planning_rational)
+- Text response quality (text_similarity)
+- Autonomy vs. human intervention (HITL, user feedback)
+- Reactivity (adapt to changes of tasks and environments)
+- Memory consistency
 
 ### Evaluations Metrics Baseline
 
@@ -84,11 +102,12 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 ```json
 {
     "evaluators_and_weights": {
-        "planning_rational": 0.25,
-        "tool_efficiency": 0.25,
-        "coordination_quality": 0.25,
-        "time_taken": 0.25,
-        "text_similarity": 0.25
+        "planning_rational": "1/6",
+        "task_success": "1/6",
+        "tool_efficiency": "1/6",
+        "coordination_quality": "1/6",
+        "time_taken": "1/6",
+        "text_similarity": "1/6"
     }
 }
 ```
@@ -170,12 +189,14 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
   - [Langchain AgentEvals](https://github.com/langchain-ai/agentevals)
   - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
   - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
+  - [AgentBench](https://github.com/THUDM/AgentBench)
 - RAG oriented
   - [RAGAs](https://github.com/explodinggradients/ragas)
 - LLM apps
   - [DeepEval](https://github.com/confident-ai/deepeval)
   - [Langchain OpenEvals](https://github.com/langchain-ai/openevals)
   - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
+  - [DeepEval (DeepSeek)]( github.com/confident-ai/deepeval)
 
 ### Observation, Monitoring, Tracing
 
@@ -223,15 +244,18 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 ### Benchmarks
 
+- [SciArena: A New Platform for Evaluating Foundation Models in Scientific Literature Tasks](https://allenai.org/blog/sciarena)
 - [AgentEvals CORE-Bench Leaderboard](https://huggingface.co/spaces/agent-evals/core_leaderboard)
 - [Berkeley Function-Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html)
 - [Chatbot Arena LLM Leaderboard](https://lmsys.org/projects/)
 - [GAIA Leaderboard](https://gaia-benchmark-leaderboard.hf.space/)
 - [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
 - [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
+- [MiniWoB++: a web interaction benchmark for reinforcement learning](https://miniwob.farama.org/)
 
 ## Further Reading
 
+- [[2506.18096] Deep Research Agents: A Systematic Examination And Roadmap](https://arxiv.org/abs/2506.18096), [gh / ai-agents-2030 / awesome-deep-research-agent](https://github.com/ai-agents-2030/awesome-deep-research-agent)
 - [[2504.19678] From LLM Reasoning to Autonomous AI Agents: A Comprehensive Review](https://arxiv.org/abs/2504.19678)
 - [[2503.21460] Large Language Model Agent: A Survey on Methodology, Applications and Challenges](https://arxiv.org/abs/2503.21460)
 - [[2503.16416] Survey on Evaluation of LLM-based Agents](https://arxiv.org/abs/2503.16416)
@@ -242,7 +266,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - [[2501.16150] AI Agents for Computer Use: A Review of Instruction-based Computer Control, GUI Automation, and Operator Assistants](https://arxiv.org/abs/2501.16150)
 - [[2501.06590] ChemAgent](https://arxiv.org/abs/2501.06590)
 - [[2501.06322] Multi-Agent Collaboration Mechanisms: A Survey of LLMs](https://arxiv.org/abs/2501.06322)
-- [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/abs/2501.04227)
+- [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/abs/2501.04227), [AgentRxiv:Towards Collaborative Autonomous Research](https://agentrxiv.github.io/)
 - [[2501.00881] Agentic Systems: A Guide to Transforming Industries with Vertical AI Agents](https://arxiv.org/abs/2501.00881)
 - [[2412.04093] Practical Considerations for Agentic LLM Systems](https://arxiv.org/abs/2412.04093)
 - [[2411.13768] Evaluation-driven Approach to LLM Agents](https://arxiv.org/abs/2411.13768)
@@ -250,7 +274,9 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - [[2411.05285] A taxonomy of agentops for enabling observability of foundation model based agents](https://arxiv.org/abs/2411.05285)
 - [[2410.22457] Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
 - [[2408.06361] Large Language Model Agent in Financial Trading: A Survey](https://arxiv.org/abs/2408.06361)
+- [[2408.06292] The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery](https://arxiv.org/abs/2408.06292)
 - [[2404.13501] A Survey on the Memory Mechanism of Large Language Model based Agents](https://arxiv.org/pdf/2404.13501)
+- [[2402.06360] CoSearchAgent: A Lightweight Collaborative Search Agent with Large Language Models](https://arxiv.org/abs/2402.06360)
 - [[2402.02716] Understanding the planning of LLM agents: A survey](https://arxiv.org/abs/2402.02716)
 - [[2402.01030] Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/abs/2402.01030)
 - [[2308.11432] A Survey on Large Language Model based Autonomous Agents](https://arxiv.org/abs/2308.11432)

@@ -1,0 +1,8 @@
+{
+  "name": "make setup_dev_claude",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
+  "postCreateCommand": "make setup_dev_claude"
+}

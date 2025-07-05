@@ -12,8 +12,8 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from app.config.config_app import API_SUFFIX
-from app.config.data_models import EndpointConfig, ModelDict, ProviderConfig
-from app.utils.load_configs import AppEnv
+from app.config.data_models import AppEnv, EndpointConfig, ModelDict, ProviderConfig
+from app.utils.error_messages import generic_exception, get_key_error
 from app.utils.log import logger
 
 
@@ -46,11 +46,11 @@ def get_provider_config(
         model_name = providers[provider].model_name
         base_url = providers[provider].base_url
     except KeyError as e:
-        msg = f"Provider '{provider}' not found in configuration: {e}"
+        msg = get_key_error(str(e))
         logger.error(msg)
         raise KeyError(msg)
     except Exception as e:
-        msg = f"Error loading provider configuration: {e}"
+        msg = generic_exception(str(e))
         logger.exception(msg)
         raise Exception(msg)
     else:

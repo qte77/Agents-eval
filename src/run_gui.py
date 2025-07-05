@@ -19,7 +19,8 @@ from asyncio import run
 from pathlib import Path
 
 from app.config.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER
-from app.utils.load_configs import load_app_config
+from app.config.data_models import ChatConfig
+from app.utils.load_configs import load_config
 from app.utils.log import logger
 from gui.components.sidebar import render_sidebar
 from gui.config.config import APP_PATH
@@ -34,7 +35,7 @@ from gui.pages.settings import render_settings
 # set readme.md as home, separate prompts into page
 
 chat_config_pfile = Path(__file__).parent / APP_PATH / CHAT_CONFIG_FILE
-chat_config = load_app_config(chat_config_pfile)
+chat_config = load_config(chat_config_pfile, ChatConfig)
 provider = CHAT_DEFAULT_PROVIDER
 logger.info(f"Default provider: {CHAT_DEFAULT_PROVIDER}")
 
@@ -50,7 +51,7 @@ async def main():
         provider = render_settings(chat_config)
         logger.info(f"Page 'Settings' provider: {provider}")
     elif selected_page == "Prompts":
-        render_prompts(chat_config.prompts)  # prompts =
+        render_prompts(chat_config)
     elif selected_page == "App":
         logger.info(f"Page 'App' provider: {CHAT_DEFAULT_PROVIDER}")
         await render_app(CHAT_DEFAULT_PROVIDER)
