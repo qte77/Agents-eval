@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(AGENTS.md)",
+      "Bash(cat:*)",
+      "Edit(docs/**/*.md)",
+      "Bash(find:*)",
+      "Bash(git:diff*)",
+      "Bash(git:status*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(source:*)",
+      "Edit(src/**/*.py)",
+      "Edit(src/**/*.json)",
+      "Edit(tests/**/*.py)",
+      "Bash(touch:*)",
+      "Bash(tree:*)",
+      "Bash(uv:*)", 
+      "WebFetch(domain:docs.anthropic.com)"
+    ],
+    "deny": [
+      "Bash(mv:*)",
+      "Bash(rm:*)"
+    ]
+  }
+}
