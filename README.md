@@ -176,6 +176,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 <details>
   <summary>Show Repo Structure</summary>
 ```sh
+|- .claude  # claude code config and commands
 |- .devcontainer  # pre-configured dev env
 |- .github  # workflows
 |- .streamlit  # config.toml
@@ -188,14 +189,21 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
       |- config
       |- evals
       |- utils
-      \- main.py
+      |- __init__.py
+      |- main.py
+      \- py.typed
    |- examples
    |- gui
    \- run_gui.py
 |- tests
 |- .env.example  # example env vars
+|- .gitignore
+|- .gitmessage
+|- AGENTS.md  # common file like agentsmd.com
 |- CHANGEOG.md  # short project history
+|- CLAUDE.md  # points to AGENTS.md
 |- Dockerfile  # create app image
+|- LICENSE.md
 |- Makefile  # helper scripts
 |- mkdocs.yaml  # docu from docstrings
 |- pyproject.toml  # project settings
@@ -293,6 +301,10 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
 - [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
 - [MiniWoB++: a web interaction benchmark for reinforcement learning](https://miniwob.farama.org/)
+
+### Research Agents
+
+- [Ai2 Scholar QA](https://qa.allen.ai/chat)
 
 ## Further Reading
 
