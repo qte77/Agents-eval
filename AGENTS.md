@@ -57,7 +57,7 @@ This is a multi-agent evaluation system for assessing agentic AI systems. The pr
 
 ### Environment Setup
 
-The project requirements are state  in `pyproject.toml`. Your development environment should be set up automatically using the provided `Makefile`, which configures the virtual environment.
+The project requirements are stated in `pyproject.toml`. Your development environment should be set up automatically using the provided `Makefile`, which configures the virtual environment.
 
 * `make setup_dev`: Install all dev dependencies.
 * `make setup_dev_claude`: Setup dev environment with Claude Code CLI.
@@ -132,13 +132,6 @@ The project requirements are state  in `pyproject.toml`. Your development enviro
 2. Ensure all tests pass: `make test_all`.
 3. Ensure static type checks pass: `make type_check`.
 4. Update documentation as described below.
-
-### Documentation
-
-* Update this `AGENTS.md` file when introducing new patterns or concepts.
-* Add and update docstrings to all files, classes, methods, function and data classes you create or change. Because the documentation site is built using **MkDocs** and is automatically deployed via a GitHub Actions workflow.
-* Document any significant architectural decisions into `docs/ADR.md`. If not present, create it.
-* Document all significant changes, features, and bug fixes in `docs/CHANGELOG.md`.
 
 ## Requests to Humans
 
