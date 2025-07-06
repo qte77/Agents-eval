@@ -3,10 +3,9 @@
 # It is designed to work with the 'uv' tool for managing Python environments and dependencies.
 # Run `make help` to see all available recipes.
 
-
 .SILENT:
 .ONESHELL:
-.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile test_all coverage_all type_check output_unset_app_env_sh help
+.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile prp_gen_claude prp_exe_claude test_all coverage_all type_check output_unset_app_env_sh help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := setup_dev_ollama
 
@@ -16,6 +15,30 @@ GUI_PATH_ST := $(SRC_PATH)/run_gui.py
 CHAT_CFG_FILE := $(APP_PATH)/config_chat.json
 OLLAMA_SETUP_URL := https://ollama.com/install.sh
 OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
+PRP_DEF_PATH := /context/PRPs/features
+PRP_CLAUDE_GEN_CMD := generate-prp
+PRP_CLAUDE_EXE_CMD := execute-prp
+
+# construct the full path to the PRP definition file
+define CLAUDE_PRP_RUNNER
+	echo "Starting Claude Code PRP runner ..."
+	# 1. Extract arguments and validate that they are not empty.
+	prp_file=$(firstword $(strip $(1)))
+	cmd_prp=$(firstword $(strip $(2)))
+	if [ -z "$${prp_file}" ]; then
+		echo "Error: ARGS for PRP filename is empty. Please provide a PRP filename."
+		exit 1
+	fi
+	if [ -z "$${cmd_prp}" ]; then
+		echo "Error: ARGS for command is empty. Please provide a command."
+		exit 2
+	fi
+	cmd_prp="/project:$${cmd_prp} $(PRP_DEF_PATH)/$${prp_file}"
+	cmd_cost="/cost"
+	echo "Executing command '$${cmd_prp}' ..."
+	claude -p "$${cmd_prp}" 2>&1
+	claude -p "$${cmd_cost}" 2>&1
+endef
 
 setup_prod:  ## Install uv and deps, Download and start Ollama 
 	echo "Setting up prod environment ..."
@@ -91,9 +114,15 @@ run_profile:  ## Profile app with scalene
 		"$(APP_PATH)/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
 		"$(APP_PATH)/main.py"
 
+prp_gen_claude:  ## generates the PRP from the file passed in ARGS
+	$(call CLAUDE_PRP_RUNNER, $(ARGS), $(PRP_CLAUDE_GEN_CMD))
+
+prp_exe_claude:  ## executes the PRP from the file passed in ARGS
+	$(call CLAUDE_PRP_RUNNER, $(ARGS), $(PRP_CLAUDE_EXE_CMD))
+
 test_all:  ## Run all tests
 	uv run pytest
-	
+
 coverage_all:  ## Get test coverage
 	uv run coverage run -m pytest || true
 	uv run coverage report -m
@@ -106,7 +135,7 @@ output_unset_app_env_sh:  ## Unset app environment variables
 	echo "Outputing '$${uf}' ..."
 	printenv | awk -F= '/_API_KEY=/ {print "unset " $$1}' > $$uf
 
-help:
+help:  ## Displays this message with available recipes
 	# TODO add stackoverflow source
 	echo "Usage: make [recipe]"
 	echo "Recipes:"
