@@ -93,7 +93,7 @@ run_profile:  ## Profile app with scalene
 
 test_all:  ## Run all tests
 	uv run pytest
-	
+
 coverage_all:  ## Get test coverage
 	uv run coverage run -m pytest || true
 	uv run coverage report -m
