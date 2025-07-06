@@ -6,7 +6,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile test_all coverage_all type_check output_unset_app_env_sh help
+.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile test_all coverage_all type_check output_unset_app_env_sh help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := setup_dev_ollama
 
