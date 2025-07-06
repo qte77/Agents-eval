@@ -6,6 +6,9 @@ Generate a complete PRP (Product Requirements Prompt) for general feature implem
 
 The AI agent only gets the context you are appending to the PRP and training data. Assume the AI agent has access to the codebase and the same knowledge cutoff as you, so its important that your research findings are included or referenced in the PRP. The Agent has Websearch capabilities, so pass urls to documentation and examples.
 
+- Use `/context/PRPs` as `$base_path`
+- Extract only the filename from `$ARGUMENTS` into `$file_name`
+
 ## Research Process
 
 1. **Codebase Analysis**
@@ -26,9 +29,7 @@ The AI agent only gets the context you are appending to the PRP and training dat
 
 ## PRP Generation
 
-- Use `/PRPs/templates/prp_base.md` as template
-- Extract only the filename from $ARGUMENTS into $filename
-- save the result to /PRPs/$filename
+- Use `${base_path}/templates/prp_base.md` in the base folder as template
 
 ### Critical Context to Include and pass to the AI agent as part of the PRP
 
@@ -61,7 +62,7 @@ make coverage_all
 
 ## Output
 
-Save as: `PRPs/{feature-name}.md`
+- Save the result to `${base_path}/${file_name}`
 
 ## Quality Checklist
 
