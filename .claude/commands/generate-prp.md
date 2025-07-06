@@ -4,7 +4,7 @@
 
 Generate a complete PRP for general feature implementation with thorough research. Ensure context is passed to the AI agent to enable self-validation and iterative refinement. Read the feature file first to understand what needs to be created, how the examples provided help, and any other considerations.
 
-The AI agent only gets the context you are appending to the PRP and training data. Assuma the AI agent has access to the codebase and the same knowledge cutoff as you, so its important that your research findings are included or referenced in the PRP. The Agent has Websearch capabilities, so pass urls to documentation and examples.
+The AI agent only gets the context you are appending to the PRP and training data. Assume the AI agent has access to the codebase and the same knowledge cutoff as you, so its important that your research findings are included or referenced in the PRP. The Agent has Websearch capabilities, so pass urls to documentation and examples.
 
 ## Research Process
 
@@ -26,7 +26,7 @@ The AI agent only gets the context you are appending to the PRP and training dat
 
 ## PRP Generation
 
-Using PRPs/templates/prp_base.md as template:
+Using /PRPs/templates/prp_base.md as template:
 
 ### Critical Context to Include and pass to the AI agent as part of the PRP
 
