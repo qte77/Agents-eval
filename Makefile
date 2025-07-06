@@ -21,6 +21,7 @@ PRP_CLAUDE_EXE_CMD := execute-prp
 
 # construct the full path to the PRP definition file
 define CLAUDE_PRP_RUNNER
+	echo "Starting Claude Code PRP runner ..."
 	# 1. Extract arguments and validate that they are not empty.
 	prp_file=$(firstword $(strip $(1)))
 	cmd_prp=$(firstword $(strip $(2)))
@@ -35,8 +36,8 @@ define CLAUDE_PRP_RUNNER
 	cmd_prp="/project:$${cmd_prp} $(PRP_DEF_PATH)/$${prp_file}"
 	cmd_cost="/cost"
 	echo "Executing command '$${cmd_prp}' ..."
-	claude -p "$${cmd_prp}"
-	claude -p "$${cmd_cost}"
+	claude -p "$${cmd_prp}" 2>&1
+	claude -p "$${cmd_cost}" 2>&1
 endef
 
 setup_prod:  ## Install uv and deps, Download and start Ollama 

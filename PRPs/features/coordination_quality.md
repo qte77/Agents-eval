@@ -1,10 +1,10 @@
-# Feature description for: [ Initial template for new features ]
+# Feature description for: coordination_quality
 
 As put forward by [context-engineering-intro](https://github.com/qte77/context-engineering-intro).
 
 ## FEATURE
 
-[Insert your feature here]
+coordination_quality
 
 ## EXAMPLES
 
