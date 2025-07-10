@@ -8,7 +8,7 @@ As put forward by [context-engineering-intro](https://github.com/qte77/context-e
 
 ## EXAMPLES
 
-[Provide and explain examples that you have in the `PRPs/examples/` folder]
+[Provide and explain examples that you have in the `context/examples` folder]
 
 ## DOCUMENTATION
 
