@@ -4,6 +4,7 @@
       "Bash(cat:*)",
       "Bash(find:*)",
       "Bash(git:diff*)",
+      "Bash(git:log*)",
       "Bash(git:status*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
@@ -11,7 +12,7 @@
       "Bash(source:*)",
       "Bash(touch:*)",
       "Bash(tree:*)",
-      "Bash(uv run:*)", 
+      "Bash(uv:run*)", 
       "Edit(AGENTS.md)",
       "Edit(docs/**/*.md)",
       "Edit(src/**/*.py)",
@@ -21,7 +22,8 @@
     ],
     "deny": [
       "Bash(mv:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Edit(CLAUDE.md)"
     ]
   }
 }
