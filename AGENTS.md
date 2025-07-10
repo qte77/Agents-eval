@@ -71,6 +71,8 @@ The project requirements are stated in `pyproject.toml`. Your development enviro
 
 ### Testing and Code Quality
 
+Testing is managed by **pytest** and orchestrated via the `Makefile`.
+
 * `make test_all`: Run all tests with pytest.
 * `make coverage_all`: Run tests and generate a coverage report.
 * `make ruff`: Format code and fix linting issues with Ruff.
