@@ -1,5 +1,5 @@
 from app.agents.agent_system import get_manager
-from app.config.data_models import ProviderConfig
+from app.datamodels.app_models import ProviderConfig
 
 
 def test_get_manager_minimal():

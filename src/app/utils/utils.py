@@ -18,7 +18,7 @@ Functions:
 
 from pydantic_ai.usage import Usage
 
-from app.config.data_models import ResearchSummary
+from app.datamodels.app_models import ResearchSummary
 from app.utils.log import logger
 
 

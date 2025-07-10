@@ -22,7 +22,7 @@ from app.config.config_app import (
     EVAL_CONFIG_FILE,
     PROJECT_NAME,
 )
-from app.config.data_models import AppEnv, ChatConfig, EvalConfig
+from app.datamodels.app_models import AppEnv, ChatConfig, EvalConfig
 from app.utils.error_messages import generic_exception
 from app.utils.load_configs import load_config
 from app.utils.log import logger

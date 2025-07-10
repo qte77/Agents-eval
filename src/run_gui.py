@@ -19,7 +19,7 @@ from asyncio import run
 from pathlib import Path
 
 from app.config.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER
-from app.config.data_models import ChatConfig
+from app.datamodels.app_models import ChatConfig
 from app.utils.load_configs import load_config
 from app.utils.log import logger
 from gui.components.sidebar import render_sidebar

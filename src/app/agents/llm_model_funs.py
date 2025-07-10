@@ -12,7 +12,7 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from app.config.config_app import API_SUFFIX
-from app.config.data_models import AppEnv, EndpointConfig, ModelDict, ProviderConfig
+from app.datamodels.app_models import AppEnv, EndpointConfig, ModelDict, ProviderConfig
 from app.utils.error_messages import generic_exception, get_key_error
 from app.utils.log import logger
 

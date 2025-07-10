@@ -9,7 +9,7 @@ displays warnings if prompts are missing, and allows interactive editing of each
 from pydantic import BaseModel
 from streamlit import error, header, warning
 
-from app.config.data_models import ChatConfig
+from app.datamodels.app_models import ChatConfig
 from app.utils.error_messages import invalid_type
 from app.utils.log import logger
 from gui.components.prompts import render_prompt_editor

@@ -1,6 +1,6 @@
 from pytest import MonkeyPatch
 
-from app.config.data_models import ProviderConfig
+from app.datamodels.app_models import ProviderConfig
 
 
 def test_provider_config_parsing(monkeypatch: MonkeyPatch):

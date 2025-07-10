@@ -12,7 +12,7 @@ from wandb import login as wandb_login
 from weave import init as weave_init
 
 from app.agents.llm_model_funs import get_api_key
-from app.config.data_models import AppEnv
+from app.datamodels.app_models import AppEnv
 from app.utils.error_messages import generic_exception
 from app.utils.log import logger
 

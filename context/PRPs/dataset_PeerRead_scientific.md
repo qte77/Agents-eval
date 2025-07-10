@@ -29,6 +29,7 @@ Provide functional tests and logic code implementation which can be integrated w
 ## What
 
 User-visible behavior and technical requirements:
+
 - Load PeerRead dataset from JSON files
 - Provide structured data models for papers, reviews, and decisions
 - Enable agent task generation from dataset entries
@@ -105,11 +106,12 @@ tests/
 src/app/
 ├── datasets/                        # NEW: Dataset integration
 │   ├── __init__.py
-│   ├── peerread_loader.py          # NEW: PeerRead data loading
+│   └── peerread_loader.py          # NEW: PeerRead data loading
+├── datamodels/
 │   └── peerread_models.py          # NEW: PeerRead Pydantic models
 ├── config/
 │   └── config_peerread.json        # NEW: PeerRead configuration
-data/                               # NEW: Dataset storage
+data/                               # NEW: Dataset storage, add to .gitignore
 ├── peerread/                       # NEW: PeerRead dataset files
 │   ├── train/
 │   ├── dev/
