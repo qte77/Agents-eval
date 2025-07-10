@@ -3,7 +3,7 @@
 This project aims to implement an evaluation pipeline to assess the effectiveness of open-source agentic AI systems across various use cases, focusing on use case agnostic metrics that measure core capabilities such as task decomposition, tool integration, adaptability, and overall performance.
 
 ![License](https://img.shields.io/badge/license-BSD3Clause-green.svg)
-![Version](https://img.shields.io/badge/version-1.1.0-58f4c2)
+![Version](https://img.shields.io/badge/version-2.0.0-58f4c2)
 [![CodeQL](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml)
 [![CodeFactor](https://www.codefactor.io/repository/github/qte77/Agents-eval/badge)](https://www.codefactor.io/repository/github/qte77/Agents-eval)
 [![ruff](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml)
@@ -176,6 +176,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 <details>
   <summary>Show Repo Structure</summary>
 ```sh
+|- .claude  # claude code config and commands
 |- .devcontainer  # pre-configured dev env
 |- .github  # workflows
 |- .streamlit  # config.toml
@@ -188,14 +189,21 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
       |- config
       |- evals
       |- utils
-      \- main.py
+      |- __init__.py
+      |- main.py
+      \- py.typed
    |- examples
    |- gui
    \- run_gui.py
 |- tests
 |- .env.example  # example env vars
+|- .gitignore
+|- .gitmessage
+|- AGENTS.md  # common file like agentsmd.com
 |- CHANGEOG.md  # short project history
+|- CLAUDE.md  # points to AGENTS.md
 |- Dockerfile  # create app image
+|- LICENSE.md
 |- Makefile  # helper scripts
 |- mkdocs.yaml  # docu from docstrings
 |- pyproject.toml  # project settings
@@ -293,6 +301,10 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
 - [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
 - [MiniWoB++: a web interaction benchmark for reinforcement learning](https://miniwob.farama.org/)
+
+### Research Agents
+
+- [Ai2 Scholar QA](https://qa.allen.ai/chat)
 
 ## Further Reading
 

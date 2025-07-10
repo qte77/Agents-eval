@@ -1,3 +1,8 @@
+├── .claude
+    ├── commands
+    │   ├── execute-prp.md
+    │   └── generate-prp.md
+    └── settings.local.json
 ├── .devcontainer
     ├── setup_dev
     │   └── devcontainer.json
@@ -27,7 +32,9 @@
 ├── .vscode
     ├── extensions.json
     └── settings.json
+├── AGENTS.md
 ├── CHANGELOG.md
+├── CLAUDE.md
 ├── Dockerfile
 ├── LICENSE.md
 ├── Makefile
@@ -38,6 +45,16 @@
     │   ├── customer-journey-activity-dark.png
     │   ├── customer-journey-activity-light.png
     │   └── metrics-eval-sweep.png
+├── context
+    └── PRPs
+    │   ├── coordination_quality.md
+    │   ├── features
+    │       ├── coordination_quality.md
+    │       └── tool_efficiency.md
+    │   ├── templates
+    │       ├── feature_base.md
+    │       └── prp_base.md
+    │   └── tool_efficiency.md
 ├── docs
     ├── PRD.md
     ├── SprintPlan.md
@@ -114,6 +131,167 @@
 └── uv.lock
 
 
+/.claude/commands/execute-prp.md:
+--------------------------------------------------------------------------------
+ 1 | # Execute Product Requirements Prompt (PRP)
+ 2 | 
+ 3 | Implement a feature using using the PRP file.
+ 4 | 
+ 5 | ## PRP File: $ARGUMENTS
+ 6 | 
+ 7 | ## Execution Process
+ 8 | 
+ 9 | 1. **Load PRP**
+10 |    - Read the specified PRP file
+11 |    - Understand all context and requirements
+12 |    - Follow all instructions in the PRP and extend the research if needed
+13 |    - Ensure you have all needed context to implement the PRP fully
+14 |    - Do more web searches and codebase exploration as needed
+15 | 
+16 | 2. **ULTRATHINK**
+17 |    - Think hard before you execute the plan. Create a comprehensive plan addressing all requirements.
+18 |    - Break down complex tasks into smaller, manageable steps using your todos tools.
+19 |    - Use the TodoWrite tool to create and track your implementation plan.
+20 |    - Identify implementation patterns from existing code to follow.
+21 | 
+22 | 3. **Execute the plan**
+23 |    - Execute the PRP
+24 |    - Implement all the code
+25 | 
+26 | 4. **Validate**
+27 |    - Run each validation command
+28 |    - Fix any failures
+29 |    - Re-run until all pass
+30 | 
+31 | 5. **Complete**
+32 |    - Ensure all checklist items done
+33 |    - Run final validation suite
+34 |    - Report completion status
+35 |    - Read the PRP again to ensure you have implemented everything
+36 | 
+37 | 6. **Reference the PRP**
+38 |    - You can always reference the PRP again if needed
+39 | 
+40 | Note: If validation fails, use error patterns in PRP to fix and retry.
+41 | 
+
+
+--------------------------------------------------------------------------------
+/.claude/commands/generate-prp.md:
+--------------------------------------------------------------------------------
+ 1 | # Create Product Requirements Prompt (PRP)
+ 2 | 
+ 3 | ## Feature file: $ARGUMENTS
+ 4 | 
+ 5 | Generate a complete PRP (Product Requirements Prompt) for general feature implementation with thorough research. Ensure context is passed to the AI agent to enable self-validation and iterative refinement. Read the feature file first to understand what needs to be created, how the examples provided help, and any other considerations.
+ 6 | 
+ 7 | The AI agent only gets the context you are appending to the PRP and training data. Assume the AI agent has access to the codebase and the same knowledge cutoff as you, so its important that your research findings are included or referenced in the PRP. The Agent has Websearch capabilities, so pass urls to documentation and examples.
+ 8 | 
+ 9 | - Use `/context/PRPs` as `$base_path`
+10 | - Extract only the filename from `$ARGUMENTS` into `$file_name`
+11 | 
+12 | ## Research Process
+13 | 
+14 | 1. **Codebase Analysis**
+15 |    - Search for similar features/patterns in the codebase
+16 |    - Identify files to reference in PRP
+17 |    - Note existing conventions to follow
+18 |    - Check test patterns for validation approach
+19 | 
+20 | 2. **External Research**
+21 |    - Search for similar features/patterns online
+22 |    - Library documentation (include specific URLs)
+23 |    - Implementation examples (GitHub/StackOverflow/blogs)
+24 |    - Best practices and common pitfalls
+25 | 
+26 | 3. **User Clarification** (if needed)
+27 |    - Specific patterns to mirror and where to find them?
+28 |    - Integration requirements and where to find them?
+29 | 
+30 | ## PRP Generation
+31 | 
+32 | - Use `${base_path}/templates/prp_base.md` in the base folder as template
+33 | 
+34 | ### Critical Context to Include and pass to the AI agent as part of the PRP
+35 | 
+36 | - **Documentation**: URLs with specific sections
+37 | - **Code Examples**: Real snippets from codebase
+38 | - **Gotchas**: Library quirks, version issues
+39 | - **Patterns**: Existing approaches to follow
+40 | 
+41 | ### Implementation Blueprint
+42 | 
+43 | - Start with pseudocode showing approach
+44 | - Reference real files for patterns
+45 | - Include error handling strategy
+46 | - list tasks to be completed to fullfill the PRP in the order they should be completed
+47 | 
+48 | ### Validation Gates (Must be Executable) eg for python
+49 | 
+50 | ```bash
+51 | # Syntax/Style
+52 | make ruff
+53 | make type_check
+54 | 
+55 | # Unit Tests
+56 | make coverage_all
+57 | ```
+58 | 
+59 | ***CRITICAL AFTER YOU ARE DONE RESEARCHING AND EXPLORING THE CODEBASE BEFORE YOU START WRITING THE PRP***
+60 | 
+61 | ***ULTRATHINK ABOUT THE PRP AND PLAN YOUR APPROACH THEN START WRITING THE PRP***
+62 | 
+63 | ## Output
+64 | 
+65 | - Save the result to `${base_path}/${file_name}`
+66 | 
+67 | ## Quality Checklist
+68 | 
+69 | - [ ] All necessary context included
+70 | - [ ] Validation gates are executable by AI
+71 | - [ ] References existing patterns
+72 | - [ ] Clear implementation path
+73 | - [ ] Error handling documented
+74 | 
+75 | Score the PRP on a scale of 1-10 (confidence level to succeed in one-pass implementation using claude codes)
+76 | 
+77 | Remember: The goal is one-pass implementation success through comprehensive context.
+78 | 
+
+
+--------------------------------------------------------------------------------
+/.claude/settings.local.json:
+--------------------------------------------------------------------------------
+ 1 | {
+ 2 |   "permissions": {
+ 3 |     "allow": [
+ 4 |       "Bash(cat:*)",
+ 5 |       "Bash(find:*)",
+ 6 |       "Bash(git:diff*)",
+ 7 |       "Bash(git:status*)",
+ 8 |       "Bash(grep:*)",
+ 9 |       "Bash(ls:*)",
+10 |       "Bash(mkdir:*)",
+11 |       "Bash(source:*)",
+12 |       "Bash(touch:*)",
+13 |       "Bash(tree:*)",
+14 |       "Bash(uv run:*)", 
+15 |       "Edit(AGENTS.md)",
+16 |       "Edit(docs/**/*.md)",
+17 |       "Edit(src/**/*.py)",
+18 |       "Edit(src/**/*.json)",
+19 |       "Edit(tests/**/*.py)",
+20 |       "WebFetch(domain:docs.anthropic.com)"
+21 |     ],
+22 |     "deny": [
+23 |       "Bash(mv:*)",
+24 |       "Bash(rm:*)"
+25 |     ]
+26 |   }
+27 | }
+
+
+--------------------------------------------------------------------------------
 /.devcontainer/setup_dev/devcontainer.json:
 --------------------------------------------------------------------------------
 1 | {
@@ -126,14 +304,21 @@
 --------------------------------------------------------------------------------
 /.devcontainer/setup_dev_claude/devcontainer.json:
 --------------------------------------------------------------------------------
-1 | {
-2 |   "name": "make setup_dev_claude",
-3 |   "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
-4 |   "features": {
-5 |     "ghcr.io/devcontainers/features/node:1": {}
-6 |   },
-7 |   "postCreateCommand": "make setup_dev_claude"
-8 | }
+ 1 | {
+ 2 |   "name": "make setup_dev_claude",
+ 3 |   "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
+ 4 |   "features": {
+ 5 |     "ghcr.io/devcontainers/features/node:1": {}
+ 6 |   },
+ 7 |   "customizations": {
+ 8 |     "vscode": {
+ 9 |       "extensions": [
+10 |         "anthropic.claude-code"
+11 |       ]
+12 |     }
+13 |   },
+14 |   "postCreateCommand": "make setup_dev_claude"
+15 | }
 
 
 --------------------------------------------------------------------------------
@@ -739,7 +924,7 @@
 --------------------------------------------------------------------------------
  1 | # TODO use local installation of repo to text
  2 | # https://github.com/itsitgroup/repo2txt
- 3 | name: Write flattened repo to llms.txt
+ 3 | name: Write repo llms.txt
  4 | 
  5 | on:
  6 |   push:
@@ -795,12 +980,13 @@
 56 |       - name: Commit and push file
 57 |         run: |
 58 |           LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
-59 |           git config user.name "github-actions"
-60 |           git config user.email "github-actions@github.com"
-61 |           git add "${LLMS_TXT_FULL}"
-62 |           git commit -m "feat(docs): Add/Update ${LLMS_TXT_FULL} adhering to [llmstxt.org](https://llmstxt.org/)."
-63 |           git push
-64 | 
+59 |           commit_msg="feat(docs): Add/Update ${LLMS_TXT_FULL}, a flattened repo as single text file, inspired by [llmstxt.org](https://llmstxt.org/)."
+60 |           git config user.name "github-actions"
+61 |           git config user.email "github-actions@github.com"
+62 |           git add "${LLMS_TXT_FULL}"
+63 |           git commit -m "${commit_msg}"
+64 |           git push
+65 | 
 
 
 --------------------------------------------------------------------------------
@@ -978,6 +1164,155 @@
 
 
 --------------------------------------------------------------------------------
+/AGENTS.md:
+--------------------------------------------------------------------------------
+  1 | # Agent instructions for `Agents-eval` repository
+  2 | 
+  3 | As proposed by [agentsmd.net](https://agentsmd.net/) and used by [wandb weave AGENTS.md](https://github.com/wandb/weave/blob/master/AGENTS.md).
+  4 | 
+  5 | ## Core Rules & AI Behavior
+  6 | 
+  7 | * When you learn something new about the codebase or introduce a new concept, **update this file (`AGENTS.md`)** to reflect the new knowledge. This is YOUR FILE! It should grow and evolve with you.
+  8 | * If something doesn't make sense architecturally, from a developer experience standpoint, or product-wise, please add it to the **`Requests to Humans`** section below.
+  9 | * Always follow the established coding patterns, conventions, and architectural decisions documented here and in the `docs/` directory.
+ 10 | * **Never assume missing context.** Ask questions if you are uncertain about requirements or implementation details.
+ 11 | * **Never hallucinate libraries or functions.** Only use known, verified Python packages listed in `pyproject.toml`.
+ 12 | * **Always confirm file paths and module names** exist before referencing them in code or tests.
+ 13 | * **Never delete or overwrite existing code** unless explicitly instructed to or as part of a documented refactoring task.
+ 14 | 
+ 15 | ## Architecture Overview
+ 16 | 
+ 17 | This is a multi-agent evaluation system for assessing agentic AI systems. The project uses **PydanticAI** as the core framework for agent orchestration and is designed for evaluation purposes, not for production agent deployment.
+ 18 | 
+ 19 | ### Data Flow
+ 20 | 
+ 21 | 1. User input → Manager Agent
+ 22 | 2. Manager delegates to Researcher Agent (with DuckDuckGo search)
+ 23 | 3. Researcher results → Analyst Agent for validation
+ 24 | 4. Validated data → Synthesizer Agent for report generation
+ 25 | 5. Results evaluated using configurable metrics
+ 26 | 
+ 27 | ### Key Dependencies
+ 28 | 
+ 29 | * **PydanticAI**: Agent framework and orchestration
+ 30 | * **uv**: Fast Python dependency management
+ 31 | * **Streamlit**: GUI framework
+ 32 | * **Ruff**: Code formatting and linting
+ 33 | * **MyPy**: Static type checking
+ 34 | 
+ 35 | ## Codebase Structure & Modularity
+ 36 | 
+ 37 | ### Main Components
+ 38 | 
+ 39 | * `src/app/`: The core application logic. This is where most of your work will be.
+ 40 |   * `main.py`: The main entry point for the CLI application.
+ 41 |   * `agents/agent_system.py`: Defines the multi-agent system, their interactions, and orchestration. **This is the central logic for agent behavior.**
+ 42 |   * `config/data_models.py`: Contains all **Pydantic** models that define the data contracts. This is a critical file for understanding data flow.
+ 43 |   * `config/config_chat.json`: Holds provider settings and system prompts for agents.
+ 44 |   * `config/config_eval.json`: Defines evaluation metrics and their weights.
+ 45 |   * `evals/metrics.py`: Implements the evaluation metrics.
+ 46 | * `src/gui/`: Contains the source code for the Streamlit GUI.
+ 47 | * `docs/`: Contains project documentation, including the Product Requirements Document (`PRD.md`) and the C4 architecture model.
+ 48 | * `tests/`: Contains all tests for the project, written using **pytest**.
+ 49 | 
+ 50 | ### Code Organization Rules
+ 51 | 
+ 52 | * **Never create a file longer than 500 lines of code.** If a file approaches this limit, refactor by splitting it into smaller, more focused modules or helper files.
+ 53 | * Organize code into clearly separated modules grouped by feature.
+ 54 | * Use clear, consistent, and absolute imports within packages.
+ 55 | 
+ 56 | ## Development Commands & Environment
+ 57 | 
+ 58 | ### Environment Setup
+ 59 | 
+ 60 | The project requirements are stated in `pyproject.toml`. Your development environment should be set up automatically using the provided `Makefile`, which configures the virtual environment.
+ 61 | 
+ 62 | * `make setup_dev`: Install all dev dependencies.
+ 63 | * `make setup_dev_claude`: Setup dev environment with Claude Code CLI.
+ 64 | * `make setup_dev_ollama`: Setup dev environment with Ollama local LLM.
+ 65 | 
+ 66 | ### Running the Application
+ 67 | 
+ 68 | * `make run_cli`: Run the CLI application.
+ 69 | * `make run_cli ARGS="--help"`: Run CLI with specific arguments.
+ 70 | * `make run_gui`: Run the Streamlit GUI.
+ 71 | 
+ 72 | ### Testing and Code Quality
+ 73 | 
+ 74 | * `make test_all`: Run all tests with pytest.
+ 75 | * `make coverage_all`: Run tests and generate a coverage report.
+ 76 | * `make ruff`: Format code and fix linting issues with Ruff.
+ 77 | * `make type_check`: Run mypy static type checking on `src/app/`.
+ 78 | 
+ 79 | ## Testing & Reliability
+ 80 | 
+ 81 | * **Always create Pytest unit tests** for new features (functions, classes, etc.).
+ 82 | * Tests must live in the `tests/` folder, mirroring the `src/app` structure.
+ 83 | * After updating any logic, check whether existing unit tests need to be updated. If so, do it.
+ 84 | * For each new feature, include at least:
+ 85 |   * 1 test for the expected use case (happy path).
+ 86 |   * 1 test for a known edge case.
+ 87 |   * 1 test for an expected failure case (e.g., invalid input).
+ 88 | * **To run a specific test file or function, use `uv run pytest` directly:**
+ 89 |   * `uv run pytest tests/test_specific_file.py`
+ 90 |   * `uv run pytest tests/test_specific_file.py::test_function`
+ 91 | 
+ 92 | ## Style, Patterns & Documentation
+ 93 | 
+ 94 | ### Coding Style
+ 95 | 
+ 96 | * **Use Pydantic** models in `src/app/config/data_models.py` for all data validation and data contracts. **Always use or update these models** when modifying data flows.
+ 97 | * Use the predefined error message functions from `src/app/utils/error_messages.py` for consistency.
+ 98 | * When writing complex logic, **add an inline `# Reason:` comment** explaining the *why*, not just the *what*.
+ 99 | * Comment non-obvious code to ensure it is understandable to a mid-level developer.
+100 | 
+101 | ### Documentation
+102 | 
+103 | * Write **docstrings for every function, class, and method** using the Google style format. This is critical as the documentation site is built automatically from docstrings.
+104 | 
+105 |     ```python
+106 |     def example_function(param1: int) -> str:
+107 |         """A brief summary of the function.
+108 | 
+109 |         Args:
+110 |             param1 (int): A description of the first parameter.
+111 | 
+112 |         Returns:
+113 |             str: A description of the return value.
+114 |         """
+115 |         return "example"
+116 |     ```
+117 | 
+118 | * Update this `AGENTS.md` file when introducing new patterns or concepts.
+119 | * Document significant architectural decisions in `docs/ADR.md`.
+120 | * Document all significant changes, features, and bug fixes in `docs/CHANGELOG.md`.
+121 | 
+122 | ## Code Review & PR Guidelines
+123 | 
+124 | ### PR Requirements
+125 | 
+126 | * **Title Format**: Commit messages and PR titles must follow the **Conventional Commits** specification, as outlined in the `.gitmessage` template.
+127 | * Provide detailed PR summaries including the purpose of the changes and the testing performed.
+128 | 
+129 | ### Pre-commit Checklist
+130 | 
+131 | 1. Run the linter and formatter: `make ruff`.
+132 | 2. Ensure all tests pass: `make test_all`.
+133 | 3. Ensure static type checks pass: `make type_check`.
+134 | 4. Update documentation as described below.
+135 | 
+136 | ## Requests to Humans
+137 | 
+138 | This section contains a list of questions, clarifications, or tasks that AI agents wish to have humans complete or elaborate on.
+139 | 
+140 | * [ ] The `agent_system.py` module has a `NotImplementedError` for streaming with Pydantic model outputs. Please clarify the intended approach for streaming structured data.
+141 | * [ ] The `llm_model_funs.py` module has `NotImplementedError` for the Gemini and HuggingFace providers. Please provide the correct implementation or remove them if they are not supported.
+142 | * [ ] The `agent_system.py` module contains a `FIXME` note regarding the use of a try-catch context manager. Please review and implement the intended error handling.
+143 | * [ ] Add TypeScript testing guidelines (if a TypeScript frontend is planned for the future).
+144 | 
+
+
+--------------------------------------------------------------------------------
 /CHANGELOG.md:
 --------------------------------------------------------------------------------
   1 | # Changelog
@@ -1008,109 +1343,125 @@
  26 | 
  27 | ## [Unreleased]
  28 | 
- 29 | ### Changed
+ 29 | ### Added
  30 | 
- 31 | - Moved streamlit_gui and examples to /src
- 32 | - Moved app to /src/app
- 33 | 
- 34 | ## [1.0.0] - 2025-03-18
- 35 | 
- 36 | ### 2025-03-18
- 37 | 
- 38 | - refactor(agent,streamlit): Convert main and run_manager functions again to async for streamli output
- 39 | - fix(prompts): Update system prompts for manager,researcher and synthesiser roles to remove complexity
- 40 | - chore(workflows): Update action versions in GitHub workflows for consistency
- 41 | - chore(workflows): Update action versions for deploy docs to pgh-pages
- 42 | - docs(deps): Add documentation dependencies for MkDocs and related plugins to pyproject.toml
+ 31 | - Claude code functionality, commands and settings
+ 32 | 
+ 33 | ## [1.1.0] - 2025-07-05
+ 34 | 
+ 35 | ### Added
+ 36 | 
+ 37 | - Makefile command and devcontainer.json for claude code usage
+ 38 | 
+ 39 | ### Changed
+ 40 | 
+ 41 | - Moved streamlit_gui and examples to /src
+ 42 | - Moved app to /src/app
  43 | 
- 44 | ### 2025-03-17
+ 44 | ## [1.0.0] - 2025-03-18
  45 | 
- 46 | - feat(main,agent): refactor entry point to support async execution and enhance login handling
- 47 | - feat(cli,login,log): refactor entry point to integrate Typer, enhance logging, added login every run
- 48 | - feat(streamlit): replace load_config with load_app_config, enhance sidebar rendering, and improve output rendering with type support
- 49 | - feat(streamlit): enhance render_output function with detailed docstring and improve query handling in run_app
- 50 | - feat(streamlit): enhance render_output function with additional info parameter and improve output handling in run_app
- 51 | - feat(streamlit,app): add Typer dependency, update main entry point for async execution, add streamlit provider input
- 52 | - feat(agent): update configuration and improve agent system setup with enhanced error handling and new environment variables
- 53 | - feat(config,login,catch): add inference settings with usage limits and result retries, enhance login function to initialize environment and handle exceptions, comment out raise in error handling context to prevent unintended crashes
- 54 | - feat(login,catch): integrate logfire configuration in login function and improve error handling context
+ 46 | ### 2025-03-18
+ 47 | 
+ 48 | - refactor(agent,streamlit): Convert main and run_manager functions again to async for streamli output
+ 49 | - fix(prompts): Update system prompts for manager,researcher and synthesiser roles to remove complexity
+ 50 | - chore(workflows): Update action versions in GitHub workflows for consistency
+ 51 | - chore(workflows): Update action versions for deploy docs to pgh-pages
+ 52 | - docs(deps): Add documentation dependencies for MkDocs and related plugins to pyproject.toml
+ 53 | 
+ 54 | ### 2025-03-17
  55 | 
- 56 | ### 2025-03-16
- 57 | 
- 58 | - feta(devconatiner): Refactor devcontainer setup: remove old configurations and add new setup targets for development and Ollama
- 59 | - feat(devcontainer): Changed from vscode to astral-sh devcontainer
- 60 | - feat(devcontainer): Changed to vscode container, added postcreatecommand make setup_env
- 61 | - feat(devcontainer): restructure environment setup with new devcontainer configurations
- 62 | - feat(devcontainer): update environment names for clarity in devcontainer configurations
- 63 | - refactor(agent): Added AgentConfig class for better agent configuration management, Refactored main function for streamlined agent initialization.
- 64 | - feat(config,agents): Update model providers and enhance configuration management, examples: Added new model providers: Gemini and OpenRouter, src: Enabled streaming responses in the agent system
- 65 | - chore: Remove unused prompt files, update configuration, and enhance logging setup
- 66 | - refactor(exception,logfire): Enhance error handling and update model configurations in agent system
+ 56 | - feat(main,agent): refactor entry point to support async execution and enhance login handling
+ 57 | - feat(cli,login,log): refactor entry point to integrate Typer, enhance logging, added login every run
+ 58 | - feat(streamlit): replace load_config with load_app_config, enhance sidebar rendering, and improve output rendering with type support
+ 59 | - feat(streamlit): enhance render_output function with detailed docstring and improve query handling in run_app
+ 60 | - feat(streamlit): enhance render_output function with additional info parameter and improve output handling in run_app
+ 61 | - feat(streamlit,app): add Typer dependency, update main entry point for async execution, add streamlit provider input
+ 62 | - feat(agent): update configuration and improve agent system setup with enhanced error handling and new environment variables
+ 63 | - feat(config,login,catch): add inference settings with usage limits and result retries, enhance login function to initialize environment and handle exceptions, comment out raise in error handling context to prevent unintended crashes
+ 64 | - feat(login,catch): integrate logfire configuration in login function and improve error handling context
+ 65 | 
+ 66 | ### 2025-03-16
  67 | 
- 68 | ### 2025-03-14
- 69 | 
- 70 | - feat(scalene): Add profiling support and update dependencies
- 71 | - refactor(Makefile): Improve target descriptions and organization
- 72 | 
- 73 | ### 2025-03-13
- 74 | 
- 75 | - refactor(API,except): .env.example, add OpenRouter configuration, enhance error handling in run_simple_agent_system.py, and update ModelConfig to allow optional API key.
- 76 | - feat(streamlit): add Streamlit app structure with header, footer, sidebar, and main content components
- 77 | - feat(streamlit): enhance Streamlit app with detailed docstrings, improved header/footer, and refined main content layout
- 78 | - feat(makefile,streamlit): update Makefile commands for CLI and GUI execution, and modify README for usage instructions, add streamlit config.toml
- 79 | - feat(streamlit): restructure Streamlit app by removing unused components, adding new header, footer, sidebar, and output components, and updating configuration settings
- 80 | - chore: replace app entrypoint with main, remove unused tools and tests, and update makefile for linting and type checking
- 81 | - chore: Enhance makefile with coverage and help commands, update mkdocs.yaml and pyproject.toml for improved project structure and documentation
- 82 | - test: Update makefile for coverage reporting, modify pyproject.toml to include pytest-cov, and adjust dependency settings
- 83 | - test: Add coverage support with pytest-cov and update makefile for coverage reporting
- 84 | - test: makefile for coverage reporting, update dependencies in pyproject.toml for improved testing and coverage support
- 85 | - chore: Remove redundant help command from makefile
- 86 | - refactor(agent,async): Refactor agent tests to use async fixtures and update verification methods for async results
- 87 | - fix(Dockerfile): Remove unnecessary user creation and pip install commands from Dockerfile
- 88 | - feat(agent): Update dependencies and add new example structures; remove obsolete files
- 89 | - chore(structure): simplified agents.py
- 90 | - fix(pyproject): Replace pydantic-ai with pydantic-ai-slim and update dependencies
- 91 | - feat(examples): add new examples and data models; update configuration structure
- 92 | - feat(agent): update dependencies, enhance examples, and introduce new data models for research and analysis agents
- 93 | - feat(examples): enhance prompts structure and refactor research agent integration
- 94 | - feat(examples): improve documentation and enhance error handling in agent examples
- 95 | - feat(agent): Added data models and configuration for research and analysis agents, Added System C4 plantuml
- 96 | - feat(weave,dependencies): update dependencies and integrate Weave for enhanced functionality in the agent system
- 97 | - feat(agent): initialize agentops with API key and default tags for enhanced agent functionality
- 98 | - feat(agent): integrate logfire for logging and configure initial logging settings
- 99 | - feat(agent): adjust usage limits for ollama provider to enhance performance
-100 | - feat(agent): refine system prompts and enhance data model structure for improved agent interactions
-101 | - feat(agent): update system prompts for improved clarity and accuracy; add example environment configuration
-102 | - feat(agent): enhance agent system with synthesiser functionality and update prompts for improved coordination
-103 | - feat(agent): add Grok and Gemini API configurations; initialize logging and agent operations
-104 | - feat(agent): improve documentation and refactor model configuration handling for agent system
-105 | - feat(agent): update environment configuration, enhance logging, and refine agent management functionality
-106 | - feat(agent): refactor login handling, update model retrieval, and enhance agent configuration
-107 | 
-108 | ## [0.0.2] - 2025-01-20
-109 | 
-110 | ### Added
-111 | 
-112 | - PRD.md
-113 | - C4 architecture diagrams: system context, code
-114 | - tests: basic agent evals, config.json
-115 | 
-116 | ### Changed
+ 68 | - feta(devconatiner): Refactor devcontainer setup: remove old configurations and add new setup targets for development and Ollama
+ 69 | - feat(devcontainer): Changed from vscode to astral-sh devcontainer
+ 70 | - feat(devcontainer): Changed to vscode container, added postcreatecommand make setup_env
+ 71 | - feat(devcontainer): restructure environment setup with new devcontainer configurations
+ 72 | - feat(devcontainer): update environment names for clarity in devcontainer configurations
+ 73 | - refactor(agent): Added AgentConfig class for better agent configuration management, Refactored main function for streamlined agent initialization.
+ 74 | - feat(config,agents): Update model providers and enhance configuration management, examples: Added new model providers: Gemini and OpenRouter, src: Enabled streaming responses in the agent system
+ 75 | - chore: Remove unused prompt files, update configuration, and enhance logging setup
+ 76 | - refactor(exception,logfire): Enhance error handling and update model configurations in agent system
+ 77 | 
+ 78 | ### 2025-03-14
+ 79 | 
+ 80 | - feat(scalene): Add profiling support and update dependencies
+ 81 | - refactor(Makefile): Improve target descriptions and organization
+ 82 | 
+ 83 | ### 2025-03-13
+ 84 | 
+ 85 | - refactor(API,except): .env.example, add OpenRouter configuration, enhance error handling in run_simple_agent_system.py, and update ModelConfig to allow optional API key.
+ 86 | - feat(streamlit): add Streamlit app structure with header, footer, sidebar, and main content components
+ 87 | - feat(streamlit): enhance Streamlit app with detailed docstrings, improved header/footer, and refined main content layout
+ 88 | - feat(makefile,streamlit): update Makefile commands for CLI and GUI execution, and modify README for usage instructions, add streamlit config.toml
+ 89 | - feat(streamlit): restructure Streamlit app by removing unused components, adding new header, footer, sidebar, and output components, and updating configuration settings
+ 90 | - chore: replace app entrypoint with main, remove unused tools and tests, and update makefile for linting and type checking
+ 91 | - chore: Enhance makefile with coverage and help commands, update mkdocs.yaml and pyproject.toml for improved project structure and documentation
+ 92 | - test: Update makefile for coverage reporting, modify pyproject.toml to include pytest-cov, and adjust dependency settings
+ 93 | - test: Add coverage support with pytest-cov and update makefile for coverage reporting
+ 94 | - test: makefile for coverage reporting, update dependencies in pyproject.toml for improved testing and coverage support
+ 95 | - chore: Remove redundant help command from makefile
+ 96 | - refactor(agent,async): Refactor agent tests to use async fixtures and update verification methods for async results
+ 97 | - fix(Dockerfile): Remove unnecessary user creation and pip install commands from Dockerfile
+ 98 | - feat(agent): Update dependencies and add new example structures; remove obsolete files
+ 99 | - chore(structure): simplified agents.py
+100 | - fix(pyproject): Replace pydantic-ai with pydantic-ai-slim and update dependencies
+101 | - feat(examples): add new examples and data models; update configuration structure
+102 | - feat(agent): update dependencies, enhance examples, and introduce new data models for research and analysis agents
+103 | - feat(examples): enhance prompts structure and refactor research agent integration
+104 | - feat(examples): improve documentation and enhance error handling in agent examples
+105 | - feat(agent): Added data models and configuration for research and analysis agents, Added System C4 plantuml
+106 | - feat(weave,dependencies): update dependencies and integrate Weave for enhanced functionality in the agent system
+107 | - feat(agent): initialize agentops with API key and default tags for enhanced agent functionality
+108 | - feat(agent): integrate logfire for logging and configure initial logging settings
+109 | - feat(agent): adjust usage limits for ollama provider to enhance performance
+110 | - feat(agent): refine system prompts and enhance data model structure for improved agent interactions
+111 | - feat(agent): update system prompts for improved clarity and accuracy; add example environment configuration
+112 | - feat(agent): enhance agent system with synthesiser functionality and update prompts for improved coordination
+113 | - feat(agent): add Grok and Gemini API configurations; initialize logging and agent operations
+114 | - feat(agent): improve documentation and refactor model configuration handling for agent system
+115 | - feat(agent): update environment configuration, enhance logging, and refine agent management functionality
+116 | - feat(agent): refactor login handling, update model retrieval, and enhance agent configuration
 117 | 
-118 | - make recipes
+118 | ## [0.0.2] - 2025-01-20
 119 | 
-120 | ## [0.0.1] - 2025-01-20
+120 | ### Added
 121 | 
-122 | ### Added
-123 | 
-124 | - Makefile: setup, test, ruff
-125 | - devcontainer: python only, w/o Jetbrains clutter from default devcontainer
-126 | - ollama: server and model download successful
-127 | - agent: tools use full run red
-128 | - pytest: e2e runm final result red
-129 | - Readme: basic project info
-130 | - pyproject.toml
+122 | - PRD.md
+123 | - C4 architecture diagrams: system context, code
+124 | - tests: basic agent evals, config.json
+125 | 
+126 | ### Changed
+127 | 
+128 | - make recipes
+129 | 
+130 | ## [0.0.1] - 2025-01-20
 131 | 
+132 | ### Added
+133 | 
+134 | - Makefile: setup, test, ruff
+135 | - devcontainer: python only, w/o Jetbrains clutter from default devcontainer
+136 | - ollama: server and model download successful
+137 | - agent: tools use full run red
+138 | - pytest: e2e runm final result red
+139 | - Readme: basic project info
+140 | - pyproject.toml
+141 | 
+
+
+--------------------------------------------------------------------------------
+/CLAUDE.md:
+--------------------------------------------------------------------------------
+1 | @AGENTS.md
 
 
 --------------------------------------------------------------------------------
@@ -1202,122 +1553,151 @@
   3 | # It is designed to work with the 'uv' tool for managing Python environments and dependencies.
   4 | # Run `make help` to see all available recipes.
   5 | 
-  6 | 
-  7 | .SILENT:
-  8 | .ONESHELL:
-  9 | .PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile test_all coverage_all type_check output_unset_app_env_sh help
- 10 | # .DEFAULT: setup_dev_ollama
- 11 | .DEFAULT_GOAL := setup_dev_ollama
- 12 | 
- 13 | SRC_PATH := src
- 14 | APP_PATH := $(SRC_PATH)/app
- 15 | GUI_PATH_ST := $(SRC_PATH)/run_gui.py
- 16 | CHAT_CFG_FILE := $(APP_PATH)/config_chat.json
- 17 | OLLAMA_SETUP_URL := https://ollama.com/install.sh
- 18 | OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
- 19 | 
- 20 | setup_prod:  ## Install uv and deps, Download and start Ollama 
- 21 | 	echo "Setting up prod environment ..."
- 22 | 	pip install uv -q
- 23 | 	uv sync --frozen
- 24 | 
- 25 | setup_dev:  ## Install uv and deps, Download and start Ollama 
- 26 | 	echo "Setting up dev environment ..."
- 27 | 	pip install uv -q
- 28 | 	uv sync --all-groups
- 29 | 
- 30 | setup_prod_ollama:
- 31 | 	$(MAKE) -s setup_prod
- 32 | 	$(MAKE) -s setup_ollama
- 33 | 	$(MAKE) -s start_ollama
- 34 | 
- 35 | setup_dev_ollama:
- 36 | 	$(MAKE) -s setup_dev
- 37 | 	$(MAKE) -s setup_ollama
- 38 | 	$(MAKE) -s start_ollama
- 39 | 
- 40 | setup_dev_claude:
- 41 | 	$(MAKE) -s setup_dev
- 42 | 	$(MAKE) -s setup_claude_code
- 43 | 
- 44 | setup_claude_code:  ## Setup claude code CLI, node.js and npm have to be present
- 45 | 	echo "Setting up claude code ..."
- 46 | 	npm install -g @anthropic-ai/claude-code
- 47 | 	claude config set --global preferredNotifChannel terminal_bell
- 48 | 	echo "npm version: $$(npm --version)"
- 49 | 	claude --version
- 50 | 
- 51 | # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
- 52 | setup_ollama:  ## Download Ollama, script does start local Ollama server
- 53 | 	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
- 54 | 	# script does start server but not consistently
- 55 | 	curl -fsSL $(OLLAMA_SETUP_URL) | sh
- 56 | 	echo "Pulling model '$(OLLAMA_MODEL_NAME)' ..."
- 57 | 	ollama pull $(OLLAMA_MODEL_NAME)
- 58 | 
- 59 | start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
- 60 | 	ollama serve
- 61 | 
- 62 | stop_ollama:  ## Stop local Ollama server
- 63 | 	echo "Stopping Ollama server..."
- 64 | 	pkill ollama
- 65 | 
- 66 | clean_ollama:  ## Remove local Ollama from system
- 67 | 	echo "Searching for Ollama binary..."
- 68 | 	for BINDIR in /usr/local/bin /usr/bin /bin; do
- 69 | 		if echo $$PATH | grep -q $$BINDIR; then
- 70 | 			echo "Ollama binary found in '$$BINDIR'"
- 71 | 			BIN="$$BINDIR/ollama"
- 72 | 			break
- 73 | 		fi
- 74 | 	done
- 75 | 	echo "Cleaning up..."
- 76 | 	rm -f $(BIN)
- 77 | 
- 78 | ruff:  ## Lint: Format and check with ruff
- 79 | 	uv run ruff format
- 80 | 	uv run ruff check --fix
+  6 | .SILENT:
+  7 | .ONESHELL:
+  8 | .PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile prp_gen_claude prp_exe_claude test_all coverage_all type_check output_unset_app_env_sh help
+  9 | # .DEFAULT: setup_dev_ollama
+ 10 | .DEFAULT_GOAL := setup_dev_ollama
+ 11 | 
+ 12 | SRC_PATH := src
+ 13 | APP_PATH := $(SRC_PATH)/app
+ 14 | GUI_PATH_ST := $(SRC_PATH)/run_gui.py
+ 15 | CHAT_CFG_FILE := $(APP_PATH)/config_chat.json
+ 16 | OLLAMA_SETUP_URL := https://ollama.com/install.sh
+ 17 | OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
+ 18 | PRP_DEF_PATH := /context/PRPs/features
+ 19 | PRP_CLAUDE_GEN_CMD := generate-prp
+ 20 | PRP_CLAUDE_EXE_CMD := execute-prp
+ 21 | 
+ 22 | # construct the full path to the PRP definition file
+ 23 | define CLAUDE_PRP_RUNNER
+ 24 | 	echo "Starting Claude Code PRP runner ..."
+ 25 | 	# 1. Extract arguments and validate that they are not empty.
+ 26 | 	prp_file=$(firstword $(strip $(1)))
+ 27 | 	cmd_prp=$(firstword $(strip $(2)))
+ 28 | 	if [ -z "$${prp_file}" ]; then
+ 29 | 		echo "Error: ARGS for PRP filename is empty. Please provide a PRP filename."
+ 30 | 		exit 1
+ 31 | 	fi
+ 32 | 	if [ -z "$${cmd_prp}" ]; then
+ 33 | 		echo "Error: ARGS for command is empty. Please provide a command."
+ 34 | 		exit 2
+ 35 | 	fi
+ 36 | 	cmd_prp="/project:$${cmd_prp} $(PRP_DEF_PATH)/$${prp_file}"
+ 37 | 	cmd_cost="/cost"
+ 38 | 	echo "Executing command '$${cmd_prp}' ..."
+ 39 | 	claude -p "$${cmd_prp}" 2>&1
+ 40 | 	claude -p "$${cmd_cost}" 2>&1
+ 41 | endef
+ 42 | 
+ 43 | setup_prod:  ## Install uv and deps, Download and start Ollama 
+ 44 | 	echo "Setting up prod environment ..."
+ 45 | 	pip install uv -q
+ 46 | 	uv sync --frozen
+ 47 | 
+ 48 | setup_dev:  ## Install uv and deps, Download and start Ollama 
+ 49 | 	echo "Setting up dev environment ..."
+ 50 | 	pip install uv -q
+ 51 | 	uv sync --all-groups
+ 52 | 
+ 53 | setup_prod_ollama:
+ 54 | 	$(MAKE) -s setup_prod
+ 55 | 	$(MAKE) -s setup_ollama
+ 56 | 	$(MAKE) -s start_ollama
+ 57 | 
+ 58 | setup_dev_ollama:
+ 59 | 	$(MAKE) -s setup_dev
+ 60 | 	$(MAKE) -s setup_ollama
+ 61 | 	$(MAKE) -s start_ollama
+ 62 | 
+ 63 | setup_dev_claude:
+ 64 | 	$(MAKE) -s setup_dev
+ 65 | 	$(MAKE) -s setup_claude_code
+ 66 | 
+ 67 | setup_claude_code:  ## Setup claude code CLI, node.js and npm have to be present
+ 68 | 	echo "Setting up claude code ..."
+ 69 | 	npm install -g @anthropic-ai/claude-code
+ 70 | 	claude config set --global preferredNotifChannel terminal_bell
+ 71 | 	echo "npm version: $$(npm --version)"
+ 72 | 	claude --version
+ 73 | 
+ 74 | # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
+ 75 | setup_ollama:  ## Download Ollama, script does start local Ollama server
+ 76 | 	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
+ 77 | 	# script does start server but not consistently
+ 78 | 	curl -fsSL $(OLLAMA_SETUP_URL) | sh
+ 79 | 	echo "Pulling model '$(OLLAMA_MODEL_NAME)' ..."
+ 80 | 	ollama pull $(OLLAMA_MODEL_NAME)
  81 | 
- 82 | run_cli:  ## Run app on CLI only
- 83 | 	path=$$(echo "$(APP_PATH)" | tr '/' '.')
- 84 | 	uv run python -m $${path}.main $(ARGS)
- 85 | 
- 86 | run_gui:  ## Run app with Streamlit GUI
- 87 | 	uv run streamlit run $(GUI_PATH_ST)
+ 82 | start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
+ 83 | 	ollama serve
+ 84 | 
+ 85 | stop_ollama:  ## Stop local Ollama server
+ 86 | 	echo "Stopping Ollama server..."
+ 87 | 	pkill ollama
  88 | 
- 89 | run_profile:  ## Profile app with scalene
- 90 | 	uv run scalene --outfile \
- 91 | 		"$(APP_PATH)/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
- 92 | 		"$(APP_PATH)/main.py"
- 93 | 
- 94 | test_all:  ## Run all tests
- 95 | 	uv run pytest
- 96 | 	
- 97 | coverage_all:  ## Get test coverage
- 98 | 	uv run coverage run -m pytest || true
- 99 | 	uv run coverage report -m
+ 89 | clean_ollama:  ## Remove local Ollama from system
+ 90 | 	echo "Searching for Ollama binary..."
+ 91 | 	for BINDIR in /usr/local/bin /usr/bin /bin; do
+ 92 | 		if echo $$PATH | grep -q $$BINDIR; then
+ 93 | 			echo "Ollama binary found in '$$BINDIR'"
+ 94 | 			BIN="$$BINDIR/ollama"
+ 95 | 			break
+ 96 | 		fi
+ 97 | 	done
+ 98 | 	echo "Cleaning up..."
+ 99 | 	rm -f $(BIN)
 100 | 
-101 | type_check:  ## Check for static typing errors
-102 | 	uv run mypy $(APP_PATH)
-103 | 
-104 | output_unset_app_env_sh:  ## Unset app environment variables
-105 | 	uf="./unset_env.sh"
-106 | 	echo "Outputing '$${uf}' ..."
-107 | 	printenv | awk -F= '/_API_KEY=/ {print "unset " $$1}' > $$uf
+101 | ruff:  ## Lint: Format and check with ruff
+102 | 	uv run ruff format
+103 | 	uv run ruff check --fix
+104 | 
+105 | run_cli:  ## Run app on CLI only
+106 | 	path=$$(echo "$(APP_PATH)" | tr '/' '.')
+107 | 	uv run python -m $${path}.main $(ARGS)
 108 | 
-109 | help:
-110 | 	# TODO add stackoverflow source
-111 | 	echo "Usage: make [recipe]"
-112 | 	echo "Recipes:"
-113 | 	awk '/^[a-zA-Z0-9_-]+:.*?##/ {
-114 | 		helpMessage = match($$0, /## (.*)/)
-115 | 		if (helpMessage) {
-116 | 			recipe = $$1
-117 | 			sub(/:/, "", recipe)
-118 | 			printf "  \033[36m%-20s\033[0m %s\n", recipe, substr($$0, RSTART + 3, RLENGTH)
-119 | 		}
-120 | 	}' $(MAKEFILE_LIST)
-121 | 
+109 | run_gui:  ## Run app with Streamlit GUI
+110 | 	uv run streamlit run $(GUI_PATH_ST)
+111 | 
+112 | run_profile:  ## Profile app with scalene
+113 | 	uv run scalene --outfile \
+114 | 		"$(APP_PATH)/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
+115 | 		"$(APP_PATH)/main.py"
+116 | 
+117 | prp_gen_claude:  ## generates the PRP from the file passed in ARGS
+118 | 	$(call CLAUDE_PRP_RUNNER, $(ARGS), $(PRP_CLAUDE_GEN_CMD))
+119 | 
+120 | prp_exe_claude:  ## executes the PRP from the file passed in ARGS
+121 | 	$(call CLAUDE_PRP_RUNNER, $(ARGS), $(PRP_CLAUDE_EXE_CMD))
+122 | 
+123 | test_all:  ## Run all tests
+124 | 	uv run pytest
+125 | 
+126 | coverage_all:  ## Get test coverage
+127 | 	uv run coverage run -m pytest || true
+128 | 	uv run coverage report -m
+129 | 
+130 | type_check:  ## Check for static typing errors
+131 | 	uv run mypy $(APP_PATH)
+132 | 
+133 | output_unset_app_env_sh:  ## Unset app environment variables
+134 | 	uf="./unset_env.sh"
+135 | 	echo "Outputing '$${uf}' ..."
+136 | 	printenv | awk -F= '/_API_KEY=/ {print "unset " $$1}' > $$uf
+137 | 
+138 | help:  ## Displays this message with available recipes
+139 | 	# TODO add stackoverflow source
+140 | 	echo "Usage: make [recipe]"
+141 | 	echo "Recipes:"
+142 | 	awk '/^[a-zA-Z0-9_-]+:.*?##/ {
+143 | 		helpMessage = match($$0, /## (.*)/)
+144 | 		if (helpMessage) {
+145 | 			recipe = $$1
+146 | 			sub(/:/, "", recipe)
+147 | 			printf "  \033[36m%-20s\033[0m %s\n", recipe, substr($$0, RSTART + 3, RLENGTH)
+148 | 		}
+149 | 	}' $(MAKEFILE_LIST)
+150 | 
 
 
 --------------------------------------------------------------------------------
@@ -1328,7 +1708,7 @@
   3 | This project aims to implement an evaluation pipeline to assess the effectiveness of open-source agentic AI systems across various use cases, focusing on use case agnostic metrics that measure core capabilities such as task decomposition, tool integration, adaptability, and overall performance.
   4 | 
   5 | ![License](https://img.shields.io/badge/license-BSD3Clause-green.svg)
-  6 | ![Version](https://img.shields.io/badge/version-1.0.0-58f4c2)
+  6 | ![Version](https://img.shields.io/badge/version-1.1.0-58f4c2)
   7 | [![CodeQL](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml)
   8 | [![CodeFactor](https://www.codefactor.io/repository/github/qte77/Agents-eval/badge)](https://www.codefactor.io/repository/github/qte77/Agents-eval)
   9 | [![ruff](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml)
@@ -1402,234 +1782,989 @@
  77 | 
  78 | `# TODO`
  79 | 
- 80 | ### Datasets used
+ 80 | ### Agents
  81 | 
- 82 | `# TODO`
+ 82 | #### Manager Agent
  83 | 
- 84 | ### Evalutions metrics
- 85 | 
- 86 | #### # TODO
- 87 | 
- 88 | - Time to complete task (time_taken)
- 89 | - Task success rate (task_success)
- 90 | - Agent coordination (coordination_quality)
- 91 | - Tool usage efficiency (tool_efficiency)
- 92 | - Plan coherence (planning_rational)
- 93 | - Text response quality (text_similarity)
- 94 | - Autonomy vs. human intervention (HITL, user feedback)
- 95 | - Reactivity (adapt to changes of tasks and environments)
- 96 | - Memory consistency
- 97 | 
- 98 | ### Evaluations Metrics Baseline
- 99 | 
-100 | As configured in [config_eval.json](src/app/config/config_eval.json).
-101 | 
-102 | ```json
-103 | {
-104 |     "evaluators_and_weights": {
-105 |         "planning_rational": "1/6",
-106 |         "task_success": "1/6",
-107 |         "tool_efficiency": "1/6",
-108 |         "coordination_quality": "1/6",
-109 |         "time_taken": "1/6",
-110 |         "text_similarity": "1/6"
-111 |     }
-112 | }
-113 | ```
+ 84 | - **Description**: Oversees research and analysis tasks, coordinating the efforts of the research, analysis, and synthesizer agents to provide comprehensive answers to user queries. Delegates tasks and ensures the accuracy of the information.
+ 85 | - **Responsibilities**:
+ 86 |   - Coordinates the research, analysis, and synthesis agents.
+ 87 |   - Delegates research tasks to the Research Agent.
+ 88 |   - Delegates analysis tasks to the Analysis Agent.
+ 89 |   - Delegates synthesis tasks to the Synthesizer Agent.
+ 90 |   - Ensures the accuracy of the information.
+ 91 | - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+ 92 | 
+ 93 | #### Researcher Agent
+ 94 | 
+ 95 | - **Description**: Gathers and analyzes data relevant to a given topic, utilizing search tools to collect data and verifying the accuracy of assumptions, facts, and conclusions.
+ 96 | - **Responsibilities**:
+ 97 |   - Gathers and analyzes data relevant to the topic.
+ 98 |   - Uses search tools to collect data.
+ 99 |   - Checks the accuracy of assumptions, facts, and conclusions.
+100 | - **Tools**:
+101 |   - [DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool)
+102 | - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+103 | 
+104 | #### Analyst Agent
+105 | 
+106 | - **Description**: Checks the accuracy of assumptions, facts, and conclusions in the provided data, providing relevant feedback and ensuring data integrity.
+107 | - **Responsibilities**:
+108 |   - Checks the accuracy of assumptions, facts, and conclusions.
+109 |   - Provides relevant feedback if the result is not approved.
+110 |   - Ensures data integrity.
+111 | - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+112 | 
+113 | #### Synthesizer Agent
 114 | 
-115 | ### Eval Metrics Sweep
-116 | 
-117 | <details>
-118 |   <summary>Eval Metrics Sweep</summary>
-119 |   <img src="assets/images/metrics-eval-sweep.png" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
-120 | </details>
-121 | 
-122 | ### Tools available
-123 | 
-124 | Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
-125 | 
-126 | ### Agentic System Architecture
-127 | 
-128 | <details>
-129 |   <summary>Show Agentic System Architecture</summary>
-130 |   <img src="assets/images/c4-multi-agent-system.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="60%" />
-131 | </details>
-132 | 
-133 | ### Project Repo Structure
-134 | 
-135 | <details>
-136 |   <summary>Show Repo Structure</summary>
-137 | ```sh
-138 | |- .devcontainer  # pre-configured dev env
-139 | |- .github  # workflows
-140 | |- .streamlit  # config.toml
-141 | |- .vscode  # extensions, settings
-142 | |- assets/images
-143 | |- docs
-144 | |- src  # source code
-145 |    |- app
-146 |       |- agents
-147 |       |- config
-148 |       |- evals
-149 |       |- utils
-150 |       \- main.py
-151 |    |- examples
-152 |    |- gui
-153 |    \- run_gui.py
-154 | |- tests
-155 | |- .env.example  # example env vars
-156 | |- CHANGEOG.md  # short project history
-157 | |- Dockerfile  # create app image
-158 | |- Makefile  # helper scripts
-159 | |- mkdocs.yaml  # docu from docstrings
-160 | |- pyproject.toml  # project settings
-161 | |- README.md  # project description
-162 | \- uv.lock  # resolved package versions
-163 | ```
-164 | </details>
-165 | 
-166 | ## Landscape overview
-167 | 
-168 | ### Agentic System Frameworks
-169 | 
-170 | - [PydanticAI](https://github.com/pydantic/pydantic-ai)
-171 | - [restack](https://www.restack.io/)
-172 | - [smolAgents](https://github.com/huggingface/smolagents)
-173 | - [AutoGen](https://github.com/microsoft/autogen)
-174 | - [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
-175 | - [CrewAI](https://github.com/crewAIInc/crewAI)
-176 | - [Langchain](https://github.com/langchain-ai/langchain)
-177 | - [Langflow](https://github.com/langflow-ai/langflow)
-178 | 
-179 | ### Agent-builder
-180 | 
-181 | - [Archon](https://github.com/coleam00/Archon)
-182 | - [Agentstack](https://github.com/AgentOps-AI/AgentStack)
-183 | 
-184 | ### Evaluation
-185 | 
-186 | - Focusing on agentic systems
-187 |   - [AgentNeo](https://github.com/raga-ai-hub/agentneo)
-188 |   - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
-189 |   - [Langchain AgentEvals](https://github.com/langchain-ai/agentevals)
-190 |   - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
-191 |   - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
-192 |   - [AgentBench](https://github.com/THUDM/AgentBench)
-193 | - RAG oriented
-194 |   - [RAGAs](https://github.com/explodinggradients/ragas)
-195 | - LLM apps
-196 |   - [DeepEval](https://github.com/confident-ai/deepeval)
-197 |   - [Langchain OpenEvals](https://github.com/langchain-ai/openevals)
-198 |   - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
-199 |   - [DeepEval (DeepSeek)]( github.com/confident-ai/deepeval)
-200 | 
-201 | ### Observation, Monitoring, Tracing
-202 | 
-203 | - [AgentOps - Agency](https://www.agentops.ai/)
-204 | - [arize](https://arize.com/)
-205 | - [Langtrace](https://www.langtrace.ai/)
-206 | - [LangSmith - Langchain](https://www.langchain.com/langsmith)
-207 | - [Weave - Weights & Biases](https://wandb.ai/site/weave/)
-208 | - [Pydantic- Logfire](https://pydantic.dev/logfire)
-209 | 
-210 | ### Datasets
-211 | 
-212 | - [awesome-reasoning - Collection of datasets](https://github.com/neurallambda/awesome-reasoning)
-213 | 
-214 | #### Scientific
-215 | 
-216 | - [SWIF2T](https://arxiv.org/abs/2405.20477), Automated Focused Feedback Generation for Scientific Writing Assistance, 2024, 300 peer reviews citing weaknesses in scientific papers and conduct human evaluation
-217 | - [PeerRead](https://github.com/allenai/PeerRead), A Dataset of Peer Reviews (PeerRead): Collection, Insights and NLP Applications, 2018, 14K paper drafts and the corresponding accept/reject decisions, over 10K textual peer reviews written by experts for a subset of the papers, structured JSONL, clear labels
-218 | - [BigSurvey](https://www.ijcai.org/proceedings/2022/0591.pdf), Generating a Structured Summary of Numerous Academic Papers: Dataset and Method, 2022, 7K survey papers and 430K referenced papers abstracts
-219 | - [SciXGen](https://arxiv.org/abs/2110.10774), A Scientific Paper Dataset for Context-Aware Text Generation, 2021, 205k papers
-220 | - [scientific_papers](https://huggingface.co/datasets/armanc/scientific_papers), 2018, two sets of long and structured documents, obtained from ArXiv and PubMed OpenAccess, 300k+ papers, total disk 7GB
-221 | 
-222 | #### Reasoning, Deduction, Commonsense, Logic
-223 | 
-224 | - [LIAR](https://www.cs.ucsb.edu/~william/data/liar_dataset.zip), fake news detection, only 12.8k records, single label
-225 | - [X-Fact](https://github.com/utahnlp/x-fact/), Benchmark Dataset for Multilingual Fact Checking, 31.1k records, large, multilingual
-226 | - [MultiFC](https://www.copenlu.com/publication/2019_emnlp_augenstein/), A Real-World Multi-Domain Dataset for Evidence-Based Fact Checking of Claims, 34.9k records
-227 | - [FEVER](https://fever.ai/dataset/fever.html), Fact Extraction and VERification, 185.4k records
-228 | - TODO GSM8K, bAbI, CommonsenseQA, DROP, LogiQA, MNLI
+115 | - **Description**: Outputs a well-formatted scientific report using the data provided, maintaining the original facts, conclusions, and sources.
+116 | - **Responsibilities**:
+117 |   - Outputs a well-formatted scientific report using the provided data.
+118 |   - Maintains the original facts, conclusions, and sources.
+119 | - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+120 | 
+121 | ### Datasets used
+122 | 
+123 | `# TODO`
+124 | 
+125 | ### Evalutions metrics
+126 | 
+127 | `# TODO`
+128 | 
+129 | - Time to complete task (time_taken)
+130 | - Task success rate (task_success)
+131 | - Agent coordination (coordination_quality)
+132 | - Tool usage efficiency (tool_efficiency)
+133 | - Plan coherence (planning_rational)
+134 | - Text response quality (text_similarity)
+135 | - Autonomy vs. human intervention (HITL, user feedback)
+136 | - Reactivity (adapt to changes of tasks and environments)
+137 | - Memory consistency
+138 | 
+139 | ### Evaluations Metrics Baseline
+140 | 
+141 | As configured in [config_eval.json](src/app/config/config_eval.json).
+142 | 
+143 | ```json
+144 | {
+145 |     "evaluators_and_weights": {
+146 |         "planning_rational": "1/6",
+147 |         "task_success": "1/6",
+148 |         "tool_efficiency": "1/6",
+149 |         "coordination_quality": "1/6",
+150 |         "time_taken": "1/6",
+151 |         "text_similarity": "1/6"
+152 |     }
+153 | }
+154 | ```
+155 | 
+156 | ### Eval Metrics Sweep
+157 | 
+158 | <details>
+159 |   <summary>Eval Metrics Sweep</summary>
+160 |   <img src="assets/images/metrics-eval-sweep.png" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
+161 | </details>
+162 | 
+163 | ### Tools available
+164 | 
+165 | Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
+166 | 
+167 | ### Agentic System Architecture
+168 | 
+169 | <details>
+170 |   <summary>Show Agentic System Architecture</summary>
+171 |   <img src="assets/images/c4-multi-agent-system.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="60%" />
+172 | </details>
+173 | 
+174 | ### Project Repo Structure
+175 | 
+176 | <details>
+177 |   <summary>Show Repo Structure</summary>
+178 | ```sh
+179 | |- .claude  # claude code config and commands
+180 | |- .devcontainer  # pre-configured dev env
+181 | |- .github  # workflows
+182 | |- .streamlit  # config.toml
+183 | |- .vscode  # extensions, settings
+184 | |- assets/images
+185 | |- docs
+186 | |- src  # source code
+187 |    |- app
+188 |       |- agents
+189 |       |- config
+190 |       |- evals
+191 |       |- utils
+192 |       |- __init__.py
+193 |       |- main.py
+194 |       \- py.typed
+195 |    |- examples
+196 |    |- gui
+197 |    \- run_gui.py
+198 | |- tests
+199 | |- .env.example  # example env vars
+200 | |- .gitignore
+201 | |- .gitmessage
+202 | |- AGENTS.md  # common file like agentsmd.com
+203 | |- CHANGEOG.md  # short project history
+204 | |- CLAUDE.md  # points to AGENTS.md
+205 | |- Dockerfile  # create app image
+206 | |- LICENSE.md
+207 | |- Makefile  # helper scripts
+208 | |- mkdocs.yaml  # docu from docstrings
+209 | |- pyproject.toml  # project settings
+210 | |- README.md  # project description
+211 | \- uv.lock  # resolved package versions
+212 | ```
+213 | </details>
+214 | 
+215 | ## Landscape overview
+216 | 
+217 | ### Agentic System Frameworks
+218 | 
+219 | - [PydanticAI](https://github.com/pydantic/pydantic-ai)
+220 | - [restack](https://www.restack.io/)
+221 | - [smolAgents](https://github.com/huggingface/smolagents)
+222 | - [AutoGen](https://github.com/microsoft/autogen)
+223 | - [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
+224 | - [CrewAI](https://github.com/crewAIInc/crewAI)
+225 | - [Langchain](https://github.com/langchain-ai/langchain)
+226 | - [Langflow](https://github.com/langflow-ai/langflow)
+227 | 
+228 | ### Agent-builder
 229 | 
-230 | #### Planning, Execution
-231 | 
-232 | - [Plancraft](https://arxiv.org/abs/2412.21033), an evaluation dataset for planning with LLM agents, both a text-only and multi-modal interface
-233 | - [IDAT](https://arxiv.org/abs/2407.08898), A Multi-Modal Dataset and Toolkit for Building and Evaluating Interactive Task-Solving Agents
-234 | - [PDEBench](https://github.com/pdebench/PDEBench), set of benchmarks for scientific machine learning
-235 | - [MatSci-NLP](https://arxiv.org/abs/2305.08264), evaluating the performance of natural language processing (NLP) models on materials science text
-236 | - TODO BigBench Hard, FSM Game
-237 | 
-238 | #### Tool Use, Function Invocation
-239 | 
-240 | - [Trelis Function Calling](https://huggingface.co/datasets/Trelis/function_calling_v3)
-241 | - [KnowLM Tool](https://huggingface.co/datasets/zjunlp/KnowLM-Tool)
-242 | - [StatLLM](https://arxiv.org/abs/2502.17657), statistical analysis tasks, LLM-generated SAS code, and human evaluation scores
-243 | - TODO ToolComp
-244 | 
-245 | ### Benchmarks
-246 | 
-247 | - [SciArena: A New Platform for Evaluating Foundation Models in Scientific Literature Tasks](https://allenai.org/blog/sciarena)
-248 | - [AgentEvals CORE-Bench Leaderboard](https://huggingface.co/spaces/agent-evals/core_leaderboard)
-249 | - [Berkeley Function-Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html)
-250 | - [Chatbot Arena LLM Leaderboard](https://lmsys.org/projects/)
-251 | - [GAIA Leaderboard](https://gaia-benchmark-leaderboard.hf.space/)
-252 | - [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
-253 | - [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
-254 | - [MiniWoB++: a web interaction benchmark for reinforcement learning](https://miniwob.farama.org/)
-255 | 
-256 | ## Further Reading
-257 | 
-258 | - [[2506.18096] Deep Research Agents: A Systematic Examination And Roadmap](https://arxiv.org/abs/2506.18096), [gh / ai-agents-2030 / awesome-deep-research-agent](https://github.com/ai-agents-2030/awesome-deep-research-agent)
-259 | - [[2504.19678] From LLM Reasoning to Autonomous AI Agents: A Comprehensive Review](https://arxiv.org/abs/2504.19678)
-260 | - [[2503.21460] Large Language Model Agent: A Survey on Methodology, Applications and Challenges](https://arxiv.org/abs/2503.21460)
-261 | - [[2503.16416] Survey on Evaluation of LLM-based Agents](https://arxiv.org/abs/2503.16416)
-262 | - [[2503.13657] Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657)
-263 | - [[2502.14776] SurveyX: Academic Survey Automation via Large Language Models](https://arxiv.org/abs/2502.14776)
-264 | - [[2502.05957] AutoAgent: A Fully-Automated and Zero-Code Framework for LLM Agents](https://arxiv.org/abs/2502.05957)
-265 | - [[2502.02649] Fully Autonomous AI Agents Should Not be Developed](https://arxiv.org/abs/2502.02649)
-266 | - [[2501.16150] AI Agents for Computer Use: A Review of Instruction-based Computer Control, GUI Automation, and Operator Assistants](https://arxiv.org/abs/2501.16150)
-267 | - [[2501.06590] ChemAgent](https://arxiv.org/abs/2501.06590)
-268 | - [[2501.06322] Multi-Agent Collaboration Mechanisms: A Survey of LLMs](https://arxiv.org/abs/2501.06322)
-269 | - [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/abs/2501.04227), [AgentRxiv:Towards Collaborative Autonomous Research](https://agentrxiv.github.io/)
-270 | - [[2501.00881] Agentic Systems: A Guide to Transforming Industries with Vertical AI Agents](https://arxiv.org/abs/2501.00881)
-271 | - [[2412.04093] Practical Considerations for Agentic LLM Systems](https://arxiv.org/abs/2412.04093)
-272 | - [[2411.13768] Evaluation-driven Approach to LLM Agents](https://arxiv.org/abs/2411.13768)
-273 | - [[2411.10478] Large Language Models for Constructing and Optimizing Machine Learning Workflows: A Survey](https://arxiv.org/abs/2411.10478)
-274 | - [[2411.05285] A taxonomy of agentops for enabling observability of foundation model based agents](https://arxiv.org/abs/2411.05285)
-275 | - [[2410.22457] Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
-276 | - [[2408.06361] Large Language Model Agent in Financial Trading: A Survey](https://arxiv.org/abs/2408.06361)
-277 | - [[2408.06292] The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery](https://arxiv.org/abs/2408.06292)
-278 | - [[2404.13501] A Survey on the Memory Mechanism of Large Language Model based Agents](https://arxiv.org/pdf/2404.13501)
-279 | - [[2402.06360] CoSearchAgent: A Lightweight Collaborative Search Agent with Large Language Models](https://arxiv.org/abs/2402.06360)
-280 | - [[2402.02716] Understanding the planning of LLM agents: A survey](https://arxiv.org/abs/2402.02716)
-281 | - [[2402.01030] Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/abs/2402.01030)
-282 | - [[2308.11432] A Survey on Large Language Model based Autonomous Agents](https://arxiv.org/abs/2308.11432)
-283 | 
+230 | - [Archon](https://github.com/coleam00/Archon)
+231 | - [Agentstack](https://github.com/AgentOps-AI/AgentStack)
+232 | 
+233 | ### Evaluation
+234 | 
+235 | - Focusing on agentic systems
+236 |   - [AgentNeo](https://github.com/raga-ai-hub/agentneo)
+237 |   - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
+238 |   - [Langchain AgentEvals](https://github.com/langchain-ai/agentevals)
+239 |   - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
+240 |   - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
+241 |   - [AgentBench](https://github.com/THUDM/AgentBench)
+242 | - RAG oriented
+243 |   - [RAGAs](https://github.com/explodinggradients/ragas)
+244 | - LLM apps
+245 |   - [DeepEval](https://github.com/confident-ai/deepeval)
+246 |   - [Langchain OpenEvals](https://github.com/langchain-ai/openevals)
+247 |   - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
+248 |   - [DeepEval (DeepSeek)]( github.com/confident-ai/deepeval)
+249 | 
+250 | ### Observation, Monitoring, Tracing
+251 | 
+252 | - [AgentOps - Agency](https://www.agentops.ai/)
+253 | - [arize](https://arize.com/)
+254 | - [Langtrace](https://www.langtrace.ai/)
+255 | - [LangSmith - Langchain](https://www.langchain.com/langsmith)
+256 | - [Weave - Weights & Biases](https://wandb.ai/site/weave/)
+257 | - [Pydantic- Logfire](https://pydantic.dev/logfire)
+258 | 
+259 | ### Datasets
+260 | 
+261 | - [awesome-reasoning - Collection of datasets](https://github.com/neurallambda/awesome-reasoning)
+262 | 
+263 | #### Scientific
+264 | 
+265 | - [SWIF2T](https://arxiv.org/abs/2405.20477), Automated Focused Feedback Generation for Scientific Writing Assistance, 2024, 300 peer reviews citing weaknesses in scientific papers and conduct human evaluation
+266 | - [PeerRead](https://github.com/allenai/PeerRead), A Dataset of Peer Reviews (PeerRead): Collection, Insights and NLP Applications, 2018, 14K paper drafts and the corresponding accept/reject decisions, over 10K textual peer reviews written by experts for a subset of the papers, structured JSONL, clear labels
+267 | - [BigSurvey](https://www.ijcai.org/proceedings/2022/0591.pdf), Generating a Structured Summary of Numerous Academic Papers: Dataset and Method, 2022, 7K survey papers and 430K referenced papers abstracts
+268 | - [SciXGen](https://arxiv.org/abs/2110.10774), A Scientific Paper Dataset for Context-Aware Text Generation, 2021, 205k papers
+269 | - [scientific_papers](https://huggingface.co/datasets/armanc/scientific_papers), 2018, two sets of long and structured documents, obtained from ArXiv and PubMed OpenAccess, 300k+ papers, total disk 7GB
+270 | 
+271 | #### Reasoning, Deduction, Commonsense, Logic
+272 | 
+273 | - [LIAR](https://www.cs.ucsb.edu/~william/data/liar_dataset.zip), fake news detection, only 12.8k records, single label
+274 | - [X-Fact](https://github.com/utahnlp/x-fact/), Benchmark Dataset for Multilingual Fact Checking, 31.1k records, large, multilingual
+275 | - [MultiFC](https://www.copenlu.com/publication/2019_emnlp_augenstein/), A Real-World Multi-Domain Dataset for Evidence-Based Fact Checking of Claims, 34.9k records
+276 | - [FEVER](https://fever.ai/dataset/fever.html), Fact Extraction and VERification, 185.4k records
+277 | - TODO GSM8K, bAbI, CommonsenseQA, DROP, LogiQA, MNLI
+278 | 
+279 | #### Planning, Execution
+280 | 
+281 | - [Plancraft](https://arxiv.org/abs/2412.21033), an evaluation dataset for planning with LLM agents, both a text-only and multi-modal interface
+282 | - [IDAT](https://arxiv.org/abs/2407.08898), A Multi-Modal Dataset and Toolkit for Building and Evaluating Interactive Task-Solving Agents
+283 | - [PDEBench](https://github.com/pdebench/PDEBench), set of benchmarks for scientific machine learning
+284 | - [MatSci-NLP](https://arxiv.org/abs/2305.08264), evaluating the performance of natural language processing (NLP) models on materials science text
+285 | - TODO BigBench Hard, FSM Game
+286 | 
+287 | #### Tool Use, Function Invocation
+288 | 
+289 | - [Trelis Function Calling](https://huggingface.co/datasets/Trelis/function_calling_v3)
+290 | - [KnowLM Tool](https://huggingface.co/datasets/zjunlp/KnowLM-Tool)
+291 | - [StatLLM](https://arxiv.org/abs/2502.17657), statistical analysis tasks, LLM-generated SAS code, and human evaluation scores
+292 | - TODO ToolComp
+293 | 
+294 | ### Benchmarks
+295 | 
+296 | - [SciArena: A New Platform for Evaluating Foundation Models in Scientific Literature Tasks](https://allenai.org/blog/sciarena)
+297 | - [AgentEvals CORE-Bench Leaderboard](https://huggingface.co/spaces/agent-evals/core_leaderboard)
+298 | - [Berkeley Function-Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html)
+299 | - [Chatbot Arena LLM Leaderboard](https://lmsys.org/projects/)
+300 | - [GAIA Leaderboard](https://gaia-benchmark-leaderboard.hf.space/)
+301 | - [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
+302 | - [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
+303 | - [MiniWoB++: a web interaction benchmark for reinforcement learning](https://miniwob.farama.org/)
+304 | 
+305 | ### Research Agents
+306 | 
+307 | - [Ai2 Scholar QA](https://qa.allen.ai/chat)
+308 | 
+309 | ## Further Reading
+310 | 
+311 | - [[2506.18096] Deep Research Agents: A Systematic Examination And Roadmap](https://arxiv.org/abs/2506.18096), [gh / ai-agents-2030 / awesome-deep-research-agent](https://github.com/ai-agents-2030/awesome-deep-research-agent)
+312 | - [[2504.19678] From LLM Reasoning to Autonomous AI Agents: A Comprehensive Review](https://arxiv.org/abs/2504.19678)
+313 | - [[2503.21460] Large Language Model Agent: A Survey on Methodology, Applications and Challenges](https://arxiv.org/abs/2503.21460)
+314 | - [[2503.16416] Survey on Evaluation of LLM-based Agents](https://arxiv.org/abs/2503.16416)
+315 | - [[2503.13657] Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657)
+316 | - [[2502.14776] SurveyX: Academic Survey Automation via Large Language Models](https://arxiv.org/abs/2502.14776)
+317 | - [[2502.05957] AutoAgent: A Fully-Automated and Zero-Code Framework for LLM Agents](https://arxiv.org/abs/2502.05957)
+318 | - [[2502.02649] Fully Autonomous AI Agents Should Not be Developed](https://arxiv.org/abs/2502.02649)
+319 | - [[2501.16150] AI Agents for Computer Use: A Review of Instruction-based Computer Control, GUI Automation, and Operator Assistants](https://arxiv.org/abs/2501.16150)
+320 | - [[2501.06590] ChemAgent](https://arxiv.org/abs/2501.06590)
+321 | - [[2501.06322] Multi-Agent Collaboration Mechanisms: A Survey of LLMs](https://arxiv.org/abs/2501.06322)
+322 | - [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/abs/2501.04227), [AgentRxiv:Towards Collaborative Autonomous Research](https://agentrxiv.github.io/)
+323 | - [[2501.00881] Agentic Systems: A Guide to Transforming Industries with Vertical AI Agents](https://arxiv.org/abs/2501.00881)
+324 | - [[2412.04093] Practical Considerations for Agentic LLM Systems](https://arxiv.org/abs/2412.04093)
+325 | - [[2411.13768] Evaluation-driven Approach to LLM Agents](https://arxiv.org/abs/2411.13768)
+326 | - [[2411.10478] Large Language Models for Constructing and Optimizing Machine Learning Workflows: A Survey](https://arxiv.org/abs/2411.10478)
+327 | - [[2411.05285] A taxonomy of agentops for enabling observability of foundation model based agents](https://arxiv.org/abs/2411.05285)
+328 | - [[2410.22457] Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
+329 | - [[2408.06361] Large Language Model Agent in Financial Trading: A Survey](https://arxiv.org/abs/2408.06361)
+330 | - [[2408.06292] The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery](https://arxiv.org/abs/2408.06292)
+331 | - [[2404.13501] A Survey on the Memory Mechanism of Large Language Model based Agents](https://arxiv.org/pdf/2404.13501)
+332 | - [[2402.06360] CoSearchAgent: A Lightweight Collaborative Search Agent with Large Language Models](https://arxiv.org/abs/2402.06360)
+333 | - [[2402.02716] Understanding the planning of LLM agents: A survey](https://arxiv.org/abs/2402.02716)
+334 | - [[2402.01030] Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/abs/2402.01030)
+335 | - [[2308.11432] A Survey on Large Language Model based Autonomous Agents](https://arxiv.org/abs/2308.11432)
+336 | 
 
 
 --------------------------------------------------------------------------------
 /assets/images/c4-multi-agent-system.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/assets/images/c4-multi-agent-system.png
+https://raw.githubusercontent.com/qte77/Agents-eval/7401b21b53bd8307e7fe8465b466595a7687f8c8/assets/images/c4-multi-agent-system.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/customer-journey-activity-dark.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/assets/images/customer-journey-activity-dark.png
+https://raw.githubusercontent.com/qte77/Agents-eval/7401b21b53bd8307e7fe8465b466595a7687f8c8/assets/images/customer-journey-activity-dark.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/customer-journey-activity-light.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/assets/images/customer-journey-activity-light.png
+https://raw.githubusercontent.com/qte77/Agents-eval/7401b21b53bd8307e7fe8465b466595a7687f8c8/assets/images/customer-journey-activity-light.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/metrics-eval-sweep.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/assets/images/metrics-eval-sweep.png
+https://raw.githubusercontent.com/qte77/Agents-eval/7401b21b53bd8307e7fe8465b466595a7687f8c8/assets/images/metrics-eval-sweep.png
+
+
+--------------------------------------------------------------------------------
+/context/PRPs/coordination_quality.md:
+--------------------------------------------------------------------------------
+  1 | # Coordination Quality Feature PRP
+  2 | 
+  3 | ## Goal
+  4 | 
+  5 | Implement a comprehensive coordination quality measurement and monitoring system for the multi-agent evaluation framework to assess how effectively agents collaborate, delegate tasks, and maintain workflow integrity.
+  6 | 
+  7 | ## Why
+  8 | 
+  9 | - **Evaluation Completeness**: The coordination_quality metric is defined in `config_eval.json` (0.167 weight) but not implemented
+ 10 | - **System Reliability**: Need to measure and improve agent coordination failures and bottlenecks
+ 11 | - **Performance Optimization**: Identify coordination inefficiencies that impact overall system performance
+ 12 | - **Research Value**: Provide quantitative data on multi-agent coordination patterns for evaluation research
+ 13 | 
+ 14 | ## What
+ 15 | 
+ 16 | A coordination quality monitoring system that measures:
+ 17 | 
+ 18 | - Task delegation success rates between agents
+ 19 | - Inter-agent communication efficiency and latency
+ 20 | - Workflow completion rates and error recovery
+ 21 | - Resource utilization across agent interactions
+ 22 | - Coordination failure detection and analysis
+ 23 | 
+ 24 | ### Success Criteria
+ 25 | 
+ 26 | - [ ] Coordination quality metric implemented and functional in evaluation system
+ 27 | - [ ] Real-time coordination monitoring dashboard
+ 28 | - [ ] Coordination failure detection and alerting
+ 29 | - [ ] Performance metrics collection and analysis
+ 30 | - [ ] Integration with existing evaluation pipeline
+ 31 | 
+ 32 | ## All Needed Context
+ 33 | 
+ 34 | ### Documentation & References
+ 35 | 
+ 36 | ```yaml
+ 37 | - file: /workspaces/Agents-eval/src/app/agents/agent_system.py
+ 38 |   why: Core coordination logic, delegation patterns, tool-based coordination
+ 39 |   critical: Lines 91-99 show delegation pattern, _validate_model_return validation
+ 40 | 
+ 41 | - file: /workspaces/Agents-eval/src/app/config/data_models.py
+ 42 |   why: Data contracts for coordination, Pydantic models for agent communication
+ 43 |   critical: ResearchResult, AnalysisResult, ResearchSummary models
+ 44 | 
+ 45 | - file: /workspaces/Agents-eval/src/app/config/config_eval.json
+ 46 |   why: Coordination quality metric weight (0.167) defined but not implemented
+ 47 |   critical: Need to implement the missing coordination_quality metric
+ 48 | 
+ 49 | - file: /workspaces/Agents-eval/src/app/evals/metrics.py
+ 50 |   why: Evaluation metrics implementation patterns
+ 51 |   critical: How other metrics are implemented and integrated
+ 52 | 
+ 53 | - file: /workspaces/Agents-eval/src/app/config/config_chat.json
+ 54 |   why: Agent prompts defining coordination behavior and approval workflows
+ 55 |   critical: Manager agent orchestration prompts
+ 56 | ```
+ 57 | 
+ 58 | ### Current Codebase Tree
+ 59 | 
+ 60 | ```bash
+ 61 | src/app/
+ 62 | ├── agents/
+ 63 | │   ├── agent_system.py        # Core coordination logic
+ 64 | │   └── llm_model_funs.py      # Model management
+ 65 | ├── config/
+ 66 | │   ├── config_app.py          # Common app configuration
+ 67 | │   ├── data_models.py         # Coordination data contracts
+ 68 | │   ├── config_chat.json       # Agent coordination prompts
+ 69 | │   └── config_eval.json       # Evaluation metrics (coordination_quality: 0.167)
+ 70 | ├── evals/
+ 71 | │   └── metrics.py             # Evaluation metrics implementation
+ 72 | ├── utils/
+ 73 | │   ├── error_messages.py      # Error handling patterns
+ 74 | │   └── log.py                 # Logging utilities
+ 75 | └── main.py                    # Entry point
+ 76 | ```
+ 77 | 
+ 78 | ### Desired Codebase Tree
+ 79 | 
+ 80 | ```bash
+ 81 | src/app/
+ 82 | ├── evals/
+ 83 | │   ├── [existing folders unchanged]
+ 84 | │   ├── coordination_quality/
+ 85 | │   │   ├── __init__.py
+ 86 | │   │   ├── quality_metrics.py     # Coordination quality measurement
+ 87 | │   │   ├── monitoring.py          # Real-time coordination monitoring
+ 88 | │   │   └── analyzer.py            # Coordination pattern analysis
+ 89 | │   └── metrics.py             # Updated with coordination_quality implementation
+ 90 | └── [existing files unchanged]
+ 91 | ```
+ 92 | 
+ 93 | ### Known Gotchas & Library Quirks
+ 94 | 
+ 95 | ```python
+ 96 | # CRITICAL: PydanticAI coordination patterns
+ 97 | # - Tool-based delegation via @agent.tool decorator
+ 98 | # - Usage tracking shared via RunContext
+ 99 | # - Streaming with Pydantic models has NotImplementedError in agent_system.py
+100 | 
+101 | # GOTCHA: Validation requirements
+102 | # - All agent communication must use _validate_model_return()
+103 | # - Pydantic models required for type safety
+104 | # - Error handling must follow utils/error_messages.py patterns
+105 | 
+106 | # LIBRARY QUIRK: PydanticAI Usage Limits
+107 | # - UsageLimits shared across agents via RunContext
+108 | # - Coordination can fail if usage limits exceeded
+109 | # - Need to track usage per coordination step
+110 | ```
+111 | 
+112 | ## Implementation Blueprint
+113 | 
+114 | ### Data Models and Structure
+115 | 
+116 | ```python
+117 | # coordination/quality_metrics.py
+118 | class CoordinationMetrics(BaseModel):
+119 |     """Coordination quality metrics data model."""
+120 |     
+121 |     delegation_success_rate: float
+122 |     communication_latency: float
+123 |     workflow_completion_rate: float
+124 |     error_recovery_rate: float
+125 |     resource_utilization: float
+126 |     coordination_score: float
+127 | 
+128 | class CoordinationEvent(BaseModel):
+129 |     """Individual coordination event tracking."""
+130 |     
+131 |     timestamp: datetime
+132 |     source_agent: str
+133 |     target_agent: str
+134 |     event_type: str  # delegation, response, error, retry
+135 |     success: bool
+136 |     latency_ms: float
+137 |     error_message: str | None = None
+138 | ```
+139 | 
+140 | ### List of Tasks
+141 | 
+142 | ```yaml
+143 | Task 1:
+144 | CREATE src/app/coordination/__init__.py:
+145 |   - EMPTY file for Python package
+146 | 
+147 | Task 2:
+148 | CREATE src/app/coordination/quality_metrics.py:
+149 |   - IMPLEMENT CoordinationMetrics and CoordinationEvent models
+150 |   - IMPLEMENT calculate_coordination_quality() function
+151 |   - PATTERN: Follow existing Pydantic models in data_models.py
+152 | 
+153 | Task 3:
+154 | CREATE src/app/coordination/monitoring.py:
+155 |   - IMPLEMENT CoordinationMonitor class
+156 |   - TRACK delegation events, latency, success rates
+157 |   - PATTERN: Use existing logging patterns from utils/log.py
+158 | 
+159 | Task 4:
+160 | CREATE src/app/coordination/analyzer.py:
+161 |   - IMPLEMENT coordination pattern analysis
+162 |   - DETECT coordination failures and bottlenecks
+163 |   - GENERATE coordination quality reports
+164 | 
+165 | Task 5:
+166 | MODIFY src/app/agents/agent_system.py:
+167 |   - FIND _add_tools_to_manager_agent function
+168 |   - INJECT coordination monitoring into delegation tools
+169 |   - PRESERVE existing delegation patterns
+170 | 
+171 | Task 6:
+172 | MODIFY src/app/evals/metrics.py:
+173 |   - IMPLEMENT coordination_quality metric function
+174 |   - INTEGRATE with existing metrics calculation
+175 |   - MIRROR pattern from other metric implementations
+176 | 
+177 | Task 7:
+178 | CREATE tests/test_coordination_quality.py:
+179 |   - TEST coordination metrics calculation
+180 |   - TEST monitoring functionality
+181 |   - TEST integration with evaluation pipeline
+182 | ```
+183 | 
+184 | ### Per Task Pseudocode
+185 | 
+186 | ```python
+187 | # Task 2: quality_metrics.py
+188 | class CoordinationMetrics(BaseModel):
+189 |     delegation_success_rate: float = Field(ge=0.0, le=1.0)
+190 |     communication_latency: float = Field(ge=0.0)
+191 |     workflow_completion_rate: float = Field(ge=0.0, le=1.0)
+192 |     error_recovery_rate: float = Field(ge=0.0, le=1.0)
+193 |     resource_utilization: float = Field(ge=0.0, le=1.0)
+194 |     coordination_score: float = Field(ge=0.0, le=1.0)
+195 | 
+196 | def calculate_coordination_quality(events: list[CoordinationEvent]) -> CoordinationMetrics:
+197 |     """Calculate coordination quality from event history."""
+198 |     # PATTERN: Weighted average of coordination dimensions
+199 |     # CRITICAL: Handle empty events list gracefully
+200 |     if not events:
+201 |         return CoordinationMetrics(...)
+202 |     
+203 |     # Calculate individual metrics
+204 |     success_rate = sum(e.success for e in events) / len(events)
+205 |     avg_latency = sum(e.latency_ms for e in events) / len(events)
+206 |     # ... other calculations
+207 |     
+208 |     # Weighted coordination score
+209 |     coordination_score = (
+210 |         success_rate * 0.3 +
+211 |         normalized_latency * 0.2 +
+212 |         completion_rate * 0.3 +
+213 |         recovery_rate * 0.2
+214 |     )
+215 |     
+216 |     return CoordinationMetrics(
+217 |         coordination_score=coordination_score,
+218 |         # ... other metrics
+219 |     )
+220 | 
+221 | # Task 3: monitoring.py
+222 | class CoordinationMonitor:
+223 |     def __init__(self):
+224 |         self.events: list[CoordinationEvent] = []
+225 |         self.logger = logger  # From utils/log.py
+226 |     
+227 |     async def track_delegation(self, source: str, target: str, func: Callable):
+228 |         """Track delegation with timing and success monitoring."""
+229 |         start_time = time.time()
+230 |         
+231 |         try:
+232 |             result = await func()
+233 |             # PATTERN: Log successful coordination
+234 |             self.logger.info(f"Delegation {source} -> {target} successful")
+235 |             
+236 |             # Record successful event
+237 |             self._record_event(
+238 |                 source_agent=source,
+239 |                 target_agent=target,
+240 |                 event_type="delegation",
+241 |                 success=True,
+242 |                 latency_ms=(time.time() - start_time) * 1000
+243 |             )
+244 |             
+245 |             return result
+246 |             
+247 |         except Exception as e:
+248 |             # PATTERN: Log coordination failures
+249 |             self.logger.error(f"Delegation {source} -> {target} failed: {str(e)}")
+250 |             
+251 |             # Record failed event
+252 |             self._record_event(
+253 |                 source_agent=source,
+254 |                 target_agent=target,
+255 |                 event_type="delegation",
+256 |                 success=False,
+257 |                 latency_ms=(time.time() - start_time) * 1000,
+258 |                 error_message=str(e)
+259 |             )
+260 |             
+261 |             raise
+262 | 
+263 | # Task 5: agent_system.py integration
+264 | # MODIFY delegate_research function
+265 | @manager_agent.tool
+266 | async def delegate_research(ctx: RunContext[None], query: str) -> ResearchResult:
+267 |     """Delegate research task to ResearchAgent."""
+268 |     # INJECT: Coordination monitoring
+269 |     monitor = CoordinationMonitor()
+270 |     
+271 |     async def _research_task():
+272 |         result = await research_agent.run(query, usage=ctx.usage)
+273 |         return _validate_model_return(str(result.output), ResearchResult)
+274 |     
+275 |     # PATTERN: Track delegation with monitoring
+276 |     return await monitor.track_delegation("manager", "researcher", _research_task)
+277 | ```
+278 | 
+279 | ### Integration Points
+280 | 
+281 | ```yaml
+282 | EVALUATION_SYSTEM:
+283 |   - modify: src/app/evals/metrics.py
+284 |   - pattern: "def coordination_quality(result: Any) -> float:"
+285 |   - integration: "Add to evaluation pipeline alongside existing metrics"
+286 | 
+287 | CONFIGURATION:
+288 |   - modify: src/app/config/config_eval.json
+289 |   - pattern: "coordination_quality metric already defined with weight 0.167"
+290 |   - validation: "Ensure metric returns float between 0.0 and 1.0"
+291 | 
+292 | LOGGING:
+293 |   - integrate: src/app/utils/log.py
+294 |   - pattern: "Use existing logger for coordination events"
+295 |   - level: "INFO for successful coordination, ERROR for failures"
+296 | ```
+297 | 
+298 | ## Validation Loop
+299 | 
+300 | ### Level 1: Syntax & Style
+301 | 
+302 | ```bash
+303 | # Run these FIRST - fix any errors before proceeding
+304 | make ruff                    # Format and fix linting issues
+305 | make type_check             # Type checking with mypy
+306 | 
+307 | # Expected: No errors. If errors, READ the error and fix.
+308 | ```
+309 | 
+310 | ### Level 2: Unit Tests
+311 | 
+312 | ```python
+313 | # CREATE tests/test_coordination_quality.py
+314 | def test_coordination_metrics_calculation():
+315 |     """Test coordination quality calculation with sample events."""
+316 |     events = [
+317 |         CoordinationEvent(
+318 |             timestamp=datetime.now(),
+319 |             source_agent="manager",
+320 |             target_agent="researcher",
+321 |             event_type="delegation",
+322 |             success=True,
+323 |             latency_ms=150.0
+324 |         ),
+325 |         # ... more test events
+326 |     ]
+327 |     
+328 |     metrics = calculate_coordination_quality(events)
+329 |     assert 0.0 <= metrics.coordination_score <= 1.0
+330 |     assert metrics.delegation_success_rate >= 0.0
+331 | 
+332 | def test_coordination_monitoring():
+333 |     """Test coordination monitoring functionality."""
+334 |     monitor = CoordinationMonitor()
+335 |     
+336 |     # Test successful delegation tracking
+337 |     async def dummy_task():
+338 |         return "success"
+339 |     
+340 |     result = await monitor.track_delegation("manager", "researcher", dummy_task)
+341 |     assert result == "success"
+342 |     assert len(monitor.events) == 1
+343 |     assert monitor.events[0].success is True
+344 | 
+345 | def test_coordination_quality_metric():
+346 |     """Test integration with evaluation metrics."""
+347 |     # PATTERN: Test similar to other metrics in the evaluation system
+348 |     sample_result = {"coordination_events": [...]}
+349 |     quality_score = coordination_quality(sample_result)
+350 |     assert isinstance(quality_score, float)
+351 |     assert 0.0 <= quality_score <= 1.0
+352 | ```
+353 | 
+354 | ```bash
+355 | # Run and iterate until passing:
+356 | make test_all
+357 | # If failing: Read error, understand root cause, fix code, re-run
+358 | ```
+359 | 
+360 | ### Level 3: Integration Test
+361 | 
+362 | ```bash
+363 | # Test the coordination quality in full evaluation
+364 | make run_cli ARGS="--query 'test coordination quality' --eval"
+365 | 
+366 | # Expected: Coordination quality metric appears in evaluation results
+367 | # If error: Check logs for coordination monitoring issues
+368 | ```
+369 | 
+370 | ## Final Validation Checklist
+371 | 
+372 | - [ ] All tests pass: `make test_all`
+373 | - [ ] No linting errors: `make ruff`
+374 | - [ ] No type errors: `make type_check`
+375 | - [ ] Coordination quality metric integrated in evaluation pipeline
+376 | - [ ] Coordination monitoring tracks delegation events
+377 | - [ ] Error cases handled gracefully with proper logging
+378 | - [ ] Performance impact minimal (< 5% overhead)
+379 | - [ ] Documentation updated in AGENTS.md if needed
+380 | 
+381 | ## Anti-Patterns to Avoid
+382 | 
+383 | - ❌ Don't break existing delegation patterns in agent_system.py
+384 | - ❌ Don't ignore coordination failures - log and track them
+385 | - ❌ Don't add excessive monitoring overhead that slows coordination
+386 | - ❌ Don't hardcode coordination thresholds - make them configurable
+387 | - ❌ Don't skip validation of coordination metrics calculation
+388 | - ❌ Don't assume all coordination events are successful - handle failures gracefully
+389 | 
+
+
+--------------------------------------------------------------------------------
+/context/PRPs/features/coordination_quality.md:
+--------------------------------------------------------------------------------
+ 1 | # Feature description for: coordination_quality
+ 2 | 
+ 3 | As put forward by [context-engineering-intro](https://github.com/qte77/context-engineering-intro).
+ 4 | 
+ 5 | ## FEATURE
+ 6 | 
+ 7 | coordination_quality
+ 8 | 
+ 9 | ## EXAMPLES
+10 | 
+11 | [Provide and explain examples that you have in the `PRPs/examples/` folder]
+12 | 
+13 | ## DOCUMENTATION
+14 | 
+15 | [List out any documentation (web pages, sources for an MCP server like Crawl4AI RAG, etc.) that will need to be referenced during development]
+16 | 
+17 | ## OTHER CONSIDERATIONS
+18 | 
+19 | [Any other considerations or specific requirements - great place to include gotchas that you see AI coding assistants miss with your projects a lot]
+20 | 
+
+
+--------------------------------------------------------------------------------
+/context/PRPs/features/tool_efficiency.md:
+--------------------------------------------------------------------------------
+ 1 | # Feature description for: tool_efficiency
+ 2 | 
+ 3 | As put forward by [context-engineering-intro](https://github.com/qte77/context-engineering-intro).
+ 4 | 
+ 5 | ## FEATURE
+ 6 | 
+ 7 | tool_efficiency
+ 8 | 
+ 9 | ## EXAMPLES
+10 | 
+11 | [Provide and explain examples that you have in the `PRPs/examples/` folder]
+12 | 
+13 | ## DOCUMENTATION
+14 | 
+15 | [List out any documentation (web pages, sources for an MCP server like Crawl4AI RAG, etc.) that will need to be referenced during development]
+16 | 
+17 | ## OTHER CONSIDERATIONS
+18 | 
+19 | [Any other considerations or specific requirements - great place to include gotchas that you see AI coding assistants miss with your projects a lot]
+20 | 
+
+
+--------------------------------------------------------------------------------
+/context/PRPs/templates/feature_base.md:
+--------------------------------------------------------------------------------
+ 1 | # Feature description for: [ Initial template for new features ]
+ 2 | 
+ 3 | As put forward by [context-engineering-intro](https://github.com/qte77/context-engineering-intro).
+ 4 | 
+ 5 | ## FEATURE
+ 6 | 
+ 7 | [Insert your feature here]
+ 8 | 
+ 9 | ## EXAMPLES
+10 | 
+11 | [Provide and explain examples that you have in the `PRPs/examples/` folder]
+12 | 
+13 | ## DOCUMENTATION
+14 | 
+15 | [List out any documentation (web pages, sources for an MCP server like Crawl4AI RAG, etc.) that will need to be referenced during development]
+16 | 
+17 | ## OTHER CONSIDERATIONS
+18 | 
+19 | [Any other considerations or specific requirements - great place to include gotchas that you see AI coding assistants miss with your projects a lot]
+20 | 
+
+
+--------------------------------------------------------------------------------
+/context/PRPs/templates/prp_base.md:
+--------------------------------------------------------------------------------
+  1 | # "Base PRP Template v2 - Context-Rich with Validation Loops"
+  2 | 
+  3 | ## Purpose
+  4 | 
+  5 | Template optimized for AI agents to implement features with sufficient context and self-validation capabilities to achieve working code through iterative refinement.
+  6 | 
+  7 | ## Core Principles
+  8 | 
+  9 | 1. **Context is King**: Include ALL necessary documentation, examples, and caveats
+ 10 | 2. **Validation Loops**: Provide executable tests/lints the AI can run and fix
+ 11 | 3. **Information Dense**: Use keywords and patterns from the codebase
+ 12 | 4. **Progressive Success**: Start simple, validate, then enhance
+ 13 | 5. **Global rules**: Be sure to follow all rules in CLAUDE.md
+ 14 | 
+ 15 | ---
+ 16 | 
+ 17 | ## Goal
+ 18 | 
+ 19 | [What needs to be built - be specific about the end state and desires]
+ 20 | 
+ 21 | ## Why
+ 22 | 
+ 23 | - [Business value and user impact]
+ 24 | - [Integration with existing features]
+ 25 | - [Problems this solves and for whom]
+ 26 | 
+ 27 | ## What
+ 28 | 
+ 29 | [User-visible behavior and technical requirements]
+ 30 | 
+ 31 | ### Success Criteria
+ 32 | 
+ 33 | - [ ] [Specific measurable outcomes]
+ 34 | 
+ 35 | ## All Needed Context
+ 36 | 
+ 37 | ### Documentation & References (list all context needed to implement the feature)
+ 38 | 
+ 39 | ```yaml
+ 40 | # MUST READ - Include these in your context window
+ 41 | - url: [Official API docs URL]
+ 42 |   why: [Specific sections/methods you'll need]
+ 43 |   
+ 44 | - file: [path/to/example.py]
+ 45 |   why: [Pattern to follow, gotchas to avoid]
+ 46 |   
+ 47 | - doc: [Library documentation URL] 
+ 48 |   section: [Specific section about common pitfalls]
+ 49 |   critical: [Key insight that prevents common errors]
+ 50 | 
+ 51 | - docfile: [PRPs/ai_docs/file.md]
+ 52 |   why: [docs that the user has pasted in to the project]
+ 53 | ```
+ 54 | 
+ 55 | ### Current Codebase tree (run `tree` in the root of the project) to get an overview of the codebase
+ 56 | 
+ 57 | ```bash
+ 58 | 
+ 59 | ```
+ 60 | 
+ 61 | ### Desired Codebase tree with files to be added and responsibility of file
+ 62 | 
+ 63 | ```bash
+ 64 | 
+ 65 | ```
+ 66 | 
+ 67 | ### Known Gotchas of our codebase & Library Quirks
+ 68 | 
+ 69 | ```python
+ 70 | # CRITICAL: [Library name] requires [specific setup]
+ 71 | # Example: FastAPI requires async functions for endpoints
+ 72 | # Example: This ORM doesn't support batch inserts over 1000 records
+ 73 | # Example: We use pydantic v2 and  
+ 74 | ```
+ 75 | 
+ 76 | ## Implementation Blueprint
+ 77 | 
+ 78 | ### Data models and structure
+ 79 | 
+ 80 | Create the core data models, we ensure type safety and consistency.
+ 81 | 
+ 82 | ```python
+ 83 | Examples: 
+ 84 |  - orm models
+ 85 |  - pydantic models
+ 86 |  - pydantic schemas
+ 87 |  - pydantic validators
+ 88 | 
+ 89 | ```
+ 90 | 
+ 91 | ### list of tasks to be completed to fullfill the PRP in the order they should be completed
+ 92 | 
+ 93 | ```yaml
+ 94 | Task 1:
+ 95 | MODIFY src/existing_module.py:
+ 96 |   - FIND pattern: "class OldImplementation"
+ 97 |   - INJECT after line containing "def __init__"
+ 98 |   - PRESERVE existing method signatures
+ 99 | 
+100 | CREATE src/new_feature.py:
+101 |   - MIRROR pattern from: src/similar_feature.py
+102 |   - MODIFY class name and core logic
+103 |   - KEEP error handling pattern identical
+104 | 
+105 | ...(...)
+106 | 
+107 | Task N:
+108 | ...
+109 | 
+110 | ```
+111 | 
+112 | ### Per task pseudocode as needed added to each task
+113 | 
+114 | ```python
+115 | 
+116 | # Task 1
+117 | # Pseudocode with CRITICAL details dont write entire code
+118 | async def new_feature(param: str) -> Result:
+119 |     # PATTERN: Always validate input first (see src/validators.py)
+120 |     validated = validate_input(param)  # raises ValidationError
+121 |     
+122 |     # GOTCHA: This library requires connection pooling
+123 |     async with get_connection() as conn:  # see src/db/pool.py
+124 |         # PATTERN: Use existing retry decorator
+125 |         @retry(attempts=3, backoff=exponential)
+126 |         async def _inner():
+127 |             # CRITICAL: API returns 429 if >10 req/sec
+128 |             await rate_limiter.acquire()
+129 |             return await external_api.call(validated)
+130 |         
+131 |         result = await _inner()
+132 |     
+133 |     # PATTERN: Standardized response format
+134 |     return format_response(result)  # see src/utils/responses.py
+135 | ```
+136 | 
+137 | ### Integration Points
+138 | 
+139 | ```yaml
+140 | DATABASE:
+141 |   - migration: "Add column 'feature_enabled' to users table"
+142 |   - index: "CREATE INDEX idx_feature_lookup ON users(feature_id)"
+143 |   
+144 | CONFIG:
+145 |   - add to: config/settings.py
+146 |   - pattern: "FEATURE_TIMEOUT = int(os.getenv('FEATURE_TIMEOUT', '30'))"
+147 |   
+148 | ROUTES:
+149 |   - add to: src/api/routes.py  
+150 |   - pattern: "router.include_router(feature_router, prefix='/feature')"
+151 | ```
+152 | 
+153 | ## Validation Loop
+154 | 
+155 | ### Level 1: Syntax & Style
+156 | 
+157 | ```bash
+158 | # Run these FIRST - fix any errors before proceeding
+159 | ruff check src/new_feature.py --fix  # Auto-fix what's possible
+160 | mypy src/new_feature.py              # Type checking
+161 | 
+162 | # Expected: No errors. If errors, READ the error and fix.
+163 | ```
+164 | 
+165 | ### Level 2: Unit Tests each new feature/file/function use existing test patterns
+166 | 
+167 | ```python
+168 | # CREATE test_new_feature.py with these test cases:
+169 | def test_happy_path():
+170 |     """Basic functionality works"""
+171 |     result = new_feature("valid_input")
+172 |     assert result.status == "success"
+173 | 
+174 | def test_validation_error():
+175 |     """Invalid input raises ValidationError"""
+176 |     with pytest.raises(ValidationError):
+177 |         new_feature("")
+178 | 
+179 | def test_external_api_timeout():
+180 |     """Handles timeouts gracefully"""
+181 |     with mock.patch('external_api.call', side_effect=TimeoutError):
+182 |         result = new_feature("valid")
+183 |         assert result.status == "error"
+184 |         assert "timeout" in result.message
+185 | ```
+186 | 
+187 | ```bash
+188 | # Run and iterate until passing:
+189 | uv run pytest test_new_feature.py -v
+190 | # If failing: Read error, understand root cause, fix code, re-run (never mock to pass)
+191 | ```
+192 | 
+193 | ### Level 3: Integration Test
+194 | 
+195 | ```bash
+196 | # Start the service
+197 | uv run python -m src.main --dev
+198 | 
+199 | # Test the endpoint
+200 | curl -X POST http://localhost:8000/feature \
+201 |   -H "Content-Type: application/json" \
+202 |   -d '{"param": "test_value"}'
+203 | 
+204 | # Expected: {"status": "success", "data": {...}}
+205 | # If error: Check logs at logs/app.log for stack trace
+206 | ```
+207 | 
+208 | ## Final validation Checklist
+209 | 
+210 | - [ ] All tests pass: `uv run pytest tests/ -v`
+211 | - [ ] No linting errors: `uv run ruff check src/`
+212 | - [ ] No type errors: `uv run mypy src/`
+213 | - [ ] Manual test successful: [specific curl/command]
+214 | - [ ] Error cases handled gracefully
+215 | - [ ] Logs are informative but not verbose
+216 | - [ ] Documentation updated if needed
+217 | 
+218 | ---
+219 | 
+220 | ## Anti-Patterns to Avoid
+221 | 
+222 | - ❌ Don't create new patterns when existing ones work
+223 | - ❌ Don't skip validation because "it should work"  
+224 | - ❌ Don't ignore failing tests - fix them
+225 | - ❌ Don't use sync functions in async context
+226 | - ❌ Don't hardcode values that should be config
+227 | - ❌ Don't catch all exceptions - be specific
+228 | 
 
 
 --------------------------------------------------------------------------------
@@ -2084,7 +3219,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932
   3 | build-backend = "hatchling.build"
   4 | 
   5 | [project]
-  6 | version = "1.0.0"
+  6 | version = "1.1.0"
   7 | name = "Agents-eval"
   8 | description = "Assess the effectiveness of agentic AI systems across various use cases focusing on agnostic metrics that measure core agentic capabilities."
   9 | authors = [
@@ -2213,7 +3348,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932
 132 | ]
 133 | 
 134 | [tool.bumpversion]
-135 | current_version = "1.0.0"
+135 | current_version = "1.1.0"
 136 | parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 137 | serialize = ["{major}.{minor}.{patch}"]
 138 | commit = true
@@ -2259,14 +3394,14 @@ https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932
 --------------------------------------------------------------------------------
 1 | """Defines the application version."""
 2 | 
-3 | __version__ = "1.0.0"
+3 | __version__ = "1.1.0"
 4 | 
 
 
 --------------------------------------------------------------------------------
 /src/app/agents/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/src/app/agents/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/7401b21b53bd8307e7fe8465b466595a7687f8c8/src/app/agents/__init__.py
 
 
 --------------------------------------------------------------------------------
@@ -2801,7 +3936,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932
 --------------------------------------------------------------------------------
 /src/app/config/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/src/app/config/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/7401b21b53bd8307e7fe8465b466595a7687f8c8/src/app/config/__init__.py
 
 
 --------------------------------------------------------------------------------
@@ -3055,7 +4190,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932
 --------------------------------------------------------------------------------
 /src/app/evals/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/src/app/evals/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/7401b21b53bd8307e7fe8465b466595a7687f8c8/src/app/evals/__init__.py
 
 
 --------------------------------------------------------------------------------
@@ -3216,7 +4351,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932
 --------------------------------------------------------------------------------
 /src/app/utils/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/0d031ae2708eba24c87e0364d932ea9fc9b0a78e/src/app/utils/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/7401b21b53bd8307e7fe8465b466595a7687f8c8/src/app/utils/__init__.py
 
 
 --------------------------------------------------------------------------------
