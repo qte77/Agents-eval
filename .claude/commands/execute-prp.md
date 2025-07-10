@@ -4,6 +4,10 @@ Implement a feature using using the PRP file.
 
 ## PRP File: $ARGUMENTS
 
+- Use `/context` as `$base_path`
+- Extract only the filename and extension from `$ARGUMENTS` into `$file_name`
+- Input: `${base_path}/PRPs/${file_name}`
+
 ## Execution Process
 
 1. **Load PRP**
