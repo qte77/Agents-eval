@@ -6,8 +6,12 @@ Generate a complete PRP (Product Requirements Prompt) for general feature implem
 
 The AI agent only gets the context you are appending to the PRP and training data. Assume the AI agent has access to the codebase and the same knowledge cutoff as you, so its important that your research findings are included or referenced in the PRP. The Agent has Websearch capabilities, so pass urls to documentation and examples.
 
-- Use `/context/PRPs` as `$base_path`
-- Extract only the filename from `$ARGUMENTS` into `$file_name`
+- Use `/context` as `$base_path`
+- Extract only the filename and extension from `$ARGUMENTS` into `$file_name`
+
+## Input
+
+- Ingest the description provided by `${base_path}/features/${file_name}`
 
 ## Research Process
 
@@ -29,7 +33,7 @@ The AI agent only gets the context you are appending to the PRP and training dat
 
 ## PRP Generation
 
-- Use `${base_path}/templates/prp_base.md` in the base folder as template
+- Use `${base_path}/templates/prp_base.md` as template
 
 ### Critical Context to Include and pass to the AI agent as part of the PRP
 
@@ -60,10 +64,6 @@ make coverage_all
 
 ***ULTRATHINK ABOUT THE PRP AND PLAN YOUR APPROACH THEN START WRITING THE PRP***
 
-## Output
-
-- Save the result to `${base_path}/${file_name}`
-
 ## Quality Checklist
 
 - [ ] All necessary context included
@@ -75,3 +75,7 @@ make coverage_all
 Score the PRP on a scale of 1-10 (confidence level to succeed in one-pass implementation using claude codes)
 
 Remember: The goal is one-pass implementation success through comprehensive context.
+
+## Output
+
+- Save the result to `${base_path}/PRPs/${file_name}`
