@@ -255,6 +255,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - [LangSmith - Langchain](https://www.langchain.com/langsmith)
 - [Weave - Weights & Biases](https://wandb.ai/site/weave/)
 - [Pydantic- Logfire](https://pydantic.dev/logfire)
+- [comet Opik](https://github.com/comet-ml/opik)
 
 ### Datasets
 
