@@ -1,21 +1,37 @@
 @startuml
 !theme plain
+skinparam monochrome true
 
-title Customer Journey Activity Diagram for CLI and Streamlit
+title Customer Journey Activity Diagram for CLI and Streamlit (Agents-eval, 2025, with Setup Steps)
 
 start
-:Discover Agents-eval;
-if (Choose CLI?) then (yes)
+
+:Discover Agents-eval project;
+
+:Clone or download the repository;
+:Install development environment;
+:Install dependencies using `make setup_dev`, `make setup_dev_claude`, or `make setup_dev_ollama`;
+:Copy `.env.example` to `.env` and add required API keys;
+:Configure application environment (optional: edit config files);
+
+if (Preferred interface?) then (CLI)
   :Run CLI with `make run_cli`;
-  :Interact with CLI for agent setup and execution;
-  :View results and metrics in CLI output;
-else (no)
+  :Configure agents (select provider, options, prompts);
+  :Submit research query or task via CLI input;
+  :Execute multi-agent workflow (Manager → Researcher → Analyst → Synthesizer);
+  :View structured results and evaluation metrics in CLI output;
+else (Streamlit GUI)
   :Run Streamlit GUI with `make run_gui`;
-  :Interact with Streamlit for agent setup and execution;
-  :View results and metrics in Streamlit dashboard;
+  :Configure agents via Settings and Prompts pages;
+  :Input research query or task using Streamlit UI;
+  :Trigger interactive multi-agent workflow (Manager → Researcher → Analyst → Synthesizer);
+  :View structured results and evaluation metrics on dashboard;
 endif
-:Continue using and provide feedback;
-:Improve based on feedback;
+
+:Iterate—modify configuration, query, or prompts as needed;
+:Download results or export evaluation logs (optional);
+:Provide feedback via documentation, issue tracker, or direct UI button;
+:Project maintainers review and integrate improvements;
 
 stop
 @enduml
