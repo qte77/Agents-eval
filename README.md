@@ -55,7 +55,9 @@ TAVILY_API_KEY=""
 WANDB_API_KEY="xyz"
 ```
 
-### Customer Journey
+### Customer Journey and User Story
+
+Have a look at the [example user story](docs/UserStory.md).
 
 <details>
   <summary>Show Customer Journey</summary>
