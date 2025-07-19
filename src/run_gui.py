@@ -17,19 +17,27 @@ Functions:
 
 from asyncio import run
 from pathlib import Path
+from sys import path
 
-from app.config.config_app import CHAT_CONFIG_FILE, CHAT_DEFAULT_PROVIDER
-from app.datamodels.app_models import ChatConfig
-from app.utils.load_configs import load_config
-from app.utils.log import logger
-from gui.components.sidebar import render_sidebar
-from gui.config.config import APP_PATH
-from gui.config.styling import add_custom_styling
-from gui.config.text import PAGE_TITLE
-from gui.pages.home import render_home
-from gui.pages.prompts import render_prompts
-from gui.pages.run_app import render_app
-from gui.pages.settings import render_settings
+# rebase project root path to avoid import errors
+project_root = Path(__file__).parent.parent
+path.insert(0, str(project_root))
+
+from src.app.config.config_app import (  # noqa: E402
+    CHAT_CONFIG_FILE,
+    CHAT_DEFAULT_PROVIDER,
+)
+from src.app.datamodels.app_models import ChatConfig  # noqa: E402
+from src.app.utils.load_configs import load_config  # noqa: E402
+from src.app.utils.log import logger  # noqa: E402
+from src.gui.components.sidebar import render_sidebar  # noqa: E402
+from src.gui.config.config import APP_PATH  # noqa: E402
+from src.gui.config.styling import add_custom_styling  # noqa: E402
+from src.gui.config.text import PAGE_TITLE  # noqa: E402
+from src.gui.pages.home import render_home  # noqa: E402
+from src.gui.pages.prompts import render_prompts  # noqa: E402
+from src.gui.pages.run_app import render_app  # noqa: E402
+from src.gui.pages.settings import render_settings  # noqa: E402
 
 # TODO create sidebar tabs, move settings to page,
 # set readme.md as home, separate prompts into page

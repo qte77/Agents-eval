@@ -2,8 +2,8 @@
 
 from os import path
 
-from .utils.agent_simple_tools import get_dice
-from .utils.utils import (
+from src.examples.utils.agent_simple_tools import get_dice
+from src.examples.utils.utils import (
     get_api_key,
     get_provider_config,
     load_config,
