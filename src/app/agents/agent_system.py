@@ -32,8 +32,8 @@ from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.messages import ModelRequest
 from pydantic_ai.usage import UsageLimits
 
-from app.agents.llm_model_funs import get_api_key, get_models, get_provider_config
-from app.config.data_models import (
+from src.app.agents.llm_model_funs import get_api_key, get_models, get_provider_config
+from src.app.datamodels.app_models import (
     AgentConfig,
     AnalysisResult,
     AppEnv,
@@ -46,8 +46,8 @@ from app.config.data_models import (
     ResultBaseType,
     UserPromptType,
 )
-from app.utils.error_messages import generic_exception, invalid_data_model_format
-from app.utils.log import logger
+from src.app.utils.error_messages import generic_exception, invalid_data_model_format
+from src.app.utils.log import logger
 
 
 def _add_tools_to_manager_agent(

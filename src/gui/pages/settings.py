@@ -8,7 +8,7 @@ It validates the input configuration and ensures correct typing before rendering
 
 from streamlit import error, header, selectbox
 
-from app.config.data_models import BaseModel, ChatConfig
+from app.datamodels.app_models import BaseModel, ChatConfig
 from app.utils.error_messages import invalid_type
 from app.utils.log import logger
 from gui.config.text import SETTINGS_HEADER, SETTINGS_PROVIDER_LABEL

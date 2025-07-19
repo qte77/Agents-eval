@@ -15,9 +15,17 @@ from pydantic_ai.exceptions import UnexpectedModelBehavior, UsageLimitExceeded
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.usage import UsageLimits
 
-from .utils.agent_simple_system import SystemAgent, add_tools_to_manager_agent
-from .utils.data_models import AnalysisResult, ResearchResult
-from .utils.utils import create_model, get_api_key, get_provider_config, load_config
+from src.examples.utils.agent_simple_system import (
+    SystemAgent,
+    add_tools_to_manager_agent,
+)
+from src.examples.utils.data_models import AnalysisResult, ResearchResult
+from src.examples.utils.utils import (
+    create_model,
+    get_api_key,
+    get_provider_config,
+    load_config,
+)
 
 CONFIG_FILE = "config.json"
 

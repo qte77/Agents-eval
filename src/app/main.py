@@ -14,20 +14,20 @@ from sys import argv
 from logfire import span
 from weave import op
 
-from app.__init__ import __version__
-from app.agents.agent_system import get_manager, run_manager, setup_agent_env
-from app.config.config_app import (
+from src.app.__init__ import __version__
+from src.app.agents.agent_system import get_manager, run_manager, setup_agent_env
+from src.app.config.config_app import (
     CHAT_CONFIG_FILE,
     CHAT_DEFAULT_PROVIDER,
     EVAL_CONFIG_FILE,
     PROJECT_NAME,
 )
-from app.config.data_models import AppEnv, ChatConfig, EvalConfig
-from app.utils.error_messages import generic_exception
-from app.utils.load_configs import load_config
-from app.utils.log import logger
-from app.utils.login import login
-from app.utils.utils import parse_args
+from src.app.datamodels.app_models import AppEnv, ChatConfig, EvalConfig
+from src.app.utils.error_messages import generic_exception
+from src.app.utils.load_configs import load_config
+from src.app.utils.log import logger
+from src.app.utils.login import login
+from src.app.utils.utils import parse_args
 
 
 @op()

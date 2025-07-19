@@ -10,13 +10,13 @@ from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
 
-from app.utils.error_messages import (
+from src.app.utils.error_messages import (
     failed_to_load_config,
     file_not_found,
     invalid_data_model_format,
     invalid_json,
 )
-from app.utils.log import logger
+from src.app.utils.log import logger
 
 
 def load_config(config_path: str | Path, data_model: type[BaseModel]) -> BaseModel:

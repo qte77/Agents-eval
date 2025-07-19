@@ -55,12 +55,14 @@ TAVILY_API_KEY=""
 WANDB_API_KEY="xyz"
 ```
 
-### Customer Journey
+### Customer Journey and User Story
+
+Have a look at the [example user story](docs/UserStory.md).
 
 <details>
   <summary>Show Customer Journey</summary>
-  <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
-  <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+  <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
+  <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
 </details>
 
 ### Note
@@ -122,21 +124,11 @@ WANDB_API_KEY="xyz"
 
 `# TODO`
 
-### Evalutions metrics
+### LLM-as-a-Judge
 
 `# TODO`
 
-- Time to complete task (time_taken)
-- Task success rate (task_success)
-- Agent coordination (coordination_quality)
-- Tool usage efficiency (tool_efficiency)
-- Plan coherence (planning_rational)
-- Text response quality (text_similarity)
-- Autonomy vs. human intervention (HITL, user feedback)
-- Reactivity (adapt to changes of tasks and environments)
-- Memory consistency
-
-### Evaluations Metrics Baseline
+### Custom Evaluations Metrics Baseline
 
 As configured in [config_eval.json](src/app/config/config_eval.json).
 
@@ -168,13 +160,12 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 <details>
   <summary>Show Agentic System Architecture</summary>
-  <img src="assets/images/c4-multi-agent-system.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="60%" />
+  <img src="assets/images/c4-multi-agent-system-dark.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="80%" />
+  <img src="assets/images/c4-multi-agent-system-light.png#gh-light-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="80%" />
 </details>
 
 ### Project Repo Structure
 
-<details>
-  <summary>Show Repo Structure</summary>
 ```sh
 |- .claude  # claude code config and commands
 |- .devcontainer  # pre-configured dev env
@@ -199,7 +190,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 |- .env.example  # example env vars
 |- .gitignore
 |- .gitmessage
-|- AGENTS.md  # common file like agentsmd.com
+|- AGENTS.md  # common file adhering to agentsmd.com
 |- CHANGEOG.md  # short project history
 |- CLAUDE.md  # points to AGENTS.md
 |- Dockerfile  # create app image
@@ -210,7 +201,6 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 |- README.md  # project description
 \- uv.lock  # resolved package versions
 ```
-</details>
 
 ## Landscape overview
 
@@ -255,6 +245,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - [LangSmith - Langchain](https://www.langchain.com/langsmith)
 - [Weave - Weights & Biases](https://wandb.ai/site/weave/)
 - [Pydantic- Logfire](https://pydantic.dev/logfire)
+- [comet Opik](https://github.com/comet-ml/opik)
 
 ### Datasets
 
@@ -263,7 +254,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 #### Scientific
 
 - [SWIF2T](https://arxiv.org/abs/2405.20477), Automated Focused Feedback Generation for Scientific Writing Assistance, 2024, 300 peer reviews citing weaknesses in scientific papers and conduct human evaluation
-- [PeerRead](https://github.com/allenai/PeerRead), A Dataset of Peer Reviews (PeerRead): Collection, Insights and NLP Applications, 2018, 14K paper drafts and the corresponding accept/reject decisions, over 10K textual peer reviews written by experts for a subset of the papers, structured JSONL, clear labels
+- [PeerRead](https://github.com/allenai/PeerRead), A Dataset of Peer Reviews (PeerRead): Collection, Insights and NLP Applications, 2018, 14K paper drafts and the corresponding accept/reject decisions, over 10K textual peer reviews written by experts for a subset of the papers, structured JSONL, clear labels, See [A Dataset of Peer Reviews (PeerRead):Collection, Insights and NLP Applications](https://arxiv.org/pdf/1804.09635)
 - [BigSurvey](https://www.ijcai.org/proceedings/2022/0591.pdf), Generating a Structured Summary of Numerous Academic Papers: Dataset and Method, 2022, 7K survey papers and 430K referenced papers abstracts
 - [SciXGen](https://arxiv.org/abs/2110.10774), A Scientific Paper Dataset for Context-Aware Text Generation, 2021, 205k papers
 - [scientific_papers](https://huggingface.co/datasets/armanc/scientific_papers), 2018, two sets of long and structured documents, obtained from ArXiv and PubMed OpenAccess, 300k+ papers, total disk 7GB
