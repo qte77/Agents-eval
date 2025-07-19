@@ -18,8 +18,8 @@ Functions:
 
 from pydantic_ai.usage import Usage
 
-from app.datamodels.app_models import ResearchSummary
-from app.utils.log import logger
+from src.app.datamodels.app_models import ResearchSummary
+from src.app.utils.log import logger
 
 
 def log_research_result(summary: ResearchSummary, usage: Usage) -> None:

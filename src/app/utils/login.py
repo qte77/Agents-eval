@@ -11,10 +11,10 @@ from logfire import configure as logfire_conf
 from wandb import login as wandb_login
 from weave import init as weave_init
 
-from app.agents.llm_model_funs import get_api_key
-from app.datamodels.app_models import AppEnv
-from app.utils.error_messages import generic_exception
-from app.utils.log import logger
+from src.app.agents.llm_model_funs import get_api_key
+from src.app.datamodels.app_models import AppEnv
+from src.app.utils.error_messages import generic_exception
+from src.app.utils.log import logger
 
 
 def login(project_name: str, chat_env_config: AppEnv):
