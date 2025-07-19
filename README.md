@@ -61,8 +61,8 @@ Have a look at the [example user story](docs/UserStory.md).
 
 <details>
   <summary>Show Customer Journey</summary>
-  <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
-  <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="60%" />
+  <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
+  <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
 </details>
 
 ### Note
@@ -124,21 +124,11 @@ Have a look at the [example user story](docs/UserStory.md).
 
 `# TODO`
 
-### Evalutions metrics
+### LLM-as-a-Judge
 
 `# TODO`
 
-- Time to complete task (time_taken)
-- Task success rate (task_success)
-- Agent coordination (coordination_quality)
-- Tool usage efficiency (tool_efficiency)
-- Plan coherence (planning_rational)
-- Text response quality (text_similarity)
-- Autonomy vs. human intervention (HITL, user feedback)
-- Reactivity (adapt to changes of tasks and environments)
-- Memory consistency
-
-### Evaluations Metrics Baseline
+### Custom Evaluations Metrics Baseline
 
 As configured in [config_eval.json](src/app/config/config_eval.json).
 
@@ -170,13 +160,12 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 <details>
   <summary>Show Agentic System Architecture</summary>
-  <img src="assets/images/c4-multi-agent-system.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="60%" />
+  <img src="assets/images/c4-multi-agent-system-dark.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="80%" />
+  <img src="assets/images/c4-multi-agent-system-light.png#gh-light-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="80%" />
 </details>
 
 ### Project Repo Structure
 
-<details>
-  <summary>Show Repo Structure</summary>
 ```sh
 |- .claude  # claude code config and commands
 |- .devcontainer  # pre-configured dev env
@@ -201,7 +190,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 |- .env.example  # example env vars
 |- .gitignore
 |- .gitmessage
-|- AGENTS.md  # common file like agentsmd.com
+|- AGENTS.md  # common file adhering to agentsmd.com
 |- CHANGEOG.md  # short project history
 |- CLAUDE.md  # points to AGENTS.md
 |- Dockerfile  # create app image
@@ -212,7 +201,6 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 |- README.md  # project description
 \- uv.lock  # resolved package versions
 ```
-</details>
 
 ## Landscape overview
 
