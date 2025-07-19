@@ -1,6 +1,6 @@
 # Feature description for: [ Initial template for new features ]
 
-As put forward by [context-engineering-intro](https://github.com/qte77/context-engineering-intro).
+- Use the paths defined in `context/config/paths.md`
 
 ## FEATURE
 
@@ -8,7 +8,7 @@ As put forward by [context-engineering-intro](https://github.com/qte77/context-e
 
 ## EXAMPLES
 
-[Provide and explain examples that you have in the `context/examples` folder]
+[Provide and explain examples that you have in the `$EXAMPLES_PATH` folder]
 
 ## DOCUMENTATION
 
