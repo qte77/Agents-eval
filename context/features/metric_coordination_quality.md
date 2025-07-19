@@ -8,7 +8,7 @@ coordination_quality
 
 ## EXAMPLES
 
-[Provide and explain examples that you have in the `PRPs/examples/` folder]
+[Provide and explain examples that you have in the `$EXAMPLES_PATH` folder]
 
 ## DOCUMENTATION
 

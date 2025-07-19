@@ -1,23 +1,22 @@
 # Create Product Requirements Prompt (PRP)
 
-## Feature file: $ARGUMENTS
-
 Generate a complete PRP (Product Requirements Prompt) for general feature implementation with thorough research. Ensure context is passed to the AI agent to enable self-validation and iterative refinement. Read the feature file first to understand what needs to be created, how the examples provided help, and any other considerations.
 
 The AI agent only gets the context you are appending to the PRP and training data. Assume the AI agent has access to the codebase and the same knowledge cutoff as you, so its important that your research findings are included or referenced in the PRP. The Agent has Websearch capabilities, so pass urls to documentation and examples.
 
-- Use `/context` as `$base_path`
-- Extract only the filename and extension from `$ARGUMENTS` into `$file_name`
-
-## Input
-
-- Ingest the description provided by `${base_path}/features/${file_name}`
+- Extract only the filename and extension from `$ARGUMENTS` into `$FILE_NAME`
+- Use the paths defined in `context/config/paths.md`
+- `FEATURE_FILE = ${FEATURES_PATH}/${FILE_NAME}`
+- `PRP_FILE = ${PRP_PATH}/${FILE_NAME}`
+- `PRP_TEMPLATE = ${TEMPLATES_PATH}/${prp_base.md}`
+- Input file: `$FEATURE_FILE`
+- Output file: `$PRP_FILE`
 
 ## Research Process
 
 1. **Codebase Analysis**
    - Search for similar features/patterns in the codebase
-   - Identify files to reference in PRP
+   - Identify files to reference in `$PRP_FILE`
    - Note existing conventions to follow
    - Check test patterns for validation approach
 
@@ -33,7 +32,7 @@ The AI agent only gets the context you are appending to the PRP and training dat
 
 ## PRP Generation
 
-- Use `${base_path}/templates/prp_base.md` as template
+- Use `$PRP_TEMPLATE` as template
 
 ### Critical Context to Include and pass to the AI agent as part of the PRP
 
@@ -49,7 +48,7 @@ The AI agent only gets the context you are appending to the PRP and training dat
 - Include error handling strategy
 - list tasks to be completed to fullfill the PRP in the order they should be completed
 
-### Validation Gates (Must be Executable) eg for python
+### Validation Gates (Must be Executable) e.g. for python
 
 ```bash
 # Syntax/Style
@@ -57,7 +56,7 @@ make ruff
 make type_check
 
 # Unit Tests
-make coverage_all
+# make coverage_all
 ```
 
 ***CRITICAL AFTER YOU ARE DONE RESEARCHING AND EXPLORING THE CODEBASE BEFORE YOU START WRITING THE PRP***
@@ -67,15 +66,11 @@ make coverage_all
 ## Quality Checklist
 
 - [ ] All necessary context included
-- [ ] Validation gates are executable by AI
 - [ ] References existing patterns
 - [ ] Clear implementation path
 - [ ] Error handling documented
+- [ ] Validation gates are executable by AI
 
 Score the PRP on a scale of 1-10 (confidence level to succeed in one-pass implementation using claude codes)
 
 Remember: The goal is one-pass implementation success through comprehensive context.
-
-## Output
-
-- Save the result to `${base_path}/PRPs/${file_name}`

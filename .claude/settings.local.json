@@ -25,5 +25,9 @@
       "Bash(rm:*)",
       "Edit(CLAUDE.md)"
     ]
+  },
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
+    "DISABLE_TELEMETRY": "1"
   }
 }

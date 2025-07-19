@@ -1,17 +1,15 @@
 # Execute Product Requirements Prompt (PRP)
 
-Implement a feature using using the PRP file.
+Implement a feature using the template PRP file and the feature desciption file provided by the user.
 
-## PRP File: $ARGUMENTS
-
-- Use `/context` as `$base_path`
-- Extract only the filename and extension from `$ARGUMENTS` into `$file_name`
-- Input: `${base_path}/PRPs/${file_name}`
+- Extract only the filename and extension from `$ARGUMENTS` into `$FILE_NAME`
+- Use the paths defined in `context/config/paths.md`
+- `PRP_FILE = ${PRP_PATH}/${FILE_NAME}`
 
 ## Execution Process
 
 1. **Load PRP**
-   - Read the specified PRP file
+   - Read the specified `$PRP_FILE`
    - Understand all context and requirements
    - Follow all instructions in the PRP and extend the research if needed
    - Ensure you have all needed context to implement the PRP fully
