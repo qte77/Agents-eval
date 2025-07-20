@@ -142,14 +142,6 @@ Testing is managed by **ruff** and **mypy** and orchestrated via the `Makefile`.
 * Content timestamp: `date -u "+%Y-%m-%dT%H:%M:%SZ"`
 * Log entry format: `[TIMESTAMP] Action description`
 
-### Usage Pattern Example
-
-  ```bash
-  TIMESTAMP=$(date -u "+%Y-%m-%dT%H:%M:%SZ")
-  FILENAME_TS=$(date -u "+%Y-%m-%dT%H-%M-%SZ")
-  echo "[$TIMESTAMP] Starting task ..." >> "${FILENAME_TS}_Task_Name.md"
-  ```
-
 ## Requests to Humans
 
 This section contains a list of questions, clarifications, or tasks that AI agents wish to have humans complete or elaborate on.
