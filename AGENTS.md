@@ -129,6 +129,27 @@ Testing is managed by **ruff** and **mypy** and orchestrated via the `Makefile`.
 4. Ensure integration, meaning all tests pass: `make test_all`.
 5. Update documentation as described above.
 
+## Timestamping for CLI Operations
+
+* **Always use ISO 8601 timestamps** when creating logs or tracking CLI operations
+* **File naming format**: `YYYY-mm-DDTHH-MM-SSZ` (hyphens for filesystem compatibility)
+* **Content format**: `YYYY-mm-DDTHH:MM:SSZ` (standard ISO 8601)
+* **Implementation**: Use `date -u "+FORMAT"` commands for accurate UTC timestamps
+
+### Timestamp Commands
+
+* Filename timestamp: `date -u "+%Y-%m-%dT%H-%M-%SZ"`
+* Content timestamp: `date -u "+%Y-%m-%dT%H:%M:%SZ"`
+* Log entry format: `[TIMESTAMP] Action description`
+
+### Usage Pattern Example
+
+  ```bash
+  TIMESTAMP=$(date -u "+%Y-%m-%dT%H:%M:%SZ")
+  FILENAME_TS=$(date -u "+%Y-%m-%dT%H-%M-%SZ")
+  echo "[$TIMESTAMP] Starting task ..." >> "${FILENAME_TS}_Task_Name.md"
+  ```
+
 ## Requests to Humans
 
 This section contains a list of questions, clarifications, or tasks that AI agents wish to have humans complete or elaborate on.
