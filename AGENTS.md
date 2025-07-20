@@ -5,7 +5,7 @@ As proposed by [agentsmd.net](https://agentsmd.net/) and used by [wandb weave AG
 ## Core Rules & AI Behavior
 
 * Use the paths and structure defined in `DEFAULT_PATHS = context/config/paths.md`.
-* Adhere to an Behavior Driven Development (BDD) approach which focuses on generating concise MVPs with minimal yet functional features sets.
+* Adhere to an Behavior Driven Development (BDD) approach which focuses on generating concise goal-oriented Minimum Viable Products (MVPs) with minimal yet functional features sets.
   * The outlined behavior should be described using tests first and implemented using code afterwards.
   * Then iteratively improve tests and code until the feature requirements are met.
   * The iterations should be as concise as possible to keep complexity low
