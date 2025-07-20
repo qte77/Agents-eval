@@ -4,7 +4,7 @@ Implement a feature using the template PRP file and the feature desciption file 
 
 - Extract only the filename and extension from `$ARGUMENTS` into `$FILE_NAME`
 - Use the paths defined in `context/config/paths.md`
-- Important ! Log your outputs from CLI to `<ISO_DATE>_Claude_ExecPRP_${FILE_NAME}` in `$LOGS_CONTEXT_PATH`
+- Important ! Write your outputs from CLI in real-time to the log file `<ISO_DATE>_Claude_ExecPRP_${FILE_NAME}` in `$LOGS_CONTEXT_PATH`
 - `PRP_FILE = ${PRP_PATH}/${FILE_NAME}`
 
 ## Execution Process
