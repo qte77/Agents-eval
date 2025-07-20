@@ -4,7 +4,7 @@ Generate a complete PRP (Product Requirements Prompt) for general feature implem
 
 The AI agent only gets the context you are appending to the PRP and training data. Assume the AI agent has access to the codebase and the same knowledge cutoff as you, so its important that your research findings are included or referenced in the PRP. The Agent has Websearch capabilities, so pass urls to documentation and examples.
 
-- Extract only the filename and extension from `$ARGUMENTS` into `$FILE_NAME`
+- Extract only the filename and extension from `$ARGUMENTS` into `$FILE_NAME`. Append extension `.md` if necessary.
 - Use the paths defined in `context/config/paths.md`
 - Important ! Write your outputs from CLI in real-time to the log file `<ISO_DATE>_Claude_GenPRP_${FILE_NAME}` in `$LOGS_CONTEXT_PATH`
 - `FEATURE_FILE = ${FEATURES_PATH}/${FILE_NAME}`
