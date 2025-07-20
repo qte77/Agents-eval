@@ -1,6 +1,6 @@
 # Feature description for: [ Initial template for new features ]
 
-- Use the paths defined in `context/config/paths.md`
+Use the paths defined in `context/config/paths.md`
 
 ## FEATURE
 
@@ -8,7 +8,7 @@
 
 ## EXAMPLES
 
-[Provide and explain examples that you have in the `$EXAMPLES_PATH` folder]
+[Provide and explain examples that you have in the `$CTX_EXAMPLES_PATH` folder]
 
 ## DOCUMENTATION
 

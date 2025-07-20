@@ -1,19 +1,19 @@
-# Execute Product Requirements Prompt (PRP)
+# Execute Feature Requirements Prompt (FRP)
 
-Implement a feature using the template PRP file and the feature desciption file provided by the user.
+Implement a feature using the template FRP file and the feature desciption file provided by the user.
 
 - Extract only the filename and extension from `$ARGUMENTS` into `$FILE_NAME`. Append extension `.md` if necessary.
 - Use the paths defined in `context/config/paths.md`
-- Important ! Write your outputs from CLI in real-time to the log file `<timestamp>_Claude_ExecPRP_${FILE_NAME}` in `$LOGS_CONTEXT_PATH`. Also include your itnernalt thinking steps. Use the configured time stamp formatting.
-- `PRP_FILE = ${PRP_PATH}/${FILE_NAME}`
+- Important ! Write your outputs from CLI in real-time to the log file `<timestamp>_Claude_ExecFRP_${FILE_NAME}` in `$CTX_LOGS_PATH`. Also include your internal thinking steps. Use the configured time stamp formatting.
+- `CTX_FRP_FILE = ${CTX_FRP_PATH}/${FILE_NAME}`
 
 ## Execution Process
 
-1. **Load PRP**
-   - Read the specified `$PRP_FILE`
+1. **Load FRP**
+   - Read the specified `$CTX_FRP_FILE`
    - Understand all context and requirements
-   - Follow all instructions in the PRP and extend the research if needed
-   - Ensure you have all needed context to implement the PRP fully
+   - Follow all instructions in the FRP and extend the research if needed
+   - Ensure you have all needed context to implement the FRP fully
    - Do more web searches and codebase exploration as needed
 
 2. **ULTRATHINK**
@@ -23,7 +23,7 @@ Implement a feature using the template PRP file and the feature desciption file 
    - Identify implementation patterns from existing code to follow.
 
 3. **Execute the plan**
-   - Execute the PRP
+   - Execute the FRP
    - Implement all the code
 
 4. **Validate**
@@ -35,9 +35,9 @@ Implement a feature using the template PRP file and the feature desciption file 
    - Ensure all checklist items done
    - Run final validation suite
    - Report completion status
-   - Read the PRP again to ensure you have implemented everything
+   - Read the FRP again to ensure you have implemented everything
 
-6. **Reference the PRP**
-   - You can always reference the PRP again if needed
+6. **Reference the FRP**
+   - You can always reference the FRP again if needed
 
-Note: If validation fails, use error patterns in PRP to fix and retry.
+Note: If validation fails, use error patterns in FRP to fix and retry.

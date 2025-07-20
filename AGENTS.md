@@ -1,12 +1,14 @@
 # Agent instructions for `Agents-eval` repository
 
-As proposed by [agentsmd.net](https://agentsmd.net/) and used by [wandb weave AGENTS.md](https://github.com/wandb/weave/blob/master/AGENTS.md).
+This file is intended to serve as an entrypoint for AI coding agents, to provide baselines and guardrails concerning this project and as a tool for communication between humans and coding agents. As proposed by [agentsmd.net](https://agentsmd.net/) and used by [wandb weave AGENTS.md](https://github.com/wandb/weave/blob/master/AGENTS.md).
 
 ## Core Rules & AI Behavior
 
 * Use the paths and structure defined in `DEFAULT_PATHS = context/config/paths.md`.
+* Aim for Sofware Development Lifecycle (SDLC) principles like maintainability, modularity, reusability, and adaptability for coding agents and humans alike
 * Adhere to an Behavior Driven Development (BDD) approach which focuses on generating concise goal-oriented Minimum Viable Products (MVPs) with minimal yet functional features sets.
-  * The outlined behavior should be described using tests first and implemented using code afterwards.
+  * Keep it simple!
+  * The outlined behavior should be described by defining tests first and implementing corresponding code afterwards.
   * Then iteratively improve tests and code until the feature requirements are met.
   * The iterations should be as concise as possible to keep complexity low
   * All code quality and tests have to be passed to davance to the next step
@@ -95,7 +97,7 @@ Testing is managed by **ruff** and **mypy** and orchestrated via the `Makefile`.
 
 ### Documentation
 
-* Write **docstrings for every function, class, and method** using the Google style format. This is critical as the documentation site is built automatically from docstrings.
+* Write **docstrings for every file, function, class, and method** using the Google style format. This is critical as the documentation site is built automatically from docstrings.
 
     ```python
     def example_function(param1: int) -> str:
@@ -110,13 +112,14 @@ Testing is managed by **ruff** and **mypy** and orchestrated via the `Makefile`.
         return "example"
     ```
 
+* Provide an example usage in regards to the whole project. How would your code be integrated, what entrypoints to use
 * Update this `AGENTS.md` file when introducing new patterns or concepts.
-* Document significant architectural decisions in `${DOCS_PATH}/ADR.md`.
-* Document all significant changes, features, and bug fixes in `${DOCS_PATH}/CHANGELOG.md`.
+* Document significant architectural decisions in `${ADR_PATH}`.
+* Document all significant changes, features, and bug fixes in `${CHANGELOG_PATH}`.
 
 ## Code Review & PR Guidelines
 
-### PR Requirements
+### Commit and PR Requirements
 
 * **Title Format**: Commit messages and PR titles must follow the **Conventional Commits** specification, as outlined in the `.gitmessage` template.
 * Provide detailed PR summaries including the purpose of the changes and the testing performed.
@@ -141,6 +144,10 @@ Testing is managed by **ruff** and **mypy** and orchestrated via the `Makefile`.
 * Filename timestamp: `date -u "+%Y-%m-%dT%H-%M-%SZ"`
 * Content timestamp: `date -u "+%Y-%m-%dT%H:%M:%SZ"`
 * Log entry format: `[TIMESTAMP] Action description`
+
+## Auxiliary
+
+* Use [markdownlint's Rules.md](https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md) to output weel-defined markdown
 
 ## Requests to Humans
 

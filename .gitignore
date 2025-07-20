@@ -45,3 +45,4 @@ site/
 
 # project specific
 wandb/
+datasets/

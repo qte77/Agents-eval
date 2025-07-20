@@ -1,8 +1,8 @@
-# Product Requirements Prompt (PRP) emplate
-
-## Purpose
+# Feature Requirements Prompt (FRP) template
 
 This template is optimized for AI agents to implement features with sufficient context and self-validation capabilities to achieve working code through iterative refinement.
+
+Use the paths defined in `context/config/paths.md`
 
 ## Core Principles
 
@@ -96,7 +96,7 @@ Create the core data models, we ensure type safety and consistency.
 # - pydantic validators
 ```
 
-### list of tasks to be completed to fullfill the PRP in the order they should be completed
+### list of tasks to be completed to fullfill the FRP in the order they should be completed
 
 ```yaml
 Task 1:
