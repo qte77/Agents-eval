@@ -21,7 +21,6 @@
 
 ## Context
 
-- `AGENTSMD_PATH`: Contains the main context for cading agents.
 - `CONTEXT_PATH = context`: Contains auxiliary context for coding agents.
 - `CTX_CONFIG_PATH = ${CONTEXT_PATH}/config`
 - `CTX_EXAMPLES_PATH = ${CONTEXT_PATH}/examples`
@@ -29,6 +28,18 @@
 - `CTX_LOGS_PATH = ${CONTEXT_PATH}/logs`
 - `CTX_FRP_PATH = ${CONTEXT_PATH}/FRPs`
 - `CTX_TEMPLATES_PATH = ${CONTEXT_PATH}/templates`
+
+### Important files
+
+- `${CTX_EXAMPLES_PATH}/code-patterns.md`: Code pattern examples and best practices for agents
+
+## GUI
+
+- `GUI_PATH = src/gui` The streamlit GUI logic.
+
+### Important files
+
+- `src/run_gui.py`: The main entry point for the streamlit GUI.
 
 ## Project
 
