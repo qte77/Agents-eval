@@ -6,7 +6,7 @@
 
 ## Goals
 
-- **Evaluate Agentic AI Systems:** Provide a comprehensive evaluation pipeline to assess the performance of agentic AI systems.
+- **Evaluate Agentic AI Systems:** Provide a concise evaluation pipeline to assess the performance of agentic AI systems.
 - **Metric Development:** Develop and implement metrics that are agnostic to specific use cases but measure core agentic capabilities.
 - **Continuous Improvement:** Promote continuous improvement through automated testing, version control, and documentation.
 
@@ -60,21 +60,21 @@
 
 ## Constraints
 
-- **Hardware:** The project assumes access to appropriate hardwareif running the Ollama server and models, including sufficient RAM and GPU capabilities.
-- **Software:** Requires Python 3.12, `uv`, and other dependencies listed in `pyproject.toml`.
+- **Hardware:** The project assumes access to appropriate hardware if running the Ollama server and models, including sufficient RAM and GPU capabilities.
+- **Software:** Requires Python 3.13, `uv`, and other dependencies listed in `pyproject.toml`.
 
 ## Main Dependencies
 
 - **Pydantic-AI:** For agent and tool management.
+- **Pydantic-settings** To load from .env or env.
 - **Pytest:** For testing.
-- **Ollama:** For local model hosting and inference.
 - **Streamlit:** For frontend dashboard.
 - **Ruff:** For code linting.
 - **MkDocs:** For documentation generation.
+- **Ollama:** (Optional) For local model hosting and inference.
 
 ## Future Enhancements
 
-- **Additional Metrics:** Develop more metrics to evaluate agentic systems.
 - **Integration with More Frameworks:** Expand compatibility with other agentic system frameworks. Meaning other popular agentic system frameworks like LangChain, AutoGen, CrewAI, LangGraph, Semantic Kernel, and smolAgents.
 - **Performance Optimization:** Further optimize for latency and resource usage.
 - **User Feedback:** Implement a feedback loop for users to report issues or suggest improvements.
