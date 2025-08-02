@@ -6,10 +6,6 @@
     "git.autofetch": true,
     "git.enableSmartCommit": true,
     "makefile.configureOnOpen": false,
-    "markdownlint.config": {
-        "MD024": false,
-        "MD033": false
-    },
     "python.defaultInterpreterPath": "./.venv/bin/python",
     "redhat.telemetry.enabled": false
 }

@@ -97,11 +97,13 @@ This project includes a comprehensive context framework for AI coding agents. It
 
 Have a look at the [example user story](docs/UserStory.md).
 
+<!-- markdownlint-disable MD033 -->
 <details>
   <summary>Show Customer Journey</summary>
   <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
   <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
 </details>
+<!-- markdownlint-enable MD033 -->
 
 ## Documentation
 
@@ -189,10 +191,12 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 
 ### Eval Metrics Sweep
 
+<!-- markdownlint-disable MD033 -->
 <details>
   <summary>Eval Metrics Sweep</summary>
   <img src="assets/images/metrics-eval-sweep.png" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
 </details>
+<!-- markdownlint-enable MD033 -->
 
 ### Tools available
 
@@ -200,11 +204,13 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 ### Agentic System Architecture
 
+<!-- markdownlint-disable MD033 -->
 <details>
   <summary>Show Agentic System Architecture</summary>
   <img src="assets/images/c4-multi-agent-system-dark.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="80%" />
   <img src="assets/images/c4-multi-agent-system-light.png#gh-light-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="80%" />
 </details>
+<!-- markdownlint-enable MD033 -->
 
 ### Project Repo Structure
 
