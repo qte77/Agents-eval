@@ -108,9 +108,11 @@ async def main(
                     query = paper_review_template.format(paper_number=paper_number)
                 logger.info(f"Paper review mode enabled for paper {paper_number}")
             elif not query:
-                query = prompts.get(
+                # Prompt user for input when no query is provided
+                default_prompt = prompts.get(
                     "default_query", "What would you like to research? "
                 )
+                query = input(f"{default_prompt} ")
             chat_env_config = AppEnv()
             agent_env = setup_agent_env(
                 chat_provider, query, chat_config, chat_env_config

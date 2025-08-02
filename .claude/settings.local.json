@@ -29,8 +29,7 @@
       "Edit(tests/**/*.json)",
       "Edit(pyproject.toml)",
       "WebFetch(domain:github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md)",
-      "WebFetch(domain:docs.anthropic.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:docs.anthropic.com)"
     ],
     "deny": [
       "Bash(cat:*)",

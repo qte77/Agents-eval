@@ -1,16 +1,15 @@
 """
-Utility functions and classes for managing and instantiating LLM models and providers.
+LLM model functions for integrating with various LLM providers.
 
 This module provides functions to retrieve API keys, provider configurations, and
 to create model instances for supported LLM providers such as Gemini and OpenAI.
 It also includes logic for assembling model dictionaries for system agents.
 """
 
-from pydantic_ai.models.gemini import GeminiModel
+from pydantic_ai.models import Model
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
-from app.config.config_app import API_SUFFIX
 from app.data_models.app_models import (
     AppEnv,
     EndpointConfig,
@@ -26,32 +25,44 @@ def get_api_key(
     chat_env_config: AppEnv,
 ) -> tuple[bool, str]:
     """Retrieve API key from chat env config variable."""
-
     provider = provider.upper()
+
+    # Provider mapping for environment variable keys
+    provider_key_mapping = {
+        "OPENAI": "OPENAI_API_KEY",
+        "ANTHROPIC": "ANTHROPIC_API_KEY",
+        "GEMINI": "GEMINI_API_KEY",
+        "GITHUB": "GITHUB_API_KEY",
+        "GROK": "GROK_API_KEY",
+        "HUGGINGFACE": "HUGGINGFACE_API_KEY",
+        "OPENROUTER": "OPENROUTER_API_KEY",
+        "PERPLEXITY": "PERPLEXITY_API_KEY",
+        "TOGETHER": "TOGETHER_API_KEY",
+        "OLLAMA": None,  # Ollama doesn't require an API key
+    }
+
     if provider == "OLLAMA":
         return (False, "Ollama does not require an API key.")
+
+    key_name = provider_key_mapping.get(provider)
+    if not key_name:
+        return (False, f"Provider '{provider}' is not supported.")
+
+    key_content = getattr(chat_env_config, key_name, None)
+    if key_content and key_content.strip():
+        logger.info(f"Found API key for provider: '{provider}'")
+        return (True, key_content)
     else:
-        key_name = f"{provider}{API_SUFFIX}"
-        key_content = getattr(chat_env_config, key_name)
-        if (
-            hasattr(chat_env_config, key_name)
-            and key_content is not None
-            and key_content != ""
-        ):
-            logger.info(f"Found API key for provider: '{provider}'")
-            return (True, getattr(chat_env_config, key_name))
-        else:
-            return (
-                False,
-                f"API key for provider '{provider}' not found in configuration.",
-            )
+        return (
+            False,
+            f"API key for provider '{provider}' not found in configuration.",
+        )
 
 
 def get_provider_config(
     provider: str, providers: dict[str, ProviderConfig]
 ) -> ProviderConfig:
     """Retrieve configuration settings for the specified provider."""
-
     try:
         return providers[provider]
     except KeyError as e:
@@ -64,33 +75,98 @@ def get_provider_config(
         raise Exception(msg)
 
 
-def _create_model(
-    endpoint_config: EndpointConfig,
-) -> GeminiModel | OpenAIModel:
-    """Create a model that uses model_name and base_url for inference API"""
+def _get_llm_model_name(provider: str, model_name: str) -> str:
+    """Convert provider and model name to required format."""
+    provider_mappings = {
+        "openai": "",  # OpenAI models don't need prefix
+        "anthropic": "anthropic/",
+        "gemini": "gemini/",
+        "github": "",  # GitHub models use OpenAI-compatible format
+        "grok": "grok/",
+        "huggingface": "huggingface/",
+        "openrouter": "openrouter/",
+        "perplexity": "perplexity/",
+        "together": "together_ai/",
+        "ollama": "ollama/",
+    }
 
-    if endpoint_config.provider.lower() == "gemini":
-        return GeminiModel(model_name=endpoint_config.provider_config.model_name)
-    elif endpoint_config.provider.lower() == "huggingface":
-        # FIXME HF not working with pydantic-ai OpenAI model
-        raise NotImplementedError(
-            "Hugging Face provider is not implemented yet. Please use Gemini or OpenAI."
-            " https://huggingface.co/docs/inference-providers/providers/hf-inference"
-        )
-        # headers = {
-        #    "Authorization": f"Bearer {endpoint_config.api_key}",
-        # }
-        # def query(payload):
-        #    response = requests.post(API_URL, headers=headers, json=payload)
-        #    return response.json()
-        # query({"inputs": "", "parameters": {},})
-    else:
-        base_url_str = str(endpoint_config.provider_config.base_url)
+    prefix = provider_mappings.get(provider.lower(), f"{provider.lower()}/")
+
+    # Handle special cases where model name already includes provider
+    if "/" in model_name and any(
+        model_name.startswith(p) for p in provider_mappings.values() if p
+    ):
+        return model_name
+
+    return f"{prefix}{model_name}"
+
+
+def _create_llm_model(
+    endpoint_config: EndpointConfig,
+) -> Model:
+    """Create a model that works with PydanticAI."""
+
+    provider = endpoint_config.provider.lower()
+    model_name = endpoint_config.provider_config.model_name
+    api_key = endpoint_config.api_key
+    base_url = str(endpoint_config.provider_config.base_url)
+
+    # Get formatted model name
+    llm_model_name = _get_llm_model_name(provider, model_name)
+
+    logger.info(f"Creating LLM model: {llm_model_name}")
+
+    # Special handling for different providers
+    if provider == "ollama":
+        # For Ollama, use the configured base URL directly
         return OpenAIModel(
-            model_name=endpoint_config.provider_config.model_name,
+            model_name=model_name,
             provider=OpenAIProvider(
-                base_url=base_url_str,
-                api_key=endpoint_config.api_key,
+                base_url=base_url,
+                api_key="not-required",
+            ),
+        )
+    elif provider == "openai":
+        # For OpenAI, use standard OpenAI endpoint
+        return OpenAIModel(
+            model_name=model_name,
+            provider=OpenAIProvider(
+                api_key=api_key or "not-required",
+            ),
+        )
+    elif provider in ["openrouter", "github"]:
+        # For OpenRouter and GitHub, use their custom base URLs with OpenAI format
+        return OpenAIModel(
+            model_name=model_name,
+            provider=OpenAIProvider(
+                base_url=base_url,
+                api_key=api_key or "not-required",
+            ),
+        )
+    elif provider == "gemini":
+        # For Gemini, we need to use Google's Gemini model directly
+        # Since PydanticAI supports Gemini natively, import and use it
+        try:
+            from pydantic_ai.models.gemini import GeminiModel
+
+            return GeminiModel(model_name=model_name)
+        except ImportError:
+            logger.warning("GeminiModel not available, falling back to OpenAI format")
+            # Fallback to OpenAI format with custom base URL
+            return OpenAIModel(
+                model_name=model_name,
+                provider=OpenAIProvider(
+                    base_url=base_url,
+                    api_key=api_key or "not-required",
+                ),
+            )
+    else:
+        # For other providers, use their configured base URLs with OpenAI format
+        return OpenAIModel(
+            model_name=model_name,
+            provider=OpenAIProvider(
+                base_url=base_url,
+                api_key=api_key or "not-required",
             ),
         )
 
@@ -103,18 +179,19 @@ def get_models(
 ) -> ModelDict:
     """
     Get the models for the system agents.
+
     Args:
         endpoint_config (EndpointConfig): Configuration for the model.
-        include_analyist (Optional[bool]): Whether to include the analyst model.
-            Defaults to False.
-        include_synthesiser (Optional[bool]): Whether to include the synthesiser model.
-            Defaults to False.
+        include_researcher (bool): Whether to include the researcher model.
+        include_analyst (bool): Whether to include the analyst model.
+        include_synthesiser (bool): Whether to include the synthesiser model.
+
     Returns:
-        Dict[str, GeminiModel | OpenAIModel]: A dictionary containing the models for the
-            system agents.
+        ModelDict: A dictionary containing compatible models for the system
+            agents.
     """
 
-    model = _create_model(endpoint_config)
+    model = _create_llm_model(endpoint_config)
     return ModelDict.model_validate(
         {
             "model_manager": model,
@@ -123,3 +200,20 @@ def get_models(
             "model_synthesiser": model if include_synthesiser else None,
         }
     )
+
+
+def setup_llm_environment(api_keys: dict[str, str]) -> None:
+    """
+    Set up LLM environment variables for API keys.
+
+    Args:
+        api_keys: Dictionary mapping provider names to API keys.
+    """
+    import os
+
+    # Set environment variables for LLM
+    for provider, api_key in api_keys.items():
+        if api_key and api_key.strip():
+            env_var = f"{provider.upper()}_API_KEY"
+            os.environ[env_var] = api_key
+            logger.info(f"Set environment variable: {env_var}")

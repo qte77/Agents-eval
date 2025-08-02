@@ -33,7 +33,12 @@ from pydantic_ai.common_tools.duckduckgo import (
 )
 from pydantic_ai.usage import UsageLimits
 
-from app.agents.llm_model_funs import get_api_key, get_models, get_provider_config
+from app.agents.llm_model_funs import (
+    get_api_key,
+    get_models,
+    get_provider_config,
+    setup_llm_environment,
+)
 from app.agents.peerread_tools import (
     add_peerread_review_tools_to_manager,
     add_peerread_tools_to_manager,
@@ -47,6 +52,7 @@ from app.data_models.app_models import (
     ModelDict,
     ProviderConfig,
     ResearchResult,
+    ResearchResultSimple,
     ResearchSummary,
     ResultBaseType,
     UserPromptType,
@@ -60,6 +66,7 @@ def _add_tools_to_manager_agent(
     research_agent: Agent[None, BaseModel] | None = None,
     analysis_agent: Agent[None, BaseModel] | None = None,
     synthesis_agent: Agent[None, BaseModel] | None = None,
+    result_type: type[ResearchResult | ResearchResultSimple] = ResearchResult,
 ):
     """
     Adds tools to the manager agent for delegating tasks to research, analysis, and
@@ -85,7 +92,7 @@ def _add_tools_to_manager_agent(
         except ValidationError as e:
             msg = invalid_data_model_format(str(e))
             logger.error(msg)
-            raise ValidationError(msg)
+            raise e
         except Exception as e:
             msg = generic_exception(str(e))
             logger.exception(msg)
@@ -98,10 +105,14 @@ def _add_tools_to_manager_agent(
         # ignore "delegate_research" is not accessed because of decorator
         async def delegate_research(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
-        ) -> ResearchResult:
+        ) -> ResearchResult | ResearchResultSimple:
             """Delegate research task to ResearchAgent."""
             result = await research_agent.run(query, usage=ctx.usage)
-            return _validate_model_return(str(result.output), ResearchResult)
+            # result.output is already a ResearchResult/ResearchResultSimple object
+            if isinstance(result.output, ResearchResult | ResearchResultSimple):
+                return result.output
+            else:
+                return _validate_model_return(str(result.output), result_type)
 
     if analysis_agent is not None:
 
@@ -112,7 +123,11 @@ def _add_tools_to_manager_agent(
         ) -> AnalysisResult:
             """Delegate analysis task to AnalysisAgent."""
             result = await analysis_agent.run(query, usage=ctx.usage)
-            return _validate_model_return(str(result.output), AnalysisResult)
+            # result.output is already an AnalysisResult object from the agent
+            if isinstance(result.output, AnalysisResult):
+                return result.output
+            else:
+                return _validate_model_return(str(result.output), AnalysisResult)
 
     if synthesis_agent is not None:
 
@@ -123,7 +138,11 @@ def _add_tools_to_manager_agent(
         ) -> ResearchSummary:
             """Delegate synthesis task to AnalysisAgent."""
             result = await synthesis_agent.run(query, usage=ctx.usage)
-            return _validate_model_return(str(result.output), ResearchSummary)
+            # result.output is already a ResearchSummary object from the agent
+            if isinstance(result.output, ResearchSummary):
+                return result.output
+            else:
+                return _validate_model_return(str(result.output), ResearchSummary)
 
 
 def _create_agent(agent_config: AgentConfig) -> Agent[None, BaseModel]:
@@ -138,9 +157,29 @@ def _create_agent(agent_config: AgentConfig) -> Agent[None, BaseModel]:
     )
 
 
+def _get_research_result_type(
+    provider: str,
+) -> type[ResearchResult | ResearchResultSimple]:
+    """
+    Select appropriate ResearchResult model based on provider capabilities.
+
+    Args:
+        provider: The provider name (e.g., 'gemini', 'openai', etc.)
+
+    Returns:
+        ResearchResultSimple for Gemini (no additionalProperties support)
+        ResearchResult for other providers (supports flexible union types)
+    """
+    # Gemini doesn't support additionalProperties in JSON schema
+    if provider.lower() == "gemini":
+        return ResearchResultSimple
+    return ResearchResult
+
+
 def _create_manager(
     prompts: dict[str, str],
     models: ModelDict,
+    provider: str,
 ) -> Agent[None, BaseModel]:
     """
     Creates and configures a manager Agent with associated researcher, analyst,
@@ -178,11 +217,14 @@ def _create_manager(
     status += f" with agents: {', '.join(active_agents)}" if active_agents else ""
     logger.info(status)
 
+    # Select appropriate result type based on provider capabilities
+    result_type = _get_research_result_type(provider)
+
     manager = _create_agent(
         AgentConfig.model_validate(
             {
                 "model": models.model_manager,
-                "output_type": ResearchResult,
+                "output_type": result_type,
                 "system_prompt": prompts["system_prompt_manager"],
             }
         )
@@ -195,7 +237,7 @@ def _create_manager(
             AgentConfig.model_validate(
                 {
                     "model": models.model_researcher,
-                    "output_type": ResearchResult,
+                    "output_type": result_type,
                     "system_prompt": prompts["system_prompt_researcher"],
                     "tools": [duckduckgo_search_tool()],
                 }
@@ -228,7 +270,7 @@ def _create_manager(
             )
         )
 
-    _add_tools_to_manager_agent(manager, researcher, analyst, synthesiser)
+    _add_tools_to_manager_agent(manager, researcher, analyst, synthesiser, result_type)
     add_peerread_tools_to_manager(manager)
 
     return manager
@@ -274,7 +316,7 @@ def get_manager(
     models = get_models(
         model_config, include_researcher, include_analyst, include_synthesiser
     )
-    manager = _create_manager(prompts, models)
+    manager = _create_manager(prompts, models, provider)
 
     # Conditionally add review tools based on flag
     def conditionally_add_review_tools(
@@ -393,6 +435,20 @@ def setup_agent_env(
 
     prompts = chat_config.prompts
     is_api_key, api_key_msg = get_api_key(provider, chat_env_config)
+
+    # Set up LLM environment with all available API keys
+    api_keys = {
+        "openai": chat_env_config.OPENAI_API_KEY,
+        "anthropic": chat_env_config.ANTHROPIC_API_KEY,
+        "gemini": chat_env_config.GEMINI_API_KEY,
+        "github": chat_env_config.GITHUB_API_KEY,
+        "grok": chat_env_config.GROK_API_KEY,
+        "huggingface": chat_env_config.HUGGINGFACE_API_KEY,
+        "openrouter": chat_env_config.OPENROUTER_API_KEY,
+        "perplexity": chat_env_config.PERPLEXITY_API_KEY,
+        "together": chat_env_config.TOGETHER_API_KEY,
+    }
+    setup_llm_environment(api_keys)
 
     if provider.lower() != "ollama" and not is_api_key:
         msg = f"API key for provider '{provider}' is not set."
