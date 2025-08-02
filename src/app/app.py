@@ -62,8 +62,22 @@ async def main(
     logger.info(f"Starting app '{PROJECT_NAME}' v{__version__}")
 
     # Handle download-only mode (setup phase)
-    if download_peerread_full_only or download_peerread_samples_only:
-        logger.info("Download-only mode activated")
+    if download_peerread_full_only:
+        logger.info("Full download-only mode activated")
+        try:
+            download_peerread_dataset(
+                peerread_max_papers_per_sample_download=None
+            )
+            logger.info("Setup completed successfully. Exiting.")
+            return
+        except Exception as e:
+            logger.error(f"Setup failed: {e}")
+            raise
+
+    if download_peerread_samples_only:
+        logger.info(
+            f"Downloading only {peerread_max_papers_per_sample_download} samples"
+        )
         try:
             download_peerread_dataset(peerread_max_papers_per_sample_download)
             logger.info("Setup completed successfully. Exiting.")

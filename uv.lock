@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = "==3.13.*"
 resolution-markers = [
     "sys_platform == 'linux'",
@@ -41,6 +41,7 @@ dependencies = [
     { name = "agentops" },
     { name = "datasets" },
     { name = "google-genai" },
+    { name = "httpx" },
     { name = "logfire" },
     { name = "loguru" },
     { name = "markitdown", extra = ["pdf"] },
@@ -84,6 +85,7 @@ requires-dist = [
     { name = "agentops", specifier = ">=0.4.14" },
     { name = "datasets", specifier = ">=4.0.0" },
     { name = "google-genai", specifier = ">=1.26.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "logfire", specifier = ">=3.16.1" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "markitdown", extras = ["pdf"], specifier = ">=0.1.2" },

@@ -34,8 +34,8 @@ def download_peerread_dataset(
     to the configured path and verifies the download was successful.
 
     Args:
-        max_papers_per_split: The maximum number of papers to download per split.
-                              If None, downloads all papers up to the config limit.
+        peerread_max_papers_per_sample_download: The maximum number of papers to
+            download. If None, downloads all papers it can find.
 
     Raises:
         Exception: If download or verification fails.
