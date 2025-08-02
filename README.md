@@ -28,7 +28,7 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 ## Setup and Usage
 
 - `make setup_prod`
-- `make setup_dev` or `make setup_dev_claude` or `make setup_dev_ollama`
+- `make setup_dev` or `make setup_dev_ollama`
 - `make run_cli` or `make run_cli ARGS="--help"`
 - `make run_gui`
 - `make test_all`

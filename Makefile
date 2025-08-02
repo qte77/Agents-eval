@@ -12,8 +12,9 @@
 SRC_PATH := src
 APP_PATH := $(SRC_PATH)/app
 CLI_PATH := $(SRC_PATH)/run_cli.py
+CONFIG_PATH := $(APP_PATH)/config
 GUI_PATH_ST := $(SRC_PATH)/run_gui.py
-CHAT_CFG_FILE := $(APP_PATH)/config_chat.json
+CHAT_CFG_FILE := $(CONFIG_PATH)/config_chat.json
 OLLAMA_SETUP_URL := https://ollama.com/install.sh
 OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
 PRP_DEF_PATH := /context/PRPs/features
