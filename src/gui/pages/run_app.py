@@ -6,6 +6,8 @@ for users to select a provider, enter a query, and execute the main agent workfl
 Results and errors are displayed in real time, supporting asynchronous execution.
 """
 
+from pathlib import Path
+
 from streamlit import button, exception, header, info, subheader, text_input, warning
 
 from app.main import main
@@ -23,7 +25,9 @@ from gui.config.text import (
 )
 
 
-async def render_app(provider: str | None = None):
+async def render_app(
+    provider: str | None = None, chat_config_file: str | Path | None = None
+):
     """
     Render the main app interface for running agentic queries via Streamlit.
 
@@ -42,7 +46,11 @@ async def render_app(provider: str | None = None):
         if query:
             info(f"{RUN_APP_QUERY_RUN_INFO} {query}")
             try:
-                result = await main(chat_provider=provider, query=query)
+                result = await main(
+                    chat_provider=provider,
+                    query=query,
+                    chat_config_file=chat_config_file,
+                )
                 render_output(result)
             except Exception as e:
                 render_output(None)

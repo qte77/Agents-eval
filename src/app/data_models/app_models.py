@@ -25,11 +25,19 @@ ResultBaseType = TypeVar(
 
 
 class ResearchResult(BaseModel):
-    """Research results from the research agent."""
+    """Research results from the research agent with flexible structure."""
 
     topic: str | dict[str, str]
     findings: list[str] | dict[str, str | list[str]]
-    sources: list[str] | dict[str, str | list[str]]
+    sources: list[str | HttpUrl] | dict[str, str | HttpUrl | list[str | HttpUrl]]
+
+
+class ResearchResultSimple(BaseModel):
+    """Simplified research results for Gemini compatibility."""
+
+    topic: str
+    findings: list[str]
+    sources: list[str]
 
 
 class AnalysisResult(BaseModel):
@@ -55,6 +63,8 @@ class ProviderConfig(BaseModel):
 
     model_name: str
     base_url: HttpUrl
+    usage_limits: int | None = None
+    max_content_length: int | None = 15000
 
 
 class ChatConfig(BaseModel):
@@ -127,10 +137,12 @@ class AppEnv(BaseSettings):
     """
 
     # Inference endpoints
+    ANTHROPIC_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
     GITHUB_API_KEY: str = ""
     GROK_API_KEY: str = ""
     HUGGINGFACE_API_KEY: str = ""
+    OPENAI_API_KEY: str = ""
     OPENROUTER_API_KEY: str = ""
     PERPLEXITY_API_KEY: str = ""
     RESTACK_API_KEY: str = ""

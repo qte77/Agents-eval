@@ -1,0 +1,29 @@
+{
+    "peerread": {
+        "base_url": "https://github.com/allenai/PeerRead/tree/master/data",
+        "cache_directory": "datasets/peerread",
+        "venues": [
+            "acl_2017",
+            "arxiv.cs.ai_2007-2017",
+            "arxiv.cs.cl_2007-2017", 
+            "arxiv.cs.lg_2007-2017",
+            "conll_2016", 
+            "iclr_2017"
+        ],
+        "splits": [
+            "train",
+            "test",
+            "dev"
+        ],
+        "max_papers_per_query": 100,
+        "download_timeout": 30,
+        "retry_attempts": 3,
+        "github_api_base_url": "https://api.github.com/repos/allenai/PeerRead/contents/data",
+        "raw_github_base_url": "https://raw.githubusercontent.com/allenai/PeerRead/master/data",
+        "similarity_metrics": {
+            "semantic_weight": 0.5,
+            "cosine_weight": 0.3,
+            "jaccard_weight": 0.2
+        }
+    }
+}

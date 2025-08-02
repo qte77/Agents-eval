@@ -45,3 +45,6 @@ site/
 
 # project specific
 wandb/
+data/
+test_data/
+datasets/

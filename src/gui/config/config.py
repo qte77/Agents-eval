@@ -1,4 +1,4 @@
-APP_PATH = "app"
+APP_CONFIG_PATH = "app/config"
 PAGES = ["Home", "Settings", "Prompts", "App"]
 PROMPTS_DEFAULT = {
     "system_prompt_manager": (

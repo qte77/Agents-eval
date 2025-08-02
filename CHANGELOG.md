@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -26,17 +28,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2025-07-25
+
+### Added
+
+- PeerRead dataset functionality
+- PeerRead agent usage documentation to reflect new architecture with `data_models` instead of `datamodels` path structure
+- Eval functionality in spearate system
+- Gemini CLI as fallback for Claude Code CLI
+
 ## [2.0.0] - 2025-07-06
 
 ### Added
 
-- Claude code functionality, commands and settings
+- Claude Code CLI commands and settings
 
 ## [1.1.0] - 2025-07-05
 
 ### Added
 
-- Makefile command and devcontainer.json for claude code usage
+- Makefile command and devcontainer.json for Claude Code CLI usage
 
 ### Changed
 
