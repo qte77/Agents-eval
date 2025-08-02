@@ -10,7 +10,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.datamodels.app_models import ChatConfig
+from app.data_models.app_models import ChatConfig
 from app.utils.error_messages import (
     failed_to_load_config,
     file_not_found,

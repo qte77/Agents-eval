@@ -55,6 +55,8 @@ class ProviderConfig(BaseModel):
 
     model_name: str
     base_url: HttpUrl
+    usage_limits: int | None = None
+    max_content_length: int | None = 15000
 
 
 class ChatConfig(BaseModel):

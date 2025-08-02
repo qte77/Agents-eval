@@ -31,6 +31,7 @@
 
 ### Important files
 
+- `CTX_FRP_TEMPLATE = ${CTX_TEMPLATES_PATH}/2_frp_base.md`: Code pattern examples and best practices for agents
 - `${CTX_EXAMPLES_PATH}/code-patterns.md`: Code pattern examples and best practices for agents
 
 ## GUI

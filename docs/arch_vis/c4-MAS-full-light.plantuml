@@ -1,0 +1,41 @@
+@startuml
+!theme plain
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_LEFT_RIGHT()
+' LAYOUT_WITH_LEGEND()
+
+Person(user, "User", "Runs the platform via CLI, Streamlit, or CI workflows")
+System(config, "Configuration", "Provides runtime settings for models, providers, prompts, datasets")
+
+System_Boundary(agents_eval, "Agents-eval Platform") {
+
+    System_Boundary(mas_boundary, "Multi-Agent System (MAS)") {
+        System(mas_core, "MAS Core", "Multi-agent orchestration for review generation")
+    }
+    ContainerDb(datasets, "Review Storage", "File System", "JSON files with generated reviews")
+    System_Boundary(eval_boundary, "Evaluation System") {
+        System(eval_core, "Evaluation Core", "Similarity analysis and metrics calculation")
+    }
+
+    mas_boundary-[hidden]-> datasets
+    datasets-[hidden]-> eval_core
+}
+
+' ------ High-Level Data Flows ------
+Rel(user, agents_eval, "Initiate tasks", "CLI/Streamlit")
+Rel(user, config, "Adjusts for tasks", "CLI/Streamlit")
+Rel(config, agents_eval, "Provides runtime settings", "JSON")
+
+Rel(mas_core, datasets, "Save generated reviews", "File I/O")
+Rel(eval_core, datasets, "Load saved reviews", "File I/O")
+
+' ------ Clear Separation Notes ------
+note left of mas_boundary : **MAS Scope:**\nPDF → Review Generation → File Storage\nNo evaluation logic
+note top of datasets: **Clean Interface**\nMAS outputs datasets here\nEval system reads from here\nNo direct coupling
+note top of eval_boundary : **Evaluation Scope:**\nFile Storage → Similarity Analysis → Results\nIndependent of MAS
+
+' SHOW_LEGEND()
+
+@enduml

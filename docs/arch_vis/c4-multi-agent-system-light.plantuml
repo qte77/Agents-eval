@@ -3,36 +3,64 @@
 
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
-LAYOUT_WITH_LEGEND()
+LAYOUT_LEFT_RIGHT()
+' LAYOUT_WITH_LEGEND()
 
 Person(user, "User", "Runs the platform via CLI, Streamlit, or CI workflows")
+System(config, "Configuration", "Provides runtime settings for models, providers, prompts, datasets")
+
+System_Boundary(agents_eval, "Agents-eval Platform") {
+    Container(main_app, "Main Application", "Python", "CLI+GUI entrypoint, orchestrates agents/sessions")
+
+    Container(eval, "Eval System", "Python+JSON", "Evaluates reviews against ground truth")
+    Container(agent_system, "Agent System", "Python/PydanticAI", "Multi-agent orchestration (Manager/Researcher/Analyst/Synthesizer)")
+
+    Container(datasets, "Dataset Integration", "Python+JSON", "Loads and provides access to benchmark datasets (e.g., PeerRead)")
+
+    Container(review_storage, "Review Storage", "File System", "Persistent storage for generated reviews (JSON files)")
+    Container(dataset_storage, "Dataset Storage", "File System", "Persistent storage for downloaded datasets (JSON+PDF)")
+
+    ' Enforce vertical stacking:
+    main_app -[hidden]-> eval
+    main_app -[hidden]-> agent_system
+
+    agent_system -[hidden]-> datasets
+    eval -[hidden]-> datasets
+
+    datasets -[hidden]-> review_storage
+    datasets -[hidden]-> dataset_storage
+
+    ' Optional: keep review_storage and dataset_storage side-by-side by not linking them vertically
+}
 
 System_Boundary(external_providers, "External Providers") {
     System_Ext(llm_providers, "LLM Providers", "Anthropic, Gemini, Ollama, OpenRouter, HuggingFace, etc.")
     System_Ext(tools, "Tools/Search APIs", "DuckDuckGo, Tavily, etc.")
     System_Ext(obs, "Observability", "WandB, Logfire, AgentOps")
+    System_Ext(dataset_ext, "Dataset", "PeerRead")
+
+    llm_providers  -[hidden]-> tools
+    tools-[hidden]-> obs
+    obs-[hidden]-> dataset_ext
 }
 
-System_Boundary(agents_eval, "Agents-eval Platform") {
+' Relationships (example)
+Rel(user, main_app, "Submits review generation tasks", "CLI/Streamlit")
+Rel(user, config, "Adjusts for tasks", "CLI/Streamlit")
+Rel(config, main_app, "Provides runtime settings", "JSON")
+Rel(main_app, agent_system, "Initiates agent tasks", "PydanticAI")
+Rel(main_app, eval, "Initiates evaluation tasks", "PydanticAI")
+Rel(agent_system, datasets, "Provides papers/data", "Dataset API")
+Rel(eval, datasets, "Provides papers/data", "Dataset API")
+Rel(datasets, review_storage, "Saves reviews", "File I/O")
+Rel(datasets, dataset_storage, "Saves datasets", "File I/O")
 
-    ' ------ Software System Containers ------
-    Container(main_app, "Main Application", "Python", "CLI+GUI entrypoint, orchestrates agents/sessions")
-    Container(agent_system, "Agent System", "Python/PydanticAI", "Multi-agent orchestration (Manager/Researcher/Analyst/Synthesizer)")
-    Container(datasets, "Datasets", "Python+JSON", "Loads, validates, and exposes benchmark datasets (e.g., PeerRead)")
-    Container(metrics, "Evaluation Metrics", "Python", "Implements and scores agent behavior against configurable metrics")
-    Container(config, "Configuration", "JSON/Pydantic", "Provider, model, prompts, eval weights, dataset config")
+' Dotted relations for external services
+Rel_D(eval, llm_providers, "Queries", "LLM-as-a-Judge")
+Rel_D(agent_system, llm_providers, "Queries", "chat/completion")
+Rel_D(agent_system, tools, "Queries", "API")
+Rel_D(agent_system, obs, "Sends", "logger, introspection")
+Rel_D(datasets, dataset_ext, "Gets", "http")
 
-    ' ------ Key Data Flows ------
-    Rel(user, main_app, "Submits tasks, views results, provides feedback", "CLI/Streamlit")
-    Rel(main_app, agent_system, "Initiates, monitors agent tasks", "PydanticAI")
-    Rel(config, main_app, "Provides runtime settings", "JSON")
-    Rel(datasets, agent_system, "Provides benchmark tasks/data")
-    Rel(metrics, agent_system, "Provides metrics calculation")
-    Rel(agent_system, llm_providers, "Queries", "chat/completion")
-    Rel(agent_system, tools, "Queries", "API")
-    Rel(agent_system, obs, "Sends", "logger, introspection")
-}
-
-SHOW_LEGEND()
-
+' SHOW_LEGEND()
 @enduml

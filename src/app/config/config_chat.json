@@ -2,44 +2,60 @@
     "providers": {
         "huggingface": {
             "model_name": "facebook/bart-large-mnli",
-            "base_url": "https://router.huggingface.co/hf-inference/models"
+            "base_url": "https://router.huggingface.co/hf-inference/models",
+            "usage_limits": 25000,
+            "max_content_length": 15000
         },
         "gemini": {
             "model_name": "gemini-1.5-flash-8b",
-            "base_url": "https://generativelanguage.googleapis.com/v1beta"
+            "base_url": "https://generativelanguage.googleapis.com/v1beta",
+            "usage_limits": 25000,
+            "max_content_length": 15000
         },
         "github": {
             "model_name": "GPT-4o",
-            "base_url": "https://models.inference.ai.azure.com"
+            "base_url": "https://models.inference.ai.azure.com",
+            "usage_limits": 25000,
+            "max_content_length": 8000
         },
         "grok": {
             "model_name": "grok-2-1212",
-            "base_url": "https://api.x.ai/v1"
+            "base_url": "https://api.x.ai/v1",
+            "usage_limits": 25000,
+            "max_content_length": 15000
         },
         "ollama": {
             "model_name": "granite3-dense",
-            "base_url": "http://localhost:11434/v1"
+            "base_url": "http://localhost:11434/v1",
+            "usage_limits": 100000,
+            "max_content_length": 15000
         },
         "openrouter": {
             "model_name": "google/gemini-2.0-flash-exp:free",
-            "base_url": "https://openrouter.ai/api/v1"
+            "base_url": "https://openrouter.ai/api/v1",
+            "usage_limits": 25000,
+            "max_content_length": 15000
         },
         "perplexity": {
             "model_name": "sonar",
-            "base_url": "https://api.perplexity.ai"
+            "base_url": "https://api.perplexity.ai",
+            "usage_limits": 25000,
+            "max_content_length": 15000
         },
         "restack": {
             "model_name": "deepseek-chat",
-            "base_url": "https://ai.restack.io"
+            "base_url": "https://ai.restack.io",
+            "usage_limits": 25000,
+            "max_content_length": 15000
         },
         "together": {
             "model_name": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
-            "base_url": "https://api.together.xyz/v1"
+            "base_url": "https://api.together.xyz/v1",
+            "usage_limits": 25000,
+            "max_content_length": 15000
         }
     },
     "inference": {
-        "usage_limits": 10000,
-        "usage_limits_ollama": 10000,
         "result_retries": 3,
         "result_retries_ollama": 3
     },
@@ -47,6 +63,8 @@
         "system_prompt_manager": "You are a manager overseeing research and analysis tasks. Your role is to coordinate the efforts of the research, analysis and synthesiser agents to provide comprehensive answers to user queries. The researcher should gather and analyze data relevant to the topic. The whole result must be handed to the analyst, who will check it for accuracy of the assumptions, facts, and conclusions. If an analyst is present the researchers output has to be approved by the analyst. If the analyst does not approve of the researcher's result, all of the analyst's response and the topic must be handed back to the researcher to be refined. Repeat this loop until the analyst approves. If a sysnthesiser is present and once the analyst approves, the synthesiser should output a well formatted scientific report using the data given.",
         "system_prompt_researcher": "You are a researcher. Gather and analyze data relevant to the topic. Use the search tool to gather data. Always check accuracy of assumptions, facts, and conclusions.",
         "system_prompt_analyst": "You are a research analyst. Use your analytical skills to check the accuracy of assumptions, facts, and conclusions in the data provided. Provide relevant feedback if you do not approve. Only approve if you do not have any feedback to give.",
-        "system_prompt_synthesiser": "You are a scientific writing assistant. Your task is to output a well formatted scientific report using the data given. Leave the privided facts, conclusions and sources unchanged."
+        "system_prompt_synthesiser": "You are a scientific writing assistant. Your task is to output a well formatted scientific report using the data given. Leave the privided facts, conclusions and sources unchanged.",
+        "default_query": "What would you like to research today? Please provide a topic or question for the multi-agent research system to investigate.",
+        "paper_review_query": "Generate a structured peer review for paper '{paper_number}' from PeerRead dataset. Follow these steps:\\n1. Call get_peerread_paper with paper_id='{paper_number}'\\n2. Call generate_structured_review with paper_id='{paper_number}'\\n3. Call save_structured_review with the generated review\\nUse exact paper_id '{paper_number}' in all tool calls. The review must follow structured format with ratings."
     }
 }

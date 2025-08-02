@@ -9,7 +9,12 @@ CHAT_DEFAULT_PROVIDER = "github"
 PROJECT_NAME = "rd-mas-example"
 
 
-# MARK: paths
-CHAT_CONFIG_FILE = "config/config_chat.json"
+# MARK: paths, files
+CHAT_CONFIG_FILE = "config_chat.json"
 LOGS_PATH = "logs"
-EVAL_CONFIG_FILE = "config/config_eval.json"
+EVAL_CONFIG_FILE = "config_eval.json"
+DATASETS_PATH = "datasets"
+DATASETS_CONFIG_FILE = "config_datasets.json"
+DATASETS_PEERREAD_PATH = f"{DATASETS_PATH}/peerread"
+MAS_REVIEWS_PATH = f"{DATASETS_PEERREAD_PATH}/MAS_reviews"
+REVIEW_PROMPT_TEMPLATE = "review_template.txt"

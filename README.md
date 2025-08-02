@@ -33,13 +33,6 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 - `make run_gui`
 - `make test_all`
 
-### Configuration
-
-- [config_app.py](src/app/config/config_app.py) contains configuration constants for the application.
-- [config_chat.json](src/app/config/config_chat.json) contains inference provider configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
-- [config_eval.json](src/app/config/config_eval.json) contains evaluation metrics and their weights.
-- [data_models.py](src/app/config/data_models.py) contains the pydantic data models for agent system configuration and results.
-
 ### Environment
 
 [.env.example](.env.example) contains examples for usage of API keys and variables.
@@ -55,6 +48,51 @@ TAVILY_API_KEY=""
 WANDB_API_KEY="xyz"
 ```
 
+### Configuration
+
+- [config_app.py](src/app/config/config_app.py) contains configuration constants for the application.
+- [config_chat.json](src/app/config/config_chat.json) contains inference provider configuration and prompts. inference endpoints used should adhere to [OpenAI Model Spec 2024-05-08](https://cdn.openai.com/spec/model-spec-2024-05-08.html) which is used by [pydantic-ai OpenAI-compatible Models](https://ai.pydantic.dev/models/#openai-compatible-models).
+- [config_eval.json](src/app/config/config_eval.json) contains evaluation metrics and their weights.
+- [data_models.py](src/app/config/data_models.py) contains the pydantic data models for agent system configuration and results.
+
+### Note
+
+1. The contained chat configuration uses free inference endpoints which are subject to change by the providers. See lists such as [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) to find other providers.
+2. The contained chat configuration uses models which are also subject to change by the providers and have to be updated from time to time.
+3. LLM-as-judge is also subject to the chat configuration.
+
+## Context Framework for AI Agents
+
+This project includes a comprehensive context framework for AI coding agents. It can be used to implement new features using a top-down approach. The user has to provide feature descriptions which will then be transformed into Feature Request Prompts (FRPs) which in turn will be transformed into code implementation.
+
+### Core Components
+
+- **AGENTS.md**: North star document with project patterns, conventions, and quality evaluation framework
+- **FRP Workflow**: Feature Requirements Prompt generation and execution system
+  1. `context/templates/1_feature_description.md`: User provides feature description, e.g., by using this template
+  2. `.claude/commands/generate-frp.md`: Creates comprehensive implementation prompts from feature descriptions
+  3. `.claude/commands/execute-frp.md`: Executes features using generated FRPs with structured validation
+
+### Agent Development Workflow
+
+1. **Follow AGENTS.md** - Read project conventions, patterns, and quality standards
+2. **Generate FRP** - Use `generate-frp.md` command for comprehensive feature planning and research
+3. **Execute Implementation** - Use `execute-frp.md` command for structured development with quality gates
+
+### Quality Framework Integration
+
+- Built-in quality evaluation with minimum thresholds (Context: 8/10, Clarity: 7/10, Alignment: 8/10, Success: 7/10)
+- BDD/TDD approach integration following project patterns
+- Automatic validation using unified command reference with error recovery
+- TodoWrite tool integration for progress tracking and transparency
+
+### For AI Agents: Quick Start
+
+1. **Read the North Star**: Start with [AGENTS.md](AGENTS.md) for project patterns and conventions
+2. **Generate FRP**: Use `/generate-frp <feature-name>` command in Claude Code
+3. **Execute Implementation**: Use `/execute-frp <feature-name>` command with generated FRP
+4. **Follow Quality Gates**: Ensure all AGENTS.md thresholds are met before proceeding
+
 ### Customer Journey and User Story
 
 Have a look at the [example user story](docs/UserStory.md).
@@ -64,12 +102,6 @@ Have a look at the [example user story](docs/UserStory.md).
   <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
   <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
 </details>
-
-### Note
-
-1. The contained chat configuration uses free inference endpoints which are subject to change by the providers. See lists such as [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) to find other providers.
-2. The contained chat configuration uses models which are also subject to change by the providers and have to be updated from time to time.
-3. LLM-as-judge is also subject to the chat configuration.
 
 ## Documentation
 
@@ -122,7 +154,17 @@ Have a look at the [example user story](docs/UserStory.md).
 
 ### Datasets used
 
-`# TODO`
+#### PeerRead Scientific Paper Review Dataset
+
+The system includes comprehensive integration with the [PeerRead dataset](https://github.com/allenai/PeerRead) for scientific paper review evaluation:
+
+- **Purpose**: Generate and evaluate scientific paper reviews using the Multi-Agent System
+- **Architecture**: Clean separation between review generation (MAS) and evaluation (external system)
+- **Workflow**:
+  1. **MAS**: PDF → Review Generation → Persistent Storage (`src/app/data_utils/reviews/`)
+  2. **External Evaluation**: Load Reviews → Similarity Analysis → Results
+- **Documentation**: See [PeerRead Agent Usage Guide](docs/peerread-agent-usage.md)
+- **Architecture Diagram**: [Refactored PeerRead System](docs/arch_vis/c4-refactored-peerread-system.plantuml)
 
 ### LLM-as-a-Judge
 
@@ -167,12 +209,24 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 ### Project Repo Structure
 
 ```sh
-|- .claude  # claude code config and commands
+|- .claude  # AI agent framework and commands
+   |- commands
+      |- generate-frp.md  # FRP generation command
+      \- execute-frp.md   # FRP execution command
 |- .devcontainer  # pre-configured dev env
 |- .github  # workflows
 |- .streamlit  # config.toml
 |- .vscode  # extensions, settings
 |- assets/images
+|- context  # AI agent context framework
+   |- config
+      \- paths.md  # path variables and definitions
+   |- templates
+      \- 2_frp_base.md  # FRP template with quality framework
+   |- features  # feature descriptions for FRP generation
+   |- FRPs  # generated feature requirements prompts
+   |- examples  # code patterns and examples
+   \- logs  # agent execution logs
 |- docs
 |- src  # source code
    |- app
@@ -190,7 +244,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 |- .env.example  # example env vars
 |- .gitignore
 |- .gitmessage
-|- AGENTS.md  # common file adhering to agentsmd.com
+|- AGENTS.md  # north star document for AI agents (agentsmd.com)
 |- CHANGEOG.md  # short project history
 |- CLAUDE.md  # points to AGENTS.md
 |- Dockerfile  # create app image

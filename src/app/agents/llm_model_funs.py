@@ -6,50 +6,54 @@ to create model instances for supported LLM providers such as Gemini and OpenAI.
 It also includes logic for assembling model dictionaries for system agents.
 """
 
-from pydantic import HttpUrl
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
-from src.app.config.config_app import API_SUFFIX
-from src.app.datamodels.app_models import (
+from app.config.config_app import API_SUFFIX
+from app.data_models.app_models import (
     AppEnv,
     EndpointConfig,
     ModelDict,
     ProviderConfig,
 )
-from src.app.utils.error_messages import generic_exception, get_key_error
-from src.app.utils.log import logger
+from app.utils.error_messages import generic_exception, get_key_error
+from app.utils.log import logger
 
 
 def get_api_key(
     provider: str,
     chat_env_config: AppEnv,
-) -> str | None:
+) -> tuple[bool, str]:
     """Retrieve API key from chat env config variable."""
 
     provider = provider.upper()
     if provider == "OLLAMA":
-        return None
+        return (False, "Ollama does not require an API key.")
     else:
         key_name = f"{provider}{API_SUFFIX}"
-        if hasattr(chat_env_config, key_name):
-            logger.info(f"Found API key for provider '{provider}'")
-            return getattr(chat_env_config, key_name)
+        key_content = getattr(chat_env_config, key_name)
+        if (
+            hasattr(chat_env_config, key_name)
+            and key_content is not None
+            and key_content != ""
+        ):
+            logger.info(f"Found API key for provider: '{provider}'")
+            return (True, getattr(chat_env_config, key_name))
         else:
-            raise KeyError(
-                f"API key for provider '{provider}' not found in configuration."
+            return (
+                False,
+                f"API key for provider '{provider}' not found in configuration.",
             )
 
 
 def get_provider_config(
     provider: str, providers: dict[str, ProviderConfig]
-) -> dict[str, str | HttpUrl]:
+) -> ProviderConfig:
     """Retrieve configuration settings for the specified provider."""
 
     try:
-        model_name = providers[provider].model_name
-        base_url = providers[provider].base_url
+        return providers[provider]
     except KeyError as e:
         msg = get_key_error(str(e))
         logger.error(msg)
@@ -58,21 +62,15 @@ def get_provider_config(
         msg = generic_exception(str(e))
         logger.exception(msg)
         raise Exception(msg)
-    else:
-        return {
-            "model_name": model_name,
-            "base_url": base_url,
-        }
 
 
-def _create_model(endpoint_config: EndpointConfig) -> GeminiModel | OpenAIModel:
+def _create_model(
+    endpoint_config: EndpointConfig,
+) -> GeminiModel | OpenAIModel:
     """Create a model that uses model_name and base_url for inference API"""
 
     if endpoint_config.provider.lower() == "gemini":
-        # FIXME EndpointConfig: TypeError: 'ModelRequest' object is not iterable.
-        raise NotImplementedError(
-            "Current typing raises TypeError: 'ModelRequest' object is not iterable."
-        )
+        return GeminiModel(model_name=endpoint_config.provider_config.model_name)
     elif endpoint_config.provider.lower() == "huggingface":
         # FIXME HF not working with pydantic-ai OpenAI model
         raise NotImplementedError(

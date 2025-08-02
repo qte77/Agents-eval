@@ -28,12 +28,17 @@ Functions:
 
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
-from pydantic_ai.messages import ModelRequest
+from pydantic_ai.common_tools.duckduckgo import (
+    duckduckgo_search_tool,  # type: ignore[reportUnknownVariableType]
+)
 from pydantic_ai.usage import UsageLimits
 
-from src.app.agents.llm_model_funs import get_api_key, get_models, get_provider_config
-from src.app.datamodels.app_models import (
+from app.agents.llm_model_funs import get_api_key, get_models, get_provider_config
+from app.agents.peerread_tools import (
+    add_peerread_review_tools_to_manager,
+    add_peerread_tools_to_manager,
+)
+from app.data_models.app_models import (
     AgentConfig,
     AnalysisResult,
     AppEnv,
@@ -46,8 +51,8 @@ from src.app.datamodels.app_models import (
     ResultBaseType,
     UserPromptType,
 )
-from src.app.utils.error_messages import generic_exception, invalid_data_model_format
-from src.app.utils.log import logger
+from app.utils.error_messages import generic_exception, invalid_data_model_format
+from app.utils.log import logger
 
 
 def _add_tools_to_manager_agent(
@@ -224,6 +229,8 @@ def _create_manager(
         )
 
     _add_tools_to_manager_agent(manager, researcher, analyst, synthesiser)
+    add_peerread_tools_to_manager(manager)
+
     return manager
 
 
@@ -235,6 +242,7 @@ def get_manager(
     include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
+    enable_review_tools: bool = False,
 ) -> Agent[None, BaseModel]:
     """
     Initializes and returns a Agent manager with the specified configuration.
@@ -266,7 +274,35 @@ def get_manager(
     models = get_models(
         model_config, include_researcher, include_analyst, include_synthesiser
     )
-    return _create_manager(prompts, models)
+    manager = _create_manager(prompts, models)
+
+    # Conditionally add review tools based on flag
+    def conditionally_add_review_tools(
+        manager: Agent[None, BaseModel],
+        enable: bool = False,
+        max_content_length: int = 15000,
+    ):
+        """Conditionally add review persistence tools to the manager.
+
+        Args:
+            manager: The manager agent to potentially add tools to.
+            enable: Flag to determine whether to add review tools.
+            max_content_length: The maximum number of characters to include in the
+                prompt.
+        """
+        if enable:
+            add_peerread_review_tools_to_manager(
+                manager, max_content_length=max_content_length
+            )
+        return manager
+
+    max_content_length = provider_config.max_content_length or 15000
+
+    return conditionally_add_review_tools(
+        manager,
+        enable=enable_review_tools,
+        max_content_length=max_content_length,
+    )
 
 
 async def run_manager(
@@ -297,29 +333,33 @@ async def run_manager(
     mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
 
-    if pydantic_ai_stream:
-        raise NotImplementedError(
-            "Streaming currently only possible for Agents with "
-            "output_type str not pydantic model"
-        )
-        # logger.info("Streaming model response ...")
-        # result = await manager.run(**mgr_cfg)
-        # aync for chunk in result.stream_text():  # .run(**mgr_cfg) as result:
-        # async with manager.run_stream(user_prompt=query) as stream:
-        #    async for chunk in stream.stream_text():
-        #        logger.info(str(chunk))
-        # result = await stream.get_result()
-    else:
-        logger.info("Waiting for model response ...")
-        # FIXME deprecated warning manager.run(), query unknown type
-        # FIXME [call-overload] error: No overload variant of "run" of "Agent"
-        # matches argument type "dict[str, list[dict[str, str]] |
-        # Sequence[str | ImageUrl | AudioUrl | DocumentUrl | VideoUrl |
-        # BinaryContent] | UsageLimits | None]"
-        result = await manager.run(**mgr_cfg)  # type: ignore[reportDeprecated,reportUnknownArgumentType,reportCallOverload,call-overload]
-
-    logger.info(f"Result: {result}")
-    logger.info(f"Usage statistics: {result.usage()}")
+    try:
+        if pydantic_ai_stream:
+            raise NotImplementedError(
+                "Streaming currently only possible for Agents with "
+                "output_type str not pydantic model"
+            )
+            # logger.info("Streaming model response ...")
+            # result = await manager.run(**mgr_cfg)
+            # aync for chunk in result.stream_text():  # .run(**mgr_cfg) as result:
+            # async with manager.run_stream(user_prompt=query) as stream:
+            #    async for chunk in stream.stream_text():
+            #        logger.info(str(chunk))
+            # result = await stream.get_result()
+        else:
+            logger.info("Waiting for model response ...")
+            # FIXME deprecated warning manager.run(), query unknown type
+            # FIXME [call-overload] error: No overload variant of "run" of "Agent"
+            # matches argument type "dict[str, list[dict[str, str]] |
+            # Sequence[str | ImageUrl | AudioUrl | DocumentUrl | VideoUrl |
+            # BinaryContent] | UsageLimits | None]"
+            result = await manager.run(**mgr_cfg)  # type: ignore[reportDeprecated,reportUnknownArgumentType,reportCallOverload,call-overload]
+        logger.info(f"Result: {result}")
+        # FIXME  # type: ignore
+        logger.info(f"Usage statistics: {result.usage()}")  # type: ignore
+    except Exception as e:
+        logger.error(f"Error in run_manager: {e}")
+        raise
 
 
 def setup_agent_env(
@@ -352,42 +392,49 @@ def setup_agent_env(
     provider_config = get_provider_config(provider, chat_config.providers)
 
     prompts = chat_config.prompts
-    api_key = get_api_key(provider, chat_env_config)
+    is_api_key, api_key_msg = get_api_key(provider, chat_env_config)
 
-    if provider.lower() == "ollama":
-        # TODO move usage limits to config
-        usage_limits = UsageLimits(request_limit=10, total_tokens_limit=100000)
-    else:
-        if api_key is None:
-            msg = f"API key for provider '{provider}' is not set."
-            logger.error(msg)
-            raise ValueError(msg)
-        # TODO Separate Gemini request into function
-        if provider.lower() == "gemini":
-            if isinstance(query, str):
-                query = ModelRequest.user_text_prompt(query)
-            elif isinstance(query, list):  # type: ignore[reportUnnecessaryIsInstance]
-                # query = [
-                #    ModelRequest.user_text_prompt(
-                #        str(msg.get("content", ""))
-                #    )  # type: ignore[reportUnknownArgumentType]
-                #    if isinstance(msg, dict)
-                #    else msg
-                #    for msg in query
-                # ]
-                raise NotImplementedError("Currently conflicting with UserPromptType")
-            else:
-                msg = f"Unsupported query type for Gemini: {type(query)}"
-                logger.error(msg)
-                raise TypeError(msg)
-        # TODO move usage limits to config
-        usage_limits = UsageLimits(request_limit=10, total_tokens_limit=10000)
+    if provider.lower() != "ollama" and not is_api_key:
+        msg = f"API key for provider '{provider}' is not set."
+        logger.error(msg)
+        raise ValueError(msg)
+
+    # TODO Separate Gemini request into function
+    # FIXME GeminiModel not compatible with pydantic-ai OpenAIModel
+    # ModelRequest not iterable
+    # Input should be 'STOP', 'MAX_TOKENS' or 'SAFETY'
+    # [type=literal_error, input_value='MALFORMED_FUNCTION_CALL', input_type=str]
+    # For further information visit https://errors.pydantic.dev/2.11/v/literal_error
+    # if provider.lower() == "gemini":
+    #     if isinstance(query, str):
+    #         query = ModelRequest.user_text_prompt(query)
+    #     elif isinstance(query, list):  # type: ignore[reportUnnecessaryIsInstance]
+    #         # query = [
+    #         #    ModelRequest.user_text_prompt(
+    #         #        str(msg.get("content", ""))
+    #         #    )  # type: ignore[reportUnknownArgumentType]
+    #         #    if isinstance(msg, dict)
+    #         #    else msg
+    #         #    for msg in query
+    #         # ]
+    #         raise NotImplementedError("Currently conflicting with UserPromptType")
+    #     else:
+    #         msg = f"Unsupported query type for Gemini: {type(query)}"
+    #         logger.error(msg)
+    #         raise TypeError(msg)
+
+    # Load usage limits from config instead of hardcoding
+    usage_limits = None
+    if provider_config.usage_limits is not None:
+        usage_limits = UsageLimits(
+            request_limit=10, total_tokens_limit=provider_config.usage_limits
+        )
 
     return EndpointConfig.model_validate(
         {
             "provider": provider,
             "query": query,
-            "api_key": api_key,
+            "api_key": api_key_msg,
             "prompts": prompts,
             "provider_config": provider_config,
             "usage_limits": usage_limits,
