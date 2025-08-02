@@ -10,7 +10,7 @@ from json import JSONDecodeError, dump, load
 from time import sleep
 from typing import Any
 
-import requests
+from httpx import Client, HTTPStatusError, RequestError
 
 from app.config.config_app import DATASETS_CONFIG_FILE
 from app.data_models.peerread_models import (
@@ -166,12 +166,11 @@ class PeerReadDownloader:
         self.config = config
         # Resolve cache directory relative to project root
         self.cache_dir = resolve_project_path(config.cache_directory)
-        self.session = requests.Session()
+        headers: dict[str, str] = {}
         if chat_config.GITHUB_API_KEY:
             logger.info("Using GitHub API key for authenticated requests")
-            self.session.headers.update(
-                {"Authorization": f"token {chat_config.GITHUB_API_KEY}"}
-            )
+            headers["Authorization"] = f"token {chat_config.GITHUB_API_KEY}"
+        self.client = Client(headers=headers)
 
     def _construct_url(
         self,
@@ -244,7 +243,7 @@ class PeerReadDownloader:
             logger.info(
                 f"Discovering {data_type} files in {venue}/{split} via GitHub API"
             )
-            response = self.session.get(api_url, timeout=self.config.download_timeout)
+            response = self.client.get(api_url, timeout=self.config.download_timeout)
             response.raise_for_status()
 
             files_data = response.json()
@@ -267,7 +266,7 @@ class PeerReadDownloader:
             logger.info(f"Found {len(paper_ids)} {data_type} files in {venue}/{split}")
             return sorted(paper_ids)
 
-        except requests.exceptions.RequestException as e:
+        except RequestError as e:
             logger.error(
                 f"Failed to discover {data_type} files for {venue}/{split}: {e}"
             )
@@ -309,7 +308,7 @@ class PeerReadDownloader:
                     f"(Attempt {attempt + 1}/{self.config.max_retries})"
                 )
 
-                response = self.session.get(url, timeout=self.config.download_timeout)
+                response = self.client.get(url, timeout=self.config.download_timeout)
                 response.raise_for_status()
 
                 # Return JSON for .json files, bytes for PDFs
@@ -318,7 +317,7 @@ class PeerReadDownloader:
                 else:  # PDFs
                     return response.content
 
-            except requests.exceptions.HTTPError as e:
+            except HTTPStatusError as e:
                 if e.response.status_code == 429:
                     logger.warning(
                         f"Rate limit hit for {data_type}/{paper_id}. "
@@ -328,7 +327,7 @@ class PeerReadDownloader:
                 else:
                     logger.error(f"Failed to download {data_type}/{paper_id}: {e}")
                     return None
-            except requests.exceptions.RequestException as e:
+            except RequestError as e:
                 logger.error(f"Failed to download {data_type}/{paper_id}: {e}")
                 return None
             except JSONDecodeError as e:
