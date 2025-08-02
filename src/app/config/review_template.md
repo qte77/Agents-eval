@@ -1,0 +1,23 @@
+# Review Template
+
+Based on the paper with TITLE "{paper_title}", ABSTRACT "{paper_abstract}" and FULL PAPER CONTENT "{paper_full_content}", please provide a structured peer review.
+
+Generate your review following this exact structure to provide specific, constructive feedback with a {tone} TONE and {review_focus} FOCUS.
+
+- IMPACT: Rate the impact of this work on a scale of 1-5 (1=minimal, 5=high impact)
+- SUBSTANCE: Rate the substance/depth of the work on a scale of 1-5 (1=shallow, 5=substantial)
+- APPROPRIATENESS: Rate how appropriate the work is for the venue on a scale of 1-5 (1=inappropriate, 5=very appropriate)
+- MEANINGFUL_COMPARISON: Rate how well the work compares to related work on a scale of 1-5 (1=poor comparison, 5=excellent comparison)
+- PRESENTATION_FORMAT: Specify whether this work should be presented as "Poster" or "Oral"
+- SOUNDNESS_CORRECTNESS: Rate the technical soundness and correctness on a scale of 1-5 (1=many errors, 5=very sound)
+- ORIGINALITY: Rate the originality of the work on a scale of 1-5 (1=not original, 5=highly original)
+- RECOMMENDATION: Provide an overall recommendation score on a scale of 1-5 (1=strong reject, 2=reject, 3=borderline, 4=accept, 5=strong accept)
+- CLARITY: Rate the clarity of the presentation on a scale of 1-5 (1=very unclear, 5=very clear)
+- REVIEWER_CONFIDENCE: Rate your confidence in this review on a scale of 1-5 (1=low confidence, 5=high confidence)
+- COMMENTS: Provide concise, focused and factual review comments covering:
+  - Summary of the paper's contributions
+  - Strengths of the work
+  - Weaknesses and areas for improvement
+  - Technical soundness assessment
+  - Clarity and presentation quality
+  - Suggestions for improvement

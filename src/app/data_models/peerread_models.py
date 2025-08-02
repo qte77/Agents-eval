@@ -229,10 +229,16 @@ class ReviewGenerationResult(BaseModel):
     Contains the structured review along with metadata.
     """
 
-    paper_id: str = Field(..., description="Unique paper identifier")
-    review: GeneratedReview = Field(..., description="The structured review")
+    paper_id: str = Field(
+        ..., description=("The unique paper identifier provided by PeerRead")
+    )
+    review: GeneratedReview = Field(
+        ..., description="The structured review povided by LLM"
+    )
     timestamp: str = Field(..., description="Generation timestamp in ISO format")
-    model_info: str = Field(..., description="Information about the generating model")
-
-
-# Evaluation models moved to separate module for separation of concerns
+    model_info: str = Field(
+        ...,
+        description=(
+            "Information about the generating model: your model name, version, etc."
+        ),
+    )

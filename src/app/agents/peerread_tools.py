@@ -157,155 +157,7 @@ def add_peerread_review_tools_to_manager(
     """
 
     @manager_agent.tool
-    async def generate_structured_review(  # type: ignore[reportUnusedFunction]
-        ctx: RunContext[None],
-        paper_id: str,
-        tone: str = "professional",
-        review_focus: str = "comprehensive",
-    ) -> GeneratedReview:
-        """Generate a structured peer review using the validated data model.
-
-        This tool ensures the LLM output adheres to the proper review structure
-        with all required fields and proper validation.
-
-        Args:
-            paper_id: Unique identifier for the paper being reviewed.
-            tone: Tone of the review (professional, constructive, critical).
-            review_focus: Type of review (comprehensive, technical, high-level).
-
-        Returns:
-            GeneratedReview: Structured review object with validated fields.
-        """
-
-        try:
-            # Get paper metadata
-            config = load_peerread_config()
-            loader = PeerReadLoader(config)
-            paper = loader.get_paper_by_id(paper_id)
-
-            if not paper:
-                raise ValueError(f"Paper {paper_id} not found in PeerRead dataset")
-
-            # Attempt to load parsed PDF content first
-            paper_content_for_prompt = loader.load_parsed_pdf_content(paper_id)
-
-            if not paper_content_for_prompt:
-                logger.warning(
-                    f"No parsed PDF content found for paper {paper_id}. "
-                    "Attempting to read raw PDF."
-                )
-                raw_pdf_path = loader.get_raw_pdf_path(paper_id)
-                if raw_pdf_path:
-                    try:
-                        paper_content_for_prompt = read_paper_pdf(ctx, raw_pdf_path)
-                        logger.info(f"Successfully read raw PDF for paper {paper_id}.")
-                    except Exception as e:
-                        logger.warning(
-                            f"Failed to read raw PDF for paper {paper_id}: {e}. "
-                            "No paper content available."
-                        )
-                else:
-                    logger.warning(
-                        f"No raw PDF found for paper {paper_id}. "
-                        "No paper content available."
-                    )
-
-            if not paper_content_for_prompt:
-                error_msg = (
-                    f"Cannot generate review for paper {paper_id}: "
-                    "No parsed PDF or raw PDF content available."
-                )
-                logger.error(error_msg)
-                raise ValueError(error_msg)
-
-            # Load review template
-            template_path = get_review_template_path()
-
-            try:
-                with open(template_path, encoding="utf-8") as f:
-                    template_content = f.read()
-
-                paper_content_len = len(paper_content_for_prompt)
-
-                full_len = (
-                    paper_content_len
-                    + len(paper.title)
-                    + len(paper.abstract)
-                    + len(tone)
-                    + len(review_focus)
-                    + len(template_content)
-                )
-
-                if full_len > max_content_length:
-                    # FIXME use tokens instead of chars
-                    logger.warning(
-                        f"Total content length ({full_len}) exceeds "
-                        f"{max_content_length} chars. "
-                        "Truncating paper content to fit context window."
-                    )
-                    paper_content_len = (
-                        full_len - max_content_length - paper_content_len
-                    )
-                    paper_content_for_prompt = paper_content_for_prompt[
-                        :paper_content_len
-                    ]
-
-                logger.info(
-                    f"Using {paper_content_len} chars of paper content "
-                    f"for review generation for max {max_content_length} model tokens."
-                )
-
-                # Format the template with paper information
-                review_prompt = template_content.format(
-                    paper_title=paper.title,
-                    paper_abstract=paper.abstract,
-                    paper_full_content=paper_content_for_prompt,
-                    tone=tone,
-                    review_focus=review_focus,
-                )
-                # existing_reviews = len(paper.reviews)
-
-                logger.info(f"Generating structured review for paper {paper_id}")
-
-                # This function template will be processed by the LLM
-                # The return type GeneratedReview ensures structured output
-                # The actual review generation happens via the agent's LLM call
-                # returning the paper_content as context for the LLM to process
-                # Return a dummy structured review - this will be overridden by
-                # the LLM's structured output based on the return type hint
-
-                # FIXME review generation should be done by the LLM
-                # This is just a placeholder to demonstrate the structure
-
-                return GeneratedReview(
-                    impact=4,
-                    substance=4,
-                    appropriateness=4,
-                    meaningful_comparison=3,
-                    presentation_format="Oral",
-                    comments=review_prompt,
-                    soundness_correctness=4,
-                    originality=3,
-                    recommendation=4,
-                    clarity=4,
-                    reviewer_confidence=4,
-                )
-
-            except FileNotFoundError:
-                logger.error(f"Review template file not found at {template_path}")
-                raise ValueError(
-                    f"Review template configuration file missing: {template_path}"
-                )
-            except Exception as e:
-                logger.error(f"Error loading review template: {e}")
-                raise ValueError(f"Failed to load review template: {str(e)}")
-
-        except Exception as e:
-            logger.error(f"Error generating structured review: {e}")
-            raise ValueError(f"Failed to generate structured review: {str(e)}")
-
-    @manager_agent.tool
-    async def generate_paper_review_template(  # type: ignore[reportUnusedFunction]
+    async def generate_paper_review_content_from_template(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None],
         paper_id: str,
         review_focus: str = "comprehensive",
@@ -334,20 +186,48 @@ def add_peerread_review_tools_to_manager(
             if not paper:
                 raise ValueError(f"Paper {paper_id} not found in PeerRead dataset")
 
+            # Load paper content for the template
+            paper_content_for_template = loader.load_parsed_pdf_content(paper_id)
+
+            if not paper_content_for_template:
+                logger.warning(
+                    f"No parsed PDF content found for paper {paper_id}. "
+                    "Attempting to read raw PDF."
+                )
+                raw_pdf_path = loader.get_raw_pdf_path(paper_id)
+                if raw_pdf_path:
+                    try:
+                        paper_content_for_template = read_paper_pdf(ctx, raw_pdf_path)
+                        logger.info(f"Successfully read raw PDF for paper {paper_id}.")
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to read raw PDF for paper {paper_id}: {e}. "
+                            "Using abstract as fallback."
+                        )
+                        paper_content_for_template = paper.abstract
+                else:
+                    logger.warning(
+                        f"No raw PDF found for paper {paper_id}. "
+                        "Using abstract as fallback."
+                    )
+                    paper_content_for_template = paper.abstract
+
             # Use centralized path resolution for template
             template_path = get_review_template_path()
 
             try:
                 with open(template_path, encoding="utf-8") as f:
                     template_content = f.read()
+                # TODO max content length handling for models
+                # full_input_contenxt_len > max_content_length
 
-                # Format the template with paper information
+                # Format the template with paper information including full content
                 review_template = template_content.format(
                     paper_title=paper.title,
                     paper_abstract=paper.abstract,
+                    paper_full_content=paper_content_for_template,
                     tone=tone,
                     review_focus=review_focus,
-                    paper_id=paper_id,
                 )
 
             except FileNotFoundError:
