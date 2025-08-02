@@ -66,10 +66,13 @@ send_to_logfire="if-token-present"
 
 [tool.pyright]
 include = ["src/app"]
-# extraPaths = ["src"]
+extraPaths = ["./venv/lib/python3.13/site-packages"]
 useLibraryCodeForTypes = true
 pythonVersion = "3.13"
 typeCheckingMode = "strict"
+reportMissingTypeStubs = "none"
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
 
 [tool.ruff]
 target-version = "py313"
