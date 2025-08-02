@@ -65,9 +65,7 @@ async def main(
     if download_peerread_full_only:
         logger.info("Full download-only mode activated")
         try:
-            download_peerread_dataset(
-                peerread_max_papers_per_sample_download=None
-            )
+            download_peerread_dataset(peerread_max_papers_per_sample_download=None)
             logger.info("Setup completed successfully. Exiting.")
             return
         except Exception as e:

@@ -2,7 +2,16 @@
 
 from pathlib import Path
 
-from app.config.config_app import REVIEW_PROMPT_TEMPLATE
+from app.config.config_app import CONFIGS_PATH, REVIEW_PROMPT_TEMPLATE
+
+
+def get_project_root() -> Path:
+    """Get the project root directory.
+
+    Returns:
+        Path: Absolute path to the project root directory.
+    """
+    return get_app_root().parent.parent
 
 
 def get_app_root() -> Path:
@@ -13,6 +22,18 @@ def get_app_root() -> Path:
     """
 
     return Path(__file__).parent.parent
+
+
+def resolve_project_path(relative_path: str) -> Path:
+    """Resolve a path relative to the project root.
+
+    Args:
+        relative_path: Path relative to the project root directory.
+
+    Returns:
+        Path: Absolute path resolved from the project root.
+    """
+    return get_project_root() / relative_path
 
 
 def resolve_app_path(relative_path: str) -> Path:
@@ -37,7 +58,7 @@ def get_config_dir() -> Path:
     Returns:
         Path: Absolute path to the src/app/config directory.
     """
-    return get_app_root() / "config"
+    return get_app_root() / CONFIGS_PATH
 
 
 def resolve_config_path(filename: str) -> Path:

@@ -19,8 +19,9 @@ from app.data_models.peerread_models import (
     PeerReadPaper,
     PeerReadReview,
 )
+from app.utils.load_settings import chat_config
 from app.utils.log import logger
-from app.utils.paths import resolve_app_path, resolve_config_path
+from app.utils.paths import resolve_config_path, resolve_project_path
 
 
 def download_peerread_dataset(
@@ -112,9 +113,10 @@ def download_peerread_dataset(
             logger.warning(
                 "Some downloads failed, but continuing (this may be expected)"
             )
+            raise Exception(f"Failed to download from {len(failed_downloads)} sources.")
 
-        if total_downloaded == 0:
-            raise Exception("No papers were downloaded successfully")
+        if total_downloaded == 0 and verification_count == 0:
+            raise Exception("No papers were downloaded or verified successfully")
 
         logger.info(
             "✓ PeerRead dataset download and verification completed successfully"
@@ -162,12 +164,21 @@ class PeerReadDownloader:
             config: PeerRead dataset configuration.
         """
         self.config = config
-        # Resolve cache directory relative to src/app
-        self.cache_dir = resolve_app_path(config.cache_directory)
+        # Resolve cache directory relative to project root
+        self.cache_dir = resolve_project_path(config.cache_directory)
         self.session = requests.Session()
+        if chat_config.GITHUB_API_KEY:
+            logger.info("Using GitHub API key for authenticated requests")
+            self.session.headers.update(
+                {"Authorization": f"token {chat_config.GITHUB_API_KEY}"}
+            )
 
     def _construct_url(
-        self, venue: str, split: str, data_type: str, paper_id: str
+        self,
+        venue: str,
+        split: str,
+        data_type: str,
+        paper_id: str,
     ) -> str:
         """Construct download URL for specific file.
 
@@ -211,7 +222,10 @@ class PeerReadDownloader:
         )
 
     def _discover_available_files(
-        self, venue: str, split: str, data_type: str
+        self,
+        venue: str,
+        split: str,
+        data_type: str,
     ) -> list[str]:
         """Discover available files in a GitHub repository directory.
 
@@ -266,7 +280,11 @@ class PeerReadDownloader:
             return []
 
     def download_file(
-        self, venue: str, split: str, data_type: str, paper_id: str
+        self,
+        venue: str,
+        split: str,
+        data_type: str,
+        paper_id: str,
     ) -> bytes | dict[str, Any] | None:
         """Download a single file.
 
@@ -323,7 +341,10 @@ class PeerReadDownloader:
         return None
 
     def download_venue_split(
-        self, venue: str, split: str, max_papers: int | None = None
+        self,
+        venue: str,
+        split: str,
+        max_papers: int | None = None,
     ) -> DownloadResult:
         """Download all files for a venue/split combination across all data types.
 
@@ -434,8 +455,8 @@ class PeerReadLoader:
             config: PeerRead dataset configuration. Loads from file if None.
         """
         self.config = config or load_peerread_config()
-        # Resolve cache directory relative to src/app
-        self.cache_dir = resolve_app_path(self.config.cache_directory)
+        # Resolve cache directory relative to project root
+        self.cache_dir = resolve_project_path(self.config.cache_directory)
 
     def load_parsed_pdf_content(self, paper_id: str) -> str | None:
         """Load the text content from the parsed PDF for a given paper ID.
@@ -496,7 +517,8 @@ class PeerReadLoader:
         return None
 
     def _validate_papers(
-        self, papers_data: list[dict[str, Any]]
+        self,
+        papers_data: list[dict[str, Any]],
     ) -> list[PeerReadPaper]:
         """Validate and convert paper data to Pydantic models.
 
@@ -549,7 +571,9 @@ class PeerReadLoader:
         return validated_papers
 
     def load_papers(
-        self, venue: str = "acl_2017", split: str = "train"
+        self,
+        venue: str = "acl_2017",
+        split: str = "train",
     ) -> list[PeerReadPaper]:
         """Load papers from cached data or download if needed.
 
