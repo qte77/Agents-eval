@@ -54,6 +54,9 @@ setup_dev:  ## Install uv and deps, Download and start Ollama
 	echo "Setting up dev environment ..."
 	pip install uv -q
 	uv sync --all-groups
+	echo "npm version: $$(npm --version)"
+	$(MAKE) -s setup_claude_code
+	$(MAKE) -s setup_gemini_cli
 
 setup_prod_ollama:
 	$(MAKE) -s setup_prod
@@ -65,23 +68,14 @@ setup_dev_ollama:
 	$(MAKE) -s setup_ollama
 	$(MAKE) -s start_ollama
 
-setup_dev_claude:
-	echo "Starting setup ..."
-	echo "npm version: $$(npm --version)"
-	$(MAKE) -s setup_dev
-	$(MAKE) -s setup_claude_code
-	$(MAKE) -s setup_gemini_cli
-
 setup_claude_code:  ## Setup claude code CLI, node.js and npm have to be present
-	echo "Setting up claude code ..."
-	npm install -g @anthropic-ai/claude-code
-	claude config set --global preferredNotifChannel terminal_bell
-	echo "npm version: $$(npm --version)"
-	claude --version
+	echo "Setting up Claude Code CLI ..."
+	npm install -gs @anthropic-ai/claude-code	
+	echo "Claude Code CLI version: $$(claude --version)"
 
 setup_gemini_cli:  ## Setup Gemini CLI, node.js and npm have to be present
 	echo "Setting up Gemini CLI ..."
-	npm install -g @google/gemini-cli
+	npm install -gs @google/gemini-cli
 	echo "Gemini CLI version: $$(gemini --version)"
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
