@@ -5,6 +5,7 @@ This module provides agent tools that enable the manager agent to interact
 with the PeerRead dataset for paper retrieval, querying, and review evaluation.
 """
 
+from json import dump
 from pathlib import Path
 
 from markitdown import MarkItDown
@@ -465,9 +466,7 @@ def add_peerread_review_tools_to_manager(
             # Save structured version alongside
             structured_path = filepath.replace(".json", "_structured.json")
             with open(structured_path, "w", encoding="utf-8") as f:
-                import json
-
-                json.dump(result.model_dump(), f, indent=2, ensure_ascii=False)
+                dump(result.model_dump(), f, indent=2, ensure_ascii=False)
 
             logger.info(f"Saved structured review for paper {paper_id} to {filepath}")
             return filepath

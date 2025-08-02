@@ -57,6 +57,7 @@ from app.data_models.app_models import (
     ResultBaseType,
     UserPromptType,
 )
+from app.data_models.peerread_models import ReviewGenerationResult
 from app.utils.error_messages import generic_exception, invalid_data_model_format
 from app.utils.log import logger
 
@@ -66,7 +67,9 @@ def _add_tools_to_manager_agent(
     research_agent: Agent[None, BaseModel] | None = None,
     analysis_agent: Agent[None, BaseModel] | None = None,
     synthesis_agent: Agent[None, BaseModel] | None = None,
-    result_type: type[ResearchResult | ResearchResultSimple] = ResearchResult,
+    result_type: type[
+        ResearchResult | ResearchResultSimple | ReviewGenerationResult
+    ] = ResearchResult,
 ):
     """
     Adds tools to the manager agent for delegating tasks to research, analysis, and
@@ -105,11 +108,14 @@ def _add_tools_to_manager_agent(
         # ignore "delegate_research" is not accessed because of decorator
         async def delegate_research(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
-        ) -> ResearchResult | ResearchResultSimple:
+        ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
             """Delegate research task to ResearchAgent."""
             result = await research_agent.run(query, usage=ctx.usage)
-            # result.output is already a ResearchResult/ResearchResultSimple object
-            if isinstance(result.output, ResearchResult | ResearchResultSimple):
+            # result.output is already a result object from the agent
+            if isinstance(
+                result.output,
+                ResearchResult | ResearchResultSimple | ReviewGenerationResult,
+            ):
                 return result.output
             else:
                 return _validate_model_return(str(result.output), result_type)
@@ -157,19 +163,27 @@ def _create_agent(agent_config: AgentConfig) -> Agent[None, BaseModel]:
     )
 
 
-def _get_research_result_type(
+def _get_result_type(
     provider: str,
-) -> type[ResearchResult | ResearchResultSimple]:
+    enable_review_tools: bool = False,
+) -> type[ResearchResult | ResearchResultSimple | ReviewGenerationResult]:
     """
-    Select appropriate ResearchResult model based on provider capabilities.
+    Select appropriate result model based on provider and tool configuration.
 
     Args:
         provider: The provider name (e.g., 'gemini', 'openai', etc.)
+        enable_review_tools: Whether review tools are enabled for paper reviews
 
     Returns:
+        ReviewGenerationResult when review tools are enabled
         ResearchResultSimple for Gemini (no additionalProperties support)
         ResearchResult for other providers (supports flexible union types)
     """
+    # When review tools are enabled, always use ReviewGenerationResult
+    if enable_review_tools:
+        return ReviewGenerationResult
+
+    # For research tasks, select based on provider capabilities
     # Gemini doesn't support additionalProperties in JSON schema
     if provider.lower() == "gemini":
         return ResearchResultSimple
@@ -180,6 +194,7 @@ def _create_manager(
     prompts: dict[str, str],
     models: ModelDict,
     provider: str,
+    enable_review_tools: bool = False,
 ) -> Agent[None, BaseModel]:
     """
     Creates and configures a manager Agent with associated researcher, analyst,
@@ -217,8 +232,8 @@ def _create_manager(
     status += f" with agents: {', '.join(active_agents)}" if active_agents else ""
     logger.info(status)
 
-    # Select appropriate result type based on provider capabilities
-    result_type = _get_research_result_type(provider)
+    # Select appropriate result type based on provider and tool configuration
+    result_type = _get_result_type(provider, enable_review_tools)
 
     manager = _create_agent(
         AgentConfig.model_validate(
@@ -316,7 +331,7 @@ def get_manager(
     models = get_models(
         model_config, include_researcher, include_analyst, include_synthesiser
     )
-    manager = _create_manager(prompts, models, provider)
+    manager = _create_manager(prompts, models, provider, enable_review_tools)
 
     # Conditionally add review tools based on flag
     def conditionally_add_review_tools(
