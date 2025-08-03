@@ -1,9 +1,9 @@
 # Agents-eval
 
-This project aims to implement an evaluation pipeline to assess the effectiveness of open-source agentic AI systems across various use cases, focusing on use case agnostic metrics that measure core capabilities such as task decomposition, tool integration, adaptability, and overall performance.
+This project aims to implement an evaluation pipeline to assess the effectiveness of open-source agentic AI systems using the PeerRead dataset. Nonetheless intending to focusing on use case agnostic metrics that measure core capabilities such as task decomposition, tool integration, adaptability, and overall performance.
 
-![License](https://img.shields.io/badge/license-BSD3Clause-58f4c2.svg)
-![Version](https://img.shields.io/badge/version-2.1.0-58f4c2.svg)
+[![License](https://img.shields.io/badge/license-BSD3Clause-58f4c2.svg)](LICENSE.md)
+![Version](https://img.shields.io/badge/version-3.0.0-58f4c2.svg)
 [![CodeQL](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml)
 [![CodeFactor](https://www.codefactor.io/repository/github/qte77/Agents-eval/badge)](https://www.codefactor.io/repository/github/qte77/Agents-eval)
 [![ruff](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml)
@@ -61,39 +61,15 @@ WANDB_API_KEY="xyz"
 2. The contained chat configuration uses models which are also subject to change by the providers and have to be updated from time to time.
 3. LLM-as-judge is also subject to the chat configuration.
 
-## Context Framework for AI Agents
+## Documentation
 
-This project includes a comprehensive context framework for AI coding agents. It can be used to implement new features using a top-down approach. The user has to provide feature descriptions which will then be transformed into Feature Request Prompts (FRPs) which in turn will be transformed into code implementation.
+[Agents-eval](https://qte77.github.io/Agents-eval)
 
-### Core Components
+### Project Outline
 
-- **AGENTS.md**: North star document with project patterns, conventions, and quality evaluation framework
-- **FRP Workflow**: Feature Requirements Prompt generation and execution system
-  1. `context/templates/1_feature_description.md`: User provides feature description, e.g., by using this template
-  2. `.claude/commands/generate-frp.md`: Creates comprehensive implementation prompts from feature descriptions
-  3. `.claude/commands/execute-frp.md`: Executes features using generated FRPs with structured validation
+`# TODO`
 
-### Agent Development Workflow
-
-1. **Follow AGENTS.md** - Read project conventions, patterns, and quality standards
-2. **Generate FRP** - Use `generate-frp.md` command for comprehensive feature planning and research
-3. **Execute Implementation** - Use `execute-frp.md` command for structured development with quality gates
-
-### Quality Framework Integration
-
-- Built-in quality evaluation with minimum thresholds (Context: 8/10, Clarity: 7/10, Alignment: 8/10, Success: 7/10)
-- BDD/TDD approach integration following project patterns
-- Automatic validation using unified command reference with error recovery
-- TodoWrite tool integration for progress tracking and transparency
-
-### For AI Agents: Quick Start
-
-1. **Read the North Star**: Start with [AGENTS.md](AGENTS.md) for project patterns and conventions
-2. **Generate FRP**: Use `/generate-frp <feature-name>` command in Claude Code
-3. **Execute Implementation**: Use `/execute-frp <feature-name>` command with generated FRP
-4. **Follow Quality Gates**: Ensure all AGENTS.md thresholds are met before proceeding
-
-### Customer Journey and User Story
+## Customer Journey and User Story
 
 Have a look at the [example user story](docs/UserStory.md).
 
@@ -104,14 +80,6 @@ Have a look at the [example user story](docs/UserStory.md).
   <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
 </details>
 <!-- markdownlint-enable MD033 -->
-
-## Documentation
-
-[Agents-eval](https://qte77.github.io/Agents-eval)
-
-### Project Outline
-
-`# TODO`
 
 ### Agents
 
@@ -154,7 +122,7 @@ Have a look at the [example user story](docs/UserStory.md).
   - Maintains the original facts, conclusions, and sources.
 - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
 
-### Datasets used
+### Dataset used
 
 #### PeerRead Scientific Paper Review Dataset
 
@@ -167,6 +135,15 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
   2. **External Evaluation**: Load Reviews → Similarity Analysis → Results
 - **Documentation**: See [PeerRead Agent Usage Guide](docs/peerread-agent-usage.md)
 - **Architecture Diagram**: [Refactored PeerRead System](docs/arch_vis/c4-refactored-peerread-system.plantuml)
+
+### Review Workflow
+
+<!-- markdownlint-disable MD033 -->
+<details>
+  <summary>Show Review Workflow</summary>
+  <img src="assets/images/MAS-review-workflow-light.png#gh-light-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
+  <img src="assets/images/MAS-review-workflow-dark.png#gh-dark-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
+</details>
 
 ### LLM-as-a-Judge
 
@@ -194,7 +171,7 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 <!-- markdownlint-disable MD033 -->
 <details>
   <summary>Eval Metrics Sweep</summary>
-  <img src="assets/images/metrics-eval-sweep.png" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
+  <img src="assets/images/metrics-eval-sweep.png#gh-light-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
 </details>
 <!-- markdownlint-enable MD033 -->
 
@@ -359,7 +336,9 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 ## Further Reading
 
-- [[2506.18096] Deep Research Agents: A Systematic Examination And Roadmap](https://arxiv.org/abs/2506.18096), [gh / ai-agents-2030 / awesome-deep-research-agent](https://github.com/ai-agents-2030/awesome-deep-research-agent)
+- [[2507.21046] A SURVEY OF SELF-EVOLVING AGENTS: ON PATH TO ARTIFICIAL SUPER INTELLIGENCE](https://arxiv.org/abs/2507.21046), [gh/CharlesQ9/Self-Evolving-Agents](https://github.com/CharlesQ9/Self-Evolving-Agents)
+- [[2506.18096] Deep Research Agents: A Systematic Examination And Roadmap](https://arxiv.org/abs/2506.18096), [gh/ai-agents-2030/awesome-deep-research-agent](https://github.com/ai-agents-2030/awesome-deep-research-agent)
+- [[2507.18074] AlphaGo Moment for Model Architecture Discovery](https://arxiv.org/abs/2507.18074), [gh/GAIR-NLP/ASI-Arch](https://github.com/GAIR-NLP/ASI-Arch)
 - [[2504.19678] From LLM Reasoning to Autonomous AI Agents: A Comprehensive Review](https://arxiv.org/abs/2504.19678)
 - [[2503.21460] Large Language Model Agent: A Survey on Methodology, Applications and Challenges](https://arxiv.org/abs/2503.21460)
 - [[2503.16416] Survey on Evaluation of LLM-based Agents](https://arxiv.org/abs/2503.16416)
@@ -384,3 +363,35 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - [[2402.02716] Understanding the planning of LLM agents: A survey](https://arxiv.org/abs/2402.02716)
 - [[2402.01030] Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/abs/2402.01030)
 - [[2308.11432] A Survey on Large Language Model based Autonomous Agents](https://arxiv.org/abs/2308.11432)
+
+## Note: Context Framework for AI Agents
+
+This project includes a comprehensive context framework for AI coding agents. It can be used to implement new features using a top-down approach. The user has to provide feature descriptions which will then be transformed into Feature Request Prompts (FRPs) which in turn will be transformed into code implementation.
+
+### Core Components
+
+- **AGENTS.md**: North star document with project patterns, conventions, and quality evaluation framework
+- **FRP Workflow**: Feature Requirements Prompt generation and execution system
+  1. `context/templates/1_feature_description.md`: User provides feature description, e.g., by using this template
+  2. `.claude/commands/generate-frp.md`: Creates comprehensive implementation prompts from feature descriptions
+  3. `.claude/commands/execute-frp.md`: Executes features using generated FRPs with structured validation
+
+### Agent Development Workflow
+
+1. **Follow AGENTS.md** - Read project conventions, patterns, and quality standards
+2. **Generate FRP** - Use `generate-frp.md` command for comprehensive feature planning and research
+3. **Execute Implementation** - Use `execute-frp.md` command for structured development with quality gates
+
+### Quality Framework Integration
+
+- Built-in quality evaluation with minimum thresholds (Context: 8/10, Clarity: 7/10, Alignment: 8/10, Success: 7/10)
+- BDD/TDD approach integration following project patterns
+- Automatic validation using unified command reference with error recovery
+- TodoWrite tool integration for progress tracking and transparency
+
+### For AI Agents: Quick Start
+
+1. **Read the North Star**: Start with [AGENTS.md](AGENTS.md) for project patterns and conventions
+2. **Generate FRP**: Use `/generate-frp <feature-name>` command in Claude Code
+3. **Execute Implementation**: Use `/execute-frp <feature-name>` command with generated FRP
+4. **Follow Quality Gates**: Ensure all AGENTS.md thresholds are met before proceeding

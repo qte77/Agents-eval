@@ -1,0 +1,101 @@
+@startuml MAS-review-workflow-light
+' GitHub Light Theme (Primer)
+' Sourced from: https://github.com/primer/github-vscode-theme
+
+' header 
+' title 
+' footer 
+
+!define ActivationColor #F6F8FA
+
+<style>
+  document {
+    BackgroundColor #FFFFFF
+  }
+  actor {
+    BackgroundColor #F6F8FA
+    LineColor #57606A
+    FontColor #24292F
+  }
+  participant {
+    BackgroundColor #F6F8FA
+    LineColor #57606A
+    FontColor #24292F
+  }
+  database {
+    BackgroundColor #F6F8FA
+    LineColor #57606A
+    FontColor #24292F
+  }
+  entity {
+    BackgroundColor #F6F8FA
+    LineColor #57606A
+    FontColor #24292F
+  }
+  note {
+    BackgroundColor #F6F8FA
+    LineColor #D0D7DE
+    FontColor #24292F
+  }
+  arrow {
+    LineColor #0969DA
+    FontColor #24292F
+  }
+  lifeLine {
+    LineColor #57606A
+  }
+</style>
+
+skinparam sequence {
+    GroupBorderColor #D0D7DE
+    GroupFontColor #24292F
+    GroupHeaderFontColor #24292F
+    GroupBackgroundColor #F6F8FA
+}
+
+actor User
+
+participant "Manager Agent" as Manager
+participant "Researcher Agent" as Researcher
+database "PeerRead Dataset" as DB
+participant "LLM" as LLM
+entity "ReviewPersistence" as Persistence
+
+User -> Manager: Request to review paper "X"
+activate Manager ActivationColor
+
+Manager -> DB: Get paper content for "X"
+activate DB ActivationColor
+DB --> Manager: Return paper content
+deactivate DB
+
+note right of Manager
+  The Manager now loads the
+  `review_template.md` and
+  fills it with the paper's data.
+end note
+
+Manager -> LLM: Generate review using filled template
+activate LLM ActivationColor
+LLM --> Manager: Return structured review (ReviewGenerationResult)
+deactivate LLM
+
+Manager -> Persistence: Save review for paper "X"
+activate Persistence ActivationColor
+Persistence -> Persistence: Create timestamped JSON file
+Persistence --> Manager: Confirm save
+deactivate Persistence
+
+Manager --> User: Acknowledge completion
+
+group Optional Delegation
+    Manager -> Researcher: Delegate research query
+    activate Researcher ActivationColor
+    Researcher -> Researcher: Use DuckDuckGo Search
+    Researcher -> Manager: Return research results
+    deactivate Researcher
+end group
+
+deactivate Manager
+
+@enduml

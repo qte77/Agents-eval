@@ -608,12 +608,14 @@ uv run python -c "from src.app.utils.datasets_peerread import PeerReadLoader; pr
 ## Implementation Success Metrics
 
 **Technical Metrics:**
+
 - All tests pass (`make test_all`)
 - Code quality passes (`make ruff`, `make type_check`)
 - File size < 500 lines per file
 - Full docstring coverage
 
 **Functional Metrics:**
+
 - **Primary**: HuggingFace datasets integration works (`allenai/peer_read`)
 - **Fallback**: Dataset downloads successfully from PeerRead repository
 - Papers load into Pydantic models without validation errors
@@ -621,12 +623,14 @@ uv run python -c "from src.app.utils.datasets_peerread import PeerReadLoader; pr
 - Similarity metrics provide meaningful comparison scores
 
 **Integration Metrics:**
+
 - No conflicts with existing agent functionality
 - Configuration integrates with existing config system
 - CLI commands work without breaking existing interface
 - Performance acceptable for typical evaluation workflows
 
 **External Dependency Metrics (Critical):**
+
 - Real HuggingFace dataset access validated during implementation
 - Actual download functionality tested with network requests
 - External API structure verified before model implementation

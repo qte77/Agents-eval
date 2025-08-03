@@ -1,5 +1,6 @@
 # TODO use local installation of repo to text
 # https://github.com/itsitgroup/repo2txt
+
 name: Write repo llms.txt
 
 on:
@@ -13,19 +14,19 @@ on:
         default: 'docs'
         type: string
       LLMS_TXT_NAME:
-        description: 'Path to the directory to save llsm.txt'
+        description: 'Name of the file to save to'
         required: true
         default: 'llms.txt'
         type: string
       CONVERTER_URL:
-        description: '[uithub|gittodoc]'  # |repo2txt
+        description: 'Only uithub.com available right now'
         required: true
         default: 'uithub.com'
         type: choice
         options:
         - 'uithub.com'
-        - 'gittodoc.com'
-        # - 'repo2txt.com'
+        # - 'gittodoc.com'
+         # - 'repo2txt.com'
 
 jobs:
   generate-file:
@@ -34,6 +35,10 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+
+      - name: Set branch name
+        id: branch
+        run: echo "branch_name=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
 
       - name: Construct and create llms.txt path
         id: construct_and_create_llms_txt_path
@@ -47,8 +52,9 @@ jobs:
 
       - name: Fetch TXT from URL
         run: |
+          BRANCH="${{ steps.branch.outputs.branch_name }}"
           LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
-          URL="https://${{ inputs.CONVERTER_URL }}/${{ github.repository }}"
+          URL="https://${{ inputs.CONVERTER_URL }}/${{ github.repository }}/tree/${BRANCH}"
           echo "Fetching content from: ${URL}"
           echo "Saving content to: ${LLMS_TXT_FULL}"
           curl -s "${URL}" > "${LLMS_TXT_FULL}"

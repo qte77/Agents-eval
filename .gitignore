@@ -14,11 +14,11 @@ dist/
 
 # Testing
 .pytest_cache/
-.coverage
+.coverage/
 
 # Logs
 *.log
-/logs
+logs/
 
 # Traces
 scalene-profiles
@@ -38,7 +38,7 @@ reference/
 site/
 
 # linting
-.ruff_cache
+.ruff_cache/
 
 # type checking
 .mypy_cache/
