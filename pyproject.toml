@@ -1,4 +1,4 @@
-[project
+[project]
 version = "3.0.0"
 name = "Agents-eval"
 description = "Assess the effectiveness of agentic AI systems across various use cases focusing on agnostic metrics that measure core agentic capabilities."
