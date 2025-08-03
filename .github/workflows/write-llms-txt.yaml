@@ -14,7 +14,7 @@ on:
         default: 'docs'
         type: string
       LLMS_TXT_NAME:
-        description: 'Name of the file to save to (e.g., llms.txt)'
+        description: 'Name of the file to save to'
         required: true
         default: 'llms.txt'
         type: string
