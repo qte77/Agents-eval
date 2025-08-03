@@ -2,44 +2,55 @@
 ' GitHub Dark Theme (Primer)
 ' Sourced from: https://github.com/primer/github-vscode-theme
 
-skinparam backgroundcolor #0D1117
+' header 
+' title 
+' footer 
 
-skinparam actor {
+!define ActivationColor #161B22
+
+<style>
+  document {
+    BackgroundColor #0D1117
+  }
+  actor {
     BackgroundColor #161B22
-    BorderColor #8B949E
+    LineColor #8B949E
     FontColor #C9D1D9
-}
-skinparam participant {
+  }
+  participant {
     BackgroundColor #161B22
-    BorderColor #8B949E
+    LineColor #8B949E
     FontColor #C9D1D9
-}
-skinparam database {
+  }
+  database {
     BackgroundColor #161B22
-    BorderColor #8B949E
+    LineColor #8B949E
     FontColor #C9D1D9
-}
-skinparam entity {
+  }
+  entity {
     BackgroundColor #161B22
-    BorderColor #8B949E
+    LineColor #8B949E
     FontColor #C9D1D9
-}
-skinparam note {
+  }
+  note {
     BackgroundColor #161B22
-    BorderColor #30363D
+    LineColor #30363D
     FontColor #C9D1D9
-}
+  }
+  arrow {
+    LineColor #58A6FF
+    FontColor #C9D1D9
+  }
+  lifeLine {
+    LineColor #8B949E
+  }
+</style>
 skinparam sequence {
-    ArrowColor #58A6FF
-    ArrowFontColor #C9D1D9
-    LifeLineBorderColor #8B949E
     GroupBorderColor #30363D
     GroupFontColor #C9D1D9
     GroupHeaderFontColor #C9D1D9
     GroupBackgroundColor #161B22
 }
-skinparam sequenceActivationBackgroundColor #010409
-skinparam sequenceActivationBorderColor #000
 
 actor User
 
@@ -50,10 +61,10 @@ participant "LLM" as LLM
 entity "ReviewPersistence" as Persistence
 
 User -> Manager: Request to review paper "X"
-activate Manager
+activate Manager ActivationColor
 
 Manager -> DB: Get paper content for "X"
-activate DB
+activate DB ActivationColor
 DB --> Manager: Return paper content
 deactivate DB
 
@@ -64,12 +75,12 @@ note right of Manager
 end note
 
 Manager -> LLM: Generate review using filled template
-activate LLM
+activate LLM ActivationColor
 LLM --> Manager: Return structured review (ReviewGenerationResult)
 deactivate LLM
 
 Manager -> Persistence: Save review for paper "X"
-activate Persistence
+activate Persistence ActivationColor
 Persistence -> Persistence: Create timestamped JSON file
 Persistence --> Manager: Confirm save
 deactivate Persistence
@@ -78,9 +89,9 @@ Manager --> User: Acknowledge completion
 
 group Optional Delegation
     Manager -> Researcher: Delegate research query
-    activate Researcher
+    activate Researcher ActivationColor
     Researcher -> Researcher: Use DuckDuckGo Search
-    Researcher --> Manager: Return research results
+    Researcher -> Manager: Return research results
     deactivate Researcher
 end group
 
