@@ -144,7 +144,6 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
   <img src="assets/images/MAS-review-workflow-light.png#gh-light-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
   <img src="assets/images/MAS-review-workflow-dark.png#gh-dark-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
 </details>
-<!-- markdownlint-enable MD033 -->
 
 ### LLM-as-a-Judge
 
