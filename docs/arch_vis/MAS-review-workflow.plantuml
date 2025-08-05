@@ -1,5 +1,14 @@
-@startuml MAS-review-workflow-dark
-!include styles/github-dark.puml
+@startuml MAS-review-workflow
+
+!define STYLE ""
+
+!if !defined(STYLE) || (%strlen(STYLE) == 0)
+  !define STYLE "light"
+!endif
+
+!include styles/github-$STYLE.puml
+
+title MAS Review Workflow
 
 actor User
 participant "Manager Agent" as Manager
@@ -44,5 +53,4 @@ group Optional Delegation
 end group
 
 deactivate Manager
-
 @enduml

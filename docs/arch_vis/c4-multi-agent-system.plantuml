@@ -1,5 +1,12 @@
-@startuml
-!include styles/github-dark.puml
+@startuml c4-multi-agent-system
+
+!define STYLE ""
+
+!if !defined(STYLE) || (%strlen(STYLE) == 0)
+  !define STYLE "light"
+!endif
+
+!include styles/github-$STYLE.puml
 
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 

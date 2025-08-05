@@ -1,5 +1,12 @@
-@startuml
-!include styles/github-light.puml
+@startuml customer-journey-activity
+
+!define STYLE ""
+
+!if !defined(STYLE) || (%strlen(STYLE) == 0)
+  !define STYLE "light"
+!endif
+
+!include styles/github-$STYLE.puml
 
 title Customer Journey Activity Diagram for CLI and Streamlit (Agents-eval, 2025, with Setup Steps)
 
