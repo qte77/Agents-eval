@@ -37,7 +37,7 @@
   }
   rectangle, system_boundary {
     BackgroundColor #0D1117
-    LineColor #8B949E
+    LineColor #30363D
     FontColor #C9D1D9
     shadowing false
   }
@@ -72,6 +72,11 @@ skinparam sequence {
     GroupFontColor #C9D1D9
     GroupHeaderFontColor #C9D1D9
     GroupBackgroundColor #161B22
+}
+
+skinparam activity {
+    StartColor #3FB950
+    StopColor #F85149
 }
 
 skinparam ConditionEndStyle diamond

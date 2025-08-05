@@ -1,43 +1,54 @@
 @startuml customer-journey-activity
 
-!define STYLE ""
-
-!if !defined(STYLE) || (%strlen(STYLE) == 0)
-  !define STYLE "light"
+!ifndef STYLE
+!define STYLE "light"
 !endif
-
 !include styles/github-$STYLE.puml
 
-title Customer Journey Activity Diagram for CLI and Streamlit (Agents-eval, 2025, with Setup Steps)
+title Customer Journey Activity Diagram
 
 start
 
-:Discover Agents-eval project;
+:User discovers the project;
 
-:Clone or download the repository;
-:Install development environment;
-:Install dependencies using `make setup_dev`, `make setup_dev_claude`, or `make setup_dev_ollama`;
-:Copy `.env.example` to `.env` and add required API keys;
-:Configure application environment (optional: edit config files);
+:Clones repository and installs environment;
 
-if (Preferred interface?) then (CLI)
-  :Run CLI with `make run_cli`;
-  :Configure agents (select provider, options, prompts);
-  :Submit research query or task via CLI input;
-  :Execute multi-agent workflow (Manager → Researcher → Analyst → Synthesizer);
-  :View structured results and evaluation metrics in CLI output;
-else (Streamlit GUI)
-  :Run Streamlit GUI with `make run_gui`;
-  :Configure agents via Settings and Prompts pages;
-  :Input research query or task using Streamlit UI;
-  :Trigger interactive multi-agent workflow (Manager → Researcher → Analyst → Synthesizer);
-  :View structured results and evaluation metrics on dashboard;
+if (First time use or dataset update?) then (yes)
+  :Run `make run_cli` with `--download-peerread-samples-only` or `--download-peerread-full-only` flags;
+  :Dataset is downloaded and saved to `datasets/peerread`;
+else (no)
 endif
 
-:Iterate—modify configuration, query, or prompts as needed;
-:Download results or export evaluation logs (optional);
-:Provide feedback via documentation, issue tracker, or direct UI button;
-:Project maintainers review and integrate improvements;
+:User chooses an interface;
+
+if (Interface choice) then (CLI)
+  :Runs `make run_cli` with a query;
+  group CLI Interaction
+    :Input query via command-line arguments;
+    :Application initializes agents (Manager, Researcher, etc.);
+    :Agent system processes the query;
+    :Results and evaluation metrics are printed to the console;
+  end group
+else (Streamlit GUI)
+  :Runs `make run_gui`;
+  group GUI Interaction
+    :User navigates to the web interface;
+    :Inputs query in the text area;
+    :Agent system is triggered on submission;
+    :Results are displayed interactively on the dashboard;
+  end group
+endif
+
+:User reviews the output;
+
+if (Is it a paper review?) then (yes)
+  :The system uses PeerRead tools to generate a structured review;
+  :Output is formatted as a peer review;
+else (no)
+  :Output is a research summary or analysis;
+endif
+
+:User can iterate by refining the query or changing agent configurations;
 
 stop
 @enduml

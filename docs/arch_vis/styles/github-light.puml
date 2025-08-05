@@ -74,6 +74,11 @@ skinparam sequence {
     GroupBackgroundColor #F6F8FA
 }
 
+skinparam activity {
+    StartColor #2DA44E
+    StopColor #CF222E
+}
+
 skinparam ConditionEndStyle diamond
 skinparam ParticipantPadding 20
 skinparam BoxPadding 20
