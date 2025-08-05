@@ -1,8 +1,8 @@
 @startuml
-!theme plain
-skinparam ConditionEndStyle diamond
-skinparam ParticipantPadding 20
-skinparam BoxPadding 20
+!ifndef STYLE
+!define STYLE "light"
+!endif
+!include styles/github-$STYLE.puml
 
 participant "Sweep Engine" as SE
 participant "Agentic System" as AS

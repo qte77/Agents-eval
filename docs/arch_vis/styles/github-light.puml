@@ -73,3 +73,7 @@ skinparam sequence {
     GroupHeaderFontColor #24292F
     GroupBackgroundColor #F6F8FA
 }
+
+skinparam ConditionEndStyle diamond
+skinparam ParticipantPadding 20
+skinparam BoxPadding 20
