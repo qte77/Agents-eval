@@ -1,5 +1,5 @@
 @startuml
-!theme plain
+!include styles/github-light.puml
 
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 

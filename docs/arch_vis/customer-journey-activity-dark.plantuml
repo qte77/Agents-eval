@@ -1,6 +1,5 @@
 @startuml
-!theme amiga
-skinparam monochrome true
+!include styles/github-dark.puml
 
 title Customer Journey Activity Diagram for CLI and Streamlit (Agents-eval, 2025, with Setup Steps)
 

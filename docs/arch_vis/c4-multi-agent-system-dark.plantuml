@@ -1,6 +1,5 @@
 @startuml
-!theme blueprint
-skinparam monochrome true
+!include styles/github-dark.puml
 
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 

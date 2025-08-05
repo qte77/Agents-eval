@@ -1,6 +1,5 @@
 @startuml
-!theme plain
-skinparam monochrome true
+!include styles/github-light.puml
 
 title Customer Journey Activity Diagram for CLI and Streamlit (Agents-eval, 2025, with Setup Steps)
 
