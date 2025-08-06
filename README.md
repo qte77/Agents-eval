@@ -134,7 +134,7 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
   1. **MAS**: PDF → Review Generation → Persistent Storage (`src/app/data_utils/reviews/`)
   2. **External Evaluation**: Load Reviews → Similarity Analysis → Results
 - **Documentation**: See [PeerRead Agent Usage Guide](docs/peerread-agent-usage.md)
-- 
+
 <!-- # FIXME
 - **Architecture Diagram**: [Refactored PeerRead System](docs/arch_vis/c4-refactored-peerread-system.plantuml)
 -->
@@ -144,8 +144,8 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
 <!-- markdownlint-disable MD033 -->
 <details>
   <summary>Show Review Workflow</summary>
-  <img src="assets/images/MAS-review-workflow-light.png#gh-light-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
-  <img src="assets/images/MAS-review-workflow-dark.png#gh-dark-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
+  <img src="assets/images/MAS-Review-Workflow-dark.png#gh-light-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
+  <img src="assets/images/MAS-Review-Workflow-light.png#gh-dark-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
 </details>
 
 ### LLM-as-a-Judge
@@ -174,6 +174,7 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 <!-- markdownlint-disable MD033 -->
 <details>
   <summary>Eval Metrics Sweep</summary>
+  <!-- #FIXME update swee and add color schemes -->
   <img src="assets/images/metrics-eval-sweep.png#gh-light-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
 </details>
 <!-- markdownlint-enable MD033 -->
