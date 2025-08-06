@@ -1,6 +1,9 @@
-@startuml
-!ifndef STYLE
-!define STYLE "light"
+@startuml metrics-eval-sweep
+title Metrics Eval Sweep
+
+!define STYLE ""
+!if !defined(STYLE) || (%strlen(STYLE) == 0)
+  !define STYLE "light"
 !endif
 !include styles/github-$STYLE.puml
 

@@ -1,14 +1,12 @@
-@startuml c4-multi-agent-system
+@startuml MAS-C4-Detailed
 title MAS Architecture Detailed
 
 !define STYLE ""
-
 !if !defined(STYLE) || (%strlen(STYLE) == 0)
   !define STYLE "light"
 !endif
 
 !include styles/github-$STYLE.puml
-
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 LAYOUT_LEFT_RIGHT()

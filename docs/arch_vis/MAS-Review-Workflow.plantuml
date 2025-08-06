@@ -1,14 +1,12 @@
-@startuml MAS-review-workflow
+@startuml MAS-Review-Workflow
+title MAS Review Workflow
 
 !define STYLE ""
-
 !if !defined(STYLE) || (%strlen(STYLE) == 0)
   !define STYLE "light"
 !endif
 
 !include styles/github-$STYLE.puml
-
-title MAS Review Workflow
 
 actor User
 participant "Manager Agent" as Manager
