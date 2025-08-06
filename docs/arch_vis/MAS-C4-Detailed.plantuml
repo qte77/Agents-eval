@@ -1,4 +1,5 @@
 @startuml c4-multi-agent-system
+title MAS Architecture Detailed
 
 !define STYLE ""
 

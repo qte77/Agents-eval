@@ -1,4 +1,5 @@
-@startuml c4-MAS-full
+@startuml MAS-C4-Overview
+title MAS Architecture Overview
 
 !define STYLE ""
 
@@ -9,6 +10,7 @@
 !include styles/github-$STYLE.puml
 
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
 
 LAYOUT_LEFT_RIGHT()
 ' LAYOUT_WITH_LEGEND()

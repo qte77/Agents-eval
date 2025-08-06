@@ -66,16 +66,16 @@ You can also use the official [PlantUML Web Server](http://www.plantuml.com/plan
     * **Replace it with this URL for light mode:**
 
         ```plantuml
-        !include https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/docs/arch_vis/styles/github-light.puml
+        !include https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/YOUR_BRANCH/docs/arch_vis/styles/github-light.puml
         ```
 
     * **Or this URL for dark mode:**
   
         ```plantuml
-        !include https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/docs/arch_vis/styles/github-dark.puml
+        !include https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/YOUR_BRANCH/docs/arch_vis/styles/github-dark.puml
         ```
 
-    > **Note:** Remember to replace `YOUR_USERNAME/YOUR_REPO/main` with the actual path to this repository.
+    > **Note:** Remember to replace `YOUR_USERNAME/YOUR_REPO/YOUR_BRANCH` with the actual path to this repository.
 
 3. **Copy the entire, modified PlantUML source code.**
 4. **Paste it** into the text area on the [PlantUML Web Server](http://www.plantuml.com/plantuml). The diagram will update automatically.

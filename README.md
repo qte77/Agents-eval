@@ -134,7 +134,10 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
   1. **MAS**: PDF → Review Generation → Persistent Storage (`src/app/data_utils/reviews/`)
   2. **External Evaluation**: Load Reviews → Similarity Analysis → Results
 - **Documentation**: See [PeerRead Agent Usage Guide](docs/peerread-agent-usage.md)
+- 
+<!-- # FIXME
 - **Architecture Diagram**: [Refactored PeerRead System](docs/arch_vis/c4-refactored-peerread-system.plantuml)
+-->
 
 ### Review Workflow
 
@@ -179,13 +182,23 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 
 Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
 
+<!-- # TODO
+- Exa
+- Ffirecrawl
+-->
+
 ### Agentic System Architecture
 
 <!-- markdownlint-disable MD033 -->
 <details>
-  <summary>Show Agentic System Architecture</summary>
-  <img src="assets/images/c4-multi-agent-system-dark.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="80%" />
-  <img src="assets/images/c4-multi-agent-system-light.png#gh-light-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="80%" />
+  <summary>Show MAS Overview</summary>
+  <img src="assets/images/MAS-C4-Overview-dark.png#gh-dark-mode-only" alt="MAS Architecture Overview" title="MAS Architecture Overview" width="80%" />
+  <img src="assets/images/MAS-C4-Overview-light.png#gh-light-mode-only" alt="MAS Architecture Overview" title="MAS Architecture Overview" width="80%" />
+</details>
+<details>
+  <summary>Show MAS Detailed</summary>
+  <img src="assets/images/MAS-C4-Detailed-dark.png#gh-dark-mode-only" alt="MAS Architecture Detailed" title="MAS Architecture Detailed" width="80%" />
+  <img src="assets/images/MAS-C4-Detailed-light.png#gh-light-mode-only" alt="MAS Architecture Detailed" title="MAS Architecture Detailed" width="80%" />
 </details>
 <!-- markdownlint-enable MD033 -->
 

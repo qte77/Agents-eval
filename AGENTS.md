@@ -443,13 +443,15 @@ Agents should add new patterns discovered during development here.
 - **Context**: PlantUML diagrams in `docs/arch_vis`
 - **Problem**: Redundant PlantUML files for light and dark themes.
 - **Solution**: Use a variable to define the theme and include the appropriate style file. This allows for a single PlantUML file to be used for multiple themes.
-- **Example**: 
+- **Example**:
+
   ```plantuml
   !ifndef STYLE
   !define STYLE "light"
   !endif
   !include styles/github-$STYLE.puml
   ```
+
 - **Validation**: Generate diagrams with different themes by setting the `STYLE` variable.
 - **References**: `docs/arch_vis/`
 
