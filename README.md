@@ -336,9 +336,11 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 ## Further Reading
 
+- [[2507.23276] How Far Are AI Scientists from Changing the World?](https://arxiv.org/abs/2507.23276), [gh/ResearAI/Awesome-AI-Scientist](https://github.com/ResearAI/Awesome-AI-Scientist)
+  - Survey of research on AI scientists, AI researchers, AI engineers, and a series of AI-driven research studies
 - [[2507.21046] A SURVEY OF SELF-EVOLVING AGENTS: ON PATH TO ARTIFICIAL SUPER INTELLIGENCE](https://arxiv.org/abs/2507.21046), [gh/CharlesQ9/Self-Evolving-Agents](https://github.com/CharlesQ9/Self-Evolving-Agents)
-- [[2506.18096] Deep Research Agents: A Systematic Examination And Roadmap](https://arxiv.org/abs/2506.18096), [gh/ai-agents-2030/awesome-deep-research-agent](https://github.com/ai-agents-2030/awesome-deep-research-agent)
 - [[2507.18074] AlphaGo Moment for Model Architecture Discovery](https://arxiv.org/abs/2507.18074), [gh/GAIR-NLP/ASI-Arch](https://github.com/GAIR-NLP/ASI-Arch)
+- [[2506.18096] Deep Research Agents: A Systematic Examination And Roadmap](https://arxiv.org/abs/2506.18096), [gh/ai-agents-2030/awesome-deep-research-agent](https://github.com/ai-agents-2030/awesome-deep-research-agent)
 - [[2504.19678] From LLM Reasoning to Autonomous AI Agents: A Comprehensive Review](https://arxiv.org/abs/2504.19678)
 - [[2503.21460] Large Language Model Agent: A Survey on Methodology, Applications and Challenges](https://arxiv.org/abs/2503.21460)
 - [[2503.16416] Survey on Evaluation of LLM-based Agents](https://arxiv.org/abs/2503.16416)
@@ -367,6 +369,13 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 ## Note: Context Framework for AI Agents
 
 This project includes a comprehensive context framework for AI coding agents. It can be used to implement new features using a top-down approach. The user has to provide feature descriptions which will then be transformed into Feature Request Prompts (FRPs) which in turn will be transformed into code implementation.
+
+### CLI used
+
+- [OpenCode](https://github.com/sst/opencode)
+- [crush](https://github.com/charmbracelet/crush)
+- [Claude Code](https://github.com/anthropics/claude-code)
+- [Google Gemini](https://github.com/google-gemini/gemini-cli)
 
 ### Core Components
 
