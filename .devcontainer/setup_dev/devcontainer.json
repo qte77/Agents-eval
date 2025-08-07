@@ -10,6 +10,14 @@
   },
   "customizations": {
     "vscode": {
+      "settings": {
+        "http.proxy": "",
+        "https.proxy": "",
+        "github.copilot.advanced.proxy": "",
+        "github.copilot.advanced.debug.useElectronFetcher": false,
+        "github.copilot.advanced.debug.useNodeFetcher": false,
+        "github.copilot.advanced.debug.useNodeFetchFetcher": false
+      },
       "extensions": [
         "anthropic.claude-code"
       ]

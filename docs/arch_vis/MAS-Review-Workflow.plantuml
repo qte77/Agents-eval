@@ -1,12 +1,9 @@
 @startuml MAS-Review-Workflow
 title MAS Review Workflow
 
-!define STYLE ""
-!if !defined(STYLE) || (%strlen(STYLE) == 0)
-  !define STYLE "light"
-!endif
-
-!include styles/github-$STYLE.puml
+!log Current 'STYLE' dvar: STYLE
+!log About to include: styles/github-STYLE.puml
+!include styles/github-STYLE.puml
 
 actor User
 participant "Manager Agent" as Manager

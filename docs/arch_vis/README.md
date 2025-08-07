@@ -37,10 +37,8 @@ This will start a server on `http://localhost:8080`.
 To render a single diagram, use the `run_puml_single` command. You can specify the input file and the style (light or dark).
 
 ```shell
-make run_puml_single INPUT=docs/arch_vis/MAS-C4-Overview.plantuml STYLE=dark
+make run_puml_single INPUT_FILE="docs/arch_vis/metrics-eval-sweep.plantuml" STYLE="dark" OUTPUT_PATH="assets/images"
 ```
-
-This will generate the diagram in the `assets/images` directory.
 
 ## Online Rendering (PlantUML.com)
 

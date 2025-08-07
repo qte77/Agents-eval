@@ -1,11 +1,9 @@
 @startuml metrics-eval-sweep
 title Metrics Eval Sweep
 
-!define STYLE ""
-!if !defined(STYLE) || (%strlen(STYLE) == 0)
-  !define STYLE "light"
-!endif
-!include styles/github-$STYLE.puml
+!log Current 'STYLE' dvar: STYLE
+!log About to include: styles/github-STYLE.puml
+!include styles/github-STYLE.puml
 
 participant "Sweep Engine" as SE
 participant "Agentic System" as AS

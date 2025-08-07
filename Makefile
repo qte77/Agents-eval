@@ -17,7 +17,7 @@ GUI_PATH_ST := $(SRC_PATH)/run_gui.py
 CHAT_CFG_FILE := $(CONFIG_PATH)/config_chat.json
 OLLAMA_SETUP_URL := https://ollama.com/install.sh
 OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
-PLANTUML_CONTAINER := plantuml/plantuml-server:tomcat
+PLANTUML_CONTAINER := plantuml/plantuml:latest
 PLANTUML_SCRIPT := scripts/generate-plantuml-png.sh
 PRP_DEF_PATH := /context/PRPs/features
 PRP_CLAUDE_GEN_CMD := generate-prp
@@ -121,13 +121,15 @@ stop_ollama:  ## Stop local Ollama server
 
 # MARK: run plantuml
 
+
 run_puml_interactive:  ## Generate a themed diagram from a PlantUML file interactively.
 	# https://github.com/plantuml/plantuml-server
-	docker run -d -p 8080:8080 plantuml/plantuml-server:tomcat
+	# plantuml/plantuml-server:tomcat
+	docker run -d -p 8080:8080 "$(PLANTUML_CONTAINER)"
 
 run_puml_single:  ## Generate a themed diagram from a PlantUML file.
-	# https://github.com/plantuml/plantuml-server
-	$(PLANTUML_SCRIPT) "$(INPUT)" "$(STYLE)" "$(OUTPUT)"
+	$(PLANTUML_SCRIPT) "$(INPUT_FILE)" "$(STYLE)" "$(OUTPUT_PATH)" \
+		"$(CHECK_ONLY)" "$(PLANTUML_CONTAINER)"
 
 
 # MARK: run app

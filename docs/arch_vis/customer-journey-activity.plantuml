@@ -1,12 +1,9 @@
 @startuml customer-journey-activity
 title Customer Journey Activity Diagram
 
-!define STYLE ""
-!if !defined(STYLE) || (%strlen(STYLE) == 0)
-  !define STYLE "light"
-!endif
-
-!include styles/github-$STYLE.puml
+!log Current 'STYLE' dvar: STYLE
+!log About to include: styles/github-STYLE.puml
+!include styles/github-STYLE.puml
 
 start
 

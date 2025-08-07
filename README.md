@@ -174,9 +174,10 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 <!-- markdownlint-disable MD033 -->
 <details>
   <summary>Eval Metrics Sweep</summary>
-  <!-- #FIXME update swee and add color schemes -->
-  <img src="assets/images/metrics-eval-sweep.png#gh-light-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
+  <img src="assets/images/metrics-eval-sweep-light.png#gh-light-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
+  <img src="assets/images/metrics-eval-sweep-dark.png#gh-dark-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
 </details>
+
 <!-- markdownlint-enable MD033 -->
 
 ### Tools available
