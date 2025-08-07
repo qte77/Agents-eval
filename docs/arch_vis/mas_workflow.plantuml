@@ -1,0 +1,88 @@
+@startuml
+title MAS Workflow - Agent Interactions and Tool Usage
+
+actor User
+
+box "Agents" #LightBlue
+    participant "Manager Agent" as Manager
+    participant "Researcher Agent" as Researcher
+    participant "Analyst Agent" as Analyst
+    participant "Synthesizer Agent" as Synthesizer
+end box
+
+box "Tools" #LightGreen
+    participant "DuckDuckGo Search" as DDG
+    participant "PeerRead Tools" as PeerRead
+end box
+
+box "Data Storage" #LightYellow
+    participant "PeerRead Dataset" as Dataset
+    participant "Review Storage" as Reviews
+end box
+
+User -> Manager: Request task\n(e.g., paper review)
+activate Manager
+
+Manager -> Dataset: get_peerread_paper(paper_id)
+activate Dataset
+Dataset --> Manager: PeerReadPaper
+deactivate Dataset
+
+Manager -> Dataset: query_peerread_papers(venue, min_reviews)
+activate Dataset
+Dataset --> Manager: List[PeerReadPaper]
+deactivate Dataset
+
+note right of Manager
+  Manager can generate review templates
+  and save reviews using PeerRead tools
+end note
+
+Manager -> PeerRead: generate_paper_review_content_from_template()
+activate PeerRead
+PeerRead --> Manager: Review template
+deactivate PeerRead
+
+Manager -> PeerRead: save_paper_review()
+activate PeerRead
+PeerRead -> Reviews: Save review to JSON file
+activate Reviews
+Reviews --> PeerRead: Confirm save
+deactivate Reviews
+PeerRead --> Manager: File path
+deactivate PeerRead
+
+Manager -> PeerRead: save_structured_review()
+activate PeerRead
+PeerRead -> Reviews: Save structured review
+activate Reviews
+Reviews --> PeerRead: Confirm save
+deactivate Reviews
+PeerRead --> Manager: File path
+deactivate PeerRead
+
+group Optional Delegation
+    Manager -> Researcher: delegate_research(query)
+    activate Researcher
+    Researcher -> DDG: duckduckgo_search_tool()
+    activate DDG
+    DDG --> Researcher: Search results
+    deactivate DDG
+    Researcher --> Manager: ResearchResult
+    deactivate Researcher
+    
+    Manager -> Analyst: delegate_analysis(query)
+    activate Analyst
+    Analyst --> Manager: AnalysisResult
+    deactivate Analyst
+    
+    Manager -> Synthesizer: delegate_synthesis(query)
+    activate Synthesizer
+    Synthesizer --> Manager: ResearchSummary
+    deactivate Synthesizer
+end group
+
+Manager --> User: Return result
+deactivate Manager
+
+@enduml
