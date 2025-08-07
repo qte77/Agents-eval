@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
+.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_plantuml setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile run_plantuml prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := setup_dev_ollama
 
@@ -17,6 +17,7 @@ GUI_PATH_ST := $(SRC_PATH)/run_gui.py
 CHAT_CFG_FILE := $(CONFIG_PATH)/config_chat.json
 OLLAMA_SETUP_URL := https://ollama.com/install.sh
 OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
+PLANTUML_SCRIPT := scripts/generate-plantuml-png.sh
 PRP_DEF_PATH := /context/PRPs/features
 PRP_CLAUDE_GEN_CMD := generate-prp
 PRP_CLAUDE_EXE_CMD := execute-prp
@@ -79,6 +80,12 @@ setup_gemini_cli:  ## Setup Gemini CLI, node.js and npm have to be present
 	npm install -gs @google/gemini-cli
 	echo "Gemini CLI version: $$(gemini --version)"
 
+setup_plantuml:  ## 
+	echo "Setting up PlantUML docker ..."
+	chmod +x $(PLANTUML_SCRIPT)
+	docker pull plantuml:latest
+	echo "PlantUML docker version: $$(docker run --rm plantuml:latest -version)"
+
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
 	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
@@ -109,6 +116,13 @@ start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
 stop_ollama:  ## Stop local Ollama server
 	echo "Stopping Ollama server..."
 	pkill ollama
+
+
+# MARK: run plantuml
+
+
+run_plantuml:  ## Generate a themed diagram from a PlantUML file.
+	$(PLANTUML_SCRIPT) "$(INPUT)" "$(STYLE)" "$(OUTPUT)"
 
 
 # MARK: run

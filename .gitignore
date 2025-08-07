@@ -48,3 +48,9 @@ wandb/
 data/
 test_data/
 datasets/
+
+# mermaid
+package.json
+package-lock.json
+puppeteer-config.json
+node_modules/

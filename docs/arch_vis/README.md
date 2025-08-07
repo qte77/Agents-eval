@@ -1,81 +1,74 @@
-# Using PlantUML Diagrams
+# Architecture Visualizations
 
-This document provides instructions on how to render the PlantUML diagrams located in this directory, both on your local machine and using the online PlantUML.com service.
+This directory contains the source files for the project's architecture diagrams. All diagrams are authored in PlantUML and are designed to be rendered into themed PNG images (light and dark modes).
 
-All diagrams are themed and support both **light** and **dark** modes.
+## Local Rendering
 
-## 1. Local Rendering
-
-Rendering diagrams locally is the recommended approach as it correctly resolves all local file includes.
+The recommended way to generate diagrams is by using the `make setup_plantuml` and `make run_plantuml` command from the root of the project. This command handles all the complexities of rendering for you.
 
 ### Prerequisites
 
-1. **Java**: PlantUML is a Java application. Check your installation with `java -version`.
-2. **PlantUML Jar**: [Download the `plantuml.jar` file](https://plantuml.com/download) and place it in a convenient location.
-3. **Graphviz**: Required for most diagram types used in this project. [Download and install Graphviz](https://graphviz.org/download/).
+- **Docker**: You must have Docker installed and running, as the command uses the official `plantuml/plantuml` Docker image to perform the rendering.
 
-### Rendering Commands
+### Usage
 
-Open your terminal and navigate to this directory (`docs/arch_vis`).
+The `make` command provides a simple interface for generating diagrams with different themes and for different source files.
 
-**To render a single diagram (e.g., `c4-MAS-full.plantuml`):**
+#### Specifying an Input File
 
-* **Light Mode (default):**
+To render a different diagram, set the `INPUT` variable:
 
-    ```shell
-    java -jar /path/to/plantuml.jar c4-MAS-full.plantuml
-    ```
+```shell
+make run_plantuml INPUT=docs/arch_vis/customer-journey-activity.plantuml
+```
 
-* **Dark Mode:**
+#### Specifying the Output File
 
-    ```shell
-    java -jar /path/to/plantuml.jar -DSTYLE=dark c4-MAS-full.plantuml
-    ```
+You can also control the output location and filename by setting the `OUTPUT` variable. This is useful for placing generated assets directly into the `assets/images` directory.
 
-**To render all diagrams in this directory:**
+```shell
+fn=MAS-C4-Overview
+in=docs/arch_vis
+out=assets/images
+make run_plantuml \
+  STYLE=dark \
+  INPUT=${in}/${fn}.plantuml \
+  OUTPUT=${out/${fn}.png
+```
 
-* **Light Mode:**
+#### Specifying the style
 
-    ```shell
-    java -jar /path/to/plantuml.jar *.plantuml
-    ```
+To render a different diagram, set the `STYLE` variable. Defaults to `light`:
 
-* **Dark Mode:**
+```shell
+make run_plantuml STYLE=dark
+```
 
-    ```shell
-    java -jar /path/to/plantuml.jar -DSTYLE=dark *.plantuml
-    ```
+## Online Rendering (PlantUML.com)
 
-This will generate PNG images for each `.plantuml` file.
-
-## 2. Using PlantUML.com (Online)
-
-You can also use the official [PlantUML Web Server](http://www.plantuml.com/plantuml) to render diagrams without installing anything. However, because our diagrams include local theme files, you must modify the source code before pasting it online.
+If you don't have Docker installed, you can use the official [PlantUML Web Server](http://www.plantuml.com/plantuml) to render diagrams. However, because our diagrams include local theme files, you must modify the source code before pasting it online.
 
 ### Instructions
 
-1. **Open a diagram file** (e.g., `c4-MAS-full.plantuml`) in a text editor.
+1. **Open a diagram file** (e.g., `MAS-Review-Workflow.plantuml`) in a text editor.
 2. **Modify the `!include` path**. You need to replace the local path with the full raw GitHub URL to the theme file.
-
-    * **Find this line:**
+    - **Find this line:**
 
         ```plantuml
         !include styles/github-$STYLE.puml
         ```
 
-    * **Replace it with this URL for light mode:**
-
-        ```plantuml
-        !include https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/YOUR_BRANCH/docs/arch_vis/styles/github-light.puml
-        ```
-
-    * **Or this URL for dark mode:**
+    - **Replace it with this URL for the light theme:**
   
         ```plantuml
-        !include https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/YOUR_BRANCH/docs/arch_vis/styles/github-dark.puml
+        !include https://raw.githubusercontent.com/qte77/Agents-eval/main/docs/arch_vis/styles/github-light.puml
         ```
 
-    > **Note:** Remember to replace `YOUR_USERNAME/YOUR_REPO/YOUR_BRANCH` with the actual path to this repository.
+    - **Or this URL for the dark theme:**
+
+        ```plantuml
+        !include https://raw.githubusercontent.com/qte77/Agents-eval/main/docs/arch_vis/styles/github-dark.puml
+        ```
 
 3. **Copy the entire, modified PlantUML source code.**
 4. **Paste it** into the text area on the [PlantUML Web Server](http://www.plantuml.com/plantuml). The diagram will update automatically.
