@@ -384,12 +384,14 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 This project includes a comprehensive context framework for AI coding agents. It can be used to implement new features using a top-down approach. The user has to provide feature descriptions which will then be transformed into Feature Request Prompts (FRPs) which in turn will be transformed into code implementation.
 
-### CLI used
+### CLI/Extensions used
 
 - [OpenCode](https://github.com/sst/opencode)
 - [crush](https://github.com/charmbracelet/crush)
+- [cline](https://github.com/cline/cline)
 - [Claude Code](https://github.com/anthropics/claude-code)
 - [Google Gemini](https://github.com/google-gemini/gemini-cli)
+- [Alibaba qwen-code](https://github.com/QwenLM/qwen-code )
 
 ### Core Components
 

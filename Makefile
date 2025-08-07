@@ -17,6 +17,7 @@ GUI_PATH_ST := $(SRC_PATH)/run_gui.py
 CHAT_CFG_FILE := $(CONFIG_PATH)/config_chat.json
 OLLAMA_SETUP_URL := https://ollama.com/install.sh
 OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
+PLANTUML_CONTAINER := plantuml/plantuml-server:tomcat
 PLANTUML_SCRIPT := scripts/generate-plantuml-png.sh
 PRP_DEF_PATH := /context/PRPs/features
 PRP_CLAUDE_GEN_CMD := generate-prp
@@ -72,7 +73,7 @@ setup_dev_ollama:
 
 setup_claude_code:  ## Setup claude code CLI, node.js and npm have to be present
 	echo "Setting up Claude Code CLI ..."
-	npm install -gs @anthropic-ai/claude-code	
+	npm install -gs @anthropic-ai/claude-code
 	echo "Claude Code CLI version: $$(claude --version)"
 
 setup_gemini_cli:  ## Setup Gemini CLI, node.js and npm have to be present
@@ -80,11 +81,11 @@ setup_gemini_cli:  ## Setup Gemini CLI, node.js and npm have to be present
 	npm install -gs @google/gemini-cli
 	echo "Gemini CLI version: $$(gemini --version)"
 
-setup_plantuml:  ## 
+setup_plantuml:  ## Setup PlantUML with docker, $(PLANTUML_SCRIPT) and $(PLANTUML_CONTAINER)
 	echo "Setting up PlantUML docker ..."
 	chmod +x $(PLANTUML_SCRIPT)
-	docker pull plantuml:latest
-	echo "PlantUML docker version: $$(docker run --rm plantuml:latest -version)"
+	docker pull $(PLANTUML_CONTAINER)
+	echo "PlantUML docker version: $$(docker run --rm $(PLANTUML_CONTAINER) --version)"
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
@@ -98,7 +99,7 @@ clean_ollama:  ## Remove local Ollama from system
 	echo "Searching for Ollama binary..."
 	for BINDIR in /usr/local/bin /usr/bin /bin; do
 		if echo $$PATH | grep -q $$BINDIR; then
-			echo "Ollama binary found in '$$BINDIR'"
+			echo "Ollama binary found in '$${BINDIR}'"
 			BIN="$$BINDIR/ollama"
 			break
 		fi
@@ -120,12 +121,16 @@ stop_ollama:  ## Stop local Ollama server
 
 # MARK: run plantuml
 
+run_puml_interactive:  ## Generate a themed diagram from a PlantUML file interactively.
+	# https://github.com/plantuml/plantuml-server
+	docker run -d -p 8080:8080 plantuml/plantuml-server:tomcat
 
-run_plantuml:  ## Generate a themed diagram from a PlantUML file.
+run_puml_single:  ## Generate a themed diagram from a PlantUML file.
+	# https://github.com/plantuml/plantuml-server
 	$(PLANTUML_SCRIPT) "$(INPUT)" "$(STYLE)" "$(OUTPUT)"
 
 
-# MARK: run
+# MARK: run app
 
 
 run_cli:  ## Run app on CLI only

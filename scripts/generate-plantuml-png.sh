@@ -1,8 +1,8 @@
 #!/bin/bash
 # set -e
 
-STYLE="$1"
-INPUT_FILE="$2"
+INPUT_FILE="$1"
+STYLE="$2"
 OUTPUT_FILE="${3:-${INPUT_FILE%.*}.png}"
 
 CLI_PREFIX='Generate PNG from PlantUML: '

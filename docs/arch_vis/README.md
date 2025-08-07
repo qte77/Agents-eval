@@ -4,45 +4,43 @@ This directory contains the source files for the project's architecture diagrams
 
 ## Local Rendering
 
-The recommended way to generate diagrams is by using the `make setup_plantuml` and `make run_plantuml` command from the root of the project. This command handles all the complexities of rendering for you.
+The recommended way to generate diagrams is by using the `make` commands from the root of the project. These commands handle all the complexities of rendering for you.
 
 ### Prerequisites
 
 - **Docker**: You must have Docker installed and running, as the command uses the official `plantuml/plantuml` Docker image to perform the rendering.
 
+### Setup
+
+First, you need to set up the PlantUML environment. This is a one-time setup.
+
+```shell
+make setup_plantuml
+```
+
 ### Usage
 
-The `make` command provides a simple interface for generating diagrams with different themes and for different source files.
+There are two ways to render the diagrams:
 
-#### Specifying an Input File
+#### Interactive Mode
 
-To render a different diagram, set the `INPUT` variable:
-
-```shell
-make run_plantuml INPUT=docs/arch_vis/customer-journey-activity.plantuml
-```
-
-#### Specifying the Output File
-
-You can also control the output location and filename by setting the `OUTPUT` variable. This is useful for placing generated assets directly into the `assets/images` directory.
+To start an interactive PlantUML server that automatically re-renders diagrams when you make changes, use:
 
 ```shell
-fn=MAS-C4-Overview
-in=docs/arch_vis
-out=assets/images
-make run_plantuml \
-  STYLE=dark \
-  INPUT=${in}/${fn}.plantuml \
-  OUTPUT=${out/${fn}.png
+make run_puml_interactive
 ```
 
-#### Specifying the style
+This will start a server on `http://localhost:8080`.
 
-To render a different diagram, set the `STYLE` variable. Defaults to `light`:
+#### Single Run
+
+To render a single diagram, use the `run_puml_single` command. You can specify the input file and the style (light or dark).
 
 ```shell
-make run_plantuml STYLE=dark
+make run_puml_single INPUT=docs/arch_vis/MAS-C4-Overview.plantuml STYLE=dark
 ```
+
+This will generate the diagram in the `assets/images` directory.
 
 ## Online Rendering (PlantUML.com)
 
