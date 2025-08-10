@@ -354,7 +354,8 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 ## Further Reading
 
-- List of papers inspected: [further_reading](docs/further_reading.md)
+- List of papers inspected: [further_reading](docs/papers/further_reading.md)
+- [Visualization of Papers inspected](https://claude.ai/public/artifacts/7761a54c-f49b-486b-9e28-7aa2de8b3c86)
 - [Agents-eval Enhancement Recommendations based on the Papers](https://qte77.github.io/ai-agents-eval-enhancement-recommendations/)
 - [Papers Meta Review](https://qte77.github.io/ai-agents-eval-papers-meta-review/)
 - [Papers Comprehensive Analysis](https://qte77.github.io/ai-agents-eval-comprehensive-analysis/)
