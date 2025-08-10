@@ -354,7 +354,10 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 ## Further Reading
 
-See [further_reading](docs/further_reading.md).
+- List of papers inspected: [further_reading](docs/further_reading.md)
+- [Agents-eval Enhancement Recommendations based on the Papers](https://qte77.github.io/ai-agents-eval-enhancement-recommendations/)
+- [Papers Meta Review](https://qte77.github.io/ai-agents-eval-papers-meta-review/)
+- [Papers Comprehensive Analysis](https://qte77.github.io/ai-agents-eval-comprehensive-analysis/)
 
 ## Note: Context Framework for AI Agents
 
