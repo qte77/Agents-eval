@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD024 -->
 # Project Plan Outline
 
 ## Week 1 starting 2025-03-31: Metric Development and CLI Enhancements

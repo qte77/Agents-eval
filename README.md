@@ -134,15 +134,18 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
   1. **MAS**: PDF → Review Generation → Persistent Storage (`src/app/data_utils/reviews/`)
   2. **External Evaluation**: Load Reviews → Similarity Analysis → Results
 - **Documentation**: See [PeerRead Agent Usage Guide](docs/peerread-agent-usage.md)
+
+<!-- # FIXME
 - **Architecture Diagram**: [Refactored PeerRead System](docs/arch_vis/c4-refactored-peerread-system.plantuml)
+-->
 
 ### Review Workflow
 
 <!-- markdownlint-disable MD033 -->
 <details>
   <summary>Show Review Workflow</summary>
-  <img src="assets/images/MAS-review-workflow-light.png#gh-light-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
-  <img src="assets/images/MAS-review-workflow-dark.png#gh-dark-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
+  <img src="assets/images/MAS-Review-Workflow-dark.png#gh-light-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
+  <img src="assets/images/MAS-Review-Workflow-light.png#gh-dark-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
 </details>
 
 ### LLM-as-a-Judge
@@ -171,21 +174,33 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 <!-- markdownlint-disable MD033 -->
 <details>
   <summary>Eval Metrics Sweep</summary>
-  <img src="assets/images/metrics-eval-sweep.png#gh-light-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
+  <img src="assets/images/metrics-eval-sweep-light.png#gh-light-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
+  <img src="assets/images/metrics-eval-sweep-dark.png#gh-dark-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
 </details>
+
 <!-- markdownlint-enable MD033 -->
 
 ### Tools available
 
 Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
 
+<!-- # TODO
+- Exa
+- Ffirecrawl
+-->
+
 ### Agentic System Architecture
 
 <!-- markdownlint-disable MD033 -->
 <details>
-  <summary>Show Agentic System Architecture</summary>
-  <img src="assets/images/c4-multi-agent-system-dark.png#gh-dark-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="80%" />
-  <img src="assets/images/c4-multi-agent-system-light.png#gh-light-mode-only" alt="Agentic System C4-Arch" title="Agentic System C4-Arch" width="80%" />
+  <summary>Show MAS Overview</summary>
+  <img src="assets/images/MAS-C4-Overview-dark.png#gh-dark-mode-only" alt="MAS Architecture Overview" title="MAS Architecture Overview" width="80%" />
+  <img src="assets/images/MAS-C4-Overview-light.png#gh-light-mode-only" alt="MAS Architecture Overview" title="MAS Architecture Overview" width="80%" />
+</details>
+<details>
+  <summary>Show MAS Detailed</summary>
+  <img src="assets/images/MAS-C4-Detailed-dark.png#gh-dark-mode-only" alt="MAS Architecture Detailed" title="MAS Architecture Detailed" width="80%" />
+  <img src="assets/images/MAS-C4-Detailed-light.png#gh-light-mode-only" alt="MAS Architecture Detailed" title="MAS Architecture Detailed" width="80%" />
 </details>
 <!-- markdownlint-enable MD033 -->
 
@@ -262,7 +277,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - Focusing on agentic systems
   - [AgentNeo](https://github.com/raga-ai-hub/agentneo)
   - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
-  - [Langchain AgentEvals](https://github.com/langchain-ai/agentevals)
+  - [Langchain AgentEvals](https://github.com/langchain-ai/agentevals), trajectory or LLM-as-a-judge
   - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
   - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
   - [AgentBench](https://github.com/THUDM/AgentBench)
@@ -283,6 +298,9 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - [Weave - Weights & Biases](https://wandb.ai/site/weave/)
 - [Pydantic- Logfire](https://pydantic.dev/logfire)
 - [comet Opik](https://github.com/comet-ml/opik)
+- [Langfuse](https://github.com/langfuse/langfuse)
+- [helicone](https://github.com/Helicone/helicone)
+- [langwatch](https://github.com/langwatch/langwatch)
 
 ### Datasets
 
@@ -336,37 +354,24 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 ## Further Reading
 
-- [[2507.21046] A SURVEY OF SELF-EVOLVING AGENTS: ON PATH TO ARTIFICIAL SUPER INTELLIGENCE](https://arxiv.org/abs/2507.21046), [gh/CharlesQ9/Self-Evolving-Agents](https://github.com/CharlesQ9/Self-Evolving-Agents)
-- [[2506.18096] Deep Research Agents: A Systematic Examination And Roadmap](https://arxiv.org/abs/2506.18096), [gh/ai-agents-2030/awesome-deep-research-agent](https://github.com/ai-agents-2030/awesome-deep-research-agent)
-- [[2507.18074] AlphaGo Moment for Model Architecture Discovery](https://arxiv.org/abs/2507.18074), [gh/GAIR-NLP/ASI-Arch](https://github.com/GAIR-NLP/ASI-Arch)
-- [[2504.19678] From LLM Reasoning to Autonomous AI Agents: A Comprehensive Review](https://arxiv.org/abs/2504.19678)
-- [[2503.21460] Large Language Model Agent: A Survey on Methodology, Applications and Challenges](https://arxiv.org/abs/2503.21460)
-- [[2503.16416] Survey on Evaluation of LLM-based Agents](https://arxiv.org/abs/2503.16416)
-- [[2503.13657] Why Do Multi-Agent LLM Systems Fail?](https://arxiv.org/abs/2503.13657)
-- [[2502.14776] SurveyX: Academic Survey Automation via Large Language Models](https://arxiv.org/abs/2502.14776)
-- [[2502.05957] AutoAgent: A Fully-Automated and Zero-Code Framework for LLM Agents](https://arxiv.org/abs/2502.05957)
-- [[2502.02649] Fully Autonomous AI Agents Should Not be Developed](https://arxiv.org/abs/2502.02649)
-- [[2501.16150] AI Agents for Computer Use: A Review of Instruction-based Computer Control, GUI Automation, and Operator Assistants](https://arxiv.org/abs/2501.16150)
-- [[2501.06590] ChemAgent](https://arxiv.org/abs/2501.06590)
-- [[2501.06322] Multi-Agent Collaboration Mechanisms: A Survey of LLMs](https://arxiv.org/abs/2501.06322)
-- [[2501.04227] Agent Laboratory: Using LLM Agents as Research Assitants](https://arxiv.org/abs/2501.04227), [AgentRxiv:Towards Collaborative Autonomous Research](https://agentrxiv.github.io/)
-- [[2501.00881] Agentic Systems: A Guide to Transforming Industries with Vertical AI Agents](https://arxiv.org/abs/2501.00881)
-- [[2412.04093] Practical Considerations for Agentic LLM Systems](https://arxiv.org/abs/2412.04093)
-- [[2411.13768] Evaluation-driven Approach to LLM Agents](https://arxiv.org/abs/2411.13768)
-- [[2411.10478] Large Language Models for Constructing and Optimizing Machine Learning Workflows: A Survey](https://arxiv.org/abs/2411.10478)
-- [[2411.05285] A taxonomy of agentops for enabling observability of foundation model based agents](https://arxiv.org/abs/2411.05285)
-- [[2410.22457] Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457)
-- [[2408.06361] Large Language Model Agent in Financial Trading: A Survey](https://arxiv.org/abs/2408.06361)
-- [[2408.06292] The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery](https://arxiv.org/abs/2408.06292)
-- [[2404.13501] A Survey on the Memory Mechanism of Large Language Model based Agents](https://arxiv.org/pdf/2404.13501)
-- [[2402.06360] CoSearchAgent: A Lightweight Collaborative Search Agent with Large Language Models](https://arxiv.org/abs/2402.06360)
-- [[2402.02716] Understanding the planning of LLM agents: A survey](https://arxiv.org/abs/2402.02716)
-- [[2402.01030] Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/abs/2402.01030)
-- [[2308.11432] A Survey on Large Language Model based Autonomous Agents](https://arxiv.org/abs/2308.11432)
+- List of papers inspected: [further_reading](docs/papers/further_reading.md)
+- [Visualization of Papers inspected](https://claude.ai/public/artifacts/7761a54c-f49b-486b-9e28-7aa2de8b3c86)
+- [Agents-eval Enhancement Recommendations based on the Papers](https://qte77.github.io/ai-agents-eval-enhancement-recommendations/)
+- [Papers Meta Review](https://qte77.github.io/ai-agents-eval-papers-meta-review/)
+- [Papers Comprehensive Analysis](https://qte77.github.io/ai-agents-eval-comprehensive-analysis/)
 
 ## Note: Context Framework for AI Agents
 
 This project includes a comprehensive context framework for AI coding agents. It can be used to implement new features using a top-down approach. The user has to provide feature descriptions which will then be transformed into Feature Request Prompts (FRPs) which in turn will be transformed into code implementation.
+
+### CLI/Extensions used
+
+- [OpenCode](https://github.com/sst/opencode)
+- [crush](https://github.com/charmbracelet/crush)
+- [cline](https://github.com/cline/cline)
+- [Claude Code](https://github.com/anthropics/claude-code)
+- [Google Gemini](https://github.com/google-gemini/gemini-cli)
+- [Alibaba qwen-code](https://github.com/QwenLM/qwen-code )
 
 ### Core Components
 

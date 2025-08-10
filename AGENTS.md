@@ -437,6 +437,24 @@ When documenting a new pattern, use this format:
 
 Agents should add new patterns discovered during development here.
 
+#### Learned Pattern: PlantUML Theming
+
+- **Date**: 2025-08-05T00:00:00Z
+- **Context**: PlantUML diagrams in `docs/arch_vis`
+- **Problem**: Redundant PlantUML files for light and dark themes.
+- **Solution**: Use a variable to define the theme and include the appropriate style file. This allows for a single PlantUML file to be used for multiple themes.
+- **Example**:
+
+  ```plantuml
+  !ifndef STYLE
+  !define STYLE "light"
+  !endif
+  !include styles/github-$STYLE.puml
+  ```
+
+- **Validation**: Generate diagrams with different themes by setting the `STYLE` variable.
+- **References**: `docs/arch_vis/`
+
 #### Learned Pattern: Module Naming Conflicts Resolution
 
 - **Date**: 2025-07-22T14:30:00Z

@@ -1,0 +1,51 @@
+@startuml MAS-Review-Workflow
+title MAS Review Workflow
+
+!log Current 'STYLE' dvar: STYLE
+!log About to include: styles/github-STYLE.puml
+!include styles/github-STYLE.puml
+
+actor User
+participant "Manager Agent" as Manager
+participant "Researcher Agent" as Researcher
+database "PeerRead Dataset" as DB
+participant "LLM" as LLM
+entity "ReviewPersistence" as Persistence
+
+User -> Manager: Request to review paper "X"
+activate Manager
+
+Manager -> DB: Get paper content for "X"
+activate DB
+DB --> Manager: Return paper content
+deactivate DB
+
+note right of Manager
+  The Manager now loads the
+  `review_template.md` and
+  fills it with the paper's data.
+end note
+
+Manager -> LLM: Generate review using filled template
+activate LLM
+LLM --> Manager: Return structured review (ReviewGenerationResult)
+deactivate LLM
+
+Manager -> Persistence: Save review for paper "X"
+activate Persistence
+Persistence -> Persistence: Create timestamped JSON file
+Persistence --> Manager: Confirm save
+deactivate Persistence
+
+Manager --> User: Acknowledge completion
+
+group Optional Delegation
+    Manager -> Researcher: Delegate research query
+    activate Researcher
+    Researcher -> Researcher: Use DuckDuckGo Search
+    Researcher -> Manager: Return research results
+    deactivate Researcher
+end group
+
+deactivate Manager
+@enduml

@@ -2,10 +2,22 @@
   "name": "make setup_dev",
   "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {}
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:1": {
+        "version": "latest",
+        "moby": true
+    }
   },
   "customizations": {
     "vscode": {
+      "settings": {
+        "http.proxy": "",
+        "https.proxy": "",
+        "github.copilot.advanced.proxy": "",
+        "github.copilot.advanced.debug.useElectronFetcher": false,
+        "github.copilot.advanced.debug.useNodeFetcher": false,
+        "github.copilot.advanced.debug.useNodeFetchFetcher": false
+      },
       "extensions": [
         "anthropic.claude-code"
       ]

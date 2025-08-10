@@ -1,7 +1,11 @@
-@startuml
-!theme plain
+@startuml MAS-C4-Overview
+title MAS Architecture Overview
 
+!log Current 'STYLE' dvar: STYLE
+!log About to include: styles/github-STYLE.puml
+!include styles/github-STYLE.puml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
 
 LAYOUT_LEFT_RIGHT()
 ' LAYOUT_WITH_LEGEND()
@@ -36,6 +40,6 @@ note left of mas_boundary : **MAS Scope:**\nPDF → Review Generation → File S
 note top of datasets: **Clean Interface**\nMAS outputs datasets here\nEval system reads from here\nNo direct coupling
 note top of eval_boundary : **Evaluation Scope:**\nFile Storage → Similarity Analysis → Results\nIndependent of MAS
 
-' SHOW_LEGEND()
+' SHOW_LEGEND() 
 
 @enduml

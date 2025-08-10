@@ -4,7 +4,7 @@
 
 Agents-eval is designed to evaluate the effectiveness of open-source agentic AI systems across various use cases. This user story focuses on the perspective of an AI researcher who aims to assess and improve these systems using Agents-eval.
 
-## As a user of the Agents-eval project, I want to:
+## As a user of the Agents-eval project, I want to
 
 ### Goals
 
@@ -56,13 +56,13 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 
 - Scenario: The user wants to evaluate a research agent system using Agents-eval.
 - Steps:
-   - User sets up the environment using the CLI or devcontainer.
-   - User configures the agent system with the desired models and tools.
-   - User runs the evaluation using the CLI or Streamlit GUI.
-   - User views the results and metrics displayed by the system.
-   - User provides feedback on the system's performance and suggests improvements.
+  - User sets up the environment using the CLI or devcontainer.
+  - User configures the agent system with the desired models and tools.
+  - User runs the evaluation using the CLI or Streamlit GUI.
+  - User views the results and metrics displayed by the system.
+  - User provides feedback on the system's performance and suggests improvements.
 
-### Additional Notes:
+### Additional Notes
 
 - The project is under development, and some features are not fully implemented yet (DRAFT/WIP).
 - Use the [CHANGELOG](https://github.com/qte77/Agents-eval/blob/main/CHANGELOG.md) for version history.
