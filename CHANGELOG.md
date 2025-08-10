@@ -30,8 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.1.0] - 2025-08-10
 
-## [3.1.0] - 2025-08-10
-
 ### Added
 
 - Inspected paper visualization
