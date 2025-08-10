@@ -28,6 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2025-08-10
+
+### Added
+
+- Inspected paper visualization
+- PlantUML local  generation with Docker
+
+### Changed
+
+- Updated project documentation
+- Sprint plans
+- PlantUML diagrams with CSS for better clarity and consistency
+
 ## [3.0.0] - 2025-08-03
 
 ### Added
