@@ -48,6 +48,7 @@ wandb/
 data/
 test_data/
 datasets/
+write-up/
 
 # mermaid
 package.json
