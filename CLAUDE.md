@@ -1,3 +1,4 @@
-# Redirected to [AGENTS.md](AGENTS.md) for project documentation
+# Redirections
 
-@AGENTS.md
+- Claude Code specific configurations: @.claude/settings.local.json
+- Project guidlines and principles: @AGENTS.md

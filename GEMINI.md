@@ -1,3 +1,4 @@
-# Redirected to [AGENTS.md](AGENTS.md) for project documentation
+# Redirections
 
-@AGENTS.md
+- Gemini specific configurations: @.gemini/config.json
+- Project guidlines and principles: @AGENTS.md
