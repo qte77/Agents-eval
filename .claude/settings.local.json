@@ -19,7 +19,8 @@
       "Bash(uv run mypy:*)",
       "Bash(uv run pytest:*)",
       "Bash(uv run ruff:*)",
-      "Edit(AGENTS.md)",
+      "Edit(AGENT_LEARNINGS.md)",
+      "Edit(AGENT_REQUESTS.md)",
       "Edit(docs/**/*.md)",
       "Edit(Makefile)",
       "Edit(README.md)",
@@ -44,9 +45,14 @@
       "Bash(rg:*)",
       "Bash(rm:*)",
       "Bash(tail:*)",
+      "Edit(.claude/**)",
+      "Edit(.claude/agents/*.md)",
       "Edit(.claude/commands/*.md)",
       "Edit(.claude/settings.local.json)",
-      "Edit(CLAUDE.md)"
+      "Edit(AGENTS.md)",
+      "Edit(CLAUDE.md)",
+      "Edit(CONTRIBUTE.md)",
+      "Edit(README.md)"
     ]
   }
 }

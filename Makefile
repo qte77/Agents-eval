@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_plantuml setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile run_plantuml prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
+.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_plantuml setup_pdf_converter setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile run_plantuml prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := setup_dev_ollama
 
@@ -90,6 +90,29 @@ setup_plantuml:  ## Setup PlantUML with docker, $(PLANTUML_SCRIPT) and $(PLANTUM
 	chmod +x $(PLANTUML_SCRIPT)
 	docker pull $(PLANTUML_CONTAINER)
 	echo "PlantUML docker version: $$(docker run --rm $(PLANTUML_CONTAINER) --version)"
+
+setup_pdf_converter:  ## Setup PDF converter tools: pandoc, wkhtmltopdf
+	converter_choice=$(firstword $(strip $(ARGS)))
+	converter_supported="Use 'pandoc' or 'wkhtmltopdf'."
+	usage="--- Usage ---\nCombine files: cat file1.md file2.md file3.md > combined.md\nConvert files: "
+	if [ -z "$${converter_choice}" ]; then
+		echo "No PDF converter specified. $${converter_supported}"
+		exit 1
+	fi
+	echo "Setting up PDF converter '$${converter_choice}' ..."
+	sudo apt-get update -yqq
+	if [ "$${converter_choice}" = "pandoc" ]; then
+		sudo apt-get install -yqq pandoc
+		sudo apt-get install -yqq texlive-latex-recommended texlive-fonts-recommended
+		pandoc --version | head -n 1
+		echo "$${usage} pandoc combined.md -o output.pdf"
+	elif [ "$${converter_choice}" = "wkhtmltopdf" ]; then
+		sudo apt-get install -yqq wkhtmltopdf
+		echo "$${usage} markdown your_document.md & wkhtmltopdf - output.pdf"
+	else
+		echo "Error: Unsupported PDF converter choice '$${converter_choice}'. $${converter_supported}"
+		exit 1
+	fi
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server

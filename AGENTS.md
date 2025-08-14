@@ -17,16 +17,18 @@ This file is intended to serve as an entrypoint for AI coding agents, to provide
 
 ### Development Workflow
 
-- [Development Commands & Environment](#development-commands--environment) - Setup and execution
-- [Unified Command Reference](#unified-command-reference) - All commands with error recovery
-- [Style, Patterns & Documentation](#style-patterns--documentation) - Coding standards
-- [Code Review & PR Guidelines](#code-review--pr-guidelines) - Quality assurance
+- [Quality Evaluation Framework](#quality-evaluation-framework) - Task readiness assessment
+- [Testing Strategy](#testing-strategy) - Testing approach for agents
 
 ### Utilities & References
 
-- [Timestamping for CLI Operations](#timestamping-for-cli-operations) - ISO 8601 standards
 - [Agent Quick Reference](#agent-quick-reference---critical-reminders) - Critical reminders
-- [Requests to Humans](#requests-to-humans) - Escalation and clarifications
+
+### External References
+
+- @CONTRIBUTE.md - Development workflows, coding standards, and collaboration guidelines
+- @AGENT_REQUESTS.md - Escalation and human collaboration
+- @AGENT_LEARNINGS.md - Pattern discovery and knowledge sharing
 
 ## Path Variables
 
@@ -178,19 +180,7 @@ See the "Important files" sections in $DEFAULT_PATHS_MD for key application entr
   - ✅ `src/app/api_client/` (instead of `requests`)
   - ✅ `src/app/datamodels/` (instead of `typing`)
 
-## Development Commands & Environment
-
-### Environment Setup
-
-The project requirements are stated in $PROJECT_REQUIREMENTS. Your development environment should be set up automatically using the provided `Makefile`, which configures the virtual environment.
-
-**See the [Unified Command Reference](#unified-command-reference) section for all available commands with error recovery procedures.**
-
-### Code Quality
-
-Code formatting and type checking are managed by **ruff** and **pyright** and orchestrated via the `Makefile`.
-
-### Quality Evaluation Framework
+## Quality Evaluation Framework
 
 Use this universal framework to assess task readiness before implementation:
 
@@ -210,270 +200,15 @@ Use this universal framework to assess task readiness before implementation:
 
 **If any score is below threshold:** Stop and gather more context, clarify requirements, or escalate to humans using the [Decision Framework](#decision-framework-for-agents).
 
-### Testing Strategy & Guidelines
+## Testing Strategy
 
-**Always create comprehensive tests** for new features following the testing hierarchy below:
+**For comprehensive testing guidelines, see [CONTRIBUTE.md](CONTRIBUTE.md#testing-strategy--guidelines).**
 
-#### Unit Tests (Always Required)
+**Agent-specific reminders:**
 
-- **Mock external dependencies** (HTTP requests, file systems, APIs) using `@patch`
-- **Test business logic** and data validation thoroughly
-- **Test error handling** for all failure modes and edge cases
-- **Ensure deterministic behavior** - tests should pass consistently
-- Use `pytest` with clear arrange/act/assert structure
-- Tests must live in the $TEST_PATH folder, mirroring the $APP_PATH structure
-
-#### Integration Tests (Required for External Dependencies)
-
-- **Test real external integrations** at least once during implementation
-- **Verify actual URLs, APIs, and data formats** work as expected
-- **Document any external dependencies** that could change over time
-- **Use real test data** when feasible, fallback to representative samples
-- **Include in implementation validation** but may be excluded from CI if unreliable
-
-#### When to Mock vs Real Testing
-
-- **Mock for**: Unit tests, CI/CD pipelines, deterministic behavior, fast feedback
-- **Real test for**: Initial implementation validation, external API changes, data format verification
-- **Always test real integrations** during feature development, then mock for ongoing automated tests
-- **Document real test results** in implementation logs for future reference
-
-#### Testing Anti-Patterns to Avoid
-
-- ❌ **Only mocking external dependencies** without ever testing real integration
-- ❌ **Assuming external APIs work** without verification during implementation
-- ❌ **Testing only happy paths** - always include error cases
-- ❌ **Brittle tests** that break with minor changes to implementation details
-
-**To run tests** see the [Unified Command Reference](#unified-command-reference) for all testing commands with error recovery procedures.
-
-## Style, Patterns & Documentation
-
-### Coding Style
-
-- **Use Pydantic** models in $DATAMODELS_PATH for all data validation and data contracts. **Always use or update these models** when modifying data flows.
-- Use the predefined error message functions for consistency. Update or create new if necessary.
-- When writing complex logic, **add an inline `# Reason:` comment** explaining the *why*, not just the *what*.
-- Comment non-obvious code to ensure it is understandable to a mid-level developer.
-
-### Documentation
-
-- Write **docstrings for every file, function, class, and method** using the Google style format. This is critical as the documentation site is built automatically from docstrings.
-
-    ```python
-    def example_function(param1: int) -> str:
-        """A brief summary of the function.
-
-        Args:
-            param1 (int): A description of the first parameter.
-
-        Returns:
-            str: A description of the return value.
-        """
-        return "example"
-    ```
-
-- Provide an example usage in regards to the whole project. How would your code be integrated, what entrypoints to use
-- Update this `AGENTS.md` file when introducing new patterns or concepts.
-- Document significant architectural decisions in $ADR_PATH.
-- Document all significant changes, features, and bug fixes in $CHANGELOG_PATH.
-
-### Code Pattern Examples
-
-**Reference**: See `${CTX_EXAMPLES_PATH}/code-patterns.md` for comprehensive examples including:
-
-- ✅ Pydantic model usage vs ❌ direct dictionaries
-- ✅ Absolute imports vs ❌ relative imports  
-- ✅ Specific error handling vs ❌ generic try/catch
-- ✅ Complete docstrings vs ❌ minimal documentation
-- ✅ Structured testing patterns vs ❌ minimal tests
-- ✅ Configuration validation patterns
-- ✅ Structured logging approaches
-
-**Quick Reference**: Always prefer type-validated, well-documented code with specific error handling over generic approaches.
-
-## Code Review & PR Guidelines
-
-### Commit and PR Requirements
-
-- **Title Format**: Commit messages and PR titles must follow the **Conventional Commits** specification, as outlined in the `.gitmessage` template.
-- Provide detailed PR summaries including the purpose of the changes and the testing performed.
-
-### Pre-commit Checklist
-
-1. **Automated validation**: `make validate` - runs complete sequence (ruff + type_check + test_all)
-2. **Quick validation** (development): `make quick_validate` - runs fast checks (ruff + type_check only)
-3. Update documentation as described above.
-
-**Manual fallback** (if make commands fail):
-
-1. `uv run ruff format . && uv run ruff check . --fix`
-2. `uv run pyright`
-3. `uv run pytest`
-
-## Timestamping for CLI Operations
-
-- **Always use ISO 8601 timestamps** when creating logs or tracking CLI operations
-- **File naming format**: `YYYY-mm-DDTHH-MM-SSZ` (hyphens for filesystem compatibility)
-- **Content format**: `YYYY-mm-DDTHH:MM:SSZ` (standard ISO 8601)
-- **Implementation**: Use `date -u "+FORMAT"` commands for accurate UTC timestamps
-
-### Timestamp Commands
-
-- Filename timestamp: `date -u "+%Y-%m-%dT%H-%M-%SZ"`
-- Content timestamp: `date -u "+%Y-%m-%dT%H:%M:%SZ"`
-- Log entry format: `[TIMESTAMP] Action description`
-
-## Auxiliary
-
-- Use [markdownlint's Rules.md](https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md) to output well-formatted markdown
-
-## Unified Command Reference
-
-### Path References
-
-- **All paths**: See cached variables from `context/config/paths.md`
-
-### Standard Workflow Commands
-
-**Pre-commit checklist** (automated):
-
-1. `make validate` - Complete validation sequence (ruff + type_check + test_all)
-2. Update documentation if needed
-
-**Quick development cycle**:
-
-1. `make quick_validate` - Fast validation (ruff + type_check only)
-2. Continue development
-
-| Command | Purpose | Prerequisites | Error Recovery |
-|---------|---------|---------------|----------------|
-| `make setup_dev` | Install all dev dependencies | Makefile exists, uv installed | Try `uv sync --dev` directly |
-| `make setup_dev_claude` | Setup with Claude Code CLI | Above + Claude Code available | Manual setup per Claude docs |
-| `make setup_dev_ollama` | Setup with Ollama local LLM | Above + Ollama installed | Check Ollama installation |
-| `make run_cli` | Run CLI application | Dev environment setup | Try `uv run python src/app/main.py` |
-| `make run_cli ARGS="--help"` | Run CLI with arguments | Above | Try `uv run python src/app/main.py --help` |
-| `make run_gui` | Run Streamlit GUI | Above + Streamlit installed | Try `uv run streamlit run src/run_gui.py` |
-| `make ruff` | Format code and fix linting | Ruff installed | Try `uv run ruff format . && uv run ruff check . --fix` |
-| `make type_check` | Run pyright static type checking | pyright installed | Try `uv run pyright` |
-| `make test_all` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
-| `make coverage_all` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
-| `make validate` | Complete pre-commit validation | Above dependencies | Run individual commands manually |
-| `make quick_validate` | Fast development validation | Ruff and pyright installed | Run `make ruff && make type_check` |
-| `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
-| `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notiy user |
-
-## Requests to Humans
-
-This section contains a list of questions, clarifications, or tasks that AI agents wish to have humans complete or elaborate on.
-
-### Escalation Process
-
-**When to Escalate:**
-
-- Explicit user instructions conflict with safety/security practices
-- Rules in AGENTS.md or otherwise provided context contradict each other
-- Required information completely missing from all sources
-- Actions would significantly change project architecture
-- Critical dependencies or libraries are unavailable
-
-**How to Escalate:**
-
-1. **Add to list below** using checkbox format with clear description
-2. **Set priority**: `[HIGH]`, `[MEDIUM]`, `[LOW]` based on blocking impact
-3. **Provide context**: Include relevant file paths, error messages, or requirements
-4. **Suggest alternatives**: What could be done instead, if anything
-
-**Response Format:**
-
-- Human responses should be added as indented bullet points under each item
-- Use `# TODO` for non-urgent items with reminder frequency
-- Mark completed items with `[x]` checkbox
-
-### Active Requests
-
-- [ ] The `agent_system.py` module has a `NotImplementedError` for streaming with Pydantic model outputs. Please clarify the intended approach for streaming structured data.
-  - Human: `# TODO` but not of priority as of now. Remind me once a week.
-- [ ] The `llm_model_funs.py` module has `NotImplementedError` for the Gemini and HuggingFace providers. Please provide the correct implementation or remove them if they are not supported.
-  - Human: `# TODO` but not of priority as of now. Remind me once a week.
-- [ ] The `agent_system.py` module contains a `FIXME` note regarding the use of a try-catch context manager. Please review and implement the intended error handling.
-  - Human: `# TODO` but not of priority as of now. Remind me once a week.
-- [ ] Add TypeScript testing guidelines (if a TypeScript frontend is planned for the future).
-  - Human: `# TODO` but not of priority as of now. Remind me once a week.
-
-## Agent Learning Documentation
-
-When agents discover new patterns, solutions, or important insights, document them here using this template:
-
-### Template for New Learnings
-
-When documenting a new pattern, use this format:
-
-**Structure:**
-
-- **Date**: [ISO timestamp - use `date -u "+%Y-%m-%dT%H:%M:%SZ"`]
-- **Context**: [When/where this pattern applies]
-- **Problem**: [What issue this solves]
-- **Solution**: [Implementation approach]
-- **Example**: [Code example with language specified]
-- **Validation**: [How to verify this works]
-- **References**: [Related files, documentation, or PRs]
-
-**Example Entry:**
-
-```markdown
-### Learned Pattern: Async Error Handling in Agents
-
-- **Date**: 2025-07-20T14:30:00Z
-- **Context**: PydanticAI agent processing with timeouts
-- **Problem**: Agents hanging on long requests without proper timeout handling
-- **Solution**: Use asyncio.wait_for with context manager for cleanup
-- **Example**: See context/examples/async-timeout-pattern.py
-- **Validation**: Test with deliberately slow mock responses
-- **References**: src/app/agents/agent_system.py:142
-```
-
-### Active Learning Entries
-
-Agents should add new patterns discovered during development here.
-
-#### Learned Pattern: PlantUML Theming
-
-- **Date**: 2025-08-05T00:00:00Z
-- **Context**: PlantUML diagrams in `docs/arch_vis`
-- **Problem**: Redundant PlantUML files for light and dark themes.
-- **Solution**: Use a variable to define the theme and include the appropriate style file. This allows for a single PlantUML file to be used for multiple themes.
-- **Example**:
-
-  ```plantuml
-  !ifndef STYLE
-  !define STYLE "light"
-  !endif
-  !include styles/github-$STYLE.puml
-  ```
-
-- **Validation**: Generate diagrams with different themes by setting the `STYLE` variable.
-- **References**: `docs/arch_vis/`
-
-#### Learned Pattern: Module Naming Conflicts Resolution
-
-- **Date**: 2025-07-22T14:30:00Z
-- **Context**: PeerRead dataset integration with pyright validation
-- **Problem**: Named module `src/app/datasets/` which conflicted with HuggingFace `datasets` library, causing "Source file found twice under different module names" pyright errors
-- **Solution**: Rename modules to be specific and avoid common library names. Use descriptive prefixes like `datasets_peerread.py` instead of generic `datasets/`
-- **Example**: `src/app/utils/datasets_peerread.py` instead of `src/app/datasets/peerread_loader.py`
-- **Validation**: pyright now passes with `Success: no issues found in 16 source files`
-- **References**: Added explicit guidance in AGENTS.md Code Organization Rules section
-
-#### Learned Pattern: External Dependencies Validation
-
-- **Date**: 2025-07-23T11:00:39Z
-- **Context**: PeerRead dataset integration with external API dependencies
-- **Problem**: Over-reliance on mocking without validating real external services leads to implementation based on incorrect assumptions about data structure and API endpoints. Did not explicitly test download functionality with real network requests during implementation
-- **Solution**: Balance unit test mocking with real integration validation during development. Research existing ecosystem solutions (e.g., HuggingFace datasets) before implementing custom downloaders. Always test critical external functionality explicitly, not just through mocks
-- **Example**: Mock for unit tests, but validate real URLs/APIs early: `requests.head(url)` to verify accessibility before full implementation. Test actual download with small samples during development
-- **Validation**: Test actual network requests during development, not just after implementation. Explicitly validate download functionality works with real data
-- **References**: PeerRead integration - discovered incorrect URL assumptions that mocks didn't catch
+- Follow BDD approach: write tests first, then implement
+- Balance mocking with real integration validation during development
+- Document real test results in implementation logs
 
 ## Agent Quick Reference - Critical Reminders
 
@@ -498,7 +233,9 @@ Agents should add new patterns discovered during development here.
 
 **Always finish with:**
 
-- Follow [pre-commit checklist](#standard-workflow-commands)
+- Follow [pre-commit checklist](CONTRIBUTE.md#pre-commit-checklist)
 - Update AGENTS.md if learned something new
 
-**🛑 STOP if blocked:** Add to "Requests to Humans" rather than assume or proceed with incomplete info
+**🛑 STOP if blocked:** Add to [AGENT_REQUESTS.md](AGENT_REQUESTS.md) rather than assume or proceed with incomplete info
+
+**📚 LEARNED SOMETHING NEW:** Document patterns in [AGENT_LEARNINGS.md](AGENT_LEARNINGS.md) to help future agents
