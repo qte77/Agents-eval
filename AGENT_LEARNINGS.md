@@ -107,16 +107,19 @@ Agents should add new patterns discovered during development here.
 ## Pattern Categories
 
 ### Development Workflow
+
 - Build system optimizations
 - Testing strategies
 - Code organization patterns
 
 ### Technical Solutions
+
 - Library integration approaches
 - Performance optimization techniques
 - Error handling patterns
 
 ### Project-Specific
+
 - Architecture decisions
 - Data flow patterns
 - Configuration management

@@ -192,6 +192,7 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 **For agent escalation and human collaboration, see [AGENT_REQUESTS.md](AGENT_REQUESTS.md).**
 
 This centralized file contains:
+
 - Escalation process guidelines
 - Active requests from agents
 - Response format for humans
@@ -202,6 +203,7 @@ This centralized file contains:
 **For accumulated agent knowledge and patterns, see [AGENT_LEARNINGS.md](AGENT_LEARNINGS.md).**
 
 This growing knowledge base includes:
+
 - Discovered patterns and solutions
 - Common pitfall avoidance
 - Integration approaches
