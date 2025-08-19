@@ -7,7 +7,7 @@
 .ONESHELL:
 .PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_plantuml setup_pdf_converter setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile run_plantuml prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
 # .DEFAULT: setup_dev_ollama
-.DEFAULT_GOAL := setup_dev_ollama
+.DEFAULT_GOAL := help
 
 SRC_PATH := src
 APP_PATH := $(SRC_PATH)/app
@@ -22,6 +22,8 @@ PLANTUML_SCRIPT := scripts/generate-plantuml-png.sh
 PRP_DEF_PATH := /context/PRPs/features
 PRP_CLAUDE_GEN_CMD := generate-prp
 PRP_CLAUDE_EXE_CMD := execute-prp
+PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex
+PANDOC_TITLE_FILE := 01_titel_abstrakt.md
 
 
 # MARK: claude commands
@@ -94,7 +96,6 @@ setup_plantuml:  ## Setup PlantUML with docker, $(PLANTUML_SCRIPT) and $(PLANTUM
 setup_pdf_converter:  ## Setup PDF converter tools: pandoc, wkhtmltopdf
 	converter_choice=$(firstword $(strip $(ARGS)))
 	converter_supported="Use 'pandoc' or 'wkhtmltopdf'."
-	usage="--- Usage ---\nCombine files: cat file1.md file2.md file3.md > combined.md\nConvert files: "
 	if [ -z "$${converter_choice}" ]; then
 		echo "No PDF converter specified. $${converter_supported}"
 		exit 1
@@ -116,14 +117,14 @@ setup_pdf_converter:  ## Setup PDF converter tools: pandoc, wkhtmltopdf
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
-	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
+	echo "Downloading Ollama binary ... Using '$(OLLAMA_SETUP_URL)'."
 	# script does start server but not consistently
 	curl -fsSL $(OLLAMA_SETUP_URL) | sh
 	echo "Pulling model '$(OLLAMA_MODEL_NAME)' ..."
 	ollama pull $(OLLAMA_MODEL_NAME)
 
 clean_ollama:  ## Remove local Ollama from system
-	echo "Searching for Ollama binary..."
+	echo "Searching for Ollama binary ..."
 	for BINDIR in /usr/local/bin /usr/bin /bin; do
 		if echo $$PATH | grep -q $$BINDIR; then
 			echo "Ollama binary found in '$${BINDIR}'"
@@ -131,7 +132,7 @@ clean_ollama:  ## Remove local Ollama from system
 			break
 		fi
 	done
-	echo "Cleaning up..."
+	echo "Cleaning up ..."
 	rm -f $(BIN)
 
 
@@ -142,7 +143,7 @@ start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
 	ollama serve
 
 stop_ollama:  ## Stop local Ollama server
-	echo "Stopping Ollama server..."
+	echo "Stopping Ollama server ..."
 	pkill ollama
 
 
@@ -157,6 +158,63 @@ run_puml_interactive:  ## Generate a themed diagram from a PlantUML file interac
 run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 	$(PLANTUML_SCRIPT) "$(INPUT_FILE)" "$(STYLE)" "$(OUTPUT_PATH)" \
 		"$(CHECK_ONLY)" "$(PLANTUML_CONTAINER)"
+
+
+# MARK: run pandoc
+
+
+run_pandoc:  ## Convert MD to PDF using pandoc, TOC and optional title page: ARGS="[input_file(s)] [output_file] [title_page] [template] [footer_text]"
+	input_file=$(firstword $(strip $(ARGS)))
+	if [ "$${input_file}" = "help" ]; then
+		echo "Usage: make run_pandoc ARGS=\"[input_file(s)] [output_file] [title_page] [template] [footer_text]\""
+		echo ""
+		echo "Arguments (all optional):"
+		echo "  input_file(s) : Markdown files to convert (default: !(01_*)*.md)"
+		echo "  output_file   : Output PDF filename (default: output.pdf)"
+		echo "  title_page    : LaTeX file for title page, 'none' to skip (default: none)"
+		echo "  template      : Pandoc template file, 'none' to skip (default: none)"
+		echo "  footer_text   : Footer text, 'none' to disable (default: 'Agents-eval v3.1.0')"
+		echo ""
+		echo "Examples:"
+		echo "  make run_pandoc                                    # Use all defaults"
+		echo "  make run_pandoc ARGS=\"*.md report.pdf\"           # Custom input/output"
+		echo "  make run_pandoc ARGS=\"*.md report.pdf title.latex\"  # With title page"
+		echo "  make run_pandoc ARGS=\"*.md report.pdf none none 'My Footer'\"  # Custom footer"
+		echo "  make run_pandoc ARGS=\"*.md report.pdf none none none\"  # No footer"
+		exit 0
+	fi
+	output_file=$(word 2,$(strip $(ARGS)))
+	title_file=$(word 3,$(strip $(ARGS)))
+	template_file=$(word 4,$(strip $(ARGS)))
+	footer_text=$(word 5,$(strip $(ARGS)))
+	pandoc_params="--toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex -M protrusion --from markdown+smart"
+	title_params=""
+	template_params=""
+	if [ -z "$${input_file}" ]; then
+		input_file="!(01_*)*.md"
+	fi
+	if [ -z "$${output_file}" ]; then
+		output_file="output.pdf"
+	fi
+	# title_file and footer_text remain empty if not provided in ARGS
+	if [ -z "$${footer_text}" ]; then
+		footer_text="Agents-eval v3.1.0"
+	fi
+	if [ -n "$${footer_text}" ] && [ "$${footer_text}" != "none" ]; then
+		footer_params="-H <(echo '\\usepackage{fancyhdr} \\pagestyle{fancy} \\fancyhf{} \\fancyfoot[L]{$${footer_text}} \\fancyfoot[R]{\\thepage} \\renewcommand{\\headrulewidth}{0pt} \\renewcommand{\\footrulewidth}{0.4pt} \\fancypagestyle{plain}{\\fancyhf{} \\renewcommand{\\headrulewidth}{0pt} \\renewcommand{\\footrulewidth}{0pt}}')"
+	else
+		footer_params=""
+	fi
+	if [ -n "$${title_file}" ] && [ "$${title_file}" != "none" ]; then
+		title_params="-B $${title_file}"
+	fi
+	if [ -n "$${template_file}" ] && [ "$${template_file}" != "none" ]; then
+		template_params="--template=$${template_file}"
+		echo "Converting '$${input_file}' to '$${output_file}' using template '$${template_file}' ..."
+	else
+		echo "Converting '$${input_file}' to '$${output_file}' using pandoc defaults ..."
+	fi
+	pandoc $${pandoc_params} $${footer_params} $${template_params} $${title_params} -o $${output_file} $${input_file}
 
 
 # MARK: run app
@@ -174,7 +232,7 @@ run_profile:  ## Profile app with scalene
 		"$(APP_PATH)/main.py"
 
 
-# MARK: context
+# MARK: Claude Code Context
 
 
 prp_gen_claude:  ## generates the PRP from the file passed in ARGS
@@ -184,7 +242,7 @@ prp_exe_claude:  ## executes the PRP from the file passed in ARGS
 	$(call CLAUDE_PRP_RUNNER, $(ARGS), $(PRP_CLAUDE_EXE_CMD))
 
 
-# MARK: sanity
+# MARK: Sanity
 
 
 ruff:  ## Lint: Format and check with ruff
@@ -202,14 +260,14 @@ type_check:  ## Check for static typing errors
 	uv run pyright
 
 validate:  ## Complete pre-commit validation sequence
-	echo "Running complete validation sequence..."
+	echo "Running complete validation sequence ..."
 	$(MAKE) -s ruff
 	-$(MAKE) -s type_check
 	-$(MAKE) -s test_all
 	echo "Validation sequence completed (check output for any failures)"
 
 quick_validate:  ## Fast development cycle validation
-	echo "Running quick validation..."
+	echo "Running quick validation ..."
 	$(MAKE) -s ruff
 	-$(MAKE) -s type_check
 	echo "Quick validation completed (check output for any failures)"
