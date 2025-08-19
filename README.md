@@ -362,7 +362,21 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 ## Note: Context Framework for AI Agents
 
-This project includes a comprehensive context framework for AI coding agents. It can be used to implement new features using a top-down approach. The user has to provide feature descriptions which will then be transformed into Feature Request Prompts (FRPs) which in turn will be transformed into code implementation.
+This project includes a comprehensive context framework for AI coding agents designed for structured development and collaboration. It supports feature implementation using a top-down approach where feature descriptions are transformed into Feature Request Prompts (FRPs) and then into code implementation.
+
+### Documentation Hierarchy
+
+The framework uses a layered documentation approach:
+
+```bash
+CLAUDE.md (entry point)
+    ↓
+AGENTS.md (core agent instructions)
+    ↓
+├── CONTRIBUTE.md (development workflows & standards)
+├── AGENT_REQUESTS.md (human escalation & collaboration)
+└── AGENT_LEARNINGS.md (pattern discovery & knowledge sharing)
+```
 
 ### CLI/Extensions used
 
@@ -375,7 +389,10 @@ This project includes a comprehensive context framework for AI coding agents. It
 
 ### Core Components
 
-- **AGENTS.md**: North star document with project patterns, conventions, and quality evaluation framework
+- **AGENTS.md**: Core agent instructions with project patterns, conventions, and decision framework
+- **CONTRIBUTE.md**: Development workflows, coding standards, and collaboration guidelines
+- **AGENT_REQUESTS.md**: Human escalation process and active collaboration requests
+- **AGENT_LEARNINGS.md**: Accumulated patterns, solutions, and knowledge sharing
 - **FRP Workflow**: Feature Requirements Prompt generation and execution system
   1. `context/templates/1_feature_description.md`: User provides feature description, e.g., by using this template
   2. `.claude/commands/generate-frp.md`: Creates comprehensive implementation prompts from feature descriptions

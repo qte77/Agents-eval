@@ -5,9 +5,9 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_plantuml setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile run_plantuml prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
+.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_plantuml setup_pdf_converter setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile run_plantuml prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
 # .DEFAULT: setup_dev_ollama
-.DEFAULT_GOAL := setup_dev_ollama
+.DEFAULT_GOAL := help
 
 SRC_PATH := src
 APP_PATH := $(SRC_PATH)/app
@@ -19,9 +19,13 @@ OLLAMA_SETUP_URL := https://ollama.com/install.sh
 OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
 PLANTUML_CONTAINER := plantuml/plantuml:latest
 PLANTUML_SCRIPT := scripts/generate-plantuml-png.sh
+PANDOC_SCRIPT := scripts/run-pandoc.sh
+PDF_CONVERTER_SCRIPT := scripts/setup-pdf-converter.sh
 PRP_DEF_PATH := /context/PRPs/features
 PRP_CLAUDE_GEN_CMD := generate-prp
 PRP_CLAUDE_EXE_CMD := execute-prp
+PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex
+PANDOC_TITLE_FILE := 01_titel_abstrakt.md
 
 
 # MARK: claude commands
@@ -91,16 +95,24 @@ setup_plantuml:  ## Setup PlantUML with docker, $(PLANTUML_SCRIPT) and $(PLANTUM
 	docker pull $(PLANTUML_CONTAINER)
 	echo "PlantUML docker version: $$(docker run --rm $(PLANTUML_CONTAINER) --version)"
 
+setup_pdf_converter:  ## Setup PDF converter tools. For usage: make setup_pdf_converter HELP=1
+	if [ -n "$(HELP)" ]; then
+		$(PDF_CONVERTER_SCRIPT) help
+	else
+		chmod +x $(PDF_CONVERTER_SCRIPT)
+		$(PDF_CONVERTER_SCRIPT) "$(CONVERTER)"
+	fi
+
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
-	echo "Downloading Ollama binary... Using '$(OLLAMA_SETUP_URL)'."
+	echo "Downloading Ollama binary ... Using '$(OLLAMA_SETUP_URL)'."
 	# script does start server but not consistently
 	curl -fsSL $(OLLAMA_SETUP_URL) | sh
 	echo "Pulling model '$(OLLAMA_MODEL_NAME)' ..."
 	ollama pull $(OLLAMA_MODEL_NAME)
 
 clean_ollama:  ## Remove local Ollama from system
-	echo "Searching for Ollama binary..."
+	echo "Searching for Ollama binary ..."
 	for BINDIR in /usr/local/bin /usr/bin /bin; do
 		if echo $$PATH | grep -q $$BINDIR; then
 			echo "Ollama binary found in '$${BINDIR}'"
@@ -108,7 +120,7 @@ clean_ollama:  ## Remove local Ollama from system
 			break
 		fi
 	done
-	echo "Cleaning up..."
+	echo "Cleaning up ..."
 	rm -f $(BIN)
 
 
@@ -119,7 +131,7 @@ start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
 	ollama serve
 
 stop_ollama:  ## Stop local Ollama server
-	echo "Stopping Ollama server..."
+	echo "Stopping Ollama server ..."
 	pkill ollama
 
 
@@ -134,6 +146,19 @@ run_puml_interactive:  ## Generate a themed diagram from a PlantUML file interac
 run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 	$(PLANTUML_SCRIPT) "$(INPUT_FILE)" "$(STYLE)" "$(OUTPUT_PATH)" \
 		"$(CHECK_ONLY)" "$(PLANTUML_CONTAINER)"
+
+
+# MARK: run pandoc
+
+
+run_pandoc:  ## Convert MD to PDF using pandoc. Usage from root: dir=docs/write-up/claude/markdown_de && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf" TITLE_PAGE="$dir/01_titel_abstrakt.tex" TOC_TITLE="Inhaltsverzeichnis" | For help: make run_pandoc HELP=1
+	if [ -n "$(HELP)" ]; then
+		$(PANDOC_SCRIPT) help
+	else
+		chmod +x $(PANDOC_SCRIPT)
+		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" "$(TITLE_PAGE)" \
+			"$(TEMPLATE)" "$(FOOTER_TEXT)" "$(TOC_TITLE)"
+	fi
 
 
 # MARK: run app
@@ -151,7 +176,7 @@ run_profile:  ## Profile app with scalene
 		"$(APP_PATH)/main.py"
 
 
-# MARK: context
+# MARK: Claude Code Context
 
 
 prp_gen_claude:  ## generates the PRP from the file passed in ARGS
@@ -161,7 +186,7 @@ prp_exe_claude:  ## executes the PRP from the file passed in ARGS
 	$(call CLAUDE_PRP_RUNNER, $(ARGS), $(PRP_CLAUDE_EXE_CMD))
 
 
-# MARK: sanity
+# MARK: Sanity
 
 
 ruff:  ## Lint: Format and check with ruff
@@ -179,14 +204,14 @@ type_check:  ## Check for static typing errors
 	uv run pyright
 
 validate:  ## Complete pre-commit validation sequence
-	echo "Running complete validation sequence..."
+	echo "Running complete validation sequence ..."
 	$(MAKE) -s ruff
 	-$(MAKE) -s type_check
 	-$(MAKE) -s test_all
 	echo "Validation sequence completed (check output for any failures)"
 
 quick_validate:  ## Fast development cycle validation
-	echo "Running quick validation..."
+	echo "Running quick validation ..."
 	$(MAKE) -s ruff
 	-$(MAKE) -s type_check
 	echo "Quick validation completed (check output for any failures)"
