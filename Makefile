@@ -19,6 +19,7 @@ OLLAMA_SETUP_URL := https://ollama.com/install.sh
 OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
 PLANTUML_CONTAINER := plantuml/plantuml:latest
 PLANTUML_SCRIPT := scripts/generate-plantuml-png.sh
+PANDOC_SCRIPT := scripts/run-pandoc.sh
 PRP_DEF_PATH := /context/PRPs/features
 PRP_CLAUDE_GEN_CMD := generate-prp
 PRP_CLAUDE_EXE_CMD := execute-prp
@@ -163,58 +164,13 @@ run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 # MARK: run pandoc
 
 
-run_pandoc:  ## Convert MD to PDF using pandoc, TOC and optional title page: ARGS="[input_file(s)] [output_file] [title_page] [template] [footer_text]"
-	input_file=$(firstword $(strip $(ARGS)))
-	if [ "$${input_file}" = "help" ]; then
-		echo "Usage: make run_pandoc ARGS=\"[input_file(s)] [output_file] [title_page] [template] [footer_text]\""
-		echo ""
-		echo "Arguments (all optional):"
-		echo "  input_file(s) : Markdown files to convert (default: !(01_*)*.md)"
-		echo "  output_file   : Output PDF filename (default: output.pdf)"
-		echo "  title_page    : LaTeX file for title page, 'none' to skip (default: none)"
-		echo "  template      : Pandoc template file, 'none' to skip (default: none)"
-		echo "  footer_text   : Footer text, 'none' to disable (default: 'Agents-eval v3.1.0')"
-		echo ""
-		echo "Examples:"
-		echo "  make run_pandoc                                    # Use all defaults"
-		echo "  make run_pandoc ARGS=\"*.md report.pdf\"           # Custom input/output"
-		echo "  make run_pandoc ARGS=\"*.md report.pdf title.latex\"  # With title page"
-		echo "  make run_pandoc ARGS=\"*.md report.pdf none none 'My Footer'\"  # Custom footer"
-		echo "  make run_pandoc ARGS=\"*.md report.pdf none none none\"  # No footer"
-		exit 0
+run_pandoc:  ## Convert MD to PDF using pandoc. For usage: make run_pandoc HELP=1
+	@if [ -n "$(HELP)" ]; then \
+		$(PANDOC_SCRIPT) help; \
+	else \
+		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" "$(TITLE_PAGE)" \
+			"$(TEMPLATE)" "$(FOOTER_TEXT)"; \
 	fi
-	output_file=$(word 2,$(strip $(ARGS)))
-	title_file=$(word 3,$(strip $(ARGS)))
-	template_file=$(word 4,$(strip $(ARGS)))
-	footer_text=$(word 5,$(strip $(ARGS)))
-	pandoc_params="--toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex -M protrusion --from markdown+smart"
-	title_params=""
-	template_params=""
-	if [ -z "$${input_file}" ]; then
-		input_file="!(01_*)*.md"
-	fi
-	if [ -z "$${output_file}" ]; then
-		output_file="output.pdf"
-	fi
-	# title_file and footer_text remain empty if not provided in ARGS
-	if [ -z "$${footer_text}" ]; then
-		footer_text="Agents-eval v3.1.0"
-	fi
-	if [ -n "$${footer_text}" ] && [ "$${footer_text}" != "none" ]; then
-		footer_params="-H <(echo '\\usepackage{fancyhdr} \\pagestyle{fancy} \\fancyhf{} \\fancyfoot[L]{$${footer_text}} \\fancyfoot[R]{\\thepage} \\renewcommand{\\headrulewidth}{0pt} \\renewcommand{\\footrulewidth}{0.4pt} \\fancypagestyle{plain}{\\fancyhf{} \\renewcommand{\\headrulewidth}{0pt} \\renewcommand{\\footrulewidth}{0pt}}')"
-	else
-		footer_params=""
-	fi
-	if [ -n "$${title_file}" ] && [ "$${title_file}" != "none" ]; then
-		title_params="-B $${title_file}"
-	fi
-	if [ -n "$${template_file}" ] && [ "$${template_file}" != "none" ]; then
-		template_params="--template=$${template_file}"
-		echo "Converting '$${input_file}' to '$${output_file}' using template '$${template_file}' ..."
-	else
-		echo "Converting '$${input_file}' to '$${output_file}' using pandoc defaults ..."
-	fi
-	pandoc $${pandoc_params} $${footer_params} $${template_params} $${title_params} -o $${output_file} $${input_file}
 
 
 # MARK: run app
