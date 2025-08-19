@@ -39,8 +39,11 @@
     ├── extensions.json
     └── settings.json
 ├── AGENTS.md
+├── AGENT_LEARNINGS.md
+├── AGENT_REQUESTS.md
 ├── CHANGELOG.md
 ├── CLAUDE.md
+├── CONTRIBUTE.md
 ├── Dockerfile
 ├── GEMINI.md
 ├── LICENSE.md
@@ -106,11 +109,14 @@
     └── sprints
     │   ├── 2025-03_SprintPlan.md
     │   ├── 2025-07_SprintPlan.md
-    │   └── 2025-08_SprintPlan.md
+    │   ├── 2025-08_Sprint1.md
+    │   └── 2025-08_Sprint2_SoC-SRP_TODO.md
 ├── mkdocs.yaml
 ├── pyproject.toml
 ├── scripts
-    └── generate-plantuml-png.sh
+    ├── generate-plantuml-png.sh
+    ├── run-pandoc.sh
+    └── setup-pdf-converter.sh
 ├── src
     ├── app
     │   ├── __init__.py
@@ -500,45 +506,55 @@
 11 |       "Bash(git:status*)",
 12 |       "Bash(git log --grep:*)",
 13 |       "Bash(make:*)",
-14 |       "Bash(mkdir:*)",
-15 |       "Bash(source:*)",
-16 |       "Bash(touch:*)",
-17 |       "Bash(tree:*)",
-18 |       "Bash(uv sync:*)",
-19 |       "Bash(uv run mypy:*)",
-20 |       "Bash(uv run pytest:*)",
-21 |       "Bash(uv run ruff:*)",
-22 |       "Edit(AGENTS.md)",
-23 |       "Edit(docs/**/*.md)",
-24 |       "Edit(Makefile)",
-25 |       "Edit(README.md)",
-26 |       "Edit(src/**/*.py)",
-27 |       "Edit(src/**/*.json)",
-28 |       "Edit(tests/**/*.py)",
-29 |       "Edit(tests/**/*.json)",
-30 |       "Edit(pyproject.toml)",
-31 |       "WebFetch(domain:github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md)",
-32 |       "WebFetch(domain:docs.anthropic.com)"
-33 |     ],
-34 |     "deny": [
-35 |       "Bash(cat:*)",
-36 |       "Bash(find:*)",
-37 |       "Bash(git add:*)",
-38 |       "Bash(git commit:*)",
-39 |       "Bash(git push:*)",
-40 |       "Bash(grep:*)",
-41 |       "Bash(head:*)",
-42 |       "Bash(ls:*)",
-43 |       "Bash(mv:*)",
-44 |       "Bash(rg:*)",
-45 |       "Bash(rm:*)",
-46 |       "Bash(tail:*)",
-47 |       "Edit(.claude/commands/*.md)",
-48 |       "Edit(.claude/settings.local.json)",
-49 |       "Edit(CLAUDE.md)"
-50 |     ]
-51 |   }
-52 | }
+14 |       "Bash(tree:*)",
+15 |       "Bash(uv sync:*)",
+16 |       "Bash(uv run mypy:*)",
+17 |       "Bash(uv run pytest:*)",
+18 |       "Bash(uv run ruff:*)",
+19 |       "Edit(AGENT_LEARNINGS.md)",
+20 |       "Edit(AGENT_REQUESTS.md)",
+21 |       "Edit(docs/**/*.md)",
+22 |       "Edit(src/**/*.py)",
+23 |       "Edit(src/**/*.json)",
+24 |       "Edit(tests/**/*.py)",
+25 |       "Edit(tests/**/*.json)",
+26 |       "WebFetch(domain:github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md)",
+27 |       "WebFetch(domain:docs.anthropic.com)"
+28 |     ],
+29 |     "ask": [
+30 |       "Edit(.claude/**)",
+31 |       "Edit(.claude/agents/*.md)",
+32 |       "Edit(.claude/commands/*.md)",
+33 |       "Edit(.claude/settings.local.json)",
+34 |       "Edit(AGENTS.md)",
+35 |       "Edit(CLAUDE.md)",
+36 |       "Edit(CONTRIBUTE.md)",
+37 |       "Edit(Makefile)",
+38 |       "Edit(pyproject.toml)",
+39 |       "Edit(README.md)",
+40 |       "WebFetch",
+41 |       "WebSearch"
+42 |     ],
+43 |     "deny": [
+44 |       "Bash(awk:*)",
+45 |       "Bash(cat:*)",
+46 |       "Bash(find:*)",
+47 |       "Bash(git add:*)",
+48 |       "Bash(git commit:*)",
+49 |       "Bash(git push:*)",
+50 |       "Bash(grep:*)",
+51 |       "Bash(head:*)",
+52 |       "Bash(ls:*)",
+53 |       "Bash(mkdir:*)",
+54 |       "Bash(mv:*)",
+55 |       "Bash(rg:*)",
+56 |       "Bash(rm:*)",
+57 |       "Bash(source:*)",
+58 |       "Bash(tail:*)",
+59 |       "Bash(touch:*)"
+60 |     ]
+61 |   }
+62 | }
 
 
 --------------------------------------------------------------------------------
@@ -1378,13 +1394,14 @@
 48 | data/
 49 | test_data/
 50 | datasets/
-51 | 
-52 | # mermaid
-53 | package.json
-54 | package-lock.json
-55 | puppeteer-config.json
-56 | node_modules/
-57 | 
+51 | write-up/
+52 | 
+53 | # mermaid
+54 | package.json
+55 | package-lock.json
+56 | puppeteer-config.json
+57 | node_modules/
+58 | 
 
 
 --------------------------------------------------------------------------------
@@ -1458,27 +1475,29 @@
 --------------------------------------------------------------------------------
  1 | {
  2 |     "recommendations": [
- 3 |         "charliermarsh.ruff",
- 4 |         "davidanson.vscode-markdownlint",
- 5 |         "donjayamanne.githistory",
- 6 |         "editorconfig.editorconfig",
- 7 |         "gruntfuggly.todo-tree",
- 8 |         "mhutchie.git-graph",
- 9 |         "PKief.material-icon-theme",
-10 |         "redhat.vscode-yaml",
-11 |         "tamasfe.even-better-toml",
-12 |         "yzhang.markdown-all-in-one",
-13 | 
-14 |         "github.copilot",
-15 |         "github.copilot-chat",
-16 |         "github.vscode-github-actions",
-17 |         "ms-azuretools.vscode-docker",
-18 |         "ms-python.debugpy",
-19 |         "ms-python.python",
-20 |         "ms-python.vscode-pylance",
-21 |         "ms-vscode.makefile-tools",
-22 |     ]
-23 | }
+ 3 |         "anthropic.claude-code",
+ 4 |         "saoudrizwan.claude-dev",
+ 5 | 
+ 6 |         "charliermarsh.ruff",
+ 7 |         "davidanson.vscode-markdownlint",
+ 8 |         "donjayamanne.githistory",
+ 9 |         "editorconfig.editorconfig",
+10 |         "gruntfuggly.todo-tree",
+11 |         "mhutchie.git-graph",
+12 |         "redhat.vscode-yaml",
+13 |         "tamasfe.even-better-toml",
+14 |         "yzhang.markdown-all-in-one",
+15 | 
+16 |         "github.copilot",
+17 |         "github.copilot-chat",
+18 |         "github.vscode-github-actions",
+19 |         "ms-azuretools.vscode-docker",
+20 |         "ms-python.debugpy",
+21 |         "ms-python.python",
+22 |         "ms-python.vscode-pylance",
+23 |         "ms-vscode.makefile-tools",
+24 |     ]
+25 | }
 
 
 --------------------------------------------------------------------------------
@@ -1498,12 +1517,101 @@
 
 
 --------------------------------------------------------------------------------
+/AGENT_REQUESTS.md:
+--------------------------------------------------------------------------------
+ 1 | # Agent Requests to Humans
+ 2 | 
+ 3 | This document contains questions, clarifications, and tasks that AI agents need humans to complete or elaborate on. This serves as the primary escalation and communication channel between agents and human collaborators.
+ 4 | 
+ 5 | ## Escalation Process
+ 6 | 
+ 7 | ### When to Escalate
+ 8 | 
+ 9 | **Always escalate when:**
+10 | 
+11 | - Explicit user instructions conflict with safety/security practices
+12 | - Rules in AGENTS.md or otherwise provided context contradict each other
+13 | - Required information completely missing from all sources
+14 | - Actions would significantly change project architecture
+15 | - Critical dependencies or libraries are unavailable
+16 | 
+17 | ### How to Escalate
+18 | 
+19 | 1. **Add to list below** using checkbox format with clear description
+20 | 2. **Set priority**: `[HIGH]`, `[MEDIUM]`, `[LOW]` based on blocking impact
+21 | 3. **Provide context**: Include relevant file paths, error messages, or requirements
+22 | 4. **Suggest alternatives**: What could be done instead, if anything
+23 | 
+24 | ### Response Format
+25 | 
+26 | - Human responses should be added as indented bullet points under each item
+27 | - Use `# TODO` for non-urgent items with reminder frequency
+28 | - Mark completed items with `[x]` checkbox
+29 | 
+30 | ## Active Requests
+31 | 
+32 | - [ ] The `agent_system.py` module has a `NotImplementedError` for streaming with Pydantic model outputs. Please clarify the intended approach for streaming structured data.
+33 |   - Human: `# TODO` but not of priority as of now. Remind me once a week.
+34 | - [ ] The `llm_model_funs.py` module has `NotImplementedError` for the Gemini and HuggingFace providers. Please provide the correct implementation or remove them if they are not supported.
+35 |   - Human: `# TODO` but not of priority as of now. Remind me once a week.
+36 | - [ ] The `agent_system.py` module contains a `FIXME` note regarding the use of a try-catch context manager. Please review and implement the intended error handling.
+37 |   - Human: `# TODO` but not of priority as of now. Remind me once a week.
+38 | - [ ] Add TypeScript testing guidelines (if a TypeScript frontend is planned for the future).
+39 |   - Human: `# TODO` but not of priority as of now. Remind me once a week.
+40 | 
+41 | ## Guidelines for Agents
+42 | 
+43 | ### What to Include in Requests
+44 | 
+45 | - **Specific file paths** and line numbers when applicable
+46 | - **Error messages** or diagnostic output
+47 | - **Context** about what you were trying to accomplish
+48 | - **Alternative approaches** you considered
+49 | - **Impact assessment** - what's blocked by this issue
+50 | 
+51 | ### What NOT to Escalate
+52 | 
+53 | - Minor implementation details that can be resolved with existing patterns
+54 | - Questions answered by existing documentation
+55 | - Standard coding decisions covered by AGENTS.md or CONTRIBUTE.md
+56 | - Issues that can be resolved through the Decision Framework
+57 | 
+58 | ### Request Template
+59 | 
+60 | ```markdown
+61 | - [ ] [PRIORITY] Brief description of the issue
+62 |   **Context**: What were you trying to do?
+63 |   **Problem**: What specific issue or conflict occurred?
+64 |   **Files**: Relevant file paths and line numbers
+65 |   **Alternatives**: What other approaches could work?
+66 |   **Impact**: What functionality is blocked?
+67 | ```
+68 | 
+69 | ## Completed Requests Archive
+70 | 
+71 | When requests are completed, move them here with resolution details:
+72 | 
+73 | ### Resolved Items
+74 | 
+75 | <!-- Example:
+76 | - [x] [MEDIUM] Clarify testing framework choice
+77 |   - **Resolution**: Use pytest as specified in AGENTS.md
+78 |   - **Date**: 2025-01-15
+79 |   - **Impact**: Unblocked test development for all new features
+80 | -->
+81 | 
+82 | *No completed requests yet.*
+83 | 
+
+
+--------------------------------------------------------------------------------
 /CLAUDE.md:
 --------------------------------------------------------------------------------
-1 | # Redirected to [AGENTS.md](AGENTS.md) for project documentation
+1 | # Redirections
 2 | 
-3 | @AGENTS.md
-4 | 
+3 | - Claude Code specific configurations: @.claude/settings.local.json
+4 | - Project guidelines and principles: @AGENTS.md
+5 | 
 
 
 --------------------------------------------------------------------------------
@@ -1556,10 +1664,11 @@
 --------------------------------------------------------------------------------
 /GEMINI.md:
 --------------------------------------------------------------------------------
-1 | # Redirected to [AGENTS.md](AGENTS.md) for project documentation
+1 | # Redirections
 2 | 
-3 | @AGENTS.md
-4 | 
+3 | - Gemini specific configurations: @.gemini/config.json
+4 | - Project guidelines and principles: @AGENTS.md
+5 | 
 
 
 --------------------------------------------------------------------------------
@@ -1599,61 +1708,61 @@
 --------------------------------------------------------------------------------
 /assets/images/MAS-C4-Detailed-dark.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/MAS-C4-Detailed-dark.png
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-C4-Detailed-dark.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/MAS-C4-Detailed-light.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/MAS-C4-Detailed-light.png
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-C4-Detailed-light.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/MAS-C4-Overview-dark.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/MAS-C4-Overview-dark.png
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-C4-Overview-dark.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/MAS-C4-Overview-light.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/MAS-C4-Overview-light.png
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-C4-Overview-light.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/MAS-Review-Workflow-dark.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/MAS-Review-Workflow-dark.png
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-Review-Workflow-dark.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/MAS-Review-Workflow-light.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/MAS-Review-Workflow-light.png
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-Review-Workflow-light.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/customer-journey-activity-dark.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/customer-journey-activity-dark.png
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/customer-journey-activity-dark.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/customer-journey-activity-light.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/customer-journey-activity-light.png
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/customer-journey-activity-light.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/metrics-eval-sweep-dark.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/metrics-eval-sweep-dark.png
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/metrics-eval-sweep-dark.png
 
 
 --------------------------------------------------------------------------------
 /assets/images/metrics-eval-sweep-light.png:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/metrics-eval-sweep-light.png
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/metrics-eval-sweep-light.png
 
 
 --------------------------------------------------------------------------------
@@ -2502,167 +2611,6 @@ https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/m
 
 
 --------------------------------------------------------------------------------
-/docs/PRD.md:
---------------------------------------------------------------------------------
- 1 | # Product Requirements Document (PRD) for Agents-eval
- 2 | 
- 3 | ## Overview
- 4 | 
- 5 | **Agents-eval** is a project aimed at evaluating the effectiveness of open-source agentic AI systems across various use cases. The focus is on use case agnostic metrics that measure core capabilities such as task decomposition, tool integration, adaptability, and overall performance.
- 6 | 
- 7 | ## Goals
- 8 | 
- 9 | - **Evaluate Agentic AI Systems:** Provide a concise evaluation pipeline to assess the performance of agentic AI systems.
-10 | - **Metric Development:** Develop and implement metrics that are agnostic to specific use cases but measure core agentic capabilities.
-11 | - **Continuous Improvement:** Promote continuous improvement through automated testing, version control, and documentation.
-12 | 
-13 | ## Functional Requirements
-14 | 
-15 | ### CLI
-16 | 
-17 | - **Command Line Interface:**
-18 |   - Commands to start, stop, and check the status of the Ollama server or remote inference endpoints.
-19 |   - Commands to download or call models and run tests.
-20 | 
-21 | ### Frontend (Streamlit)
-22 | 
-23 | - **User Interface:**
-24 |   - Display test results and system performance metrics.
-25 | 
-26 | ### (Optional) Backend (FastAPI)
-27 | 
-28 | - **Agentic System Integration:**
-29 |   - Support for adding tools to agents using Pydantic-AI.
-30 |   - Ensure agents can use tools effectively and return expected results.
-31 | - **Model Management:**
-32 |   - Ability to download, list, and manage models using the `ollama` Python package.
-33 | - **API Endpoints:**
-34 |   - Endpoint to start and check the status of the Ollama server.
-35 |   - Endpoint to download and manage models.
-36 |   - Endpoint to run tests and return results.
-37 | 
-38 | ## Non-Functional Requirements
-39 | 
-40 | - **Maintainability:**
-41 |   - Use modular design patterns for easy updates and maintenance.
-42 |   - Implement logging and error handling for debugging and monitoring.
-43 | - **Documentation:**
-44 |   - Comprehensive documentation for setup, usage, and testing.
-45 | - **Scalability:**
-46 |   - Design the system to handle multiple concurrent requests.
-47 | - **Performance:**
-48 |   - Ensure low latency in server responses and model downloads.
-49 |   - Optimize for memory usage and CPU/GPU utilization.
-50 | - **Security:**
-51 |   - Implement secure communication between components.
-52 |   - Use environment variables for sensitive information.
-53 | 
-54 | ## Assumptions
-55 | 
-56 | - **Remote Inference Endpoints:** The project can use remote inference endpoints provided within a `config.json` and using API keys from `.env`.
-57 | - **Local Ollama Server:** The project can make use of a local Ollama server for model hosting and inference.
-58 | - **Python Environment:** The project uses Python 3.12 and related tools like `uv` for dependency management.
-59 | - **GitHub Actions:** CI/CD pipelines are set up using GitHub Actions for automated testing, version bumping, and documentation deployment.
-60 | 
-61 | ## Constraints
-62 | 
-63 | - **Hardware:** The project assumes access to appropriate hardware if running the Ollama server and models, including sufficient RAM and GPU capabilities.
-64 | - **Software:** Requires Python 3.13, `uv`, and other dependencies listed in `pyproject.toml`.
-65 | 
-66 | ## Main Dependencies
-67 | 
-68 | - **Pydantic-AI:** For agent and tool management.
-69 | - **Pydantic-settings** To load from .env or env.
-70 | - **Pytest:** For testing.
-71 | - **Streamlit:** For frontend dashboard.
-72 | - **Ruff:** For code linting.
-73 | - **MkDocs:** For documentation generation.
-74 | - **Ollama:** (Optional) For local model hosting and inference.
-75 | 
-76 | ## Future Enhancements
-77 | 
-78 | - **Integration with More Frameworks:** Expand compatibility with other agentic system frameworks. Meaning other popular agentic system frameworks like LangChain, AutoGen, CrewAI, LangGraph, Semantic Kernel, and smolAgents.
-79 | - **Performance Optimization:** Further optimize for latency and resource usage.
-80 | - **User Feedback:** Implement a feedback loop for users to report issues or suggest improvements.
-81 | 
-
-
---------------------------------------------------------------------------------
-/docs/UserStory.md:
---------------------------------------------------------------------------------
- 1 | # User Story
- 2 | 
- 3 | ## Introduction
- 4 | 
- 5 | Agents-eval is designed to evaluate the effectiveness of open-source agentic AI systems across various use cases. This user story focuses on the perspective of an AI researcher who aims to assess and improve these systems using Agents-eval.
- 6 | 
- 7 | ## As a user of the Agents-eval project, I want to
- 8 | 
- 9 | ### Goals
-10 | 
-11 | - Evaluate and compare different open-source agentic AI systems.
-12 | - Assess core capabilities such as task decomposition, tool integration, and adaptability.
-13 | - Get use-case agnostic metrics for a comprehensive assessment.
-14 | 
-15 | ### Steps
-16 | 
-17 | 1. **Set up the environment:**
-18 |    - Use `make setup_prod` for production or `make setup_dev` for development.
-19 |    - Configure API keys and variables in `.env.example` and rename t `.env`
-20 | 2. **Run the evaluation pipeline:**
-21 |    - Execute the CLI with `make run_cli` or the GUI with `make run_gui`.
-22 | 3. **Configure evaluation metrics:**
-23 |    - Adjust weights in `src/app/config/config_eval.json`.
-24 | 4. **Analyze the results:**
-25 |    - Review output logs and UI to assess agent performance.
-26 | 
-27 | ### Expected Outcomes
-28 | 
-29 | - Clear metrics for task success, coordination quality, tool efficiency, etc.
-30 | - Insights into the strengths and weaknesses of different agentic systems.
-31 | - Data-driven assessment of agentic systems across various use cases.
-32 | 
-33 | ### Acceptance Criteria
-34 | 
-35 | 1. Evaluation Pipeline:
-36 |    - The system should provide a comprehensive evaluation pipeline that measures core agentic capabilities such as task decomposition, tool integration, adaptability, and overall performance.
-37 |    - The pipeline should support multiple agentic AI frameworks (e.g., Pydantic-AI, LangChain).
-38 | 2. Metric Development:
-39 |    - The system should allow for the development and integration of new metrics that are agnostic to specific use cases.
-40 |    - These metrics should be modular and easily integratable with existing evaluation logic.
-41 | 3. CLI and GUI Interactions:
-42 |    - The system should offer both a CLI and a Streamlit GUI for user interaction.
-43 |    - The Streamlit GUI should display output and provide an intuitive interface for setting up and running evaluations.
-44 |    - Optional: The CLI should support streaming output from Pydantic-AI models.
-45 | 4. Documentation and Feedback:
-46 |    - The system should include comprehensive documentation for setup, usage, and testing.
-47 |    - There should be a feedback loop for users to report issues or suggest improvements.
-48 | 
-49 | ### Benefits
-50 | 
-51 | - Improved Evaluation Capabilities: Agents-eval provides a structured approach to evaluating agentic AI systems, allowing researchers to focus on improving these systems.
-52 | - Flexibility and Customization: The system supports multiple frameworks and allows for the development of new metrics, making it adaptable to various research needs.
-53 | - Enhanced User Experience: The combination of CLI and GUI interfaces offers flexibility in how users interact with the system, catering to different preferences and workflows.
-54 | 
-55 | ### Example Scenario
-56 | 
-57 | - Scenario: The user wants to evaluate a research agent system using Agents-eval.
-58 | - Steps:
-59 |   - User sets up the environment using the CLI or devcontainer.
-60 |   - User configures the agent system with the desired models and tools.
-61 |   - User runs the evaluation using the CLI or Streamlit GUI.
-62 |   - User views the results and metrics displayed by the system.
-63 |   - User provides feedback on the system's performance and suggests improvements.
-64 | 
-65 | ### Additional Notes
-66 | 
-67 | - The project is under development, and some features are not fully implemented yet (DRAFT/WIP).
-68 | - Use the [CHANGELOG](https://github.com/qte77/Agents-eval/blob/main/CHANGELOG.md) for version history.
-69 | - Refer to [AGENTS.md](https://github.com/qte77/Agents-eval/blob/main/AGENTS.md) for agent instructions and architecture overview.
-70 | 
-
-
---------------------------------------------------------------------------------
 /docs/arch_vis/MAS-C4-Detailed.plantuml:
 --------------------------------------------------------------------------------
  1 | @startuml MAS-C4-Detailed
@@ -3376,12 +3324,6 @@ https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/assets/images/m
 
 
 --------------------------------------------------------------------------------
-/docs/llms.txt:
---------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/docs/llms.txt
-
-
---------------------------------------------------------------------------------
 /docs/maintaining-agents-md.md:
 --------------------------------------------------------------------------------
  1 | # Strategy for Maintaining `AGENTS.md`
@@ -3712,7 +3654,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/docs/llms.txt
 /pyproject.toml:
 --------------------------------------------------------------------------------
   1 | [project]
-  2 | version = "3.1.0"
+  2 | version = "3.2.0"
   3 | name = "Agents-eval"
   4 | description = "Assess the effectiveness of agentic AI systems across various use cases focusing on agnostic metrics that measure core agentic capabilities."
   5 | authors = [
@@ -3846,7 +3788,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/docs/llms.txt
 133 | ]
 134 | 
 135 | [tool.bumpversion]
-136 | current_version = "3.1.0"
+136 | current_version = "3.2.0"
 137 | parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 138 | serialize = ["{major}.{minor}.{patch}"]
 139 | commit = true
@@ -3935,18 +3877,115 @@ https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/docs/llms.txt
 
 
 --------------------------------------------------------------------------------
+/scripts/setup-pdf-converter.sh:
+--------------------------------------------------------------------------------
+ 1 | #!/bin/bash
+ 2 | # PDF Converter Setup Script
+ 3 | # Installs and configures PDF conversion tools (pandoc or wkhtmltopdf)
+ 4 | 
+ 5 | # Check for help request first
+ 6 | if [ "$1" = "help" ]; then
+ 7 |     cat << EOF
+ 8 | Usage: $0 [help | converter_type]
+ 9 | 
+10 | Setup PDF converter tools for document conversion.
+11 | 
+12 | Arguments:
+13 |   help           : Show this help message and exit
+14 |   converter_type : Type of converter to install (pandoc or wkhtmltopdf)
+15 | 
+16 | Supported converters:
+17 |   pandoc      : Install pandoc with LaTeX packages for PDF generation
+18 |                 Usage: pandoc combined.md -o output.pdf
+19 |   
+20 |   wkhtmltopdf : Install wkhtmltopdf for HTML to PDF conversion
+21 |                 Usage: markdown your_document.md | wkhtmltopdf - output.pdf
+22 | 
+23 | Examples:
+24 |   $0 help         # Show this help
+25 |   $0 pandoc       # Install pandoc and LaTeX packages
+26 |   $0 wkhtmltopdf  # Install wkhtmltopdf
+27 | EOF
+28 |     exit 0
+29 | fi
+30 | 
+31 | # Parse converter choice
+32 | CONVERTER_CHOICE="${1:-}"
+33 | SUPPORTED_MSG="Use 'pandoc' or 'wkhtmltopdf'."
+34 | 
+35 | # Validate converter choice
+36 | if [ -z "$CONVERTER_CHOICE" ]; then
+37 |     echo "Error: No PDF converter specified. $SUPPORTED_MSG"
+38 |     echo "Run '$0 help' for usage information."
+39 |     exit 1
+40 | fi
+41 | 
+42 | echo "Setting up PDF converter '$CONVERTER_CHOICE' ..."
+43 | 
+44 | # Update package lists
+45 | echo "Updating package lists..."
+46 | sudo apt-get update -yqq
+47 | 
+48 | # Install based on converter choice
+49 | case "$CONVERTER_CHOICE" in
+50 |     pandoc)
+51 |         echo "Installing pandoc and LaTeX packages..."
+52 |         sudo apt-get install -yqq pandoc
+53 |         sudo apt-get install -yqq texlive-latex-recommended texlive-fonts-recommended
+54 |         
+55 |         # Display version info
+56 |         if command -v pandoc &> /dev/null; then
+57 |             echo "Successfully installed pandoc:"
+58 |             pandoc --version | head -n 1
+59 |             echo ""
+60 |             echo "Usage example:"
+61 |             echo "  pandoc combined.md -o output.pdf"
+62 |         else
+63 |             echo "Error: pandoc installation may have failed."
+64 |             exit 1
+65 |         fi
+66 |         ;;
+67 |         
+68 |     wkhtmltopdf)
+69 |         echo "Installing wkhtmltopdf..."
+70 |         sudo apt-get install -yqq wkhtmltopdf
+71 |         
+72 |         # Display version info
+73 |         if command -v wkhtmltopdf &> /dev/null; then
+74 |             echo "Successfully installed wkhtmltopdf:"
+75 |             wkhtmltopdf --version | head -n 1
+76 |             echo ""
+77 |             echo "Usage example:"
+78 |             echo "  markdown your_document.md | wkhtmltopdf - output.pdf"
+79 |         else
+80 |             echo "Error: wkhtmltopdf installation may have failed."
+81 |             exit 1
+82 |         fi
+83 |         ;;
+84 |         
+85 |     *)
+86 |         echo "Error: Unsupported PDF converter choice '$CONVERTER_CHOICE'. $SUPPORTED_MSG"
+87 |         echo "Run '$0 help' for usage information."
+88 |         exit 1
+89 |         ;;
+90 | esac
+91 | 
+92 | echo "PDF converter setup complete!"
+
+
+--------------------------------------------------------------------------------
 /src/app/__init__.py:
 --------------------------------------------------------------------------------
 1 | """Defines the application version."""
 2 | 
-3 | __version__ = "3.1.0"
+3 | __version__ = "3.2.0"
 4 | 
 
 
 --------------------------------------------------------------------------------
 /src/app/agents/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/src/app/agents/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/src/app/agents/__init__.py
 
 
 --------------------------------------------------------------------------------
@@ -4104,7 +4143,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/src/app/agents/
 --------------------------------------------------------------------------------
 /src/app/config/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/src/app/config/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/src/app/config/__init__.py
 
 
 --------------------------------------------------------------------------------
@@ -4301,7 +4340,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/src/app/config/
 --------------------------------------------------------------------------------
 /src/app/data_models/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/src/app/data_models/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/src/app/data_models/__init__.py
 
 
 --------------------------------------------------------------------------------
@@ -4509,7 +4548,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/src/app/data_mo
 --------------------------------------------------------------------------------
 /src/app/data_utils/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/src/app/data_utils/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/src/app/data_utils/__init__.py
 
 
 --------------------------------------------------------------------------------
@@ -4704,7 +4743,7 @@ https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/src/app/data_ut
 --------------------------------------------------------------------------------
 /src/app/evals/__init__.py:
 --------------------------------------------------------------------------------
-https://raw.githubusercontent.com/qte77/Agents-eval/bump-20-main/src/app/evals/__init__.py
+https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/src/app/evals/__init__.py
 
 
 --------------------------------------------------------------------------------
