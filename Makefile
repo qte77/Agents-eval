@@ -20,6 +20,7 @@ OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
 PLANTUML_CONTAINER := plantuml/plantuml:latest
 PLANTUML_SCRIPT := scripts/generate-plantuml-png.sh
 PANDOC_SCRIPT := scripts/run-pandoc.sh
+PDF_CONVERTER_SCRIPT := scripts/setup-pdf-converter.sh
 PRP_DEF_PATH := /context/PRPs/features
 PRP_CLAUDE_GEN_CMD := generate-prp
 PRP_CLAUDE_EXE_CMD := execute-prp
@@ -94,26 +95,12 @@ setup_plantuml:  ## Setup PlantUML with docker, $(PLANTUML_SCRIPT) and $(PLANTUM
 	docker pull $(PLANTUML_CONTAINER)
 	echo "PlantUML docker version: $$(docker run --rm $(PLANTUML_CONTAINER) --version)"
 
-setup_pdf_converter:  ## Setup PDF converter tools: pandoc, wkhtmltopdf
-	converter_choice=$(firstword $(strip $(ARGS)))
-	converter_supported="Use 'pandoc' or 'wkhtmltopdf'."
-	if [ -z "$${converter_choice}" ]; then
-		echo "No PDF converter specified. $${converter_supported}"
-		exit 1
-	fi
-	echo "Setting up PDF converter '$${converter_choice}' ..."
-	sudo apt-get update -yqq
-	if [ "$${converter_choice}" = "pandoc" ]; then
-		sudo apt-get install -yqq pandoc
-		sudo apt-get install -yqq texlive-latex-recommended texlive-fonts-recommended
-		pandoc --version | head -n 1
-		echo "$${usage} pandoc combined.md -o output.pdf"
-	elif [ "$${converter_choice}" = "wkhtmltopdf" ]; then
-		sudo apt-get install -yqq wkhtmltopdf
-		echo "$${usage} markdown your_document.md & wkhtmltopdf - output.pdf"
+setup_pdf_converter:  ## Setup PDF converter tools. For usage: make setup_pdf_converter HELP=1
+	if [ -n "$(HELP)" ]; then
+		$(PDF_CONVERTER_SCRIPT) help
 	else
-		echo "Error: Unsupported PDF converter choice '$${converter_choice}'. $${converter_supported}"
-		exit 1
+		chmod +x $(PDF_CONVERTER_SCRIPT)
+		$(PDF_CONVERTER_SCRIPT) "$(CONVERTER)"
 	fi
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
@@ -165,11 +152,12 @@ run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 
 
 run_pandoc:  ## Convert MD to PDF using pandoc. For usage: make run_pandoc HELP=1
-	@if [ -n "$(HELP)" ]; then \
-		$(PANDOC_SCRIPT) help; \
-	else \
+	if [ -n "$(HELP)" ]; then
+		$(PANDOC_SCRIPT) help
+	else
+		chmod +x $(PANDOC_SCRIPT)
 		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" "$(TITLE_PAGE)" \
-			"$(TEMPLATE)" "$(FOOTER_TEXT)"; \
+			"$(TEMPLATE)" "$(FOOTER_TEXT)"
 	fi
 
 
