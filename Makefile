@@ -151,13 +151,13 @@ run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 # MARK: run pandoc
 
 
-run_pandoc:  ## Convert MD to PDF using pandoc. For usage: make run_pandoc HELP=1
+run_pandoc:  ## Convert MD to PDF using pandoc. Usage from root: dir=docs/write-up/claude/markdown_de && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf" TITLE_PAGE="$dir/01_titel_abstrakt.tex" TOC_TITLE="Inhaltsverzeichnis" | For help: make run_pandoc HELP=1
 	if [ -n "$(HELP)" ]; then
 		$(PANDOC_SCRIPT) help
 	else
 		chmod +x $(PANDOC_SCRIPT)
 		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" "$(TITLE_PAGE)" \
-			"$(TEMPLATE)" "$(FOOTER_TEXT)"
+			"$(TEMPLATE)" "$(FOOTER_TEXT)" "$(TOC_TITLE)"
 	fi
 
 

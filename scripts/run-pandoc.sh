@@ -1,255 +1,139 @@
-#!/bin/bash
+#!/bin/sh
+# Pandoc PDF generation script - Functionality:
+#  - String splitting for space-separated file lists from Makefile variables
+#  - Robust project name/version extraction from [project] section
+#  - Proper directory changing logic for image paths
+#  - ASCII Record Separator (\036) support for file paths with spaces
+#  - LaTeX special character escaping for footer text
+#  - File sorting to maintain proper chapter order
 
-# Pandoc PDF generation script
-# Converts markdown files to PDF with customizable options
-
-# Check for help request first - if first argument is "help", show help and exit
+# Help
 if [ "$1" = "help" ]; then
-    cat << EOF
-Usage: $0 [help | input_file(s) [output_file] [title_page] [template] [footer_text]]
-
-Arguments:
-  help          : Show this help message and exit
-  input_file(s) : Markdown files to convert (default: !(01_*)*.md)
-  output_file   : Output PDF filename (default: output.pdf)
-  title_page    : LaTeX file for title page, 'none' to skip (default: none)
-  template      : Pandoc template file, 'none' to skip (default: none)
-  footer_text   : Footer text, 'none' to disable (default: 'Agents-eval vX.X.X')
-
+    cat << 'EOF'
+Usage: $0 [input_files [output_file] [title_page] [template] [footer_text] [toc_title]]
 Examples:
-  $0 help                               # Show this help
-  $0                                    # Use all defaults
-  $0 "*.md" report.pdf                  # Custom input/output
-  $0 "*.md" report.pdf title.latex      # With title page
-  $0 "*.md" report.pdf none none 'My Footer'  # Custom footer
-  $0 "*.md" report.pdf none none none   # No footer
+  $0 "*.md" report.pdf title.tex template.tex "Custom Footer" "Inhaltsverzeichnis"
+  $0 "*.md" report.pdf title.tex template.tex "all:Footer on all pages" "Table of Contents"
+  dir=docs/path && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf"
 EOF
     exit 0
 fi
 
-# Get script directory for finding pyproject.toml
-SCRIPT_DIR="$(dirname "$0")"
-
-# Get version from pyproject.toml
-VERSION=$(grep '^version = ' "$SCRIPT_DIR/../pyproject.toml" | sed 's/version = "\(.*\)"/\1/')
-
-# Default values
-DEFAULT_INPUT="!(01_*)*.md"
-DEFAULT_OUTPUT="output.pdf"
-DEFAULT_FOOTER="Agents-eval v${VERSION}"
+# Extract name and version from [project] section
+PROJECT_FILE="$(dirname "$0")/../pyproject.toml"
+project_section=$(mktemp)
+sed -n '/^\[project\]/,/^\[/p' "$PROJECT_FILE" | head -n -1 > "$project_section"
+PROJECT_NAME=$(grep -E '^name[[:space:]]*=' "$project_section" | head -1 | sed -E 's/^name[[:space:]]*=[[:space:]]*"([^"]*)".*/\1/')
+VERSION=$(grep -E '^version[[:space:]]*=' "$project_section" | head -1 | sed -E 's/^version[[:space:]]*=[[:space:]]*"([^"]*)".*/\1/')
+rm -f "$project_section"
 
 # Parse arguments
-input_file="${1:-$DEFAULT_INPUT}"
-output_file="${2:-$DEFAULT_OUTPUT}"
-title_file="${3:-}"
-template_file="${4:-}"
-footer_text="${5:-$DEFAULT_FOOTER}"
+input_files_raw="${1:-!(01_*)*.md}"
+output_file="${2:-output.pdf}"
+title_file="$3"
+template_file="$4"
+footer_text="${5:-${PROJECT_NAME} v${VERSION}}"
+toc_title="$6"
 
-# Base pandoc parameters
-pandoc_params=(
-    "--toc"
-    "--toc-depth=2"
-    "-V" "geometry:margin=1in"
-    "-V" "documentclass=report"
-    "--pdf-engine=pdflatex"
-    "-M" "protrusion"
-    "--from" "markdown+smart"
-)
-
-# Configure footer parameters
-footer_params=()
-if [ -n "$footer_text" ] && [ "$footer_text" != "none" ]; then
-    # Create LaTeX header for footer on all pages except title page
-    footer_latex=$(cat << 'LATEX'
-\usepackage{fancyhdr}
-
-% Define fancy page style for regular pages
-\pagestyle{fancy}
-\fancyhf{}
-\fancyfoot[L]{FOOTER_TEXT_PLACEHOLDER}
-\fancyfoot[R]{\thepage}
-\renewcommand{\headrulewidth}{0pt}
-\renewcommand{\footrulewidth}{0.4pt}
-
-% Define plain style (used by first page of chapters)
-\fancypagestyle{plain}{
-    \fancyhf{}
-    \fancyfoot[L]{FOOTER_TEXT_PLACEHOLDER}
-    \fancyfoot[R]{\thepage}
-    \renewcommand{\headrulewidth}{0pt}
-    \renewcommand{\footrulewidth}{0.4pt}
-}
-
-% Special style for title page only (no footer)
-\fancypagestyle{empty}{
-    \fancyhf{}
-    \renewcommand{\headrulewidth}{0pt}
-    \renewcommand{\footrulewidth}{0pt}
-}
-
-% Apply empty style to title page if it exists
-\AtBeginDocument{
-    \ifx\maketitle\undefined\else
-        \let\oldmaketitle\maketitle
-        \renewcommand{\maketitle}{
-            \oldmaketitle
-            \thispagestyle{empty}
-        }
-    \fi
-}
-LATEX
-)
-    # Replace placeholder with actual footer text
-    footer_latex="${footer_latex//FOOTER_TEXT_PLACEHOLDER/$footer_text}"
-    
-    # Add footer parameters using process substitution
-    footer_params+=("-H" "<(echo '$footer_latex')")
+# Handle separator-delimited file lists
+RS_CHAR=$(printf '\036')
+if echo "$input_files_raw" | grep -q "$RS_CHAR"; then
+    input_files=$(echo "$input_files_raw" | tr "$RS_CHAR" ' ')
+else
+    input_files="$input_files_raw"
 fi
 
-# We'll check and adjust title/template paths after determining work_dir
-title_params=()
-template_params=()
+# Build base command
+set -- --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex -M protrusion --from markdown+smart -V pagestyle=plain
 
-# Determine working directory and file patterns
-# Check if we have multiple files or a single path with directory
+# Add custom TOC title if specified
+[ -n "$toc_title" ] && set -- "$@" -V toc-title="$toc_title"
+
+# Handle directory changes for image paths
 work_dir=""
-file_pattern="$input_file"
-
-# Check if input contains directory path
-if [[ "$input_file" == */* ]]; then
-    # Extract common directory if all files share the same path
-    first_dir=""
-    all_same_dir=true
-    
-    # Check if it's a single pattern or multiple files
-    for file in $input_file; do
-        if [[ "$file" == */* ]]; then
-            dir="$(dirname "$file")"
-            if [ -z "$first_dir" ]; then
-                first_dir="$dir"
-            elif [ "$dir" != "$first_dir" ]; then
-                all_same_dir=false
-                break
-            fi
-        else
-            all_same_dir=false
-            break
-        fi
+title_arg=""
+if echo "$input_files" | grep -q "/"; then
+    for file in $input_files; do
+        [ -f "$file" ] && work_dir=$(dirname "$file") && break
     done
     
-    # If all files are in the same directory, change to it
-    if [ "$all_same_dir" = true ] && [ -n "$first_dir" ]; then
-        work_dir="$first_dir"
-        # Extract just the filenames
-        file_pattern=""
-        for file in $input_file; do
-            file_pattern="$file_pattern $(basename "$file")"
+    if [ -n "$work_dir" ]; then
+        # Convert paths before changing directory
+        temp_files=""
+        for file in $input_files; do
+            [ -f "$file" ] && temp_files="$temp_files $(basename "$file")"
         done
-        file_pattern="${file_pattern# }"  # Remove leading space
+        [ -n "$title_file" ] && [ -f "$title_file" ] && title_arg="-B $(basename "$title_file")"
+        
+        # Change directory and update paths
+        case "$output_file" in /*) ;; *) output_file="$(pwd)/$output_file" ;; esac
+        cd "$work_dir"
+        input_files=$(printf '%s\n' $temp_files | sort | tr '\n' ' ' | sed 's/^ *//; s/ *$//')
     fi
 fi
 
-# Change directory if needed
-if [ -n "$work_dir" ]; then
-    pushd "$work_dir" > /dev/null
+# Add title if not set by directory change
+[ -z "$title_arg" ] && [ -n "$title_file" ] && [ -f "$title_file" ] && title_arg="-B $title_file"
+
+# Add template
+[ -n "$template_file" ] && [ -f "$template_file" ] && set -- "$@" --template="$template_file"
+
+# Add footer (skip if using template)
+if [ -n "$footer_text" ] && [ "$footer_text" != "none" ] && [ -z "$template_file" ]; then
+    footer_temp=$(mktemp)
     
-    # Handle output path relative to the new working directory
-    if [[ "$output_file" == /* ]]; then
-        # Absolute path - use as is
-        output_path="$output_file"
-    elif [[ "$output_file" == */* ]]; then
-        # Relative path with directory - need to go back to original directory
-        original_dir="$(dirs +1)"
-        output_path="$original_dir/$output_file"
+    # Check if footer should include title/TOC pages (if footer_text contains "all:")
+    if echo "$footer_text" | grep -q "^all:"; then
+        # Include footer on all pages including title and TOC
+        actual_footer=$(echo "$footer_text" | sed 's/^all://')
+        safe_footer=$(printf '%s' "$actual_footer" | sed 's/[&\\]/\\&/g; s/#/\\#/g; s/\$/\\$/g; s/_/\\_/g; s/%/\\%/g')
+        cat > "$footer_temp" << EOF
+\\usepackage{fancyhdr}
+\\pagestyle{fancy}
+\\fancyhf{}
+\\fancyfoot[L]{$safe_footer}
+\\fancyfoot[R]{\\thepage}
+\\renewcommand{\\headrulewidth}{0pt}
+\\renewcommand{\\footrulewidth}{0.4pt}
+\\fancypagestyle{plain}{\\fancyhf{}\\fancyfoot[L]{$safe_footer}\\fancyfoot[R]{\\thepage}}
+EOF
     else
-        # Just filename - use in current directory
-        output_path="$output_file"
+        # Default: no footer on title page, roman numerals with footer on TOC, arabic+footer on content
+        safe_footer=$(printf '%s' "$footer_text" | sed 's/[&\\]/\\&/g; s/#/\\#/g; s/\$/\\$/g; s/_/\\_/g; s/%/\\%/g')
+        cat > "$footer_temp" << EOF
+\\usepackage{fancyhdr}
+\\usepackage{etoolbox}
+\\pagestyle{fancy}
+\\fancyhf{}
+\\renewcommand{\\headrulewidth}{0pt}
+\\renewcommand{\\footrulewidth}{0.4pt}
+\\fancyfoot[L]{$safe_footer}
+\\fancyfoot[R]{\\thepage}
+\\fancypagestyle{empty}{\\fancyhf{}\\renewcommand{\\headrulewidth}{0pt}\\renewcommand{\\footrulewidth}{0pt}}
+\\fancypagestyle{plain}{\\fancyhf{}\\fancyfoot[L]{$safe_footer}\\fancyfoot[R]{\\thepage}\\renewcommand{\\headrulewidth}{0pt}\\renewcommand{\\footrulewidth}{0.4pt}}
+\\AtBeginDocument{\\pagenumbering{roman}\\thispagestyle{empty}}
+\\preto\\tableofcontents{\\clearpage\\pagenumbering{roman}\\setcounter{page}{1}}
+\\appto\\tableofcontents{\\clearpage\\pagenumbering{arabic}\\setcounter{page}{1}}
+EOF
     fi
-    
-    output_file="$output_path"
-    
-    # Configure title page parameters - check in current directory first
-    if [ -n "$title_file" ] && [ "$title_file" != "none" ]; then
-        # Check if title file exists in current directory
-        if [ -f "$(basename "$title_file")" ]; then
-            title_params+=("-B" "$(basename "$title_file")")
-        elif [ -f "$title_file" ]; then
-            # Try with original path
-            title_params+=("-B" "$title_file")
-        elif [ -f "$original_dir/$title_file" ]; then
-            # Try relative to original directory
-            title_params+=("-B" "$original_dir/$title_file")
-        else
-            echo "Warning: Title file '$title_file' not found, skipping..."
-        fi
-    fi
-    
-    # Configure template parameters - check in current directory first
-    if [ -n "$template_file" ] && [ "$template_file" != "none" ]; then
-        # Check if template file exists in current directory
-        if [ -f "$(basename "$template_file")" ]; then
-            template_params+=("--template=$(basename "$template_file")")
-            echo "Converting '$file_pattern' to '$output_file' using template '$(basename "$template_file")' ..."
-        elif [ -f "$template_file" ]; then
-            # Try with original path
-            template_params+=("--template=$template_file")
-            echo "Converting '$file_pattern' to '$output_file' using template '$template_file' ..."
-        elif [ -f "$original_dir/$template_file" ]; then
-            # Try relative to original directory
-            template_params+=("--template=$original_dir/$template_file")
-            echo "Converting '$file_pattern' to '$output_file' using template '$template_file' ..."
-        else
-            echo "Warning: Template file '$template_file' not found, using defaults..."
-            echo "Converting '$file_pattern' to '$output_file' using pandoc defaults ..."
-        fi
-    else
-        echo "Converting '$file_pattern' to '$output_file' using pandoc defaults ..."
-    fi
+    set -- "$@" -H "$footer_temp"
+    cleanup_footer=1
 else
-    # Not changing directory, use original title/template logic
-    if [ -n "$title_file" ] && [ "$title_file" != "none" ]; then
-        if [ -f "$title_file" ]; then
-            title_params+=("-B" "$title_file")
-        else
-            echo "Warning: Title file '$title_file' not found, skipping..."
-        fi
-    fi
-    
-    if [ -n "$template_file" ] && [ "$template_file" != "none" ]; then
-        if [ -f "$template_file" ]; then
-            template_params+=("--template=$template_file")
-            echo "Converting '$file_pattern' to '$output_file' using template '$template_file' ..."
-        else
-            echo "Warning: Template file '$template_file' not found, using defaults..."
-            echo "Converting '$file_pattern' to '$output_file' using pandoc defaults ..."
-        fi
-    else
-        echo "Converting '$file_pattern' to '$output_file' using pandoc defaults ..."
-    fi
+    cleanup_footer=0
 fi
 
-# Enable extended globbing if needed
-if [[ "$file_pattern" == *"!("* ]]; then
-    shopt -s extglob
-fi
+# Enable extended globbing
+[ -n "${BASH_VERSION}" ] && shopt -s extglob 2>/dev/null
 
-# Build and run command
-if [ ${#footer_params[@]} -gt 0 ]; then
-    # Use eval to properly handle process substitution in footer_params
-    eval "pandoc ${pandoc_params[*]} ${footer_params[*]} ${template_params[*]} ${title_params[*]} -o \"$output_file\" $file_pattern"
-    result=$?
-else
-    # No footer, simple execution
-    eval "pandoc ${pandoc_params[*]} ${template_params[*]} ${title_params[*]} -o \"$output_file\" $file_pattern"
-    result=$?
-fi
+# Run pandoc
+echo "Converting '$input_files_raw' to '$output_file'..."
+eval "pandoc \"\$@\" $title_arg -o \"\$output_file\" $input_files"
+result=$?
 
-# Return to original directory if we changed
-if [ -n "$work_dir" ]; then
-    popd > /dev/null
-fi
+# Cleanup
+[ "$cleanup_footer" -eq 1 ] && rm -f "$footer_temp"
 
-# Check exit status
+# Check result
 if [ $result -eq 0 ]; then
     echo "PDF generated successfully: $output_file"
 else
