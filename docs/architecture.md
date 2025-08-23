@@ -25,17 +25,53 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 3. **Graph-Based Analysis**: Tool call complexity, agent interaction mapping
 4. **Composite Scoring**: Final score calculation using formula: (Agentic Results / Execution Time / Graph Complexity)
 
+### Evaluation Approach Decision Tree
+
+```text
+Evaluation Requirements Assessment
+│
+├─ Quick Development/Prototyping?
+│  ├─ YES → Use Traditional Metrics Only
+│  │         ├─ Basic similarity: BLEU, ROUGE
+│  │         └─ Add execution time measurement
+│  │
+│  └─ NO → Continue Assessment
+│
+├─ Need Semantic Understanding?
+│  ├─ NO → Traditional Metrics + Graph Analysis
+│  │        ├─ Focus on coordination patterns
+│  │        └─ Tool usage efficiency
+│  │
+│  └─ YES → Continue Assessment
+│
+├─ Budget Constraints (API Costs)?
+│  ├─ HIGH → Traditional + Graph (Skip LLM Judge)
+│  │         ├─ Use local models only
+│  │         └─ Focus on behavioral patterns
+│  │
+│  └─ LOW → Full Three-Tier Evaluation
+│
+├─ Research/Production Setting?
+│  ├─ RESEARCH → Full Pipeline + Extended Analysis
+│  │            ├─ All three evaluation tiers
+│  │            ├─ Comparative studies
+│  │            └─ Statistical significance testing
+│  │
+│  └─ PRODUCTION → Optimized Pipeline
+│               ├─ Cached traditional metrics
+│               ├─ Selective LLM judging
+│               └─ Real-time graph analysis
+│
+└─ Result: Choose appropriate combination based on constraints
+```
+
 ## Evaluation Framework Architecture
 
 ### Large Context Model Integration
 
-The evaluation framework is built around large context window models capable of processing full PeerRead papers:
+The evaluation framework is built around large context window models capable of processing full PeerRead papers with automatic selection based on paper token count and intelligent fallback to document chunking for smaller context models.
 
-- **Claude-3.5-Sonnet**: 200k context limit (Anthropic provider) - Primary choice for comprehensive paper analysis
-- **GPT-4 Turbo**: 128k context limit (OpenAI provider) - Secondary option with solid performance
-- **Gemini-1.5-Pro**: 1M context limit (Google provider) - Maximum context for largest papers
-
-**Model Selection Logic**: Automatic selection based on paper token count with intelligent fallback to document chunking for smaller context models.
+**Model Selection**: See [Available Models - Large Context Window Models](landscape.md#available-models) in landscape.md for detailed model comparisons, context limits, and integration approaches for Claude 4 Opus/Sonnet, GPT-4 Turbo, and Gemini-1.5-Pro.
 
 ### Sprint 1: PeerRead Evaluation Components
 
@@ -145,15 +181,13 @@ The evaluation framework will be refactored into three independent engines:
 
 ## Key Dependencies
 
-- **PydanticAI**: Agent framework and orchestration
-- **NetworkX**: Graph analysis for complexity metrics
-- **NLTK**: Traditional text similarity metrics (BLEU)
-- **Rouge-Score**: ROUGE metrics implementation
-- **BERTScore**: Semantic similarity evaluation
-- **uv**: Fast Python dependency management
-- **Streamlit**: GUI framework
-- **Ruff**: Code formatting and linting
-- **pyright**: Static type checking
+The system relies on several key technology categories for implementation and evaluation.
+
+**Core Technologies**: See [Agentic System Frameworks](landscape.md#agentic-system-frameworks) for PydanticAI agent orchestration details, [Graph Analysis & Network Tools](landscape.md#graph-analysis--network-tools) for NetworkX complexity analysis capabilities, and [Available Models](landscape.md#available-models) for LLM integration approaches.
+
+**Evaluation Tools**: See [Traditional Metrics Libraries](landscape.md#traditional-metrics-libraries) for NLTK, Rouge-Score, and BERTScore implementation details and feasibility assessments.
+
+**Development Infrastructure**: See [Development Infrastructure](landscape.md#development-infrastructure) for uv, Streamlit, Ruff, and pyright integration approaches and alternatives.
 
 ## Agents
 
