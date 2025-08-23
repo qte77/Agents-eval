@@ -32,7 +32,7 @@ When documenting a new pattern, use this format:
 - **Context**: PydanticAI agent processing with timeouts
 - **Problem**: Agents hanging on long requests without proper timeout handling
 - **Solution**: Use asyncio.wait_for with context manager for cleanup
-- **Example**: See context/examples/async-timeout-pattern.py
+- **Example**: Use asyncio.wait_for with timeout and proper cleanup
 - **Validation**: Test with deliberately slow mock responses
 - **References**: src/app/agents/agent_system.py:142
 ```

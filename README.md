@@ -2,6 +2,8 @@
 
 This project aims to implement an evaluation pipeline to assess the effectiveness of open-source agentic AI systems using the PeerRead dataset. Nonetheless intending to focusing on use case agnostic metrics that measure core capabilities such as task decomposition, tool integration, adaptability, and overall performance.
 
+**This README is intended for human developers and users.** For shared development workflows and standards (valid for both agents and humans), see [CONTRIBUTING.md](CONTRIBUTING.md). For AI coding agent instructions, see [AGENTS.md](AGENTS.md).
+
 [![License](https://img.shields.io/badge/license-BSD3Clause-58f4c2.svg)](LICENSE.md)
 ![Version](https://img.shields.io/badge/version-3.2.0-58f4c2.svg)
 [![CodeQL](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml)
@@ -207,24 +209,11 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 ### Project Repo Structure
 
 ```sh
-|- .claude  # AI agent framework and commands
-   |- commands
-      |- generate-frp.md  # FRP generation command
-      \- execute-frp.md   # FRP execution command
 |- .devcontainer  # pre-configured dev env
 |- .github  # workflows
 |- .streamlit  # config.toml
 |- .vscode  # extensions, settings
 |- assets/images
-|- context  # AI agent context framework
-   |- config
-      \- paths.md  # path variables and definitions
-   |- templates
-      \- 2_frp_base.md  # FRP template with quality framework
-   |- features  # feature descriptions for FRP generation
-   |- FRPs  # generated feature requirements prompts
-   |- examples  # code patterns and examples
-   \- logs  # agent execution logs
 |- docs
 |- src  # source code
    |- app
@@ -286,7 +275,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 - LLM apps
   - [DeepEval](https://github.com/confident-ai/deepeval)
   - [Langchain OpenEvals](https://github.com/langchain-ai/openevals)
-  - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
+  - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llcheckm-evaluate/index.html)
   - [DeepEval (DeepSeek)]( github.com/confident-ai/deepeval)
 
 ### Observation, Monitoring, Tracing
@@ -393,16 +382,12 @@ AGENTS.md (core agent instructions)
 - **CONTRIBUTE.md**: Development workflows, coding standards, and collaboration guidelines
 - **AGENT_REQUESTS.md**: Human escalation process and active collaboration requests
 - **AGENT_LEARNINGS.md**: Accumulated patterns, solutions, and knowledge sharing
-- **FRP Workflow**: Feature Requirements Prompt generation and execution system
-  1. `context/templates/1_feature_description.md`: User provides feature description, e.g., by using this template
-  2. `.claude/commands/generate-frp.md`: Creates comprehensive implementation prompts from feature descriptions
-  3. `.claude/commands/execute-frp.md`: Executes features using generated FRPs with structured validation
 
 ### Agent Development Workflow
 
 1. **Follow AGENTS.md** - Read project conventions, patterns, and quality standards
-2. **Generate FRP** - Use `generate-frp.md` command for comprehensive feature planning and research
-3. **Execute Implementation** - Use `execute-frp.md` command for structured development with quality gates
+2. **Use CONTRIBUTING.md** - Reference development workflows, testing guidelines, and coding standards
+3. **Apply Quality Framework** - Use task readiness assessment before implementation
 
 ### Quality Framework Integration
 
@@ -410,10 +395,3 @@ AGENTS.md (core agent instructions)
 - BDD/TDD approach integration following project patterns
 - Automatic validation using unified command reference with error recovery
 - TodoWrite tool integration for progress tracking and transparency
-
-### For AI Agents: Quick Start
-
-1. **Read the North Star**: Start with [AGENTS.md](AGENTS.md) for project patterns and conventions
-2. **Generate FRP**: Use `/generate-frp <feature-name>` command in Claude Code
-3. **Execute Implementation**: Use `/execute-frp <feature-name>` command with generated FRP
-4. **Follow Quality Gates**: Ensure all AGENTS.md thresholds are met before proceeding
