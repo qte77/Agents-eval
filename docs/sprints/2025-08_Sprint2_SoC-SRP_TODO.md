@@ -1,302 +1,352 @@
-# Sprint 2: SoC/SRP Refactoring TODO
+# Sprint 2: Separation of Concerns (SoC) & Single Responsibility Principle (SRP) Refactoring
 
-**Sprint Goal**: Resolve main Separation of Concerns (SoC) and Single Responsibility Principle (SRP) violations in the current codebase structure while maintaining existing module organization.
+**Sprint Goal**: Refactor the codebase to achieve proper Separation of Concerns and Single Responsibility Principle by implementing modular, independent, and extensible engine architecture: agents-engine, dataset-engine, and eval-engine.
 
-**Date**: 2025-08-19  
+**Date**: 2025-08-23  
 **Status**: Planning  
-**Priority**: High Priority for code maintainability and extensibility
+**Priority**: High Priority for architectural foundation and technical debt resolution
 
-## Current Structure Analysis
+## Architectural Refactoring Requirements
 
-The codebase does **not** achieve proper separation into `agents-engine`, `dataset-engine`, and `eval-engine`. Instead, it uses domain-driven organization with significant SoC/SRP violations that limit modularity, independence, and extensibility.
+The current system has several SoC/SRP violations that need to be addressed before implementing the comprehensive evaluation framework. This sprint focuses on restructuring the codebase into clear, modular engines with well-defined boundaries.
 
-## Main SoC/SRP Violations and Solutions
+## Sprint 1 TODO Integration
 
-### 1. **app.py: Multiple Responsibilities Violation (SRP)**
+### External Tool Assessment from Sprint 1
 
-**Current Issues:**
+**Note**: These external tool assessments may be carried forward from Sprint 1 if architectural refactoring is determined to be prerequisite:
 
-- Application orchestration (main concern)  
-- Dataset downloading logic (lines 65-85)
-- User input handling (lines 92-115)
-- Agent configuration and setup (lines 116-133)
-- Login/authentication (line 122)
-- **File size**: 146 lines mixing concerns
+- [ ] **BAML Integration Assessment**: Evaluate if [BAML](https://github.com/BoundaryML/baml)  adds value for structured engine outputs
+- [ ] **Prompt Flow Tools**: Assess [Prompt Flow](https://github.com/microsoft/promptflow) or [AdalFlow](https://github.com/SylphAI-Inc/AdalFlow) for engine workflow coordination
+- [ ] **Agent File Format**: Evaluate [agentfile](https://github.com/letta-ai/agent-file) for standardized agent engine definitions
+- [ ] **Property-Based Testing**: Assess [Hypothesis](https://github.com/HypothesisWorks/hypothesis) for engine interface testing
+- [ ] **Deep Agents Integration**: Evaluate [DeepAgents](https://github.com/langchain-ai/deepagents) framework for advanced agent engine capabilities
 
-**Solution within current structure:**
+### Resolved in Sprint 1
 
-```python
-# Create src/app/orchestration/
-src/app/orchestration/
-├── app_launcher.py      # Pure application entry point
-├── setup_handler.py     # Dataset download operations  
-├── input_handler.py     # User input and query processing
-└── session_manager.py   # Login and session management
-```
+**These tasks are definitively completed in Sprint 1 and will not be carried forward:**
 
-**Implementation Example:**
+- ✅ **PDF Ingestion Capability**: Implemented in Sprint 1 with large context models
+- ✅ **Prompt Configuration Audit**: All prompts externalized in Sprint 1
+- ✅ **Error Message Strategy**: Unified error handling implemented in Sprint 1
+- ✅ **Security & Quality Review**: Comprehensive audit completed in Sprint 1
 
-```python
-# app.py becomes minimal orchestrator
-async def main(**kwargs):
-    if kwargs.get('download_peerread_full_only'):
-        return await SetupHandler().handle_full_download()
-    
-    session = SessionManager()
-    await session.authenticate()
-    
-    input_handler = InputHandler()
-    query = await input_handler.process_input(kwargs)
-    
-    # Only agent orchestration remains in main
-    return await run_agent_workflow(query, kwargs)
-```
+## Current SoC/SRP Violations Analysis
 
-### 2. **agent_system.py: God Class Violation (SRP)**
+### Major Architectural Issues
 
-**Current Issues:**
+#### 1. **Mixed Concerns in `app.py` (Main Entry Point)**
 
-- **File size**: 513 lines (exceeds 500-line limit from AGENTS.md)
-- Agent creation and configuration
-- Tool delegation logic  
-- Environment setup
-- Model validation
-- Usage limit management
-- Stream handling
+**Violation**: Single file handling authentication, configuration loading, agent orchestration, dataset operations, and CLI interface.
 
-**Solution within current structure:**
+**Current Issues**:
+
+- Direct dataset download calls in main application flow
+- Agent system setup mixed with application initialization
+- Configuration loading scattered throughout the function
+- No clear separation between CLI concerns and business logic
+
+**Resolution Strategy**:
 
 ```python
-# Split into focused classes in src/app/agents/
-agents/
-├── agent_factory.py      # Agent creation (get_manager)
-├── delegation_manager.py # Tool delegation logic  
-├── environment_setup.py  # Environment configuration
-├── stream_handler.py     # Streaming operations
-└── validation_utils.py   # Model validation helpers
+# Proposed structure:
+src/app/
+├── engines/
+│   ├── agents_engine/     # Agent orchestration and execution
+│   ├── dataset_engine/    # Data loading, caching, preprocessing  
+│   └── eval_engine/       # Evaluation metrics and scoring
+├── interfaces/
+│   ├── cli_interface.py   # CLI-specific logic
+│   └── api_interface.py   # Future API endpoints
+└── core/
+    ├── app_coordinator.py # High-level application coordination
+    └── dependency_injection.py # DI container for engines
 ```
 
-**Migration Steps:**
+#### 2. **Agent System Mixed Responsibilities (`agents/agent_system.py`)**
 
-1. Extract `get_manager()` function to `agent_factory.py`
-2. Move tool delegation (@manager_agent.tool functions) to `delegation_manager.py`
-3. Extract `setup_agent_env()` to `environment_setup.py`
-4. Move streaming logic to `stream_handler.py`
-5. Extract `_validate_model_return()` to `validation_utils.py`
+**Violation**: Agent creation, LLM provider management, environment setup, and execution orchestration in single module.
 
-### 3. **agents/peerread_tools.py: Tight Coupling Violation (SoC)**
+**Current Issues**:
 
-**Current Issues:**
+- Provider configuration logic mixed with agent orchestration
+- Environment setup responsibilities scattered
+- Tool integration tightly coupled to agent creation
+- Model selection logic embedded in agent system
 
-- Agent tool registration mixed with business logic
-- Direct imports from data_utils and data_models  
-- PDF processing mixed with dataset operations
-- Review generation mixed with data retrieval
-
-**Solution within current structure:**
+**Resolution Strategy**:
 
 ```python
-# agents/tools/
-tools/
-├── dataset_tools.py     # Pure dataset access tools
-├── review_tools.py      # Review generation and evaluation  
-├── file_tools.py        # PDF processing utilities
-└── tool_registry.py     # Agent tool registration
+# Separate into:
+agents_engine/
+├── core/
+│   ├── agent_factory.py      # Pure agent creation
+│   ├── agent_orchestrator.py # Agent workflow coordination  
+│   └── agent_executor.py     # Agent execution runtime
+├── providers/
+│   ├── llm_provider_manager.py # LLM provider abstractions
+│   └── model_selector.py      # Model selection logic
+└── tools/
+    └── tool_registry.py      # Tool registration and management
 ```
 
-**Implementation:**
+#### 3. **Dataset Operations Mixed with Business Logic (`data_utils/`)**
 
-- Move `read_paper_pdf()` to `file_tools.py`
-- Move dataset access functions to `dataset_tools.py`
-- Move review generation to `review_tools.py`
-- Create `tool_registry.py` for agent tool registration patterns
+**Violation**: Dataset downloading, paper loading, review persistence mixed with application-specific logic.
 
-### 4. **data_utils/datasets_peerread.py: Multiple Concerns (SoC)**
+**Current Issues**:
 
-**Current Issues:**
+- Configuration loading embedded in dataset functions
+- Logging scattered throughout data operations  
+- No clear abstraction between dataset format and business models
+- Caching logic tightly coupled to download implementation
 
-- Download functionality mixed with loading  
-- Configuration management mixed with data access
-- HTTP client management mixed with file operations
-- Validation mixed with persistence
-
-**Solution within current structure:**
+**Resolution Strategy**:
 
 ```python
-# data_utils/peerread/
-peerread/
-├── downloader.py        # Pure download operations
-├── loader.py           # Pure data loading  
-├── validator.py        # Data validation
-└── config_loader.py    # Configuration management
+# Separate into:
+dataset_engine/
+├── core/
+│   ├── dataset_loader.py     # Pure dataset loading
+│   ├── dataset_cache.py      # Caching abstraction
+│   └── dataset_validator.py  # Data validation
+├── sources/
+│   ├── peerread_source.py    # PeerRead-specific operations
+│   └── source_registry.py    # Support multiple datasets
+└── models/
+    └── dataset_models.py     # Dataset-agnostic models
 ```
 
-**Migration Steps:**
+#### 4. **Evaluation Logic Incomplete and Scattered (`evals/`)**
 
-1. Extract `PeerReadDownloader` class to `downloader.py`
-2. Extract `PeerReadLoader` class to `loader.py`
-3. Move configuration functions to `config_loader.py`
-4. Extract validation logic to `validator.py`
+**Violation**: Minimal evaluation implementation with missing separation between metrics calculation and evaluation orchestration.
 
-### 5. **Cross-Module Dependency Violations (SoC)**
+**Current Issues**:
 
-**Current Issues:**
+- Only 2 basic metrics implemented with TODOs
+- No separation between metric calculation and result aggregation
+- Missing evaluation pipeline coordination
+- No abstraction for different evaluation types
 
-- `agents/peerread_tools.py` imports from `data_utils/` and `data_models/`
-- `app.py` directly calls `data_utils.download_peerread_dataset`
-- `evals/` not used by any other module (orphaned)
-
-**Solution within current structure:**
+**Resolution Strategy**:
 
 ```python
-# Create service layer: src/app/services/
-services/
-├── dataset_service.py   # Abstract dataset operations
-├── agent_service.py     # Abstract agent operations  
-├── eval_service.py      # Abstract evaluation operations
-└── __init__.py         # Service registry and injection
+# Complete separation:
+eval_engine/
+├── core/
+│   ├── evaluation_coordinator.py # Evaluation workflow
+│   ├── metric_calculator.py      # Pure metric calculations
+│   └── result_aggregator.py      # Score aggregation
+├── metrics/
+│   ├── traditional_metrics.py    # BLEU, ROUGE, similarity
+│   ├── llm_judge_metrics.py      # LLM-as-judge evaluation
+│   └── graph_metrics.py          # Execution complexity
+└── scorers/
+    └── composite_scorer.py       # Final scoring logic
 ```
 
-**Implementation Example:**
+### Engine Architecture Implementation
 
-```python
-# Usage in app.py
-from services import DatasetService, AgentService
+#### Agents Engine Responsibilities
 
-dataset_service = DatasetService()
-agent_service = AgentService()
+- **Pure Concerns**: Agent creation, orchestration, execution, tool management
+- **Dependencies**: None on dataset or evaluation engines
+- **Interfaces**: Agent execution API, tool registration API
+- **Configuration**: Agent prompts, model selection, execution parameters
 
-# Instead of direct imports across modules
-```
+#### Dataset Engine Responsibilities
 
-### 6. **Configuration Scattered Across Modules (SoC)**
+- **Pure Concerns**: Data loading, caching, validation, source management
+- **Dependencies**: None on agents or evaluation engines
+- **Interfaces**: Dataset loading API, caching API, validation API
+- **Configuration**: Dataset sources, cache settings, validation rules
 
-**Current Issues:**
+#### Eval Engine Responsibilities
 
-- `config/` module exists but config loading spread across modules
-- Environment variables mixed with file config
-- Provider config in agents module
+- **Pure Concerns**: Metric calculation, scoring, result aggregation
+- **Dependencies**: Consumes results from agents engine, dataset from dataset engine
+- **Interfaces**: Evaluation API, metrics API, scoring API  
+- **Configuration**: Evaluation weights, metric parameters, scoring formulas
 
-**Solution within current structure:**
+## Implementation Priority Tasks
 
-```python
-# Centralize in src/app/config/
-config/
-├── config_manager.py    # Single config entry point
-├── providers.py         # Provider configurations
-├── datasets.py          # Dataset configurations  
-└── environments.py      # Environment management
-```
+### **Phase 1: Architectural Foundation (Days 1-2)**
 
-**Implementation:**
+#### Task 1: Create Engine Directory Structure
 
-```python
-# Single import everywhere
-from config import ConfigManager
-config = ConfigManager()
-```
+- [ ] Create `src/app/engines/` directory structure
+- [ ] Move existing modules to appropriate engines following SoC principles
+- [ ] Update all import statements to reflect new structure
+- [ ] Create engine-specific `__init__.py` files with clear APIs
 
-## Implementation Priority
+#### Task 2: Agents Engine Separation
 
-### **High Priority (Immediate Impact)**
+- [ ] Extract agent creation logic to `agents_engine/core/agent_factory.py`
+- [ ] Move LLM provider management to `agents_engine/providers/`
+- [ ] Separate tool management to `agents_engine/tools/tool_registry.py`
+- [ ] Create clean agent execution interface
 
-- [ ] **Task 1**: Split `app.py` into orchestration modules
-  - Create `src/app/orchestration/` directory
-  - Extract setup, input, and session management
-  - Reduce `app.py` to pure orchestration logic
-  - **Estimated effort**: 1-2 days
+#### Task 3: Dataset Engine Isolation
 
-- [ ] **Task 2**: Break down `agent_system.py` god class
-  - Split 513-line file into focused modules  
-  - Extract agent factory, delegation, environment setup
-  - **Estimated effort**: 2-3 days
+- [ ] Move PeerRead operations to `dataset_engine/sources/peerread_source.py`
+- [ ] Extract caching logic to `dataset_engine/core/dataset_cache.py`
+- [ ] Create dataset-agnostic loading interface
+- [ ] Implement dataset validation abstraction
 
-- [ ] **Task 3**: Create service layer for cross-module dependencies
-  - Design service interfaces
-  - Implement dataset, agent, and eval services
-  - Update imports across modules
-  - **Estimated effort**: 2-3 days
+### **Phase 2: Evaluation Engine Implementation (Days 3-4)**
 
-### **Medium Priority (Maintainability)**
+#### Task 4: Evaluation Framework Architecture
 
-- [ ] **Task 4**: Separate concerns in `peerread_tools.py`
-  - Create `agents/tools/` structure
-  - Split PDF processing, dataset access, and tool registration
-  - **Estimated effort**: 1-2 days
+- [ ] Implement `eval_engine/core/evaluation_coordinator.py`
+- [ ] Create metric calculation abstractions
+- [ ] Build result aggregation system
+- [ ] Design composite scoring interface
 
-- [ ] **Task 5**: Split `datasets_peerread.py` by functionality
-  - Create `data_utils/peerread/` structure
-  - Separate download, loading, validation, and config
-  - **Estimated effort**: 1-2 days
+#### Task 5: Engine Refactoring Integration
 
-- [ ] **Task 6**: Centralize configuration management
-  - Create unified `ConfigManager`
-  - Consolidate environment and file configuration
-  - **Estimated effort**: 1 day
+- [ ] **Refactor PDF Ingestion**: Move Sprint 1 PDF processing implementation to `dataset_engine` boundaries
+- [ ] **Refactor Configuration**: Ensure Sprint 1 externalized prompts align with engine separation
+- [ ] **Refactor Error Handling**: Adapt Sprint 1 unified error handling to engine boundaries
+- [ ] **Engine Security Review**: Apply Sprint 1 security audit findings to engine architecture
+
+### **Phase 3: Engine Integration & Validation (Days 5-6)**
+
+#### Task 6: Dependency Injection System
+
+- [ ] Create `core/dependency_injection.py` for engine coordination
+- [ ] Implement clean interfaces between engines
+- [ ] Update `app.py` to use engine coordination instead of direct calls
+- [ ] Validate engine independence and modularity
+
+#### Task 7: External Tool Assessment
+
+- [ ] **BAML Assessment**: Evaluate for `agents_engine` structured outputs
+- [ ] **PromptFlow/AdalFlow**: Assess for agent workflow coordination
+- [ ] **AgentFile**: Evaluate for agent definition standardization
+- [ ] **Hypothesis**: Test engine interfaces with property-based testing
+- [ ] **DeepAgents**: Assess for advanced agent capabilities in `agents_engine`
+
+## Sprint Dependencies
+
+**Critical Dependency**: Sprint 2 depends on Sprint 1 completion.
+
+**Rationale**: Functionality is demanded first. Sprint 1 implements the PeerRead evaluation framework that provides the concrete use cases and requirements needed to design proper engine boundaries in Sprint 2.
+
+**Sprint 1 → Sprint 2 Handoff Requirements**:
+
+- Working PeerRead evaluation pipeline
+- Identified architectural pain points from implementation
+- Clear interface contracts based on actual usage patterns
+- Performance bottlenecks and scaling requirements from real evaluation workloads
+
+## Engine Architecture Context
+
+**Note**: Detailed evaluation framework specifications are in Sprint 1. Sprint 2 focuses purely on architectural refactoring based on Sprint 1 learnings.
+
+### Engine Refactoring Focus
+
+Sprint 2 addresses the architectural foundation needed to support the evaluation framework implemented in Sprint 1. The focus is purely on refactoring existing code to achieve proper Separation of Concerns and Single Responsibility Principle.
+
+### Refactoring Scope
+
+- **Agents Engine**: Clean separation of agent orchestration, LLM provider management, and tool integration
+- **Dataset Engine**: Pure data operations isolated from business logic and evaluation concerns  
+- **Eval Engine**: Evaluation framework architecture that can consume clean interfaces from other engines
+
+### Key Architectural Improvements
+
+1. **Dependency Inversion**: Engines depend on abstractions, not concrete implementations
+2. **Interface Segregation**: Each engine exposes only what other engines need
+3. **Single Responsibility**: Each module has one reason to change
+4. **Open/Closed Principle**: Engines are open for extension, closed for modification
 
 ## Success Criteria
 
-### **Code Quality Metrics**
+### **Architectural Refactoring (SoC/SRP)**
 
-- [ ] No files exceed 500 lines (AGENTS.md compliance)
-- [ ] Each module has single, clear responsibility
-- [ ] Reduced cross-module imports (measured via dependency analysis)
-- [ ] Service layer abstracts cross-cutting concerns
+- [ ] Clear separation into three independent engines: `agents_engine`, `dataset_engine`, `eval_engine`
+- [ ] Each engine has single, well-defined responsibility with no cross-concerns
+- [ ] Engine dependencies follow dependency inversion principle (eval depends on agents/dataset, but not vice versa)
+- [ ] Clean interfaces between engines with no direct implementation coupling
 
-### **Maintainability Improvements**
+### **Sprint 1 Integration & External Tool Assessment**
 
-- [ ] New datasets can be added without modifying agent code
-- [ ] Agent types can be extended without touching data utilities
-- [ ] Configuration changes don't require code modifications across modules
+- [ ] **PDF Ingestion Refactoring**: Sprint 1 implementation properly separated into `dataset_engine` boundaries
+- [ ] **Configuration Refactoring**: Sprint 1 externalized prompts integrated with engine-specific config management
+- [ ] **Error Handling Refactoring**: Sprint 1 unified error handling adapted to respect engine boundaries
+- [ ] **Security Architecture**: Sprint 1 security audit findings applied to engine separation design
+- [ ] **External Tool Assessment**: BAML, PromptFlow, AgentFile, Hypothesis, DeepAgents evaluated with engine integration recommendations
 
-### **Testing Requirements**
+### **Engine Independence Validation**
 
-- [ ] All refactored modules have unit tests
-- [ ] Integration tests verify service layer contracts
-- [ ] No regression in existing functionality
+- [ ] `agents_engine` can be tested in complete isolation without dataset or evaluation dependencies
+- [ ] `dataset_engine` can load and cache data without agent or evaluation logic
+- [ ] `eval_engine` can calculate metrics given standardized input interfaces
+- [ ] Each engine has comprehensive unit tests with mocked dependencies
+- [ ] Integration tests validate engine coordination without breaking encapsulation
 
-## Migration Strategy
+### **Code Quality Improvements**
 
-### **Phase 1: Foundation** (Week 1)
+- [ ] All SoC/SRP violations identified and resolved
+- [ ] Import structure reflects clean engine boundaries
+- [ ] Configuration loading centralized and not scattered across modules
+- [ ] Logging abstracted and not embedded in business logic
+- [ ] Error handling consistent across all engine boundaries
 
-1. Create new directory structures
-2. Extract and test individual components
-3. Maintain backward compatibility
+## Implementation Strategy
 
-### **Phase 2: Service Layer** (Week 2)
+### **Phase 1: Architectural Foundation** (Days 1-2)
 
-1. Implement service interfaces
-2. Update cross-module dependencies
-3. Test integration points
+1. Create engine directory structure and move existing modules
+2. Separate agent system into `agents_engine` with clean interfaces
+3. Extract dataset operations into `dataset_engine` with caching abstraction
+4. Update all import statements to reflect new modular structure
 
-### **Phase 3: Cleanup** (Week 3)
+### **Phase 2: Engine Implementation** (Days 3-4)  
 
-1. Remove old code and imports
-2. Update documentation
-3. Validate all functionality works
+1. Implement `eval_engine` architecture with metric calculation separation
+2. Resolve all Sprint 1 TODOs within appropriate engine boundaries
+3. Create dependency injection system for engine coordination
+4. Validate engine independence and interface contracts
+
+### **Phase 3: Integration & Validation** (Days 5-6)
+
+1. Update main application to use engine coordination pattern
+2. Implement comprehensive testing for each engine in isolation
+3. Validate SoC/SRP compliance and architectural improvements
+4. Complete external tool assessments and integration recommendations
 
 ## Risk Mitigation
 
 ### **Potential Risks**
 
-- Breaking existing functionality during refactoring
-- Integration issues between refactored modules
-- Test coverage gaps during migration
+- **Breaking Changes**: Extensive refactoring may break existing functionality during transition
+- **Import Dependencies**: Moving modules may create circular import issues or missing dependencies  
+- **Test Coverage**: Refactoring may reduce test coverage if tests aren't properly updated
+- **Integration Complexity**: Engine coordination may introduce new complexity and failure points
+- **Timeline Risk**: Architectural changes may take longer than estimated, blocking Sprint 1 evaluation goals
 
 ### **Mitigation Strategies**
 
-- Incremental refactoring with continuous testing
-- Maintain parallel old/new implementations during transition
-- Comprehensive integration test suite before old code removal
+- **Incremental Migration**: Move modules one at a time with immediate testing to catch breaking changes early
+- **Import Mapping**: Create comprehensive import mapping and update all references systematically
+- **Test-First Approach**: Update tests alongside refactoring to maintain coverage throughout transition
+- **Interface Contracts**: Define clear interfaces between engines before implementation to avoid integration issues
+- **Rollback Plan**: Maintain git branches for each phase to enable rollback if architectural changes block critical functionality
+- **Validation Gates**: Require all existing functionality to pass before proceeding to next phase
 
 ## Notes
 
-- **Current violations stem from**: mixing orchestration, business logic, and infrastructure concerns within single modules
-- **Proposed solutions**: maintain existing module structure while creating focused, single-responsibility classes and clear separation boundaries
-- **Long-term goal**: This refactoring prepares the codebase for future engine-based architecture if needed
+- **Architectural Focus**: This sprint prioritizes clean code architecture and technical debt resolution as foundation for Sprint 1 evaluation goals
+- **SoC/SRP Compliance**: Strict adherence to Separation of Concerns and Single Responsibility Principle for maintainable, extensible system
+- **Engine Independence**: Each engine must be testable and developable in complete isolation from other engines
+- **Foundation for Future**: Clean architecture enables rapid implementation of evaluation framework in subsequent sprints
+- **Sprint 1 Integration**: All Sprint 1 TODOs are addressed within appropriate engine boundaries during refactoring
 
 ## References
 
-- AGENTS.md: Code organization rules (500-line limit)
-- CONTRIBUTE.md: Testing strategy and code quality standards
-- Current analysis: Cross-module dependency mapping completed
+- [PeerRead Dataset](https://github.com/allenai/PeerRead)
+- AGENTS.md: Code organization and testing guidelines  
+- CONTRIBUTING.md: Development workflow and quality standards
+- Large Context Models: Claude-3.5-Sonnet (200k), GPT-4 Turbo (128k), Gemini-1.5-Pro (1M tokens)
+- Evaluation Libraries: NLTK (BLEU), Rouge-Score, BERTScore, NetworkX (graph analysis)
