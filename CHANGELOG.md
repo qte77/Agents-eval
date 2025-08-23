@@ -22,19 +22,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation structure: clarified purpose statements for README.md (humans), AGENTS.md (agents), CONTRIBUTING.md (shared)
 - AGENTS.md: streamlined content, removed duplicated architecture information
 - CHANGELOG.md: reduced boilerplate, consolidated change type descriptions
-- README.md: fixed grammar, improved clarity of intended audience
+- README.md: major reorganization, moved detailed content to dedicated docs
 
 ### Added
 
 - Clear audience targeting for all main documentation files
 - PyPI verification requirement for new package introductions in AGENTS.md
+- docs/architecture.md: Comprehensive system architecture documentation
+- docs/landscape.md: AI agent ecosystem and competitive analysis
 
 ## [3.2.0] - 2025-08-19
 
 ### Added
 
 - Evaluation engine for PeerRead dataset
-- Documentation updates: separation of human and agent files, clear CONTRIBUTING.md ma
+- Documentation updates: separation of human and agent files, clear CONTRIBUTING.md
 
 ### Fixed
 

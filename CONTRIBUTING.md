@@ -112,7 +112,7 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 - Provide an example usage in regards to the whole project. How would your code be integrated, what entrypoints to use
 - Update `AGENTS.md` file when introducing new patterns or concepts.
 - Document significant architectural decisions in `docs/arch/`.
-- Document all significant changes, features, and bug fixes in `CHANGELOG.md`.
+- **Update `CHANGELOG.md`**: Add all changes to the `## [Unreleased]` section using the format: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`. This is **required** for all non-trivial changes.
 
 ### Code Pattern Examples
 
@@ -128,6 +128,26 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 
 **Quick Reference**: Always prefer type-validated, well-documented code with specific error handling over generic approaches.
 
+### CHANGELOG.md Requirements
+
+**All contributors must update CHANGELOG.md for non-trivial changes.**
+
+**What requires a CHANGELOG entry:**
+- ✅ New features or functionality
+- ✅ Breaking changes or API modifications  
+- ✅ Bug fixes that affect user experience
+- ✅ Documentation restructuring or major updates
+- ✅ Dependency updates that affect functionality
+- ✅ Configuration changes
+
+**What doesn't require a CHANGELOG entry:**
+- ❌ Typo fixes in comments
+- ❌ Code formatting changes
+- ❌ Internal refactoring without user impact
+- ❌ Test-only changes
+
+**Format**: See [CHANGELOG.md](CHANGELOG.md) for format specification and change type definitions.
+
 ## Code Review & PR Guidelines
 
 ### Commit and PR Requirements
@@ -139,7 +159,8 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 
 1. **Automated validation**: `make validate` - runs complete sequence (ruff + type_check + test_all)
 2. **Quick validation** (development): `make quick_validate` - runs fast checks (ruff + type_check only)
-3. Update documentation as described above.
+3. **Update CHANGELOG.md**: Add entry to `## [Unreleased]` section describing your changes
+4. Update documentation as described above.
 
 **Manual fallback** (if make commands fail):
 

@@ -83,46 +83,9 @@ Have a look at the [example user story](docs/UserStory.md).
 </details>
 <!-- markdownlint-enable MD033 -->
 
-### Agents
+### Architecture
 
-#### Manager Agent
-
-- **Description**: Oversees research and analysis tasks, coordinating the efforts of the research, analysis, and synthesizer agents to provide comprehensive answers to user queries. Delegates tasks and ensures the accuracy of the information.
-- **Responsibilities**:
-  - Coordinates the research, analysis, and synthesis agents.
-  - Delegates research tasks to the Research Agent.
-  - Delegates analysis tasks to the Analysis Agent.
-  - Delegates synthesis tasks to the Synthesizer Agent.
-  - Ensures the accuracy of the information.
-- **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
-
-#### Researcher Agent
-
-- **Description**: Gathers and analyzes data relevant to a given topic, utilizing search tools to collect data and verifying the accuracy of assumptions, facts, and conclusions.
-- **Responsibilities**:
-  - Gathers and analyzes data relevant to the topic.
-  - Uses search tools to collect data.
-  - Checks the accuracy of assumptions, facts, and conclusions.
-- **Tools**:
-  - [DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool)
-- **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
-
-#### Analyst Agent
-
-- **Description**: Checks the accuracy of assumptions, facts, and conclusions in the provided data, providing relevant feedback and ensuring data integrity.
-- **Responsibilities**:
-  - Checks the accuracy of assumptions, facts, and conclusions.
-  - Provides relevant feedback if the result is not approved.
-  - Ensures data integrity.
-- **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
-
-#### Synthesizer Agent
-
-- **Description**: Outputs a well-formatted scientific report using the data provided, maintaining the original facts, conclusions, and sources.
-- **Responsibilities**:
-  - Outputs a well-formatted scientific report using the provided data.
-  - Maintains the original facts, conclusions, and sources.
-- **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+For detailed agent descriptions, data flow, and system architecture, see [docs/architecture.md](docs/architecture.md).
 
 ### Dataset used
 
@@ -182,30 +145,6 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 
 <!-- markdownlint-enable MD033 -->
 
-### Tools available
-
-Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
-
-<!-- # TODO
-- Exa
-- Ffirecrawl
--->
-
-### Agentic System Architecture
-
-<!-- markdownlint-disable MD033 -->
-<details>
-  <summary>Show MAS Overview</summary>
-  <img src="assets/images/MAS-C4-Overview-dark.png#gh-dark-mode-only" alt="MAS Architecture Overview" title="MAS Architecture Overview" width="80%" />
-  <img src="assets/images/MAS-C4-Overview-light.png#gh-light-mode-only" alt="MAS Architecture Overview" title="MAS Architecture Overview" width="80%" />
-</details>
-<details>
-  <summary>Show MAS Detailed</summary>
-  <img src="assets/images/MAS-C4-Detailed-dark.png#gh-dark-mode-only" alt="MAS Architecture Detailed" title="MAS Architecture Detailed" width="80%" />
-  <img src="assets/images/MAS-C4-Detailed-light.png#gh-light-mode-only" alt="MAS Architecture Detailed" title="MAS Architecture Detailed" width="80%" />
-</details>
-<!-- markdownlint-enable MD033 -->
-
 ### Project Repo Structure
 
 ```sh
@@ -213,15 +152,18 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 |- .github  # workflows
 |- .streamlit  # config.toml
 |- .vscode  # extensions, settings
-|- assets/images
+|- assets/images  # generated diagrams (PNG)
 |- docs
+   |- arch_vis  # PlantUML source files + generation tools
+   |- architecture.md  # detailed system architecture
+   |- landscape.md  # AI agent ecosystem overview
+   \- papers/  # research papers and analysis
 |- src  # source code
    |- app
       |- agents
       |- config
       |- evals
       |- utils
-      |- __init__.py
       |- main.py
       \- py.typed
    |- examples
@@ -231,115 +173,24 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 |- .env.example  # example env vars
 |- .gitignore
 |- .gitmessage
-|- AGENTS.md  # north star document for AI agents (agentsmd.com)
-|- CHANGEOG.md  # short project history
+|- AGENTS.md  # AI agent instructions and guidelines
+|- CHANGELOG.md  # project history
 |- CLAUDE.md  # points to AGENTS.md
+|- CONTRIBUTING.md  # shared human and agent development workflows
+|- AGENT_REQUESTS.md  # agent-human escalation
+|- AGENT_LEARNINGS.md  # accumulated agent knowledge
 |- Dockerfile  # create app image
 |- LICENSE.md
 |- Makefile  # helper scripts
 |- mkdocs.yaml  # docu from docstrings
 |- pyproject.toml  # project settings
-|- README.md  # project description
+|- README.md  # project description (for humans)
 \- uv.lock  # resolved package versions
 ```
 
-## Landscape overview
+## Related Work
 
-### Agentic System Frameworks
-
-- [PydanticAI](https://github.com/pydantic/pydantic-ai)
-- [restack](https://www.restack.io/)
-- [smolAgents](https://github.com/huggingface/smolagents)
-- [AutoGen](https://github.com/microsoft/autogen)
-- [Semantic Kernel](https://github.com/microsoft/semantic-kernel)
-- [CrewAI](https://github.com/crewAIInc/crewAI)
-- [Langchain](https://github.com/langchain-ai/langchain)
-- [Langflow](https://github.com/langflow-ai/langflow)
-
-### Agent-builder
-
-- [Archon](https://github.com/coleam00/Archon)
-- [Agentstack](https://github.com/AgentOps-AI/AgentStack)
-
-### Evaluation
-
-- Focusing on agentic systems
-  - [AgentNeo](https://github.com/raga-ai-hub/agentneo)
-  - [AutoGenBench](https://github.com/microsoft/autogen/blob/0.2/samples/tools/autogenbench)
-  - [Langchain AgentEvals](https://github.com/langchain-ai/agentevals), trajectory or LLM-as-a-judge
-  - [Mosaic AI Agent Evaluation](https://docs.databricks.com/en/generative-ai/agent-evaluation/index.html)
-  - [RagaAI-Catalyst](https://github.com/raga-ai-hub/RagaAI-Catalyst)
-  - [AgentBench](https://github.com/THUDM/AgentBench)
-- RAG oriented
-  - [RAGAs](https://github.com/explodinggradients/ragas)
-- LLM apps
-  - [DeepEval](https://github.com/confident-ai/deepeval)
-  - [Langchain OpenEvals](https://github.com/langchain-ai/openevals)
-  - [MLFlow LLM Evaluate](https://mlflow.org/docs/latest/llms/llcheckm-evaluate/index.html)
-  - [DeepEval (DeepSeek)]( github.com/confident-ai/deepeval)
-
-### Observation, Monitoring, Tracing
-
-- [AgentOps - Agency](https://www.agentops.ai/)
-- [arize](https://arize.com/)
-- [Langtrace](https://www.langtrace.ai/)
-- [LangSmith - Langchain](https://www.langchain.com/langsmith)
-- [Weave - Weights & Biases](https://wandb.ai/site/weave/)
-- [Pydantic- Logfire](https://pydantic.dev/logfire)
-- [comet Opik](https://github.com/comet-ml/opik)
-- [Langfuse](https://github.com/langfuse/langfuse)
-- [helicone](https://github.com/Helicone/helicone)
-- [langwatch](https://github.com/langwatch/langwatch)
-
-### Datasets
-
-- [awesome-reasoning - Collection of datasets](https://github.com/neurallambda/awesome-reasoning)
-
-#### Scientific
-
-- [SWIF2T](https://arxiv.org/abs/2405.20477), Automated Focused Feedback Generation for Scientific Writing Assistance, 2024, 300 peer reviews citing weaknesses in scientific papers and conduct human evaluation
-- [PeerRead](https://github.com/allenai/PeerRead), A Dataset of Peer Reviews (PeerRead): Collection, Insights and NLP Applications, 2018, 14K paper drafts and the corresponding accept/reject decisions, over 10K textual peer reviews written by experts for a subset of the papers, structured JSONL, clear labels, See [A Dataset of Peer Reviews (PeerRead):Collection, Insights and NLP Applications](https://arxiv.org/pdf/1804.09635)
-- [BigSurvey](https://www.ijcai.org/proceedings/2022/0591.pdf), Generating a Structured Summary of Numerous Academic Papers: Dataset and Method, 2022, 7K survey papers and 430K referenced papers abstracts
-- [SciXGen](https://arxiv.org/abs/2110.10774), A Scientific Paper Dataset for Context-Aware Text Generation, 2021, 205k papers
-- [scientific_papers](https://huggingface.co/datasets/armanc/scientific_papers), 2018, two sets of long and structured documents, obtained from ArXiv and PubMed OpenAccess, 300k+ papers, total disk 7GB
-
-#### Reasoning, Deduction, Commonsense, Logic
-
-- [LIAR](https://www.cs.ucsb.edu/~william/data/liar_dataset.zip), fake news detection, only 12.8k records, single label
-- [X-Fact](https://github.com/utahnlp/x-fact/), Benchmark Dataset for Multilingual Fact Checking, 31.1k records, large, multilingual
-- [MultiFC](https://www.copenlu.com/publication/2019_emnlp_augenstein/), A Real-World Multi-Domain Dataset for Evidence-Based Fact Checking of Claims, 34.9k records
-- [FEVER](https://fever.ai/dataset/fever.html), Fact Extraction and VERification, 185.4k records
-- TODO GSM8K, bAbI, CommonsenseQA, DROP, LogiQA, MNLI
-
-#### Planning, Execution
-
-- [Plancraft](https://arxiv.org/abs/2412.21033), an evaluation dataset for planning with LLM agents, both a text-only and multi-modal interface
-- [IDAT](https://arxiv.org/abs/2407.08898), A Multi-Modal Dataset and Toolkit for Building and Evaluating Interactive Task-Solving Agents
-- [PDEBench](https://github.com/pdebench/PDEBench), set of benchmarks for scientific machine learning
-- [MatSci-NLP](https://arxiv.org/abs/2305.08264), evaluating the performance of natural language processing (NLP) models on materials science text
-- TODO BigBench Hard, FSM Game
-
-#### Tool Use, Function Invocation
-
-- [Trelis Function Calling](https://huggingface.co/datasets/Trelis/function_calling_v3)
-- [KnowLM Tool](https://huggingface.co/datasets/zjunlp/KnowLM-Tool)
-- [StatLLM](https://arxiv.org/abs/2502.17657), statistical analysis tasks, LLM-generated SAS code, and human evaluation scores
-- TODO ToolComp
-
-### Benchmarks
-
-- [SciArena: A New Platform for Evaluating Foundation Models in Scientific Literature Tasks](https://allenai.org/blog/sciarena)
-- [AgentEvals CORE-Bench Leaderboard](https://huggingface.co/spaces/agent-evals/core_leaderboard)
-- [Berkeley Function-Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html)
-- [Chatbot Arena LLM Leaderboard](https://lmsys.org/projects/)
-- [GAIA Leaderboard](https://gaia-benchmark-leaderboard.hf.space/)
-- [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
-- [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
-- [MiniWoB++: a web interaction benchmark for reinforcement learning](https://miniwob.farama.org/)
-
-### Research Agents
-
-- [Ai2 Scholar QA](https://qa.allen.ai/chat)
+For a comprehensive overview of AI agent frameworks, evaluation tools, datasets, and benchmarks, see [docs/landscape.md](docs/landscape.md).
 
 ## Further Reading
 
@@ -379,9 +230,11 @@ AGENTS.md (core agent instructions)
 ### Core Components
 
 - **AGENTS.md**: Core agent instructions with project patterns, conventions, and decision framework
-- **CONTRIBUTING.md**: Shared development workflows, coding standards, and collaboration guidelines
+- **CONTRIBUTING.md**: Shared development workflows, coding standards, and collaboration guidelines  
 - **AGENT_REQUESTS.md**: Human escalation process and active collaboration requests
 - **AGENT_LEARNINGS.md**: Accumulated patterns, solutions, and knowledge sharing
+- **docs/architecture.md**: Detailed system architecture, agents, and data flow
+- **docs/landscape.md**: Comprehensive AI agent ecosystem overview
 
 ### Agent Development Workflow
 
