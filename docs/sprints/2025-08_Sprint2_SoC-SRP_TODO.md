@@ -348,5 +348,5 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 - [PeerRead Dataset](https://github.com/allenai/PeerRead)
 - AGENTS.md: Code organization and testing guidelines  
 - CONTRIBUTING.md: Development workflow and quality standards
-- Large Context Models: Claude-3.5-Sonnet (200k), GPT-4 Turbo (128k), Gemini-1.5-Pro (1M tokens)
+- Large Context Models: Claude 4 Opus/Sonnet (1M), GPT-4 Turbo (128k), Gemini-1.5-Pro (1M tokens) - see [Available Models](../landscape.md#available-models)
 - Evaluation Libraries: NLTK (BLEU), Rouge-Score, BERTScore, NetworkX (graph analysis)
