@@ -77,19 +77,40 @@ The evaluation framework is built around large context window models capable of 
 
 **Location**: `src/app/evals/graph_complexity.py`
 
+**Approach**: Post-execution behavioral analysis where agents autonomously decide tool use during execution, then observability logs are processed to construct behavioral graphs for retrospective evaluation.
+
+##### Integration Workflow
+
+1. **Agent Execution** → PydanticAI agents (Manager/Researcher/Analyst/Synthesizer) autonomously decide tool use and coordination strategies during PeerRead paper processing
+2. **Observability Logging** → AgentNeo and Comet Opik capture comprehensive execution traces, tool usage patterns, and agent interactions in real-time
+3. **Graph Construction** → spaCy + NetworkX and Google LangExtract process trace logs to build behavioral graphs showing coordination patterns and decision flows
+4. **Analysis** → NetworkX and NetworKit analyze coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
+
+**Tool Selection**: See [Graph Analysis & Network Tools](../landscape.md#graph-analysis--network-tools), [Post-Execution Graph Construction Tools](../landscape.md#post-execution-graph-construction-tools), and [Observability & Monitoring Platforms](../landscape.md#observability--monitoring-platforms) in landscape.md for detailed feasibility assessments and integration approaches.
+
+##### Key Applications for Agent Evaluation
+
+- **Agent Interaction Patterns** - Identify communication flows, coordination effectiveness, and collaboration bottlenecks between Manager/Researcher/Analyst/Synthesizer agents
+- **Tool Usage Sequences** - Analyze autonomous tool selection patterns, decision quality, and usage efficiency across agent types and tasks
+- **Decision Flow Analysis** - Map how decisions and information propagate through the multi-agent system during PeerRead review generation
+- **Coordination Effectiveness** - Correlate behavioral patterns with successful task outcomes and identify optimal coordination strategies
+- **Performance Bottlenecks** - Detect where autonomous coordination breaks down, communication fails, or tool usage becomes inefficient
+
+##### Technical Implementation
+
 - **Coordination Quality Analysis** (config: `coordination_quality`):
-  - Agent interaction effectiveness using NetworkX
-  - Multi-agent orchestration pattern analysis
-  - Communication efficiency measurement
+  - Agent interaction effectiveness using NetworkX post-execution graph analysis
+  - Multi-agent orchestration pattern analysis from behavioral traces
+  - Communication efficiency measurement through graph centrality metrics
 - **Execution Graph Construction**:
-  - Tool call pattern mapping
-  - Agent interaction relationship modeling
-  - Decision branching visualization
+  - Tool call pattern mapping from observability logs using spaCy + NetworkX
+  - Agent interaction relationship modeling through trace log analysis
+  - Decision branching visualization from autonomous agent decision sequences
 - **Complexity Metrics Integration**:
-  - Node count (discrete actions) → feeds into coordination_quality
-  - Edge density (interaction frequency) → affects tool_efficiency
-  - Path optimization → impacts time_taken scoring
-  - Pattern recognition → influences planning_rational assessment
+  - Node count (discrete actions) → feeds into coordination_quality scoring
+  - Edge density (interaction frequency) → affects tool_efficiency evaluation
+  - Path optimization → impacts time_taken scoring through coordination analysis
+  - Pattern recognition → influences planning_rational assessment via behavioral analysis
 
 #### Composite Scoring System
 

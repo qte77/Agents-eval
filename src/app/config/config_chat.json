@@ -7,16 +7,16 @@
             "max_content_length": 15000
         },
         "gemini": {
-            "model_name": "gemini-1.5-flash-8b",
+            "model_name": "gemini-1.5-pro",
             "base_url": "https://generativelanguage.googleapis.com/v1beta",
             "usage_limits": 25000,
-            "max_content_length": 25000
+            "max_content_length": 1000000
         },
         "github": {
-            "model_name": "GPT-4o",
+            "model_name": "gpt-4-turbo",
             "base_url": "https://models.inference.ai.azure.com",
             "usage_limits": 25000,
-            "max_content_length": 8000
+            "max_content_length": 128000
         },
         "grok": {
             "model_name": "grok-2-1212",
@@ -53,6 +53,18 @@
             "base_url": "https://api.together.xyz/v1",
             "usage_limits": 25000,
             "max_content_length": 15000
+        },
+        "openai": {
+            "model_name": "gpt-4-turbo",
+            "base_url": "https://api.openai.com/v1",
+            "usage_limits": 25000,
+            "max_content_length": 128000
+        },
+        "anthropic": {
+            "model_name": "claude-3-5-sonnet-20241022",
+            "base_url": "https://api.anthropic.com",
+            "usage_limits": 25000,
+            "max_content_length": 200000
         }
     },
     "inference": {
