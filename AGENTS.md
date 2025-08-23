@@ -80,23 +80,7 @@ When facing conflicting instructions or ambiguous situations, use this priority 
 
 ## Architecture Overview
 
-This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI systems. The project uses **PydanticAI** as the core framework for agent orchestration and is designed for evaluation purposes, not for production agent deployment.
-
-### Data Flow
-
-1. User input → Manager Agent (can be single-LLM)
-2. Optional: Manager delegates to Researcher Agent (with DuckDuckGo search)
-3. Optional: Researcher results → Analyst Agent for validation
-4. Optional: Validated data → Synthesizer Agent for report generation
-5. Results evaluated using configurable metrics
-
-### Key Dependencies
-
-- **PydanticAI**: Agent framework and orchestration
-- **uv**: Fast Python dependency management
-- **Streamlit**: GUI framework
-- **Ruff**: Code formatting and linting
-- **pyright**: Static type checking
+This is a Multi-Agent System (MAS) evaluation framework using **PydanticAI** for agent orchestration. For detailed architecture and component descriptions, see [README.md](README.md).
 
 ## Codebase Structure & Modularity
 

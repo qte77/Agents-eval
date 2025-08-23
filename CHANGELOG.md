@@ -7,28 +7,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Guiding Principles
-
-- Changelogs are for humans, not machines.
-- There should be an entry for every single version.
-- The same types of changes should be grouped.
-- Versions and sections should be linkable.
-- The latest version comes first.
-- The release date of each version is displayed.
-- Mention whether you follow Semantic Versioning.
-
-## Types of changes
-
-- `Added` for new features.
-- `Changed` for changes in existing functionality.
-- `Deprecated` for soon-to-be removed features.
-- `Removed` for now removed features.
-- `Fixed` for any bug fixes.
-- `Security` in case of vulnerabilities.
+**Types of changes**: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`
 
 ## [Unreleased]
 
+### Removed
+
+- Obsolete context/ directory and .claude/commands framework references
+- FRP (Feature Requirements Prompt) command references from documentation
+- Redundant architecture details from AGENTS.md
+
+### Changed
+
+- Documentation structure: clarified purpose statements for README.md (humans), AGENTS.md (agents), CONTRIBUTING.md (shared)
+- AGENTS.md: streamlined content, removed duplicated architecture information
+- CHANGELOG.md: reduced boilerplate, consolidated change type descriptions
+- README.md: fixed grammar, improved clarity of intended audience
+
+### Added
+
+- Clear audience targeting for all main documentation files
+- PyPI verification requirement for new package introductions in AGENTS.md
+
 ## [3.2.0] - 2025-08-19
+
+### Added
+
+- Evaluation engine for PeerRead dataset
+- Documentation updates: separation of human and agent files, clear CONTRIBUTING.md ma
+
+### Fixed
+
+- Cleaned up obsolete documentation and logs, removed outdated markdown files and datasets
 
 ## [3.1.0] - 2025-08-10
 

@@ -1,6 +1,6 @@
 # Agents-eval
 
-This project aims to implement an evaluation pipeline to assess the effectiveness of open-source agentic AI systems using the PeerRead dataset. Nonetheless intending to focusing on use case agnostic metrics that measure core capabilities such as task decomposition, tool integration, adaptability, and overall performance.
+This project aims to implement an evaluation pipeline to assess the effectiveness of open-source agentic AI systems using the PeerRead dataset, focusing on use case agnostic metrics that measure core capabilities such as task decomposition, tool integration, adaptability, and overall performance.
 
 **This README is intended for human developers and users.** For shared development workflows and standards (valid for both agents and humans), see [CONTRIBUTING.md](CONTRIBUTING.md). For AI coding agent instructions, see [AGENTS.md](AGENTS.md).
 
@@ -379,7 +379,7 @@ AGENTS.md (core agent instructions)
 ### Core Components
 
 - **AGENTS.md**: Core agent instructions with project patterns, conventions, and decision framework
-- **CONTRIBUTE.md**: Development workflows, coding standards, and collaboration guidelines
+- **CONTRIBUTING.md**: Shared development workflows, coding standards, and collaboration guidelines
 - **AGENT_REQUESTS.md**: Human escalation process and active collaboration requests
 - **AGENT_LEARNINGS.md**: Accumulated patterns, solutions, and knowledge sharing
 
