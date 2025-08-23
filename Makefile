@@ -21,36 +21,8 @@ PLANTUML_CONTAINER := plantuml/plantuml:latest
 PLANTUML_SCRIPT := scripts/generate-plantuml-png.sh
 PANDOC_SCRIPT := scripts/run-pandoc.sh
 PDF_CONVERTER_SCRIPT := scripts/setup-pdf-converter.sh
-PRP_DEF_PATH := /context/PRPs/features
-PRP_CLAUDE_GEN_CMD := generate-prp
-PRP_CLAUDE_EXE_CMD := execute-prp
 PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex
 PANDOC_TITLE_FILE := 01_titel_abstrakt.md
-
-
-# MARK: claude commands
-
-
-# construct the full path to the PRP definition file
-define CLAUDE_PRP_RUNNER
-	echo "Starting Claude Code PRP runner ..."
-	# 1. Extract arguments and validate that they are not empty.
-	prp_file=$(firstword $(strip $(1)))
-	cmd_prp=$(firstword $(strip $(2)))
-	if [ -z "$${prp_file}" ]; then
-		echo "Error: ARGS for PRP filename is empty. Please provide a PRP filename."
-		exit 1
-	fi
-	if [ -z "$${cmd_prp}" ]; then
-		echo "Error: ARGS for command is empty. Please provide a command."
-		exit 2
-	fi
-	cmd_prp="/project:$${cmd_prp} $(PRP_DEF_PATH)/$${prp_file}"
-	cmd_cost="/cost"
-	echo "Executing command '$${cmd_prp}' ..."
-	claude -p "$${cmd_prp}" 2>&1
-	claude -p "$${cmd_cost}" 2>&1
-endef
 
 
 # MARK: setup
@@ -174,16 +146,6 @@ run_profile:  ## Profile app with scalene
 	uv run scalene --outfile \
 		"$(APP_PATH)/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
 		"$(APP_PATH)/main.py"
-
-
-# MARK: Claude Code Context
-
-
-prp_gen_claude:  ## generates the PRP from the file passed in ARGS
-	$(call CLAUDE_PRP_RUNNER, $(ARGS), $(PRP_CLAUDE_GEN_CMD))
-
-prp_exe_claude:  ## executes the PRP from the file passed in ARGS
-	$(call CLAUDE_PRP_RUNNER, $(ARGS), $(PRP_CLAUDE_EXE_CMD))
 
 
 # MARK: Sanity

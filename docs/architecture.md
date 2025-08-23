@@ -4,19 +4,131 @@ This document provides detailed architecture information for the Agents-eval Mul
 
 ## System Overview
 
-This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI systems. The project uses **PydanticAI** as the core framework for agent orchestration and is designed for evaluation purposes, not for production agent deployment.
+This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI systems using the **PeerRead dataset** for comprehensive agent performance measurement. The project uses **PydanticAI** as the core framework for agent orchestration and implements a three-tiered evaluation approach: traditional metrics, LLM-as-a-judge assessment, and graph-based complexity analysis.
+
+**Primary Purpose**: Evaluate agent performance in generating academic paper reviews through multiple evaluation methodologies to produce composite performance scores.
 
 ## Data Flow
 
-1. User input → Manager Agent (can be single-LLM)
+### Agent Execution Flow
+
+1. PeerRead paper input → Manager Agent (with large context window models)
 2. Optional: Manager delegates to Researcher Agent (with DuckDuckGo search)
 3. Optional: Researcher results → Analyst Agent for validation
-4. Optional: Validated data → Synthesizer Agent for report generation
-5. Results evaluated using configurable metrics
+4. Optional: Validated data → Synthesizer Agent for review generation
+5. Generated review → Comprehensive evaluation pipeline
+
+### Evaluation Pipeline Flow
+
+1. **Traditional Metrics**: Text similarity (BLEU, ROUGE, BERTScore), execution time measurement
+2. **LLM-as-a-Judge**: Review quality assessment, agentic execution analysis
+3. **Graph-Based Analysis**: Tool call complexity, agent interaction mapping
+4. **Composite Scoring**: Final score calculation using formula: (Agentic Results / Execution Time / Graph Complexity)
+
+## Evaluation Framework Architecture
+
+### Large Context Model Integration
+
+The evaluation framework is built around large context window models capable of processing full PeerRead papers:
+
+- **Claude-3.5-Sonnet**: 200k context limit (Anthropic provider) - Primary choice for comprehensive paper analysis
+- **GPT-4 Turbo**: 128k context limit (OpenAI provider) - Secondary option with solid performance
+- **Gemini-1.5-Pro**: 1M context limit (Google provider) - Maximum context for largest papers
+
+**Model Selection Logic**: Automatic selection based on paper token count with intelligent fallback to document chunking for smaller context models.
+
+### Sprint 1: PeerRead Evaluation Components
+
+#### Traditional Evaluation Metrics
+
+**Location**: `src/app/evals/traditional_metrics.py`
+
+- **Output Similarity Assessment** (config: `output_similarity`):
+  - Cosine similarity (primary metric from config)
+  - Jaccard similarity (secondary metric)
+  - Semantic similarity (default metric from config)
+  - Confidence threshold: 0.8 (from config)
+- **Performance Metrics** (config: `time_taken`):
+  - Execution time tracking (end-to-end paper processing)
+  - Resource usage monitoring (memory, API calls, token consumption)
+- **Task Success Evaluation** (config: `task_success`):
+  - Review completeness scoring
+  - Structure adherence measurement
+  - Academic standard compliance with recommendation weights
+
+#### LLM-as-a-Judge Framework
+
+**Location**: `src/app/evals/llm_judge.py`
+
+- **Planning Rational Assessment** (config: `planning_rational`):
+  - Decision-making process quality evaluation
+  - Reasoning chain coherence analysis
+  - Strategic planning effectiveness
+- **Tool Efficiency Evaluation** (config: `tool_efficiency`):
+  - Tool usage effectiveness analysis
+  - Resource optimization assessment
+  - API call efficiency measurement
+- **Recommendation Quality Scoring**:
+  - Uses config recommendation weights: accept (1.0), weak_accept (0.7), weak_reject (-0.7), reject (-1.0)
+  - Generated review vs. ground truth PeerRead reviews
+  - Multi-dimensional quality scoring with confidence threshold (0.8)
+
+#### Graph-Based Complexity Analysis
+
+**Location**: `src/app/evals/graph_complexity.py`
+
+- **Coordination Quality Analysis** (config: `coordination_quality`):
+  - Agent interaction effectiveness using NetworkX
+  - Multi-agent orchestration pattern analysis
+  - Communication efficiency measurement
+- **Execution Graph Construction**:
+  - Tool call pattern mapping
+  - Agent interaction relationship modeling
+  - Decision branching visualization
+- **Complexity Metrics Integration**:
+  - Node count (discrete actions) → feeds into coordination_quality
+  - Edge density (interaction frequency) → affects tool_efficiency
+  - Path optimization → impacts time_taken scoring
+  - Pattern recognition → influences planning_rational assessment
+
+#### Composite Scoring System
+
+**Location**: `src/app/evals/composite_scorer.py`
+
+**Formula**: `Agent Score = Weighted Sum of Six Core Metrics`
+
+**Configuration-Based Metrics** (from `config_eval.json`):
+
+- `time_taken`: 0.167 (16.7% - execution time efficiency)
+- `task_success`: 0.167 (16.7% - review completion and accuracy)
+- `coordination_quality`: 0.167 (16.7% - agent interaction effectiveness)
+- `tool_efficiency`: 0.167 (16.7% - tool usage optimization)
+- `planning_rational`: 0.167 (16.7% - decision-making quality)
+- `output_similarity`: 0.167 (16.7% - similarity to PeerRead ground truth)
+
+**Configuration-Based Output**:
+
+- Final weighted score using six config metrics (0.167 each)
+- Individual metric breakdowns: time_taken, task_success, coordination_quality, tool_efficiency, planning_rational, output_similarity
+- Similarity metrics selection (cosine, jaccard, semantic) with semantic as default
+- Recommendation scoring with config weights and confidence threshold (0.8)
+- Performance trend analysis with configurable evaluation parameters
+
+### Sprint 2: Architectural Refactoring (Future)
+
+The evaluation framework will be refactored into three independent engines:
+
+- **Agents Engine**: Pure agent orchestration and execution
+- **Dataset Engine**: PeerRead data loading, caching, and validation  
+- **Eval Engine**: Evaluation metrics calculation and scoring
 
 ## Key Dependencies
 
 - **PydanticAI**: Agent framework and orchestration
+- **NetworkX**: Graph analysis for complexity metrics
+- **NLTK**: Traditional text similarity metrics (BLEU)
+- **Rouge-Score**: ROUGE metrics implementation
+- **BERTScore**: Semantic similarity evaluation
 - **uv**: Fast Python dependency management
 - **Streamlit**: GUI framework
 - **Ruff**: Code formatting and linting

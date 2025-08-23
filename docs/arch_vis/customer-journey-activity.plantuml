@@ -1,5 +1,5 @@
 @startuml customer-journey-activity
-title Customer Journey Activity Diagram
+title PeerRead Agent Evaluation Journey
 
 !log Current 'STYLE' dvar: STYLE
 !log About to include: styles/github-STYLE.puml
@@ -7,46 +7,57 @@ title Customer Journey Activity Diagram
 
 start
 
-:User discovers the project;
+:User discovers the agent evaluation project;
 
-:Clones repository and installs environment;
+:Clones repository and sets up development environment;
 
 if (First time use or dataset update?) then (yes)
-  :Run `make run_cli` with `--download-peerread-samples-only` or `--download-peerread-full-only` flags;
-  :Dataset is downloaded and saved to `datasets/peerread`;
+  :Download PeerRead dataset with `make run_cli --download-peerread-full-only`;
+  :Dataset is cached locally in `datasets/peerread/`;
 else (no)
 endif
 
-:User chooses an interface;
+:User selects evaluation interface;
 
 if (Interface choice) then (CLI)
-  :Runs `make run_cli` with a query;
-  group CLI Interaction
-    :Input query via command-line arguments;
-    :Application initializes agents (Manager, Researcher, etc.);
-    :Agent system processes the query;
-    :Results and evaluation metrics are printed to the console;
+  :Execute `make run_cli` with evaluation parameters;
+  group CLI Agent Evaluation
+    :Select paper from PeerRead dataset;
+    :Configure agent system (Manager/Researcher/Analyst/Synthesizer);
+    :Initialize large context window models (Claude-3.5, GPT-4, Gemini-1.5);
+    :Agent system generates comprehensive review;
+    :Three-tier evaluation runs automatically;
   end group
 else (Streamlit GUI)
-  :Runs `make run_gui`;
-  group GUI Interaction
-    :User navigates to the web interface;
-    :Inputs query in the text area;
-    :Agent system is triggered on submission;
-    :Results are displayed interactively on the dashboard;
+  :Launch `make run_gui` for interactive evaluation;
+  group GUI Agent Evaluation
+    :Browse PeerRead papers in web interface;
+    :Configure evaluation parameters and agent settings;
+    :Trigger agent review generation;
+    :View real-time evaluation metrics and scores;
   end group
 endif
 
-:User reviews the output;
+:System executes three-tier evaluation;
 
-if (Is it a paper review?) then (yes)
-  :The system uses PeerRead tools to generate a structured review;
-  :Output is formatted as a peer review;
+group Three-Tier Evaluation Process
+  :Traditional Metrics: text similarity, execution time, task success;
+  :LLM-as-a-Judge: planning rational, coordination quality, tool efficiency;
+  :Graph Analysis: agent interaction complexity and patterns;
+  :Composite Scoring: weighted final score with config metrics;
+end group
+
+:User analyzes evaluation results;
+
+if (Evaluation results satisfactory?) then (yes)
+  :Export evaluation data and performance metrics;
+  :Document agent performance insights;
 else (no)
-  :Output is a research summary or analysis;
+  :Adjust agent configuration or model selection;
+  :Re-run evaluation with different parameters;
 endif
 
-:User can iterate by refining the query or changing agent configurations;
+:User iterates to improve agent performance;
 
 stop
 @enduml
