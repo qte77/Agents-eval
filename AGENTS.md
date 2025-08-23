@@ -57,7 +57,7 @@ When facing conflicting instructions or ambiguous situations, use this priority 
 
 1. **Explicit user instructions** - Always override all other guidelines
 2. **AGENTS.md rules** - Override general best practices when specified
-3. **paths.md structure** - Source of truth for all path references
+3. **Project structure** - Follow established file organization patterns
 4. **Project-specific patterns** - Found in existing codebase
 5. **General best practices** - Default fallback for unspecified cases
 

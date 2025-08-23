@@ -71,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - PeerRead dataset functionality
 - PeerRead agent usage documentation to reflect new architecture with `data_models` instead of `datamodels` path structure
-- Eval functionality in spearate system
+- Eval functionality in separate system
 - Gemini CLI as fallback for Claude Code CLI
 
 ## [2.0.0] - 2025-07-06
@@ -115,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 2025-03-16
 
-- feta(devconatiner): Refactor devcontainer setup: remove old configurations and add new setup targets for development and Ollama
+- feat(devcontainer): Refactor devcontainer setup: remove old configurations and add new setup targets for development and Ollama
 - feat(devcontainer): Changed from vscode to astral-sh devcontainer
 - feat(devcontainer): Changed to vscode container, added postcreatecommand make setup_env
 - feat(devcontainer): restructure environment setup with new devcontainer configurations
@@ -185,6 +185,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - devcontainer: python only, w/o Jetbrains clutter from default devcontainer
 - ollama: server and model download successful
 - agent: tools use full run red
-- pytest: e2e runm final result red
+- pytest: e2e run, final result red
 - Readme: basic project info
 - pyproject.toml

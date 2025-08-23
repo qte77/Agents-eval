@@ -133,6 +133,7 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 **All contributors must update CHANGELOG.md for non-trivial changes.**
 
 **What requires a CHANGELOG entry:**
+
 - ✅ New features or functionality
 - ✅ Breaking changes or API modifications  
 - ✅ Bug fixes that affect user experience
@@ -141,6 +142,7 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 - ✅ Configuration changes
 
 **What doesn't require a CHANGELOG entry:**
+
 - ❌ Typo fixes in comments
 - ❌ Code formatting changes
 - ❌ Internal refactoring without user impact
