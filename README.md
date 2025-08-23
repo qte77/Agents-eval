@@ -362,7 +362,7 @@ Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pyd
 
 ## Note: Context Framework for AI Agents
 
-This project includes a comprehensive context framework for AI coding agents designed for structured development and collaboration. It supports feature implementation using a top-down approach where feature descriptions are transformed into Feature Request Prompts (FRPs) and then into code implementation.
+This project includes a context framework for AI coding agents designed for structured development and collaboration.
 
 ### Documentation Hierarchy
 
@@ -373,9 +373,9 @@ CLAUDE.md (entry point)
     ↓
 AGENTS.md (core agent instructions)
     ↓
-├── CONTRIBUTE.md (development workflows & standards)
-├── AGENT_REQUESTS.md (human escalation & collaboration)
-└── AGENT_LEARNINGS.md (pattern discovery & knowledge sharing)
+├── CONTRIBUTING.md (shared development workflows & standards)
+├── AGENT_REQUESTS.md (agentic requests to humans, escalation & collaboration)
+└── AGENT_LEARNINGS.md (agentic pattern discovery & knowledge sharing)
 ```
 
 ### CLI/Extensions used
