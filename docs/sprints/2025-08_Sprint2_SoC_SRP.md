@@ -38,22 +38,7 @@ The current system has several SoC/SRP violations that need to be addressed befo
 - Configuration loading scattered throughout the function
 - No clear separation between CLI concerns and business logic
 
-**Resolution Strategy**:
-
-```python
-# Proposed structure:
-src/app/
-├── engines/
-│   ├── agents_engine/     # Agent orchestration and execution
-│   ├── dataset_engine/    # Data loading, caching, preprocessing  
-│   └── eval_engine/       # Evaluation metrics and scoring
-├── interfaces/
-│   ├── cli_interface.py   # CLI-specific logic
-│   └── api_interface.py   # Future API endpoints
-└── core/
-    ├── app_coordinator.py # High-level application coordination
-    └── dependency_injection.py # DI container for engines
-```
+**Resolution Strategy**: Separate into three independent engines with clear boundaries and responsibilities.
 
 #### 2. **Agent System Mixed Responsibilities (`agents/agent_system.py`)**
 
@@ -66,21 +51,7 @@ src/app/
 - Tool integration tightly coupled to agent creation
 - Model selection logic embedded in agent system
 
-**Resolution Strategy**:
-
-```python
-# Separate into:
-agents_engine/
-├── core/
-│   ├── agent_factory.py      # Pure agent creation
-│   ├── agent_orchestrator.py # Agent workflow coordination  
-│   └── agent_executor.py     # Agent execution runtime
-├── providers/
-│   ├── llm_provider_manager.py # LLM provider abstractions
-│   └── model_selector.py      # Model selection logic
-└── tools/
-    └── tool_registry.py      # Tool registration and management
-```
+**Resolution Strategy**: Extract agent creation, provider management, and tool integration into separate modules with single responsibilities.
 
 #### 3. **Dataset Operations Mixed with Business Logic (`data_utils/`)**
 
@@ -93,21 +64,7 @@ agents_engine/
 - No clear abstraction between dataset format and business models
 - Caching logic tightly coupled to download implementation
 
-**Resolution Strategy**:
-
-```python
-# Separate into:
-dataset_engine/
-├── core/
-│   ├── dataset_loader.py     # Pure dataset loading
-│   ├── dataset_cache.py      # Caching abstraction
-│   └── dataset_validator.py  # Data validation
-├── sources/
-│   ├── peerread_source.py    # PeerRead-specific operations
-│   └── source_registry.py    # Support multiple datasets
-└── models/
-    └── dataset_models.py     # Dataset-agnostic models
-```
+**Resolution Strategy**: Create isolated dataset engine with pure data operations separated from business logic.
 
 #### 4. **Evaluation Logic Incomplete and Scattered (`evals/`)**
 
@@ -120,45 +77,16 @@ dataset_engine/
 - Missing evaluation pipeline coordination
 - No abstraction for different evaluation types
 
-**Resolution Strategy**:
+**Resolution Strategy**: Build complete evaluation engine with separation between metrics calculation and result aggregation.
 
-```python
-# Complete separation:
-eval_engine/
-├── core/
-│   ├── evaluation_coordinator.py # Evaluation workflow
-│   ├── metric_calculator.py      # Pure metric calculations
-│   └── result_aggregator.py      # Score aggregation
-├── metrics/
-│   ├── traditional_metrics.py    # BLEU, ROUGE, similarity
-│   ├── llm_judge_metrics.py      # LLM-as-judge evaluation
-│   └── graph_metrics.py          # Execution complexity
-└── scorers/
-    └── composite_scorer.py       # Final scoring logic
-```
+### Engine Architecture Overview
 
-### Engine Architecture Implementation
+**Three Independent Engines:**
+- **Agents Engine**: Agent orchestration and execution (no external dependencies)
+- **Dataset Engine**: Data loading and caching (no external dependencies)  
+- **Eval Engine**: Metrics and scoring (consumes from agents and dataset engines)
 
-#### Agents Engine Responsibilities
-
-- **Pure Concerns**: Agent creation, orchestration, execution, tool management
-- **Dependencies**: None on dataset or evaluation engines
-- **Interfaces**: Agent execution API, tool registration API
-- **Configuration**: Agent prompts, model selection, execution parameters
-
-#### Dataset Engine Responsibilities
-
-- **Pure Concerns**: Data loading, caching, validation, source management
-- **Dependencies**: None on agents or evaluation engines
-- **Interfaces**: Dataset loading API, caching API, validation API
-- **Configuration**: Dataset sources, cache settings, validation rules
-
-#### Eval Engine Responsibilities
-
-- **Pure Concerns**: Metric calculation, scoring, result aggregation
-- **Dependencies**: Consumes results from agents engine, dataset from dataset engine
-- **Interfaces**: Evaluation API, metrics API, scoring API  
-- **Configuration**: Evaluation weights, metric parameters, scoring formulas
+**Note**: Detailed engine specifications and advanced architectural patterns are implemented in [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
 
 ## Implementation Priority Tasks
 
@@ -300,24 +228,7 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 3. Validate SoC/SRP compliance and architectural improvements
 4. Finalize Sprint 1 integration within proper engine boundaries
 
-## Risk Mitigation
-
-### **Potential Risks**
-
-- **Breaking Changes**: Extensive refactoring may break existing functionality during transition
-- **Import Dependencies**: Moving modules may create circular import issues or missing dependencies  
-- **Test Coverage**: Refactoring may reduce test coverage if tests aren't properly updated
-- **Integration Complexity**: Engine coordination may introduce new complexity and failure points
-- **Timeline Risk**: Architectural changes may take longer than estimated, blocking Sprint 1 evaluation goals
-
-### **Mitigation Strategies**
-
-- **Incremental Migration**: Move modules one at a time with immediate testing to catch breaking changes early
-- **Import Mapping**: Create comprehensive import mapping and update all references systematically
-- **Test-First Approach**: Update tests alongside refactoring to maintain coverage throughout transition
-- **Interface Contracts**: Define clear interfaces between engines before implementation to avoid integration issues
-- **Rollback Plan**: Maintain git branches for each phase to enable rollback if architectural changes block critical functionality
-- **Validation Gates**: Require all existing functionality to pass before proceeding to next phase
+**Note**: Detailed risk analysis and advanced mitigation strategies are covered in [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
 
 ## Notes
 
@@ -329,10 +240,4 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 
 **Note**: External tool assessments and advanced coordination infrastructure have been moved to [Sprint 3: Advanced Features & Research Integration](2025-08_Sprint3_Advanced-Features.md).
 
-## References
-
-- [PeerRead Dataset](https://github.com/allenai/PeerRead)
-- AGENTS.md: Code organization and testing guidelines  
-- CONTRIBUTING.md: Development workflow and quality standards
-- Large Context Models: Claude 4 Opus/Sonnet (1M), GPT-4 Turbo (128k), Gemini-1.5-Pro (1M tokens) - see [Available Models](../landscape.md#available-models)
-- Evaluation Libraries: NLTK (BLEU), Rouge-Score, BERTScore, NetworkX (graph analysis)
+**Note**: Technical references and tool specifications are maintained in [landscape documentation](../landscape/) and [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).

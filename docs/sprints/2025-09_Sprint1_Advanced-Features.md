@@ -1,6 +1,6 @@
 # Sprint 3: Advanced Features & Research Integration
 
-**Sprint Goal**: Implement advanced evaluation features, external tool integrations, and research-backed enhancements on top of the solid architectural foundation established in Sprints 1 & 2.
+**Sprint Goal**: Implement core advanced evaluation features and external tool integrations on top of the solid architectural foundation established in Sprints 1 & 2.
 
 **Priority**: Medium Priority for advanced capabilities and ecosystem integration
 
@@ -12,11 +12,10 @@ Sprint 3 builds upon the foundational evaluation framework (Sprint 1) and clean 
 
 **Key Requirements**:
 
-- Advanced evaluation metrics and self-assessment capabilities
-- External tool ecosystem integration and assessment
-- Research-backed feature implementation
-- Production-ready monitoring and observability
-- Cross-domain evaluation capabilities
+- External tool ecosystem integration (AdalFlow, BAML, agentfile format)
+- Advanced evaluation capabilities (predictive assessment, self-assessment)  
+- Research framework integration (Arize Phoenix, Swarms frameworks)
+- Enhanced monitoring and observability features
 
 ## Sprint Foundation
 
@@ -106,19 +105,7 @@ Sprint 3 builds upon the foundational evaluation framework (Sprint 1) and clean 
 
 ### Advanced Coordination Infrastructure
 
-#### Task 6: Production Framework Integration
-
-- [ ] **12-Factor Agent Architecture**: Full modular, stateless design implementation
-  - Apply to prompt externalization and configuration management
-  - Ensure scalability and maintainability principles
-  - **Deliverable**: 12-Factor compliance validated
-
-- [ ] **Coral Protocol Assessment**: Evaluate for multi-agent coordination infrastructure
-  - Assess MCP server integration with `agents_engine`
-  - Evaluate session-based agent coordination patterns
-  - Test thread-based messaging for engine communication
-  - Consider decentralized coordination capabilities
-  - **Deliverable**: Advanced coordination infrastructure assessment
+**Note**: Production framework integration moved to [Backlog](#backlog-future-sprints) section.
 
 ### Observability & Monitoring Enhancement
 
@@ -134,47 +121,7 @@ Sprint 3 builds upon the foundational evaluation framework (Sprint 1) and clean 
   - **Swarms Framework Integration**: Continuous evaluation with dynamic assessment criteria
   - **Deliverable**: Advanced evaluation monitoring operational
 
-### Self-Evolving Capabilities
-
-**Research Foundation**: [arXiv:2507.21046](https://arxiv.org/abs/2507.21046), [arXiv:2505.22954](https://arxiv.org/abs/2505.22954)
-
-#### Task 8: Adaptive Evaluation Systems
-
-- [ ] **Adaptive Evaluation Criteria**: Agents improve evaluation through experience
-  - Learning from PeerRead dataset interactions
-  - Dynamic criteria adjustment based on performance patterns
-  - **Deliverable**: Adaptive evaluation system operational
-
-- [ ] **Meta-Learning Evaluation**: Long-term capability tracking
-  - Evolution analysis across evaluation sessions
-  - Performance trend identification and optimization
-  - **Deliverable**: Meta-learning framework implemented
-
-- [ ] **Self-Questioning Integration**: Advanced self-assessment
-  - Based on research: [arXiv:2508.03682](https://www.arxiv.org/pdf/2508.03682)
-  - Integration with existing self-assessment capabilities
-  - **Deliverable**: Advanced self-questioning system operational
-
-### Cross-Domain Evaluation
-
-**Research Foundation**: [arXiv:2505.22583](https://arxiv.org/pdf/2505.22583), [arXiv:2411.13543](https://arxiv.org/pdf/2411.13543)
-
-#### Task 9: Multi-Domain Benchmark Suite
-
-- [ ] **Domain Extension**: Extend beyond PeerRead to diverse evaluation domains
-  - Identify additional research domains for evaluation
-  - Adapt dataset engine for multi-domain support
-  - **Deliverable**: Multi-domain evaluation capability
-
-- [ ] **Domain-Adaptive Evaluation**: Context-aware evaluation criteria
-  - Domain-specific evaluation metrics
-  - Adaptive scoring based on domain requirements
-  - **Deliverable**: Domain-adaptive evaluation system
-
-- [ ] **Standardized Agent Benchmarking**: Community-driven evaluation standards
-  - Establish benchmarking protocols
-  - Integration with research community standards
-  - **Deliverable**: Standardized benchmarking framework
+**Note**: Advanced self-evolving capabilities and cross-domain evaluation moved to [Backlog](#backlog-future-sprints) section.
 
 ## Implementation Priority & Phases
 
@@ -196,23 +143,12 @@ Sprint 3 builds upon the foundational evaluation framework (Sprint 1) and clean 
 3. **Meta-evaluation**: Continuous improvement and feedback loops
 4. **Security Monitoring**: Runtime security evaluation metrics
 
-### **Phase 3: Advanced Coordination & Observability** (Days 7-9)
+### **Phase 3: Advanced Observability** (Days 5-6)
 
-**Priority**: Medium - Production readiness and monitoring
+**Priority**: Medium - Enhanced monitoring and evaluation
 
-1. **12-Factor Architecture**: Full compliance implementation
-2. **Coral Protocol**: Advanced coordination infrastructure assessment
-3. **External Monitoring**: Opik and Logfire integration
-4. **Enhanced Evaluation**: Phoenix and Swarms framework integration
-
-### **Phase 4: Self-Evolving & Cross-Domain** (Days 10-12)
-
-**Priority**: Medium - Cutting-edge research features
-
-1. **Adaptive Systems**: Dynamic evaluation criteria and meta-learning
-2. **Self-Questioning**: Advanced self-assessment integration
-3. **Multi-Domain**: Cross-domain evaluation capability
-4. **Standardization**: Community benchmarking protocols
+1. **External Monitoring**: Opik and Logfire integration
+2. **Enhanced Evaluation**: Phoenix and Swarms framework integration
 
 ## Success Metrics
 
@@ -237,12 +173,7 @@ Sprint 3 builds upon the foundational evaluation framework (Sprint 1) and clean 
 - [ ] External monitoring systems operational with full observability
 - [ ] Enhanced evaluation frameworks integrated and functional
 
-### **Self-Evolving Capabilities**
-
-- [ ] Adaptive evaluation criteria functional and learning from experience
-- [ ] Meta-learning capability tracking operational
-- [ ] Advanced self-questioning system integrated
-- [ ] Cross-domain evaluation capability operational
+**Note**: Self-evolving and cross-domain success metrics moved to [Backlog](#backlog-future-sprints) section.
 
 ### **Production Readiness**
 
@@ -276,14 +207,43 @@ All Sprint 3 features must:
 - Backward compatibility with Sprint 1/2 functionality maintained
 - Security review required for all external integrations
 
-## Future Considerations
+## Backlog (Future Sprints)
 
-### **Research Contribution & Ecosystem**
+### **Production Infrastructure**
+
+*Target: Sprint 4*  
+
+- [ ] **12-Factor Agent Architecture**: Full modular, stateless design implementation
+- [ ] **Coral Protocol Assessment**: Advanced multi-agent coordination infrastructure
+- [ ] **Advanced Risk Mitigation**: Complex rollback strategies and deployment patterns
+
+### **Self-Evolving Capabilities**
+
+*Target: Sprint 4+*  
+
+**Research Foundation**: [arXiv:2507.21046](https://arxiv.org/abs/2507.21046), [arXiv:2505.22954](https://arxiv.org/abs/2505.22954)
+
+- [ ] **Adaptive Evaluation Criteria**: Agents improve evaluation through experience
+- [ ] **Meta-Learning Evaluation**: Long-term capability tracking  
+- [ ] **Self-Questioning Integration**: Advanced self-assessment based on [arXiv:2508.03682](https://www.arxiv.org/pdf/2508.03682)
+
+### **Cross-Domain Evaluation**
+
+*Target: Sprint 5+*  
+
+**Research Foundation**: [arXiv:2505.22583](https://arxiv.org/pdf/2505.22583), [arXiv:2411.13543](https://arxiv.org/pdf/2411.13543)
+
+- [ ] **Multi-Domain Benchmark Suite**: Extend beyond PeerRead to diverse evaluation domains
+- [ ] **Domain-Adaptive Evaluation**: Context-aware evaluation criteria
+- [ ] **Standardized Agent Benchmarking**: Community-driven evaluation standards
+
+### **Research Ecosystem**
+
+*Target: Long-term Roadmap*  
 
 - [ ] **PeerRead Research Agent Benchmark**: Establish as academic standard
-- [ ] **Multi-Framework Integration Methodology**: Publish synthesis approach
+- [ ] **Multi-Framework Integration Methodology**: Publish synthesis approach  
 - [ ] **Academic-Industry Bridge**: Conference papers and research collaboration
-
 - [ ] **Blog Post Enhancement Integration**: Implement recommendations from [AI Agents Evaluation Enhancement Recommendations](https://github.com/qte77/qte77.github.io/blob/master/_posts/2025-08-09-ai-agents-eval-enhancement-recommendations.md)
 
 ## References

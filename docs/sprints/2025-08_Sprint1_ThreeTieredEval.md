@@ -152,27 +152,15 @@ The Sprint 1 implementation follows a progressive three-tier approach, allowing 
 - **Tool Efficiency**: Evaluate effectiveness of DuckDuckGo search and PeerRead-specific tools usage
 - **Planning Rational**: Assess reasoning quality and decision-making processes in agent orchestration
 
-### Enhanced Evaluation Methodologies
-
-**Arize Phoenix Cyclical Development Approach**:
-
-- **Path Convergence Metrics**: Measure agent step efficiency and iteration optimization
-- **Granular Skill Evaluation**: Router selection accuracy, tool calling precision, parameter extraction validation
-- **LLM-as-a-Judge Templates**: Agent planning validation, reflection assessment, convergence scoring
-
-**Swarms Continuous Evaluation Framework**:
-
-- **Comprehensive Performance Tracking**: Accuracy, precision, recall, F1 score, response time, task completion rate, error rate
-- **Dynamic Assessment Criteria**: Baseline establishment with regular comparative evaluations
-- **User Feedback Integration**: Continuous improvement loops with realistic scenario testing
+**Note**: Advanced research methodologies (Arize Phoenix, Swarms frameworks) are implemented in [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
 
 ### Graph-Based Complexity Analysis
 
-See [Graph Analysis & Network Tools in landscape.md](../landscape.md#graph-analysis--network-tools) for comprehensive tool recommendations.
+- **Tool Call Complexity**: Analyze patterns and efficiency of tool utilizations
+- **Agent Interaction Graphs**: Map and measure complexity of agent-to-agent communications  
+- **Execution Flow Analysis**: Compare actual vs. expected execution patterns
 
-- **Tool Call Complexity**: Analyze patterns and efficiency of tool utilizations using NetworkX for graph construction and PyTorch Geometric for advanced pattern recognition
-- **Agent Interaction Graphs**: Map and measure complexity of agent-to-agent communications using NetworkX centrality measures and igraph for performance-critical computations
-- **Execution Flow Analysis**: Compare actual vs. expected execution patterns with graph visualization using Graphviz and interactive dashboards via Plotly
+**Note**: Detailed tool analysis and advanced visualizations are implemented in [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
 
 ### Composite Scoring Formula (from config_eval.json)
 
@@ -201,125 +189,17 @@ Agent Score = (
 - **Fallback Strategy**: Intelligent document chunking for smaller context models
 - **Implementation**: Model selection logic based on paper token count with automatic fallback
 
-### Implementation Architecture Details
+### Implementation Requirements
 
-#### Config-Based Evaluation Implementation
+**Sprint 1 will implement:**
 
-```python
-# Extends existing src/app/evals/metrics.py (time_taken, output_similarity already exist)
-class ConfigBasedEvaluator:
-    def __init__(self, config_path: str = "src/app/config/config_eval.json"):
-        self.config = load_config(config_path)
-        self.weights = self.config["metrics_and_weights"]  # All 6 metrics with 0.167 weights
-        self.similarity_metrics = self.config["evaluation"]["similarity_metrics"]  # cosine, jaccard, semantic
-        
-    def calculate_output_similarity(self, generated: str, reference: str) -> float:
-        """Calculate similarity using HuggingFace and sklearn metrics."""
-        # Use HuggingFace evaluate library for standard metrics
-        # Use sklearn for cosine similarity, jaccard coefficient
-        return self._multi_similarity_hf_sklearn(generated, reference, self.similarity_metrics)
-    
-    def time_taken(self, start_time: float, end_time: float) -> float:
-        """Existing implementation - execution time tracking."""
-        return end_time - start_time
-    
-    def evaluate_task_success(self, generated_review: str, confidence: float) -> float:
-        """Task completion assessment with confidence threshold (0.8)."""
-        return 1.0 if confidence >= self.config["evaluation"]["confidence_threshold"] else 0.0
-```
+- Config-based evaluation system using `config_eval.json`
+- Traditional metrics: output similarity, execution time, task success  
+- Advanced metrics: coordination quality, tool efficiency, planning rationality
+- Graph-based complexity analysis with NetworkX
+- Composite scoring system with weighted formula
 
-#### Advanced Metrics Implementation
-
-```python
-# src/app/evals/advanced_metrics.py - New metrics from config_eval.json
-class AdvancedEvaluator:
-    def evaluate_coordination_quality(self, agent_interactions: List[Dict]) -> float:
-        """Assess Manager->Researcher->Analyst->Synthesizer coordination efficiency."""
-        coordination_score = self._analyze_delegation_patterns(agent_interactions)
-        return min(1.0, max(0.0, coordination_score))
-    
-    def evaluate_tool_efficiency(self, tool_calls: List[Dict]) -> float:
-        """Assess DuckDuckGo search and PeerRead tools usage effectiveness."""
-        efficiency_metrics = self._analyze_tool_usage(tool_calls)
-        return efficiency_metrics["success_rate"] * efficiency_metrics["response_time_factor"]
-    
-    def evaluate_planning_rational(self, decision_trace: List[Dict]) -> float:
-        """Assess reasoning quality in agent decision-making processes."""
-        rationality_score = self._analyze_decision_quality(decision_trace)
-        return rationality_score
-```
-
-#### Graph-Based Complexity Analysis
-
-**Tools**: See [Graph Analysis & Network Tools in landscape.md](../landscape.md#graph-analysis--network-tools) for detailed tool selection rationale and integration approaches.
-
-```python
-# src/app/evals/graph_complexity.py
-# Primary tools: NetworkX (graph construction), PyTorch Geometric (GNN analysis), igraph (performance)
-class GraphComplexityEvaluator:
-    def build_execution_graph(self, execution_trace: List[Dict]) -> nx.DiGraph:
-        """Convert execution trace to directed graph representation using NetworkX."""
-        graph = nx.DiGraph()
-        for step in execution_trace:
-            self._add_execution_step(graph, step)
-        return graph
-    
-    def calculate_complexity_metrics(self, graph: nx.DiGraph) -> Dict[str, float]:
-        """Calculate graph complexity measures using NetworkX algorithms."""
-        return {
-            "node_count": graph.number_of_nodes(),
-            "edge_density": nx.density(graph),
-            "cyclic_complexity": self._calculate_cyclomatic_complexity(graph),
-            "average_path_length": nx.average_shortest_path_length(graph),
-            "betweenness_centrality": max(nx.betweenness_centrality(graph).values())
-        }
-    
-    def apply_gnn_analysis(self, graph: nx.DiGraph) -> Dict[str, float]:
-        """Advanced pattern recognition using PyTorch Geometric GNN models."""
-        # Convert NetworkX to PyG Data format for GNN processing
-        # Apply graph attention networks for communication pattern analysis
-        # Return advanced coordination and efficiency predictions
-        pass
-```
-
-#### Composite Scoring System
-
-```python
-# src/app/evals/composite_scorer.py - Using config_eval.json structure  
-class CompositeScorer:
-    def __init__(self, config_path: str = "src/app/config/config_eval.json"):
-        self.config = load_config(config_path)
-        self.weights = self.config["metrics_and_weights"]  # All 0.167 equal weights
-        self.recommendation_weights = self.config["evaluation"]["recommendation_weights"]
-    
-    def calculate_agent_score(self, metrics_results: Dict[str, float]) -> Dict[str, Any]:
-        """Calculate final score using config_eval.json weighted approach."""
-        
-        # Apply config weights to all 6 metrics
-        weighted_score = (
-            metrics_results["time_taken"] * self.weights["time_taken"] +
-            metrics_results["task_success"] * self.weights["task_success"] + 
-            metrics_results["coordination_quality"] * self.weights["coordination_quality"] +
-            metrics_results["tool_efficiency"] * self.weights["tool_efficiency"] +
-            metrics_results["planning_rational"] * self.weights["planning_rational"] +
-            metrics_results["output_similarity"] * self.weights["output_similarity"]
-        )
-        
-        # Apply recommendation weights based on performance
-        if weighted_score >= 0.8: recommendation = "accept"
-        elif weighted_score >= 0.6: recommendation = "weak_accept" 
-        elif weighted_score >= 0.4: recommendation = "weak_reject"
-        else: recommendation = "reject"
-        
-        final_score = weighted_score * self.recommendation_weights[recommendation]
-        
-        return {
-            "final_score": final_score,
-            "weighted_score": weighted_score,
-            "recommendation": recommendation,
-            "individual_metrics": metrics_results
-        }
-```
+**Implementation details and code architecture will be generated by specialized agents during sprint execution.**
 
 ---
 
@@ -379,7 +259,7 @@ class CompositeScorer:
 
 ### **Day 2 (Aug 24): LLM-as-a-Judge Implementation**
 
-**👥 Recommended Agents**: `evaluation-specialist`, `multi-agent-systems-specialist`, `security-auditor`
+**Recommended Agents**: `evaluation-specialist`, `multi-agent-systems-specialist`, `security-auditor`
 
 - [ ] **Task 2.1**: LLM-as-a-Judge Framework Development
   - Implement judge system for review quality assessment
@@ -406,7 +286,7 @@ class CompositeScorer:
 
 ### **Day 3 (Aug 25): Graph-Based Complexity Analysis**
 
-**👥 Recommended Agents**: `python-performance-expert`, `multi-agent-systems-specialist`, `evaluation-specialist`
+**Recommended Agents**: `python-performance-expert`, `multi-agent-systems-specialist`, `evaluation-specialist`
 
 - [ ] **Task 3.1**: Graph-Based Evaluation Architecture
   - Design tool call complexity measurement system using NetworkX graph construction
@@ -426,19 +306,15 @@ class CompositeScorer:
   - **Deliverable**: Agent interaction complexity metrics with real-time visualization capabilities
   - **Agent Focus**: `evaluation-specialist` for complexity metrics design, `multi-agent-systems-specialist` for agent coordination analysis
 
-- [ ] **Task 3.4**: External Tool Assessment (Phase 2)
-  - Evaluate AdalFlow for agent workflow optimization
-  - Assess agentfile format for agent definitions
-  - **Deliverable**: Additional tool integration recommendations
-  - **Agent Focus**: `evaluation-specialist` for tool assessment
+**Note**: External tool assessment moved to [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
 
-**Day 3 DoD**: Graph-based complexity analysis system operational, comprehensive external tool assessment complete
+**Day 3 DoD**: Graph-based complexity analysis system operational
 
 ---
 
 ### **Day 4 (Aug 26): Composite Scoring & Integration**
 
-**👥 Recommended Agents**: `evaluation-specialist`, `multi-agent-systems-specialist`, `python-performance-expert`, `code-reviewer`
+**Recommended Agents**: `evaluation-specialist`, `multi-agent-systems-specialist`, `python-performance-expert`, `code-reviewer`
 
 - [ ] **Task 4.1**: Composite Scoring System Implementation
   - Implement scoring formula: (Agentic Results / Execution Time / Graph Complexity)
@@ -470,7 +346,7 @@ class CompositeScorer:
 
 ### **Day 5 (Aug 27): PeerRead Validation & Testing**
 
-**👥 Recommended Agents**: `evaluation-specialist`, `code-reviewer`
+**Recommended Agents**: `evaluation-specialist`, `code-reviewer`
 
 - [ ] **Task 5.1**: Comprehensive PeerRead Dataset Testing
   - Test full pipeline with actual PeerRead papers and reviews
@@ -502,7 +378,7 @@ class CompositeScorer:
 
 ### **Day 6 (Aug 28): Final Integration & Sprint Analysis**
 
-**👥 Recommended Agents**: `code-reviewer`, `evaluation-specialist`
+**Recommended Agents**: `code-reviewer`, `evaluation-specialist`
 
 - [ ] **Task 6.1**: Final System Integration Testing
   - Complete end-to-end testing with full PeerRead workflow
