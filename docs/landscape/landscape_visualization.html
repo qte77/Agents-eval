@@ -233,13 +233,14 @@
     </div>
 
     <script>
-        // Data based on the actual frameworks from your landscape.md document
+        // Complete data based on ALL frameworks from your landscape.md document
         const frameworks = [
-            // Agentic System Frameworks - Open-Source Multi-Agent Orchestration
+            // === Agentic System Frameworks ===
+            
+            // Open-Source Multi-Agent Orchestration
             { name: "LangGraph", category: "multi-agent", approach: "graph-orchestration", age: 1, github_stars: 8500, pypi_downloads: 850000, description: "Graph-based stateful orchestration framework for building resilient multi-agent workflows", github: "langchain-ai/langgraph", connections: [
                 {name: "Langchain", relationship: "Extends LangChain ecosystem"},
-                {name: "CrewAI", relationship: "Alternative orchestration approach"},
-                {name: "AutoGen/AG2", relationship: "Competing multi-agent framework"}
+                {name: "CrewAI", relationship: "Alternative orchestration approach"}
             ]},
             { name: "CrewAI", category: "multi-agent", approach: "role-playing", age: 1, github_stars: 22000, pypi_downloads: 180000, description: "Role-playing autonomous AI agents framework for collaborative task completion", github: "crewAIInc/crewAI", connections: [
                 {name: "LangGraph", relationship: "Alternative orchestration approach"},
@@ -248,7 +249,6 @@
             ]},
             { name: "AutoGen/AG2", category: "multi-agent", approach: "conversational", age: 1, github_stars: 33000, pypi_downloads: 95000, description: "Microsoft's multi-agent conversation framework for structured agent communication", github: "ag2ai/ag2", connections: [
                 {name: "CrewAI", relationship: "Similar team-based coordination"},
-                {name: "LangGraph", relationship: "Competing multi-agent framework"},
                 {name: "Semantic Kernel", relationship: "Microsoft ecosystem integration"}
             ]},
             { name: "OpenAI Agents SDK", category: "multi-agent", approach: "production-ready", age: 1, github_stars: 2500, pypi_downloads: 45000, description: "Production-ready multi-agent orchestration framework from OpenAI", connections: [
@@ -302,23 +302,59 @@
             { name: "Archon", category: "dev-tools", approach: "coordination", age: 1, github_stars: 2200, pypi_downloads: 6800, description: "Multi-agent architecture framework for coordinating specialized AI agents", github: "coleam00/Archon", connections: []},
             { name: "Agentstack", category: "dev-tools", approach: "deployment", age: 1, github_stars: 3400, pypi_downloads: 12000, description: "Development toolkit for building and deploying production-ready AI agents", github: "AgentOps-AI/AgentStack", connections: []},
 
-            // Evaluation Frameworks (Key ones from your doc)
+            // Development Infrastructure (Key ones marked as suitable)
+            { name: "uv", category: "dev-infrastructure", approach: "package-manager", age: 1, github_stars: 25000, pypi_downloads: 500000, description: "Ultra-fast Python package manager written in Rust with 10-100x speed improvements", github: "astral-sh/uv", connections: [
+                {name: "Ruff", relationship: "Both from Astral, complementary tools"}
+            ]},
+            { name: "Streamlit", category: "dev-infrastructure", approach: "web-apps", age: 4, github_stars: 35000, pypi_downloads: 2800000, description: "Framework for building interactive web applications for ML and data science", github: "streamlit/streamlit", connections: []},
+            { name: "Ruff", category: "dev-infrastructure", approach: "linting", age: 2, github_stars: 31000, pypi_downloads: 18000000, description: "Extremely fast Python linter and code formatter written in Rust", github: "astral-sh/ruff", connections: [
+                {name: "uv", relationship: "Both from Astral, complementary tools"}
+            ]},
+            { name: "pyright", category: "dev-infrastructure", approach: "type-checking", age: 5, github_stars: 13000, pypi_downloads: 8500000, description: "Fast static type checker for Python with comprehensive type inference", github: "microsoft/pyright", connections: []},
+
+            // === Evaluation Frameworks ===
+            
+            // Agent Evaluation & Benchmarking
             { name: "AutoGenBench", category: "evaluation", approach: "benchmarking", age: 1, github_stars: 2200, pypi_downloads: 8500, description: "Command-line tool for evaluating AutoGen agents with Docker isolation", github: "microsoft/autogen", connections: [
                 {name: "AutoGen/AG2", relationship: "Official evaluation tool for AutoGen"}
             ]},
             { name: "AgentBench", category: "evaluation", approach: "academic", age: 1, github_stars: 1800, pypi_downloads: 4200, description: "Academic research benchmark evaluating LLM-as-Agent across 8 environments", github: "THUDM/AgentBench", connections: []},
-            { name: "DeepEval", category: "evaluation", approach: "pytest-like", age: 1, github_stars: 3200, pypi_downloads: 25000, description: "Pytest-like testing framework for LLM outputs with 14+ research-backed metrics", github: "confident-ai/deepeval", connections: []},
-            { name: "RAGAs", category: "evaluation", approach: "rag-specific", age: 1, github_stars: 6800, pypi_downloads: 45000, description: "Specialized framework for evaluating RAG pipelines with reference-free metrics", github: "explodinggradients/ragas", connections: []},
+            { name: "Langchain AgentEvals", category: "evaluation", approach: "trajectory", age: 1, github_stars: 1200, pypi_downloads: 6800, description: "Framework for evaluating agent execution trajectories within LangChain ecosystem", github: "langchain-ai/agentevals", connections: [
+                {name: "Langchain", relationship: "Official LangChain evaluation tool"}
+            ]},
 
-            // Observability Platforms (Key local-deployment ones)
-            { name: "AgentNeo", category: "observability", approach: "multi-agent-focused", age: 1, github_stars: 1200, pypi_downloads: 3800, description: "Open-source observability platform for multi-agent systems with real-time monitoring", github: "raga-ai-hub/agentneo", connections: []},
-            { name: "Langfuse", category: "observability", approach: "llm-engineering", age: 1, github_stars: 5400, pypi_downloads: 95000, description: "Open-source LLM engineering platform with observability and evaluation", github: "langfuse/langfuse", connections: [
+            // LLM Evaluation & Benchmarking
+            { name: "DeepEval", category: "evaluation", approach: "pytest-like", age: 1, github_stars: 3200, pypi_downloads: 25000, description: "Pytest-like testing framework for LLM outputs with 14+ research-backed metrics", github: "confident-ai/deepeval", connections: []},
+            { name: "Langchain OpenEvals", category: "evaluation", approach: "llm-judge", age: 1, github_stars: 980, pypi_downloads: 3400, description: "Prebuilt LLM-as-a-judge evaluators for structured output extraction", github: "langchain-ai/openevals", connections: [
+                {name: "Langchain", relationship: "Part of LangChain ecosystem"}
+            ]},
+            { name: "HELM", category: "evaluation", approach: "holistic", age: 2, github_stars: 1800, pypi_downloads: 12000, description: "Stanford's Holistic Evaluation of Language Models framework", github: "stanford-crfm/helm", connections: []},
+
+            // RAG System Evaluation
+            { name: "RAGAs", category: "evaluation", approach: "rag-specific", age: 1, github_stars: 6800, pypi_downloads: 45000, description: "Specialized framework for evaluating RAG pipelines with reference-free metrics", github: "explodinggradients/ragas", connections: []},
+            { name: "TruLens", category: "evaluation", approach: "rag-and-agents", age: 1, github_stars: 2100, pypi_downloads: 18500, description: "Evaluation framework with dual focus on RAG and agent assessment", github: "truera/trulens", connections: []},
+
+            // === Observability & Monitoring Platforms ===
+            
+            // Multi-Agent System Observability
+            { name: "AgentNeo", category: "observability", approach: "multi-agent-focused", age: 1, github_stars: 1200, pypi_downloads: 3800, description: "Observability-first platform for multi-agent systems with real-time monitoring", github: "raga-ai-hub/agentneo", connections: []},
+            
+            // LLM Application Observability (Local deployment focus)
+            { name: "Comet Opik", category: "observability", approach: "evaluation-focused", age: 1, github_stars: 1800, pypi_downloads: 8200, description: "Open-source platform focused on AI evaluation with comprehensive tracing", github: "comet-ml/opik", connections: []},
+            { name: "Helicone", category: "observability", approach: "proxy-based", age: 2, github_stars: 1400, pypi_downloads: 12000, description: "Observability platform with proxy-based middleware architecture", github: "Helicone/helicone", connections: []},
+            { name: "Langfuse", category: "observability", approach: "llm-engineering", age: 1, github_stars: 5400, pypi_downloads: 95000, description: "LLM engineering platform balancing observability and evaluation", github: "langfuse/langfuse", connections: [
                 {name: "Langchain", relationship: "Strong LangChain ecosystem integration"}
             ]},
-            { name: "MLflow", category: "observability", approach: "mlops", age: 7, github_stars: 18500, pypi_downloads: 2800000, description: "Open-source MLOps platform with comprehensive LLM tracing and evaluation", github: "mlflow/mlflow", connections: []},
+            { name: "Arize Phoenix", category: "observability", approach: "evaluation-platform", age: 2, github_stars: 4200, pypi_downloads: 28000, description: "Evaluation and model performance monitoring platform", connections: []},
+            { name: "Langtrace", category: "observability", approach: "opentelemetry", age: 1, github_stars: 1600, pypi_downloads: 8500, description: "OpenTelemetry-based observability with ClickHouse backend", connections: []},
+            { name: "LangWatch", category: "observability", approach: "docker-compose", age: 1, github_stars: 1200, pypi_downloads: 5400, description: "Observability platform with local Docker deployment", github: "langwatch/langwatch", connections: []},
+            { name: "MLflow", category: "observability", approach: "mlops", age: 7, github_stars: 18500, pypi_downloads: 2800000, description: "End-to-end MLOps platform with comprehensive LLM tracing", github: "mlflow/mlflow", connections: []},
+            { name: "Uptrace", category: "observability", approach: "apm", age: 3, github_stars: 3100, pypi_downloads: 15000, description: "Open-source APM for OpenTelemetry with distributed tracing", github: "uptrace/uptrace", connections: []},
 
-            // Graph Analysis Tools
-            { name: "NetworkX", category: "graph-analysis", approach: "comprehensive", age: 20, github_stars: 15000, pypi_downloads: 12000000, description: "Comprehensive Python library for complex network analysis and graph algorithms", github: "networkx/networkx", connections: [
+            // === Graph Analysis & Network Tools ===
+            
+            // Core Graph Libraries
+            { name: "NetworkX", category: "graph-analysis", approach: "comprehensive", age: 20, github_stars: 15000, pypi_downloads: 12000000, description: "Comprehensive Python library for complex network analysis and algorithms", github: "networkx/networkx", connections: [
                 {name: "PyTorch Geometric", relationship: "Complementary for graph ML"},
                 {name: "igraph", relationship: "Alternative graph library"}
             ]},
@@ -327,32 +363,79 @@
             ]},
             { name: "igraph", category: "graph-analysis", approach: "high-performance", age: 15, github_stars: 1800, pypi_downloads: 850000, description: "High-performance graph analysis library with C implementation", connections: [
                 {name: "NetworkX", relationship: "Alternative graph library"}
-            ]}
+            ]},
+
+            // Advanced Graph Analysis Tools
+            { name: "DGL", category: "graph-analysis", approach: "deep-learning", age: 6, github_stars: 13500, pypi_downloads: 180000, description: "Scalable graph neural network framework supporting multiple backends", github: "dmlc/dgl", connections: [
+                {name: "PyTorch Geometric", relationship: "Alternative GNN framework"}
+            ]},
+            { name: "NetworKit", category: "graph-analysis", approach: "high-performance", age: 12, github_stars: 760, pypi_downloads: 25000, description: "High-performance graph analysis toolkit with C++ implementation", github: "networkit/networkit", connections: [
+                {name: "NetworkX", relationship: "High-performance alternative"}
+            ]},
+            
+            // Specialized Agent Graph Analysis
+            { name: "GraphAgent", category: "graph-analysis", approach: "agentic", age: 1, github_stars: 650, pypi_downloads: 2800, description: "Agentic graph language assistant for semantic knowledge graphs", github: "HKUDS/GraphAgent", connections: []},
+
+            // Visualization Tools
+            { name: "Graphviz", category: "graph-visualization", approach: "static", age: 30, github_stars: 5800, pypi_downloads: 3200000, description: "Standard graph visualization toolkit with multiple layout algorithms", connections: []},
+            { name: "Plotly", category: "graph-visualization", approach: "interactive", age: 11, github_stars: 16000, pypi_downloads: 8500000, description: "Interactive visualization library with network graph support", github: "plotly/plotly.py", connections: []},
+
+            // === Traditional Metrics Libraries ===
+            
+            // Comprehensive Metric Suites
+            { name: "Hugging Face Evaluate", category: "metrics", approach: "comprehensive", age: 2, github_stars: 1900, pypi_downloads: 1200000, description: "Comprehensive evaluation library with 100+ standardized metrics", connections: []},
+            { name: "scikit-learn.metrics", category: "metrics", approach: "ml-standard", age: 15, github_stars: 60000, pypi_downloads: 45000000, description: "Industry-standard ML metrics library", connections: []},
+            { name: "TorchMetrics", category: "metrics", approach: "pytorch", age: 3, github_stars: 2100, pypi_downloads: 980000, description: "PyTorch-native metrics library with GPU optimization", github: "Lightning-AI/torchmetrics", connections: []},
+
+            // Text-Specific Evaluation
+            { name: "NLTK", category: "metrics", approach: "nlp", age: 25, github_stars: 13500, pypi_downloads: 15000000, description: "Natural language processing toolkit with evaluation functions", connections: []},
+            { name: "spaCy", category: "metrics", approach: "industrial-nlp", age: 9, github_stars: 30000, pypi_downloads: 8200000, description: "Industrial-strength NLP library with similarity evaluation", connections: []},
+            { name: "BERTScore", category: "metrics", approach: "contextual", age: 5, github_stars: 1800, pypi_downloads: 340000, description: "Contextual embedding-based evaluation metric using BERT models", github: "Tiiiger/bert_score", connections: []},
+
+            // === Post-Execution Graph Construction Tools ===
+            
+            // Trace Log Processing
+            { name: "spaCy + NetworkX", category: "post-execution", approach: "nlp-graph", age: 1, github_stars: 0, pypi_downloads: 0, description: "Combined NLP and graph analysis for trace log processing", connections: [
+                {name: "spaCy", relationship: "Uses spaCy for NLP"},
+                {name: "NetworkX", relationship: "Uses NetworkX for graphs"}
+            ]},
+            { name: "Google LangExtract", category: "post-execution", approach: "structured-extraction", age: 1, github_stars: 580, pypi_downloads: 1200, description: "Extracts structured data from unstructured logs using LLMs", github: "google/langextract", connections: []},
+            { name: "Unstructured.io", category: "post-execution", approach: "log-parsing", age: 2, github_stars: 8900, pypi_downloads: 280000, description: "Platform for parsing structured and unstructured logs", github: "Unstructured-IO/unstructured", connections: []}
         ];
 
-        // Colors for different categories based on your landscape structure
+        // Colors for all categories based on your comprehensive landscape structure
         const categoryColors = {
             'multi-agent': 0x4ecdc4,           // Teal - Multi-Agent Orchestration
             'llm-orchestration': 0xf9ca24,    // Yellow - LLM Orchestration & Workflows
             'lightweight': 0xff6b6b,          // Red - Lightweight & Specialized
             'protocol': 0xa55eea,             // Purple - Protocol & Integration
             'dev-tools': 0x45b7d1,           // Blue - Development Tools
+            'dev-infrastructure': 0x5f5f5f,   // Gray - Development Infrastructure
+            'rag-agents': 0xfeca57,           // Gold - RAG-focused Agents
             'evaluation': 0xeb4d4b,           // Dark Red - Evaluation Frameworks
             'observability': 0xf0932b,        // Orange - Observability Platforms
             'graph-analysis': 0x26de81,       // Green - Graph Analysis Tools
-            'rag-agents': 0xfeca57            // Gold - RAG-focused Agents
+            'graph-visualization': 0x00d2d3,  // Cyan - Graph Visualization
+            'metrics': 0xfd79a8,             // Pink - Traditional Metrics Libraries
+            'post-execution': 0x74b9ff        // Light Blue - Post-Execution Tools
         };
 
-        // Age-based colors (newer = brighter)
+        // Age-based colors (newer = brighter, extended for older tools)
         const ageColors = {
-            1: 0x00ff88, // Very new (bright green)
-            2: 0x44ff44, // New (green)
-            3: 0x88ff00, // Moderate (yellow-green)
-            4: 0xffaa00, // Older (orange)
-            5: 0xff6600, // Older (red-orange)
-            7: 0xff4400, // Old (red)
-            15: 0xcc3300, // Very old (dark red)
-            20: 0x990000  // Ancient (very dark red)
+            1: 0x00ff88,   // Very new (bright green)
+            2: 0x44ff44,   // New (green) 
+            3: 0x88ff00,   // Moderate (yellow-green)
+            4: 0xffaa00,   // Older (orange)
+            5: 0xff6600,   // Older (red-orange)
+            6: 0xff4400,   // Old (red)
+            7: 0xcc3300,   // Very old (dark red)
+            9: 0xaa2200,   // Ancient (very dark red)
+            11: 0x881100,  // Very ancient (very dark red)
+            12: 0x660000,  // Extremely old
+            15: 0x440000,  // Ancient
+            20: 0x220000,  // Very ancient
+            25: 0x110000,  // Prehistoric
+            30: 0x000000   // Ancient
         };
 
         // Three.js setup
@@ -420,10 +503,14 @@
                 'lightweight': 'Lightweight & Specialized',
                 'protocol': 'Protocol & Integration',
                 'dev-tools': 'Development Tools',
+                'dev-infrastructure': 'Development Infrastructure',
+                'rag-agents': 'RAG-focused Agents',
                 'evaluation': 'Evaluation Frameworks',
                 'observability': 'Observability Platforms',
                 'graph-analysis': 'Graph Analysis Tools',
-                'rag-agents': 'RAG-focused Agents'
+                'graph-visualization': 'Graph Visualization',
+                'metrics': 'Traditional Metrics Libraries',
+                'post-execution': 'Post-Execution Tools'
             };
             
             Object.keys(clusters).forEach((category, clusterIndex) => {
