@@ -67,9 +67,19 @@ WANDB_API_KEY="xyz"
 
 [Agents-eval](https://qte77.github.io/Agents-eval)
 
+### Technical Analysis
+
+- [Tracing & Observation Methods](docs/trace_observe_methods.md) - Technical analysis of observability tool implementations
+
 ### Project Outline
 
-`# TODO`
+**Current Phase**: Sprint 1 - Three-Tiered Evaluation Framework Implementation
+
+**System**: Multi-agent evaluation pipeline (Manager → Researcher → Analyst → Synthesizer) with PydanticAI, processing PeerRead scientific papers through large context models.
+
+**Evaluation Approach**: Traditional metrics + LLM-as-a-Judge + Graph-based complexity analysis → Composite scoring
+
+**Next**: Sprint 2 architectural refactoring (engine separation), then advanced evaluation features and production deployment.
 
 ## Customer Journey and User Story
 

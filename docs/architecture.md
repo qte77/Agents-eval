@@ -122,7 +122,7 @@ The evaluation framework is built around large context window models capable of 
 3. **Graph Construction** → spaCy + NetworkX and Google LangExtract process trace logs to build behavioral graphs showing coordination patterns and decision flows
 4. **Analysis** → NetworkX and NetworKit analyze coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
 
-**Tool Selection**: See [Graph Analysis & Network Tools](../landscape.md#graph-analysis--network-tools), [Post-Execution Graph Construction Tools](../landscape.md#post-execution-graph-construction-tools), and [Observability & Monitoring Platforms](../landscape.md#observability--monitoring-platforms) in landscape.md for detailed feasibility assessments and integration approaches.
+**Tool Selection**: See [Graph Analysis & Network Tools](../landscape.md#graph-analysis--network-tools), [Post-Execution Graph Construction Tools](../landscape.md#post-execution-graph-construction-tools), [Observability & Monitoring Platforms](../landscape.md#observability--monitoring-platforms), and [Technical Analysis: Tracing Methods](trace_observe_methods.md) for detailed feasibility assessments and integration approaches.
 
 ##### Key Applications for Agent Evaluation
 
