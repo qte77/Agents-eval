@@ -320,7 +320,6 @@ class CompositeScorer:
   - **Configuration Validation**: Ensure all prompts are properly externalized and functional
   - **Deliverable**: Security audit complete, error handling unified, configuration validated
 
-
 **Day 2 DoD**: LLM-as-a-judge system operational, security audit complete
 
 ---

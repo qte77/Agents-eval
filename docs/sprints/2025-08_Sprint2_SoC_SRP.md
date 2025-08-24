@@ -238,7 +238,6 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 - **Dataset Engine**: Pure data operations isolated from business logic and evaluation concerns  
 - **Eval Engine**: Evaluation framework architecture that can consume clean interfaces from other engines
 
-
 ### Key Architectural Improvements
 
 1. **Dependency Inversion**: Engines depend on abstractions, not concrete implementations
