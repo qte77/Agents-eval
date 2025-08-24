@@ -1,6 +1,6 @@
 # Sprint 2: Separation of Concerns (SoC) & Single Responsibility Principle (SRP) Refactoring
 
-**Sprint Goal**: Refactor the codebase to achieve proper Separation of Concerns and Single Responsibility Principle by implementing modular, independent, and extensible engine architecture: agents-engine, dataset-engine, and eval-engine.
+**Sprint Goal**: Refactor the codebase to achieve proper Separation of Concerns (SoC) and Single Responsibility Principle (SRP) by implementing clean, modular engine architecture that separates agents, dataset, and evaluation concerns into independent, testable components.
 
 **Priority**: High Priority for architectural foundation and technical debt resolution
 
@@ -8,17 +8,11 @@
 
 The current system has several SoC/SRP violations that need to be addressed before implementing the comprehensive evaluation framework. This sprint focuses on restructuring the codebase into clear, modular engines with well-defined boundaries.
 
-## Sprint 1 TODO Integration
+## Sprint Dependencies
 
-### External Tool Assessment from Sprint 1
+**Critical Dependency**: Sprint 2 depends on Sprint 1 completion.
 
-**Note**: These external tool assessments may be carried forward from Sprint 1 if architectural refactoring is determined to be prerequisite:
-
-- [ ] **BAML Integration Assessment**: Evaluate if [BAML](https://github.com/BoundaryML/baml)  adds value for structured engine outputs
-- [ ] **Prompt Flow Tools**: Assess [Prompt Flow](https://github.com/microsoft/promptflow) or [AdalFlow](https://github.com/SylphAI-Inc/AdalFlow) for engine workflow coordination
-- [ ] **Agent File Format**: Evaluate [agentfile](https://github.com/letta-ai/agent-file) for standardized agent engine definitions
-- [ ] **Property-Based Testing**: Assess [Hypothesis](https://github.com/HypothesisWorks/hypothesis) for engine interface testing
-- [ ] **Deep Agents Integration**: Evaluate [DeepAgents](https://github.com/langchain-ai/deepagents) framework for advanced agent engine capabilities
+**Rationale**: Functionality is demanded first. Sprint 1 implements the PeerRead evaluation framework that provides the concrete use cases and requirements needed to design proper engine boundaries in Sprint 2.
 
 ### Resolved in Sprint 1
 
@@ -216,24 +210,12 @@ eval_engine/
 - [ ] Update `app.py` to use engine coordination instead of direct calls
 - [ ] Validate engine independence and modularity
 
-#### Task 7: External Tool Assessment
+#### Task 7: Final Validation & Testing
 
-- [ ] **BAML Assessment**: Evaluate for `agents_engine` structured outputs
-- [ ] **PromptFlow/AdalFlow**: Assess for agent workflow coordination
-- [ ] **AgentFile**: Evaluate for agent definition standardization
-- [ ] **Hypothesis**: Test engine interfaces with property-based testing
-- [ ] **DeepAgents**: Assess for advanced agent capabilities in `agents_engine`
-- [ ] **Coral Protocol Assessment**: Evaluate for multi-agent coordination infrastructure
-  - Assess MCP server integration with `agents_engine`
-  - Evaluate session-based agent coordination patterns
-  - Test thread-based messaging for engine communication
-  - Consider future decentralized coordination capabilities
-
-## Sprint Dependencies
-
-**Critical Dependency**: Sprint 2 depends on Sprint 1 completion.
-
-**Rationale**: Functionality is demanded first. Sprint 1 implements the PeerRead evaluation framework that provides the concrete use cases and requirements needed to design proper engine boundaries in Sprint 2.
+- [ ] **Engine Integration Testing**: Validate all engines work together through dependency injection
+- [ ] **SoC/SRP Compliance Audit**: Ensure all architectural violations are resolved
+- [ ] **Performance Validation**: Verify refactoring doesn't degrade Sprint 1 functionality
+- [ ] **Documentation Update**: Update all architectural documentation to reflect engine structure
 
 **Sprint 1 → Sprint 2 Handoff Requirements**:
 
@@ -256,15 +238,6 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 - **Dataset Engine**: Pure data operations isolated from business logic and evaluation concerns  
 - **Eval Engine**: Evaluation framework architecture that can consume clean interfaces from other engines
 
-### Future Coordination Infrastructure
-
-**Coral Protocol Integration Potential**:
-
-- **Agents Engine**: Could benefit from standardized agent communication protocols and trust mechanisms
-- **Eval Engine**: Session-based evaluation workflows and coordination quality assessment through protocol-level monitoring
-- **Cross-Engine Communication**: Thread-based messaging system for engine coordination beyond current dependency injection
-
-**Architectural Alignment**: Coral Protocol's "graph-like structure that prevents any one agent from holding too much power" aligns with the SoC/SRP principles of engine separation and distributed responsibility.
 
 ### Key Architectural Improvements
 
@@ -282,13 +255,12 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 - [ ] Engine dependencies follow dependency inversion principle (eval depends on agents/dataset, but not vice versa)
 - [ ] Clean interfaces between engines with no direct implementation coupling
 
-### **Sprint 1 Integration & External Tool Assessment**
+### **Sprint 1 Integration**
 
 - [ ] **PDF Ingestion Refactoring**: Sprint 1 implementation properly separated into `dataset_engine` boundaries
 - [ ] **Configuration Refactoring**: Sprint 1 externalized prompts integrated with engine-specific config management
 - [ ] **Error Handling Refactoring**: Sprint 1 unified error handling adapted to respect engine boundaries
 - [ ] **Security Architecture**: Sprint 1 security audit findings applied to engine separation design
-- [ ] **External Tool Assessment**: BAML, PromptFlow, AgentFile, Hypothesis, DeepAgents evaluated with engine integration recommendations
 
 ### **Engine Independence Validation**
 
@@ -327,7 +299,7 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 1. Update main application to use engine coordination pattern
 2. Implement comprehensive testing for each engine in isolation
 3. Validate SoC/SRP compliance and architectural improvements
-4. Complete external tool assessments and integration recommendations
+4. Finalize Sprint 1 integration within proper engine boundaries
 
 ## Risk Mitigation
 
@@ -355,6 +327,8 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 - **Engine Independence**: Each engine must be testable and developable in complete isolation from other engines
 - **Foundation for Future**: Clean architecture enables rapid implementation of evaluation framework in subsequent sprints
 - **Sprint 1 Integration**: All Sprint 1 TODOs are addressed within appropriate engine boundaries during refactoring
+
+**Note**: External tool assessments and advanced coordination infrastructure have been moved to [Sprint 3: Advanced Features & Research Integration](2025-08_Sprint3_Advanced-Features.md).
 
 ## References
 
