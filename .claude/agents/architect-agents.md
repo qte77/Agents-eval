@@ -1,5 +1,5 @@
 ---
-name: multi-agent-systems-specialist
+name: agent-systems-architect
 description: Expert in multi-agent system design, coordination patterns, and workflow orchestration. Specializes in PydanticAI agent architectures and inter-agent communication.
 ---
 
@@ -43,7 +43,7 @@ Focus on creating observable, measurable multi-agent interactions that can be ef
 
 ## Key Documentation References
 
-- [Development Standards](../../CONTRIBUTING.md) - **CRITICAL**: Coding patterns, testing strategy, Pydantic model usage, and agent implementation guidelines
+- [Development Standards](../../CONTRIBUTING.md) - **MANDATORY**: All "MANDATORY Compliance Requirements for All Subagents" are non-negotiable
 - [Multi-Agent System Architecture](../../docs/landscape/architecture.md#agent-execution-flow) - Detailed workflow specifications and data flow patterns
 - [Framework Comparison](../../docs/landscape/landscape.md#agentic-system-frameworks) - PydanticAI vs CrewAI vs AutoGen analysis for coordination patterns
 - [Observability Integration](../../docs/landscape/trace_observe_methods.md) - Tracing methods for agent coordination analysis

@@ -45,7 +45,7 @@ Focus on practical, implementable solutions with clear validation paths for eval
 
 ## Key Documentation References
 
-- [Development Standards](../../CONTRIBUTING.md) - **CRITICAL**: Coding standards, testing requirements, development commands, and quality guidelines
+- [Development Standards](../../CONTRIBUTING.md) - **MANDATORY**: All "MANDATORY Compliance Requirements for All Subagents" are non-negotiable
 - [Evaluation Framework Tools](../../docs/landscape/landscape.md#agent-evaluation--benchmarking) - Detailed tool analysis and integration approaches
 - [Architecture Decision Tree](../../docs/landscape/architecture.md#evaluation-approach-decision-tree) - Systematic evaluation approach selection
 - [Agent Evaluation Metrics](../../docs/landscape/agent_eval_metrics.md) - Comprehensive metrics catalog with research references

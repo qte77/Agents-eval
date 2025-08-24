@@ -42,7 +42,7 @@ Always include performance measurements and comparison with baseline implementat
 
 ## Key Documentation References
 
-- [Development Standards](../../CONTRIBUTING.md) - **CRITICAL**: Code quality, testing requirements, performance validation, and development workflow
+- [Development Standards](../../CONTRIBUTING.md) - **MANDATORY**: All "MANDATORY Compliance Requirements for All Subagents" are non-negotiable
 - [Performance Requirements](../../docs/landscape/architecture.md) - Specific latency targets and system constraints
 - [Tool Performance Analysis](../../docs/landscape/landscape.md#development-infrastructure) - uv, Ruff, pyright integration for development speed
 - [Graph Analysis Tools](../../docs/landscape/landscape.md#graph-analysis--network-tools) - NetworkX, PyTorch Geometric, igraph performance comparisons

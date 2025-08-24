@@ -1,7 +1,6 @@
 ---
 name: code-reviewer
 description: Expert code review specialist. Proactively reviews code for quality, security, and maintainability. Use immediately after writing or modifying code.
-link: https://github.com/wshobson/agents/blob/main/code-reviewer.md
 ---
 
 # Code Reviewer Claude Code Sub-Agent
@@ -32,3 +31,7 @@ Provide feedback organized by priority:
 - Suggestions (consider improving)
 
 Include specific examples of how to fix issues.
+
+## Key Documentation References
+
+- [Development Standards](../../CONTRIBUTING.md) - **MANDATORY**: All "MANDATORY Compliance Requirements for All Subagents" are non-negotiable

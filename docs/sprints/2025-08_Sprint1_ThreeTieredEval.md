@@ -110,6 +110,12 @@ Task("Audit implementation security", subagent_type="review-security")
 - Graph-based complexity analysis of tool and agent interactions
 - Composite scoring system: (agentic results / execution time / graph complexity)
 
+**Package Maintenance Requirements**:
+
+- **MANDATORY**: Use only actively maintained packages (max 6 months since last release). Avoid legacy, obsolete, or unmaintained libraries.
+- **MANDATORY**: Verify package maintenance status before adding dependencies
+- **MANDATORY**: Prioritize lightweight alternatives to heavy transformer libraries ❌ **AVOID HEAVY PACKAGES** - Prioritize lightweight alternatives to transformer-based libraries 
+
 **Sprint Goals**: Implement comprehensive PeerRead evaluation framework with traditional, LLM-judge, and graph-based evaluation approaches to enable agent performance scoring. See [Evaluation Approach Decision Tree](../architecture.md#evaluation-approach-decision-tree) for guidance on approach selection.
 
 ## Three-Tiered Evaluation Engine Strategy
@@ -119,17 +125,19 @@ The Sprint 1 implementation follows a progressive three-tier approach, allowing 
 ### **Tier 1: Traditional Metrics Engine**
 
 **Status**: Well-defined foundation (Tasks 1.3, 1.4)  
-**Scope**: Fast, deterministic text similarity and performance metrics  
-**Tools**: NLTK, Rouge-Score, BERTScore (see [Traditional Metrics Libraries](../landscape.md#traditional-metrics-libraries))  
+**Scope**: Fast, deterministic text similarity and performance metrics
+**Tools**: see [LLM Evaluation & Benchmarking](../landscape/agent_eval_metrics.md)
 **Sprint Priority**: High - Foundation for all evaluation approaches  
-**Implementation**: Days 1-2 with HuggingFace evaluate + sklearn integration  
-**Performance Target**: <1s evaluation time, minimal computational overhead
+**Implementation**: Days 1-2 with **minimal dependencies** for fast installation and low disk usage  
+**Performance Target**: <1s evaluation time, **<100MB additional dependencies**
 
 ### **Tier 2: LLM-as-a-Judge Engine**
 
 **Status**: Medium complexity implementation (Tasks 2.1, 2.2)  
-**Scope**: Semantic understanding, quality assessment, reasoning evaluation  
-**Tools**: DeepEval, Langchain OpenEvals (see [LLM Evaluation & Benchmarking](../landscape.md#llm-evaluation--benchmarking))  
+**Scope**: Semantic understanding, quality assessment, reasoning evaluation
+**Tools**: DeepEval, Langchain OpenEvals (see [LLM Evaluation & Benchmarking](../landscape/landscape.md#llm-evaluation--benchmarking))  
+**Package Requirements**: **CURRENT PACKAGES ONLY** - Use packages actively maintained within 6 months, avoid legacy/obsolete libraries  
+**Dependencies**: ❌ **AVOID HEAVY PACKAGES** - Prioritize lightweight alternatives to transformer-based libraries  
 **Sprint Priority**: High - Core semantic evaluation capability  
 **Implementation**: Days 2-3 with LLM provider coordination and prompt engineering  
 **Performance Target**: 5-15s evaluation time, moderate API costs
@@ -137,8 +145,10 @@ The Sprint 1 implementation follows a progressive three-tier approach, allowing 
 ### **Tier 3: Graph-Based Analysis Engine**
 
 **Status**: Excellently architected post-execution analysis (Tasks 3.1-3.3)  
-**Scope**: Behavioral pattern analysis, coordination effectiveness, emergent complexity  
-**Tools**: NetworkX + PyTorch Geometric + NetworKit (see [Graph Analysis & Network Tools](../landscape.md#graph-analysis--network-tools))  
+**Scope**: Behavioral pattern analysis, coordination effectiveness, emergent complexity
+**Tools**: NetworkX + PyTorch Geometric + NetworKit (see [Graph Analysis & Network Tools](../landscape/landscape.md#graph-analysis--network-tools))
+**Package Requirements**: **CURRENT PACKAGES ONLY** - Use packages actively maintained within 6 months, avoid legacy/obsolete libraries  
+**Dependencies**: ❌ **AVOID HEAVY PACKAGES** - Prioritize lightweight alternatives to transformer-based libraries  
 **Sprint Priority**: High - Advanced multi-agent coordination analysis  
 **Implementation**: Days 3-4 with execution trace processing and graph neural networks  
 **Performance Target**: 10-30s analysis time, computationally intensive but offline

@@ -231,6 +231,52 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 
 ## Agent-Specific Guidelines
 
+### MANDATORY Compliance Requirements for All Subagents
+
+**ALL SUBAGENTS MUST STRICTLY ADHERE TO THE FOLLOWING:**
+
+1. **Command Execution (MANDATORY)**:
+   - **ALWAYS use make recipes** (e.g., `make type_check`, `make ruff`, `make test_all`)
+   - **NEVER use direct uv commands** unless make command fails
+   - **Document any deviation** from make commands with explicit reason
+
+2. **Quality Validation (MANDATORY)**:
+   - **MUST run `make validate`** before task completion
+   - **MUST fix ALL issues** found by validation steps
+   - **MUST NOT proceed** with type errors or lint failures
+
+3. **Documentation Updates (MANDATORY)**:
+   - **MUST update CHANGELOG.md** for non-trivial changes
+   - **MUST write comprehensive docstrings** using Google style format
+   - **MUST update AGENTS.md** when learning new patterns
+
+4. **Testing Requirements (MANDATORY)**:
+   - **MUST create tests** for new functionality following BDD approach
+   - **MUST use `make test_all`** to run tests, not direct pytest
+   - **MUST achieve end-to-end validation**, not just mocked tests
+
+5. **Code Standards (MANDATORY)**:
+   - **MUST follow existing project patterns** and conventions
+   - **MUST use absolute imports** not relative imports
+   - **MUST add `# Reason:` comments** for complex logic
+
+**FAILURE TO FOLLOW THESE REQUIREMENTS WILL RESULT IN TASK REJECTION**  
+
+### Subagent Prompt Requirements
+
+**ALL SUBAGENT PROMPTS MUST INCLUDE:**
+
+```text
+MANDATORY: Follow CONTRIBUTING.md guidelines strictly. 
+All requirements in the "MANDATORY Compliance Requirements for All Subagents" section are non-negotiable.
+```
+
+**Subagents MUST:**
+
+- Reference and follow ALL mandatory compliance requirements above
+- Explicitly confirm they will use make recipes instead of direct commands
+- Validate their work using `make validate` before completion
+
 ### Decision Framework Implementation
 
 When facing conflicting instructions or ambiguous situations:
