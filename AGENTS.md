@@ -123,6 +123,8 @@ See the project structure in the repository root directory for key application e
 - Complete validation and commit processes (see [CONTRIBUTING.md](CONTRIBUTING.md#pre-commit-checklist))
 - Update AGENTS.md if learned something new
 
+**🛑 Do not use emojis or icons in code:** Do not use emojis or icons in code, documentation, or files unless explicitly requested by users.
+
 **🛑 STOP if blocked:** Add to [AGENT_REQUESTS.md](AGENT_REQUESTS.md) rather than assume or proceed with incomplete info
 
 **📚 LEARNED SOMETHING NEW:** Document patterns in [AGENT_LEARNINGS.md](AGENT_LEARNINGS.md) to help future agents

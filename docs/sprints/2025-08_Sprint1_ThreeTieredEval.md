@@ -7,6 +7,75 @@
 
 **Priority**: Critical Priority for evaluation framework foundation and Sprint 2 architectural prerequisites
 
+## Claude Code Agent Strategy
+
+**Sprint 1 leverages a specialized combination of existing and custom agents for optimal implementation:**
+
+### **Agent Composition**
+
+- **Existing Agents**: `backend-architect`, `code-reviewer`  
+- **Custom Agents**: `evaluation-specialist`, `multi-agent-systems-specialist`, `python-performance-expert`, `security-auditor`
+
+### **Agent Deployment Strategy**
+
+- **Architecture Phase** (Days 1-2): `backend-architect` + `multi-agent-systems-specialist` + `evaluation-specialist`  
+- **Implementation Phase** (Days 2-4): `multi-agent-systems-specialist` + `python-performance-expert` + `evaluation-specialist`  
+- **Quality Assurance** (Days 4-6): `code-reviewer` + `security-auditor`
+
+**Agent integration provides specialized expertise for multi-agent system architecture, evaluation framework design, performance optimization, and security validation throughout the sprint.**
+
+### **Subagent Usage Examples**
+
+#### **Interactive Usage (Recommended)**
+
+Start Claude Code interactively, then use Task tool:
+
+```bash
+claude
+# Then within the session:
+Task("Evaluate PDF processing capabilities", subagent_type="backend-architect")
+Task("Design evaluation framework architecture", subagent_type="evaluation-specialist") 
+Task("Plan multi-agent coordination workflow", subagent_type="multi-agent-systems-specialist")
+```
+
+#### **Headless/CLI Usage**
+
+Direct command-line invocation for automation:
+
+```bash
+# Architecture Phase Examples
+claude --print 'Task("Evaluate PDF processing capabilities", subagent_type="backend-architect")'
+claude --print 'Task("Design evaluation framework architecture", subagent_type="evaluation-specialist")'
+claude --print 'Task("Plan multi-agent coordination workflow", subagent_type="multi-agent-systems-specialist")'
+
+# Implementation Phase Examples
+claude --print 'Task("Implement traditional evaluation metrics", subagent_type="evaluation-specialist")'
+claude --print 'Task("Optimize NetworkX graph performance", subagent_type="python-performance-expert")'
+claude --print 'Task("Build Manager→Researcher→Analyst→Synthesizer coordination", subagent_type="multi-agent-systems-specialist")'
+
+# Quality Assurance Examples
+claude --print 'Task("Review evaluation framework code quality", subagent_type="code-reviewer")'
+claude --print 'Task("Audit API security and data privacy", subagent_type="security-auditor")'
+```
+
+#### **Task Categories by Sprint Phase**
+
+```python
+# Architecture Phase (Days 1-2)
+Task("Evaluate PDF processing capabilities", subagent_type="backend-architect")
+Task("Design evaluation framework architecture", subagent_type="evaluation-specialist") 
+Task("Plan multi-agent coordination workflow", subagent_type="multi-agent-systems-specialist")
+
+# Implementation Phase (Days 2-4)
+Task("Implement traditional evaluation metrics", subagent_type="evaluation-specialist")
+Task("Optimize NetworkX graph performance", subagent_type="python-performance-expert")
+Task("Build Manager→Researcher→Analyst→Synthesizer coordination", subagent_type="multi-agent-systems-specialist")
+
+# Quality Assurance Phase (Days 4-6)
+Task("Review evaluation framework code quality", subagent_type="code-reviewer")
+Task("Audit API security and data privacy", subagent_type="security-auditor")
+```
+
 ## Executive Summary
 
 **Project Goal**: Assess and evaluate AI agents on the PeerRead dataset by implementing a comprehensive evaluation framework that measures agent performance in generating academic paper reviews through multiple evaluation approaches.
@@ -276,20 +345,25 @@ class CompositeScorer:
 
 ### **Day 1 (Aug 23): PeerRead Integration & Large Context Models**
 
+**Recommended Agents**: `backend-architect`, `multi-agent-systems-specialist`, `evaluation-specialist`
+
 - [ ] **Task 1.1**: PeerRead Dataset Integration Assessment
   - Evaluate PDF parsing capabilities for PeerRead papers
   - Test agent ingestion of full papers with large context models
   - **Deliverable**: PDF processing capability assessment
+  - **Agent Focus**: `backend-architect` for architecture, `multi-agent-systems-specialist` for agent workflow design, `evaluation-specialist` for assessment criteria
 
 - [ ] **Task 1.2**: Large Context Model Configuration
   - Configure Claude 4 Opus/Sonnet, GPT-4 Turbo for extended context (see [Available Models](../landscape.md#available-models))
   - Test full paper ingestion (>50k tokens) capability
   - **Deliverable**: Large context model pipeline ready
+  - **Agent Focus**: `backend-architect` for pipeline design, `multi-agent-systems-specialist` for agent orchestration setup
 
 - [ ] **Task 1.3**: Traditional Evaluation Metrics Implementation
   - Implement text similarity metrics using HuggingFace evaluate library and sklearn
   - Add execution time measurement infrastructure
   - **Deliverable**: Traditional evaluation metrics operational
+  - **Agent Focus**: `evaluation-specialist` for metrics selection and validation
 
 - [ ] **Task 1.4**: Core Implementation Tasks (Must Complete)
   - **PDF Ingestion**: Implement PeerRead PDF processing with large context models
@@ -297,6 +371,7 @@ class CompositeScorer:
   - **Error Message Strategy**: Begin unified error handling implementation
   - **Security Review**: Start comprehensive codebase security and quality audit
   - **Deliverable**: PDF processing operational, prompts externalized, error handling framework, security audit findings
+  - **Agent Focus**: `backend-architect` for system design, `multi-agent-systems-specialist` for agent workflow architecture, `evaluation-specialist` for validation frameworks
 
 **Day 1 DoD**: PeerRead integration ready, large context models configured, traditional metrics implemented
 
@@ -304,21 +379,26 @@ class CompositeScorer:
 
 ### **Day 2 (Aug 24): LLM-as-a-Judge Implementation**
 
+**👥 Recommended Agents**: `evaluation-specialist`, `multi-agent-systems-specialist`, `security-auditor`
+
 - [ ] **Task 2.1**: LLM-as-a-Judge Framework Development
   - Implement judge system for review quality assessment
   - Create agentic execution assessment judges
   - **Deliverable**: LLM judge framework operational
+  - **Agent Focus**: `evaluation-specialist` for judge design, `multi-agent-systems-specialist` for agent workflow evaluation, `security-auditor` for API security
 
 - [ ] **Task 2.2**: Agent Coordination Assessment
   - Develop judges for multi-agent interaction quality
   - Implement tool usage efficiency assessment
   - **Deliverable**: Agent coordination evaluation system
+  - **Agent Focus**: `evaluation-specialist` for coordination metrics, `multi-agent-systems-specialist` for workflow efficiency patterns
 
 - [ ] **Task 2.3**: Core Implementation Tasks
   - **Security & Quality Review**: Complete comprehensive audit findings and resolution plan
   - **Error Message Strategy**: Finalize unified error handling across evaluation components
   - **Configuration Validation**: Ensure all prompts are properly externalized and functional
   - **Deliverable**: Security audit complete, error handling unified, configuration validated
+  - **Agent Focus**: `security-auditor` for comprehensive security review
 
 **Day 2 DoD**: LLM-as-a-judge system operational, security audit complete
 
@@ -326,25 +406,31 @@ class CompositeScorer:
 
 ### **Day 3 (Aug 25): Graph-Based Complexity Analysis**
 
+**👥 Recommended Agents**: `python-performance-expert`, `multi-agent-systems-specialist`, `evaluation-specialist`
+
 - [ ] **Task 3.1**: Graph-Based Evaluation Architecture
   - Design tool call complexity measurement system using NetworkX graph construction
   - Create agent interaction graph mapping infrastructure with PyTorch Geometric for advanced analysis
   - **Deliverable**: Graph analysis architecture leveraging landscape.md recommended tools
+  - **Agent Focus**: `python-performance-expert` for NetworkX optimization, `multi-agent-systems-specialist` for agent interaction patterns
 
 - [ ] **Task 3.2**: Tool Call Pattern Analysis
   - Implement tool usage pattern recognition using NetworkX centrality measures
   - Create efficiency metrics for tool interactions with igraph for performance-critical computations
   - **Deliverable**: Tool call complexity analyzer with visualization via Graphviz
+  - **Agent Focus**: `python-performance-expert` for performance optimization, `multi-agent-systems-specialist` for agent workflow patterns
 
 - [ ] **Task 3.3**: Agent Interaction Graph Generation
   - Map agent-to-agent communication patterns using NetworkX directed graphs
   - Measure interaction complexity and efficiency with interactive dashboards via Plotly
   - **Deliverable**: Agent interaction complexity metrics with real-time visualization capabilities
+  - **Agent Focus**: `evaluation-specialist` for complexity metrics design, `multi-agent-systems-specialist` for agent coordination analysis
 
 - [ ] **Task 3.4**: External Tool Assessment (Phase 2)
   - Evaluate AdalFlow for agent workflow optimization
   - Assess agentfile format for agent definitions
   - **Deliverable**: Additional tool integration recommendations
+  - **Agent Focus**: `evaluation-specialist` for tool assessment
 
 **Day 3 DoD**: Graph-based complexity analysis system operational, comprehensive external tool assessment complete
 
@@ -352,25 +438,31 @@ class CompositeScorer:
 
 ### **Day 4 (Aug 26): Composite Scoring & Integration**
 
+**👥 Recommended Agents**: `evaluation-specialist`, `multi-agent-systems-specialist`, `python-performance-expert`, `code-reviewer`
+
 - [ ] **Task 4.1**: Composite Scoring System Implementation
   - Implement scoring formula: (Agentic Results / Execution Time / Graph Complexity)
   - Create score normalization and weighting system
   - **Deliverable**: Functional composite scoring system
+  - **Agent Focus**: `evaluation-specialist` for scoring design, `multi-agent-systems-specialist` for agent performance weighting, `python-performance-expert` for optimization
 
 - [ ] **Task 4.2**: Full Evaluation Pipeline Integration
   - Connect traditional, LLM-judge, and graph-based evaluations
   - End-to-end testing with PeerRead dataset samples
   - **Deliverable**: Complete integrated evaluation pipeline
+  - **Agent Focus**: `python-performance-expert` for integration optimization, `multi-agent-systems-specialist` for workflow coordination
 
 - [ ] **Task 4.3**: Testing and Validation
   - Implement comprehensive unit tests for all evaluation components
   - Create integration tests for pipeline components
   - **Deliverable**: Complete test coverage for evaluation system
+  - **Agent Focus**: `code-reviewer` for test quality validation
 
 - [ ] **Task 4.4**: Performance Optimization
   - Optimize large context model processing
   - Improve evaluation pipeline efficiency
   - **Deliverable**: Optimized evaluation system performance
+  - **Agent Focus**: `python-performance-expert` for system optimization
 
 **Day 4 DoD**: Complete PeerRead evaluation system with composite scoring operational
 
@@ -378,25 +470,31 @@ class CompositeScorer:
 
 ### **Day 5 (Aug 27): PeerRead Validation & Testing**
 
+**👥 Recommended Agents**: `evaluation-specialist`, `code-reviewer`
+
 - [ ] **Task 5.1**: Comprehensive PeerRead Dataset Testing
   - Test full pipeline with actual PeerRead papers and reviews
   - Validate all three evaluation approaches with real data
   - **Deliverable**: Validated evaluation system with real dataset
+  - **Agent Focus**: `evaluation-specialist` for validation methodology
 
 - [ ] **Task 5.2**: Scoring System Validation
   - Test composite scoring formula with varied performance scenarios
   - Validate score interpretability and ranking accuracy
   - **Deliverable**: Validated and calibrated scoring system
+  - **Agent Focus**: `evaluation-specialist` for calibration validation
 
 - [ ] **Task 5.3**: Error Handling & Edge Case Testing
   - Complete error message strategy implementation
   - Test edge cases with malformed papers, missing reviews
   - **Deliverable**: Robust error handling system
+  - **Agent Focus**: `code-reviewer` for comprehensive error testing
 
 - [ ] **Task 5.4**: Documentation & Usage Guide
   - Create PeerRead evaluation workflow documentation
   - Document scoring interpretation and benchmarking
   - **Deliverable**: Complete user documentation
+  - **Agent Focus**: `evaluation-specialist` for usage documentation
 
 **Day 5 DoD**: Production-ready PeerRead evaluation system with comprehensive validation and documentation
 
@@ -404,25 +502,31 @@ class CompositeScorer:
 
 ### **Day 6 (Aug 28): Final Integration & Sprint Analysis**
 
+**👥 Recommended Agents**: `code-reviewer`, `evaluation-specialist`
+
 - [ ] **Task 6.1**: Final System Integration Testing
   - Complete end-to-end testing with full PeerRead workflow
   - Performance benchmarking and optimization
   - **Deliverable**: Production-ready evaluation system
+  - **Agent Focus**: `code-reviewer` for final quality validation
 
 - [ ] **Task 6.2**: Sprint Retrospective & Analysis
   - Analyze implementation effectiveness against goals
   - Document lessons learned and optimization opportunities
   - **Deliverable**: Comprehensive sprint analysis report
+  - **Agent Focus**: `evaluation-specialist` for performance analysis
 
 - [ ] **Task 6.3**: Future Sprint Planning
   - Identify next priorities based on current implementation
   - Plan enhancements for evaluation framework expansion
   - **Deliverable**: Next sprint roadmap and priorities
+  - **Agent Focus**: `evaluation-specialist` for enhancement planning
 
 - [ ] **Task 6.4**: Final Validation & Handoff
   - Complete system validation checklist
   - Prepare handoff documentation for production use
   - **Deliverable**: Production-ready system with handoff materials
+  - **Agent Focus**: `code-reviewer` for final validation checklist
 
 **Day 6 DoD**: Complete PeerRead evaluation system ready for production use with comprehensive analysis and future roadmap
 
