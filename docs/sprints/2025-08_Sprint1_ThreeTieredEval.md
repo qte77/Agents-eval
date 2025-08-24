@@ -105,7 +105,7 @@ The Sprint 1 implementation follows a progressive three-tier approach, allowing 
 
 ### **Tier 2: LLM-as-a-Judge Engine**
 
-**Status**: ⚠️ Medium complexity implementation (Tasks 2.1, 2.2)  
+**Status**: Medium complexity implementation (Tasks 2.1, 2.2)  
 **Scope**: Semantic understanding, quality assessment, reasoning evaluation  
 **Tools**: DeepEval, Langchain OpenEvals (see [LLM Evaluation & Benchmarking](../landscape.md#llm-evaluation--benchmarking))  
 **Sprint Priority**: High - Core semantic evaluation capability  
@@ -152,15 +152,11 @@ The Sprint 1 implementation follows a progressive three-tier approach, allowing 
 - **Tool Efficiency**: Evaluate effectiveness of DuckDuckGo search and PeerRead-specific tools usage
 - **Planning Rational**: Assess reasoning quality and decision-making processes in agent orchestration
 
-**Note**: Advanced research methodologies (Arize Phoenix, Swarms frameworks) are implemented in [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
-
 ### Graph-Based Complexity Analysis
 
 - **Tool Call Complexity**: Analyze patterns and efficiency of tool utilizations
 - **Agent Interaction Graphs**: Map and measure complexity of agent-to-agent communications  
 - **Execution Flow Analysis**: Compare actual vs. expected execution patterns
-
-**Note**: Detailed tool analysis and advanced visualizations are implemented in [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
 
 ### Composite Scoring Formula (from config_eval.json)
 
@@ -305,8 +301,6 @@ Agent Score = (
   - Measure interaction complexity and efficiency with interactive dashboards via Plotly
   - **Deliverable**: Agent interaction complexity metrics with real-time visualization capabilities
   - **Agent Focus**: `evaluation-specialist` for complexity metrics design, `multi-agent-systems-specialist` for agent coordination analysis
-
-**Note**: External tool assessment moved to [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
 
 **Day 3 DoD**: Graph-based complexity analysis system operational
 
@@ -461,4 +455,10 @@ Agent Score = (
 
 ---
 
-**Note**: Advanced features, external tool assessments, and research enhancements have been moved to [Sprint 3: Advanced Features & Research Integration](2025-08_Sprint3_Advanced-Features.md).
+## References
+
+- [CONTRIBUTING.md](../../CONTRIBUTING.md): Development workflow and quality standards
+- [Technical Analysis: Tracing Methods](../trace_observe_methods.md)
+- [Available Models](../landscape.md#available-models): Large Context Models reference
+- [Landscape Analysis](../landscape.md): Comprehensive tool and framework analysis
+- [Evaluation Approach Decision Tree](../architecture.md#evaluation-approach-decision-tree)

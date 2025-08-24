@@ -82,11 +82,10 @@ The current system has several SoC/SRP violations that need to be addressed befo
 ### Engine Architecture Overview
 
 **Three Independent Engines:**
+
 - **Agents Engine**: Agent orchestration and execution (no external dependencies)
 - **Dataset Engine**: Data loading and caching (no external dependencies)  
 - **Eval Engine**: Metrics and scoring (consumes from agents and dataset engines)
-
-**Note**: Detailed engine specifications and advanced architectural patterns are implemented in [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
 
 ## Implementation Priority Tasks
 
@@ -153,8 +152,6 @@ The current system has several SoC/SRP violations that need to be addressed befo
 - Performance bottlenecks and scaling requirements from real evaluation workloads
 
 ## Engine Architecture Context
-
-**Note**: Detailed evaluation framework specifications are in Sprint 1. Sprint 2 focuses purely on architectural refactoring based on Sprint 1 learnings.
 
 ### Engine Refactoring Focus
 
@@ -228,8 +225,6 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 3. Validate SoC/SRP compliance and architectural improvements
 4. Finalize Sprint 1 integration within proper engine boundaries
 
-**Note**: Detailed risk analysis and advanced mitigation strategies are covered in [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
-
 ## Notes
 
 - **Architectural Focus**: This sprint prioritizes clean code architecture and technical debt resolution as foundation for Sprint 1 evaluation goals
@@ -238,6 +233,8 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 - **Foundation for Future**: Clean architecture enables rapid implementation of evaluation framework in subsequent sprints
 - **Sprint 1 Integration**: All Sprint 1 TODOs are addressed within appropriate engine boundaries during refactoring
 
-**Note**: External tool assessments and advanced coordination infrastructure have been moved to [Sprint 3: Advanced Features & Research Integration](2025-08_Sprint3_Advanced-Features.md).
+## References
 
-**Note**: Technical references and tool specifications are maintained in [landscape documentation](../landscape/) and [Sprint 3: Advanced Features](2025-09_Sprint1_Advanced-Features.md).
+- [CONTRIBUTING.md](../../CONTRIBUTING.md): Development workflow and quality standards
+- [Landscape Analysis](../landscape.md): Comprehensive tool and framework analysis
+- [Architecture Documentation](../architecture.md): System design and architectural decisions

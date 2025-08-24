@@ -105,8 +105,6 @@ Sprint 3 builds upon the foundational evaluation framework (Sprint 1) and clean 
 
 ### Advanced Coordination Infrastructure
 
-**Note**: Production framework integration moved to [Backlog](#backlog-future-sprints) section.
-
 ### Observability & Monitoring Enhancement
 
 #### Task 7: Advanced Observability Infrastructure
@@ -120,8 +118,6 @@ Sprint 3 builds upon the foundational evaluation framework (Sprint 1) and clean 
   - **Arize Phoenix Integration**: Cyclical development approach with Path Convergence metrics
   - **Swarms Framework Integration**: Continuous evaluation with dynamic assessment criteria
   - **Deliverable**: Advanced evaluation monitoring operational
-
-**Note**: Advanced self-evolving capabilities and cross-domain evaluation moved to [Backlog](#backlog-future-sprints) section.
 
 ## Implementation Priority & Phases
 
@@ -172,8 +168,6 @@ Sprint 3 builds upon the foundational evaluation framework (Sprint 1) and clean 
 - [ ] Advanced coordination infrastructure assessed and recommendations provided
 - [ ] External monitoring systems operational with full observability
 - [ ] Enhanced evaluation frameworks integrated and functional
-
-**Note**: Self-evolving and cross-domain success metrics moved to [Backlog](#backlog-future-sprints) section.
 
 ### **Production Readiness**
 
@@ -248,11 +242,7 @@ All Sprint 3 features must:
 
 ## References
 
-- Sprint 1: [2025-08_Sprint1.md](2025-08_Sprint1.md) - Evaluation Framework Foundation
-- Sprint 2: [2025-08_Sprint2_SoC-SRP_TODO.md](2025-08_Sprint2_SoC-SRP_TODO.md) - Architectural Refactoring
-- [PeerRead Dataset](https://github.com/allenai/PeerRead)
+- [CONTRIBUTING.md](../../CONTRIBUTING.md): Development workflow and quality standards
 - [Research Integration Analysis](../papers/research_integration_analysis.md)
-- AGENTS.md: Code organization and testing guidelines
-- CONTRIBUTING.md: Development workflow and quality standards
-- [Available Models](../landscape.md#available-models): Large Context Models reference
 - [Landscape Analysis](../landscape.md): Comprehensive tool and framework analysis
+- [Available Models](../landscape.md#available-models): Large Context Models reference
