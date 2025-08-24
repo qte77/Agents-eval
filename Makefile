@@ -40,6 +40,7 @@ setup_dev:  ## Install uv and deps, Download and start Ollama
 	echo "npm version: $$(npm --version)"
 	$(MAKE) -s setup_claude_code
 	$(MAKE) -s setup_gemini_cli
+	$(MAKE) -s setup_markdownlint
 
 setup_prod_ollama:
 	$(MAKE) -s setup_prod
@@ -74,6 +75,11 @@ setup_pdf_converter:  ## Setup PDF converter tools. For usage: make setup_pdf_co
 		chmod +x $(PDF_CONVERTER_SCRIPT)
 		$(PDF_CONVERTER_SCRIPT) "$(CONVERTER)"
 	fi
+
+setup_markdownlint:  ## Setup markdownlint CLI, node.js and npm have to be present
+	echo "Setting up markdownlint CLI ..."
+	npm install -gs markdownlint-cli
+	echo "markdownlint version: $$(markdownlint --version)"
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
@@ -131,6 +137,17 @@ run_pandoc:  ## Convert MD to PDF using pandoc. Usage from root: dir=docs/write-
 		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" "$(TITLE_PAGE)" \
 			"$(TEMPLATE)" "$(FOOTER_TEXT)" "$(TOC_TITLE)"
 	fi
+
+
+# MARK: run markdownlint
+
+
+run_markdownlint:  ## Lint markdown files. Usage from root dir: make run_markdownlint INPUT_FILES="docs/**/*.md"
+	if [ -z "$(INPUT_FILES)" ]; then
+		echo "Error: No input files specified. Use INPUT_FILES=\"docs/**/*.md\""
+		exit 1
+	fi
+	markdownlint $(INPUT_FILES) --fix
 
 
 # MARK: run app

@@ -185,7 +185,12 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 
 ## Auxiliary
 
-- Use [markdownlint's Rules.md](https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md) to output well-formatted markdown
+### Markdown Formatting
+
+- Run `make setup_markdownlint` once to install markdownlint CLI
+- Use `make run_markdownlint INPUT_FILES="docs/**/*.md"` to lint and auto-fix markdown files
+- Common issues: line length (MD013), trailing spaces (MD009), blank lines around headings (MD022)
+- Use [markdownlint's Rules.md](https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md) to output well-formatted markdown as fallback
 
 ## Unified Command Reference
 
@@ -219,6 +224,8 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 | `make coverage_all` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
 | `make validate` | Complete pre-commit validation | Above dependencies | Run individual commands manually |
 | `make quick_validate` | Fast development validation | Ruff and pyright installed | Run `make ruff && make type_check` |
+| `make setup_markdownlint` | Setup markdownlint CLI | Node.js and npm installed | Try `npm install -gs markdownlint-cli` |
+| `make run_markdownlint INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
 | `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
 | `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notify user |
 
