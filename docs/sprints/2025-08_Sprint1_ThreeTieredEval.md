@@ -136,9 +136,6 @@ The Sprint 1 implementation follows a progressive three-tier approach, allowing 
 **Status**: Medium complexity implementation (Tasks 2.1, 2.2)  
 **Scope**: Semantic understanding, quality assessment, reasoning evaluation
 **Tools**: DeepEval, Langchain OpenEvals (see [LLM Evaluation & Benchmarking](../landscape/landscape.md#llm-evaluation--benchmarking))  
-**Package Requirements**: **CURRENT PACKAGES ONLY** - Use packages actively maintained within 6 months, avoid legacy/obsolete libraries  
-**Dependencies**: ❌ **AVOID HEAVY PACKAGES** - Prioritize lightweight alternatives to transformer-based libraries  
-**Sprint Priority**: High - Core semantic evaluation capability  
 **Implementation**: Days 2-3 with LLM provider coordination and prompt engineering  
 **Performance Target**: 5-15s evaluation time, moderate API costs
 
@@ -147,8 +144,6 @@ The Sprint 1 implementation follows a progressive three-tier approach, allowing 
 **Status**: Excellently architected post-execution analysis (Tasks 3.1-3.3)  
 **Scope**: Behavioral pattern analysis, coordination effectiveness, emergent complexity
 **Tools**: NetworkX + PyTorch Geometric + NetworKit (see [Graph Analysis & Network Tools](../landscape/landscape.md#graph-analysis--network-tools))
-**Package Requirements**: **CURRENT PACKAGES ONLY** - Use packages actively maintained within 6 months, avoid legacy/obsolete libraries  
-**Dependencies**: ❌ **AVOID HEAVY PACKAGES** - Prioritize lightweight alternatives to transformer-based libraries  
 **Sprint Priority**: High - Advanced multi-agent coordination analysis  
 **Implementation**: Days 3-4 with execution trace processing and graph neural networks  
 **Performance Target**: 10-30s analysis time, computationally intensive but offline
