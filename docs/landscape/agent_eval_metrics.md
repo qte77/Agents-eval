@@ -19,7 +19,7 @@ definitions, use cases, and primary research references for each metric.
 
 ### Text Generation Quality
 
-*See also: [Traditional Metrics Libraries](landscape.md#traditional-metrics-libraries) in landscape.md*
+*See also: [Traditional Metrics Libraries](landscape/landscape.md#traditional-metrics-libraries) in landscape.md*
 
 #### BLEU (Bilingual Evaluation Understudy)
 
@@ -60,7 +60,7 @@ definitions, use cases, and primary research references for each metric.
 
 ### LLM-as-a-Judge Quality Assessment
 
-*See also: [Agent Evaluation & Benchmarking](landscape.md#agent-evaluation--benchmarking) and [LLM Evaluation & Benchmarking](landscape.md#llm-evaluation--benchmarking) in landscape.md*
+*See also: [Agent Evaluation & Benchmarking](landscape/landscape.md#agent-evaluation--benchmarking) and [LLM Evaluation & Benchmarking](landscape/landscape.md#llm-evaluation--benchmarking) in landscape.md*
 
 #### Answer Relevancy
 
@@ -97,11 +97,11 @@ definitions, use cases, and primary research references for each metric.
 - **Strengths**: RAG-specific, improves retrieval quality
 - **Limitations**: Requires clear context-query relationships
 - **Reference**: [Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401)
-- **Landscape Reference**: [RAG System Evaluation](landscape.md#rag-system-evaluation)
+- **Landscape Reference**: [RAG System Evaluation](landscape/landscape.md#rag-system-evaluation)
 
 ### Agent Performance Metrics
 
-*See also: [Agent Evaluation & Benchmarking](landscape.md#agent-evaluation--benchmarking) and [Observability & Monitoring Platforms](landscape.md#observability--monitoring-platforms) in landscape.md*
+*See also: [Agent Evaluation & Benchmarking](landscape/landscape.md#agent-evaluation--benchmarking) and [Observability & Monitoring Platforms](landscape/landscape.md#observability--monitoring-platforms) in landscape.md*
 
 #### Tool Selection Accuracy
 
@@ -141,7 +141,7 @@ definitions, use cases, and primary research references for each metric.
 
 ### Multi-Agent Coordination Metrics
 
-*See also: [Graph Analysis & Network Tools](landscape.md#graph-analysis--network-tools) and [Agentic System Frameworks](landscape.md#agentic-system-frameworks) in landscape.md*
+*See also: [Graph Analysis & Network Tools](landscape/landscape.md#graph-analysis--network-tools) and [Agentic System Frameworks](landscape/landscape.md#agentic-system-frameworks) in landscape.md*
 
 #### Centrality Measures
 
@@ -153,7 +153,7 @@ definitions, use cases, and primary research references for each metric.
 - **Limitations**: Requires graph construction from interaction logs
 - **Reference**: [Networks: An Introduction](https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780199206650.001.0001/acprof-9780199206650)
   (Newman, 2010)
-- **Landscape Reference**: [Graph Analysis & Network Tools](landscape.md#graph-analysis--network-tools)
+- **Landscape Reference**: [Graph Analysis & Network Tools](landscape/landscape.md#graph-analysis--network-tools)
 
 #### Communication Overhead
 
@@ -174,8 +174,8 @@ definitions, use cases, and primary research references for each metric.
 - **Strengths**: Quantifies load balancing effectiveness
 - **Limitations**: Doesn't account for task complexity differences
 - **Reference**: [Multi-agent coordination in distributed systems](https://link.springer.com/article/10.1007/s10458-013-9235-1) (coordination metrics)
-- **Landscape Reference**: [Agentic System Frameworks](landscape.md#agentic-system-frameworks)
+- **Landscape Reference**: [Agentic System Frameworks](landscape/landscape.md#agentic-system-frameworks)
 
 ## Additional Resources
 
-[Framework implementations and practical guidance on using these metrics](landscape.md#agent-evaluation--benchmarking)
+[Framework implementations and practical guidance on using these metrics](landscape/landscape.md#agent-evaluation--benchmarking)

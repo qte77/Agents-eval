@@ -11,11 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed
+### Added
 
-- Obsolete context/ directory and .claude/commands framework references
-- FRP (Feature Requirements Prompt) command references from documentation
-- Redundant architecture details from AGENTS.md
+- Clear audience targeting for all main documentation files
+- PyPI verification requirement for new package introductions in AGENTS.md
+- architecture.md: Comprehensive system architecture documentation
+- landscape.md: AI agent ecosystem and competitive analysis
+- agent_eval_metrics.md: Evaluation metrics catalog
+- trace_observe_methods.md: Observability analysis
 
 ### Changed
 
@@ -24,12 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CHANGELOG.md: reduced boilerplate, consolidated change type descriptions
 - README.md: major reorganization, moved detailed content to dedicated docs
 
-### Added
+### Removed
 
-- Clear audience targeting for all main documentation files
-- PyPI verification requirement for new package introductions in AGENTS.md
-- docs/architecture.md: Comprehensive system architecture documentation
-- docs/landscape.md: AI agent ecosystem and competitive analysis
+- Obsolete context/ directory and .claude/commands framework references
+- FRP (Feature Requirements Prompt) command references from documentation
+- Redundant architecture details from AGENTS.md
 
 ## [3.2.0] - 2025-08-19
 
