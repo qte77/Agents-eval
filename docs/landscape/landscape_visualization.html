@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Frameworks Landscape</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f1a 100%);
+            color: white;
+            overflow: hidden;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 300px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        #info-panel.minimized {
+            max-width: 200px;
+            padding: 10px;
+        }
+
+        #info-panel.minimized .collapsible-content {
+            display: none;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .minimize-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 5px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .minimize-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        #controls {
+            display: none; /* Hide the controls panel */
+        }
+
+        #tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 200;
+            display: none;
+            max-width: 250px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-group {
+            margin-bottom: 10px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+
+        .control-group select, .control-group input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            width: 120px;
+        }
+
+        h1 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            color: #4fc3f7;
+        }
+
+        .legend {
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        #search {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        #search input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            width: 200px;
+        }
+
+        #search input::placeholder {
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="info-panel">
+            <div class="panel-header" onclick="togglePanel('info-panel')">
+                <h1>Agent Frameworks Landscape</h1>
+                <button class="minimize-btn">−</button>
+            </div>
+            <div class="collapsible-content">
+                <div style="font-size: 12px; color: #aaa; margin-bottom: 15px; text-align: center;">
+                    <strong>Data as of: 2025-08-24</strong>
+                </div>
+                <div class="control-group" style="margin-bottom: 15px;">
+                    <label>Animation:</label>
+                    <input type="checkbox" id="animate" checked>
+                </div>
+                <p style="font-size: 12px; line-height: 1.4; color: #ccc;">
+                    Interactive visualization of AI agent frameworks and evaluation tools. 
+                    Each node represents a framework, with size indicating popularity and 
+                    connections showing relationships. <strong>Hover over connection lines to see relationships.</strong>
+                    <br><br><strong>Controls:</strong> Hold left mouse button and drag to move the view. Scroll to zoom.
+                </p>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4ecdc4;"></div>
+                        <span>Multi-Agent Orchestration</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f9ca24;"></div>
+                        <span>LLM Orchestration & Workflows</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff6b6b;"></div>
+                        <span>Lightweight & Specialized</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #a55eea;"></div>
+                        <span>Protocol & Integration</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #45b7d1;"></div>
+                        <span>Development Tools</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #eb4d4b;"></div>
+                        <span>Evaluation Frameworks</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f0932b;"></div>
+                        <span>Observability Platforms</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #26de81;"></div>
+                        <span>Graph Analysis Tools</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #feca57;"></div>
+                        <span>RAG-focused Agents</span>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 11px; color: #888;">
+                        <strong>Based on qte77/Agents-eval landscape.md:</strong><br>
+                        • Node Size = GitHub Stars + PyPI Downloads<br>
+                        • Brightness = Age (newer = brighter)<br>
+                        • Glow = High adoption (>50K combined)<br>
+                        • Height = Age floating (newer = higher)<br>
+                        • Hover connections for relationship details
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="search">
+            <input type="text" id="searchInput" placeholder="Search frameworks...">
+        </div>
+
+        <div id="tooltip"></div>
+    </div>
+
+    <script>
+        // Data based on the actual frameworks from your landscape.md document
+        const frameworks = [
+            // Agentic System Frameworks - Open-Source Multi-Agent Orchestration
+            { name: "LangGraph", category: "multi-agent", approach: "graph-orchestration", age: 1, github_stars: 8500, pypi_downloads: 850000, description: "Graph-based stateful orchestration framework for building resilient multi-agent workflows", github: "langchain-ai/langgraph", connections: [
+                {name: "Langchain", relationship: "Extends LangChain ecosystem"},
+                {name: "CrewAI", relationship: "Alternative orchestration approach"},
+                {name: "AutoGen/AG2", relationship: "Competing multi-agent framework"}
+            ]},
+            { name: "CrewAI", category: "multi-agent", approach: "role-playing", age: 1, github_stars: 22000, pypi_downloads: 180000, description: "Role-playing autonomous AI agents framework for collaborative task completion", github: "crewAIInc/crewAI", connections: [
+                {name: "LangGraph", relationship: "Alternative orchestration approach"},
+                {name: "AutoGen/AG2", relationship: "Similar team-based coordination"},
+                {name: "Langchain", relationship: "Built on LangChain foundation"}
+            ]},
+            { name: "AutoGen/AG2", category: "multi-agent", approach: "conversational", age: 1, github_stars: 33000, pypi_downloads: 95000, description: "Microsoft's multi-agent conversation framework for structured agent communication", github: "ag2ai/ag2", connections: [
+                {name: "CrewAI", relationship: "Similar team-based coordination"},
+                {name: "LangGraph", relationship: "Competing multi-agent framework"},
+                {name: "Semantic Kernel", relationship: "Microsoft ecosystem integration"}
+            ]},
+            { name: "OpenAI Agents SDK", category: "multi-agent", approach: "production-ready", age: 1, github_stars: 2500, pypi_downloads: 45000, description: "Production-ready multi-agent orchestration framework from OpenAI", connections: [
+                {name: "PydanticAI", relationship: "Alternative type-safe framework"}
+            ]},
+            { name: "PydanticAI", category: "multi-agent", approach: "type-safe", age: 1, github_stars: 5800, pypi_downloads: 25000, description: "Type-safe agent framework with Pydantic validation and async support", github: "pydantic/pydantic-ai", connections: [
+                {name: "OpenAI Agents SDK", relationship: "Alternative production framework"}
+            ]},
+            { name: "LlamaIndex Agents", category: "rag-agents", approach: "retrieval-augmented", age: 2, github_stars: 36000, pypi_downloads: 3500000, description: "Retrieval-augmented generation framework with agent capabilities", github: "run-llama/llama_index", connections: [
+                {name: "Langchain", relationship: "Alternative RAG framework"},
+                {name: "Haystack", relationship: "Similar document processing focus"}
+            ]},
+
+            // LLM Orchestration & Workflows
+            { name: "Langchain", category: "llm-orchestration", approach: "comprehensive", age: 2, github_stars: 95000, pypi_downloads: 23000000, description: "Comprehensive LLM application development framework with extensive tool integrations", github: "langchain-ai/langchain", connections: [
+                {name: "LangGraph", relationship: "Official LangChain extension"},
+                {name: "CrewAI", relationship: "Built on LangChain foundation"},
+                {name: "LlamaIndex Agents", relationship: "Alternative RAG framework"},
+                {name: "Semantic Kernel", relationship: "Microsoft alternative"}
+            ]},
+            { name: "Semantic Kernel", category: "llm-orchestration", approach: "enterprise", age: 1, github_stars: 21500, pypi_downloads: 75000, description: "Microsoft's enterprise-focused SDK for AI integration", github: "microsoft/semantic-kernel", connections: [
+                {name: "Langchain", relationship: "Alternative orchestration framework"},
+                {name: "AutoGen/AG2", relationship: "Microsoft ecosystem integration"}
+            ]},
+            { name: "Haystack", category: "llm-orchestration", approach: "rag-specialized", age: 3, github_stars: 16800, pypi_downloads: 450000, description: "Production-ready LLM pipeline framework specialized in RAG applications", github: "deepset-ai/haystack", connections: [
+                {name: "LlamaIndex Agents", relationship: "Similar document processing focus"}
+            ]},
+            { name: "Restack", category: "llm-orchestration", approach: "event-driven", age: 1, github_stars: 1200, pypi_downloads: 8500, description: "Backend framework for reliable AI agents with event-driven workflows", github: "restackio", connections: []},
+
+            // Lightweight & Specialized Frameworks  
+            { name: "smolAgents", category: "lightweight", approach: "minimalist", age: 1, github_stars: 2800, pypi_downloads: 15000, description: "HuggingFace's minimalist agent framework optimized for simple tool use", github: "huggingface/smolagents", connections: []},
+            { name: "AutoGPT", category: "lightweight", approach: "autonomous", age: 1, github_stars: 170000, pypi_downloads: 45000, description: "Autonomous task completion framework with recursive execution", github: "Significant-Gravitas/AutoGPT", connections: [
+                {name: "BabyAGI", relationship: "Similar autonomous approach"},
+                {name: "SuperAGI", relationship: "Similar autonomous framework"}
+            ]},
+            { name: "BabyAGI", category: "lightweight", approach: "task-planning", age: 1, github_stars: 20000, pypi_downloads: 5500, description: "Compact task-planning loop framework for autonomous goal decomposition", github: "yoheinakajima/babyagi", connections: [
+                {name: "AutoGPT", relationship: "Similar autonomous approach"}
+            ]},
+            { name: "SuperAGI", category: "lightweight", approach: "production-ready", age: 1, github_stars: 15000, pypi_downloads: 12000, description: "Production-ready multi-agent framework with GUI and enterprise tooling", github: "TransformerOptimus/SuperAGI", connections: [
+                {name: "AutoGPT", relationship: "Similar autonomous framework"}
+            ]},
+
+            // Protocol & Integration Standards
+            { name: "mcp-agent", category: "protocol", approach: "standardized", age: 1, github_stars: 1800, pypi_downloads: 3200, description: "Agent framework leveraging MCP protocol for standardized tool integration", github: "lastmile-ai/mcp-agent", connections: []},
+
+            // Agent-builder & Development Tools
+            { name: "Langflow", category: "dev-tools", approach: "visual", age: 1, github_stars: 28000, pypi_downloads: 85000, description: "Visual drag-and-drop interface for building LLM applications and agent workflows", github: "langflow-ai/langflow", connections: [
+                {name: "Langchain", relationship: "Built on LangChain ecosystem"}
+            ]},
+            { name: "Sim Studio", category: "dev-tools", approach: "visual-builder", age: 1, github_stars: 1500, pypi_downloads: 4200, description: "Open-source AI agent workflow builder with visual interface", github: "simstudioai/sim", connections: []},
+            { name: "Archon", category: "dev-tools", approach: "coordination", age: 1, github_stars: 2200, pypi_downloads: 6800, description: "Multi-agent architecture framework for coordinating specialized AI agents", github: "coleam00/Archon", connections: []},
+            { name: "Agentstack", category: "dev-tools", approach: "deployment", age: 1, github_stars: 3400, pypi_downloads: 12000, description: "Development toolkit for building and deploying production-ready AI agents", github: "AgentOps-AI/AgentStack", connections: []},
+
+            // Evaluation Frameworks (Key ones from your doc)
+            { name: "AutoGenBench", category: "evaluation", approach: "benchmarking", age: 1, github_stars: 2200, pypi_downloads: 8500, description: "Command-line tool for evaluating AutoGen agents with Docker isolation", github: "microsoft/autogen", connections: [
+                {name: "AutoGen/AG2", relationship: "Official evaluation tool for AutoGen"}
+            ]},
+            { name: "AgentBench", category: "evaluation", approach: "academic", age: 1, github_stars: 1800, pypi_downloads: 4200, description: "Academic research benchmark evaluating LLM-as-Agent across 8 environments", github: "THUDM/AgentBench", connections: []},
+            { name: "DeepEval", category: "evaluation", approach: "pytest-like", age: 1, github_stars: 3200, pypi_downloads: 25000, description: "Pytest-like testing framework for LLM outputs with 14+ research-backed metrics", github: "confident-ai/deepeval", connections: []},
+            { name: "RAGAs", category: "evaluation", approach: "rag-specific", age: 1, github_stars: 6800, pypi_downloads: 45000, description: "Specialized framework for evaluating RAG pipelines with reference-free metrics", github: "explodinggradients/ragas", connections: []},
+
+            // Observability Platforms (Key local-deployment ones)
+            { name: "AgentNeo", category: "observability", approach: "multi-agent-focused", age: 1, github_stars: 1200, pypi_downloads: 3800, description: "Open-source observability platform for multi-agent systems with real-time monitoring", github: "raga-ai-hub/agentneo", connections: []},
+            { name: "Langfuse", category: "observability", approach: "llm-engineering", age: 1, github_stars: 5400, pypi_downloads: 95000, description: "Open-source LLM engineering platform with observability and evaluation", github: "langfuse/langfuse", connections: [
+                {name: "Langchain", relationship: "Strong LangChain ecosystem integration"}
+            ]},
+            { name: "MLflow", category: "observability", approach: "mlops", age: 7, github_stars: 18500, pypi_downloads: 2800000, description: "Open-source MLOps platform with comprehensive LLM tracing and evaluation", github: "mlflow/mlflow", connections: []},
+
+            // Graph Analysis Tools
+            { name: "NetworkX", category: "graph-analysis", approach: "comprehensive", age: 20, github_stars: 15000, pypi_downloads: 12000000, description: "Comprehensive Python library for complex network analysis and graph algorithms", github: "networkx/networkx", connections: [
+                {name: "PyTorch Geometric", relationship: "Complementary for graph ML"},
+                {name: "igraph", relationship: "Alternative graph library"}
+            ]},
+            { name: "PyTorch Geometric", category: "graph-analysis", approach: "gnn", age: 5, github_stars: 21000, pypi_downloads: 1200000, description: "Advanced graph neural network library for machine learning on graphs", github: "pyg-team/pytorch_geometric", connections: [
+                {name: "NetworkX", relationship: "Complementary for graph analysis"}
+            ]},
+            { name: "igraph", category: "graph-analysis", approach: "high-performance", age: 15, github_stars: 1800, pypi_downloads: 850000, description: "High-performance graph analysis library with C implementation", connections: [
+                {name: "NetworkX", relationship: "Alternative graph library"}
+            ]}
+        ];
+
+        // Colors for different categories based on your landscape structure
+        const categoryColors = {
+            'multi-agent': 0x4ecdc4,           // Teal - Multi-Agent Orchestration
+            'llm-orchestration': 0xf9ca24,    // Yellow - LLM Orchestration & Workflows
+            'lightweight': 0xff6b6b,          // Red - Lightweight & Specialized
+            'protocol': 0xa55eea,             // Purple - Protocol & Integration
+            'dev-tools': 0x45b7d1,           // Blue - Development Tools
+            'evaluation': 0xeb4d4b,           // Dark Red - Evaluation Frameworks
+            'observability': 0xf0932b,        // Orange - Observability Platforms
+            'graph-analysis': 0x26de81,       // Green - Graph Analysis Tools
+            'rag-agents': 0xfeca57            // Gold - RAG-focused Agents
+        };
+
+        // Age-based colors (newer = brighter)
+        const ageColors = {
+            1: 0x00ff88, // Very new (bright green)
+            2: 0x44ff44, // New (green)
+            3: 0x88ff00, // Moderate (yellow-green)
+            4: 0xffaa00, // Older (orange)
+            5: 0xff6600, // Older (red-orange)
+            7: 0xff4400, // Old (red)
+            15: 0xcc3300, // Very old (dark red)
+            20: 0x990000  // Ancient (very dark red)
+        };
+
+        // Three.js setup
+        let scene, camera, renderer, controls;
+        let nodes = [];
+        let connections = [];
+        let clusterBoundaries = [];
+        let clusterLabels = [];
+        let selectedNode = null;
+        let isAnimating = true;
+
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 50;
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            // Create nodes and connections
+            createVisualization();
+
+            // Setup controls AFTER DOM is ready
+            setTimeout(() => {
+                setupControls();
+            }, 100);
+
+            // Event listeners
+            setupEventListeners();
+
+            // Start animation
+            animate();
+        }
+
+        function createVisualization() {
+            // Clear existing objects
+            nodes = [];
+            connections = [];
+            clusterBoundaries = [];
+            clusterLabels = [];
+            while(scene.children.length > 0) {
+                scene.remove(scene.children[0]);
+            }
+
+            // Group frameworks by category for clustering
+            const clusters = {};
+            frameworks.forEach(framework => {
+                if (!clusters[framework.category]) {
+                    clusters[framework.category] = [];
+                }
+                clusters[framework.category].push(framework);
+            });
+
+            // Position nodes by clusters
+            const clusterPositions = {};
+            const categoryNames = {
+                'multi-agent': 'Multi-Agent Orchestration',
+                'llm-orchestration': 'LLM Orchestration & Workflows', 
+                'lightweight': 'Lightweight & Specialized',
+                'protocol': 'Protocol & Integration',
+                'dev-tools': 'Development Tools',
+                'evaluation': 'Evaluation Frameworks',
+                'observability': 'Observability Platforms',
+                'graph-analysis': 'Graph Analysis Tools',
+                'rag-agents': 'RAG-focused Agents'
+            };
+            
+            Object.keys(clusters).forEach((category, clusterIndex) => {
+                const angle = (clusterIndex / Object.keys(clusters).length) * Math.PI * 2;
+                const clusterRadius = 25;
+                const centerX = Math.cos(angle) * clusterRadius;
+                const centerY = Math.sin(angle) * clusterRadius;
+                
+                clusterPositions[category] = { x: centerX, y: centerY };
+                
+                // Create cluster boundary - ensure color exists
+                const clusterNodes = clusters[category];
+                const categoryColor = categoryColors[category] || 0xffffff;
+                
+                const boundaryGeometry = new THREE.RingGeometry(8, 12, 32);
+                const boundaryMaterial = new THREE.MeshBasicMaterial({
+                    color: categoryColor,
+                    transparent: true,
+                    opacity: 0.1,
+                    side: THREE.DoubleSide
+                });
+                
+                const boundary = new THREE.Mesh(boundaryGeometry, boundaryMaterial);
+                boundary.position.x = centerX;
+                boundary.position.y = centerY;
+                boundary.position.z = -2;
+                
+                // Add dashed ring outline
+                const outlineGeometry = new THREE.RingGeometry(11.5, 12, 64);
+                const outlineMaterial = new THREE.MeshBasicMaterial({
+                    color: categoryColor,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                const outline = new THREE.Mesh(outlineGeometry, outlineMaterial);
+                outline.position.copy(boundary.position);
+                outline.position.z = -1.5;
+                
+                scene.add(boundary);
+                scene.add(outline);
+                clusterBoundaries.push({ boundary, outline, category, center: { x: centerX, y: centerY } });
+                
+                // Create cluster label using canvas texture
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = 2048;
+                canvas.height = 256;
+                
+                // Clear canvas with transparent background
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Set text properties for very large, clear text
+                context.font = 'Bold 72px Arial';
+                context.fillStyle = 'white';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                
+                // Add strong text shadow for maximum visibility
+                context.shadowColor = 'rgba(0, 0, 0, 1.0)';
+                context.shadowOffsetX = 4;
+                context.shadowOffsetY = 4;
+                context.shadowBlur = 8;
+                
+                // Draw the text
+                const labelText = categoryNames[category] || category.toUpperCase();
+                context.fillText(labelText, canvas.width / 2, canvas.height / 2);
+                
+                // Create texture from canvas
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.needsUpdate = true;
+                
+                // Make label much larger and fix aspect ratio
+                const labelGeometry = new THREE.PlaneGeometry(24, 3);
+                const labelMaterial = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    opacity: 1.0,
+                    depthWrite: false,
+                    alphaTest: 0.1 // Better transparency handling
+                });
+                
+                const label = new THREE.Mesh(labelGeometry, labelMaterial);
+                label.position.x = centerX;
+                label.position.y = centerY;
+                label.position.z = 8; // Even higher Z to ensure visibility
+                label.renderOrder = 1000;
+                
+                // Ensure label always faces camera
+                label.lookAt(0, 0, 100);
+                
+                scene.add(label);
+                clusterLabels.push({
+                    mesh: label,
+                    text: labelText,
+                    category: category
+                });
+            });
+
+            // Create nodes within clusters
+            frameworks.forEach((framework, index) => {
+                // SIZE: Based on combined GitHub stars + PyPI downloads (normalized)
+                const adoptionScore = Math.log10(framework.github_stars + framework.pypi_downloads/100) / 2;
+                const nodeSize = Math.max(0.3, Math.min(2.5, adoptionScore));
+                
+                const geometry = new THREE.SphereGeometry(nodeSize, 16, 16);
+                
+                // Ensure color is defined, fallback to white if category not found
+                const categoryColor = categoryColors[framework.category] || 0xffffff;
+                
+                const material = new THREE.MeshBasicMaterial({
+                    color: categoryColor,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const node = new THREE.Mesh(geometry, material);
+                
+                // Position within cluster
+                const clusterCenter = clusterPositions[framework.category];
+                if (clusterCenter) {
+                    const clusterNodes = clusters[framework.category];
+                    const nodeIndex = clusterNodes.indexOf(framework);
+                    const nodeAngle = (nodeIndex / clusterNodes.length) * Math.PI * 2;
+                    const nodeRadius = 3 + Math.random() * 5;
+                    
+                    node.position.x = clusterCenter.x + Math.cos(nodeAngle) * nodeRadius;
+                    node.position.y = clusterCenter.y + Math.sin(nodeAngle) * nodeRadius;
+                    node.position.z = (Math.random() - 0.5) * 4;
+                } else {
+                    // Fallback positioning if cluster not found
+                    node.position.x = (Math.random() - 0.5) * 40;
+                    node.position.y = (Math.random() - 0.5) * 40;
+                    node.position.z = (Math.random() - 0.5) * 20;
+                }
+                
+                // Store framework data
+                node.userData = framework;
+                node.originalColor = categoryColor;
+                node.baseScale = nodeSize;
+                node.baseOpacity = 0.8;
+                
+                scene.add(node);
+                nodes.push(node);
+            });
+
+            // Create connections
+            frameworks.forEach((framework, index) => {
+                if (framework.connections && framework.connections.length > 0) {
+                    framework.connections.forEach(connectionObj => {
+                        const connectionName = typeof connectionObj === 'string' ? connectionObj : connectionObj.name;
+                        const relationship = typeof connectionObj === 'string' ? 'Related framework' : connectionObj.relationship;
+                        
+                        const targetIndex = frameworks.findIndex(f => f.name === connectionName);
+                        if (targetIndex !== -1 && targetIndex > index) { // Avoid duplicate lines
+                            const geometry = new THREE.BufferGeometry();
+                            const positions = new Float32Array(6);
+                            
+                            const sourceNode = nodes[index];
+                            const targetNode = nodes[targetIndex];
+                            
+                            positions[0] = sourceNode.position.x;
+                            positions[1] = sourceNode.position.y;
+                            positions[2] = sourceNode.position.z;
+                            positions[3] = targetNode.position.x;
+                            positions[4] = targetNode.position.y;
+                            positions[5] = targetNode.position.z;
+                            
+                            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                            
+                            const material = new THREE.LineDashedMaterial({
+                                color: 0x888888,
+                                transparent: true,
+                                opacity: 0.6,
+                                dashSize: 0.8,
+                                gapSize: 0.4,
+                                linewidth: 2 // Make lines thicker
+                            });
+                            
+                            const line = new THREE.Line(geometry, material);
+                            line.computeLineDistances();
+                            
+                            // Store connection metadata for hover tooltips
+                            line.userData = {
+                                source: framework.name,
+                                target: connectionName,
+                                relationship: relationship
+                            };
+                            
+                            scene.add(line);
+                            connections.push({
+                                line: line,
+                                source: sourceNode,
+                                target: targetNode,
+                                geometry: geometry,
+                                relationship: relationship,
+                                sourceFramework: framework.name,
+                                targetFramework: connectionName
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        function updateConnections() {
+            connections.forEach(connection => {
+                const positions = connection.geometry.attributes.position.array;
+                positions[0] = connection.source.position.x;
+                positions[1] = connection.source.position.y;
+                positions[2] = connection.source.position.z;
+                positions[3] = connection.target.position.x;
+                positions[4] = connection.target.position.y;
+                positions[5] = connection.target.position.z;
+                connection.geometry.attributes.position.needsUpdate = true;
+            });
+        }
+
+        // Add panel toggle functionality
+        function togglePanel(panelId) {
+            const panel = document.getElementById(panelId);
+            const minimizeBtn = panel.querySelector('.minimize-btn');
+            
+            panel.classList.toggle('minimized');
+            minimizeBtn.textContent = panel.classList.contains('minimized') ? '+' : '−';
+        }
+
+        function setupControls() {
+            // Animation toggle
+            const animateCheckbox = document.getElementById('animate');
+            if (animateCheckbox) {
+                animateCheckbox.addEventListener('change', (e) => {
+                    isAnimating = e.target.checked;
+                });
+            }
+
+            // Search
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    searchNodes(e.target.value);
+                });
+            }
+        }
+
+        function updateNodeColors(colorBy) {
+            nodes.forEach(node => {
+                const framework = node.userData;
+                let color;
+                
+                switch(colorBy) {
+                    case 'age':
+                        color = ageColors[framework.age] || 0xffffff;
+                        break;
+                    case 'approach':
+                        // Simple hash-based coloring for approaches
+                        const hash = framework.approach.split('').reduce((a, b) => {
+                            a = ((a << 5) - a) + b.charCodeAt(0);
+                            return a & a;
+                        }, 0);
+                        color = Math.abs(hash) % 0xffffff;
+                        break;
+                    default:
+                        color = categoryColors[framework.category] || 0xffffff;
+                }
+                
+                node.material.color.setHex(color);
+                node.originalColor = color;
+            });
+        }
+
+        function filterNodes(filter) {
+            nodes.forEach(node => {
+                const framework = node.userData;
+                const visible = filter === 'all' || framework.category === filter;
+                node.visible = visible;
+                node.material.opacity = visible ? 0.8 : 0.1;
+            });
+            
+            connections.forEach(connection => {
+                const visible = connection.source.visible && connection.target.visible;
+                connection.line.material.opacity = visible ? 0.3 : 0.05;
+            });
+        }
+
+        function searchNodes(query) {
+            if (!query) {
+                nodes.forEach(node => {
+                    node.material.color.setHex(node.originalColor);
+                    node.scale.set(1, 1, 1);
+                });
+                return;
+            }
+            
+            nodes.forEach(node => {
+                const framework = node.userData;
+                const matches = framework.name.toLowerCase().includes(query.toLowerCase()) ||
+                               framework.description.toLowerCase().includes(query.toLowerCase());
+                
+                if (matches) {
+                    node.material.color.setHex(0x00ff00);
+                    node.scale.set(1.5, 1.5, 1.5);
+                } else {
+                    node.material.color.setHex(node.originalColor);
+                    node.scale.set(1, 1, 1);
+                    node.material.opacity = 0.3;
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Mouse interaction
+            const raycaster = new THREE.Raycaster();
+            raycaster.params.Line.threshold = 5; // Make lines much easier to detect
+            const mouse = new THREE.Vector2();
+            const tooltip = document.getElementById('tooltip');
+
+            function onMouseMove(event) {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                
+                // Check for connection line intersections first (with more generous threshold)
+                const lineObjects = connections.map(c => c.line);
+                const lineIntersects = raycaster.intersectObjects(lineObjects);
+                
+                // Check for node intersections
+                const nodeIntersects = raycaster.intersectObjects(nodes);
+
+                if (lineIntersects.length > 0 && lineIntersects[0].distance < (nodeIntersects[0]?.distance || Infinity)) {
+                    // Show connection tooltip (prioritize if closer than nodes)
+                    const line = lineIntersects[0].object;
+                    const connectionData = line.userData;
+                    
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = event.clientX + 10 + 'px';
+                    tooltip.style.top = event.clientY + 10 + 'px';
+                    tooltip.innerHTML = `
+                        <strong>🔗 Connection</strong><br>
+                        <strong>${connectionData.source}</strong> ↔ <strong>${connectionData.target}</strong><br>
+                        <br><em>${connectionData.relationship}</em>
+                    `;
+                    
+                    // Highlight the connection line
+                    connections.forEach(conn => {
+                        if (conn.line === line) {
+                            conn.line.material.color.setHex(0x00ff00);
+                            conn.line.material.opacity = 1.0;
+                        } else {
+                            conn.line.material.color.setHex(0x333333);
+                            conn.line.material.opacity = 0.2;
+                        }
+                    });
+                    
+                    // Clear node selection
+                    if (selectedNode) {
+                        selectedNode.material.color.setHex(selectedNode.originalColor);
+                        selectedNode.scale.set(1, 1, 1);
+                        selectedNode = null;
+                    }
+                } else if (nodeIntersects.length > 0) {
+                    const node = nodeIntersects[0].object;
+                    const framework = node.userData;
+                    
+                    // Show node tooltip
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = event.clientX + 10 + 'px';
+                    tooltip.style.top = event.clientY + 10 + 'px';
+                    tooltip.innerHTML = `
+                        <strong>${framework.name}</strong><br>
+                        <strong>📊 Adoption Metrics:</strong><br>
+                        ⭐ GitHub Stars: ${framework.github_stars.toLocaleString()}<br>
+                        📦 PyPI Downloads/Month: ${framework.pypi_downloads.toLocaleString()}<br>
+                        📅 Age: ${framework.age} year(s) old<br>
+                        🏷️ Category: ${framework.category}<br>
+                        🔧 Approach: ${framework.approach}<br>
+                        <br>${framework.description}<br>
+                        ${framework.github ? `<br>📂 GitHub: ${framework.github}` : ''}
+                    `;
+                    
+                    // Reset connection colors first
+                    connections.forEach(connection => {
+                        connection.line.material.color.setHex(0x888888);
+                        connection.line.material.opacity = 0.6;
+                    });
+                    
+                    // Highlight node
+                    if (selectedNode !== node) {
+                        if (selectedNode) {
+                            selectedNode.material.color.setHex(selectedNode.originalColor);
+                            selectedNode.scale.set(1, 1, 1);
+                        }
+                        selectedNode = node;
+                        node.material.color.setHex(0xffffff);
+                        node.scale.set(1.3, 1.3, 1.3);
+                    }
+                } else {
+                    tooltip.style.display = 'none';
+                    
+                    // Reset connection colors
+                    connections.forEach(connection => {
+                        connection.line.material.color.setHex(0x888888);
+                        connection.line.material.opacity = 0.6;
+                    });
+                    
+                    // Reset node selection
+                    if (selectedNode) {
+                        selectedNode.material.color.setHex(selectedNode.originalColor);
+                        selectedNode.scale.set(1, 1, 1);
+                        selectedNode = null;
+                    }
+                }
+            }
+
+            // Mouse controls for camera movement
+            let isMouseDown = false;
+            let mouseDownX = 0, mouseDownY = 0;
+            let cameraPanSpeed = 0.05;
+            
+            function onMouseDown(event) {
+                if (event.button === 0) { // Left mouse button
+                    isMouseDown = true;
+                    mouseDownX = event.clientX;
+                    mouseDownY = event.clientY;
+                    renderer.domElement.style.cursor = 'grabbing';
+                }
+            }
+            
+            function onMouseUp(event) {
+                if (event.button === 0) { // Left mouse button
+                    isMouseDown = false;
+                    renderer.domElement.style.cursor = 'grab';
+                }
+            }
+            
+            function onMouseMoveCamera(event) {
+                if (isMouseDown) {
+                    const deltaX = event.clientX - mouseDownX;
+                    const deltaY = event.clientY - mouseDownY;
+                    
+                    // Pan the camera
+                    camera.position.x -= deltaX * cameraPanSpeed;
+                    camera.position.y += deltaY * cameraPanSpeed;
+                    
+                    mouseDownX = event.clientX;
+                    mouseDownY = event.clientY;
+                    
+                    // Don't process hover tooltips while dragging
+                    return;
+                }
+                
+                // Only process hover tooltips when not dragging
+                onMouseMove(event);
+            }
+            
+            // Zoom with mouse wheel
+            function onWheel(event) {
+                event.preventDefault();
+                const zoomSpeed = 0.1;
+                const zoomFactor = event.deltaY > 0 ? 1 + zoomSpeed : 1 - zoomSpeed;
+                
+                camera.position.z *= zoomFactor;
+                camera.position.z = Math.max(5, Math.min(150, camera.position.z));
+            }
+
+            // Set initial cursor style
+            renderer.domElement.style.cursor = 'grab';
+            
+            // Add all event listeners
+            renderer.domElement.addEventListener('mousemove', onMouseMoveCamera);
+            renderer.domElement.addEventListener('mousedown', onMouseDown);
+            renderer.domElement.addEventListener('mouseup', onMouseUp);
+            renderer.domElement.addEventListener('wheel', onWheel);
+            renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault()); // Disable right-click menu
+
+            // Window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isAnimating) {
+                const time = Date.now() * 0.001;
+                
+                nodes.forEach((node, index) => {
+                    const framework = node.userData;
+                    
+                    // BRIGHTNESS: Age-based brightness (newer = brighter)
+                    const ageBrightness = Math.max(0.5, 1.2 - framework.age * 0.15);
+                    
+                    // Apply brightness based on age (no pulsing)
+                    node.material.opacity = ageBrightness;
+                    
+                    // POPULARITY GLOW: High-adoption frameworks get brighter color
+                    const totalAdoption = framework.github_stars + framework.pypi_downloads/100;
+                    let currentColor = node.originalColor;
+                    
+                    // CONNECTION HIGHLIGHTING: Connected nodes get different color when highlighted
+                    if (selectedNode && framework.connections && framework.connections.some(conn => {
+                        const connName = typeof conn === 'string' ? conn : conn.name;
+                        return connName === selectedNode.userData.name;
+                    })) {
+                        currentColor = 0xffffff; // Bright white for connections
+                    } else if (totalAdoption > 50000) {
+                        // High adoption gets a brighter version of the original color
+                        const r = (currentColor >> 16) & 0xff;
+                        const g = (currentColor >> 8) & 0xff;  
+                        const b = currentColor & 0xff;
+                        const brightnessBoost = Math.min(0.5, totalAdoption / 200000);
+                        const newR = Math.min(255, r + brightnessBoost * 255);
+                        const newG = Math.min(255, g + brightnessBoost * 255);
+                        const newB = Math.min(255, b + brightnessBoost * 255);
+                        currentColor = (newR << 16) | (newG << 8) | newB;
+                    }
+                    
+                    node.material.color.setHex(currentColor);
+                    
+                    // CLUSTERING DRIFT: Gentle orbital motion within clusters
+                    const orbit = time * 0.05 + index * 0.15;
+                    node.position.x += Math.cos(orbit) * 0.003;
+                    node.position.y += Math.sin(orbit) * 0.003;
+                    
+                    // AGE-BASED Z POSITIONING: Newer frameworks float higher
+                    const ageFloat = Math.sin(time * 0.2 + index) * (5 - framework.age) * 0.2;
+                    node.position.z = node.position.z * 0.98 + ageFloat * 0.02;
+                });
+                
+                // Animate cluster boundaries with subtle data-driven effects
+                clusterBoundaries.forEach((cluster, index) => {
+                    // Calculate average adoption in this cluster
+                    const clusterFrameworks = frameworks.filter(f => f.category === cluster.category);
+                    const avgAdoption = clusterFrameworks.reduce((sum, f) => 
+                        sum + f.github_stars + f.pypi_downloads/100, 0) / clusterFrameworks.length;
+                    
+                    // Breathing effect based on cluster activity
+                    const activityPulse = 1 + Math.sin(time * 0.3 + index) * (Math.log10(avgAdoption) / 50);
+                    cluster.boundary.scale.set(activityPulse, activityPulse, 1);
+                    
+                    // Rotate based on cluster innovation (age)
+                    const avgAge = clusterFrameworks.reduce((sum, f) => sum + f.age, 0) / clusterFrameworks.length;
+                    cluster.outline.rotation.z += (5 - avgAge) * 0.001; // Newer categories spin faster
+                });
+                
+                // Update cluster labels to always face camera
+                clusterLabels.forEach(label => {
+                    label.mesh.lookAt(camera.position);
+                });
+                
+                updateConnections();
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Initialize the visualization
+        init();
+    </script>
+</body>
+</html>

@@ -223,6 +223,11 @@ eval_engine/
 - [ ] **AgentFile**: Evaluate for agent definition standardization
 - [ ] **Hypothesis**: Test engine interfaces with property-based testing
 - [ ] **DeepAgents**: Assess for advanced agent capabilities in `agents_engine`
+- [ ] **Coral Protocol Assessment**: Evaluate for multi-agent coordination infrastructure
+  - Assess MCP server integration with `agents_engine`
+  - Evaluate session-based agent coordination patterns
+  - Test thread-based messaging for engine communication
+  - Consider future decentralized coordination capabilities
 
 ## Sprint Dependencies
 
@@ -250,6 +255,16 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 - **Agents Engine**: Clean separation of agent orchestration, LLM provider management, and tool integration
 - **Dataset Engine**: Pure data operations isolated from business logic and evaluation concerns  
 - **Eval Engine**: Evaluation framework architecture that can consume clean interfaces from other engines
+
+### Future Coordination Infrastructure
+
+**Coral Protocol Integration Potential**:
+
+- **Agents Engine**: Could benefit from standardized agent communication protocols and trust mechanisms
+- **Eval Engine**: Session-based evaluation workflows and coordination quality assessment through protocol-level monitoring
+- **Cross-Engine Communication**: Thread-based messaging system for engine coordination beyond current dependency injection
+
+**Architectural Alignment**: Coral Protocol's "graph-like structure that prevents any one agent from holding too much power" aligns with the SoC/SRP principles of engine separation and distributed responsibility.
 
 ### Key Architectural Improvements
 
