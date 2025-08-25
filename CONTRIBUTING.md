@@ -34,12 +34,12 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 
 ### Testing Strategy & Guidelines
 
-**Always create comprehensive tests** for new features following the testing hierarchy below:
+**Always create focused, efficient tests** for new features following the testing hierarchy below:
 
 #### Unit Tests (Always Required)
 
 - **Mock external dependencies** (HTTP requests, file systems, APIs) using `@patch`
-- **Test business logic** and data validation thoroughly
+- **Test business logic** and data validation efficiently
 - **Test error handling** for all failure modes and edge cases
 - **Ensure deterministic behavior** - tests should pass consistently
 - Use `pytest` with clear arrange/act/assert structure
@@ -87,10 +87,14 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 
 ### Coding Style
 
+- **Follow existing codebase patterns exactly** - analyze file structure, naming conventions, and architectural decisions before writing any codeni
+- **Write concise, focused, streamlined code** with no unnecessary features or verbose implementations
 - **Use Pydantic** models in `src/app/datamodels/` for all data validation and data contracts. **Always use or update these models** when modifying data flows.
 - Use the predefined error message functions for consistency. Update or create new if necessary.
+- **Minimize dependencies** and prefer lightweight solutions over heavy libraries
 - When writing complex logic, **add an inline `# Reason:` comment** explaining the *why*, not just the *what*.
 - Comment non-obvious code to ensure it is understandable to a mid-level developer.
+- **Avoid long output or lengthy code blocks** - keep implementations focused and minimal
 
 ### Documentation
 
@@ -125,8 +129,11 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 - ✅ Structured testing patterns vs ❌ minimal tests
 - ✅ Configuration validation patterns
 - ✅ Structured logging approaches
+- ✅ Concise, focused implementations vs ❌ verbose, feature-heavy code
+- ✅ Minimal dependencies vs ❌ heavy library usage
+- ✅ Streamlined file structures vs ❌ complex hierarchies
 
-**Quick Reference**: Always prefer type-validated, well-documented code with specific error handling over generic approaches.
+**Quick Reference**: Always prefer type-validated, well-documented, concise code with specific error handling over generic approaches. **Analyze existing codebase patterns before implementing anything new.**
 
 ### CHANGELOG.md Requirements
 
@@ -155,11 +162,11 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 ### Commit and PR Requirements
 
 - **Title Format**: Commit messages and PR titles must follow the **Conventional Commits** specification, as outlined in the `.gitmessage` template.
-- Provide detailed PR summaries including the purpose of the changes and the testing performed.
+- Provide focused PR summaries including the purpose of the changes and the testing performed.
 
 ### Pre-commit Checklist
 
-1. **Automated validation**: `make validate` - runs complete sequence (ruff + type_check + test_all)
+1. **Automated validation**: `make validate` - runs streamlined sequence (ruff + type_check + test_all)
 2. **Quick validation** (development): `make quick_validate` - runs fast checks (ruff + type_check only)
 3. **Update CHANGELOG.md**: Add entry to `## [Unreleased]` section describing your changes
 4. Update documentation as described above.
@@ -235,32 +242,69 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 
 **ALL SUBAGENTS MUST STRICTLY ADHERE TO THE FOLLOWING:**
 
-1. **Command Execution (MANDATORY)**:
+1. **Separation of Concerns (MANDATORY)**:
+   - **Architects MUST NOT implement code** - only design, plan, and specify requirements
+   - **Developers MUST NOT make architectural decisions** - follow architect specifications exactly
+   - **Evaluators MUST NOT implement** - only design evaluation frameworks and metrics
+   - **Code reviewers MUST focus solely on quality, security, and standards compliance**
+   - **NEVER cross role boundaries** without explicit handoff documentation
+
+2. **Command Execution (MANDATORY)**:
    - **ALWAYS use make recipes** (e.g., `make type_check`, `make ruff`, `make test_all`)
    - **NEVER use direct uv commands** unless make command fails
    - **Document any deviation** from make commands with explicit reason
 
-2. **Quality Validation (MANDATORY)**:
+3. **Quality Validation (MANDATORY)**:
    - **MUST run `make validate`** before task completion
    - **MUST fix ALL issues** found by validation steps
    - **MUST NOT proceed** with type errors or lint failures
 
-3. **Documentation Updates (MANDATORY)**:
+4. **Coding Style Adherence (MANDATORY)**:
+   - **MUST analyze existing codebase patterns** before writing any code
+   - **MUST write concise, focused, streamlined code** with no unnecessary features
+   - **MUST avoid verbose output or lengthy explanations** in code or comments
+   - **MUST follow exact naming conventions, file structures, and architectural patterns** found in the codebase
+   - **MUST use minimal dependencies** and lightweight solutions
+
+5. **Documentation Updates (MANDATORY)**:
    - **MUST update CHANGELOG.md** for non-trivial changes
-   - **MUST write comprehensive docstrings** using Google style format
+   - **MUST write focused, concise docstrings** using Google style format
    - **MUST update AGENTS.md** when learning new patterns
 
-4. **Testing Requirements (MANDATORY)**:
+6. **Testing Requirements (MANDATORY)**:
    - **MUST create tests** for new functionality following BDD approach
    - **MUST use `make test_all`** to run tests, not direct pytest
-   - **MUST achieve end-to-end validation**, not just mocked tests
+   - **MUST achieve focused validation**, not just mocked tests
 
-5. **Code Standards (MANDATORY)**:
+7. **Code Standards (MANDATORY)**:
    - **MUST follow existing project patterns** and conventions
    - **MUST use absolute imports** not relative imports
-   - **MUST add `# Reason:` comments** for complex logic
+   - **MUST add `# Reason:` comments** for complex logic only when necessary
 
 **FAILURE TO FOLLOW THESE REQUIREMENTS WILL RESULT IN TASK REJECTION**  
+
+### Role-Specific Agent Boundaries
+
+**ARCHITECTS (backend-architect, agent-systems-architect, evaluation-specialist):**
+
+- **SCOPE**: Design, plan, specify requirements, create architecture diagrams
+- **DELIVERABLES**: Technical specifications, architecture documents, requirement lists
+- **FORBIDDEN**: Writing implementation code, making code changes, running tests
+- **HANDOFF**: Must provide focused specifications to developers before any implementation begins
+
+**DEVELOPERS (python-developer, python-performance-expert):**
+
+- **SCOPE**: Implement code based on architect specifications, optimize performance
+- **DELIVERABLES**: Working code, tests, performance improvements
+- **FORBIDDEN**: Making architectural decisions, changing system design without architect approval
+- **REQUIREMENTS**: Must follow architect specifications exactly, request clarification if specifications are insufficient
+
+**REVIEWERS (code-reviewer):**
+
+- **SCOPE**: Quality assurance, security review, standards compliance, final validation
+- **DELIVERABLES**: Code review reports, security findings, compliance verification
+- **FORBIDDEN**: Making implementation decisions, writing new features
+- **TIMING**: Must be used immediately after any code implementation
 
 ### Subagent Prompt Requirements
 
@@ -269,13 +313,15 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 ```text
 MANDATORY: Follow CONTRIBUTING.md guidelines strictly. 
 All requirements in the "MANDATORY Compliance Requirements for All Subagents" section are non-negotiable.
+RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross into other agents' responsibilities.
 ```
 
 **Subagents MUST:**
 
 - Reference and follow ALL mandatory compliance requirements above
-- Explicitly confirm they will use make recipes instead of direct commands
-- Validate their work using `make validate` before completion
+- Explicitly confirm they will respect role boundaries and separation of concerns
+- Use make recipes instead of direct commands
+- Validate their work using `make validate` before completion (developers/reviewers only)
 
 ### Decision Framework Implementation
 
@@ -310,7 +356,7 @@ Use this framework to assess task readiness before implementation:
 - **Context Completeness**: All required information and patterns gathered from codebase, documentation, and requirements
 - **Implementation Clarity**: Clear understanding and actionable implementation path of what needs to be built and how to build it
 - **Requirements Alignment**: Solution follows feature requirements, project patterns, conventions, and architectural decisions
-- **Success Probability**: Confidence level for completing the task successfully in one pass
+- **Success Probability**: Confidence level for completing the task efficiently in one pass
 
 **Minimum thresholds for proceeding:**
 

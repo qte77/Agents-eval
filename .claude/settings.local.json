@@ -1,5 +1,6 @@
 {
   "env": {
+    "ANTHROPIC_MODEL": "sonnet",
     "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
     "DISABLE_TELEMETRY": "1"
   },
@@ -26,20 +27,6 @@
       "WebFetch(domain:github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md)",
       "WebFetch(domain:docs.anthropic.com)"
     ],
-    "ask": [
-      "Edit(.claude/**)",
-      "Edit(.claude/agents/*.md)",
-      "Edit(.claude/commands/*.md)",
-      "Edit(.claude/settings.local.json)",
-      "Edit(AGENTS.md)",
-      "Edit(CLAUDE.md)",
-      "Edit(CONTRIBUTE.md)",
-      "Edit(Makefile)",
-      "Edit(pyproject.toml)",
-      "Edit(README.md)",
-      "WebFetch",
-      "WebSearch"
-    ],
     "deny": [
       "Bash(awk:*)",
       "Bash(cat:*)",
@@ -57,6 +44,15 @@
       "Bash(source:*)",
       "Bash(tail:*)",
       "Bash(touch:*)"
+    ],
+    "ask": [
+      "Edit(.claude/**)",
+      "Edit(AGENTS.md)",
+      "Edit(CLAUDE.md)",
+      "Edit(CONTRIBUTE.md)",
+      "Edit(Makefile)",
+      "Edit(pyproject.toml)",
+      "Edit(README.md)"
     ]
   },
   "statusLine": {
