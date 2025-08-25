@@ -141,7 +141,7 @@ The Sprint 1 implementation follows a progressive three-tier approach, allowing 
 
 **Status**: Minimal foundation implementation
 **Scope**: Essential text similarity and performance metrics only
-**Tools**: Lightweight sklearn and basic HuggingFace evaluate
+**Tools**: Lightweight packages, e.g., torchmetrics[text], scikit-learn, nltk, textdistance. See for reference: [Landscape of Traditional Metrics Libraries](../landscape/landscape.md#traditional-metrics-libraries)
 **Sprint Priority**: High - Streamlined foundation  
 **Implementation**: Day 1-2 with **minimal dependencies** for fast installation and low disk usage  
 **Performance Target**: <1s evaluation time, **<50MB additional dependencies**
