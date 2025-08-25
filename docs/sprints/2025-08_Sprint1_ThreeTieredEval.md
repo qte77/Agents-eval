@@ -3,7 +3,7 @@
 
 ## Sprint Dates: August 23-28, 2025 (6 Days)
 
-**Sprint Goal**: Implement a focused, streamlined three-tiered evaluation framework (Traditional + LLM-as-Judge + Graph-based) for assessing multi-agent systems on PeerRead scientific paper review generation with minimal complexity and maximum efficiency.
+**Sprint Goal**: Implement a focused, streamlined three-tiered evaluation framework (Traditional + LLM-as-Judge + Graph-based) for assessing the existing multi-agent system on PeerRead scientific paper review generation with minimal complexity and maximum efficiency.
 
 **Priority**: Critical Priority for evaluation framework foundation and Sprint 2 architectural prerequisites
 
@@ -24,13 +24,13 @@
 
 **MANDATORY ROLE SEPARATION** - Each phase must respect strict role boundaries:
 
-- **Architecture Phase** (Days 1-2): `backend-architect` + `agent-systems-architect` + `evaluation-specialist` **DESIGN ONLY**
+- **Architecture Phase** (Days 1-2): **DESIGN ONLY**
   - **FORBIDDEN**: Any code implementation or testing
   - **REQUIRED**: Complete specification files before handoff
-- **Implementation Phase** (Days 2-4): `python-developer` + `python-performance-expert` **IMPLEMENT ONLY**
+- **Implementation Phase** (Days 2-4): **IMPLEMENT ONLY**
   - **FORBIDDEN**: Architectural decisions without architect approval
   - **REQUIRED**: Follow architect specifications exactly
-- **Quality Assurance** (Days 4-6): `code-reviewer` **REVIEW ONLY**
+- **Quality Assurance** (Days 4-6): **REVIEW ONLY**
   - **FORBIDDEN**: Implementation or architectural changes
   - **REQUIRED**: Immediate use after every code implementation
 
@@ -39,11 +39,13 @@
 ## **MANDATORY HANDOFF REQUIREMENTS**
 
 **Architecture → Implementation Handoff:**
+
 - **REQUIRED**: All architects must create complete specification files before any implementation begins
 - **VALIDATION**: Developers must confirm specifications are complete or request clarification
 - **NO IMPLEMENTATION**: Without complete architect handoff documentation
 
 **Post-Implementation Review:**
+
 - **MANDATORY**: `code-reviewer` must be used immediately after every code implementation
 - **COMPLIANCE**: All code must pass `make validate` before review
 - **PATTERN ADHERENCE**: Code must follow existing codebase patterns exactly
@@ -279,16 +281,10 @@ Agent Score = (
   - **Handoff**: Implementation guide with mathematical formulas for developers
   - **User Review**: Present evaluation specifications to user for approval before proceeding to Task 1.3
 
-- [ ] **Task 1.3**: Agent Coordination Architecture Design
-  - **Agent**: `agent-systems-architect` **DESIGN ONLY** 
-  - **Required Files**: `docs/agent_architecture/coordination_patterns.md`, `docs/agent_architecture/implementation_guide.md`
-  - **Deliverable**: Complete agent workflow specifications
-  - **Handoff**: Precise implementation requirements for Manager→Researcher→Analyst→Synthesizer
-  - **User Review**: Present agent coordination architecture to user for approval before Day 2 implementation
-
 **Day 1 DoD**: All architecture specifications complete with required files created and implementation handoffs documented
 
-**MANDATORY COMPLIANCE**: 
+**MANDATORY COMPLIANCE**:
+
 - All architect agents must create specification files listed above
 - No implementation allowed until Day 2 with complete handoffs
 - All specifications must follow CONTRIBUTING.md requirements
@@ -314,16 +310,10 @@ Agent Score = (
   - **Validation**: Must pass `make validate` and immediate `code-reviewer` audit
   - **User Review**: Present evaluation system to user for approval before proceeding to Task 2.3
 
-- [ ] **Task 2.3**: Implement Agent Coordination per Architect Specifications
-  - **Agent**: `python-developer` **IMPLEMENT ONLY**  
-  - **Requirements**: Follow `docs/agent_architecture/coordination_patterns.md` exactly
-  - **Deliverable**: Manager→Researcher→Analyst→Synthesizer workflow operational
-  - **Validation**: Must pass `make validate` and immediate `code-reviewer` audit
-  - **User Review**: Present agent coordination implementation to user for approval before Day 3
-
 **Day 2 DoD**: Core implementations complete with all validations passing
 
 **MANDATORY COMPLIANCE**:
+
 - All implementations must follow architect specifications exactly
 - `make validate` must pass before any code review
 - `code-reviewer` must audit every implementation immediately
