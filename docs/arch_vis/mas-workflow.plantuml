@@ -1,4 +1,4 @@
-@startuml
+@startuml mas-workflow
 title MAS Workflow - Agent Interactions and Tool Usage
 
 actor User

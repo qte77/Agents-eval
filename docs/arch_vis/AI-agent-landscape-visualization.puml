@@ -1,0 +1,44 @@
+@startuml AI-agent-landscape-visualization
+title AI Agent Landscape
+
+!log Current 'STYLE' dvar: STYLE
+!log About to include: styles/github-STYLE.puml
+!include styles/github-STYLE.puml
+
+skinparam defaultFontSize 12
+skinparam rectangle {
+  FontSize 12
+}
+
+title AI Agent Evaluation Landscape
+
+rectangle "Agent Frameworks" as frameworks #87CEEB {
+  rectangle "LangGraph • CrewAI • AutoGen/AG2 • OpenAI Agents • PydanticAI\nLlamaIndex • Fetch.ai • Langchain • Semantic Kernel\nHaystack • Restack • smolAgents • AutoGPT • BabyAGI\nSuperAGI • mcp-agent • Coral Protocol • Langflow\nSim Studio • Archon • Agentstack" as agent_tools
+}
+
+rectangle "Data & Web Intelligence" as data_web #98E4D6 {
+  rectangle "Search APIs: Exa.ai • Tavily • Linkup • You.com • Parallel AI\nWeb Scraping: Apify • Firecrawl • Crawl4AI • Browse AI • Bright Data" as web_tools
+}
+
+rectangle "Evaluation & Testing" as eval #90EE90 {
+  rectangle "Agent Eval: AgentBench • WebArena • SWE-bench • HumanEval • GAIA\nLLM/RAG: HELM • LM Eval Harness • OpenAI Evals • RAGAS • TruLens\nML Platforms: Weights & Biases • MLflow • Neptune • Comet" as eval_tools
+}
+
+rectangle "Observability" as obs #DDA0DD {
+  rectangle "Multi-Agent: AgentOps • LangSmith • Arize Phoenix\nLLM Obs: Helicone • Langfuse • \nHumanloop • PromptLayer • Literal AI • Parea AI" as obs_tools
+}
+
+rectangle "Analysis & Metrics" as analysis #FFB6C1 {
+  rectangle "Graph: NetworkX • PyGraphviz • Graphviz\nVisualization: Matplotlib • Plotly • Bokeh • Streamlit\nMetrics: scikit-learn • TorchMetrics • BLEU • ROUGE • BERTScore • CodeBLEU" as analysis_tools
+}
+
+rectangle "Dev Infrastructure" as dev_infra #C8A2C8 {
+  rectangle "uv • Streamlit • Ruff • pyright" as dev_tools
+}
+
+eval --> frameworks : evaluates
+obs --> frameworks : monitors
+obs --> analysis : feeds data to
+frameworks --> data_web : uses
+
+@enduml
