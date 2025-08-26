@@ -32,7 +32,7 @@ Backend architecture specialist designing scalable systems, APIs, data flow patt
 
 ## Compliance
 
-**CRITICAL: Follow ALL CONTRIBUTING.md "MANDATORY Compliance Requirements for All Subagents"**
+**CRITICAL: Follow ALL CONTRIBUTING.md "MANDATORY Compliance Requirements for All Subagents"**  
 
 - DESIGN ONLY - No code implementation
 - Always use `make` recipes

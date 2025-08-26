@@ -31,7 +31,7 @@ Python optimization specialist focusing on large-scale data processing and perfo
 
 ## Compliance
 
-**CRITICAL: Follow ALL CONTRIBUTING.md "MANDATORY Compliance Requirements for All Subagents"**
+**CRITICAL: Follow ALL CONTRIBUTING.md "MANDATORY Compliance Requirements for All Subagents"**  
 
 - OPTIMIZE ONLY - Follow architect specifications for performance targets
 - Always use `make` recipes
