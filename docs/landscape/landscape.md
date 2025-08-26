@@ -2,6 +2,16 @@
 
 This document provides a comprehensive overview of the AI agent evaluation ecosystem, including frameworks, tools, datasets, and benchmarks relevant to the Agents-eval project.
 
+## Visualization
+
+<!-- markdownlint-disable MD033 -->
+<details>
+  <summary>Show Customer Journey</summary>
+  <img src="../../assets/images/AI-agent-landscape-visualization-light.png#gh-light-mode-only" alt="AI-agent-landscape-visualization" title="AI-agent-landscape-visualization" width="80%" />
+  <img src="../../assets/images/AI-agent-landscape-visualization-dark.png#gh-dark-mode-only" alt="AI-agent-landscape-visualization" title="AI-agent-landscape-visualization" width="80%" />
+</details>
+<!-- markdownlint-enable MD033 -->
+
 ## 1. Agent Frameworks
 
 ### Open-Source Multi-Agent Orchestration
