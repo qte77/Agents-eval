@@ -25,13 +25,13 @@ Evaluation framework specialist designing comprehensive testing methodologies an
 ## Evaluation Tiers
 
 - **Traditional Metrics** - DeepEval, HuggingFace evaluate, sklearn metrics (<1s target)
-- **LLM-as-Judge** - Swarms continuous evaluation, Langchain AgentEvals (5-15s target) 
+- **LLM-as-Judge** - Swarms continuous evaluation, Langchain AgentEvals (5-15s target)
 - **Graph Analysis** - NetworkX + PyTorch Geometric + NetworKit (10-30s target)
 - **Multi-Agent Evaluation** - Coordination quality assessment metrics
 
 ## Compliance
 
-**CRITICAL: Follow ALL CONTRIBUTING.md "MANDATORY Compliance Requirements for All Subagents"**
+**CRITICAL: Follow ALL CONTRIBUTING.md "MANDATORY Compliance Requirements for All Subagents"**  
 
 - DESIGN ONLY - No code implementation
 - Always use `make` recipes  
