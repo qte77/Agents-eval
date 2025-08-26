@@ -13,12 +13,12 @@
 
 ### **Agent Composition**
 
+- `general-purpose` - Research, assessment, and analysis tasks for broad investigations
 - `backend-architect` - Backend system architecture and API implementation
 - `agent-systems-architect` - Multi-agent system coordination and workflow development  
-- `python-performance-expert` - Python optimization and performance tuning
 - `evaluation-specialist` - Evaluation framework design and metrics analysis
-- `code-reviewer` - Code quality review and validation
 - `python-developer` - Python development specialist for clean, maintainable code
+- `code-reviewer` - Code quality review and validation
 
 ### **Agent Deployment Strategy**
 
@@ -80,7 +80,7 @@ claude --print 'Task("Plan multi-agent coordination workflow", subagent_type="ag
 
 # Implementation Phase Examples
 claude --print 'Task("Implement traditional evaluation metrics per architect specs", subagent_type="python-developer")'
-claude --print 'Task("Optimize NetworkX graph performance per architect specs", subagent_type="python-performance-expert")'
+claude --print 'Task("Implement NetworkX graph analysis per architect specs", subagent_type="python-developer")'
 claude --print 'Task("Implement Manager→Researcher→Analyst→Synthesizer per architect specs", subagent_type="python-developer")'
 claude --print 'Task("Implement clean Python code following architect specifications", subagent_type="python-developer")'
 
@@ -104,7 +104,7 @@ Task("Design multi-agent coordination architecture", subagent_type="agent-system
 
 # Implementation Phase (Days 2-4) - IMPLEMENT ONLY
 Task("Implement evaluation metrics per architect specifications", subagent_type="python-developer")
-Task("Optimize NetworkX performance per architect specifications", subagent_type="python-performance-expert")
+Task("Implement NetworkX graph analysis per architect specifications", subagent_type="python-developer")
 Task("Implement agent coordination per architect specifications", subagent_type="python-developer")
 Task("Implement all code following architect specifications exactly", subagent_type="python-developer")
 
@@ -237,7 +237,7 @@ Agent Score = (
 **Sprint 1 will implement:**
 
 - Config-based evaluation system using `config_eval.json`
-- **Lightweight-first Traditional metrics**: 
+- **Lightweight-first Traditional metrics**:
   - **Primary stack**: ROUGE-Score (~10MB), NLTK BLEU (~20MB), scikit-learn (~50MB), textdistance (~5MB)
   - **Fallback only**: HuggingFace Evaluate for advanced metrics when lightweight insufficient
   - Execution time and task success measurement
@@ -271,13 +271,13 @@ Agent Score = (
 
 ### **Day 1 (Aug 23): PeerRead Integration & Large Context Models**
 
-**Recommended Agents**: `backend-architect`, `agent-systems-architect`, `evaluation-specialist`, `code-reviewer`
+**Recommended Agents**: `general-purpose`, `agent-systems-architect`, `evaluation-specialist`, `backend-architect`, `code-reviewer`
 
 - [ ] **Task 1.1**: Existing PDF Processing Capability Assessment
-  - **Agent**: `backend-architect` **ASSESSMENT ONLY**
+  - **Agent**: `general-purpose` **ASSESSMENT ONLY**
   - **Required Files**: `docs/assessment/existing_pdf_capabilities.md`, `docs/assessment/large_context_model_status.md`
   - **Deliverable**: Assessment of current PDF processing capabilities in the existing agentic system
-  - **Scope**: Evaluate what PDF processing already exists, identify gaps, document current state
+  - **Scope**: Research and evaluate what PDF processing already exists, identify gaps, document current state
   - **User Review**: Present capability assessment to user for approval before proceeding to Task 1.2
 
 - [ ] **Task 1.2**: Evaluation Framework Architecture Design  
@@ -300,7 +300,7 @@ Agent Score = (
 
 ### **Day 2 (Aug 24): Implementation Phase Begins**
 
-**Recommended Agents**: `python-developer`, `python-performance-expert`, `code-reviewer`
+**Recommended Agents**: `python-developer`, `code-reviewer`
 
 - [ ] **Task 2.1**: Implement Core Evaluation Framework per Architect Specifications
   - **Agent**: `python-developer` **IMPLEMENT ONLY**
@@ -332,19 +332,19 @@ Agent Score = (
 
 ### **Day 3 (Aug 25): Graph-Based Complexity Analysis**
 
-**Recommended Agents**: `python-performance-expert`, `agent-systems-architect`, `evaluation-specialist`, `code-reviewer`
+**Recommended Agents**: `python-developer`, `agent-systems-architect`, `evaluation-specialist`, `code-reviewer`
 
 - [ ] **Task 3.1**: Graph-Based Evaluation Architecture
   - Design tool call complexity measurement system using NetworkX graph construction
   - Create agent interaction graph mapping infrastructure with NetworkX for essential analysis
   - **Deliverable**: Streamlined graph analysis architecture with NetworkX-native components
-  - **Agent Focus**: `python-performance-expert` for NetworkX optimization, `agent-systems-architect` for agent interaction patterns
+  - **Agent Focus**: `python-developer` for NetworkX implementation, `agent-systems-architect` for agent interaction patterns
 
 - [ ] **Task 3.2**: Tool Call Pattern Analysis
   - Implement tool usage pattern recognition using NetworkX centrality measures and basic graph algorithms
   - Create efficiency metrics for tool interactions with NetworkX (igraph as optional performance fallback)
   - **Deliverable**: Tool call complexity analyzer with NetworkX native visualization (nx.draw())
-  - **Agent Focus**: `python-performance-expert` for NetworkX optimization, `agent-systems-architect` for agent workflow patterns
+  - **Agent Focus**: `python-developer` for implementation with NetworkX optimization, `agent-systems-architect` for agent workflow patterns
 
 - [ ] **Task 3.3**: Agent Interaction Graph Generation
   - Map agent-to-agent communication patterns using NetworkX directed graphs
@@ -358,31 +358,31 @@ Agent Score = (
 
 ### **Day 4 (Aug 26): Composite Scoring & Integration**
 
-**Recommended Agents**: `evaluation-specialist`, `agent-systems-architect`, `python-performance-expert`, `code-reviewer`
+**Recommended Agents**: `evaluation-specialist`, `python-developer`, `code-reviewer`
 
 - [ ] **Task 4.1**: Composite Scoring System Implementation
   - Implement scoring formula: (Agentic Results / Execution Time / Graph Complexity)
   - Create score normalization and weighting system
   - **Deliverable**: Functional composite scoring system
-  - **Agent Focus**: `evaluation-specialist` for scoring design, `agent-systems-architect` for agent performance weighting, `python-performance-expert` for optimization
+  - **Agent Focus**: `evaluation-specialist` for scoring design, `python-developer` for implementation
 
 - [ ] **Task 4.2**: Full Evaluation Pipeline Integration
   - Connect traditional, LLM-judge, and graph-based evaluations
   - End-to-end testing with PeerRead dataset samples
   - **Deliverable**: Complete integrated evaluation pipeline
-  - **Agent Focus**: `python-performance-expert` for integration optimization, `agent-systems-architect` for workflow coordination
+  - **Agent Focus**: `python-developer` for integration implementation, `evaluation-specialist` for workflow coordination
 
 - [ ] **Task 4.3**: Testing and Validation
   - Implement focused unit tests for all evaluation components
   - Create integration tests for pipeline components
   - **Deliverable**: Complete test coverage for evaluation system
-  - **Agent Focus**: `code-reviewer` for test quality validation
+  - **Agent Focus**: `python-developer` for test implementation, `code-reviewer` for test quality validation
 
 - [ ] **Task 4.4**: Performance Optimization
-  - Optimize large context model processing
-  - Improve evaluation pipeline efficiency
+  - Optimize evaluation pipeline efficiency using lightweight-first approach
+  - Ensure minimal dependency footprint
   - **Deliverable**: Optimized evaluation system performance
-  - **Agent Focus**: `python-performance-expert` for system optimization
+  - **Agent Focus**: `python-developer` for optimization implementation
 
 **Day 4 DoD**: Complete PeerRead evaluation system with composite scoring operational
 
