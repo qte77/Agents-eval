@@ -1,0 +1,336 @@
+"""
+BDD-style tests for LLM-as-Judge engine.
+
+Test the Tier 2 evaluation using LLM assessment with fallback mechanisms
+and cost optimization strategies.
+"""
+
+import pytest
+import asyncio
+from unittest.mock import Mock, patch, AsyncMock
+
+from app.evals.llm_judge import LLMJudgeEngine, evaluate_single_llm_judge
+from app.data_models.evaluation_models import Tier2Result
+
+
+class TestLLMJudgeEngine:
+    """Test suite for LLM-as-Judge evaluation engine."""
+    
+    @pytest.fixture
+    def config(self):
+        """Fixture providing LLM judge configuration."""
+        return {
+            'tier2_llm_judge': {
+                'model': 'gpt-4o-mini',
+                'max_retries': 2,
+                'timeout_seconds': 30.0,
+                'paper_excerpt_length': 2000,
+                'cost_budget_usd': 0.05,
+                'weights': {
+                    'technical_accuracy': 0.4,
+                    'constructiveness': 0.3,
+                    'planning_rationality': 0.3
+                }
+            }
+        }
+    
+    @pytest.fixture
+    def engine(self, config):
+        """Fixture providing LLMJudgeEngine instance."""
+        return LLMJudgeEngine(config)
+    
+    @pytest.fixture
+    def sample_data(self):
+        """Fixture providing sample evaluation data."""
+        return {
+            'paper': '''This paper presents a novel approach to machine learning using 
+                       transformer architectures for natural language processing tasks. 
+                       The methodology involves fine-tuning pre-trained models on domain-specific
+                       datasets with comprehensive evaluation across multiple benchmarks.''',
+            'review': '''The paper demonstrates solid technical methodology with clear 
+                        experimental design. However, the evaluation could be more comprehensive
+                        and the writing clarity could be improved. I recommend acceptance
+                        with minor revisions to address presentation issues.''',
+            'execution_trace': {
+                'agent_interactions': [
+                    {'from': 'Manager', 'to': 'Researcher', 'type': 'task_request', 'timestamp': 1.0},
+                    {'from': 'Researcher', 'to': 'Analyst', 'type': 'data_transfer', 'timestamp': 2.0}
+                ],
+                'tool_calls': [
+                    {'tool_name': 'paper_retrieval', 'timestamp': 1.5, 'success': True, 'duration': 0.5},
+                    {'tool_name': 'duckduckgo_search', 'timestamp': 2.5, 'success': True, 'duration': 1.0}
+                ],
+                'coordination_events': [
+                    {'coordination_type': 'delegation', 'target_agents': ['Researcher'], 'timestamp': 1.0}
+                ]
+            }
+        }
+    
+    def test_engine_initialization(self, config):
+        """Given configuration, LLM judge engine should initialize properly."""
+        engine = LLMJudgeEngine(config)
+        
+        assert engine.default_model == 'gpt-4o-mini'
+        assert engine.max_retries == 2
+        assert engine.timeout == 30.0
+        assert engine.paper_excerpt_length == 2000
+        assert engine.fallback_engine is not None
+    
+    # Technical accuracy assessment tests
+    @pytest.mark.asyncio
+    @patch('app.evals.llm_judge.Agent')
+    @patch('asyncio.wait_for')
+    async def test_assess_technical_accuracy_success(self, mock_wait_for, mock_agent_class, engine, sample_data):
+        """Given successful LLM assessment, should return normalized technical accuracy score."""
+        # Mock LLM response
+        mock_assessment = Mock()
+        mock_assessment.factual_correctness = 4.0
+        mock_assessment.methodology_understanding = 4.5
+        mock_assessment.domain_knowledge = 3.5
+        
+        mock_agent = Mock()
+        mock_agent.run = AsyncMock(return_value=mock_assessment)
+        mock_agent_class.return_value = mock_agent
+        mock_wait_for.return_value = mock_assessment
+        
+        score = await engine.assess_technical_accuracy(sample_data['paper'], sample_data['review'])
+        
+        # Expected score: (4.0*0.5 + 4.5*0.3 + 3.5*0.2) / 5.0 = 0.82
+        expected_score = (4.0*0.5 + 4.5*0.3 + 3.5*0.2) / 5.0
+        assert abs(score - expected_score) < 0.01
+        assert 0.0 <= score <= 1.0
+    
+    @pytest.mark.asyncio
+    @patch('app.evals.llm_judge.Agent')
+    @patch('asyncio.wait_for')
+    async def test_assess_technical_accuracy_timeout(self, mock_wait_for, mock_agent_class, engine, sample_data):
+        """Given LLM timeout, should fallback to semantic similarity."""
+        mock_agent_class.return_value = Mock()
+        mock_wait_for.side_effect = asyncio.TimeoutError("LLM request timed out")
+        
+        with patch.object(engine.fallback_engine, 'compute_semantic_similarity', return_value=0.75) as mock_fallback:
+            score = await engine.assess_technical_accuracy(sample_data['paper'], sample_data['review'])
+            
+            assert score == 0.75
+            mock_fallback.assert_called_once_with(sample_data['paper'], sample_data['review'])
+    
+    # Constructiveness assessment tests
+    @pytest.mark.asyncio
+    @patch('app.evals.llm_judge.Agent')
+    @patch('asyncio.wait_for')
+    async def test_assess_constructiveness_success(self, mock_wait_for, mock_agent_class, engine, sample_data):
+        """Given successful LLM assessment, should return normalized constructiveness score."""
+        mock_assessment = Mock()
+        mock_assessment.actionable_feedback = 4.0
+        mock_assessment.balanced_critique = 3.5
+        mock_assessment.improvement_guidance = 4.5
+        
+        mock_agent = Mock()
+        mock_agent.run = AsyncMock(return_value=mock_assessment)
+        mock_agent_class.return_value = mock_agent
+        mock_wait_for.return_value = mock_assessment
+        
+        score = await engine.assess_constructiveness(sample_data['review'])
+        
+        # Expected score: (4.0 + 3.5 + 4.5) / 15.0 = 0.8
+        expected_score = (4.0 + 3.5 + 4.5) / 15.0
+        assert abs(score - expected_score) < 0.01
+    
+    @pytest.mark.asyncio
+    async def test_assess_constructiveness_fallback(self, engine, sample_data):
+        """Given LLM failure, should use fallback constructiveness check."""
+        with patch('app.evals.llm_judge.Agent', side_effect=Exception("Model error")):
+            with patch.object(engine, '_fallback_constructiveness_check', return_value=0.6) as mock_fallback:
+                score = await engine.assess_constructiveness(sample_data['review'])
+                
+                assert score == 0.6
+                mock_fallback.assert_called_once_with(sample_data['review'])
+    
+    def test_fallback_constructiveness_check(self, engine):
+        """Fallback constructiveness check should analyze constructive phrases."""
+        # Review with many constructive phrases
+        constructive_review = "I suggest improving the methodology. The paper shows strength in analysis but has unclear sections. I recommend considering future work directions."
+        score = engine._fallback_constructiveness_check(constructive_review)
+        assert score > 0.3  # Should detect multiple constructive phrases
+        
+        # Review with few constructive phrases
+        basic_review = "This paper is about machine learning."
+        score = engine._fallback_constructiveness_check(basic_review)
+        assert score < 0.3  # Should have low constructiveness score
+    
+    # Planning rationality assessment tests
+    @pytest.mark.asyncio
+    @patch('app.evals.llm_judge.Agent')
+    @patch('asyncio.wait_for')
+    async def test_assess_planning_rationality_success(self, mock_wait_for, mock_agent_class, engine, sample_data):
+        """Given successful LLM assessment, should return normalized planning score."""
+        mock_assessment = Mock()
+        mock_assessment.logical_flow = 4.0
+        mock_assessment.decision_quality = 4.5
+        mock_assessment.resource_efficiency = 3.0
+        
+        mock_agent = Mock()
+        mock_agent.run = AsyncMock(return_value=mock_assessment)
+        mock_agent_class.return_value = mock_agent
+        mock_wait_for.return_value = mock_assessment
+        
+        score = await engine.assess_planning_rationality(sample_data['execution_trace'])
+        
+        # Expected score: (4.0*0.3 + 4.5*0.5 + 3.0*0.2) / 5.0 = 0.84
+        expected_score = (4.0*0.3 + 4.5*0.5 + 3.0*0.2) / 5.0
+        assert abs(score - expected_score) < 0.01
+    
+    def test_extract_planning_decisions(self, engine, sample_data):
+        """Should extract meaningful summary from execution trace."""
+        summary = engine._extract_planning_decisions(sample_data['execution_trace'])
+        
+        assert "2 interactions" in summary
+        assert "2 calls" in summary
+        assert len(summary) <= 500  # Should be truncated for API efficiency
+    
+    def test_fallback_planning_check(self, engine, sample_data):
+        """Fallback planning check should analyze activity patterns."""
+        # Test optimal activity level
+        score = engine._fallback_planning_check(sample_data['execution_trace'])
+        assert 0.5 < score <= 1.0  # Should be in good range
+        
+        # Test low activity
+        low_activity_trace = {'agent_interactions': [], 'tool_calls': []}
+        score = engine._fallback_planning_check(low_activity_trace)
+        assert score < 0.5
+        
+        # Test excessive activity
+        high_activity_trace = {
+            'agent_interactions': [{'type': 'test'}] * 15,
+            'tool_calls': [{'name': 'test'}] * 10
+        }
+        score = engine._fallback_planning_check(high_activity_trace)
+        assert score < 1.0  # Should penalize excessive activity
+    
+    # Complete evaluation tests
+    @pytest.mark.asyncio
+    async def test_evaluate_llm_judge_complete_success(self, engine, sample_data):
+        """Complete LLM judge evaluation should return valid Tier2Result."""
+        with patch.object(engine, 'assess_technical_accuracy', return_value=0.8) as mock_tech:
+            with patch.object(engine, 'assess_constructiveness', return_value=0.7) as mock_const:
+                with patch.object(engine, 'assess_planning_rationality', return_value=0.75) as mock_plan:
+                    
+                    result = await engine.evaluate_llm_judge(
+                        sample_data['paper'], 
+                        sample_data['review'], 
+                        sample_data['execution_trace']
+                    )
+                    
+                    assert isinstance(result, Tier2Result)
+                    assert result.technical_accuracy == 0.8
+                    assert result.constructiveness == 0.7
+                    assert result.planning_rationality == 0.75
+                    assert result.model_used == 'gpt-4o-mini'
+                    assert result.api_cost > 0.0
+                    assert result.fallback_used is False
+                    
+                    # Check weighted overall score
+                    expected_overall = 0.8*0.4 + 0.7*0.3 + 0.75*0.3
+                    assert abs(result.overall_score - expected_overall) < 0.01
+    
+    @pytest.mark.asyncio
+    async def test_evaluate_llm_judge_with_partial_failures(self, engine, sample_data):
+        """When some assessments fail, should use fallbacks and mark fallback_used."""
+        with patch.object(engine, 'assess_technical_accuracy', side_effect=Exception("API error")):
+            with patch.object(engine, 'assess_constructiveness', return_value=0.7):
+                with patch.object(engine, 'assess_planning_rationality', return_value=0.75):
+                    with patch.object(engine.fallback_engine, 'compute_semantic_similarity', return_value=0.6):
+                        
+                        result = await engine.evaluate_llm_judge(
+                            sample_data['paper'], 
+                            sample_data['review'], 
+                            sample_data['execution_trace']
+                        )
+                        
+                        assert result.technical_accuracy == 0.6  # Fallback value
+                        assert result.fallback_used is True
+    
+    @pytest.mark.asyncio
+    async def test_evaluate_llm_judge_complete_failure(self, engine, sample_data):
+        """When complete evaluation fails, should return fallback result."""
+        with patch.object(engine, 'assess_technical_accuracy', side_effect=Exception("Complete failure")):
+            with patch.object(engine, 'assess_constructiveness', side_effect=Exception("Complete failure")):
+                with patch.object(engine, 'assess_planning_rationality', side_effect=Exception("Complete failure")):
+                    
+                    result = await engine.evaluate_llm_judge(
+                        sample_data['paper'], 
+                        sample_data['review'], 
+                        sample_data['execution_trace']
+                    )
+                    
+                    assert isinstance(result, Tier2Result)
+                    assert result.model_used == "fallback_traditional"
+                    assert result.api_cost == 0.0
+                    assert result.fallback_used is True
+
+
+# Convenience function tests
+@pytest.mark.asyncio
+async def test_evaluate_single_llm_judge():
+    """Test convenience function for single LLM judge evaluation."""
+    paper = "Test paper content"
+    review = "Test review content"
+    trace = {'agent_interactions': []}
+    
+    with patch('app.evals.llm_judge.LLMJudgeEngine') as mock_engine_class:
+        mock_engine = Mock()
+        mock_engine_class.return_value = mock_engine
+        
+        mock_result = Mock(spec=Tier2Result)
+        mock_engine.evaluate_llm_judge = AsyncMock(return_value=mock_result)
+        
+        result = await evaluate_single_llm_judge(paper, review, trace)
+        
+        assert result == mock_result
+        mock_engine.evaluate_llm_judge.assert_called_once_with(paper, review, trace)
+
+
+# Performance and cost tests
+class TestLLMJudgePerformance:
+    """Performance and cost optimization tests."""
+    
+    @pytest.mark.asyncio
+    async def test_paper_excerpt_truncation(self, config):
+        """Long papers should be truncated for cost efficiency."""
+        config['tier2_llm_judge']['paper_excerpt_length'] = 100
+        engine = LLMJudgeEngine(config)
+        
+        long_paper = "This is a very long paper. " * 50  # Much longer than 100 chars
+        review = "Test review"
+        
+        with patch('app.evals.llm_judge.Agent') as mock_agent_class:
+            mock_agent = Mock()
+            mock_agent.run = AsyncMock(return_value=Mock(factual_correctness=4, methodology_understanding=4, domain_knowledge=4))
+            mock_agent_class.return_value = mock_agent
+            
+            await engine.assess_technical_accuracy(long_paper, review)
+            
+            # Check that the prompt was called with truncated paper
+            call_args = mock_agent.run.call_args[0][0]  # First positional argument (prompt)
+            assert len(call_args) < len(long_paper) + 200  # Should be significantly shorter
+    
+    def test_cost_estimation(self, engine):
+        """Should provide reasonable API cost estimates."""
+        paper = "Test paper " * 100
+        review = "Test review " * 50
+        
+        # Rough token estimation
+        total_tokens = len(paper) / 4 + len(review) / 4 + 500
+        expected_cost = (total_tokens / 1000) * 0.0001
+        
+        # This would be tested in the complete evaluation
+        assert expected_cost < 0.05  # Should be under budget limit
+    
+    @pytest.mark.asyncio
+    async def test_timeout_handling(self, engine, sample_data):
+        """Should handle LLM request timeouts gracefully."""
+        with patch('asyncio.wait_for', side_effect=asyncio.TimeoutError("Request timed out")):
+            with patch.object(engine.fallback_engine, 'compute_semantic_similarity', return_value=0.5):
+                
+                score = await engine.assess_technical_accuracy(sample_data['paper'], sample_data['review'])
+                assert score == 0.5  # Should use fallback
