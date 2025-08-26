@@ -1,6 +1,6 @@
 # AI Agent Evaluation Landscape
 
-This document provides a comprehensive overview of the AI agent evaluation ecosystem, including frameworks, tools, datasets, and benchmarks relevant to the Agents-eval project.
+This document provides a comprehensive overview of the AI agent evaluation ecosystem, including frameworks, tools, datasets, and benchmarks relevant to the Agents-eval project. It includes technical details, feasibility assessments, integration scenarios, and GitHub URLs for all major platforms discussed. The platforms are organized by category with detailed Core Features, Technical Implementation sections, and project-specific integration guidance for the PeerRead evaluation use case.
 
 ## Visualization
 

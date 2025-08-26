@@ -12,33 +12,55 @@ skinparam rectangle {
 
 title AI Agent Evaluation Landscape
 
-rectangle "Agent Frameworks" as frameworks #87CEEB {
-  rectangle "LangGraph • CrewAI • AutoGen/AG2 • OpenAI Agents • PydanticAI\nLlamaIndex • Fetch.ai • Langchain • Semantic Kernel\nHaystack • Restack • smolAgents • AutoGPT • BabyAGI\nSuperAGI • mcp-agent • Coral Protocol • Langflow\nSim Studio • Archon • Agentstack" as agent_tools
+' Explicit 3x2 matrix layout
+' Top row
+rectangle "Development Infrastructure" as dev_infra #C8A2C8 {
+  rectangle "Package Management:\nuv\n\nCode Quality:\nRuff • pyright\n\nApplication Framework:\nStreamlit\n\nEnterprise Infrastructure:\nShakudo • Daytona\n\nAI Governance:\nLarridin • Credo AI • Fiddler AI" as dev_tools
 }
 
+rectangle "Observability & Monitoring" as obs #DDA0DD {
+  rectangle "Multi-Agent Observability:\nAgentOps • LangSmith • Arize Phoenix • Langtrace\n\nLLM Observability:\nHelicone • Langfuse • Humanloop • PromptLayer\nLiteral AI • Parea AI\n\nSecurity & Compliance:\nVijil.ai • Cekura.ai • Coval • Cequence.ai" as obs_tools
+}
+
+' Middle row
+rectangle "Analysis & Metrics" as analysis #FFB6C1 {
+  rectangle "Graph Analysis:\nNetworkX • PyTorch Geometric • NetworKit\nGraphology • Graphviz\n\nVisualization:\nMatplotly • Plotly • Bokeh • Streamlit\n\nTraditional Metrics:\nscikit-learn • TorchMetrics • Hugging Face Evaluate\n\nText Evaluation:\nBLEU • ROUGE • BERTScore • CodeBLEU\nNLTK Evaluation • spaCy Similarity\n\nBehavioral Graph Construction:\nspaCy + NetworkX • Neo4j GraphRAG\nUnstructured.io • LlamaIndex PropertyGraphIndex" as analysis_tools
+}
+
+rectangle "Agent Frameworks" as frameworks #87CEEB {
+  rectangle "Multi-Agent Orchestration:\nLangGraph • CrewAI • AutoGen/AG2 • PydanticAI\n\nLLM Orchestration & Workflows:\nLangchain • Semantic Kernel • Haystack • Restack\n\nLightweight & Specialized:\nsmolAgents • AutoGPT • BabyAGI • SuperAGI\n\nProtocol & Integration:\nmcp-agent • Coral Protocol\n\nVisual Development:\nLangflow • Sim Studio • Archon • Agentstack\n\nRAG-Optimized:\nLlamaIndex • Fetch.ai uAgents" as agent_tools
+}
+
+' Bottom row
 rectangle "Data & Web Intelligence" as data_web #98E4D6 {
-  rectangle "Search APIs: Exa.ai • Tavily • Linkup • You.com • Parallel AI\nWeb Scraping: Apify • Firecrawl • Crawl4AI • Browse AI • Bright Data" as web_tools
+  rectangle "AI-Optimized Search APIs:\nExa.ai • Tavily • Linkup • You.com • Parallel AI\n\nWeb Scraping & Extraction:\nApify • Firecrawl • Crawl4AI • Browse AI • Bright Data" as web_tools
 }
 
 rectangle "Evaluation & Testing" as eval #90EE90 {
-  rectangle "Agent Eval: AgentBench • WebArena • SWE-bench • HumanEval • GAIA\nLLM/RAG: HELM • LM Eval Harness • OpenAI Evals • RAGAS • TruLens\nML Platforms: Weights & Biases • MLflow • Neptune • Comet" as eval_tools
+  rectangle "Agent Evaluation:\nAutoGenBench • AgentBench • Langchain AgentEvals\nSwarms Agent Evaluation • Azure AI Evaluation SDK\nBraintrust Agent Evaluation • Google ADK Evaluation\n\nLLM Evaluation:\nDeepEval • Langchain OpenEvals • Braintrust Autoevals\nHELM • MLFlow LLM Evaluate\n\nRAG System Evaluation:\nRAGAs • TruLens\n\nAI Model Testing:\nDeepchecks • Giskard • Patronus AI" as eval_tools
 }
 
-rectangle "Observability" as obs #DDA0DD {
-  rectangle "Multi-Agent: AgentOps • LangSmith • Arize Phoenix\nLLM Obs: Helicone • Langfuse • \nHumanloop • PromptLayer • Literal AI • Parea AI" as obs_tools
-}
+' Layout constraints to force proper matrix arrangement
+dev_infra -[hidden]right- obs
+dev_infra -[hidden]down- analysis
+obs -[hidden]down- frameworks
+analysis -[hidden]right- frameworks
+analysis -[hidden]down- data_web
+frameworks -[hidden]down- eval
+data_web -[hidden]right- eval
 
-rectangle "Analysis & Metrics" as analysis #FFB6C1 {
-  rectangle "Graph: NetworkX • PyGraphviz • Graphviz\nVisualization: Matplotlib • Plotly • Bokeh • Streamlit\nMetrics: scikit-learn • TorchMetrics • BLEU • ROUGE • BERTScore • CodeBLEU" as analysis_tools
-}
+' Primary workflow
+frameworks --> data_web : queries
+data_web --> analysis : provides data to
+analysis --> eval : provides metrics to
 
-rectangle "Dev Infrastructure" as dev_infra #C8A2C8 {
-  rectangle "uv • Streamlit • Ruff • pyright" as dev_tools
-}
-
+' Evaluation and monitoring
 eval --> frameworks : evaluates
 obs --> frameworks : monitors
 obs --> analysis : feeds data to
-frameworks --> data_web : uses
+
+' Infrastructure support
+dev_infra --> analysis : supports
+dev_infra --> eval : enables testing
 
 @enduml
