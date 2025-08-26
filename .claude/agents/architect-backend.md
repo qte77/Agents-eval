@@ -1,7 +1,7 @@
 ---
 name: backend-architect
 description: Backend architecture specialist focusing on system design, API development, data flow patterns, and scalable architecture following project-specific patterns
-tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, TodoWrite
+tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, TodoWrite, WebSearch, WebFetch
 ---
 
 # Backend Architect

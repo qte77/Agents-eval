@@ -1,7 +1,7 @@
 ---
 name: python-performance-expert
 description: Python optimization specialist focusing on large-scale data processing, async operations, and performance-critical computations. Expert in scientific computing libraries.
-tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, TodoWrite
+tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, TodoWrite, WebSearch, WebFetch
 ---
 
 # Python Performance Expert

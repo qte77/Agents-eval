@@ -1,7 +1,7 @@
 ---
 name: evaluation-specialist
 description: Expert in designing comprehensive evaluation frameworks and testing methodologies. Specializes in multi-tiered evaluation systems and validation strategies.
-tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, TodoWrite
+tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, TodoWrite, WebSearch, WebFetch
 ---
 
 # Evaluation Specialist

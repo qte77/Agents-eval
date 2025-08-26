@@ -1,7 +1,7 @@
 ---
 name: agent-systems-architect
 description: Expert in multi-agent system design, coordination patterns, and workflow orchestration. Specializes in PydanticAI agent architectures and inter-agent communication.
-tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, TodoWrite
+tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, TodoWrite, WebSearch, WebFetch
 ---
 
 # Agent Systems Architect
