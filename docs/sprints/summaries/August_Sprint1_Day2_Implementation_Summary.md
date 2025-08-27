@@ -9,9 +9,7 @@
 make setup_dev
 
 # Run basic evaluation example
-cd /workspaces/Agents-eval
-python examples/run_evaluation_example.py
-# Choose option 2 for traditional metrics only
+python src/examples/run_evaluation_example.py
 ```
 
 ### Full Three-Tier Evaluation (Requires API Setup)
