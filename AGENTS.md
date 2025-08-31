@@ -17,10 +17,16 @@ This file serves as an entrypoint for AI coding agents, providing baselines and 
 - [Architecture Overview](#architecture-overview) - System design and data flow
 - [Codebase Structure & Modularity](#codebase-structure--modularity) - Organization principles
 
+### AI Agent Behavior & Compliance
+
+- [Agent Neutrality Requirements](#agent-neutrality-requirements) - Requirement-driven design principles
+- [Subagent Role Boundaries](#subagent-role-boundaries) - Role separation and coordination
+- [Quality Evaluation Framework](#quality-evaluation-framework) - Task readiness assessment
+
 ### Development Workflow
 
-- [Quality Evaluation Framework](#quality-evaluation-framework) - Task readiness assessment
 - [Testing Strategy](#testing-strategy) - Testing approach for agents
+- [Decision Framework Implementation](#decision-framework-implementation) - Conflict resolution procedures
 
 ### Utilities & References
 
@@ -97,9 +103,184 @@ See the project structure in the repository root directory for key application e
 
 **For detailed coding standards, file organization rules, and specific examples, see [CONTRIBUTING.md](CONTRIBUTING.md#style-patterns--documentation).**
 
+## Agent Neutrality Requirements
+
+**ALL AI AGENTS MUST MAINTAIN STRICT NEUTRALITY AND REQUIREMENT-DRIVEN DESIGN:**
+
+### Information Source Requirements (MANDATORY)
+
+1. **Extract requirements from specified documents ONLY**
+   - Read provided sprint documents, task descriptions, or reference materials
+   - Do NOT make assumptions about unstated requirements
+   - Do NOT add functionality not explicitly requested
+   - Do NOT assume production-level complexity unless specified
+
+2. **Request clarification for ambiguous scope**
+   - If task boundaries are unclear, ASK the main agent for clarification
+   - If complexity level is not specified, ASK for target complexity
+   - If integration points are unclear, ASK for specific requirements
+   - Do NOT assume scope or make architectural decisions without validation
+
+3. **Design to stated requirements exactly**
+   - Match the complexity level requested (simple vs complex)
+   - Stay within specified line count targets when provided
+   - Follow "minimal," "streamlined," or "focused" guidance literally
+   - Do NOT over-engineer solutions beyond stated needs
+
+### Example Neutral vs Problematic Prompts
+
+**✅ GOOD (Neutral) Prompt:**
+
+```text
+"Design composite scoring system per Task 4.1 requirements in docs/sprints/2025-08_Sprint1_ThreeTieredEval.md lines 374-394. 
+Target: 100-200 lines total. 
+Scope: Simple scoring formula only, no tier integration.
+If requirements unclear, request specific clarification."
+```
+
+**❌ BAD (Assumption-Heavy) Prompt:**
+
+```text
+"Design comprehensive composite scoring system with advanced tier integration, 
+complex normalization, extensive error handling, and production-ready architecture."
+```
+
+### Scope Validation Checkpoints (MANDATORY)
+
+- **Before design completion**: Validate design stays within specified task scope
+- **Before handoff**: Confirm complexity matches stated targets
+- **During review**: Check implementation matches original requirements, not assumed needs
+
+## Subagent Role Boundaries
+
+### MANDATORY Compliance Requirements for All Subagents
+
+**ALL SUBAGENTS MUST STRICTLY ADHERE TO THE FOLLOWING:**
+
+1. **Separation of Concerns (MANDATORY)**:
+   - **Architects MUST NOT implement code** - only design, plan, and specify requirements
+   - **Developers MUST NOT make architectural decisions** - follow architect specifications exactly
+   - **Evaluators MUST NOT implement** - only design evaluation frameworks and metrics
+   - **Code reviewers MUST focus solely on quality, security, and standards compliance**
+   - **NEVER cross role boundaries** without explicit handoff documentation
+
+2. **Command Execution (MANDATORY)**:
+   - **ALWAYS use make recipes** (e.g., `make type_check`, `make ruff`, `make test_all`)
+   - **NEVER use direct uv commands** unless make command fails
+   - **Document any deviation** from make commands with explicit reason
+
+3. **Quality Validation (MANDATORY)**:
+   - **MUST run `make validate`** before task completion
+   - **MUST fix ALL issues** found by validation steps
+   - **MUST NOT proceed** with type errors or lint failures
+
+4. **Coding Style Adherence (MANDATORY)**:
+   - **MUST analyze existing codebase patterns** before writing any code
+   - **MUST write concise, focused, streamlined code** with no unnecessary features
+   - **MUST avoid verbose output or lengthy explanations** in code or comments
+   - **MUST follow exact naming conventions, file structures, and architectural patterns** found in the codebase
+   - **MUST use minimal dependencies** and lightweight solutions
+
+5. **Documentation Updates (MANDATORY)**:
+   - **MUST update CHANGELOG.md** for non-trivial changes
+   - **MUST write focused, concise docstrings** using Google style format
+   - **MUST update AGENTS.md** when learning new patterns
+
+6. **Testing Requirements (MANDATORY)**:
+   - **MUST create tests** for new functionality following BDD approach
+   - **MUST use `make test_all`** to run tests, not direct pytest
+   - **MUST achieve focused validation**, not just mocked tests
+
+7. **Code Standards (MANDATORY)**:
+   - **MUST follow existing project patterns** and conventions
+   - **MUST use absolute imports** not relative imports
+   - **MUST add `# Reason:` comments** for complex logic only when necessary
+
+**FAILURE TO FOLLOW THESE REQUIREMENTS WILL RESULT IN TASK REJECTION**  
+
+### Role-Specific Agent Boundaries
+
+**ARCHITECTS (backend-architect, agent-systems-architect, evaluation-specialist):**
+
+- **SCOPE**: Design, plan, specify requirements, create architecture diagrams
+- **DELIVERABLES**: Technical specifications, architecture documents, requirement lists
+- **FORBIDDEN**: Writing implementation code, making code changes, running tests
+- **HANDOFF**: Must provide focused specifications to developers before any implementation begins
+
+**DEVELOPERS (python-developer, python-performance-expert, frontend-developer):**
+
+- **SCOPE**: Implement code based on architect specifications, optimize performance
+- **DELIVERABLES**: Working code, tests, performance improvements
+- **FORBIDDEN**: Making architectural decisions, changing system design without architect approval
+- **REQUIREMENTS**: Must follow architect specifications exactly, request clarification if specifications are insufficient
+
+**REVIEWERS (code-reviewer):**
+
+- **SCOPE**: Quality assurance, security review, standards compliance, final validation
+- **DELIVERABLES**: Code review reports, security findings, compliance verification
+- **FORBIDDEN**: Making implementation decisions, writing new features
+- **TIMING**: Must be used immediately after any code implementation
+
+### Subagent Prompt Requirements
+
+**ALL SUBAGENT PROMPTS MUST INCLUDE:**
+
+```text
+MANDATORY: Follow CONTRIBUTING.md guidelines strictly. 
+All requirements in the "MANDATORY Compliance Requirements for All Subagents" section are non-negotiable.
+RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross into other agents' responsibilities.
+```
+
+**Subagents MUST:**
+
+- Reference and follow ALL mandatory compliance requirements above
+- Explicitly confirm they will respect role boundaries and separation of concerns
+- Use make recipes instead of direct commands
+- Validate their work using `make validate` before completion (developers/reviewers only)
+
+## Decision Framework Implementation
+
+When facing conflicting instructions or ambiguous situations:
+
+### Command Execution Preferences
+
+- **Prefer make commands** when available (e.g., `make ruff` over direct `uv run ruff`)
+- If make commands fail, try direct commands as fallback
+- Always document when deviating from standard commands
+
+### Project Structure Handling
+
+**Before starting any task**, agents should:
+
+1. Review the project structure and understand file organization
+2. Identify key components in `src/app/` and test locations in `tests/`
+3. Use consistent file paths based on the established project structure
+
+### Documentation Update Guidelines
+
+- Update **both AGENTS.md and related files** to maintain consistency
+- When learning something new, add it to the appropriate section
+- Prefer specific examples over vague instructions
+
 ## Quality Evaluation Framework
 
-**For detailed task readiness assessment criteria, scoring scales, and implementation procedures, see [CONTRIBUTING.md](CONTRIBUTING.md#quality-evaluation-implementation).**
+Use this framework to assess task readiness before implementation:
+
+**Rate task readiness (1-10 scale):**
+
+- **Context Completeness**: All required information and patterns gathered from codebase, documentation, and requirements
+- **Implementation Clarity**: Clear understanding and actionable implementation path of what needs to be built and how to build it
+- **Requirements Alignment**: Solution follows feature requirements, project patterns, conventions, and architectural decisions
+- **Success Probability**: Confidence level for completing the task efficiently in one pass
+
+**Minimum thresholds for proceeding:**
+
+- Context Completeness: 8/10 or higher
+- Implementation Clarity: 7/10 or higher  
+- Requirements Alignment: 8/10 or higher
+- Success Probability: 7/10 or higher
+
+**If any score is below threshold:** Stop and gather more context, clarify requirements, or escalate using AGENT_REQUESTS.md.
 
 ## Testing Strategy
 

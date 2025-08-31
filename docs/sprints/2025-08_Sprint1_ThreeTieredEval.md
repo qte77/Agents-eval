@@ -38,17 +38,64 @@
 
 ## **MANDATORY HANDOFF REQUIREMENTS**
 
+**All handoff documentation must be placed in `docs/sprints/handoffs/` using the following structure:**
+
+### Handoff Document Structure
+
+**File Format**: `docs/sprints/handoffs/task-[day].[task]-[from_agent]-to-[to_agent].md`
+
+**Examples**:
+
+- `docs/sprints/handoffs/task-1.2-backend_architect-to-evaluation_specialist.md`
+- `docs/sprints/handoffs/task-2.1-backend_architect-to-python_developer.md`
+- `docs/sprints/handoffs/task-2.1-python_developer-to-code_reviewer.md`
+
+**Required Handoff Content**:
+
+```markdown
+# Task [X.Y] Handoff: [From Agent] → [To Agent]
+
+## Task Context
+
+- **Task**: [Brief description]
+- **Objective**: [What needs to be accomplished]
+- **Dependencies**: [Prerequisites completed]
+
+## Deliverables for Next Agent
+
+- [ ] [Specific deliverable 1]
+- [ ] [Specific deliverable 2]
+- [ ] [Validation checkpoint]
+
+## Implementation Requirements
+
+[Specific requirements/specifications for receiving agent]
+
+## Validation Criteria
+
+[How the receiving agent should validate this handoff is complete]
+
+## Files/Locations
+
+[Relevant file paths, documentation locations, etc.]
+```
+
+### Handoff Workflow Requirements
+
 **Architecture → Implementation Handoff:**
 
-- **REQUIRED**: All architects must create complete specification files before any implementation begins
-- **VALIDATION**: Developers must confirm specifications are complete or request clarification
+- **REQUIRED**: Complete specification documents in `docs/sprints/handoffs/`
+- **VALIDATION**: Developers must confirm specifications are complete via handoff document
 - **NO IMPLEMENTATION**: Without complete architect handoff documentation
 
-**Post-Implementation Review:**
+**Implementation → Review Handoff:**
 
-- **MANDATORY**: `code-reviewer` must be used immediately after every code implementation
+- **REQUIRED**: Implementation completion documented in handoff file
+- **VALIDATION**: Code reviewers must validate against handoff criteria
 - **COMPLIANCE**: All code must pass `make validate` before review
-- **PATTERN ADHERENCE**: Code must follow existing codebase patterns exactly
+
+**Final Handoff:**
+
 - **USER APPROVAL**: After each task completion, present results to user and request approval before proceeding
 
 ### **Subagent Usage Examples**
@@ -271,95 +318,78 @@ Agent Score = (
 
 ### **Day 1 (Aug 23): PeerRead Integration & Large Context Models**
 
-**Recommended Agents**: `general-purpose`, `agent-systems-architect`, `evaluation-specialist`, `backend-architect`, `code-reviewer`
+**Objective**: Assess existing capabilities and design evaluation framework architecture
 
-- [ ] **Task 1.1**: Existing PDF Processing Capability Assessment
-  - **Agent**: `general-purpose` **ASSESSMENT ONLY**
-  - **Required Files**: `docs/assessment/existing_pdf_capabilities.md`, `docs/assessment/large_context_model_status.md`
-  - **Deliverable**: Assessment of current PDF processing capabilities in the existing agentic system
-  - **Scope**: Research and evaluate what PDF processing already exists, identify gaps, document current state
-  - **User Review**: Present capability assessment to user for approval before proceeding to Task 1.2
+**Tasks**:
 
-- [ ] **Task 1.2**: Evaluation Framework Architecture Design  
-  - **Agent**: `evaluation-specialist` **DESIGN ONLY**
-  - **Required Files**: `docs/evaluation/framework_architecture.md`, `docs/evaluation/metrics_definitions.md`
-  - **Deliverable**: Complete evaluation tier specifications with exact metrics
-  - **Handoff**: Implementation guide with mathematical formulas for developers
-  - **User Review**: Present evaluation specifications to user for approval before proceeding to Task 1.3
+- [ ] **Task 1.1**: Existing PDF processing capability assessment
+  - **Assigned to**: General Purpose Agent
+- [ ] **Task 1.2**: Evaluation framework architecture design
+  - **Assigned to**: Backend Architect → Evaluation Specialist
 
-**Day 1 DoD**: All architecture specifications complete with required files created and implementation handoffs documented
+**Expected Deliverables**:
 
-**MANDATORY COMPLIANCE**:
+- Assessment of current PDF processing capabilities in the existing agentic system
+- Complete evaluation tier specifications with exact metrics
+- Implementation guide with mathematical formulas for developers
 
-- All architect agents must create specification files listed above
-- No implementation allowed until Day 2 with complete handoffs
-- All specifications must follow CONTRIBUTING.md requirements
-- **USER APPROVAL REQUIRED**: Each task must receive user approval before proceeding to next task
+**Day 1 DoD**: All architecture specifications complete with implementation handoffs documented
 
 ---
 
 ### **Day 2 (Aug 24): Implementation Phase Begins**
 
-**Recommended Agents**: `python-developer`, `code-reviewer`
+**Objective**: Implement core evaluation framework and observability infrastructure
 
-- [ ] **Task 2.1**: Implement Core Evaluation Framework per Architect Specifications
-  - **Agent**: `python-developer` **IMPLEMENT ONLY**
-  - **Requirements**: Follow `docs/evaluation/framework_architecture.md` exactly, implementing **lightweight-first strategy**:
-    - **Primary lightweight stack**: ROUGE-Score + NLTK BLEU + scikit-learn + textdistance (~85MB total)
-    - **Fallback only**: HuggingFace Evaluate when lightweight metrics insufficient for specific use cases
-    - Basic LLM-judge evaluation with existing project patterns
-  - **Deliverable**: Working Traditional and LLM-judge evaluation system with minimal dependencies
-  - **Validation**: Must pass `make validate` and immediate `code-reviewer` audit
-  - **User Review**: Present evaluation system to user for approval before proceeding to Task 2.2
+**Tasks**:
 
-- [ ] **Task 2.2**: Implement Local Observability Infrastructure per Architecture Specifications  
-  - **Agent**: `python-developer` **IMPLEMENT ONLY**
-  - **Requirements**: Follow architect specifications for local JSON/JSONL tracing setup
-  - **Deliverable**: Local tracing infrastructure for evaluation framework (foundation for Day 3 graph analysis)
-  - **Validation**: Must pass `make validate` and immediate `code-reviewer` audit
-  - **User Review**: Present observability system to user for approval before proceeding to Day 3
+- [ ] **Task 2.1**: Core evaluation framework implementation
+  - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
+- [ ] **Task 2.2**: Local observability infrastructure implementation
+  - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
+
+**Expected Deliverables**:
+
+- Working Traditional and LLM-judge evaluation system with minimal dependencies
+- Local tracing infrastructure for evaluation framework
 
 **Day 2 DoD**: Core implementations complete with all validations passing
-
-**MANDATORY COMPLIANCE**:
-
-- All implementations must follow architect specifications exactly
-- `make validate` must pass before any code review
-- `code-reviewer` must audit every implementation immediately
-- **USER APPROVAL REQUIRED**: Each task must receive user approval before proceeding to next task
 
 ---
 
 ### **Day 3 (Aug 25): Graph-Based Complexity Analysis** ✅ **RESOLVED**
 
-**Recommended Agents**: `python-developer`, `agent-systems-architect`, `evaluation-specialist`, `code-reviewer`
+**Objective**: Implement graph-based evaluation metrics and network analysis capabilities
+
+**Tasks**:
 
 - [x] **Task 3.1**: Graph-Based Evaluation Architecture ✅ **COMPLETED**
+  - **Assigned to**: Agent Systems Architect → Python Developer → Code Reviewer
   - Designed tool call complexity measurement system using NetworkX graph construction
   - Created agent interaction graph mapping infrastructure with NetworkX for essential analysis
   - **Deliverable**: Streamlined graph analysis architecture with NetworkX-native components
-  - **Agent Focus**: `python-developer` for NetworkX implementation, `agent-systems-architect` for agent interaction patterns
   - **Status**: Graph analysis module implemented in `src/app/evals/graph_analysis.py`
 
 - [x] **Task 3.2**: Tool Call Pattern Analysis ✅ **COMPLETED**
+  - **Assigned to**: Agent Systems Architect → Python Developer → Code Reviewer
   - Implemented tool usage pattern recognition using NetworkX centrality measures and basic graph algorithms
   - Created efficiency metrics for tool interactions with NetworkX
   - **Deliverable**: Tool call complexity analyzer with NetworkX native visualization (nx.draw())
-  - **Agent Focus**: `python-developer` for implementation with NetworkX optimization, `agent-systems-architect` for agent workflow patterns
   - **Status**: Tool pattern analysis functionality integrated with visualization capabilities
 
 - [x] **Task 3.3**: Agent Interaction Graph Generation ✅ **COMPLETED**
+  - **Assigned to**: Evaluation Specialist → Agent Systems Architect → Python Developer → Code Reviewer
   - Mapped agent-to-agent communication patterns using NetworkX directed graphs
   - Measured interaction complexity and efficiency with minimal built-in visualization
   - **Deliverable**: Agent interaction metrics with NetworkX-native visualization capabilities
-  - **Agent Focus**: `evaluation-specialist` for complexity metrics design, `agent-systems-architect` for agent coordination analysis, `code-reviewer` for code quality validation
   - **Status**: Agent interaction graph generation complete with comprehensive test coverage
 
 **Day 3 DoD**: Graph-based complexity analysis system operational ✅ **ACHIEVED**
 
 **Implementation Summary**:
+
 - Graph analysis module (`src/app/evals/graph_analysis.py`) completed with NetworkX
-- Comprehensive test suite (`tests/evals/test_graph_analysis.py`) implemented 
+- Comprehensive test suite (`tests/evals/test_graph_analysis.py`) implemented
 - Tool call and agent interaction pattern analysis operational
 - Visualization capabilities integrated using NetworkX native functions
 
@@ -367,95 +397,65 @@ Agent Score = (
 
 ### **Day 4 (Aug 26): Composite Scoring & Integration** 🎯 **IN PROGRESS**
 
-**Recommended Agents**: `evaluation-specialist`, `python-developer`, `code-reviewer`
+**Objective**: Integrate three evaluation tiers into unified scoring system with PeerRead dataset support
 
-**Current Sprint Status**: With Day 3 graph-based analysis complete, Day 4 focuses on integrating all three evaluation tiers into a unified scoring system.
+**Tasks**:
 
-- [ ] **Task 4.1**: Composite Scoring System Implementation
-  - Implement six-metric scoring formula from `config_eval.json`:
-    ```python
-    Agent Score = (
-        time_taken * 0.167 +
-        task_success * 0.167 + 
-        coordination_quality * 0.167 +
-        tool_efficiency * 0.167 +
-        planning_rational * 0.167 +
-        output_similarity * 0.167
-    )
-    ```
-  - Create score normalization and weighting system with confidence threshold (0.8)
-  - Implement recommendation weights: Accept (1.0), Weak Accept (0.7), Weak Reject (-0.7), Reject (-1.0)
-  - **Deliverable**: Functional composite scoring system in `src/app/evals/scoring.py`
-  - **Agent Focus**: `evaluation-specialist` for scoring design, `python-developer` for implementation
-  - **Dependencies**: Requires graph analysis output from Day 3 tasks
+- [ ] **Task 4.1**: Simple composite scoring formula implementation
+  - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
+- [ ] **Task 4.2**: Three-tier evaluation pipeline integration
+  - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
+- [ ] **Task 4.3**: PeerRead dataset integration & testing
+  - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
+- [ ] **Task 4.4**: Observability & performance integration
+  - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
 
-- [ ] **Task 4.2**: Three-Tier Evaluation Pipeline Integration
-  - Connect Tier 1 (traditional metrics), Tier 2 (LLM-judge), and Tier 3 (graph-based) evaluations
-  - Implement progressive evaluation strategy: basic → quality → complexity analysis
-  - End-to-end testing with PeerRead dataset samples using large context models
-  - Create evaluation orchestration layer for tier selection based on requirements
-  - **Deliverable**: Complete integrated evaluation pipeline in `src/app/evals/pipeline.py`
-  - **Agent Focus**: `python-developer` for integration implementation, `evaluation-specialist` for workflow coordination
-  - **Performance Target**: <5s for tier 1+2, <15s for all tiers including graph analysis
+**Expected Deliverables**:
 
-- [ ] **Task 4.3**: PeerRead Dataset Integration & Testing
-  - Implement PeerRead paper ingestion with large context window models (Claude 4, GPT-4 Turbo, Gemini 1.5)
-  - Create fallback strategy for smaller context models using intelligent document chunking
-  - Implement focused unit tests for all evaluation components
-  - Create integration tests for pipeline components with real PeerRead samples
-  - Test edge cases: malformed papers, missing reviews, large documents
-  - **Deliverable**: Complete test coverage for evaluation system with PeerRead validation
-  - **Agent Focus**: `python-developer` for test implementation, `code-reviewer` for test quality validation
-  - **Test Target**: >90% coverage with real dataset validation
-
-- [ ] **Task 4.4**: Observability & Performance Integration
-  - Integrate local observability infrastructure from Day 2 with graph analysis from Day 3
-  - Connect AgentNeo tracing with graph construction for real-time analysis
-  - Optimize evaluation pipeline efficiency using lightweight-first approach (ROUGE, NLTK, scikit-learn)
-  - Ensure <100MB dependency footprint for primary stack, with HuggingFace Evaluate as fallback only
-  - Implement trace file structure in `./logs/traces/` with timestamped execution logs
-  - **Deliverable**: Optimized evaluation system with integrated observability
-  - **Agent Focus**: `python-developer` for optimization implementation, `evaluation-specialist` for observability integration
-  - **Performance Target**: <5s latency using lightweight stack
+- Functional composite scoring system
+- Integrated evaluation pipeline connecting all three tiers
+- PeerRead dataset processing with comprehensive test coverage
+- Optimized evaluation system with observability integration
 
 **Day 4 DoD**: Complete three-tier PeerRead evaluation system with composite scoring operational
 
 **Critical Dependencies from Previous Days**:
+
 - ✅ Day 2: Core evaluation framework and observability infrastructure
 - ✅ Day 3: Graph-based complexity analysis system
 - 🎯 Day 4: Integration of all components into unified pipeline
-
-**Next Day Preview**: Day 5 will focus on comprehensive PeerRead validation, error handling, and production readiness.
 
 ---
 
 ### **Day 5 (Aug 27): PeerRead Validation & Testing**
 
-**Recommended Agents**: `evaluation-specialist`, `code-reviewer`, `python-developer`
+**Objective**: Validate evaluation system with real PeerRead dataset and ensure production readiness
+
+**Tasks**:
 
 - [ ] **Task 5.1**: Comprehensive PeerRead Dataset Testing
+  - **Assigned to**: Evaluation Specialist → Python Developer → Code Reviewer
   - Test full pipeline with actual PeerRead papers and reviews
   - Validate all three evaluation approaches with real data
   - **Deliverable**: Validated evaluation system with real dataset
-  - **Agent Focus**: `evaluation-specialist` for validation methodology
 
 - [ ] **Task 5.2**: Scoring System Validation
+  - **Assigned to**: Evaluation Specialist → Python Developer → Code Reviewer
   - Test composite scoring formula with varied performance scenarios
   - Validate score interpretability and ranking accuracy
   - **Deliverable**: Validated and calibrated scoring system
-  - **Agent Focus**: `evaluation-specialist` for calibration validation
 
 - [ ] **Task 5.3**: Error Handling & Edge Case Testing
+  - **Assigned to**: Python Developer → Code Reviewer
   - Complete error message strategy implementation
   - Test edge cases with malformed papers, missing reviews
   - **Deliverable**: Robust error handling system
-  - **Agent Focus**: `code-reviewer` for focused error testing, `python-developer` for robust implementation
 
 - [ ] **Task 5.4**: Documentation & Usage Guide
+  - **Assigned to**: Evaluation Specialist
   - Create PeerRead evaluation workflow documentation
   - Document scoring interpretation and benchmarking
   - **Deliverable**: Complete user documentation
-  - **Agent Focus**: `evaluation-specialist` for usage documentation
 
 **Day 5 DoD**: Production-ready PeerRead evaluation system with focused validation and documentation
 
@@ -463,31 +463,33 @@ Agent Score = (
 
 ### **Day 6 (Aug 28): Final Integration & Sprint Analysis**
 
-**Recommended Agents**: `code-reviewer`, `evaluation-specialist`, `python-developer`
+**Objective**: Complete system integration testing and prepare for production handoff
+
+**Tasks**:
 
 - [ ] **Task 6.1**: Final System Integration Testing
+  - **Assigned to**: Code Reviewer → Python Developer
   - Complete end-to-end testing with full PeerRead workflow
   - Performance benchmarking and optimization
   - **Deliverable**: Production-ready evaluation system
-  - **Agent Focus**: `code-reviewer` for final quality validation
 
 - [ ] **Task 6.2**: Sprint Retrospective & Analysis
+  - **Assigned to**: Evaluation Specialist
   - Analyze implementation effectiveness against goals
   - Document lessons learned and optimization opportunities
   - **Deliverable**: Comprehensive sprint analysis report
-  - **Agent Focus**: `evaluation-specialist` for performance analysis
 
 - [ ] **Task 6.3**: Future Sprint Planning
+  - **Assigned to**: Evaluation Specialist
   - Identify next priorities based on current implementation
   - Plan enhancements for evaluation framework expansion
   - **Deliverable**: Next sprint roadmap and priorities
-  - **Agent Focus**: `evaluation-specialist` for enhancement planning
 
 - [ ] **Task 6.4**: Final Validation & Handoff
+  - **Assigned to**: Code Reviewer → Python Developer
   - Complete system validation checklist
   - Prepare handoff documentation for production use
   - **Deliverable**: Production-ready system with handoff materials
-  - **Agent Focus**: `code-reviewer` for final validation checklist, `python-developer` for code quality validation
 
 **Day 6 DoD**: Complete PeerRead evaluation system ready for production use with focused analysis and future roadmap
 

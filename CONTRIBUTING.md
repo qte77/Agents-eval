@@ -17,8 +17,7 @@
 
 ### Collaboration
 
-- [Requests to Humans](#requests-to-humans) - Escalation and clarifications
-- [Timestamping for CLI Operations](#timestamping-for-cli-operations) - ISO 8601 standards
+- [Human-Agent Collaboration](#human-agent-collaboration) - Guidelines for AI agents and escalation
 
 ## Development Commands & Environment
 
@@ -26,11 +25,9 @@
 
 The project requirements are stated in `pyproject.toml`. Your development environment should be set up automatically using the provided `Makefile`, which configures the virtual environment.
 
-**See the [Unified Command Reference](#unified-command-reference) section for all available commands with error recovery procedures.**
-
-### Code Quality
-
 Code formatting and type checking are managed by **ruff** and **pyright** and orchestrated via the `Makefile`.
+
+**See the [Unified Command Reference](#unified-command-reference) section for all available commands with error recovery procedures.**
 
 ### Testing Strategy & Guidelines
 
@@ -69,11 +66,6 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 - **Iteratively improve** tests and code until feature requirements are met
 - All code quality and tests must **pass before advancing** to the next step
 
-**Implementation Balance:**
-
-- **Balance mocking** with real integration validation during development
-- **Document real test results** in implementation logs for future reference
-
 #### Testing Anti-Patterns to Avoid
 
 - ❌ **Only mocking external dependencies** without ever testing real integration
@@ -87,7 +79,7 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 
 ### Coding Style
 
-- **Follow existing codebase patterns exactly** - analyze file structure, naming conventions, and architectural decisions before writing any codeni
+- **Follow existing codebase patterns exactly** - analyze file structure, naming conventions, and architectural decisions before writing any code
 - **Write concise, focused, streamlined code** with no unnecessary features or verbose implementations
 - **Use Pydantic** models in `src/app/datamodels/` for all data validation and data contracts. **Always use or update these models** when modifying data flows.
 - Use the predefined error message functions for consistency. Update or create new if necessary.
@@ -177,28 +169,6 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 2. `uv run pyright`
 3. `uv run pytest`
 
-## Timestamping for CLI Operations
-
-- **Always use ISO 8601 timestamps** when creating logs or tracking CLI operations
-- **File naming format**: `YYYY-mm-DDTHH-MM-SSZ` (hyphens for filesystem compatibility)
-- **Content format**: `YYYY-mm-DDTHH:MM:SSZ` (standard ISO 8601)
-- **Implementation**: Use `date -u "+FORMAT"` commands for accurate UTC timestamps
-
-### Timestamp Commands
-
-- Filename timestamp: `date -u "+%Y-%m-%dT%H-%M-%SZ"`
-- Content timestamp: `date -u "+%Y-%m-%dT%H:%M:%SZ"`
-- Log entry format: `[TIMESTAMP] Action description`
-
-## Auxiliary
-
-### Markdown Formatting
-
-- Run `make setup_markdownlint` once to install markdownlint CLI
-- Use `make run_markdownlint INPUT_FILES="docs/**/*.md"` to lint and auto-fix markdown files
-- Common issues: line length (MD013), trailing spaces (MD009), blank lines around headings (MD022)
-- Use [markdownlint's Rules.md](https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md) to output well-formatted markdown as fallback
-
 ## Unified Command Reference
 
 ### Path References
@@ -236,157 +206,24 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 | `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
 | `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notify user |
 
-## Agent-Specific Guidelines
+## Human-Agent Collaboration
 
-### MANDATORY Compliance Requirements for All Subagents
+### Basic Guidelines for AI Agents
 
-**ALL SUBAGENTS MUST STRICTLY ADHERE TO THE FOLLOWING:**
+**For comprehensive AI agent instructions, see [AGENTS.md](AGENTS.md).**
 
-1. **Separation of Concerns (MANDATORY)**:
-   - **Architects MUST NOT implement code** - only design, plan, and specify requirements
-   - **Developers MUST NOT make architectural decisions** - follow architect specifications exactly
-   - **Evaluators MUST NOT implement** - only design evaluation frameworks and metrics
-   - **Code reviewers MUST focus solely on quality, security, and standards compliance**
-   - **NEVER cross role boundaries** without explicit handoff documentation
+**Key principles for AI agents working in this codebase:**
 
-2. **Command Execution (MANDATORY)**:
-   - **ALWAYS use make recipes** (e.g., `make type_check`, `make ruff`, `make test_all`)
-   - **NEVER use direct uv commands** unless make command fails
-   - **Document any deviation** from make commands with explicit reason
-
-3. **Quality Validation (MANDATORY)**:
-   - **MUST run `make validate`** before task completion
-   - **MUST fix ALL issues** found by validation steps
-   - **MUST NOT proceed** with type errors or lint failures
-
-4. **Coding Style Adherence (MANDATORY)**:
-   - **MUST analyze existing codebase patterns** before writing any code
-   - **MUST write concise, focused, streamlined code** with no unnecessary features
-   - **MUST avoid verbose output or lengthy explanations** in code or comments
-   - **MUST follow exact naming conventions, file structures, and architectural patterns** found in the codebase
-   - **MUST use minimal dependencies** and lightweight solutions
-
-5. **Documentation Updates (MANDATORY)**:
-   - **MUST update CHANGELOG.md** for non-trivial changes
-   - **MUST write focused, concise docstrings** using Google style format
-   - **MUST update AGENTS.md** when learning new patterns
-
-6. **Testing Requirements (MANDATORY)**:
-   - **MUST create tests** for new functionality following BDD approach
-   - **MUST use `make test_all`** to run tests, not direct pytest
-   - **MUST achieve focused validation**, not just mocked tests
-
-7. **Code Standards (MANDATORY)**:
-   - **MUST follow existing project patterns** and conventions
-   - **MUST use absolute imports** not relative imports
-   - **MUST add `# Reason:` comments** for complex logic only when necessary
-
-**FAILURE TO FOLLOW THESE REQUIREMENTS WILL RESULT IN TASK REJECTION**  
-
-### Role-Specific Agent Boundaries
-
-**ARCHITECTS (backend-architect, agent-systems-architect, evaluation-specialist):**
-
-- **SCOPE**: Design, plan, specify requirements, create architecture diagrams
-- **DELIVERABLES**: Technical specifications, architecture documents, requirement lists
-- **FORBIDDEN**: Writing implementation code, making code changes, running tests
-- **HANDOFF**: Must provide focused specifications to developers before any implementation begins
-
-**DEVELOPERS (python-developer, python-performance-expert):**
-
-- **SCOPE**: Implement code based on architect specifications, optimize performance
-- **DELIVERABLES**: Working code, tests, performance improvements
-- **FORBIDDEN**: Making architectural decisions, changing system design without architect approval
-- **REQUIREMENTS**: Must follow architect specifications exactly, request clarification if specifications are insufficient
-
-**REVIEWERS (code-reviewer):**
-
-- **SCOPE**: Quality assurance, security review, standards compliance, final validation
-- **DELIVERABLES**: Code review reports, security findings, compliance verification
-- **FORBIDDEN**: Making implementation decisions, writing new features
-- **TIMING**: Must be used immediately after any code implementation
-
-### Subagent Prompt Requirements
-
-**ALL SUBAGENT PROMPTS MUST INCLUDE:**
-
-```text
-MANDATORY: Follow CONTRIBUTING.md guidelines strictly. 
-All requirements in the "MANDATORY Compliance Requirements for All Subagents" section are non-negotiable.
-RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross into other agents' responsibilities.
-```
-
-**Subagents MUST:**
-
-- Reference and follow ALL mandatory compliance requirements above
-- Explicitly confirm they will respect role boundaries and separation of concerns
-- Use make recipes instead of direct commands
-- Validate their work using `make validate` before completion (developers/reviewers only)
-
-### Decision Framework Implementation
-
-When facing conflicting instructions or ambiguous situations:
-
-#### Command Execution Preferences
-
-- **Prefer make commands** when available (e.g., `make ruff` over direct `uv run ruff`)
-- If make commands fail, try direct commands as fallback
-- Always document when deviating from standard commands
-
-#### Project Structure Handling
-
-**Before starting any task**, agents should:
-
-1. Review the project structure and understand file organization
-2. Identify key components in `src/app/` and test locations in `tests/`
-3. Use consistent file paths based on the established project structure
-
-#### Documentation Update Guidelines
-
-- Update **both AGENTS.md and related files** to maintain consistency
-- When learning something new, add it to the appropriate section
-- Prefer specific examples over vague instructions
-
-### Quality Evaluation Implementation
-
-Use this framework to assess task readiness before implementation:
-
-**Rate task readiness (1-10 scale):**
-
-- **Context Completeness**: All required information and patterns gathered from codebase, documentation, and requirements
-- **Implementation Clarity**: Clear understanding and actionable implementation path of what needs to be built and how to build it
-- **Requirements Alignment**: Solution follows feature requirements, project patterns, conventions, and architectural decisions
-- **Success Probability**: Confidence level for completing the task efficiently in one pass
-
-**Minimum thresholds for proceeding:**
-
-- Context Completeness: 8/10 or higher
-- Implementation Clarity: 7/10 or higher  
-- Requirements Alignment: 8/10 or higher
-- Success Probability: 7/10 or higher
-
-**If any score is below threshold:** Stop and gather more context, clarify requirements, or escalate using AGENT_REQUESTS.md.
-
-## Agent Communication
+- Follow existing project structure and organization patterns
+- Always use `make` recipes for commands (e.g., `make validate`, `make test_all`)
+- Request clarification when requirements are unclear rather than making assumptions
+- Write concise, focused code following established codebase patterns
+- Update CHANGELOG.md for non-trivial changes and AGENTS.md when learning new patterns
 
 ### Requests to Humans
 
 **For agent escalation and human collaboration, see [AGENT_REQUESTS.md](AGENT_REQUESTS.md).**
 
-This centralized file contains:
-
-- Escalation process guidelines
-- Active requests from agents
-- Response format for humans
-- Completed requests archive
-
 ### Agent Learning
 
 **For accumulated agent knowledge and patterns, see [AGENT_LEARNINGS.md](AGENT_LEARNINGS.md).**
-
-This growing knowledge base includes:
-
-- Discovered patterns and solutions
-- Common pitfall avoidance
-- Integration approaches
-- Performance optimizations
