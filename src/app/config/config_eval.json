@@ -44,7 +44,10 @@
       "tool_accuracy": 0.25,
       "coordination_quality": 0.25,
       "task_balance": 0.2
-    }
+    },
+    "max_nodes": 1000,
+    "max_edges": 5000,
+    "operation_timeout_seconds": 10.0
   },
   
   "composite_scoring": {

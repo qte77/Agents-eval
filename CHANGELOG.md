@@ -57,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BaseException type issues in evaluation pipelines with proper exception handling
 - LLM assessment model definitions with comprehensive Pydantic validation
 - Data model imports using direct module references instead of __init__.py exports
+- Graph analysis engine configuration validation now allows partial weight specifications for improved usability
+- Test data structures in graph analysis tests to include required fields
+- NetworkX error handling test expectations to match actual fallback behavior
 
 ### Removed
 

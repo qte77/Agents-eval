@@ -330,61 +330,102 @@ Agent Score = (
 
 ---
 
-### **Day 3 (Aug 25): Graph-Based Complexity Analysis**
+### **Day 3 (Aug 25): Graph-Based Complexity Analysis** ✅ **RESOLVED**
 
 **Recommended Agents**: `python-developer`, `agent-systems-architect`, `evaluation-specialist`, `code-reviewer`
 
-- [ ] **Task 3.1**: Graph-Based Evaluation Architecture
-  - Design tool call complexity measurement system using NetworkX graph construction
-  - Create agent interaction graph mapping infrastructure with NetworkX for essential analysis
+- [x] **Task 3.1**: Graph-Based Evaluation Architecture ✅ **COMPLETED**
+  - Designed tool call complexity measurement system using NetworkX graph construction
+  - Created agent interaction graph mapping infrastructure with NetworkX for essential analysis
   - **Deliverable**: Streamlined graph analysis architecture with NetworkX-native components
   - **Agent Focus**: `python-developer` for NetworkX implementation, `agent-systems-architect` for agent interaction patterns
+  - **Status**: Graph analysis module implemented in `src/app/evals/graph_analysis.py`
 
-- [ ] **Task 3.2**: Tool Call Pattern Analysis
-  - Implement tool usage pattern recognition using NetworkX centrality measures and basic graph algorithms
-  - Create efficiency metrics for tool interactions with NetworkX (igraph as optional performance fallback)
+- [x] **Task 3.2**: Tool Call Pattern Analysis ✅ **COMPLETED**
+  - Implemented tool usage pattern recognition using NetworkX centrality measures and basic graph algorithms
+  - Created efficiency metrics for tool interactions with NetworkX
   - **Deliverable**: Tool call complexity analyzer with NetworkX native visualization (nx.draw())
   - **Agent Focus**: `python-developer` for implementation with NetworkX optimization, `agent-systems-architect` for agent workflow patterns
+  - **Status**: Tool pattern analysis functionality integrated with visualization capabilities
 
-- [ ] **Task 3.3**: Agent Interaction Graph Generation
-  - Map agent-to-agent communication patterns using NetworkX directed graphs
-  - Measure interaction complexity and efficiency with minimal built-in visualization
+- [x] **Task 3.3**: Agent Interaction Graph Generation ✅ **COMPLETED**
+  - Mapped agent-to-agent communication patterns using NetworkX directed graphs
+  - Measured interaction complexity and efficiency with minimal built-in visualization
   - **Deliverable**: Agent interaction metrics with NetworkX-native visualization capabilities
   - **Agent Focus**: `evaluation-specialist` for complexity metrics design, `agent-systems-architect` for agent coordination analysis, `code-reviewer` for code quality validation
+  - **Status**: Agent interaction graph generation complete with comprehensive test coverage
 
-**Day 3 DoD**: Graph-based complexity analysis system operational
+**Day 3 DoD**: Graph-based complexity analysis system operational ✅ **ACHIEVED**
+
+**Implementation Summary**:
+- Graph analysis module (`src/app/evals/graph_analysis.py`) completed with NetworkX
+- Comprehensive test suite (`tests/evals/test_graph_analysis.py`) implemented 
+- Tool call and agent interaction pattern analysis operational
+- Visualization capabilities integrated using NetworkX native functions
 
 ---
 
-### **Day 4 (Aug 26): Composite Scoring & Integration**
+### **Day 4 (Aug 26): Composite Scoring & Integration** 🎯 **IN PROGRESS**
 
 **Recommended Agents**: `evaluation-specialist`, `python-developer`, `code-reviewer`
 
+**Current Sprint Status**: With Day 3 graph-based analysis complete, Day 4 focuses on integrating all three evaluation tiers into a unified scoring system.
+
 - [ ] **Task 4.1**: Composite Scoring System Implementation
-  - Implement scoring formula: (Agentic Results / Execution Time / Graph Complexity)
-  - Create score normalization and weighting system
-  - **Deliverable**: Functional composite scoring system
+  - Implement six-metric scoring formula from `config_eval.json`:
+    ```python
+    Agent Score = (
+        time_taken * 0.167 +
+        task_success * 0.167 + 
+        coordination_quality * 0.167 +
+        tool_efficiency * 0.167 +
+        planning_rational * 0.167 +
+        output_similarity * 0.167
+    )
+    ```
+  - Create score normalization and weighting system with confidence threshold (0.8)
+  - Implement recommendation weights: Accept (1.0), Weak Accept (0.7), Weak Reject (-0.7), Reject (-1.0)
+  - **Deliverable**: Functional composite scoring system in `src/app/evals/scoring.py`
   - **Agent Focus**: `evaluation-specialist` for scoring design, `python-developer` for implementation
+  - **Dependencies**: Requires graph analysis output from Day 3 tasks
 
-- [ ] **Task 4.2**: Full Evaluation Pipeline Integration
-  - Connect traditional, LLM-judge, and graph-based evaluations
-  - End-to-end testing with PeerRead dataset samples
-  - **Deliverable**: Complete integrated evaluation pipeline
+- [ ] **Task 4.2**: Three-Tier Evaluation Pipeline Integration
+  - Connect Tier 1 (traditional metrics), Tier 2 (LLM-judge), and Tier 3 (graph-based) evaluations
+  - Implement progressive evaluation strategy: basic → quality → complexity analysis
+  - End-to-end testing with PeerRead dataset samples using large context models
+  - Create evaluation orchestration layer for tier selection based on requirements
+  - **Deliverable**: Complete integrated evaluation pipeline in `src/app/evals/pipeline.py`
   - **Agent Focus**: `python-developer` for integration implementation, `evaluation-specialist` for workflow coordination
+  - **Performance Target**: <5s for tier 1+2, <15s for all tiers including graph analysis
 
-- [ ] **Task 4.3**: Testing and Validation
+- [ ] **Task 4.3**: PeerRead Dataset Integration & Testing
+  - Implement PeerRead paper ingestion with large context window models (Claude 4, GPT-4 Turbo, Gemini 1.5)
+  - Create fallback strategy for smaller context models using intelligent document chunking
   - Implement focused unit tests for all evaluation components
-  - Create integration tests for pipeline components
-  - **Deliverable**: Complete test coverage for evaluation system
+  - Create integration tests for pipeline components with real PeerRead samples
+  - Test edge cases: malformed papers, missing reviews, large documents
+  - **Deliverable**: Complete test coverage for evaluation system with PeerRead validation
   - **Agent Focus**: `python-developer` for test implementation, `code-reviewer` for test quality validation
+  - **Test Target**: >90% coverage with real dataset validation
 
-- [ ] **Task 4.4**: Performance Optimization
-  - Optimize evaluation pipeline efficiency using lightweight-first approach
-  - Ensure minimal dependency footprint
-  - **Deliverable**: Optimized evaluation system performance
-  - **Agent Focus**: `python-developer` for optimization implementation
+- [ ] **Task 4.4**: Observability & Performance Integration
+  - Integrate local observability infrastructure from Day 2 with graph analysis from Day 3
+  - Connect AgentNeo tracing with graph construction for real-time analysis
+  - Optimize evaluation pipeline efficiency using lightweight-first approach (ROUGE, NLTK, scikit-learn)
+  - Ensure <100MB dependency footprint for primary stack, with HuggingFace Evaluate as fallback only
+  - Implement trace file structure in `./logs/traces/` with timestamped execution logs
+  - **Deliverable**: Optimized evaluation system with integrated observability
+  - **Agent Focus**: `python-developer` for optimization implementation, `evaluation-specialist` for observability integration
+  - **Performance Target**: <5s latency using lightweight stack
 
-**Day 4 DoD**: Complete PeerRead evaluation system with composite scoring operational
+**Day 4 DoD**: Complete three-tier PeerRead evaluation system with composite scoring operational
+
+**Critical Dependencies from Previous Days**:
+- ✅ Day 2: Core evaluation framework and observability infrastructure
+- ✅ Day 3: Graph-based complexity analysis system
+- 🎯 Day 4: Integration of all components into unified pipeline
+
+**Next Day Preview**: Day 5 will focus on comprehensive PeerRead validation, error handling, and production readiness.
 
 ---
 
