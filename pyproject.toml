@@ -21,10 +21,10 @@ dependencies = [
     "pydantic-ai-slim[duckduckgo,openai,tavily]>=0.2.12",
     "pydantic-settings>=2.9.1",
     # "torchmetrics[text]>=1.4.0",  # Modern ROUGE, BLEU, text metrics (2024+ maintained) - DISABLED due to sentencepiece build issues
-    "scikit-learn>=1.5.0",  # F1, precision, recall, accuracy metrics (2024+ maintained)
-    "nltk>=3.9.0",  # BLEU score computation (2024+ maintained)
-    "textdistance>=4.6.0",  # Multiple text similarity algorithms (2024+ maintained)
-    "networkx>=3.0",  # Graph analysis for agent coordination metrics (2024+ maintained)
+    "scikit-learn>=1.7.1", # F1, precision, recall, accuracy metrics
+    "nltk>=3.9.1", # BLEU score computation (2024)
+    "textdistance>=4.6.3", # Multiple text similarity algorithms (2024)
+    "networkx>=3.5", # Graph analysis (May 29, 2025 maintained)
     "scalene>=1.5.51",
     "weave>=0.51.49",
 ]
@@ -63,7 +63,7 @@ docs = [
 [tool.uv]
 # package = true
 # last well-known "2025-05-31T00:00:00Z"
-exclude-newer = "2025-07-20T00:00:00Z"
+exclude-newer = "2025-08-31T00:00:00Z"
 
 [tool.logfire]
 ignore_no_config=true
