@@ -1,6 +1,6 @@
 ---
-title: "Technical Analysis: Tracing and Observation Methods in AI Agent Observability Tools"
-description: Comprehensive technical analysis of tracing and observation mechanisms used by observability platforms for AI agent monitoring and post-execution graph construction
+title: Technical Analysis: Tracing and Observation Methods in AI Agent Observability Tools
+description: Comprehensive technical analysis from the landscape analysis, focused on tracing and observation mechanisms used by observability platforms for AI agent monitoring and post-execution graph construction
 date: 2025-08-24
 status: draft
 category: technical-analysis
@@ -20,6 +20,8 @@ investigation_notes: Needs deeper source code analysis of actual tracing impleme
 This analysis examines the specific technical mechanisms used by 11 observability platforms to trace and observe AI agent behavior. The research reveals five primary technical patterns: decorator-based instrumentation, proxy-based interception, OpenTelemetry standard implementation, native framework integration, and specialized statistical approaches.
 
 **Note**: This document requires further investigation into the actual source code implementations to provide deeper technical details about how tracing and observation mechanisms are implemented within each tool's codebase.
+
+**See**: [landscape.md](landscape.md)
 
 ## Key Features of the Analysis
 

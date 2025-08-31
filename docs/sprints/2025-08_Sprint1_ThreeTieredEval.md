@@ -403,12 +403,24 @@ Agent Score = (
 
 - [ ] **Task 4.1**: Simple composite scoring formula implementation
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
+  - **Requirements**: Implement composite scoring using config_eval.json weights (6 metrics @ 0.167 each)
+  - **Reference**: docs/landscape/agent_eval_metrics.md for metric definitions
+  - **Deliverable**: CompositeScorer class with recommendation thresholds
 - [ ] **Task 4.2**: Three-tier evaluation pipeline integration
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
+  - **Requirements**: Connect Traditional → LLM-Judge → Graph Analysis tiers
+  - **Reference**: docs/architecture.md for evaluation pipeline flow
+  - **Deliverable**: Unified evaluation pipeline orchestrator
 - [ ] **Task 4.3**: PeerRead dataset integration & testing
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
+  - **Requirements**: End-to-end testing with real PeerRead papers and reviews
+  - **Reference**: docs/architecture.md for data flow patterns
+  - **Deliverable**: Validated PeerRead evaluation workflow
 - [ ] **Task 4.4**: Observability & performance integration
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
+  - **Requirements**: AgentNeo tracing for graph analysis input data
+  - **Reference**: docs/landscape/trace_observe_methods.md for tracing patterns
+  - **Deliverable**: Integrated tracing and performance monitoring
 
 **Expected Deliverables**:
 

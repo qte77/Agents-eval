@@ -18,7 +18,7 @@ definitions, use cases, and primary research references for each metric.
 
 ### Text Generation Quality
 
-*See also: [Traditional Metrics Libraries](landscape/landscape.md#traditional-metrics-libraries) in landscape.md*
+*See also: [Traditional Metrics Libraries](landscape.md#8-traditional-metrics-libraries) in landscape.md*
 
 #### BLEU (Bilingual Evaluation Understudy)
 
@@ -59,7 +59,7 @@ definitions, use cases, and primary research references for each metric.
 
 ### LLM-as-a-Judge Quality Assessment
 
-*See also: [Agent Evaluation & Benchmarking](landscape/landscape.md#agent-evaluation--benchmarking) and [LLM Evaluation & Benchmarking](landscape/landscape.md#llm-evaluation--benchmarking) in landscape.md*
+*See also: [Agent Evaluation & Benchmarking](landscape.md#agent-evaluation--benchmarking) and [LLM Evaluation & Benchmarking](landscape.md#llm-evaluation--benchmarking) in landscape.md*
 
 #### Answer Relevancy
 
@@ -96,11 +96,11 @@ definitions, use cases, and primary research references for each metric.
 - **Strengths**: RAG-specific, improves retrieval quality
 - **Limitations**: Requires clear context-query relationships
 - **Reference**: [Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401)
-- **Landscape Reference**: [RAG System Evaluation](landscape/landscape.md#rag-system-evaluation)
+- **Landscape Reference**: [RAG System Evaluation](landscape.md#rag-system-evaluation)
 
 ### Agent Performance Metrics
 
-*See also: [Agent Evaluation & Benchmarking](landscape/landscape.md#agent-evaluation--benchmarking) and [Observability & Monitoring Platforms](landscape/landscape.md#observability--monitoring-platforms) in landscape.md*
+*See also: [Agent Evaluation & Benchmarking](landscape.md#agent-evaluation--benchmarking) and [Observability & Monitoring Platforms](landscape.md#4-observability--monitoring) in landscape.md*
 
 #### Tool Selection Accuracy
 
@@ -138,9 +138,39 @@ definitions, use cases, and primary research references for each metric.
 - **Limitations**: Doesn't account for output quality
 - **Reference**: [Training language models to follow instructions with human feedback](https://arxiv.org/abs/2203.02155) (RLHF efficiency considerations)
 
+#### Path Convergence
+
+- **Definition**: Ratio of minimum required steps to actual steps taken
+- **Use Case**: Measure agent execution efficiency in completing evaluation tasks
+- **Calculation**: `minimum_steps / actual_steps`
+- **Strengths**: Quantifies workflow efficiency, identifies optimization opportunities
+- **Limitations**: Requires determination of optimal path
+- **Reference**: [WebArena: A Realistic Web Environment for Building Autonomous Agents](https://arxiv.org/abs/2307.13854)
+- **Landscape Reference**: [Arize Phoenix - Path Metrics](landscape.md#llm-application-observability)
+
+#### Tool Call Accuracy
+
+- **Definition**: Percentage of successful tool calls compared to attempted calls
+- **Use Case**: Evaluate agent reliability in tool selection and parameter extraction
+- **Calculation**: `successful_tool_calls / total_tool_calls`
+- **Strengths**: Direct measure of agent competency with tools
+- **Limitations**: Requires clear success/failure definitions
+- **Reference**: [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
+- **Landscape Reference**: [Arize Phoenix - LLM-as-a-Judge Templates](landscape.md#llm-application-observability)
+
 ### Multi-Agent Coordination Metrics
 
-*See also: [Graph Analysis & Network Tools](landscape/landscape.md#graph-analysis--network-tools) and [Agentic System Frameworks](landscape/landscape.md#agentic-system-frameworks) in landscape.md*
+*See also: [Graph Analysis & Network Tools](landscape.md#7-graph-analysis--network-tools) and [Agent Frameworks](landscape.md#1-agent-frameworks) in landscape.md*
+
+#### Step Efficiency
+
+- **Definition**: Ratio of productive work steps to total execution steps
+- **Use Case**: Identify coordination overhead in multi-agent workflows
+- **Calculation**: `productive_steps / total_steps`
+- **Strengths**: Measures workflow optimization effectiveness
+- **Limitations**: Requires classification of step types
+- **Reference**: [Multi-agent coordination in distributed systems](https://link.springer.com/article/10.1007/s10458-013-9235-1)
+- **Landscape Reference**: [Arize Phoenix - Path Metrics](landscape.md#llm-application-observability)
 
 #### Centrality Measures
 
@@ -152,7 +182,7 @@ definitions, use cases, and primary research references for each metric.
 - **Limitations**: Requires graph construction from interaction logs
 - **Reference**: [Networks: An Introduction](https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780199206650.001.0001/acprof-9780199206650)
   (Newman, 2010)
-- **Landscape Reference**: [Graph Analysis & Network Tools](landscape/landscape.md#graph-analysis--network-tools)
+- **Landscape Reference**: [Graph Analysis & Network Tools](landscape.md#7-graph-analysis--network-tools)
 
 #### Communication Overhead
 
@@ -173,8 +203,107 @@ definitions, use cases, and primary research references for each metric.
 - **Strengths**: Quantifies load balancing effectiveness
 - **Limitations**: Doesn't account for task complexity differences
 - **Reference**: [Multi-agent coordination in distributed systems](https://link.springer.com/article/10.1007/s10458-013-9235-1) (coordination metrics)
-- **Landscape Reference**: [Agentic System Frameworks](landscape/landscape.md#agentic-system-frameworks)
+- **Landscape Reference**: [Agent Frameworks](landscape.md#1-agent-frameworks)
+
+### Observability-Based Metrics
+
+*See also: [Observability & Monitoring Platforms](landscape.md#4-observability--monitoring) in landscape.md*
+
+#### Trace Coverage
+
+- **Definition**: Percentage of agent execution paths captured in observability traces
+- **Use Case**: Ensure comprehensive monitoring of agent behavior
+- **Calculation**: `traced_execution_paths / total_execution_paths`
+- **Strengths**: Validates observability completeness
+- **Limitations**: Requires trace path definition
+- **Reference**: [OpenTelemetry Specification](https://opentelemetry.io/docs/specs/)
+- **Landscape Reference**: [AgentNeo - Observability Platform](landscape.md#multi-agent-system-observability)
+
+#### Error Recovery Rate
+
+- **Definition**: Percentage of errors that agents successfully recover from
+- **Use Case**: Measure system resilience and self-correction capability
+- **Calculation**: `recovered_errors / total_errors`
+- **Strengths**: Quantifies system robustness
+- **Limitations**: Requires error classification and recovery detection
+- **Reference**: [Fault tolerance in distributed systems](https://dl.acm.org/doi/10.1145/98163.98167)
+- **Landscape Reference**: [Browser Use - Self-Correcting Architecture](landscape.md#ai-browser-automation--computer-use)
+
+#### Memory Utilization Efficiency
+
+- **Definition**: Ratio of relevant retrieved memory to total memory accessed
+- **Use Case**: Optimize agent memory systems and context management
+- **Calculation**: `relevant_memory_retrieved / total_memory_accessed`
+- **Strengths**: Measures memory system effectiveness
+- **Limitations**: Requires relevance assessment
+- **Reference**: [MemGPT: Towards LLMs as Operating Systems](https://arxiv.org/abs/2310.08560)
+- **Landscape Reference**: [Letta - Advanced Memory Architecture](landscape.md#1-agent-frameworks)
+
+### Security & Safety Metrics
+
+*See also: [AI Model Testing & Validation Platforms](landscape.md#ai-model-testing--validation-platforms) in landscape.md*
+
+#### Hallucination Rate
+
+- **Definition**: Percentage of generated content not supported by source material
+- **Use Case**: Ensure factual accuracy in academic review generation
+- **Calculation**: `hallucinated_statements / total_statements`
+- **Strengths**: Critical for academic integrity
+- **Limitations**: Requires ground truth verification
+- **Reference**: [Survey of Hallucination in Natural Language Generation](https://arxiv.org/abs/2202.03629)
+- **Landscape Reference**: [Patronus AI - Hallucination Detection](landscape.md#ai-model-testing--validation-platforms)
+
+#### Bias Detection Score
+
+- **Definition**: Quantified measurement of bias in agent outputs across demographic groups
+- **Use Case**: Ensure fair evaluation across diverse academic content
+- **Calculation**: Statistical variance in performance across protected attributes
+- **Strengths**: Promotes fair and equitable agent behavior
+- **Limitations**: Requires demographic data and bias definitions
+- **Reference**: [Bias in AI Systems](https://arxiv.org/abs/1909.01326)
+- **Landscape Reference**: [Patronus AI - Bias Assessment](landscape.md#ai-model-testing--validation-platforms)
+
+#### Prompt Injection Resistance
+
+- **Definition**: Ability to maintain intended behavior despite malicious input attempts
+- **Use Case**: Prevent manipulation of academic evaluation processes
+- **Measurement**: Success rate against standardized injection attacks
+- **Strengths**: Essential for production security
+- **Limitations**: Requires comprehensive attack vectors
+- **Reference**: [Prompt injection attacks against large language models](https://arxiv.org/abs/2302.12173)
+- **Landscape Reference**: [Giskard - Security Testing](landscape.md#ai-model-testing--validation-platforms)
+
+## Implementation Frameworks
+
+### Evaluation Platform Integration
+
+*For comprehensive implementation guidance, see [Agent Evaluation & Benchmarking](landscape.md#agent-evaluation--benchmarking) in landscape.md*
+
+- **AutoGenBench**: Docker-isolated evaluation with benchmark performance metrics
+- **Swarms Agent Evaluation**: Continuous monitoring with real-time performance tracking  
+- **DeepEval**: 30+ LLM-as-a-judge metrics with pytest integration
+- **Braintrust Agent Evaluation**: Architecture-specific assessment with custom scorers
+- **Google ADK Evaluation**: Trajectory analysis with multi-turn conversation testing
+
+### Observability Tool Integration
+
+*For detailed technical analysis, see [Observability & Monitoring Platforms](landscape.md#4-observability--monitoring) in landscape.md*
+
+- **AgentNeo**: Decorator-based tracing with SQLite storage
+- **Comet Opik**: OpenTelemetry-compatible spans with local deployment
+- **Langfuse**: Comprehensive prompt management with evaluation integration
+- **Arize Phoenix**: Path convergence metrics with LLM-as-a-judge templates
+- **TruLens**: RAG Triad metrics with multi-step workflow assessment
+
+### Graph Analysis Integration
+
+*For network analysis capabilities, see [Graph Analysis & Network Tools](landscape.md#7-graph-analysis--network-tools) in landscape.md*
+
+- **NetworkX**: Centrality measures and coordination pattern analysis
+- **LangGraph**: Stateful agent workflow orchestration with conditional logic
+- **PyTorch Geometric**: Graph neural networks for agent behavior modeling
+- **NetworKit**: High-performance graph analysis with parallel processing
 
 ## Additional Resources
 
-[Framework implementations and practical guidance on using these metrics](landscape/landscape.md#agent-evaluation--benchmarking)
+[Framework implementations and practical guidance on using these metrics](landscape.md#agent-evaluation--benchmarking)
