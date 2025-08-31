@@ -7,9 +7,9 @@
   "permissions": {
     "allow": [
       "Bash(date:*)",
-      "Bash(git:diff*)",
-      "Bash(git:log*)",
-      "Bash(git:status*)",
+      "Bash(git:diff:*)",
+      "Bash(git:log:*)",
+      "Bash(git:status:*)",
       "Bash(git log --grep:*)",
       "Bash(make:*)",
       "Bash(tree:*)",
