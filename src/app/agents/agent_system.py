@@ -33,16 +33,6 @@ from pydantic_ai.common_tools.duckduckgo import (
 )
 from pydantic_ai.usage import UsageLimits
 
-from app.agents.llm_model_funs import (
-    get_api_key,
-    get_models,
-    get_provider_config,
-    setup_llm_environment,
-)
-from app.agents.peerread_tools import (
-    add_peerread_review_tools_to_manager,
-    add_peerread_tools_to_manager,
-)
 from app.data_models.app_models import (
     AgentConfig,
     AnalysisResult,
@@ -58,6 +48,16 @@ from app.data_models.app_models import (
     UserPromptType,
 )
 from app.data_models.peerread_models import ReviewGenerationResult
+from app.llms.models import create_agent_models
+from app.llms.providers import (
+    get_api_key,
+    get_provider_config,
+    setup_llm_environment,
+)
+from app.tools.peerread_tools import (
+    add_peerread_review_tools_to_manager,
+    add_peerread_tools_to_manager,
+)
 from app.utils.error_messages import generic_exception, invalid_data_model_format
 from app.utils.log import logger
 
@@ -328,7 +328,7 @@ def get_manager(
             "provider_config": provider_config,
         }
     )
-    models = get_models(
+    models = create_agent_models(
         model_config, include_researcher, include_analyst, include_synthesiser
     )
     manager = _create_manager(prompts, models, provider, enable_review_tools)

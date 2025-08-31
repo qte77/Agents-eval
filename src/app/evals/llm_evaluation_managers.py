@@ -1,12 +1,15 @@
 """
-LLM-as-Judge implementation for Tier 2 evaluation.
+LLM evaluation management and orchestration.
 
-Provides quality assessment using existing PydanticAI infrastructure
-with cost optimization and fallback mechanisms.
+This module provides managers for orchestrating LLM-based evaluations,
+handling provider selection, fallback mechanisms, and cost optimization
+for evaluation tasks.
 """
 
 import asyncio
 from typing import Any
+
+from pydantic_ai import Agent
 
 from app.agents.agent_factories import create_evaluation_agent
 from app.data_models.evaluation_models import (
@@ -20,41 +23,65 @@ from app.utils.log import logger
 
 
 class LLMJudgeEngine:
-    """LLM-as-Judge evaluation engine with fallback mechanisms.
-
-    Provides quality assessment through structured prompts and cost-optimized
-    model usage with graceful degradation to traditional metrics on failures.
-    """
+    """Manager for LLM-based evaluation with provider flexibility and fallbacks."""
 
     def __init__(self, config: dict[str, Any]):
-        """Initialize LLM judge with configuration.
-
-        Args:
-            config: Configuration dictionary from config_eval.json
-        """
+        """Initialize evaluation LLM manager with configuration."""
         self.config = config
         self.fallback_engine = TraditionalMetricsEngine()
 
-        # Extract LLM judge configuration
+        # Extract LLM configuration
         llm_config = config.get("tier2_llm_judge", {})
 
-        # Cost-optimized model selection
-        self.default_model = llm_config.get("model", "gpt-4o-mini")
-        self.max_retries = llm_config.get("max_retries", 2)
+        # Provider and model settings
+        self.provider = llm_config.get("provider", "openai")
+        self.model = llm_config.get("model", "gpt-4o-mini")
+        self.fallback_provider = llm_config.get("fallback_provider", "github")
+        self.fallback_model = llm_config.get("fallback_model", "gpt-4o-mini")
+
+        # Performance settings
         self.timeout = llm_config.get("timeout_seconds", 30.0)
+        self.max_retries = llm_config.get("max_retries", 2)
         self.paper_excerpt_length = llm_config.get("paper_excerpt_length", 2000)
         self.cost_budget = llm_config.get("cost_budget_usd", 0.05)
 
-    async def assess_technical_accuracy(self, paper: str, review: str) -> float:
-        """Assess technical accuracy of review against paper.
+        # Evaluation weights
+        self.weights = llm_config.get(
+            "weights",
+            {
+                "technical_accuracy": 0.4,
+                "constructiveness": 0.3,
+                "planning_rationality": 0.3,
+            },
+        )
+
+    async def create_judge_agent(
+        self, assessment_type: str, use_fallback: bool = False
+    ) -> Agent:
+        """
+        Create an LLM judge agent for specific assessment type.
 
         Args:
-            paper: Paper content (truncated for API efficiency)
-            review: Agent-generated review
+            assessment_type: Type of assessment ("technical_accuracy", etc.)
+            use_fallback: Whether to use fallback provider
 
         Returns:
-            Normalized technical accuracy score (0.0-1.0)
+            Configured Agent for evaluation
         """
+        if use_fallback:
+            provider = self.fallback_provider
+            model = self.fallback_model
+            logger.info(f"Using fallback provider: {provider}/{model}")
+        else:
+            provider = self.provider
+            model = self.model
+
+        return create_evaluation_agent(
+            provider=provider, model_name=model, assessment_type=assessment_type
+        )
+
+    async def assess_technical_accuracy(self, paper: str, review: str) -> float:
+        """Assess technical accuracy of review against paper."""
         try:
             # Truncate paper content for cost efficiency
             paper_excerpt = (
@@ -76,11 +103,7 @@ Rate each aspect (1=poor, 5=excellent):
 
 Provide scores and brief explanation."""
 
-            agent = create_evaluation_agent(
-                provider="openai",  # Default provider
-                model_name=self.default_model,
-                assessment_type="technical_accuracy",
-            )
+            agent = await self.create_judge_agent("technical_accuracy")
             result = await asyncio.wait_for(
                 agent.run(prompt, output_type=TechnicalAccuracyAssessment),
                 timeout=self.timeout,
@@ -101,14 +124,7 @@ Provide scores and brief explanation."""
             return self.fallback_engine.compute_semantic_similarity(paper, review)
 
     async def assess_constructiveness(self, review: str) -> float:
-        """Assess constructiveness and helpfulness of review.
-
-        Args:
-            review: Agent-generated review text
-
-        Returns:
-            Normalized constructiveness score (0.0-1.0)
-        """
+        """Assess constructiveness and helpfulness of review."""
         try:
             prompt = f"""Evaluate constructiveness of this review (1-5 scale):
             
@@ -121,11 +137,7 @@ Rate each aspect (1=poor, 5=excellent):
 
 Provide scores and brief explanation."""
 
-            agent = create_evaluation_agent(
-                provider="openai",  # Default provider
-                model_name=self.default_model,
-                assessment_type="constructiveness",
-            )
+            agent = await self.create_judge_agent("constructiveness")
             result = await asyncio.wait_for(
                 agent.run(prompt, output_type=ConstructivenessAssessment),
                 timeout=self.timeout,
@@ -148,14 +160,7 @@ Provide scores and brief explanation."""
     async def assess_planning_rationality(
         self, execution_trace: dict[str, Any]
     ) -> float:
-        """Assess quality of agent planning and decision-making.
-
-        Args:
-            execution_trace: Agent execution trace data
-
-        Returns:
-            Normalized planning rationality score (0.0-1.0)
-        """
+        """Assess quality of agent planning and decision-making."""
         try:
             # Extract planning summary from trace
             planning_summary = self._extract_planning_decisions(execution_trace)
@@ -166,16 +171,12 @@ Execution Summary: {planning_summary}
 
 Rate each aspect (1=poor, 5=excellent):
 1. Logical Flow: Coherent step progression?
-2. Decision Quality: Appropriate choices made?  
+2. Decision Quality: Appropriate choices made?
 3. Resource Efficiency: Optimal tool/agent usage?
 
 Provide scores and brief explanation."""
 
-            agent = create_evaluation_agent(
-                provider="openai",  # Default provider
-                model_name=self.default_model,
-                assessment_type="planning_rationality",
-            )
+            agent = await self.create_judge_agent("planning_rationality")
             result = await asyncio.wait_for(
                 agent.run(prompt, output_type=PlanningRationalityAssessment),
                 timeout=self.timeout,
@@ -195,19 +196,10 @@ Provide scores and brief explanation."""
             # Simple fallback based on trace structure
             return self._fallback_planning_check(execution_trace)
 
-    async def evaluate_llm_judge(
+    async def evaluate_comprehensive(
         self, paper: str, review: str, execution_trace: dict[str, Any]
     ) -> Tier2Result:
-        """Complete LLM-as-Judge evaluation with error handling.
-
-        Args:
-            paper: Full paper content
-            review: Agent-generated review
-            execution_trace: Agent execution data
-
-        Returns:
-            Tier2Result with all LLM judge assessments
-        """
+        """Run comprehensive LLM-based evaluation."""
         fallback_used = False
         api_cost = 0.0
 
@@ -250,24 +242,15 @@ Provide scores and brief explanation."""
                 planning_score = float(self._fallback_planning_check(execution_trace))
                 fallback_used = True
 
-            # Estimate API cost (approximate for gpt-4o-mini)
+            # Estimate API cost (approximate)
             total_tokens = len(paper) / 4 + len(review) / 4 + 500  # Rough estimate
             api_cost = (total_tokens / 1000) * 0.0001  # $0.0001 per 1K tokens
 
             # Calculate overall LLM judge score
-            weights = self.config.get("tier2_llm_judge", {}).get(
-                "weights",
-                {
-                    "technical_accuracy": 0.4,
-                    "constructiveness": 0.3,
-                    "planning_rationality": 0.3,
-                },
-            )
-
             overall_score = (
-                technical_score * weights.get("technical_accuracy", 0.4)
-                + constructiveness_score * weights.get("constructiveness", 0.3)
-                + planning_score * weights.get("planning_rationality", 0.3)
+                technical_score * self.weights.get("technical_accuracy", 0.4)
+                + constructiveness_score * self.weights.get("constructiveness", 0.3)
+                + planning_score * self.weights.get("planning_rationality", 0.3)
             )
 
             return Tier2Result(
@@ -276,7 +259,7 @@ Provide scores and brief explanation."""
                 clarity=constructiveness_score,  # Use constructiveness as proxy
                 planning_rationality=planning_score,
                 overall_score=overall_score,
-                model_used=self.default_model,
+                model_used=f"{self.provider}/{self.model}",
                 api_cost=api_cost,
                 fallback_used=fallback_used,
             )
@@ -287,14 +270,7 @@ Provide scores and brief explanation."""
             return self._complete_fallback(paper, review, execution_trace)
 
     def _extract_planning_decisions(self, execution_trace: dict[str, Any]) -> str:
-        """Extract key planning decisions from execution trace.
-
-        Args:
-            execution_trace: Agent execution trace data
-
-        Returns:
-            String summary of planning decisions
-        """
+        """Extract key planning decisions from execution trace."""
         try:
             decisions = execution_trace.get("agent_interactions", [])
             tool_calls = execution_trace.get("tool_calls", [])
@@ -304,9 +280,7 @@ Provide scores and brief explanation."""
 
             # Extract key decision points
             if decisions:
-                decision_types = [
-                    d.get("type", "unknown") for d in decisions[:5]
-                ]  # First 5
+                decision_types = [d.get("type", "unknown") for d in decisions[:5]]
                 summary += f", Decision types: {', '.join(set(decision_types))}"
 
             return summary[:500]  # Limit length for API efficiency
@@ -315,14 +289,7 @@ Provide scores and brief explanation."""
             return "Limited trace data available"
 
     def _fallback_constructiveness_check(self, review: str) -> float:
-        """Simple fallback for constructiveness assessment.
-
-        Args:
-            review: Review text to analyze
-
-        Returns:
-            Heuristic constructiveness score (0.0-1.0)
-        """
+        """Simple fallback for constructiveness assessment."""
         constructive_phrases = [
             "suggest",
             "recommend",
@@ -346,30 +313,20 @@ Provide scores and brief explanation."""
         return min(1.0, matches / len(constructive_phrases))
 
     def _fallback_planning_check(self, execution_trace: dict[str, Any]) -> float:
-        """Simple fallback for planning rationality.
-
-        Args:
-            execution_trace: Agent execution trace data
-
-        Returns:
-            Heuristic planning score (0.0-1.0)
-        """
+        """Simple fallback for planning rationality."""
         try:
             interactions = len(execution_trace.get("agent_interactions", []))
             tool_calls = len(execution_trace.get("tool_calls", []))
 
             # Simple heuristic: moderate activity indicates good planning
-            # Too few = insufficient planning, too many = inefficient
             total_activity = interactions + tool_calls
 
             if total_activity <= 2:
-                activity_score = total_activity / 2.0  # Scale up low activity
+                activity_score = total_activity / 2.0
             elif total_activity <= 10:
                 activity_score = 1.0  # Optimal range
             else:
-                activity_score = max(
-                    0.5, 1.0 - (total_activity - 10) * 0.05
-                )  # Diminishing returns
+                activity_score = max(0.5, 1.0 - (total_activity - 10) * 0.05)
 
             return min(1.0, max(0.0, activity_score))
 
@@ -379,16 +336,7 @@ Provide scores and brief explanation."""
     def _complete_fallback(
         self, paper: str, review: str, execution_trace: dict[str, Any]
     ) -> Tier2Result:
-        """Complete fallback when all LLM assessments fail.
-
-        Args:
-            paper: Paper content
-            review: Generated review
-            execution_trace: Agent execution data
-
-        Returns:
-            Tier2Result using fallback mechanisms only
-        """
+        """Complete fallback when all LLM assessments fail."""
         # Use traditional metrics as fallback
         semantic_score = self.fallback_engine.compute_semantic_similarity(paper, review)
         constructiveness_score = self._fallback_constructiveness_check(review)
@@ -406,37 +354,3 @@ Provide scores and brief explanation."""
             api_cost=0.0,
             fallback_used=True,
         )
-
-
-async def evaluate_single_llm_judge(
-    paper: str,
-    review: str,
-    execution_trace: dict[str, Any] | None = None,
-    config: dict[str, Any] | None = None,
-) -> Tier2Result:
-    """Convenience function for single LLM judge evaluation.
-
-    Args:
-        paper: Paper content
-        review: Generated review text
-        execution_trace: Optional execution trace data
-        config: Optional configuration override
-
-    Returns:
-        Tier2Result with LLM judge assessments
-
-    Example:
-        >>> result = await evaluate_single_llm_judge(
-        ...     paper="This paper presents...",
-        ...     review="The work demonstrates...",
-        ...     execution_trace=trace_data,
-        ... )
-        >>> print(f"Overall score: {result.overall_score:.3f}")
-    """
-    from app.evals.llm_evaluation_managers import LLMJudgeEngine
-
-    config = config or {}
-    execution_trace = execution_trace or {}
-
-    engine = LLMJudgeEngine(config)
-    return await engine.evaluate_comprehensive(paper, review, execution_trace)

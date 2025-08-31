@@ -35,8 +35,10 @@ class TestTraditionalMetricsEngine:
             "empty_first": ("", "Some text"),
             "empty_both": ("", ""),
             "academic_review": (
-                "This paper presents a novel approach to machine learning with solid methodology and clear results.",
-                "The work demonstrates strong technical contribution with comprehensive evaluation and good presentation.",
+                "This paper presents a novel approach to machine learning with "
+                "solid methodology and clear results.",
+                "The work demonstrates strong technical contribution with "
+                "comprehensive evaluation and good presentation.",
             ),
         }
 
@@ -291,11 +293,18 @@ class TestTraditionalMetricsPerformance:
     def test_performance_target_under_1_second(self):
         """Complete traditional evaluation should complete under 1 second."""
         engine = TraditionalMetricsEngine()
-        agent_output = "This paper presents a comprehensive evaluation of machine learning algorithms with detailed experimental validation and thorough analysis of results."
+        agent_output = (
+            "This paper presents a comprehensive evaluation of machine "
+            "learning algorithms with detailed experimental validation "
+            "and thorough analysis of results."
+        )
         reference_texts = [
-            "The work provides extensive experimental validation of ML approaches with comprehensive analysis.",
-            "Strong experimental methodology with detailed analysis and good presentation quality.",
-            "Thorough evaluation with solid methodology but could improve presentation clarity.",
+            "The work provides extensive experimental validation of ML approaches "
+            "with comprehensive analysis.",
+            "Strong experimental methodology with detailed analysis and good "
+            "presentation quality.",
+            "Thorough evaluation with solid methodology but could improve "
+            "presentation clarity.",
         ]
 
         start_time = time.perf_counter()

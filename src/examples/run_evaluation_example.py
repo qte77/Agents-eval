@@ -135,10 +135,13 @@ async def run_evaluation_example():
     print("2. TIER 2: LLM-as-Judge Evaluation")
     print("-" * 50)
 
-    # Run Tier 2: LLM-as-Judge (with basic config)
+    # Run Tier 2: LLM-as-Judge (with GitHub model config)
     llm_config = {
         "tier2_llm_judge": {
+            "provider": "github",
             "model": "gpt-4o-mini",
+            "fallback_provider": "openai",
+            "fallback_model": "gpt-4o-mini",
             "timeout_seconds": 30.0,
             "weights": {
                 "technical_accuracy": 0.4,

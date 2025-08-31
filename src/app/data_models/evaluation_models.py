@@ -10,6 +10,49 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+class TechnicalAccuracyAssessment(BaseModel):
+    """LLM assessment of technical accuracy."""
+
+    factual_correctness: float = Field(
+        ge=1.0, le=5.0, description="Factual correctness score"
+    )
+    methodology_understanding: float = Field(
+        ge=1.0, le=5.0, description="Methodology understanding score"
+    )
+    domain_knowledge: float = Field(
+        ge=1.0, le=5.0, description="Domain knowledge score"
+    )
+    explanation: str = Field(description="Explanation of the assessment")
+
+
+class ConstructivenessAssessment(BaseModel):
+    """LLM assessment of constructiveness."""
+
+    actionable_feedback: float = Field(
+        ge=1.0, le=5.0, description="Actionable feedback score"
+    )
+    balanced_critique: float = Field(
+        ge=1.0, le=5.0, description="Balanced critique score"
+    )
+    improvement_guidance: float = Field(
+        ge=1.0, le=5.0, description="Improvement guidance score"
+    )
+    explanation: str = Field(description="Explanation of the assessment")
+
+
+class PlanningRationalityAssessment(BaseModel):
+    """LLM assessment of planning rationality."""
+
+    logical_flow: float = Field(ge=1.0, le=5.0, description="Logical flow score")
+    decision_quality: float = Field(
+        ge=1.0, le=5.0, description="Decision quality score"
+    )
+    resource_efficiency: float = Field(
+        ge=1.0, le=5.0, description="Resource efficiency score"
+    )
+    explanation: str = Field(description="Explanation of the assessment")
+
+
 class Tier1Result(BaseModel):
     """Traditional metrics evaluation result.
 

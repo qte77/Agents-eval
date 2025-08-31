@@ -98,7 +98,8 @@ class TraceCollector:
                         event_type TEXT,
                         agent_id TEXT,
                         data TEXT,
-                        FOREIGN KEY (execution_id) REFERENCES trace_executions (execution_id)
+                        FOREIGN KEY (execution_id) 
+                        REFERENCES trace_executions (execution_id)
                     )
                 """)
 
@@ -221,7 +222,7 @@ class TraceCollector:
         """End the current execution and process traces.
 
         Returns:
-            ProcessedTrace object with extracted patterns, or None if no execution active
+            ProcessedTrace object with patterns, or None if no execution active
         """
         if (
             not self.trace_enabled
@@ -259,9 +260,9 @@ class TraceCollector:
         sorted_events = sorted(self.current_events, key=lambda e: e.timestamp)
 
         # Extract different event types
-        agent_interactions = []
-        tool_calls = []
-        coordination_events = []
+        agent_interactions: list[dict[str, Any]] = []
+        tool_calls: list[dict[str, Any]] = []
+        coordination_events: list[dict[str, Any]] = []
 
         for event in sorted_events:
             if event.event_type == "agent_interaction":
@@ -286,7 +287,7 @@ class TraceCollector:
         }
 
         return ProcessedTrace(
-            execution_id=self.current_execution_id,
+            execution_id=self.current_execution_id or "",
             start_time=start_time,
             end_time=end_time,
             agent_interactions=agent_interactions,
@@ -303,7 +304,7 @@ class TraceCollector:
         """
         try:
             # Store as JSONL file
-            timestamp_str = datetime.utcnow().strftime("%Y-%m-%dT%H-%M-%SZ")
+            timestamp_str = datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
             json_file = (
                 self.storage_path / f"trace_{trace.execution_id}_{timestamp_str}.jsonl"
             )
@@ -318,7 +319,8 @@ class TraceCollector:
                 conn.execute(
                     """
                     INSERT OR REPLACE INTO trace_executions 
-                    (execution_id, start_time, end_time, agent_count, tool_count, total_duration, created_at)
+                    (execution_id, start_time, end_time, agent_count, 
+                     tool_count, total_duration, created_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
@@ -328,7 +330,7 @@ class TraceCollector:
                         len(set(ia.get("from", "") for ia in trace.agent_interactions)),
                         len(trace.tool_calls),
                         trace.performance_metrics["total_duration"],
-                        datetime.utcnow().isoformat(),
+                        datetime.now(datetime.UTC).isoformat(),
                     ),
                 )
 

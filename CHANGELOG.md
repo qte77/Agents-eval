@@ -19,6 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - landscape.md: AI agent ecosystem and competitive analysis
 - agent_eval_metrics.md: Evaluation metrics catalog
 - trace_observe_methods.md: Observability analysis
+- Modular architecture with functional separation: agents/, evals/, llms/, tools/
+- LLM provider abstraction layer with multi-provider support
+- Agent factory patterns for creating specialized agents
+- Evaluation engine orchestration and management systems
+- Configuration-based prompt management for evaluation agents
+- Comprehensive docstrings for all major modules (agents/, data_models/, config/)
+- GitHub models integration with OpenAI-compatible API
+- Three-tier evaluation system with traditional metrics, LLM-as-judge, and trace collection
+- Typed Pydantic models for LLM assessment results (TechnicalAccuracyAssessment, ConstructivenessAssessment, PlanningRationalityAssessment)
+- Enhanced type safety with explicit type annotations for trace processors and evaluation pipelines
+- Modern datetime handling with timezone-aware UTC timestamps
+- Comprehensive exception handling patterns for evaluation fallback mechanisms
 
 ### Changed
 
@@ -26,12 +38,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AGENTS.md: streamlined content, removed duplicated architecture information
 - CHANGELOG.md: reduced boilerplate, consolidated change type descriptions
 - README.md: major reorganization, moved detailed content to dedicated docs
+- Restructured codebase from monolithic to modular architecture
+- Migrated LLM functionality from single file to focused modules
+- Updated GUI import paths to use new modular structure
+- Refactored agent creation to use configuration-based prompts
+- Shortened evaluation prompt strings for improved readability
+
+### Fixed
+
+- Import errors after architectural restructuring
+- Line length violations in evaluation modules
+- CLI argument parsing for proper provider selection
+- GUI import paths to work with new module structure
+- Time score calculation in traditional metrics to prevent negative values
+- PydanticAI deprecation warnings where feasible
+- Datetime deprecation warnings by migrating to datetime.now(datetime.UTC)
+- Type safety issues in trace processors with explicit type annotations
+- BaseException type issues in evaluation pipelines with proper exception handling
+- LLM assessment model definitions with comprehensive Pydantic validation
+- Data model imports using direct module references instead of __init__.py exports
 
 ### Removed
 
 - Obsolete context/ directory and .claude/commands framework references
 - FRP (Feature Requirements Prompt) command references from documentation
 - Redundant architecture details from AGENTS.md
+- Monolithic llm_model_funs.py file after successful migration
 
 ## [3.2.0] - 2025-08-19
 

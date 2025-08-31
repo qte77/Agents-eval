@@ -13,7 +13,7 @@
             "max_content_length": 1000000
         },
         "github": {
-            "model_name": "gpt-4-turbo",
+            "model_name": "gpt-4o-mini",
             "base_url": "https://models.inference.ai.azure.com",
             "usage_limits": 25000,
             "max_content_length": 128000
@@ -76,6 +76,10 @@
         "system_prompt_researcher": "You are a researcher. Gather and analyze data relevant to the topic. Use the search tool to gather data. Always check accuracy of assumptions, facts, and conclusions.",
         "system_prompt_analyst": "You are a research analyst. Use your analytical skills to check the accuracy of assumptions, facts, and conclusions in the data provided. Provide relevant feedback if you do not approve. Only approve if you do not have any feedback to give.",
         "system_prompt_synthesiser": "You are a scientific writing assistant. Your task is to output a well formatted scientific report using the data given. Leave the privided facts, conclusions and sources unchanged.",
+        "system_prompt_evaluator_technical_accuracy": "You are an expert at evaluating technical accuracy of academic reviews. Focus on factual correctness and methodology understanding.",
+        "system_prompt_evaluator_constructiveness": "You are an expert at evaluating constructiveness of academic reviews. Focus on actionable feedback and balanced critique.",
+        "system_prompt_evaluator_planning_rationality": "You are an expert at evaluating planning quality of agent executions. Focus on logical flow and decision quality.",
+        "system_prompt_evaluator_general": "You are an expert evaluator providing structured assessments of text quality and content.",
         "paper_review_query": "Generate a structured peer review for paper '{paper_number}' from PeerRead dataset. Follow these steps:\\n1. Call get_peerread_paper with paper_id='{paper_number}'\\n2. Call generate_paper_review_content_from_template with paper_id='{paper_number}'\\n3. Call save_structured_review with the generated review\\nUse exact paper_id '{paper_number}' in all tool calls. The review must follow structured format with ratings.",
         "default_query": "What would you like to research today?"
     }

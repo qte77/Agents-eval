@@ -10,7 +10,7 @@ from pathlib import Path
 
 from streamlit import button, exception, header, info, subheader, text_input, warning
 
-from app.main import main
+from app.app import main
 from app.utils.log import logger
 from gui.components.output import render_output
 from gui.config.text import (

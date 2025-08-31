@@ -22,13 +22,13 @@ sys.path.insert(0, "src")
 from pydantic_ai.usage import UsageLimits
 
 from app.agents.agent_system import get_manager
-from app.agents.llm_model_funs import get_api_key, get_provider_config
 from app.data_models.app_models import AppEnv, ChatConfig
 from app.data_utils.datasets_peerread import (
     PeerReadDownloader,
     PeerReadLoader,
     load_peerread_config,
 )
+from app.llms.providers import get_api_key, get_provider_config
 
 
 @pytest.mark.asyncio

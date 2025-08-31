@@ -45,12 +45,14 @@ class TestLLMJudgeEngine:
         return {
             "paper": """This paper presents a novel approach to machine learning using 
                        transformer architectures for natural language processing tasks. 
-                       The methodology involves fine-tuning pre-trained models on domain-specific
-                       datasets with comprehensive evaluation across multiple benchmarks.""",
+                       The methodology involves fine-tuning pre-trained models on 
+                       domain-specific datasets with comprehensive evaluation across 
+                       multiple benchmarks.""",
             "review": """The paper demonstrates solid technical methodology with clear 
-                        experimental design. However, the evaluation could be more comprehensive
-                        and the writing clarity could be improved. I recommend acceptance
-                        with minor revisions to address presentation issues.""",
+                        experimental design. However, the evaluation could be more 
+                        comprehensive and the writing clarity could be improved. 
+                        I recommend acceptance with minor revisions to address 
+                        presentation issues.""",
             "execution_trace": {
                 "agent_interactions": [
                     {
@@ -107,7 +109,7 @@ class TestLLMJudgeEngine:
     async def test_assess_technical_accuracy_success(
         self, mock_wait_for, mock_agent_class, engine, sample_data
     ):
-        """Given successful LLM assessment, should return normalized technical accuracy score."""
+        """Should return normalized technical accuracy score when succeeds."""
         # Mock LLM response
         mock_assessment = Mock()
         mock_assessment.factual_correctness = 4.0
@@ -157,7 +159,7 @@ class TestLLMJudgeEngine:
     async def test_assess_constructiveness_success(
         self, mock_wait_for, mock_agent_class, engine, sample_data
     ):
-        """Given successful LLM assessment, should return normalized constructiveness score."""
+        """Should return normalized constructiveness score when assessment succeeds."""
         mock_assessment = Mock()
         mock_assessment.actionable_feedback = 4.0
         mock_assessment.balanced_critique = 3.5
@@ -189,7 +191,11 @@ class TestLLMJudgeEngine:
     def test_fallback_constructiveness_check(self, engine):
         """Fallback constructiveness check should analyze constructive phrases."""
         # Review with many constructive phrases
-        constructive_review = "I suggest improving the methodology. The paper shows strength in analysis but has unclear sections. I recommend considering future work directions."
+        constructive_review = (
+            "I suggest improving the methodology. The paper shows "
+            "strength in analysis but has unclear sections. "
+            "I recommend considering future work directions."
+        )
         score = engine._fallback_constructiveness_check(constructive_review)
         assert score > 0.3  # Should detect multiple constructive phrases
 
@@ -253,15 +259,11 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     async def test_evaluate_llm_judge_complete_success(self, engine, sample_data):
         """Complete LLM judge evaluation should return valid Tier2Result."""
-        with patch.object(
-            engine, "assess_technical_accuracy", return_value=0.8
-        ) as mock_tech:
-            with patch.object(
-                engine, "assess_constructiveness", return_value=0.7
-            ) as mock_const:
+        with patch.object(engine, "assess_technical_accuracy", return_value=0.8):
+            with patch.object(engine, "assess_constructiveness", return_value=0.7):
                 with patch.object(
                     engine, "assess_planning_rationality", return_value=0.75
-                ) as mock_plan:
+                ):
                     result = await engine.evaluate_llm_judge(
                         sample_data["paper"],
                         sample_data["review"],
