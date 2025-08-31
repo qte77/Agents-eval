@@ -10,8 +10,7 @@ tags:
   - ai-agents
   - technical-analysis
   - graph-construction
-author: AI Research Team
-version: 0.0.1
+version: 1.0.0
 requires_further_investigation: true
 investigation_notes: Needs deeper source code analysis of actual tracing implementations and observation mechanisms within each tool's codebase
 ---

@@ -8,8 +8,7 @@ tags:
   - agent-evaluation
   - metrics
   - peerread-evaluation
-author: AI Research Team
-version: 0.1.0
+version: 1.0.0
 ---
 
 Comprehensive catalog of evaluation metrics for AI agent systems, with

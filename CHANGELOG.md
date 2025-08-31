@@ -28,6 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub models integration with OpenAI-compatible API
 - Three-tier evaluation system with traditional metrics, LLM-as-judge, and trace collection
 - Typed Pydantic models for LLM assessment results (TechnicalAccuracyAssessment, ConstructivenessAssessment, PlanningRationalityAssessment)
+- Composite scoring system integrating all three evaluation tiers into unified assessment
+- MetricNormalizer with six normalization functions for consistent scoring ranges
+- CompositeScorer with weighted aggregation of normalized metrics 
+- RecommendationEngine with threshold-based paper acceptance recommendations
+- TierIntegrationManager orchestrating fallback handling for missing evaluation tiers
+- Performance-optimized composite scoring achieving <100ms latency target
+- Comprehensive test suite with >95% coverage for composite scoring system
 - Enhanced type safety with explicit type annotations for trace processors and evaluation pipelines
 - Modern datetime handling with timezone-aware UTC timestamps
 - Comprehensive exception handling patterns for evaluation fallback mechanisms

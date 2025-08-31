@@ -1,4 +1,10 @@
-# Agents-eval Architecture
+---
+title: Agents-eval Architecture
+description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
+date: 2025-08-31
+category: architecture
+version: 1.0.0
+---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
 
