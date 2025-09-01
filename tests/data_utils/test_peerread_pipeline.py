@@ -201,7 +201,7 @@ async def test_complete_pipeline():
     # Step 6: Evaluate review against ground truth
     print("\n📊 Step 6: Evaluating review against ground truth...")
     try:
-        from app.evals.peerread_evaluation import create_evaluation_result
+        from app.evals.traditional_metrics import create_evaluation_result
 
         # Create evaluation result
         eval_result = create_evaluation_result(

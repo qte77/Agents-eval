@@ -174,7 +174,7 @@ class GraphAnalysisEngine:
                 f"exceeding max_edges={self.max_edges}"
             )
 
-    def _with_timeout(self, func, *args: Any, **kwargs: Any) -> Any:
+    def _with_timeout(self, func: Any, *args: Any, **kwargs: Any) -> Any:
         """Execute function with timeout protection.
 
         Args:
@@ -398,7 +398,7 @@ class GraphAnalysisEngine:
             logger.warning(f"Task distribution analysis failed: {e}")
             return 0.0
 
-    def _calculate_path_convergence(self, graph) -> float:
+    def _calculate_path_convergence(self, graph: Any) -> float:
         """Calculate path convergence efficiency in tool usage graph.
 
         Args:

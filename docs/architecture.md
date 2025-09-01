@@ -77,7 +77,7 @@ Evaluation Requirements Assessment
 
 The evaluation framework is built around large context window models capable of processing full PeerRead papers with automatic selection based on paper token count and intelligent fallback to document chunking for smaller context models.
 
-**Model Selection**: See [Available Models - Large Context Window Models](landscape/landscape.md#available-models) in landscape.md for detailed model comparisons, context limits, and integration approaches for Claude 4 Opus/Sonnet, GPT-4 Turbo, and Gemini-1.5-Pro.
+**Model Selection**: See [Large Language Models](landscape-agent-frameworks-infrastructure.md#2-large-language-models) for detailed model comparisons, context limits, and integration approaches for Claude 4 Opus/Sonnet, GPT-4 Turbo, and Gemini-1.5-Pro.
 
 ### Sprint 1: PeerRead Evaluation Components
 
@@ -128,7 +128,7 @@ The evaluation framework is built around large context window models capable of 
 3. **Graph Construction** → spaCy + NetworkX and Google LangExtract process trace logs to build behavioral graphs showing coordination patterns and decision flows
 4. **Analysis** → NetworkX and NetworKit analyze coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
 
-**Tool Selection**: See [Graph Analysis & Network Tools](landscape/landscape.md#graph-analysis--network-tools), [Post-Execution Graph Construction Tools](landscape/landscape.md#post-execution-graph-construction-tools), [Observability & Monitoring Platforms](landscape/landscape.md#observability--monitoring-platforms), and [Technical Analysis: Tracing Methods](landscape/trace_observe_methods.md) for detailed feasibility assessments and integration approaches.
+**Tool Selection**: See [Graph Analysis & Network Tools](landscape-evaluation-data-resources.md#6-graph-analysis--network-tools), [Post-Execution Graph Construction Tools](landscape-evaluation-data-resources.md#8-post-execution-graph-construction-tools), [Observability & Monitoring Platforms](landscape-agent-frameworks-infrastructure.md#4-observability--monitoring), and [Technical Analysis: Tracing Methods](landscape/trace_observe_methods.md) for detailed feasibility assessments and integration approaches.
 
 ##### Key Applications for Agent Evaluation
 
@@ -189,11 +189,11 @@ The evaluation framework will be refactored into three independent engines:
 
 The system relies on several key technology categories for implementation and evaluation.
 
-**Core Technologies**: See [Agentic System Frameworks](landscape/landscape.md#agentic-system-frameworks) for PydanticAI agent orchestration details, [Graph Analysis & Network Tools](landscape/landscape.md#graph-analysis--network-tools) for NetworkX complexity analysis capabilities, and [Available Models](landscape/landscape.md#available-models) for LLM integration approaches.
+**Core Technologies**: See [Agent Frameworks](landscape-agent-frameworks-infrastructure.md#1-agent-frameworks) for PydanticAI agent orchestration details, [Graph Analysis & Network Tools](landscape-evaluation-data-resources.md#6-graph-analysis--network-tools) for NetworkX complexity analysis capabilities, and [Large Language Models](landscape-agent-frameworks-infrastructure.md#2-large-language-models) for LLM integration approaches.
 
-**Evaluation Tools**: See [Traditional Metrics Libraries](landscape/landscape.md#traditional-metrics-libraries) for NLTK, Rouge-Score, and BERTScore implementation details and feasibility assessments.
+**Evaluation Tools**: See [Traditional Metrics Libraries](landscape-evaluation-data-resources.md#7-traditional-metrics-libraries) for NLTK, Rouge-Score, and BERTScore implementation details and feasibility assessments.
 
-**Development Infrastructure**: See [Development Infrastructure](landscape/landscape.md#development-infrastructure) for uv, Streamlit, Ruff, and pyright integration approaches and alternatives.
+**Development Infrastructure**: See [Development Infrastructure](landscape-agent-frameworks-infrastructure.md#development-infrastructure) for uv, Streamlit, Ruff, and pyright integration approaches and alternatives.
 
 ## Agents
 

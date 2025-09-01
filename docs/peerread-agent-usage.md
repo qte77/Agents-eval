@@ -75,9 +75,9 @@ The system is designed with a clear separation of concerns:
 - **Review Persistence**: `src/app/data_utils/review_persistence.py` and `src/app/data_utils/review_loader.py` manage saving and loading reviews
 - **Data Models**:
   - `src/app/data_models/peerread_models.py`: Defines core data structures like `PeerReadPaper` and `GeneratedReview`
-  - `src/app/data_models/peerread_evaluation_models.py`: Contains models for the external evaluation system
+  - `src/app/data_models/evaluation_models.py`: Contains evaluation result models and PeerRead evaluation structures
   - `src/app/data_models/app_models.py`: Application-level configuration models
-- **Evaluation**: `src/app/evals/peerread_evaluation.py` is part of a separate system that consumes the saved reviews for evaluation
+- **Evaluation**: `src/app/evals/traditional_metrics.py` contains comprehensive evaluation functionality including PeerRead-specific evaluation tools
 
 ## Additional CLI Options
 

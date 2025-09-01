@@ -19,7 +19,7 @@ rectangle "Development Infrastructure" as dev_infra #C8A2C8 {
 }
 
 rectangle "Observability & Monitoring" as obs #DDA0DD {
-  rectangle "Multi-Agent Observability:\nAgentOps • LangSmith • Arize Phoenix • Langtrace\n\nLLM Observability:\nHelicone • Langfuse • Humanloop • PromptLayer\nLiteral AI • Parea AI\n\nSecurity & Compliance:\nVijil.ai • Cekura.ai • Coval • Cequence.ai" as obs_tools
+  rectangle "Multi-Agent System Observability:\nAgentNeo • RagaAI-Catalyst\n\nLLM Application Observability:\nComet Opik • Helicone • Langfuse • Arize Phoenix\nLangtrace • LangWatch • MLflow • Uptrace\nTraceloop • Pydantic Logfire • LangSmith\n\nEnterprise/Commercial:\nNeptune.ai • Weights & Biases (Weave)\nEvidently AI • Dynatrace\n\nSecurity & Compliance:\nVijil.ai • Cekura.ai • Coval • Cequence.ai" as obs_tools
 }
 
 ' Middle row
@@ -28,16 +28,16 @@ rectangle "Analysis & Metrics" as analysis #FFB6C1 {
 }
 
 rectangle "Agent Frameworks" as frameworks #87CEEB {
-  rectangle "Multi-Agent Orchestration:\nLangGraph • CrewAI • AutoGen/AG2 • PydanticAI\nLlamaIndex Agents • Fetch.ai uAgents • Letta\n\nLLM Orchestration & Workflows:\nLangchain • Semantic Kernel • Haystack • Restack\nWithmartian • OpenRouter • Arcee.ai (4.5B model)\n\nLightweight & Specialized:\nsmolAgents • AutoGPT • BabyAGI • SuperAGI • Rippletide\n\nProtocol & Integration:\nmcp-agent • Coral Protocol • Akka • AgentPass\nZapier • ToolSDK.ai • Make • Composio\n\nVisual Development:\nLangflow • Sim Studio • Archon • Agentstack\nOmnara • n8n\n\nMemory & Knowledge Management:\nZep • Mem0 • Cognee • Gulp.ai" as agent_tools
+  rectangle "Multi-Agent Orchestration:\nLangGraph • CrewAI • AutoGen/AG2 • PydanticAI\nLlamaIndex Agents • Fetch.ai uAgents • Letta\n\nLLM Orchestration & Workflows:\nLangchain • Semantic Kernel • Haystack • Restack\nWithmartian • OpenRouter\n\nLarge Language Models:\nClaude 4 Opus/Sonnet • GPT-4 Turbo\nGemini-1.5-Pro • Arcee Foundation Models (AFM)\n\nLightweight & Specialized:\nsmolAgents • AutoGPT • BabyAGI • SuperAGI • Rippletide\n\nProtocol & Integration Standards:\nmcp-agent • Coral Protocol • Akka • AgentPass\nZapier • ToolSDK.ai • Make • Composio\n\nVisual Development:\nLangflow • Sim.ai • Archon • Agentstack\nOmnara • n8n\n\nMemory & Knowledge Management:\nZep • Mem0 • Cognee • Gulp.ai" as agent_tools
 }
 
 ' Bottom row
 rectangle "Data & Web Intelligence" as data_web #98E4D6 {
-  rectangle "AI-Optimized Search APIs:\nExa.ai • Tavily • Linkup • You.com • Parallel AI\n\nWeb Scraping & Extraction:\nApify • Firecrawl • Crawl4AI • Browse AI • Bright Data\n\nAI Browser Automation & Computer Use:\nSkyvern • Browser Use • ChatGPT Operator\nAnthropic Computer Use • UI-TARS-desktop" as web_tools
+  rectangle "AI-Optimized Search APIs:\nExa.ai • Tavily • Linkup • You.com • Parallel AI\n\nWeb Scraping & Extraction:\nApify • Firecrawl • Crawl4AI • Bright Data\n\nAI Browser Automation & Computer Use:\nSkyvern • Browser Use • ChatGPT Operator\nAnthropic Computer Use • UI-TARS-desktop\n\nNo-Code Data Extraction:\nBrowse AI" as web_tools
 }
 
 rectangle "Evaluation & Testing" as eval #90EE90 {
-  rectangle "Agent Evaluation:\nAutoGenBench • AgentBench • Langchain AgentEvals\nSwarms Agent Evaluation • Azure AI Evaluation SDK\nBraintrust Agent Evaluation • Google ADK Evaluation\n\nLLM Evaluation:\nConfident AI/DeepEval • Langchain OpenEvals • Braintrust Autoevals\nHELM • MLFlow LLM Evaluate • Libretto.ai • Yupp.ai • LiveBench\n\nRAG System Evaluation:\nRAGAs • TruLens\n\nAI Model Testing:\nDeepchecks • Giskard • Patronus AI" as eval_tools
+  rectangle "Agent Evaluation & Benchmarking:\nAutoGenBench • AgentBench • Langchain AgentEvals\nSwarms Agent Evaluation • Confident AI/DeepEval\nLibretto.ai • Yupp.ai • Azure AI Evaluation SDK\nBraintrust Agent Evaluation • Google ADK Evaluation\nStrands Agents Evaluation\n\nLLM Evaluation & Benchmarking:\nDeepEval • Langchain OpenEvals • Braintrust Autoevals\nHELM • LiveBench • MLFlow LLM Evaluate\n\nRAG System Evaluation:\nRAGAs • TruLens\n\nAI Model Testing & Validation:\nDeepchecks • Giskard • Patronus AI\n\nDatasets & Benchmarks:\nPeerRead • SWIF2T • BigSurvey • SciXGen\nLIAR • X-Fact • MultiFC • FEVER • Plancraft" as eval_tools
 }
 
 ' Layout constraints to force proper matrix arrangement

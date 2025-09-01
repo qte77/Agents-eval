@@ -168,6 +168,8 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
    |- architecture.md  # detailed system architecture
    |- landscape/       # landscape analysis and evaluation tools
       |- landscape.md  # AI agent ecosystem overview
+      |- landscape-agent-frameworks-infrastructure.md  # agent frameworks & tools
+      |- landscape-evaluation-data-resources.md  # evaluation frameworks & datasets
       |- agent_eval_metrics.md  # evaluation metrics catalog
       \- trace_observe_methods.md  # observability analysis
    \- papers/  # research papers and analysis
@@ -203,13 +205,17 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 
 ## Related Work
 
-For a comprehensive overview of AI agent frameworks, evaluation tools, datasets, and benchmarks, see [docs/landscape/landscape.md](docs/landscape/landscape.md).
+For a comprehensive overview of AI agent frameworks, evaluation tools, datasets, and benchmarks, see:
+
+- [AI Agent Evaluation Landscape Overview](docs/landscape/landscape.md) - Navigation guide and document overview
+- [Agent Frameworks & Infrastructure](docs/landscape/landscape-agent-frameworks-infrastructure.md) - Agent frameworks, LLMs, observability, and development tools  
+- [Evaluation & Data Resources](docs/landscape/landscape-evaluation-data-resources.md) - Evaluation frameworks, datasets, benchmarks, and analysis tools
 
 ## Further Reading
 
 - [Project architecture](docs/architecture.md)
 - [List of papers inspected](docs/papers/further_reading.md)
-- [Landscape of current related frameworks](docs/landscape/landscape.md)
+- [AI Agent Evaluation Landscape](docs/landscape/landscape.md)
 - [Visualization of Papers inspected](https://claude.ai/public/artifacts/7761a54c-f49b-486b-9e28-7aa2de8b3c86)
 - [Visualization of related frameworks inspected](https://claude.ai/public/artifacts/e883fe7a-f500-4acc-b397-d6b73e1765ed)
 - [Agents-eval Enhancement Recommendations based on the Papers](https://qte77.github.io/ai-agents-eval-enhancement-recommendations/)
@@ -250,7 +256,7 @@ AGENTS.md (core agent instructions)
 - **AGENT_REQUESTS.md**: Human escalation process and active collaboration requests
 - **AGENT_LEARNINGS.md**: Accumulated patterns, solutions, and knowledge sharing
 - **docs/architecture.md**: Detailed system architecture, agents, and data flow
-- **docs/landscape/landscape.md**: Comprehensive AI agent ecosystem overview
+- **docs/landscape/**: Comprehensive AI agent ecosystem analysis and evaluation resources
 
 ### Agent Development Workflow
 

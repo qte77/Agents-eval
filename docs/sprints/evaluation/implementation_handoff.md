@@ -28,8 +28,7 @@ src/app/evals/
 └── composite_scoring.py          # Final score calculation
 
 src/app/data_models/
-├── evaluation_models.py          # New evaluation data models
-└── peerread_evaluation_models.py # Existing (extend as needed)
+└── evaluation_models.py          # Comprehensive evaluation data models including PeerReadEvalResult
 
 src/app/config/
 └── config_eval.json             # Evaluation configuration

@@ -401,7 +401,7 @@ class TraceCollector:
                 coordination_events = []
                 timing_data = {}
 
-                for timestamp, event_type, agent_id, data_json in events:
+                for timestamp, event_type, _agent_id, data_json in events:
                     data = json.loads(data_json)
 
                     if event_type == "agent_interaction":
@@ -526,7 +526,7 @@ def get_trace_collector(config: dict[str, Any] | None = None) -> TraceCollector:
     return _global_collector
 
 
-def trace_execution(execution_id: str):
+def trace_execution(execution_id: str) -> Any:
     """Decorator for automatic execution tracing.
 
     Args:
@@ -539,8 +539,8 @@ def trace_execution(execution_id: str):
             pass
     """
 
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+    def decorator(func: Any) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             collector = get_trace_collector()
             collector.start_execution(execution_id)
 

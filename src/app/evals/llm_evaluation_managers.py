@@ -246,18 +246,32 @@ Provide scores and brief explanation."""
             total_tokens = len(paper) / 4 + len(review) / 4 + 500  # Rough estimate
             api_cost = (total_tokens / 1000) * 0.0001  # $0.0001 per 1K tokens
 
+            # Ensure all scores are float types before calculation
+            technical_score_float: float = (
+                technical_score if isinstance(technical_score, int | float) else 0.0
+            )
+            constructiveness_score_float: float = (
+                constructiveness_score
+                if isinstance(constructiveness_score, int | float)
+                else 0.0
+            )
+            planning_score_float: float = (
+                planning_score if isinstance(planning_score, int | float) else 0.0
+            )
+
             # Calculate overall LLM judge score
             overall_score = (
-                technical_score * self.weights.get("technical_accuracy", 0.4)
-                + constructiveness_score * self.weights.get("constructiveness", 0.3)
-                + planning_score * self.weights.get("planning_rationality", 0.3)
+                technical_score_float * self.weights.get("technical_accuracy", 0.4)
+                + constructiveness_score_float
+                * self.weights.get("constructiveness", 0.3)
+                + planning_score_float * self.weights.get("planning_rationality", 0.3)
             )
 
             return Tier2Result(
-                technical_accuracy=technical_score,
-                constructiveness=constructiveness_score,
-                clarity=constructiveness_score,  # Use constructiveness as proxy
-                planning_rationality=planning_score,
+                technical_accuracy=technical_score_float,
+                constructiveness=constructiveness_score_float,
+                clarity=constructiveness_score_float,  # Use constructiveness as proxy
+                planning_rationality=planning_score_float,
                 overall_score=overall_score,
                 model_used=f"{self.provider}/{self.model}",
                 api_cost=api_cost,

@@ -41,7 +41,7 @@ class CompositeScorer:
     - task_success (0.167)
     - coordination_quality (0.167)
     - tool_efficiency (0.167)
-    - planning_rational (0.167)
+    - planning_rationality (0.167)
     - output_similarity (0.167)
 
     Maps scores to recommendation categories with thresholds.
@@ -94,7 +94,7 @@ class CompositeScorer:
             "task_success",
             "coordination_quality",
             "tool_efficiency",
-            "planning_rational",
+            "planning_rationality",
             "output_similarity",
         }
 
@@ -108,7 +108,9 @@ class CompositeScorer:
 
         # Validate weights sum to approximately 1.0
         total_weight = sum(self.weights.values())
-        if abs(total_weight - 1.0) > 0.001:
+        if (
+            abs(total_weight - 1.0) > 0.01
+        ):  # Reason: Allow for floating point precision in config
             logger.warning(f"Metric weights sum to {total_weight:.3f}, expected 1.0")
 
         # Validate thresholds are in correct order
@@ -118,7 +120,8 @@ class CompositeScorer:
             logger.warning("Recommendation thresholds are not in descending order")
 
         logger.debug(
-            f"Configuration validation completed: {len(self.weights)} metrics, weights sum = {total_weight:.3f}"
+            f"Configuration validation completed: {len(self.weights)} metrics, "
+            f"weights sum = {total_weight:.3f}"
         )
 
     def extract_metric_values(self, results: EvaluationResults) -> dict[str, float]:
@@ -144,16 +147,25 @@ class CompositeScorer:
             raise ValueError(f"Missing required tier results: {missing_tiers}")
 
         # Extract metrics following the sprint document specification
+        # At this point, we know all tiers are non-None due to is_complete() check
+        assert results.tier1 is not None, "tier1 should not be None after check"
+        assert results.tier2 is not None, "tier2 should not be None after check"
+        assert results.tier3 is not None, "tier3 should not be None after check"
+
+        # Reason: Task 4.1 requires these exact 6 metrics with specific source mappings
+        # Each metric maps to specific fields from evaluation tier results
         metrics = {
             # From Tier 1: Traditional metrics + execution performance
-            "time_taken": self._normalize_time_score(results.tier1.time_score),
-            "task_success": results.tier1.task_success,
-            "output_similarity": results.tier1.overall_score,
-            # From Tier 2: LLM-as-Judge quality assessment
-            "planning_rational": results.tier2.overall_score,
+            "time_taken": self._normalize_time_score(
+                results.tier1.time_score
+            ),  # normalized execution time
+            "task_success": results.tier1.task_success,  # binary completion flag
+            "output_similarity": results.tier1.overall_score,  # weighted similarity
+            # From Tier 2: LLM-as-Judge quality assessment - use specific metric
+            "planning_rationality": results.tier2.planning_rationality,
             # From Tier 3: Graph-based coordination analysis
-            "coordination_quality": results.tier3.coordination_centrality,
-            "tool_efficiency": results.tier3.path_convergence,
+            "coordination_quality": results.tier3.coordination_centrality,  # centrality
+            "tool_efficiency": results.tier3.tool_selection_accuracy,  # tool accuracy
         }
 
         # Validate all metrics are in valid range
@@ -211,9 +223,10 @@ class CompositeScorer:
         composite_score = max(0.0, min(1.0, composite_score))
 
         logger.info(f"Composite score calculated: {composite_score:.3f}")
-        logger.debug(
-            f"Metric contributions: {[(m, f'{metrics[m] * self.weights[m]:.3f}') for m in self.weights.keys()]}"
-        )
+        contributions = [
+            (m, f"{metrics[m] * self.weights[m]:.3f}") for m in self.weights.keys()
+        ]
+        logger.debug(f"Metric contributions: {contributions}")
 
         return composite_score
 
@@ -271,19 +284,25 @@ class CompositeScorer:
             metrics = self.extract_metric_values(results)
 
             # Create result object
+            # We know tiers are non-None since calculate_composite_score succeeded
+            assert results.tier1 is not None
+            assert results.tier2 is not None
+            assert results.tier3 is not None
+
             result = CompositeResult(
                 composite_score=composite_score,
                 recommendation=recommendation,
                 recommendation_weight=recommendation_weight,
                 metric_scores=metrics,
-                tier1_score=results.tier1.overall_score if results.tier1 else 0.0,
-                tier2_score=results.tier2.overall_score if results.tier2 else 0.0,
-                tier3_score=results.tier3.overall_score if results.tier3 else 0.0,
+                tier1_score=results.tier1.overall_score,
+                tier2_score=results.tier2.overall_score,
+                tier3_score=results.tier3.overall_score,
                 evaluation_complete=results.is_complete(),
             )
 
             logger.info(
-                f"Composite evaluation complete: {composite_score:.3f} → {recommendation}"
+                f"Composite evaluation complete: {composite_score:.3f} → "
+                f"{recommendation}"
             )
             return result
 

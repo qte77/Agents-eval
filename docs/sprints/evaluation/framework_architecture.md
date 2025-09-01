@@ -33,7 +33,7 @@ This document specifies the complete architecture for a streamlined three-tiered
 
 **Evaluation Engine**: `src/app/evals/evaluation_engine.py`
 **Configuration**: `src/app/config/config_eval.json`
-**Data Models**: `src/app/data_models/peerread_evaluation_models.py`
+**Data Models**: `src/app/data_models/evaluation_models.py`
 **Metrics**: `src/app/evals/metrics.py`
 
 ## Tier 1: Traditional Metrics Engine

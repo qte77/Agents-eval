@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clear audience targeting for all main documentation files
 - PyPI verification requirement for new package introductions in AGENTS.md
 - architecture.md: Comprehensive system architecture documentation
-- landscape.md: AI agent ecosystem and competitive analysis
+- landscape analysis: AI agent ecosystem split into focused documents (landscape.md overview, landscape-agent-frameworks-infrastructure.md, landscape-evaluation-data-resources.md)
 - agent_eval_metrics.md: Evaluation metrics catalog
 - trace_observe_methods.md: Observability analysis
 - Modular architecture with functional separation: agents/, evals/, llms/, tools/
