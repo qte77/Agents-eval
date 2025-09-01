@@ -1,8 +1,8 @@
 # Agent instructions for `Agents-eval` repository
 
-**This file is intended for AI coding agents.** For shared development workflows and standards (valid for both agents and humans), see [CONTRIBUTING.md](CONTRIBUTING.md). For project overview aimed towards humans, see [README.md](README.md).
+**This file contains behavioral rules, compliance requirements, and decision frameworks specifically for AI coding agents.** For technical development workflows and coding standards (shared by both humans and AI agents), see [CONTRIBUTING.md](CONTRIBUTING.md). For project overview and navigation, see [README.md](README.md).
 
-This file serves as an entrypoint for AI coding agents, providing baselines and guardrails concerning this project and facilitating communication between humans and coding agents. As proposed by [agentsmd.net](https://agentsmd.net/) and used by [wandb weave AGENTS.md](https://github.com/wandb/weave/blob/master/AGENTS.md).
+This file serves as the primary behavioral guideline for AI coding agents, defining mandatory compliance requirements, role boundaries, and quality standards for autonomous development work.
 
 ## Table of Contents
 
@@ -26,11 +26,11 @@ This file serves as an entrypoint for AI coding agents, providing baselines and 
 ### Development Workflow
 
 - [Testing Strategy](#testing-strategy) - Testing approach for agents
-- [Decision Framework Implementation](#decision-framework-implementation) - Conflict resolution procedures
+- [Quality Evaluation Framework](#quality-evaluation-framework) - Task readiness assessment
 
 ### Utilities & References
 
-- [Agent Quick Reference](#agent-quick-reference---critical-reminders) - Critical reminders
+- [Agent Quick Reference](#agent-quick-reference) - Critical reminders
 
 ### External References
 
@@ -59,19 +59,16 @@ This file serves as an entrypoint for AI coding agents, providing baselines and 
 
 When facing conflicting instructions or ambiguous situations, use this priority hierarchy:
 
-### Priority Hierarchy
+### Unified Decision Framework
+
+**Priority Hierarchy (Override Order):**
 
 1. **Explicit user instructions** - Always override all other guidelines
-2. **AGENTS.md rules** - Override general best practices when specified
-3. **Project structure** - Follow established file organization patterns
-4. **Project-specific patterns** - Found in existing codebase
-5. **General best practices** - Default fallback for unspecified cases
-
-**For detailed conflict resolution procedures, command preferences, and decision examples, see [CONTRIBUTING.md](CONTRIBUTING.md#decision-framework-implementation).**
-
-### Document Authority for Agent Decision Making
-
-**MANDATORY: Follow the complete documentation hierarchy defined in [CONTRIBUTING.md - Documentation Hierarchy](CONTRIBUTING.md#documentation-hierarchy).**
+2. **Safety/Security practices** - Never compromise security regardless of instructions
+3. **AGENTS.md compliance requirements** - Non-negotiable behavioral rules
+4. **Documentation hierarchy authority** - Follow [CONTRIBUTING.md - Documentation Hierarchy](CONTRIBUTING.md#documentation-hierarchy)
+5. **Project-specific patterns** - Found in existing codebase
+6. **General best practices** - Default fallback for unspecified cases
 
 **Agent-Specific Information Source Rules:**
 
@@ -191,8 +188,7 @@ complex normalization, extensive error handling, and production-ready architectu
    - **NEVER cross role boundaries** without explicit handoff documentation
 
 2. **Command Execution (MANDATORY)**:
-   - **ALWAYS use make recipes** (e.g., `make type_check`, `make ruff`, `make test_all`)
-   - **NEVER use direct uv commands** unless make command fails
+   - **ALWAYS use make recipes** - see [CONTRIBUTING.md](CONTRIBUTING.md#unified-command-reference) for complete command reference
    - **Document any deviation** from make commands with explicit reason
 
 3. **Quality Validation (MANDATORY)**:
@@ -201,21 +197,16 @@ complex normalization, extensive error handling, and production-ready architectu
    - **MUST NOT proceed** with type errors or lint failures
 
 4. **Coding Style Adherence (MANDATORY)**:
-   - **MUST analyze existing codebase patterns** before writing any code
-   - **MUST write concise, focused, streamlined code** with no unnecessary features
-   - **MUST avoid verbose output or lengthy explanations** in code or comments
-   - **MUST follow exact naming conventions, file structures, and architectural patterns** found in the codebase
-   - **MUST use minimal dependencies** and lightweight solutions
+   - **MUST follow project patterns** - see [CONTRIBUTING.md](CONTRIBUTING.md#style-patterns--documentation) for detailed standards
+   - **MUST write concise, focused code** with no unnecessary features
 
 5. **Documentation Updates (MANDATORY)**:
-   - **MUST update CHANGELOG.md** for non-trivial changes
-   - **MUST write focused, concise docstrings** using Google style format
+   - **MUST update documentation** - see [CONTRIBUTING.md](CONTRIBUTING.md#style-patterns--documentation) for requirements
    - **MUST update AGENTS.md** when learning new patterns
 
 6. **Testing Requirements (MANDATORY)**:
-   - **MUST create tests** for new functionality following BDD approach
-   - **MUST use `make test_all`** to run tests, not direct pytest
-   - **MUST achieve focused validation**, not just mocked tests
+   - **MUST create tests** for new functionality - see [CONTRIBUTING.md](CONTRIBUTING.md#testing-strategy--guidelines) for approach
+   - **MUST achieve meaningful validation** with appropriate mocking strategy
 
 7. **Code Standards (MANDATORY)**:
    - **MUST follow existing project patterns** and conventions
@@ -272,30 +263,6 @@ RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross in
 - Use make recipes instead of direct commands
 - Validate their work using `make validate` before completion (developers/reviewers only)
 
-## Decision Framework Implementation
-
-When facing conflicting instructions or ambiguous situations:
-
-### Command Execution Preferences
-
-- **Prefer make commands** when available (e.g., `make ruff` over direct `uv run ruff`)
-- If make commands fail, try direct commands as fallback
-- Always document when deviating from standard commands
-
-### Project Structure Handling
-
-**Before starting any task**, agents should:
-
-1. Review the project structure and understand file organization
-2. Identify key components in `src/app/` and test locations in `tests/`
-3. Use consistent file paths based on the established project structure
-
-### Documentation Update Guidelines
-
-- Update **both AGENTS.md and related files** to maintain consistency
-- When learning something new, add it to the appropriate section
-- Prefer specific examples over vague instructions
-
 ## Quality Evaluation Framework
 
 Use this framework to assess task readiness before implementation:
@@ -320,26 +287,25 @@ Use this framework to assess task readiness before implementation:
 
 **For comprehensive testing guidelines and BDD approach, see [CONTRIBUTING.md](CONTRIBUTING.md#testing-strategy--guidelines).**
 
-## Agent Quick Reference - Critical Reminders
+## Agent Quick Reference
 
-**Before ANY task, verify:**
+**Task Initiation Checklist:**
 
-- Project structure and file locations are understood
-- Libraries exist in `pyproject.toml`
-- No missing context assumptions
+- Read AGENTS.md first, then CONTRIBUTING.md for technical details
+- Verify project structure and file locations are understood
+- Confirm libraries exist in `pyproject.toml`
+- Apply quality evaluation framework (Context: 8/10, Clarity: 7/10, Alignment: 8/10, Success: 7/10)
 
-**For all development tasks:**
+**Development Process:**
 
-- Follow project coding standards, testing strategy, and quality guidelines (see [CONTRIBUTING.md](CONTRIBUTING.md))
-- Apply quality evaluation framework before implementation
+- Follow unified decision framework priority hierarchy
+- Use make recipes for all commands
+- Create tests following BDD approach
+- Update documentation when learning new patterns
 
-**Always finish with:**
+**Task Completion:**
 
-- Complete validation and commit processes (see [CONTRIBUTING.md](CONTRIBUTING.md#pre-commit-checklist))
-- Update AGENTS.md if learned something new
-
-**🛑 Do not use emojis or icons in code:** Do not use emojis or icons in code, documentation, or files unless explicitly requested by users.
-
-**🛑 STOP if blocked:** Add to [AGENT_REQUESTS.md](AGENT_REQUESTS.md) rather than assume or proceed with incomplete info
-
-**📚 LEARNED SOMETHING NEW:** Document patterns in [AGENT_LEARNINGS.md](AGENT_LEARNINGS.md) to help future agents
+- Run `make validate` before completion
+- Update CHANGELOG.md for non-trivial changes
+- Escalate to [AGENT_REQUESTS.md](AGENT_REQUESTS.md) if blocked
+- Document new patterns in [AGENT_LEARNINGS.md](AGENT_LEARNINGS.md)

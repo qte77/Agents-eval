@@ -1,6 +1,8 @@
 # Contributing to Agents-eval
 
-**This document is shared between human developers and AI coding agents.** It contains development workflows, coding standards, and collaboration guidelines to help onboard and align both human and agentic coders. For AI agent-specific instructions, see [AGENTS.md](AGENTS.md). For project overview aimed towards humans, see [README.md](README.md).
+**This document contains technical development workflows, coding standards, and implementation guidelines shared by both human developers and AI coding agents.** For AI agent behavioral rules and compliance requirements, see [AGENTS.md](AGENTS.md). For project overview and navigation, see [README.md](README.md).
+
+This serves as the technical implementation reference, covering command execution, testing strategies, code patterns, and human-agent collaboration procedures.
 
 ## Table of Contents
 
@@ -284,17 +286,16 @@ This hierarchy prevents the confusion between "what could be built" (landscape r
 
 ## Human-Agent Collaboration
 
-### Basic Guidelines for AI Agents
+### Agent Integration Guidelines
 
 **For comprehensive AI agent instructions, see [AGENTS.md](AGENTS.md).**
 
-**Key principles for AI agents working in this codebase:**
+**Key integration points:**
 
-- Follow existing project structure and organization patterns
-- Always use `make` recipes for commands (e.g., `make validate`, `make test_all`)
-- Request clarification when requirements are unclear rather than making assumptions
-- Write concise, focused code following established codebase patterns
-- Update CHANGELOG.md for non-trivial changes and AGENTS.md when learning new patterns
+- Agent behavioral rules and compliance → [AGENTS.md](AGENTS.md)
+- Technical implementation standards → This document
+- Command execution → [Unified Command Reference](#unified-command-reference)
+- Testing approach → [Testing Strategy & Guidelines](#testing-strategy--guidelines)
 
 ### Requests to Humans
 

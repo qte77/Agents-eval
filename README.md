@@ -2,7 +2,7 @@
 
 This project aims to implement an evaluation pipeline to assess the effectiveness of open-source agentic AI systems using the PeerRead dataset, focusing on use case agnostic metrics that measure core capabilities such as task decomposition, tool integration, adaptability, and overall performance.
 
-**This README is intended for human developers and users.** For shared development workflows and standards (valid for both agents and humans), see [CONTRIBUTING.md](CONTRIBUTING.md). For AI coding agent instructions, see [AGENTS.md](AGENTS.md).
+**This README provides project overview and navigation for human developers and users.** For technical development workflows and coding standards (shared by both humans and AI agents), see [CONTRIBUTING.md](CONTRIBUTING.md). For AI agent behavioral rules and compliance requirements, see [AGENTS.md](AGENTS.md).
 
 [![License](https://img.shields.io/badge/license-BSD3Clause-58f4c2.svg)](LICENSE.md)
 ![Version](https://img.shields.io/badge/version-3.2.0-58f4c2.svg)
