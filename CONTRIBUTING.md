@@ -17,6 +17,7 @@
 
 ### Collaboration
 
+- [Documentation Hierarchy](#documentation-hierarchy) - Authority structure and single source of truth principles
 - [Human-Agent Collaboration](#human-agent-collaboration) - Guidelines for AI agents and escalation
 
 ## Development Commands & Environment
@@ -205,6 +206,81 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 | `make run_markdownlint INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
 | `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
 | `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notify user |
+
+## Documentation Hierarchy
+
+This project follows a structured documentation hierarchy to prevent scope creep, eliminate redundancy, and maintain clear authority for different types of information.
+
+### Authority Structure & Single Source of Truth
+
+Each document type has specific authority and serves as the single source of truth for its domain:
+
+#### Requirements & Strategy (What & Why)
+
+- **[PRD.md](docs/PRD.md)** - **PRIMARY AUTHORITY** for business requirements, scope boundaries, and project goals
+- **[UserStory.md](docs/UserStory.md)** - **AUTHORITY** for user workflows, acceptance criteria, and success metrics
+
+#### Technical Implementation (How)
+
+- **[architecture.md](docs/architecture.md)** - **AUTHORITY** for system design, technical decisions, and architectural patterns
+- **[README.md](README.md)** - **AUTHORITY** for project overview, navigation, and current status
+
+#### Implementation Details (When & Current State)
+
+- **Sprint Documents** (`docs/sprints/`) - **AUTHORITY** for implementation timelines, current capabilities, and task execution
+- **Usage Guides** (`docs/peerread-agent-usage.md`) - **AUTHORITY** for operational procedures and working features
+
+#### Research & Reference (What's Possible)
+
+- **Landscape Documents** (`docs/landscape/`) - **INFORMATIONAL ONLY** for technology research, feasibility analysis, and available options
+- **Assessment Documents** (`docs/sprints/assessment/`) - **INFORMATIONAL ONLY** for capability gap analysis and technical evaluations
+
+### Reference Flow & Decision Rules
+
+#### Correct Reference Pattern
+
+```text
+PRD.md (requirements) → architecture.md (technical design) → Sprint docs (implementation) → Usage guides (operations)
+     ↑
+Landscape docs (inform strategic decisions, do not create requirements)
+```
+
+#### Anti-Scope-Creep Rules
+
+1. **Landscape possibilities ≠ Requirements** - Research documents inform choices but do not dictate implementation
+2. **Validate against authority chain** - Implementation decisions must align with PRD.md requirements
+3. **Current vs Future clarity** - Clearly distinguish between implemented, planned, and possible features
+
+#### Anti-Redundancy Rules
+
+1. **Single source of truth** - Each piece of information should exist in exactly ONE authoritative document
+2. **Reference, don't duplicate** - Other documents should link to authoritative sources, not repeat information
+3. **Update procedures** - When updating requirements or technical decisions, update the authoritative document and remove duplicates elsewhere
+
+### Document Maintenance Procedures
+
+#### When Updating Strategic Documents (PRD.md, UserStory.md, architecture.md)
+
+1. Review all dependent implementation documents for alignment
+2. Update sprint plans if scope or technical approach changes
+3. Ensure landscape references don't create unrealistic expectations
+4. Remove outdated information from non-authoritative documents
+
+#### When Creating New Documents
+
+1. Reference appropriate authority documents in YAML frontmatter
+2. Specify document category: requirements/technical/implementation/research
+3. Include authority chain references to prevent conflicts
+4. Avoid duplicating information available in authoritative sources
+
+#### Quality Assurance
+
+- Implementation documents must validate against PRD.md scope
+- Technical decisions must align with architecture.md patterns
+- Research findings should inform but not override strategic documents
+- Sprint status should reflect actual implementation reality
+
+This hierarchy prevents the confusion between "what could be built" (landscape research) vs. "what should be built" (PRD requirements) vs. "what is built" (implementation status).
 
 ## Human-Agent Collaboration
 

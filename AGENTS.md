@@ -69,6 +69,32 @@ When facing conflicting instructions or ambiguous situations, use this priority 
 
 **For detailed conflict resolution procedures, command preferences, and decision examples, see [CONTRIBUTING.md](CONTRIBUTING.md#decision-framework-implementation).**
 
+### Document Authority for Agent Decision Making
+
+**MANDATORY: Follow the complete documentation hierarchy defined in [CONTRIBUTING.md - Documentation Hierarchy](CONTRIBUTING.md#documentation-hierarchy).**
+
+**Agent-Specific Information Source Rules:**
+
+1. **Need requirements or scope validation?** → **PRD.md ONLY** (PRIMARY AUTHORITY)
+2. **Need user workflow understanding?** → **UserStory.md ONLY** (AUTHORITY)
+3. **Need technical implementation approach?** → **architecture.md ONLY** (AUTHORITY)
+4. **Need current implementation status?** → **Sprint documents ONLY** (AUTHORITY)
+5. **Need operational procedures?** → **Usage guides ONLY** (AUTHORITY)
+6. **Need technology research?** → **Landscape documents** (INFORMATIONAL ONLY)
+
+**Critical Agent Anti-Scope-Creep Rules:**
+
+- **NEVER implement landscape possibilities without PRD.md validation**
+- **Landscape documents are research input ONLY, not implementation requirements**
+- **Always validate implementation decisions against PRD.md scope boundaries**
+- **If landscape docs suggest capabilities beyond PRD.md scope, escalate to AGENT_REQUESTS.md**
+
+**Agent Anti-Redundancy Rules:**
+
+- **NEVER duplicate information across documents** - always reference the authoritative source
+- **Before adding information, check if it exists in the authority document**
+- **Update the authoritative document, then remove duplicates elsewhere**
+
 ### When to Stop and Ask
 
 **Always stop and ask for clarification when:**

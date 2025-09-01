@@ -240,6 +240,59 @@ The system relies on several key technology categories for implementation and ev
 
 Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
 
+## Decision Log
+
+This section documents architectural decisions made during system development to provide context, rationale, and alternatives considered.
+
+### Decision Format
+
+Each architectural decision includes:
+
+- **Date**: When the decision was made
+- **Decision**: What was decided
+- **Context**: Why this decision was needed
+- **Alternatives**: What other options were considered
+- **Rationale**: Why this option was chosen
+- **Status**: Active/Superseded/Deprecated
+
+### Architectural Decisions Records
+
+#### ADR-001: PydanticAI as Agent Framework
+
+- **Date**: 2025-03-01
+- **Decision**: Use PydanticAI for multi-agent orchestration
+- **Context**: Need type-safe, production-ready agent framework
+- **Alternatives**: LangChain, AutoGen, CrewAI, custom implementation
+- **Rationale**: Type safety, async support, Pydantic validation, lightweight architecture
+- **Status**: Active
+
+#### ADR-002: PeerRead Dataset Integration
+
+- **Date**: 2025-08-01
+- **Decision**: Use PeerRead scientific paper review dataset as primary evaluation benchmark
+- **Context**: Need standardized, academic-quality evaluation dataset
+- **Alternatives**: Custom dataset, multiple datasets, synthetic data
+- **Rationale**: Established academic benchmark, complex reasoning tasks, real-world data quality
+- **Status**: Active
+
+#### ADR-003: Three-Tiered Evaluation Framework
+
+- **Date**: 2025-08-23
+- **Decision**: Implement Traditional Metrics → LLM-as-a-Judge → Graph Analysis evaluation pipeline
+- **Context**: Need comprehensive agent evaluation beyond simple metrics
+- **Alternatives**: Single-tier evaluation, two-tier approach, external evaluation only
+- **Rationale**: Provides complementary evaluation dimensions (quantitative, qualitative, behavioral) while maintaining modularity
+- **Status**: Active
+
+#### ADR-004: Post-Execution Graph Analysis
+
+- **Date**: 2025-08-25
+- **Decision**: Analyze agent behavior through post-execution trace processing rather than real-time monitoring
+- **Context**: Need to evaluate coordination patterns without affecting agent performance
+- **Alternatives**: Real-time graph construction, embedded monitoring, manual analysis
+- **Rationale**: Avoids performance overhead, enables comprehensive analysis, preserves agent autonomy
+- **Status**: Active
+
 ## Agentic System Architecture
 
 **PlantUML Source**: [arch_vis/MAS-C4-Overview.plantuml](arch_vis/MAS-C4-Overview.plantuml) | [arch_vis/MAS-C4-Detailed.plantuml](arch_vis/MAS-C4-Detailed.plantuml)

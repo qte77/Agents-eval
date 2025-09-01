@@ -67,6 +67,23 @@ WANDB_API_KEY="xyz"
 
 [Agents-eval](https://qte77.github.io/Agents-eval)
 
+### Documentation Navigation
+
+This project uses a structured documentation hierarchy to provide clear authority and prevent scope creep. For comprehensive details, see [Documentation Hierarchy](CONTRIBUTING.md#documentation-hierarchy).
+
+**Quick Navigation:**
+
+- **Requirements & Goals**: [PRD.md](docs/PRD.md) - Project scope, business requirements
+- **User Experience**: [UserStory.md](docs/UserStory.md) - User workflows, acceptance criteria  
+- **Technical Design**: [architecture.md](docs/architecture.md) - System architecture, technical decisions
+- **Current Implementation**: [Sprint Documents](docs/sprints/) - Active development status
+- **Usage & Operations**: [Agent Usage Guide](docs/peerread-agent-usage.md) - Working feature documentation
+- **Research & Analysis**: [Landscape Documents](docs/landscape/) - Technology research, feasibility studies
+
+**For Developers:**
+- **AI Agent Instructions**: [AGENTS.md](AGENTS.md) - AI coding agent guidelines and patterns
+- **Development Workflow**: [CONTRIBUTING.md](CONTRIBUTING.md) - Shared human/agent development standards
+
 ### Technical Analysis
 
 - [Tracing & Observation Methods](docs/landscape/trace_observe_methods.md) - Technical analysis of observability tool implementations
