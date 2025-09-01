@@ -1,4 +1,10 @@
-# Sprint 2: Separation of Concerns (SoC) & Single Responsibility Principle (SRP) Refactoring
+---
+title: Sprint 2 - Separation of Concerns (SoC) & Single Responsibility Principle (SRP) Refactoring
+description: Refactor the codebase to achieve proper Separation of Concerns (SoC) and Single Responsibility Principle (SRP) by implementing clean, modular engine architecture
+date: 2025-08-01
+category: sprint
+version: 1.0.0
+---
 
 **Sprint Goal**: Refactor the codebase to achieve proper Separation of Concerns (SoC) and Single Responsibility Principle (SRP) by implementing clean, modular engine architecture that separates agents, dataset, and evaluation concerns into independent, testable components.
 

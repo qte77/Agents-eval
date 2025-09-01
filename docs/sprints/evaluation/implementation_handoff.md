@@ -1,4 +1,10 @@
-# Implementation Handoff: Three-Tiered Evaluation Framework
+---
+title: Implementation Handoff - Three-Tiered Evaluation Framework
+description: Complete implementation specifications for Python developers to build the three-tiered evaluation framework following the architecture design
+date: 2025-08-26
+category: evaluation
+version: 1.0.0
+---
 
 **Document Version**: 1.0  
 **Sprint**: 1 - Three-Tiered PeerRead Evaluation System  

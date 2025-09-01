@@ -1,5 +1,12 @@
+---
+title: Sprint 1 - PeerRead Dataset Agent Evaluation Framework
+description: Three-tiered evaluation framework implementation for multi-agent system assessment
+date: 2025-08-23
+category: sprint
+version: 1.0.0
+---
+
 <!-- markdownlint-disable MD024 no-duplicate-heading -->
-# Sprint 1: PeerRead Dataset Agent Evaluation Framework
 
 ## Sprint Dates: August 23-28, 2025 (6 Days)
 

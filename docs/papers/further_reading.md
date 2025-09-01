@@ -1,4 +1,10 @@
-# Further Reading
+---
+title: Further Reading - Research Papers
+description: Curated list of research papers and academic resources for AI agent evaluation
+date: 2025-09-01
+category: research
+version: 1.0.0
+---
 
 ## 2025-08
 

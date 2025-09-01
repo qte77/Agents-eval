@@ -1,4 +1,10 @@
-# Architecture Visualizations
+---
+title: Architecture Visualizations
+description: PlantUML source files and rendering instructions for project architecture diagrams
+date: 2025-09-01
+category: documentation
+version: 1.0.0
+---
 
 This directory contains the source files for the project's architecture diagrams. All diagrams are authored in PlantUML and are designed to be rendered into themed PNG images (light and dark modes).
 

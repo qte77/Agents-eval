@@ -1,4 +1,10 @@
-# Large Context Model Integration Design
+---
+title: Large Context Model Integration Design
+description: Complete architecture for integrating large context window models (>50k tokens, preferably 200k+) with the PeerRead dataset processing system
+date: 2025-09-01
+category: architecture
+version: 1.0.0
+---
 
 ## Overview
 

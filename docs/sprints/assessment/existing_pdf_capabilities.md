@@ -1,4 +1,10 @@
-# Existing PDF Processing Capability Assessment
+---
+title: Existing PDF Processing Capability Assessment
+description: Assessment of current PDF processing capabilities in the Agents-eval system, including strengths, gaps, and integration recommendations
+date: 2025-09-01
+category: assessment
+version: 1.0.0
+---
 
 ## Executive Summary
 

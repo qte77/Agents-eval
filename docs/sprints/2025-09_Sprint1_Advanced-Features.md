@@ -1,4 +1,10 @@
-# Sprint 3: Advanced Features & Research Integration
+---
+title: Sprint 3 - Advanced Features & Research Integration
+description: Implementation of core advanced evaluation features and external tool integrations on top of the solid architectural foundation established in Sprints 1 & 2
+date: 2025-09-01
+category: sprint
+version: 1.0.0
+---
 
 **Sprint Goal**: Implement core advanced evaluation features and external tool integrations on top of the solid architectural foundation established in Sprints 1 & 2.
 

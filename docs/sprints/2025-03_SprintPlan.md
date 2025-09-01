@@ -1,5 +1,12 @@
+---
+title: Project Plan Outline - March 2025
+description: Sprint plan for metric development and CLI enhancements
+date: 2025-03-01
+category: sprint-plan
+version: 1.0.0
+---
+
 <!-- markdownlint-disable MD024 -->
-# Project Plan Outline
 
 ## Week 1 starting 2025-03-31: Metric Development and CLI Enhancements
 

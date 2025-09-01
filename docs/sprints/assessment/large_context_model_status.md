@@ -1,4 +1,10 @@
-# Large Context Model Integration Status Assessment
+---
+title: Large Context Model Integration Status Assessment
+description: Status assessment of large context model integration in the Agents-eval system, including current capabilities, gaps, and implementation readiness
+date: 2025-09-01
+category: assessment
+version: 1.0.0
+---
 
 ## Executive Summary
 

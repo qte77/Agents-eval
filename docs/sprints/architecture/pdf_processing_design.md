@@ -1,4 +1,10 @@
-# PDF Processing Architecture Design
+---
+title: PDF Processing Architecture Design
+description: Complete PDF processing architecture for PeerRead dataset integration, designed to handle large scientific papers with large context window models
+date: 2025-09-01
+category: architecture
+version: 1.0.0
+---
 
 ## Overview
 

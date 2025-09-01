@@ -1,4 +1,10 @@
-# Product Requirements Document (PRD) for Agents-eval
+---
+title: Product Requirements Document (PRD) for Agents-eval
+description: Comprehensive product requirements document for the multi-agent AI system evaluation framework
+date: 2025-09-01
+category: requirements
+version: 1.0.0
+---
 
 ## Overview
 

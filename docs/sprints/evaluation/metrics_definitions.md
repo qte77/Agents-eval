@@ -1,4 +1,10 @@
-# Evaluation Metrics Definitions
+---
+title: Evaluation Metrics Definitions
+description: Exact mathematical formulas, implementation specifications, and developer guidance for all evaluation metrics in the three-tiered PeerRead evaluation framework
+date: 2025-08-25
+category: evaluation
+version: 1.0.0
+---
 
 **Document Version**: 1.0  
 **Sprint**: 1 - Three-Tiered PeerRead Evaluation System  

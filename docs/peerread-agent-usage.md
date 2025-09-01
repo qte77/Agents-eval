@@ -1,4 +1,10 @@
-# PeerRead Agent System Usage Guide
+---
+title: PeerRead Agent System Usage Guide
+description: Comprehensive guide for using the PeerRead dataset integration with multi-agent evaluation system
+date: 2025-08-31
+category: usage-guide
+version: 2.0.0
+---
 
 **Document Status**: Updated 2025-08-31  
 **Version**: 2.0  

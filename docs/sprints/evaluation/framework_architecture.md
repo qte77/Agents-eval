@@ -1,6 +1,12 @@
-<!-- markdownlint-disable MD024 no-duplicate-heading -->
+---
+title: Evaluation Framework Architecture
+description: Complete architecture specification for a streamlined three-tiered evaluation framework that assesses multi-agent systems on PeerRead scientific paper review generation
+date: 2025-08-25
+category: evaluation
+version: 1.0.0
+---
 
-# Evaluation Framework Architecture
+<!-- markdownlint-disable MD024 no-duplicate-heading -->
 
 **Document Version**: 1.0  
 **Sprint**: 1 - Three-Tiered PeerRead Evaluation System  
