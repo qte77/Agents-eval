@@ -1,0 +1,306 @@
+"""
+Composite scoring system for three-tiered evaluation framework.
+
+Integrates Traditional Metrics (Tier 1), LLM-as-Judge (Tier 2), and
+Graph Analysis (Tier 3) into unified scoring system with recommendation mapping.
+"""
+
+import json
+from pathlib import Path
+from typing import Any
+
+from pydantic import BaseModel
+
+from app.data_models.evaluation_models import (
+    CompositeResult,
+    Tier1Result,
+    Tier2Result,
+    Tier3Result,
+)
+from app.utils.log import logger
+
+
+class EvaluationResults(BaseModel):
+    """Container for all three evaluation tier results."""
+
+    tier1: Tier1Result | None = None
+    tier2: Tier2Result | None = None
+    tier3: Tier3Result | None = None
+
+    def is_complete(self) -> bool:
+        """Check if all required tiers have results."""
+        return all([self.tier1, self.tier2, self.tier3])
+
+
+class CompositeScorer:
+    """
+    Composite scoring system that integrates all three evaluation tiers.
+
+    Implements the six-metric weighted formula from config_eval.json:
+    - time_taken (0.167)
+    - task_success (0.167)
+    - coordination_quality (0.167)
+    - tool_efficiency (0.167)
+    - planning_rational (0.167)
+    - output_similarity (0.167)
+
+    Maps scores to recommendation categories with thresholds.
+    """
+
+    def __init__(self, config_path: str | Path | None = None):
+        """Initialize composite scorer with configuration.
+
+        Args:
+            config_path: Path to config_eval.json file. If None, uses default location.
+        """
+        if config_path is None:
+            config_path = Path(__file__).parent.parent / "config" / "config_eval.json"
+
+        self.config_path = Path(config_path)
+        self.config = self._load_config()
+
+        # Extract composite scoring configuration
+        self.composite_config = self.config.get("composite_scoring", {})
+        self.weights = self.composite_config.get("metrics_and_weights", {})
+        self.thresholds = self.composite_config.get("recommendation_thresholds", {})
+        self.recommendation_weights = self.composite_config.get(
+            "recommendation_weights", {}
+        )
+
+        # Validate configuration
+        self._validate_config()
+
+        logger.info(f"CompositeScorer initialized with {len(self.weights)} metrics")
+
+    def _load_config(self) -> dict[str, Any]:
+        """Load evaluation configuration from JSON file."""
+        try:
+            with open(self.config_path) as f:
+                config = json.load(f)
+            logger.debug(f"Loaded configuration from {self.config_path}")
+            return config
+        except FileNotFoundError:
+            logger.error(f"Configuration file not found: {self.config_path}")
+            raise
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in configuration file: {e}")
+            raise
+
+    def _validate_config(self) -> None:
+        """Validate composite scoring configuration."""
+        # Check that all required metrics are present
+        required_metrics = {
+            "time_taken",
+            "task_success",
+            "coordination_quality",
+            "tool_efficiency",
+            "planning_rational",
+            "output_similarity",
+        }
+
+        configured_metrics = set(self.weights.keys())
+        missing_metrics = required_metrics - configured_metrics
+
+        if missing_metrics:
+            raise ValueError(
+                f"Missing required metrics in configuration: {missing_metrics}"
+            )
+
+        # Validate weights sum to approximately 1.0
+        total_weight = sum(self.weights.values())
+        if abs(total_weight - 1.0) > 0.001:
+            logger.warning(f"Metric weights sum to {total_weight:.3f}, expected 1.0")
+
+        # Validate thresholds are in correct order
+        thresholds = ["accept", "weak_accept", "weak_reject", "reject"]
+        threshold_values = [self.thresholds.get(t, 0) for t in thresholds]
+        if threshold_values != sorted(threshold_values, reverse=True):
+            logger.warning("Recommendation thresholds are not in descending order")
+
+        logger.debug(
+            f"Configuration validation completed: {len(self.weights)} metrics, weights sum = {total_weight:.3f}"
+        )
+
+    def extract_metric_values(self, results: EvaluationResults) -> dict[str, float]:
+        """Extract the six composite metrics from tier results.
+
+        Args:
+            results: Container with tier1, tier2, tier3 evaluation results
+
+        Returns:
+            Dictionary with normalized metric values (0.0 to 1.0)
+
+        Raises:
+            ValueError: If required tier results are missing
+        """
+        if not results.is_complete():
+            missing_tiers = []
+            if not results.tier1:
+                missing_tiers.append("tier1")
+            if not results.tier2:
+                missing_tiers.append("tier2")
+            if not results.tier3:
+                missing_tiers.append("tier3")
+            raise ValueError(f"Missing required tier results: {missing_tiers}")
+
+        # Extract metrics following the sprint document specification
+        metrics = {
+            # From Tier 1: Traditional metrics + execution performance
+            "time_taken": self._normalize_time_score(results.tier1.time_score),
+            "task_success": results.tier1.task_success,
+            "output_similarity": results.tier1.overall_score,
+            # From Tier 2: LLM-as-Judge quality assessment
+            "planning_rational": results.tier2.overall_score,
+            # From Tier 3: Graph-based coordination analysis
+            "coordination_quality": results.tier3.coordination_centrality,
+            "tool_efficiency": results.tier3.path_convergence,
+        }
+
+        # Validate all metrics are in valid range
+        for metric_name, value in metrics.items():
+            if not (0.0 <= value <= 1.0):
+                logger.warning(
+                    f"Metric {metric_name} = {value:.3f} outside valid range [0.0, 1.0]"
+                )
+                # Clamp to valid range
+                metrics[metric_name] = max(0.0, min(1.0, value))
+
+        logger.debug(
+            f"Extracted metrics: {[(k, f'{v:.3f}') for k, v in metrics.items()]}"
+        )
+        return metrics
+
+    def _normalize_time_score(self, time_score: float) -> float:
+        """Normalize time score using 1/(1+log(time)) formula.
+
+        Args:
+            time_score: Raw time score from Tier 1
+
+        Returns:
+            Normalized time score (0.0 to 1.0, higher is better)
+        """
+        import math
+
+        if time_score <= 0:
+            return 1.0  # Perfect score for zero time
+
+        # Apply logarithmic normalization - better performance = higher score
+        normalized = 1.0 / (1.0 + math.log(1.0 + time_score))
+        return max(0.0, min(1.0, normalized))
+
+    def calculate_composite_score(self, results: EvaluationResults) -> float:
+        """Calculate weighted composite score from all evaluation tiers.
+
+        Args:
+            results: Container with tier1, tier2, tier3 evaluation results
+
+        Returns:
+            Composite score (0.0 to 1.0)
+
+        Raises:
+            ValueError: If required tier results are missing
+        """
+        metrics = self.extract_metric_values(results)
+
+        # Apply weighted formula from configuration
+        composite_score = sum(
+            metrics[metric] * weight for metric, weight in self.weights.items()
+        )
+
+        # Ensure score is in valid range
+        composite_score = max(0.0, min(1.0, composite_score))
+
+        logger.info(f"Composite score calculated: {composite_score:.3f}")
+        logger.debug(
+            f"Metric contributions: {[(m, f'{metrics[m] * self.weights[m]:.3f}') for m in self.weights.keys()]}"
+        )
+
+        return composite_score
+
+    def map_to_recommendation(self, composite_score: float) -> str:
+        """Map composite score to recommendation category.
+
+        Args:
+            composite_score: Composite score (0.0 to 1.0)
+
+        Returns:
+            Recommendation category: "accept", "weak_accept", "weak_reject", or "reject"
+        """
+        # Apply threshold mapping (descending order)
+        if composite_score >= self.thresholds.get("accept", 0.8):
+            return "accept"
+        elif composite_score >= self.thresholds.get("weak_accept", 0.6):
+            return "weak_accept"
+        elif composite_score >= self.thresholds.get("weak_reject", 0.4):
+            return "weak_reject"
+        else:
+            return "reject"
+
+    def get_recommendation_weight(self, recommendation: str) -> float:
+        """Get numerical weight for recommendation category.
+
+        Args:
+            recommendation: Recommendation category
+
+        Returns:
+            Numerical weight (-1.0 to 1.0)
+        """
+        return self.recommendation_weights.get(recommendation, 0.0)
+
+    def evaluate_composite(self, results: EvaluationResults) -> CompositeResult:
+        """Complete composite evaluation with score and recommendation.
+
+        Args:
+            results: Container with tier1, tier2, tier3 evaluation results
+
+        Returns:
+            CompositeResult with score, recommendation, and detailed metrics
+
+        Raises:
+            ValueError: If required tier results are missing
+        """
+        try:
+            # Calculate composite score
+            composite_score = self.calculate_composite_score(results)
+
+            # Map to recommendation
+            recommendation = self.map_to_recommendation(composite_score)
+            recommendation_weight = self.get_recommendation_weight(recommendation)
+
+            # Extract individual metrics for detailed analysis
+            metrics = self.extract_metric_values(results)
+
+            # Create result object
+            result = CompositeResult(
+                composite_score=composite_score,
+                recommendation=recommendation,
+                recommendation_weight=recommendation_weight,
+                metric_scores=metrics,
+                tier1_score=results.tier1.overall_score if results.tier1 else 0.0,
+                tier2_score=results.tier2.overall_score if results.tier2 else 0.0,
+                tier3_score=results.tier3.overall_score if results.tier3 else 0.0,
+                evaluation_complete=results.is_complete(),
+            )
+
+            logger.info(
+                f"Composite evaluation complete: {composite_score:.3f} → {recommendation}"
+            )
+            return result
+
+        except Exception as e:
+            logger.error(f"Composite evaluation failed: {e}")
+            raise
+
+    def get_scoring_summary(self) -> dict[str, Any]:
+        """Get summary of scoring configuration for validation.
+
+        Returns:
+            Dictionary with configuration summary
+        """
+        return {
+            "metrics_count": len(self.weights),
+            "total_weight": sum(self.weights.values()),
+            "weights": self.weights.copy(),
+            "thresholds": self.thresholds.copy(),
+            "recommendation_weights": self.recommendation_weights.copy(),
+        }

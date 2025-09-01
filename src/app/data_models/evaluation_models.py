@@ -153,6 +153,47 @@ class CompositeEvaluationResult(BaseModel):
     config_version: str = Field(description="Configuration version used")
 
 
+class CompositeResult(BaseModel):
+    """Result of composite scoring across all three evaluation tiers.
+
+    Integrates Traditional Metrics, LLM-as-Judge, and Graph Analysis
+    into unified scoring system with recommendation mapping.
+    """
+
+    composite_score: float = Field(
+        ge=0.0, le=1.0, description="Weighted composite score across all tiers"
+    )
+    recommendation: str = Field(
+        description="Recommendation category: accept, weak_accept, weak_reject, reject"
+    )
+    recommendation_weight: float = Field(
+        ge=-1.0, le=1.0, description="Numerical weight for recommendation (-1.0 to 1.0)"
+    )
+
+    # Individual metric contributions
+    metric_scores: dict[str, float] = Field(
+        description="Individual metric values used in composite calculation"
+    )
+
+    # Tier-level scores
+    tier1_score: float = Field(
+        ge=0.0, le=1.0, description="Traditional metrics overall score"
+    )
+    tier2_score: float = Field(ge=0.0, le=1.0, description="LLM-as-Judge overall score")
+    tier3_score: float = Field(
+        ge=0.0, le=1.0, description="Graph analysis overall score"
+    )
+
+    # Evaluation metadata
+    evaluation_complete: bool = Field(
+        description="Whether all required tiers completed"
+    )
+    timestamp: str = Field(description="ISO 8601 evaluation timestamp", default="")
+    config_version: str = Field(
+        description="Configuration version used", default="1.0.0"
+    )
+
+
 class GraphTraceData(BaseModel):
     """Trace data structure for graph-based analysis.
 
