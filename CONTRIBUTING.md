@@ -2,14 +2,67 @@
 
 **This document contains technical development workflows, coding standards, and implementation guidelines shared by both human developers and AI coding agents.** For AI agent behavioral rules and compliance requirements, see [AGENTS.md](AGENTS.md). For project overview and navigation, see [README.md](README.md).
 
-This serves as the technical implementation reference, covering command execution, testing strategies, code patterns, and human-agent collaboration procedures.
+## Instant Commands
+
+**Development Workflow:**
+
+- `make setup_dev` → Setup development environment  
+- `make quick_validate` → Fast validation during development (ruff + type checking)
+- `make validate` → Complete pre-commit validation (ruff + type check + test_all)
+
+**Testing:**
+
+- `make test_all` → Run all tests with pytest
+- `uv run pytest <path>` → Run specific test file/function
+
+**Emergency Fallback** (if make commands fail):
+
+- `uv run ruff format . && uv run ruff check . --fix` → Format and lint code
+- `uv run pyright` → Type checking
+- `uv run pytest` → Run tests
+
+## Complete Command Reference
+
+| Command | Purpose | Prerequisites | Error Recovery |
+|---------|---------|---------------|----------------|
+| `make setup_dev` | Install all dev dependencies | Makefile exists, uv installed | Try `uv sync --dev` directly |
+| `make setup_dev_claude` | Setup with Claude Code CLI | Above + Claude Code available | Manual setup per Claude docs |
+| `make setup_dev_ollama` | Setup with Ollama local LLM | Above + Ollama installed | Check Ollama installation |
+| `make run_cli` | Run CLI application | Dev environment setup | Try `uv run python src/app/main.py` |
+| `make run_cli ARGS="--help"` | Run CLI with arguments | Above | Try `uv run python src/app/main.py --help` |
+| `make run_gui` | Run Streamlit GUI | Above + Streamlit installed | Try `uv run streamlit run src/run_gui.py` |
+| `make ruff` | Format code and fix linting | Ruff installed | Try `uv run ruff format . && uv run ruff check . --fix` |
+| `make type_check` | Run pyright static type checking | pyright installed | Try `uv run pyright` |
+| `make test_all` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
+| `make coverage_all` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
+| `make validate` | Complete pre-commit validation | Above dependencies | Run individual commands manually |
+| `make quick_validate` | Fast development validation | Ruff and pyright installed | Run `make ruff && make type_check` |
+| `make setup_markdownlint` | Setup markdownlint CLI | Node.js and npm installed | Try `npm install -gs markdownlint-cli` |
+| `make run_markdownlint INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
+| `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
+| `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notify user |
+
+## Code Patterns Quick Reference
+
+**Essential Patterns:**
+
+- **Imports**: Use absolute imports (`from app.module import Class`)
+- **Models**: Use Pydantic models in `src/app/data_models/` for all data validation  
+- **Docstrings**: Google style format for all functions, classes, methods
+- **Comments**: Add `# Reason:` for complex logic explaining the *why*
+- **Dependencies**: Verify in `pyproject.toml` before using
+
+**Testing Patterns:**
+
+- **Mock externals**: Use `@patch` for HTTP requests, file systems, APIs
+- **BDD approach**: Write tests first, implement code iteratively  
+- **Test location**: Mirror `src/app/` structure in `tests/`
 
 ## Table of Contents
 
 ### Development Workflow
 
-- [Development Commands & Environment](#development-commands--environment) - Setup and execution
-- [Unified Command Reference](#unified-command-reference) - All commands with error recovery
+- [Development Commands & Environment](#development-commands--environment) - Setup and execution  
 - [Testing Strategy & Guidelines](#testing-strategy--guidelines) - Comprehensive testing approach
 
 ### Code Standards
@@ -30,7 +83,7 @@ The project requirements are stated in `pyproject.toml`. Your development enviro
 
 Code formatting and type checking are managed by **ruff** and **pyright** and orchestrated via the `Makefile`.
 
-**See the [Unified Command Reference](#unified-command-reference) section for all available commands with error recovery procedures.**
+**See the [Complete Command Reference](#complete-command-reference) section for all available commands with error recovery procedures.**
 
 ### Testing Strategy & Guidelines
 
@@ -76,7 +129,7 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 - ❌ **Testing only happy paths** - always include error cases
 - ❌ **Brittle tests** that break with minor changes to implementation details
 
-**To run tests** see the [Unified Command Reference](#unified-command-reference) for all testing commands with error recovery procedures.
+**To run tests** see the [Complete Command Reference](#complete-command-reference) for all testing commands with error recovery procedures.
 
 ## Style, Patterns & Documentation
 
@@ -172,43 +225,6 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 2. `uv run pyright`
 3. `uv run pytest`
 
-## Unified Command Reference
-
-### Path References
-
-- **All paths**: Use standard repository structure (see README.md for overview)
-
-### Standard Workflow Commands
-
-**Pre-commit checklist** (automated):
-
-1. `make validate` - Complete validation sequence (ruff + type_check + test_all)
-2. Update documentation if needed
-
-**Quick development cycle**:
-
-1. `make quick_validate` - Fast validation (ruff + type_check only)
-2. Continue development
-
-| Command | Purpose | Prerequisites | Error Recovery |
-|---------|---------|---------------|----------------|
-| `make setup_dev` | Install all dev dependencies | Makefile exists, uv installed | Try `uv sync --dev` directly |
-| `make setup_dev_claude` | Setup with Claude Code CLI | Above + Claude Code available | Manual setup per Claude docs |
-| `make setup_dev_ollama` | Setup with Ollama local LLM | Above + Ollama installed | Check Ollama installation |
-| `make run_cli` | Run CLI application | Dev environment setup | Try `uv run python src/app/main.py` |
-| `make run_cli ARGS="--help"` | Run CLI with arguments | Above | Try `uv run python src/app/main.py --help` |
-| `make run_gui` | Run Streamlit GUI | Above + Streamlit installed | Try `uv run streamlit run src/run_gui.py` |
-| `make ruff` | Format code and fix linting | Ruff installed | Try `uv run ruff format . && uv run ruff check . --fix` |
-| `make type_check` | Run pyright static type checking | pyright installed | Try `uv run pyright` |
-| `make test_all` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
-| `make coverage_all` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
-| `make validate` | Complete pre-commit validation | Above dependencies | Run individual commands manually |
-| `make quick_validate` | Fast development validation | Ruff and pyright installed | Run `make ruff && make type_check` |
-| `make setup_markdownlint` | Setup markdownlint CLI | Node.js and npm installed | Try `npm install -gs markdownlint-cli` |
-| `make run_markdownlint INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
-| `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
-| `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notify user |
-
 ## Documentation Hierarchy
 
 This project follows a structured documentation hierarchy to prevent scope creep, eliminate redundancy, and maintain clear authority for different types of information.
@@ -294,7 +310,7 @@ This hierarchy prevents the confusion between "what could be built" (landscape r
 
 - Agent behavioral rules and compliance → [AGENTS.md](AGENTS.md)
 - Technical implementation standards → This document
-- Command execution → [Unified Command Reference](#unified-command-reference)
+- Command execution → [Complete Command Reference](#complete-command-reference)
 - Testing approach → [Testing Strategy & Guidelines](#testing-strategy--guidelines)
 
 ### Requests to Humans

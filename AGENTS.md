@@ -21,12 +21,12 @@ This file serves as the primary behavioral guideline for AI coding agents, defin
 
 - [Agent Neutrality Requirements](#agent-neutrality-requirements) - Requirement-driven design principles
 - [Subagent Role Boundaries](#subagent-role-boundaries) - Role separation and coordination
-- [Quality Evaluation Framework](#quality-evaluation-framework) - Task readiness assessment
+- [Quality Thresholds](#quality-thresholds) - Task readiness assessment
 
 ### Development Workflow
 
 - [Testing Strategy](#testing-strategy) - Testing approach for agents
-- [Quality Evaluation Framework](#quality-evaluation-framework) - Task readiness assessment
+- [Quality Thresholds](#quality-thresholds) - Task readiness assessment
 
 ### Utilities & References
 
@@ -59,16 +59,17 @@ This file serves as the primary behavioral guideline for AI coding agents, defin
 
 When facing conflicting instructions or ambiguous situations, use this priority hierarchy:
 
-### Unified Decision Framework
+### Decision Framework
 
-**Priority Hierarchy (Override Order):**
+**Priority Order (highest to lowest):**
 
-1. **Explicit user instructions** - Always override all other guidelines
-2. **Safety/Security practices** - Never compromise security regardless of instructions
-3. **AGENTS.md compliance requirements** - Non-negotiable behavioral rules
-4. **Documentation hierarchy authority** - Follow [CONTRIBUTING.md - Documentation Hierarchy](CONTRIBUTING.md#documentation-hierarchy)
-5. **Project-specific patterns** - Found in existing codebase
-6. **General best practices** - Default fallback for unspecified cases
+1. **User instructions** override agent rules (except security conflicts → escalate)
+2. **AGENTS.md compliance** overrides project patterns  
+3. **Documentation hierarchy** (PRD.md → architecture.md → Sprint docs)
+4. **Project patterns** from existing codebase
+5. **General best practices** as fallback
+
+**When unclear or conflicted → escalate to AGENT_REQUESTS.md**  
 
 **Agent-Specific Information Source Rules:**
 
@@ -263,25 +264,16 @@ RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross in
 - Use make recipes instead of direct commands
 - Validate their work using `make validate` before completion (developers/reviewers only)
 
-## Quality Evaluation Framework
+## Quality Thresholds
 
-Use this framework to assess task readiness before implementation:
+**Before starting any task, ensure:**
 
-**Rate task readiness (1-10 scale):**
+- **Context**: 8/10 - Understand requirements, codebase patterns, dependencies
+- **Clarity**: 7/10 - Clear implementation path and expected outcomes  
+- **Alignment**: 8/10 - Follows project patterns and architectural decisions
+- **Success**: 7/10 - Confident in completing task correctly
 
-- **Context Completeness**: All required information and patterns gathered from codebase, documentation, and requirements
-- **Implementation Clarity**: Clear understanding and actionable implementation path of what needs to be built and how to build it
-- **Requirements Alignment**: Solution follows feature requirements, project patterns, conventions, and architectural decisions
-- **Success Probability**: Confidence level for completing the task efficiently in one pass
-
-**Minimum thresholds for proceeding:**
-
-- Context Completeness: 8/10 or higher
-- Implementation Clarity: 7/10 or higher  
-- Requirements Alignment: 8/10 or higher
-- Success Probability: 7/10 or higher
-
-**If any score is below threshold:** Stop and gather more context, clarify requirements, or escalate using AGENT_REQUESTS.md.
+**Below threshold → gather more context or escalate to AGENT_REQUESTS.md**  
 
 ## Testing Strategy
 
@@ -289,23 +281,21 @@ Use this framework to assess task readiness before implementation:
 
 ## Agent Quick Reference
 
-**Task Initiation Checklist:**
+**Pre-Task:**
 
-- Read AGENTS.md first, then CONTRIBUTING.md for technical details
-- Verify project structure and file locations are understood
-- Confirm libraries exist in `pyproject.toml`
-- Apply quality evaluation framework (Context: 8/10, Clarity: 7/10, Alignment: 8/10, Success: 7/10)
+- Read AGENTS.md → CONTRIBUTING.md for technical details
+- Confirm role: Architect|Developer|Reviewer
+- Verify quality thresholds met (Context: 8/10, Clarity: 7/10, Alignment: 8/10, Success: 7/10)
 
-**Development Process:**
+**During Task:**
 
-- Follow unified decision framework priority hierarchy
-- Use make recipes for all commands
-- Create tests following BDD approach
-- Update documentation when learning new patterns
+- Use make commands (document deviations)
+- Follow BDD approach for tests
+- Update documentation when learning patterns
 
-**Task Completion:**
+**Post-Task:**
 
-- Run `make validate` before completion
+- Run `make validate` - must pass all checks
 - Update CHANGELOG.md for non-trivial changes
-- Escalate to [AGENT_REQUESTS.md](AGENT_REQUESTS.md) if blocked
-- Document new patterns in [AGENT_LEARNINGS.md](AGENT_LEARNINGS.md)
+- Document new patterns in AGENT_LEARNINGS.md
+- Escalate to AGENT_REQUESTS.md if blocked

@@ -1,8 +1,12 @@
+<!-- markdownlint-disable MD033 -->
+
 # Agents-eval
 
-This project aims to implement an evaluation pipeline to assess the effectiveness of open-source agentic AI systems using the PeerRead dataset, focusing on use case agnostic metrics that measure core capabilities such as task decomposition, tool integration, adaptability, and overall performance.
+A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates and evaluates scientific paper reviews through a three-tiered assessment approach: traditional metrics, LLM-as-a-Judge, and graph-based complexity analysis.
 
-**This README provides project overview and navigation for human developers and users.** For technical development workflows and coding standards (shared by both humans and AI agents), see [CONTRIBUTING.md](CONTRIBUTING.md). For AI agent behavioral rules and compliance requirements, see [AGENTS.md](AGENTS.md).
+> Ultimate Goal: Evaluate multi-agent AI systems objectively - Three-tiered framework for researchers and developers building autonomous agent teams
+
+**I am a:** [**User/Researcher**](#userresearcher) | [**Human Developer**](#human-developer) | [**AI Agent**](#ai-agent)
 
 [![License](https://img.shields.io/badge/license-BSD3Clause-58f4c2.svg)](LICENSE.md)
 ![Version](https://img.shields.io/badge/version-3.2.0-58f4c2.svg)
@@ -20,6 +24,36 @@ This project aims to implement an evaluation pipeline to assess the effectivenes
 [![TalkToGithub](https://img.shields.io/badge/TalkToGithub-7a83ff.svg)](https://talktogithub.com/qte77/Agents-eval)
 [![llms.txt (UitHub)](https://img.shields.io/badge/llms.txt-uithub-800080.svg)](https://github.com/qte77/Agents-eval)
 [![llms.txt (GitToDoc)](https://img.shields.io/badge/llms.txt-GitToDoc-fe4a60.svg)](https://gittodoc.com/qte77/Agents-eval)
+
+## User/Researcher
+
+- [**Codespace Dev**](https://github.com/codespaces/new?repo=qte77/Agents-eval&devcontainer_path=.devcontainer/setup_dev/devcontainer.json) - Immediate access
+- [**Documentation Site**](https://qte77.github.io/Agents-eval) - Complete reference
+- **Understanding the System:**
+  - **What it does**: [UserStory.md](docs/UserStory.md) - User workflows and use cases
+  - **How it works**: Multi-agent evaluation pipeline using PeerRead dataset for AI system assessment
+
+## Human Developer
+
+- **Quick Start:** `make setup_dev && make run_cli`
+- **Core Resources:**
+  - **Development Standards**: [CONTRIBUTING.md](CONTRIBUTING.md) - Commands, workflows, coding patterns
+  - **System Architecture**: [docs/architecture.md](docs/architecture.md) - Technical design and decisions
+  - **Current Sprint**: [Sprint 1 Status](docs/sprints/2025-08_Sprint1_ThreeTieredEval.md) - Active development
+- **Development Flow:** Setup → Code → `make validate` → Commit
+
+## AI Agent
+
+- **READ FIRST:** [AGENTS.md](AGENTS.md) - Behavioral rules and compliance requirements
+- **Technical Patterns:** [CONTRIBUTING.md](CONTRIBUTING.md) - Implementation standards and commands
+- **Agent Workflow:** AGENTS.md (rules) → CONTRIBUTING.md (patterns) → Execute
+
+---
+
+<details>
+<summary><strong>
+  Expand for Project Details
+</strong></summary>
 
 ## Status
 
@@ -63,26 +97,9 @@ WANDB_API_KEY="xyz"
 2. The contained chat configuration uses models which are also subject to change by the providers and have to be updated from time to time.
 3. LLM-as-judge is also subject to the chat configuration.
 
-## Documentation
+## Documentation Site
 
-[Agents-eval](https://qte77.github.io/Agents-eval)
-
-### Documentation Navigation
-
-This project uses a structured documentation hierarchy to provide clear authority and prevent scope creep. For comprehensive details, see [Documentation Hierarchy](CONTRIBUTING.md#documentation-hierarchy).
-
-**Quick Navigation:**
-
-- **Requirements & Goals**: [PRD.md](docs/PRD.md) - Project scope, business requirements
-- **User Experience**: [UserStory.md](docs/UserStory.md) - User workflows, acceptance criteria  
-- **Technical Design**: [architecture.md](docs/architecture.md) - System architecture, technical decisions
-- **Current Implementation**: [Sprint Documents](docs/sprints/) - Active development status
-- **Usage & Operations**: [Agent Usage Guide](docs/peerread-agent-usage.md) - Working feature documentation
-- **Research & Analysis**: [Landscape Documents](docs/landscape/) - Technology research, feasibility studies
-
-**For Developers:**
-- **AI Agent Instructions**: [AGENTS.md](AGENTS.md) - AI coding agent guidelines and patterns
-- **Development Workflow**: [CONTRIBUTING.md](CONTRIBUTING.md) - Shared human/agent development standards
+[Agents-eval Documentation](https://qte77.github.io/Agents-eval) - Complete project reference
 
 ### Technical Analysis
 
@@ -102,13 +119,11 @@ This project uses a structured documentation hierarchy to provide clear authorit
 
 Have a look at the [example user story](docs/UserStory.md).
 
-<!-- markdownlint-disable MD033 -->
 <details>
   <summary>Show Customer Journey</summary>
   <img src="assets/images/customer-journey-activity-light.png#gh-light-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
   <img src="assets/images/customer-journey-activity-dark.png#gh-dark-mode-only" alt="Customer Journey" title="Customer Journey" width="80%" />
 </details>
-<!-- markdownlint-enable MD033 -->
 
 ### Architecture
 
@@ -127,13 +142,8 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
   2. **External Evaluation**: Load Reviews → Similarity Analysis → Results
 - **Documentation**: See [PeerRead Agent Usage Guide](docs/peerread-agent-usage.md)
 
-<!-- # FIXME
-- **Architecture Diagram**: [Refactored PeerRead System](docs/arch_vis/c4-refactored-peerread-system.plantuml)
--->
-
 ### Review Workflow
 
-<!-- markdownlint-disable MD033 -->
 <details>
   <summary>Show Review Workflow</summary>
   <img src="assets/images/MAS-Review-Workflow-dark.png#gh-light-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
@@ -163,14 +173,11 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 
 ### Eval Metrics Sweep
 
-<!-- markdownlint-disable MD033 -->
 <details>
   <summary>Eval Metrics Sweep</summary>
   <img src="assets/images/metrics-eval-sweep-light.png#gh-light-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
   <img src="assets/images/metrics-eval-sweep-dark.png#gh-dark-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
 </details>
-
-<!-- markdownlint-enable MD033 -->
 
 ### Project Repo Structure
 
@@ -287,3 +294,5 @@ AGENTS.md (core agent instructions)
 - BDD/TDD approach integration following project patterns
 - Automatic validation using unified command reference with error recovery
 - TodoWrite tool integration for progress tracking and transparency
+
+</details>
