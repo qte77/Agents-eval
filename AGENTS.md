@@ -249,10 +249,17 @@ complex normalization, extensive error handling, and production-ready architectu
 
 ### Subagent Prompt Requirements
 
+**DOCUMENT INGESTION ORDER (MANDATORY):**
+
+Subagents must ingest documents in this specific sequence:
+
+1. **AGENTS.md FIRST** - Behavioral rules, compliance requirements, role boundaries
+2. **CONTRIBUTING.md SECOND** - Technical workflows, command reference, implementation standards
+
 **ALL SUBAGENT PROMPTS MUST INCLUDE:**
 
 ```text
-MANDATORY: Follow CONTRIBUTING.md guidelines strictly. 
+MANDATORY: Read AGENTS.md first for compliance requirements, then CONTRIBUTING.md for technical standards.
 All requirements in the "MANDATORY Compliance Requirements for All Subagents" section are non-negotiable.
 RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross into other agents' responsibilities.
 ```
@@ -260,6 +267,7 @@ RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross in
 **Subagents MUST:**
 
 - Reference and follow ALL mandatory compliance requirements above
+- Ingest both AGENTS.md (rules) and CONTRIBUTING.md (implementation) in sequence
 - Explicitly confirm they will respect role boundaries and separation of concerns
 - Use make recipes instead of direct commands
 - Validate their work using `make validate` before completion (developers/reviewers only)
