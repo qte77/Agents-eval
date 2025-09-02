@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_plantuml setup_pdf_converter setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile run_plantuml prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
+.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_plantuml setup_pdf_converter setup_ollama start_ollama stop_ollama clean_ollama setup_dataset_sample ruff run_cli run_gui run_profile run_plantuml prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -81,6 +81,14 @@ setup_markdownlint:  ## Setup markdownlint CLI, node.js and npm have to be prese
 	npm install -gs markdownlint-cli
 	echo "markdownlint version: $$(markdownlint --version)"
 
+setup_opik_env:  ## Setup Opik environment variables for local development
+	echo "Setting up Opik environment variables ..."
+	echo "export OPIK_URL_OVERRIDE=http://localhost:3003" >> ~/.bashrc
+	echo "export OPIK_WORKSPACE=peerread-evaluation" >> ~/.bashrc
+	echo "export OPIK_PROJECT_NAME=sprint1-evaluation" >> ~/.bashrc
+	echo "Environment variables added to ~/.bashrc"
+	echo "Run: source ~/.bashrc"
+
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
 	echo "Downloading Ollama binary ... Using '$(OLLAMA_SETUP_URL)'."
@@ -100,6 +108,23 @@ clean_ollama:  ## Remove local Ollama from system
 	done
 	echo "Cleaning up ..."
 	rm -f $(BIN)
+
+setup_dataset_sample:  ## Download small sample of PeerRead dataset
+	echo "Downloading small sample of PeerRead dataset ..."
+	$(MAKE) -s run_cli ARGS=--download-peerread-samples-only
+	$(MAKE) -s dataset_get_smallest
+
+setup_dataset_full:  ## Download full PeerRead dataset
+	echo "Downloading full PeerRead dataset ..."
+	$(MAKE) -s run_cli ARGS=--download-peerread-full-only
+	$(MAKE) -s dataset_get_smallest
+
+dataset_get_smallest:
+	SMALLEST_N=10
+	DATASETS_PATH='datasets/peerread'
+	echo "Finding smallest $${SMALLEST_N} parsed PDFs in $${DATASETS_PATH}..."
+	find $$DATASETS_PATH -path "*/parsed_pdfs/*.json" \
+		-type f -printf '%s %p\n' 2>/dev/null | sort -n | head -$$SMALLEST_N
 
 
 # MARK: run ollama
@@ -169,8 +194,8 @@ run_profile:  ## Profile app with scalene
 
 
 ruff:  ## Lint: Format and check with ruff
-	uv run ruff format
-	uv run ruff check --fix
+	uv run ruff format --exclude tests
+	uv run ruff check --fix --exclude tests
 
 test_all:  ## Run all tests
 	uv run pytest
@@ -180,7 +205,7 @@ coverage_all:  ## Get test coverage
 	uv run coverage report -m
 
 type_check:  ## Check for static typing errors
-	uv run pyright
+	uv run pyright src
 
 validate:  ## Complete pre-commit validation sequence
 	echo "Running complete validation sequence ..."
@@ -199,6 +224,39 @@ output_unset_app_env_sh:  ## Unset app environment variables
 	uf="./unset_env.sh"
 	echo "Outputing '$${uf}' ..."
 	printenv | awk -F= '/_API_KEY=/ {print "unset " $$1}' > $$uf
+
+
+# MARK: opik
+
+
+start_opik:  ## Start local Opik tracing with ClickHouse database
+	# FIXME add officla opik setup
+	# https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml
+	# https://www.comet.com/docs/opik/self-host/local_deployment/
+	echo "Starting Opik stack with ClickHouse ..."
+	docker-compose -f docker-compose.opik.yml up -d
+	echo "Opik UI: http://localhost:5173"
+	echo "Opik API: http://localhost:3003"
+
+stop_opik:  ## Stop local Opik tracing stack
+	echo "Stopping Opik stack ..."
+	docker-compose -f docker-compose.opik.yml down
+
+clean_opik:  ## Stop Opik and remove all trace data (WARNING: destructive)
+	echo "WARNING: This will remove all Opik trace data!"
+	echo "Press Ctrl+C to cancel, Enter to continue..."
+	read
+	docker-compose -f docker-compose.opik.yml down -v
+
+status_opik:  ## Check Opik services health status
+	echo "Checking Opik services status ..."
+	docker-compose -f docker-compose.opik.yml ps
+	echo "API Health:"
+	curl -f http://localhost:3003/health 2>/dev/null && \
+		echo "Opik API healthy" || echo "Opik API not responding"
+	echo "ClickHouse:"
+	curl -s http://localhost:8123/ping 2>/dev/null && \
+		echo "ClickHouse healthy" || echo "ClickHouse not responding"
 
 
 # MARK: help

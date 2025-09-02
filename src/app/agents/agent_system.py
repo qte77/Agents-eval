@@ -33,6 +33,10 @@ from pydantic_ai.common_tools.duckduckgo import (
 )
 from pydantic_ai.usage import UsageLimits
 
+from app.agents.opik_instrumentation import (
+    get_instrumentation_manager,
+    initialize_opik_instrumentation,
+)
 from app.data_models.app_models import (
     AgentConfig,
     AnalysisResult,
@@ -48,6 +52,7 @@ from app.data_models.app_models import (
     UserPromptType,
 )
 from app.data_models.peerread_models import ReviewGenerationResult
+from app.evals.evaluation_config import EvaluationConfig
 from app.llms.models import create_agent_models
 from app.llms.providers import (
     get_api_key,
@@ -59,7 +64,27 @@ from app.tools.peerread_tools import (
     add_peerread_tools_to_manager,
 )
 from app.utils.error_messages import generic_exception, invalid_data_model_format
+from app.utils.load_configs import OpikConfig
 from app.utils.log import logger
+
+
+def initialize_opik_instrumentation_from_config(config_path: str | None = None) -> None:
+    """Initialize Opik instrumentation from evaluation config."""
+    try:
+        eval_config = EvaluationConfig(config_path)
+        opik_config = OpikConfig.from_config(eval_config.config)
+        initialize_opik_instrumentation(opik_config)
+        logger.info(f"Opik instrumentation initialized: enabled={opik_config.enabled}")
+    except Exception as e:
+        logger.warning(f"Failed to initialize Opik instrumentation: {e}")
+
+
+def get_opik_decorator(agent_name: str, agent_role: str, execution_phase: str):
+    """Get Opik tracking decorator if available."""
+    manager = get_instrumentation_manager()
+    if manager and manager.config.enabled:
+        return manager.track_agent_execution(agent_name, agent_role, execution_phase)
+    return lambda func: func  # No-op decorator if Opik not available
 
 
 def _add_tools_to_manager_agent(
@@ -67,9 +92,7 @@ def _add_tools_to_manager_agent(
     research_agent: Agent[None, BaseModel] | None = None,
     analysis_agent: Agent[None, BaseModel] | None = None,
     synthesis_agent: Agent[None, BaseModel] | None = None,
-    result_type: type[
-        ResearchResult | ResearchResultSimple | ReviewGenerationResult
-    ] = ResearchResult,
+    result_type: type[ResearchResult | ResearchResultSimple | ReviewGenerationResult] = ResearchResult,
 ):
     """
     Adds tools to the manager agent for delegating tasks to research, analysis, and
@@ -102,7 +125,10 @@ def _add_tools_to_manager_agent(
             raise Exception(msg)
 
     if research_agent is not None:
+        # Apply Opik tracing decorator
+        opik_decorator = get_opik_decorator("researcher", "research", "information_gathering")
 
+        @opik_decorator
         @manager_agent.tool
         # TODO remove redundant tool creation
         # ignore "delegate_research" is not accessed because of decorator
@@ -121,7 +147,10 @@ def _add_tools_to_manager_agent(
                 return _validate_model_return(str(result.output), result_type)
 
     if analysis_agent is not None:
+        # Apply Opik tracing decorator
+        opik_decorator_analysis = get_opik_decorator("analyst", "analysis", "analytical_processing")
 
+        @opik_decorator_analysis
         @manager_agent.tool
         # ignore "delegate_research" is not accessed because of decorator
         async def delegate_analysis(  # type: ignore[reportUnusedFunction]
@@ -136,7 +165,10 @@ def _add_tools_to_manager_agent(
                 return _validate_model_return(str(result.output), AnalysisResult)
 
     if synthesis_agent is not None:
+        # Apply Opik tracing decorator
+        opik_decorator_synthesis = get_opik_decorator("synthesizer", "synthesis", "integration_synthesis")
 
+        @opik_decorator_synthesis
         @manager_agent.tool
         # ignore "delegate_research" is not accessed because of decorator
         async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
@@ -217,15 +249,9 @@ def _create_manager(
     active_agents = [
         agent
         for agent in [
-            f"researcher({models.model_researcher.model_name})"
-            if models.model_researcher
-            else None,
-            f"analyst({models.model_analyst.model_name})"
-            if models.model_analyst
-            else None,
-            f"synthesiser({models.model_synthesiser.model_name})"
-            if models.model_synthesiser
-            else None,
+            f"researcher({models.model_researcher.model_name})" if models.model_researcher else None,
+            f"analyst({models.model_analyst.model_name})" if models.model_analyst else None,
+            f"synthesiser({models.model_synthesiser.model_name})" if models.model_synthesiser else None,
         ]
         if agent
     ]
@@ -328,9 +354,7 @@ def get_manager(
             "provider_config": provider_config,
         }
     )
-    models = create_agent_models(
-        model_config, include_researcher, include_analyst, include_synthesiser
-    )
+    models = create_agent_models(model_config, include_researcher, include_analyst, include_synthesiser)
     manager = _create_manager(prompts, models, provider, enable_review_tools)
 
     # Conditionally add review tools based on flag
@@ -348,9 +372,7 @@ def get_manager(
                 prompt.
         """
         if enable:
-            add_peerread_review_tools_to_manager(
-                manager, max_content_length=max_content_length
-            )
+            add_peerread_review_tools_to_manager(manager, max_content_length=max_content_length)
         return manager
 
     max_content_length = provider_config.max_content_length or 15000
@@ -362,6 +384,8 @@ def get_manager(
     )
 
 
+# Apply Opik tracing decorator to run_manager
+@get_opik_decorator("manager", "orchestrator", "coordination")
 async def run_manager(
     manager: Agent[None, BaseModel],
     query: UserPromptType,
@@ -393,8 +417,7 @@ async def run_manager(
     try:
         if pydantic_ai_stream:
             raise NotImplementedError(
-                "Streaming currently only possible for Agents with "
-                "output_type str not pydantic model"
+                "Streaming currently only possible for Agents with output_type str not pydantic model"
             )
             # logger.info("Streaming model response ...")
             # result = await manager.run(**mgr_cfg)
@@ -497,9 +520,7 @@ def setup_agent_env(
     # Load usage limits from config instead of hardcoding
     usage_limits = None
     if provider_config.usage_limits is not None:
-        usage_limits = UsageLimits(
-            request_limit=10, total_tokens_limit=provider_config.usage_limits
-        )
+        usage_limits = UsageLimits(request_limit=10, total_tokens_limit=provider_config.usage_limits)
 
     return EndpointConfig.model_validate(
         {

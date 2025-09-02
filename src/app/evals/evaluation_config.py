@@ -65,17 +65,12 @@ class EvaluationConfig:
 
         except FileNotFoundError as e:
             error_msg = f"Pipeline configuration file not found: {self.config_path}"
-            logger.error(
-                f"{error_msg}. Please ensure config file exists and is accessible."
-            )
+            logger.error(f"{error_msg}. Please ensure config file exists and is accessible.")
             raise FileNotFoundError(error_msg) from e
 
         except json.JSONDecodeError as e:
             error_msg = f"Invalid JSON in pipeline configuration: {e}"
-            logger.error(
-                f"{error_msg}. Check file syntax at line "
-                f"{e.lineno if hasattr(e, 'lineno') else 'unknown'}."
-            )
+            logger.error(f"{error_msg}. Check file syntax at line {e.lineno if hasattr(e, 'lineno') else 'unknown'}.")
             raise json.JSONDecodeError(error_msg, e.doc, e.pos) from e
 
         except Exception as e:
@@ -118,9 +113,7 @@ class EvaluationConfig:
             # Check that performance targets are positive numbers
             for key, value in targets.items():
                 if not isinstance(value, int | float) or value <= 0:
-                    raise ValueError(
-                        f"Performance target {key} must be a positive number"
-                    )
+                    raise ValueError(f"Performance target {key} must be a positive number")
 
         # Validate composite scoring section
         composite = config["composite_scoring"]

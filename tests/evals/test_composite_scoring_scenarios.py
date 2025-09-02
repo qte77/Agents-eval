@@ -271,20 +271,12 @@ class TestCompositeScoringSCenarios:
         evaluation_results = scenario_method()
 
         # Execute composite scoring
-        composite_result = composite_scorer.calculate_composite_score(
-            evaluation_results
-        )
+        composite_result = composite_scorer.calculate_composite_score(evaluation_results)
 
         # Validate result structure
-        assert composite_result is not None, (
-            f"Composite result should not be None for {scenario_name}"
-        )
-        assert hasattr(composite_result, "composite_score"), (
-            f"Missing composite_score for {scenario_name}"
-        )
-        assert hasattr(composite_result, "recommendation"), (
-            f"Missing recommendation for {scenario_name}"
-        )
+        assert composite_result is not None, f"Composite result should not be None for {scenario_name}"
+        assert hasattr(composite_result, "composite_score"), f"Missing composite_score for {scenario_name}"
+        assert hasattr(composite_result, "recommendation"), f"Missing recommendation for {scenario_name}"
 
         # Validate score range
         min_score, max_score = expected_score_range
@@ -301,8 +293,7 @@ class TestCompositeScoringSCenarios:
             )
         else:
             assert composite_result.recommendation == expected_recommendation, (
-                f"Expected '{expected_recommendation}', "
-                f"got '{composite_result.recommendation}' for {scenario_name}"
+                f"Expected '{expected_recommendation}', got '{composite_result.recommendation}' for {scenario_name}"
             )
 
         # Log scenario results for debugging
@@ -326,9 +317,7 @@ class TestCompositeScoringSCenarios:
             recommendations.append(result.recommendation)
 
         # All scores should be identical (deterministic)
-        assert all(abs(score - scores[0]) < 0.001 for score in scores), (
-            f"Scores not consistent across runs: {scores}"
-        )
+        assert all(abs(score - scores[0]) < 0.001 for score in scores), f"Scores not consistent across runs: {scores}"
 
         # All recommendations should be identical
         assert all(rec == recommendations[0] for rec in recommendations), (
@@ -339,9 +328,7 @@ class TestCompositeScoringSCenarios:
         import statistics
 
         score_stddev = statistics.stdev(scores) if len(scores) > 1 else 0.0
-        assert score_stddev < 0.001, (
-            f"Score standard deviation too high: {score_stddev}"
-        )
+        assert score_stddev < 0.001, f"Score standard deviation too high: {score_stddev}"
 
     async def test_metric_contribution_analysis(self, composite_scorer, scenario_data):
         """Test that individual metrics contribute as expected."""
@@ -350,24 +337,20 @@ class TestCompositeScoringSCenarios:
         result = composite_scorer.calculate_composite_score(evaluation_results)
 
         # Validate that scoring breakdown exists
-        assert hasattr(result, "metric_breakdown") or hasattr(
-            result, "tier_contributions"
-        ), "Result should include metric breakdown information"
+        assert hasattr(result, "metric_breakdown") or hasattr(result, "tier_contributions"), (
+            "Result should include metric breakdown information"
+        )
 
         # Calculate expected weighted contributions based on config
         config_weights = composite_scorer.weights
 
         # Verify weights sum to approximately 1.0
         total_weight = sum(config_weights.values())
-        assert abs(total_weight - 1.0) < 0.01, (
-            f"Weights should sum to 1.0, got {total_weight}"
-        )
+        assert abs(total_weight - 1.0) < 0.01, f"Weights should sum to 1.0, got {total_weight}"
 
         # Validate individual weight ranges
         for metric, weight in config_weights.items():
-            assert 0.0 < weight <= 1.0, (
-                f"Weight for {metric} should be in (0, 1]: {weight}"
-            )
+            assert 0.0 < weight <= 1.0, f"Weight for {metric} should be in (0, 1]: {weight}"
 
     async def test_recommendation_boundary_conditions(self, composite_scorer):
         """Test recommendation mapping at exact threshold boundaries."""
@@ -401,8 +384,7 @@ class TestCompositeScoringSCenarios:
             actual_recommendation = composite_scorer._map_score_to_recommendation(score)
 
             assert actual_recommendation == expected_recommendation, (
-                f"Score {score} should map to '{expected_recommendation}', "
-                f"got '{actual_recommendation}'"
+                f"Score {score} should map to '{expected_recommendation}', got '{actual_recommendation}'"
             )
 
     async def test_scenario_ranking_accuracy(self, composite_scorer, scenario_data):
@@ -423,30 +405,26 @@ class TestCompositeScoringSCenarios:
             scenario_scores[name] = composite_result.composite_score
 
         # Validate expected ranking order
-        assert (
-            scenario_scores["high_quality_fast"] >= scenario_scores["high_quality_slow"]
-        ), "High quality fast should score >= high quality slow"
-        assert (
-            scenario_scores["high_quality_slow"] >= scenario_scores["mixed_performance"]
-        ), "High quality slow should score >= mixed performance"
-        assert (
-            scenario_scores["mixed_performance"] >= scenario_scores["low_quality_fast"]
-        ), "Mixed performance should score >= low quality fast"
-        assert (
-            scenario_scores["low_quality_fast"] >= scenario_scores["low_quality_slow"]
-        ), "Low quality fast should score >= low quality slow"
+        assert scenario_scores["high_quality_fast"] >= scenario_scores["high_quality_slow"], (
+            "High quality fast should score >= high quality slow"
+        )
+        assert scenario_scores["high_quality_slow"] >= scenario_scores["mixed_performance"], (
+            "High quality slow should score >= mixed performance"
+        )
+        assert scenario_scores["mixed_performance"] >= scenario_scores["low_quality_fast"], (
+            "Mixed performance should score >= low quality fast"
+        )
+        assert scenario_scores["low_quality_fast"] >= scenario_scores["low_quality_slow"], (
+            "Low quality fast should score >= low quality slow"
+        )
 
         # Log ranking for debugging
-        sorted_scenarios = sorted(
-            scenario_scores.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_scenarios = sorted(scenario_scores.items(), key=lambda x: x[1], reverse=True)
         print("✓ Scenario ranking (score, name):")
         for name, score in sorted_scenarios:
             print(f"  {score:.3f}: {name}")
 
-    async def test_performance_vs_quality_tradeoffs(
-        self, composite_scorer, scenario_data
-    ):
+    async def test_performance_vs_quality_tradeoffs(self, composite_scorer, scenario_data):
         """Test how performance vs quality tradeoffs are handled in scoring."""
         fast_low_quality = scenario_data.create_low_quality_fast_scenario()
         slow_high_quality = scenario_data.create_high_quality_slow_scenario()
@@ -462,12 +440,10 @@ class TestCompositeScoringSCenarios:
 
         # Different recommendation categories expected
         assert slow_result.recommendation in ["accept", "weak_accept"], (
-            f"High quality should get positive recommendation, "
-            f"got {slow_result.recommendation}"
+            f"High quality should get positive recommendation, got {slow_result.recommendation}"
         )
         assert fast_result.recommendation in ["weak_reject", "reject"], (
-            f"Low quality should get negative recommendation, "
-            f"got {fast_result.recommendation}"
+            f"Low quality should get negative recommendation, got {fast_result.recommendation}"
         )
 
 
@@ -505,9 +481,7 @@ if __name__ == "__main__":
                 results[scenario_name] = composite_result
 
                 min_score, max_score = expected_range
-                score_in_range = (
-                    min_score <= composite_result.composite_score <= max_score
-                )
+                score_in_range = min_score <= composite_result.composite_score <= max_score
 
                 if isinstance(expected_rec, list):
                     rec_matches = composite_result.recommendation in expected_rec
@@ -521,15 +495,10 @@ if __name__ == "__main__":
                 )
 
             # Test ranking
-            sorted_results = sorted(
-                results.items(), key=lambda x: x[1].composite_score, reverse=True
-            )
+            sorted_results = sorted(results.items(), key=lambda x: x[1].composite_score, reverse=True)
             print("\n✓ Final ranking:")
             for i, (name, result) in enumerate(sorted_results, 1):
-                print(
-                    f"  {i}. {name}: {result.composite_score:.3f} "
-                    f"({result.recommendation})"
-                )
+                print(f"  {i}. {name}: {result.composite_score:.3f} ({result.recommendation})")
 
         except Exception as e:
             print(f"✗ Test failed: {e}")

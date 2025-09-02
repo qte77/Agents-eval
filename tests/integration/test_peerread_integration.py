@@ -196,9 +196,7 @@ class TestPeerReadIntegration:
         return EvaluationPipeline()
 
     @pytest.mark.asyncio
-    async def test_peerread_data_format_compatibility(
-        self, peerread_data, evaluation_pipeline
-    ):
+    async def test_peerread_data_format_compatibility(self, peerread_data, evaluation_pipeline):
         """Test that pipeline can handle PeerRead data structures."""
         # Create test data
         peerread_paper = peerread_data.create_synthetic_peerread_data()

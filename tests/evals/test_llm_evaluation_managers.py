@@ -109,9 +109,7 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
-    async def test_assess_technical_accuracy_success(
-        self, mock_wait_for, mock_agent_class, engine, sample_data
-    ):
+    async def test_assess_technical_accuracy_success(self, mock_wait_for, mock_agent_class, engine, sample_data):
         """Should return normalized technical accuracy score when succeeds."""
         # Mock LLM response - create mock result with output attribute
         mock_assessment_output = Mock()
@@ -127,9 +125,7 @@ class TestLLMJudgeEngine:
         mock_agent_class.return_value = mock_agent
         mock_wait_for.return_value = mock_result
 
-        score = await engine.assess_technical_accuracy(
-            sample_data["paper"], sample_data["review"]
-        )
+        score = await engine.assess_technical_accuracy(sample_data["paper"], sample_data["review"])
 
         # Expected score: (4.0*0.5 + 4.5*0.3 + 3.5*0.2) / 5.0 = 0.82
         expected_score = (4.0 * 0.5 + 4.5 * 0.3 + 3.5 * 0.2) / 5.0
@@ -139,32 +135,22 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
-    async def test_assess_technical_accuracy_timeout(
-        self, mock_wait_for, mock_agent_class, engine, sample_data
-    ):
+    async def test_assess_technical_accuracy_timeout(self, mock_wait_for, mock_agent_class, engine, sample_data):
         """Given LLM timeout, should fallback to semantic similarity."""
         mock_agent_class.return_value = Mock()
         mock_wait_for.side_effect = TimeoutError("LLM request timed out")
 
-        with patch.object(
-            engine.fallback_engine, "compute_semantic_similarity", return_value=0.75
-        ) as mock_fallback:
-            score = await engine.assess_technical_accuracy(
-                sample_data["paper"], sample_data["review"]
-            )
+        with patch.object(engine.fallback_engine, "compute_semantic_similarity", return_value=0.75) as mock_fallback:
+            score = await engine.assess_technical_accuracy(sample_data["paper"], sample_data["review"])
 
             assert score == 0.75
-            mock_fallback.assert_called_once_with(
-                sample_data["paper"], sample_data["review"]
-            )
+            mock_fallback.assert_called_once_with(sample_data["paper"], sample_data["review"])
 
     # Constructiveness assessment tests
     @pytest.mark.asyncio
     @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
-    async def test_assess_constructiveness_success(
-        self, mock_wait_for, mock_agent_class, engine, sample_data
-    ):
+    async def test_assess_constructiveness_success(self, mock_wait_for, mock_agent_class, engine, sample_data):
         """Should return normalized constructiveness score when assessment succeeds."""
         # Mock LLM response - create mock result with output attribute
         mock_assessment_output = Mock()
@@ -190,9 +176,7 @@ class TestLLMJudgeEngine:
     async def test_assess_constructiveness_fallback(self, engine, sample_data):
         """Given LLM failure, should use fallback constructiveness check."""
         with patch("pydantic_ai.Agent", side_effect=Exception("Model error")):
-            with patch.object(
-                engine, "_fallback_constructiveness_check", return_value=0.6
-            ) as mock_fallback:
+            with patch.object(engine, "_fallback_constructiveness_check", return_value=0.6) as mock_fallback:
                 score = await engine.assess_constructiveness(sample_data["review"])
 
                 assert score == 0.6
@@ -218,9 +202,7 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
-    async def test_assess_planning_rationality_success(
-        self, mock_wait_for, mock_agent_class, engine, sample_data
-    ):
+    async def test_assess_planning_rationality_success(self, mock_wait_for, mock_agent_class, engine, sample_data):
         """Given successful LLM assessment, should return normalized planning score."""
         # Mock LLM response - create mock result with output attribute
         mock_assessment_output = Mock()
@@ -275,9 +257,7 @@ class TestLLMJudgeEngine:
         """Complete LLM judge evaluation should return valid Tier2Result."""
         with patch.object(engine, "assess_technical_accuracy", return_value=0.8):
             with patch.object(engine, "assess_constructiveness", return_value=0.7):
-                with patch.object(
-                    engine, "assess_planning_rationality", return_value=0.75
-                ):
+                with patch.object(engine, "assess_planning_rationality", return_value=0.75):
                     result = await engine.evaluate_comprehensive(
                         sample_data["paper"],
                         sample_data["review"],
@@ -299,13 +279,9 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     async def test_evaluate_llm_judge_with_partial_failures(self, engine, sample_data):
         """When some assessments fail, should use fallbacks and mark fallback_used."""
-        with patch.object(
-            engine, "assess_technical_accuracy", side_effect=Exception("API error")
-        ):
+        with patch.object(engine, "assess_technical_accuracy", side_effect=Exception("API error")):
             with patch.object(engine, "assess_constructiveness", return_value=0.7):
-                with patch.object(
-                    engine, "assess_planning_rationality", return_value=0.75
-                ):
+                with patch.object(engine, "assess_planning_rationality", return_value=0.75):
                     with patch.object(
                         engine.fallback_engine,
                         "compute_semantic_similarity",
@@ -346,9 +322,7 @@ class TestLLMJudgeEngine:
 
                     assert isinstance(result, Tier2Result)
                     assert result.model_used == "openai/gpt-4o-mini"
-                    assert (
-                        result.api_cost >= 0.0
-                    )  # Some cost incurred during failed attempts
+                    assert result.api_cost >= 0.0  # Some cost incurred during failed attempts
                     assert result.fallback_used is True
 
 
@@ -374,9 +348,7 @@ async def test_evaluate_single_llm_judge_via_pipeline():
 
     assert result == mock_result
     assert execution_time >= 0.0
-    pipeline.llm_engine.evaluate_comprehensive.assert_called_once_with(
-        paper, review, trace
-    )
+    pipeline.llm_engine.evaluate_comprehensive.assert_called_once_with(paper, review, trace)
 
 
 # Performance and cost tests
@@ -411,9 +383,7 @@ class TestLLMJudgePerformance:
             # truncation logic)
             if mock_agent.run.called:
                 call_args = mock_agent.run.call_args[0][0]
-                assert (
-                    len(call_args) < len(long_paper) + 200
-                )  # Should be significantly shorter
+                assert len(call_args) < len(long_paper) + 200  # Should be significantly shorter
             else:
                 # Test passes if we got to the truncation logic (fallback was
                 # triggered due to mock setup)
@@ -435,10 +405,6 @@ class TestLLMJudgePerformance:
     async def test_timeout_handling(self, engine, sample_data):
         """Should handle LLM request timeouts gracefully."""
         with patch("asyncio.wait_for", side_effect=TimeoutError("Request timed out")):
-            with patch.object(
-                engine.fallback_engine, "compute_semantic_similarity", return_value=0.5
-            ):
-                score = await engine.assess_technical_accuracy(
-                    sample_data["paper"], sample_data["review"]
-                )
+            with patch.object(engine.fallback_engine, "compute_semantic_similarity", return_value=0.5):
+                score = await engine.assess_technical_accuracy(sample_data["paper"], sample_data["review"])
                 assert score == 0.5  # Should use fallback

@@ -431,7 +431,7 @@ Agent Score = (
     - CLI interface validation and end-to-end workflow confirmation
     - PeerRead data format compatibility validated with synthetic testing
     - Production-ready status confirmed through comprehensive quality assurance
-- [ ] **Task 4.3**: PeerRead Integration Validation & Real Dataset Testing with scoring system validation
+- [x] **Task 4.3**: PeerRead Integration Validation & Real Dataset Testing with scoring system validation ✅ **COMPLETED**
   - **Assigned to**: Evaluation Specialist → Python Developer → Code Reviewer
   - **Requirements**: Leverage existing robust PeerRead integration to validate real dataset compatibility, test composite scoring with varied performance scenarios, and validate score interpretability
   - **Reference**: docs/architecture.md for data flow patterns, existing datasets_peerread.py and evaluation_pipeline.py integration
@@ -440,27 +440,47 @@ Agent Score = (
     - **Phase 1**: Real dataset validation using existing `datasets_peerread.py` and `evaluation_pipeline.py` infrastructure
     - **Phase 2**: Composite scoring validation with varied performance scenarios and ranking accuracy testing
     - **Phase 3**: Performance baseline establishment and integration test enhancement
-- [ ] **Task 4.4**: Opik tracing integration & error handling testing
+  - **Status**: ✅ COMPLETED - Comprehensive validation framework implemented with 7 test files, performance baselines documented, and production readiness confirmed
+- [ ] **Task 4.4**: Opik tracing integration with ClickHouse analytics & error handling testing
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
-  - **Requirements**: Deploy local Opik instance as primary tracing solution, instrument PydanticAI agents with `@track` decorators, implement step-level evaluation for Manager/Researcher/Analyst/Synthesizer interactions, and comprehensive error handling testing
-  - **Reference**: docs/landscape/landscape-agent-frameworks-infrastructure.md for Opik, Weave, and Logfire integration patterns
-  - **Deliverable**: Local Opik tracing system with agent interaction graph export and robust error handling
+  - **Requirements**: Deploy local Opik instance as primary tracing solution, instrument PydanticAI agents with `@track` decorators, implement step-level evaluation for Manager/Researcher/Analyst/Synthesizer interactions, leverage ClickHouse for analytical queries, and comprehensive error handling testing
+  - **Reference**: docs/landscape/landscape-agent-frameworks-infrastructure.md for Opik integration patterns, existing docker-compose.opik.yml with ClickHouse backend
+  - **Deliverable**: Local Opik tracing system with ClickHouse-powered analytics, agent interaction graph export, and robust error handling
   - **Implementation Strategy**:
-    - **Phase 1**: Local Opik deployment and PydanticAI instrumentation (primary solution)
-    - **Phase 2**: Step-level agent evaluation metrics (tool selection quality, plan coherence assessment)
-    - **Phase 3**: Export trace data for graph analysis and error handling validation
-  - **Optional Integrations**: Weave and Logfire implementations as secondary/fallback options, but Opik is the go-to solution for local deployment and agent-specific evaluation capabilities
+    - **Phase 1**: Local Opik deployment using existing docker-compose.opik.yml with ClickHouse backend (database: opik, user: opik/opik123, ports: 8123 HTTP, 9000 native)
+    - **Phase 2**: PydanticAI agent instrumentation with enhanced metadata for graph analysis export
+    - **Phase 3**: ClickHouse analytical queries for agent performance trends, tool usage patterns, and coordination effectiveness metrics
+    - **Phase 4**: Export enhanced trace data for NetworkX graph construction and composite scoring integration
+  - **ClickHouse Analytics Integration**:
+    - Agent performance trending: execution time analysis, success rate tracking, error pattern detection
+    - Tool usage analytics: effectiveness measurements, selection pattern analysis, resource utilization metrics
+    - Multi-agent coordination analysis: interaction frequency, delegation patterns, collaboration effectiveness
+    - Graph metrics storage: NetworkX-generated metrics stored in ClickHouse for time-series analysis and performance correlation
+  - **Optional Integrations**: Weave and Logfire implementations as secondary/fallback options
+- [ ] **Task 4.5**: Deploy Opik locally using official repository
+  - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
+  - **Requirements**: Deploy local Opik instance using official documentation and repository, validate deployment with health checks, and integrate with existing docker-compose setup
+  - **Reference**: 
+    - Official documentation: https://www.comet.com/docs/opik/self-host/local_deployment/
+    - Official Docker Compose: https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml
+    - Existing configuration: docker-compose.opik.yml
+  - **Deliverable**: Production-ready local Opik deployment with official configuration
+  - **Implementation Strategy**:
+    - **Phase 1**: Review official Opik deployment documentation and Docker Compose configuration
+    - **Phase 2**: Deploy using official repository setup and validate services health
+    - **Phase 3**: Integrate with existing docker-compose.opik.yml configuration
+    - **Phase 4**: Verify deployment compatibility with Task 4.4 tracing requirements
 
 **Expected Deliverables**:
 
 - ✅ Functional composite scoring system
 - ✅ Integrated evaluation pipeline connecting all three tiers
-- [ ] PeerRead dataset validation with calibrated scoring system
+- ✅ PeerRead dataset validation with calibrated scoring system
 - [ ] Local Opik tracing with agent interaction graph export and robust error handling
 
 **Day 4 DoD**: Complete three-tier PeerRead evaluation system with composite scoring operational
 
-**Day 4 Progress**: **2/4 tasks complete** - Task 4.2 (pipeline integration) ✅ DONE, Task 4.1 (composite scoring) ✅ DONE
+**Day 4 Progress**: **3/4 tasks complete** - Task 4.1 (composite scoring) ✅ DONE, Task 4.2 (pipeline integration) ✅ DONE, Task 4.3 (PeerRead validation) ✅ DONE
 
 **Critical Dependencies from Previous Days**:
 

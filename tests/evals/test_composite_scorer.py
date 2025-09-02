@@ -218,9 +218,7 @@ class TestCompositeScorer_MetricExtraction:
 class TestCompositeScorer_ScoreCalculation:
     """Test composite score calculation."""
 
-    def test_calculate_composite_score_perfect_performance(
-        self, scorer, sample_tier_results
-    ):
+    def test_calculate_composite_score_perfect_performance(self, scorer, sample_tier_results):
         """Perfect performance should yield high composite score."""
         # Set all metrics to perfect scores
         sample_tier_results.tier1.time_score = 1.0
@@ -236,9 +234,7 @@ class TestCompositeScorer_ScoreCalculation:
         assert score >= 0.85
         assert score <= 1.0
 
-    def test_calculate_composite_score_poor_performance(
-        self, scorer, sample_tier_results
-    ):
+    def test_calculate_composite_score_poor_performance(self, scorer, sample_tier_results):
         """Poor performance should yield low composite score."""
         # Set all metrics to poor scores
         sample_tier_results.tier1.time_score = 0.1
@@ -254,17 +250,13 @@ class TestCompositeScorer_ScoreCalculation:
         assert score >= 0.0
         assert score <= 0.4
 
-    def test_calculate_composite_score_weights_applied(
-        self, scorer, sample_tier_results
-    ):
+    def test_calculate_composite_score_weights_applied(self, scorer, sample_tier_results):
         """Composite score should reflect configured metric weights."""
         score = scorer.calculate_composite_score(sample_tier_results)
 
         # Extract individual metrics to verify calculation
         metrics = scorer.extract_metric_values(sample_tier_results)
-        expected_score = sum(
-            metrics[metric] * weight for metric, weight in scorer.weights.items()
-        )
+        expected_score = sum(metrics[metric] * weight for metric, weight in scorer.weights.items())
 
         assert abs(score - expected_score) < 0.001
 
@@ -320,9 +312,7 @@ class TestCompositeScorer_Integration:
         assert len(result.metric_scores) == 6
         assert result.evaluation_complete is True
 
-    def test_evaluate_composite_consistent_recommendation(
-        self, scorer, sample_tier_results
-    ):
+    def test_evaluate_composite_consistent_recommendation(self, scorer, sample_tier_results):
         """Recommendation should be consistent with composite score."""
         result = scorer.evaluate_composite(sample_tier_results)
 
@@ -371,9 +361,7 @@ class TestCompositeScorer_Utils:
         incomplete_results = EvaluationResults(tier1=None, tier2=None, tier3=None)
         assert incomplete_results.is_complete() is False
 
-        partial_results = EvaluationResults(
-            tier1=sample_tier_results.tier1, tier2=None, tier3=None
-        )
+        partial_results = EvaluationResults(tier1=sample_tier_results.tier1, tier2=None, tier3=None)
         assert partial_results.is_complete() is False
 
 
@@ -383,24 +371,77 @@ class TestCompositeScorer_RealConfig:
 
     def test_with_real_config_file(self):
         """Should work with the actual config_eval.json from the project."""
-        real_config_path = (
-            Path(__file__).parent.parent.parent
-            / "src"
-            / "app"
-            / "config"
-            / "config_eval.json"
-        )
+        real_config_path = Path(__file__).parent.parent.parent / "src" / "app" / "config" / "config_eval.json"
 
         if real_config_path.exists():
             scorer = CompositeScorer(config_path=real_config_path)
 
             # Verify basic functionality
             assert len(scorer.weights) == 6
-            assert (
-                abs(sum(scorer.weights.values()) - 1.0) < 0.01
-            )  # Allow for floating point precision
+            assert abs(sum(scorer.weights.values()) - 1.0) < 0.01  # Allow for floating point precision
 
             summary = scorer.get_scoring_summary()
             assert summary["metrics_count"] == 6
         else:
             pytest.skip("Real config file not found")
+
+
+class TestAgentAssessment:
+    """Test agent assessment functionality."""
+
+    def test_assess_agent_performance_default(self, scorer):
+        """Test agent assessment with default parameters."""
+        metrics = scorer.assess_agent_performance(
+            execution_time=5.0,
+            tools_used=["tool1", "tool2"],
+            delegation_count=1,
+            error_occurred=False,
+            output_length=100,
+        )
+        
+        # Should return valid AgentMetrics object
+        assert 0.0 <= metrics.tool_selection_score <= 1.0
+        assert 0.0 <= metrics.plan_coherence_score <= 1.0  
+        assert 0.0 <= metrics.coordination_score <= 1.0
+        
+        # Should have composite score
+        composite = metrics.get_agent_composite_score()
+        assert 0.0 <= composite <= 1.0
+
+    def test_assess_agent_performance_error_penalty(self, scorer):
+        """Test that errors result in lower scores."""
+        normal_metrics = scorer.assess_agent_performance(
+            execution_time=5.0,
+            tools_used=["tool1"],
+            error_occurred=False,
+            output_length=100,
+        )
+        
+        error_metrics = scorer.assess_agent_performance(
+            execution_time=5.0,
+            tools_used=["tool1"],
+            error_occurred=True,  # Should reduce coherence score
+            output_length=100,
+        )
+        
+        # Error should result in lower coherence score
+        assert error_metrics.plan_coherence_score < normal_metrics.plan_coherence_score
+
+    def test_assess_agent_performance_over_tooling_penalty(self, scorer):
+        """Test that over-tooling results in lower tool selection score."""
+        normal_metrics = scorer.assess_agent_performance(
+            execution_time=5.0,
+            tools_used=["tool1", "tool2"],
+            error_occurred=False,
+            output_length=100,
+        )
+        
+        over_tooled_metrics = scorer.assess_agent_performance(
+            execution_time=5.0,
+            tools_used=["tool1", "tool2", "tool3", "tool4", "tool5", "tool6", "tool7"],  # Too many tools
+            error_occurred=False,
+            output_length=100,
+        )
+        
+        # Over-tooling should result in lower tool selection score
+        assert over_tooled_metrics.tool_selection_score < normal_metrics.tool_selection_score

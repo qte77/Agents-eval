@@ -31,9 +31,7 @@ def get_llm_model_name(provider: str, model_name: str) -> str:
     prefix = provider_mappings.get(provider.lower(), f"{provider.lower()}/")
 
     # Handle special cases where model name already includes provider
-    if "/" in model_name and any(
-        model_name.startswith(p) for p in provider_mappings.values() if p
-    ):
+    if "/" in model_name and any(model_name.startswith(p) for p in provider_mappings.values() if p):
         return model_name
 
     return f"{prefix}{model_name}"
@@ -138,9 +136,7 @@ def create_agent_models(
     )
 
 
-def create_simple_model(
-    provider: str, model_name: str, api_key: str | None = None
-) -> Model:
+def create_simple_model(provider: str, model_name: str, api_key: str | None = None) -> Model:
     """
     Create a simple model for basic usage like evaluation.
 

@@ -77,8 +77,18 @@
   "observability": {
     "trace_collection": true,
     "agentneo_enabled": true,
-    "opik_enabled": false,
+    "opik_enabled": true,
+    "opik_log_start_trace_span": true,
+    "opik_batch_size": 100,
+    "opik_timeout_seconds": 30.0,
+    "opik_export_interval": 5,
     "trace_storage_path": "./logs/traces/",
     "performance_logging": true
+  },
+  
+  "agent_assessment_weights": {
+    "tool_selection": 0.35,
+    "plan_coherence": 0.35,
+    "coordination": 0.30
   }
 }

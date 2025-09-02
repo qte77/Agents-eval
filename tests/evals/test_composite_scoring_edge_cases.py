@@ -238,14 +238,9 @@ class TestCompositeScoreEdgeCases:
         ], f"Invalid recommendation: {result.recommendation}"
 
         # Tier 1 contribution should be 0 or handled appropriately
-        assert result.tier1_contribution == 0.0, (
-            "Missing tier should have 0 contribution"
-        )
+        assert result.tier1_contribution == 0.0, "Missing tier should have 0 contribution"
 
-        print(
-            f"✓ Missing Tier 1: score={result.composite_score:.3f}, "
-            f"rec={result.recommendation}"
-        )
+        print(f"✓ Missing Tier 1: score={result.composite_score:.3f}, rec={result.recommendation}")
 
     async def test_missing_tier2_fallback(self, composite_scorer, edge_case_data):
         """Test fallback when Tier 2 results are missing."""
@@ -255,14 +250,9 @@ class TestCompositeScoreEdgeCases:
 
         assert result is not None, "Should produce result even with missing Tier 2"
         assert 0.0 <= result.composite_score <= 1.0, "Score should be in valid range"
-        assert result.tier2_contribution == 0.0, (
-            "Missing tier should have 0 contribution"
-        )
+        assert result.tier2_contribution == 0.0, "Missing tier should have 0 contribution"
 
-        print(
-            f"✓ Missing Tier 2: score={result.composite_score:.3f}, "
-            f"rec={result.recommendation}"
-        )
+        print(f"✓ Missing Tier 2: score={result.composite_score:.3f}, rec={result.recommendation}")
 
     async def test_missing_tier3_fallback(self, composite_scorer, edge_case_data):
         """Test fallback when Tier 3 results are missing."""
@@ -272,14 +262,9 @@ class TestCompositeScoreEdgeCases:
 
         assert result is not None, "Should produce result even with missing Tier 3"
         assert 0.0 <= result.composite_score <= 1.0, "Score should be in valid range"
-        assert result.tier3_contribution == 0.0, (
-            "Missing tier should have 0 contribution"
-        )
+        assert result.tier3_contribution == 0.0, "Missing tier should have 0 contribution"
 
-        print(
-            f"✓ Missing Tier 3: score={result.composite_score:.3f}, "
-            f"rec={result.recommendation}"
-        )
+        print(f"✓ Missing Tier 3: score={result.composite_score:.3f}, rec={result.recommendation}")
 
     async def test_all_tiers_missing_fallback(self, composite_scorer, edge_case_data):
         """Test behavior when all tiers are missing."""
@@ -292,12 +277,8 @@ class TestCompositeScoreEdgeCases:
 
             # If it returns a result, it should be minimal/fallback
             assert result is not None, "Should handle all missing tiers"
-            assert result.composite_score >= 0.0, (
-                "Fallback score should be non-negative"
-            )
-            assert result.recommendation == "reject", (
-                "All missing should default to reject"
-            )
+            assert result.composite_score >= 0.0, "Fallback score should be non-negative"
+            assert result.recommendation == "reject", "All missing should default to reject"
 
             print(f"✓ All tiers missing: fallback score={result.composite_score:.3f}")
 
@@ -306,9 +287,7 @@ class TestCompositeScoreEdgeCases:
             assert "missing" in str(e).lower() or "empty" in str(e).lower(), (
                 f"Should provide informative error message: {e}"
             )
-            print(
-                f"✓ All tiers missing: raised appropriate exception: {type(e).__name__}"
-            )
+            print(f"✓ All tiers missing: raised appropriate exception: {type(e).__name__}")
 
     async def test_extreme_metric_values(self, composite_scorer, edge_case_data):
         """Test handling of extreme metric values (0.0, 1.0, etc.)."""
@@ -318,26 +297,15 @@ class TestCompositeScoreEdgeCases:
 
         # Should handle extreme values without error
         assert result is not None, "Should handle extreme values"
-        assert 0.0 <= result.composite_score <= 1.0, (
-            "Score should remain in valid range"
-        )
+        assert 0.0 <= result.composite_score <= 1.0, "Score should remain in valid range"
 
         # Score should be reasonable despite extreme inputs
-        assert result.composite_score > 0.0, (
-            "Should not produce zero score with mixed extremes"
-        )
-        assert result.composite_score < 1.0, (
-            "Should not produce perfect score with mixed extremes"
-        )
+        assert result.composite_score > 0.0, "Should not produce zero score with mixed extremes"
+        assert result.composite_score < 1.0, "Should not produce perfect score with mixed extremes"
 
-        print(
-            f"✓ Extreme values: score={result.composite_score:.3f}, "
-            f"rec={result.recommendation}"
-        )
+        print(f"✓ Extreme values: score={result.composite_score:.3f}, rec={result.recommendation}")
 
-    async def test_failed_tier_execution_handling(
-        self, composite_scorer, edge_case_data
-    ):
+    async def test_failed_tier_execution_handling(self, composite_scorer, edge_case_data):
         """Test handling when tier executions fail."""
         evaluation = edge_case_data.create_failed_tiers_evaluation()
 
@@ -345,23 +313,15 @@ class TestCompositeScoreEdgeCases:
 
         # Should handle failed executions
         assert result is not None, "Should handle failed tier executions"
-        assert result.composite_score >= 0.0, (
-            "Failed execution score should be non-negative"
-        )
+        assert result.composite_score >= 0.0, "Failed execution score should be non-negative"
 
         # Failed executions should generally result in low scores
-        assert result.composite_score < 0.5, (
-            "Failed executions should result in low scores"
-        )
+        assert result.composite_score < 0.5, "Failed executions should result in low scores"
         assert result.recommendation in ["weak_reject", "reject"], (
-            f"Failed executions should get negative recommendation: "
-            f"{result.recommendation}"
+            f"Failed executions should get negative recommendation: {result.recommendation}"
         )
 
-        print(
-            f"✓ Failed tiers: score={result.composite_score:.3f}, "
-            f"rec={result.recommendation}"
-        )
+        print(f"✓ Failed tiers: score={result.composite_score:.3f}, rec={result.recommendation}")
 
     async def test_nan_infinity_handling(self, composite_scorer):
         """Test handling of NaN and infinite values."""
@@ -412,27 +372,18 @@ class TestCompositeScoreEdgeCases:
 
             # If it handles the values, result should be valid
             assert result is not None, "Should handle NaN/infinity values"
-            assert not math.isnan(result.composite_score), (
-                "Result score should not be NaN"
-            )
-            assert not math.isinf(result.composite_score), (
-                "Result score should not be infinite"
-            )
-            assert 0.0 <= result.composite_score <= 1.0, (
-                "Should produce valid score range"
-            )
+            assert not math.isnan(result.composite_score), "Result score should not be NaN"
+            assert not math.isinf(result.composite_score), "Result score should not be infinite"
+            assert 0.0 <= result.composite_score <= 1.0, "Should produce valid score range"
 
             print(f"✓ NaN/Infinity handling: score={result.composite_score:.3f}")
 
         except (ValueError, TypeError) as e:
             # If it raises an exception, should be informative
-            assert any(
-                word in str(e).lower() for word in ["nan", "inf", "invalid", "finite"]
-            ), f"Should provide informative error for NaN/infinity: {e}"
-            print(
-                f"✓ NaN/Infinity handling: raised appropriate exception: "
-                f"{type(e).__name__}"
+            assert any(word in str(e).lower() for word in ["nan", "inf", "invalid", "finite"]), (
+                f"Should provide informative error for NaN/infinity: {e}"
             )
+            print(f"✓ NaN/Infinity handling: raised appropriate exception: {type(e).__name__}")
 
     async def test_invalid_configuration_handling(self, edge_case_data):
         """Test behavior with invalid configuration."""
@@ -459,15 +410,10 @@ class TestCompositeScoreEdgeCases:
             # Should either handle gracefully or raise informative error
             try:
                 CompositeScorer(temp_config_path)
-                print(
-                    "✓ Invalid config: handled gracefully with defaults or validation"
-                )
+                print("✓ Invalid config: handled gracefully with defaults or validation")
             except (ValueError, KeyError, FileNotFoundError) as e:
                 assert len(str(e)) > 0, "Should provide error message"
-                print(
-                    f"✓ Invalid config: raised appropriate exception: "
-                    f"{type(e).__name__}"
-                )
+                print(f"✓ Invalid config: raised appropriate exception: {type(e).__name__}")
 
         finally:
             # Clean up temporary file
@@ -515,10 +461,7 @@ class TestCompositeScoreEdgeCases:
         assert result is not None, "Should handle incomplete tier data"
         assert 0.0 <= result.composite_score <= 1.0, "Score should be in valid range"
 
-        print(
-            f"✓ Partial data: score={result.composite_score:.3f}, "
-            f"rec={result.recommendation}"
-        )
+        print(f"✓ Partial data: score={result.composite_score:.3f}, rec={result.recommendation}")
 
     async def test_zero_execution_time_handling(self, composite_scorer):
         """Test handling of zero or negative execution times."""
@@ -593,24 +536,16 @@ if __name__ == "__main__":
             for tier_name, evaluation in missing_tier_cases:
                 try:
                     result = scorer.calculate_composite_score(evaluation)
-                    print(
-                        f"  ✓ Missing {tier_name}: score={result.composite_score:.3f}, "
-                        f"rec={result.recommendation}"
-                    )
+                    print(f"  ✓ Missing {tier_name}: score={result.composite_score:.3f}, rec={result.recommendation}")
                 except Exception as e:
-                    print(
-                        f"  ✗ Missing {tier_name}: failed with {type(e).__name__}: {e}"
-                    )
+                    print(f"  ✗ Missing {tier_name}: failed with {type(e).__name__}: {e}")
 
             # Test extreme values
             print("\nTesting extreme values:")
             try:
                 extreme_eval = test_data.create_extreme_values_evaluation()
                 result = scorer.calculate_composite_score(extreme_eval)
-                print(
-                    f"  ✓ Extreme values: score={result.composite_score:.3f}, "
-                    f"rec={result.recommendation}"
-                )
+                print(f"  ✓ Extreme values: score={result.composite_score:.3f}, rec={result.recommendation}")
             except Exception as e:
                 print(f"  ✗ Extreme values: failed with {type(e).__name__}: {e}")
 
@@ -619,10 +554,7 @@ if __name__ == "__main__":
             try:
                 failed_eval = test_data.create_failed_tiers_evaluation()
                 result = scorer.calculate_composite_score(failed_eval)
-                print(
-                    f"  ✓ Failed executions: score={result.composite_score:.3f}, "
-                    f"rec={result.recommendation}"
-                )
+                print(f"  ✓ Failed executions: score={result.composite_score:.3f}, rec={result.recommendation}")
             except Exception as e:
                 print(f"  ✗ Failed executions: failed with {type(e).__name__}: {e}")
 
@@ -631,10 +563,7 @@ if __name__ == "__main__":
             try:
                 empty_eval = test_data.create_all_tiers_missing_evaluation()
                 result = scorer.calculate_composite_score(empty_eval)
-                print(
-                    f"  ✓ All missing: score={result.composite_score:.3f}, "
-                    f"rec={result.recommendation}"
-                )
+                print(f"  ✓ All missing: score={result.composite_score:.3f}, rec={result.recommendation}")
             except Exception as e:
                 print(f"  ✓ All missing: appropriately failed with {type(e).__name__}")
 

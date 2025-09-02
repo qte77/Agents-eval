@@ -443,9 +443,7 @@ class TestFullEvaluationPipeline:
         return EvaluationPipeline()
 
     @pytest.mark.asyncio
-    async def test_comprehensive_evaluation_workflow(
-        self, realistic_test_data, evaluation_pipeline
-    ):
+    async def test_comprehensive_evaluation_workflow(self, realistic_test_data, evaluation_pipeline):
         """Test complete evaluation workflow with realistic data."""
         # Create comprehensive test data
         paper_data = realistic_test_data.create_scientific_paper()
@@ -488,9 +486,7 @@ class TestFullEvaluationPipeline:
     @pytest.mark.asyncio
     async def test_observability_integration(self, realistic_test_data):
         """Test trace collection and observability features."""
-        trace_collector = get_trace_collector(
-            config={"observability": {"trace_collection": True}}
-        )
+        trace_collector = get_trace_collector(config={"observability": {"trace_collection": True}})
 
         execution_id = "integration_test_observability"
         trace_collector.start_execution(execution_id)
@@ -521,9 +517,7 @@ class TestFullEvaluationPipeline:
         assert len(processed_trace.tool_calls) > 0
 
     @pytest.mark.asyncio
-    async def test_error_handling_and_fallbacks(
-        self, realistic_test_data, evaluation_pipeline
-    ):
+    async def test_error_handling_and_fallbacks(self, realistic_test_data, evaluation_pipeline):
         """Test error handling and fallback mechanisms."""
         paper_data = realistic_test_data.create_scientific_paper()
         agent_review = realistic_test_data.create_agent_generated_review()
@@ -574,9 +568,7 @@ if __name__ == "__main__":
         print(f"   All tiers executed: {result.evaluation_complete}")
 
         stats = pipeline.get_execution_stats()
-        print(
-            f"   Performance: {stats['total_time']:.3f}s, tiers: {stats['tiers_executed']}"
-        )
+        print(f"   Performance: {stats['total_time']:.3f}s, tiers: {stats['tiers_executed']}")
 
         return result
 

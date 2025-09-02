@@ -220,9 +220,7 @@ async def run_evaluation_example():
     print("-" * 50)
 
     # Initialize trace collection for future graph analysis (Day 3)
-    trace_collector = get_trace_collector(
-        config={"observability": {"trace_collection": True}}
-    )
+    trace_collector = get_trace_collector(config={"observability": {"trace_collection": True}})
 
     # Demonstrate trace collection
     execution_id = "demo_evaluation_001"
@@ -257,10 +255,7 @@ async def run_evaluation_example():
     if processed_trace:
         print(f"Execution ID: {processed_trace.execution_id}")
         print(f"Duration: {processed_trace.performance_metrics['total_duration']:.3f}s")
-        print(
-            f"Agent Interactions: "
-            f"{processed_trace.performance_metrics['agent_interactions']}"
-        )
+        print(f"Agent Interactions: {processed_trace.performance_metrics['agent_interactions']}")
         print(f"Tool Calls: {processed_trace.performance_metrics['tool_calls']}")
         print("Trace data collected successfully for Day 3 graph analysis")
     else:

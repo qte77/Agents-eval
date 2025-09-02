@@ -20,6 +20,27 @@ from app.data_models.evaluation_models import (
 from app.utils.log import logger
 
 
+class AgentMetrics(BaseModel):
+    """Simple agent-level metrics for evaluation enhancement."""
+
+    tool_selection_score: float = 0.7  # Default neutral score
+    plan_coherence_score: float = 0.7  # Default neutral score
+    coordination_score: float = 0.7  # Default neutral score
+
+    def get_agent_composite_score(self) -> float:
+        """Calculate simple weighted composite score for agent metrics."""
+        weights = {
+            "tool_selection": 0.35,
+            "plan_coherence": 0.35,
+            "coordination": 0.30,
+        }
+        return (
+            self.tool_selection_score * weights["tool_selection"]
+            + self.plan_coherence_score * weights["plan_coherence"]
+            + self.coordination_score * weights["coordination"]
+        )
+
+
 class EvaluationResults(BaseModel):
     """Container for all three evaluation tier results."""
 
@@ -63,9 +84,7 @@ class CompositeScorer:
         self.composite_config = self.config.get("composite_scoring", {})
         self.weights = self.composite_config.get("metrics_and_weights", {})
         self.thresholds = self.composite_config.get("recommendation_thresholds", {})
-        self.recommendation_weights = self.composite_config.get(
-            "recommendation_weights", {}
-        )
+        self.recommendation_weights = self.composite_config.get("recommendation_weights", {})
 
         # Validate configuration
         self._validate_config()
@@ -102,15 +121,11 @@ class CompositeScorer:
         missing_metrics = required_metrics - configured_metrics
 
         if missing_metrics:
-            raise ValueError(
-                f"Missing required metrics in configuration: {missing_metrics}"
-            )
+            raise ValueError(f"Missing required metrics in configuration: {missing_metrics}")
 
         # Validate weights sum to approximately 1.0
         total_weight = sum(self.weights.values())
-        if (
-            abs(total_weight - 1.0) > 0.01
-        ):  # Reason: Allow for floating point precision in config
+        if abs(total_weight - 1.0) > 0.01:  # Reason: Allow for floating point precision in config
             logger.warning(f"Metric weights sum to {total_weight:.3f}, expected 1.0")
 
         # Validate thresholds are in correct order
@@ -120,8 +135,7 @@ class CompositeScorer:
             logger.warning("Recommendation thresholds are not in descending order")
 
         logger.debug(
-            f"Configuration validation completed: {len(self.weights)} metrics, "
-            f"weights sum = {total_weight:.3f}"
+            f"Configuration validation completed: {len(self.weights)} metrics, weights sum = {total_weight:.3f}"
         )
 
     def extract_metric_values(self, results: EvaluationResults) -> dict[str, float]:
@@ -156,9 +170,7 @@ class CompositeScorer:
         # Each metric maps to specific fields from evaluation tier results
         metrics = {
             # From Tier 1: Traditional metrics + execution performance
-            "time_taken": self._normalize_time_score(
-                results.tier1.time_score
-            ),  # normalized execution time
+            "time_taken": self._normalize_time_score(results.tier1.time_score),  # normalized execution time
             "task_success": results.tier1.task_success,  # binary completion flag
             "output_similarity": results.tier1.overall_score,  # weighted similarity
             # From Tier 2: LLM-as-Judge quality assessment - use specific metric
@@ -171,15 +183,11 @@ class CompositeScorer:
         # Validate all metrics are in valid range
         for metric_name, value in metrics.items():
             if not (0.0 <= value <= 1.0):
-                logger.warning(
-                    f"Metric {metric_name} = {value:.3f} outside valid range [0.0, 1.0]"
-                )
+                logger.warning(f"Metric {metric_name} = {value:.3f} outside valid range [0.0, 1.0]")
                 # Clamp to valid range
                 metrics[metric_name] = max(0.0, min(1.0, value))
 
-        logger.debug(
-            f"Extracted metrics: {[(k, f'{v:.3f}') for k, v in metrics.items()]}"
-        )
+        logger.debug(f"Extracted metrics: {[(k, f'{v:.3f}') for k, v in metrics.items()]}")
         return metrics
 
     def _normalize_time_score(self, time_score: float) -> float:
@@ -215,17 +223,13 @@ class CompositeScorer:
         metrics = self.extract_metric_values(results)
 
         # Apply weighted formula from configuration
-        composite_score = sum(
-            metrics[metric] * weight for metric, weight in self.weights.items()
-        )
+        composite_score = sum(metrics[metric] * weight for metric, weight in self.weights.items())
 
         # Ensure score is in valid range
         composite_score = max(0.0, min(1.0, composite_score))
 
         logger.info(f"Composite score calculated: {composite_score:.3f}")
-        contributions = [
-            (m, f"{metrics[m] * self.weights[m]:.3f}") for m in self.weights.keys()
-        ]
+        contributions = [(m, f"{metrics[m] * self.weights[m]:.3f}") for m in self.weights.keys()]
         logger.debug(f"Metric contributions: {contributions}")
 
         return composite_score
@@ -300,10 +304,7 @@ class CompositeScorer:
                 evaluation_complete=results.is_complete(),
             )
 
-            logger.info(
-                f"Composite evaluation complete: {composite_score:.3f} → "
-                f"{recommendation}"
-            )
+            logger.info(f"Composite evaluation complete: {composite_score:.3f} → {recommendation}")
             return result
 
         except Exception as e:
@@ -323,3 +324,68 @@ class CompositeScorer:
             "thresholds": self.thresholds.copy(),
             "recommendation_weights": self.recommendation_weights.copy(),
         }
+
+    def assess_agent_performance(
+        self,
+        execution_time: float,
+        tools_used: list[str],
+        delegation_count: int = 0,
+        error_occurred: bool = False,
+        output_length: int = 0,
+    ) -> AgentMetrics:
+        """Assess agent performance with simple rule-based metrics.
+
+        Args:
+            execution_time: Time taken for agent execution in seconds
+            tools_used: List of tools used during execution
+            delegation_count: Number of delegations made (for manager agents)
+            error_occurred: Whether an error occurred during execution
+            output_length: Length of output result in characters
+
+        Returns:
+            AgentMetrics with evaluated scores
+        """
+        # Tool Selection Score (0.0-1.0)
+        tool_score = 0.8  # Default good score
+        if len(tools_used) == 0:
+            tool_score = 0.3  # No tools used
+        elif len(tools_used) > 5:
+            tool_score = max(0.4, 0.8 - (len(tools_used) - 5) * 0.1)  # Over-tooling penalty
+
+        # Plan Coherence Score (0.0-1.0)
+        coherence_score = 0.7  # Default neutral
+        if error_occurred:
+            coherence_score -= 0.4  # Major penalty for errors
+        if output_length > 100:
+            coherence_score += 0.1  # Reward substantive output
+        elif output_length < 20:
+            coherence_score -= 0.2  # Penalize minimal output
+        if execution_time > 30.0:  # Very long execution
+            coherence_score -= 0.2  # Penalize slow execution
+
+        # Coordination Score (0.0-1.0)
+        coordination_score = 0.7  # Default neutral
+        if delegation_count > 0:  # Agent delegated tasks
+            if delegation_count <= 3:
+                coordination_score += 0.2  # Reward appropriate delegation
+            else:
+                coordination_score -= (delegation_count - 3) * 0.1  # Over-delegation penalty
+        if output_length > 50:  # Substantive response
+            coordination_score += 0.1
+
+        # Ensure all scores are within bounds
+        tool_score = max(0.0, min(1.0, tool_score))
+        coherence_score = max(0.0, min(1.0, coherence_score))
+        coordination_score = max(0.0, min(1.0, coordination_score))
+
+        agent_metrics = AgentMetrics(
+            tool_selection_score=tool_score,
+            plan_coherence_score=coherence_score,
+            coordination_score=coordination_score,
+        )
+
+        logger.debug(
+            f"Agent assessment: tool={tool_score:.3f}, coherence={coherence_score:.3f}, "
+            f"coordination={coordination_score:.3f}"
+        )
+        return agent_metrics

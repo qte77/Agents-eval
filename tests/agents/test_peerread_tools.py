@@ -84,9 +84,7 @@ class TestPeerReadAgentTools:
 
     @patch("app.agents.peerread_tools.load_peerread_config")
     @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_get_peerread_paper_tool_success(
-        self, mock_loader_class, mock_config, sample_paper, sample_config
-    ):
+    def test_get_peerread_paper_tool_success(self, mock_loader_class, mock_config, sample_paper, sample_config):
         """Test successful paper retrieval via agent tool."""
         # Import here to avoid import errors if module doesn't exist yet
         from app.tools.peerread_tools import add_peerread_tools_to_manager
@@ -107,9 +105,7 @@ class TestPeerReadAgentTools:
 
     @patch("app.agents.peerread_tools.load_peerread_config")
     @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_get_peerread_paper_tool_not_found(
-        self, mock_loader_class, mock_config, sample_config
-    ):
+    def test_get_peerread_paper_tool_not_found(self, mock_loader_class, mock_config, sample_config):
         """Test paper retrieval when paper is not found."""
         # Import here to avoid import errors if module doesn't exist yet
         from app.tools.peerread_tools import add_peerread_tools_to_manager
@@ -129,9 +125,7 @@ class TestPeerReadAgentTools:
 
     @patch("app.agents.peerread_tools.load_peerread_config")
     @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_query_peerread_papers_tool(
-        self, mock_loader_class, mock_config, sample_paper, sample_config
-    ):
+    def test_query_peerread_papers_tool(self, mock_loader_class, mock_config, sample_paper, sample_config):
         """Test paper querying via agent tool."""
         # Import here to avoid import errors if module doesn't exist yet
         from app.tools.peerread_tools import add_peerread_tools_to_manager
@@ -166,9 +160,7 @@ class TestPeerReadAgentTools:
         with (
             patch("app.agents.peerread_tools.load_peerread_config") as mock_config,
             patch("app.agents.peerread_tools.PeerReadLoader") as mock_loader_class,
-            patch(
-                "app.agents.peerread_tools.ReviewPersistence"
-            ) as mock_persistence_class,
+            patch("app.agents.peerread_tools.ReviewPersistence") as mock_persistence_class,
         ):
             # Setup mocks
             mock_config.return_value = sample_config

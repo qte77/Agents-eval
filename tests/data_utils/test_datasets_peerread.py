@@ -62,10 +62,7 @@ class TestPeerReadDownloader:
         url = downloader._construct_url("acl_2017", "train", "reviews", "104")
 
         # Assert
-        expected = (
-            "https://raw.githubusercontent.com/allenai/PeerRead/master/data/"
-            "acl_2017/train/reviews/104.json"
-        )
+        expected = "https://raw.githubusercontent.com/allenai/PeerRead/master/data/acl_2017/train/reviews/104.json"
         assert url == expected
 
     def test_invalid_venue_error(self):
@@ -217,10 +214,7 @@ class TestRealExternalDependencies:
         This test uses real network requests to verify functionality.
         """
         # Arrange
-        test_url = (
-            "https://raw.githubusercontent.com/allenai/PeerRead/master/data/"
-            "acl_2017/train/reviews/104.json"
-        )
+        test_url = "https://raw.githubusercontent.com/allenai/PeerRead/master/data/acl_2017/train/reviews/104.json"
 
         try:
             # Act
@@ -242,10 +236,7 @@ class TestRealExternalDependencies:
         proceeding with full implementation.
         """
         # Arrange
-        test_url = (
-            "https://raw.githubusercontent.com/allenai/PeerRead/master/data/"
-            "acl_2017/train/reviews/104.json"
-        )
+        test_url = "https://raw.githubusercontent.com/allenai/PeerRead/master/data/acl_2017/train/reviews/104.json"
 
         try:
             # Act

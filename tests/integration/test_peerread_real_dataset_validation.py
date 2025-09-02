@@ -130,9 +130,7 @@ class TestPeerReadRealDatasetValidation:
                 ]
 
                 for field in required_review_fields:
-                    assert field in review, (
-                        f"Missing review field '{field}' in {json_file}"
-                    )
+                    assert field in review, f"Missing review field '{field}' in {json_file}"
 
     @pytest.mark.integration
     @pytest.mark.network
@@ -159,12 +157,9 @@ class TestPeerReadRealDatasetValidation:
 
         # Reason: Cache hit should be much faster than initial download
         # Allow some tolerance for network variability
-        if (
-            first_download_time > 1.0
-        ):  # Only check if first download took reasonable time
+        if first_download_time > 1.0:  # Only check if first download took reasonable time
             assert second_download_time < first_download_time * 0.5, (
-                f"Cache not working effectively: "
-                f"first={first_download_time:.2f}s, second={second_download_time:.2f}s"
+                f"Cache not working effectively: first={first_download_time:.2f}s, second={second_download_time:.2f}s"
             )
 
         # Validate that same files exist
@@ -206,12 +201,8 @@ class TestPeerReadRealDatasetValidation:
         split = config.splits[0]
 
         # Download data first
-        download_result = test_downloader.download_venue_split(
-            venue, split, max_papers=2
-        )
-        assert download_result.success, (
-            f"Download failed: {download_result.error_message}"
-        )
+        download_result = test_downloader.download_venue_split(venue, split, max_papers=2)
+        assert download_result.success, f"Download failed: {download_result.error_message}"
 
         # Create loader with same configuration
         loader = PeerReadLoader(config)
@@ -225,9 +216,7 @@ class TestPeerReadRealDatasetValidation:
 
         # Validate paper structure
         for paper in papers[:1]:  # Check first paper only
-            assert isinstance(paper, PeerReadPaper), (
-                "Paper should be PeerReadPaper instance"
-            )
+            assert isinstance(paper, PeerReadPaper), "Paper should be PeerReadPaper instance"
             assert paper.paper_id is not None, "Paper should have ID"
             assert len(paper.title) > 0, "Paper should have title"
             assert len(paper.abstract) > 0, "Paper should have abstract"
@@ -236,9 +225,7 @@ class TestPeerReadRealDatasetValidation:
             # Validate review structure
             for review in paper.reviews[:1]:  # Check first review only
                 assert review.impact is not None, "Review should have impact score"
-                assert review.recommendation is not None, (
-                    "Review should have recommendation"
-                )
+                assert review.recommendation is not None, "Review should have recommendation"
                 assert len(review.comments) > 0, "Review should have comments"
 
     @pytest.mark.integration
@@ -271,20 +258,14 @@ class TestPeerReadRealDatasetValidation:
         split = config.splits[0]
 
         # Test file discovery
-        available_papers = test_downloader._discover_available_files(
-            venue, split, "reviews"
-        )
+        available_papers = test_downloader._discover_available_files(venue, split, "reviews")
 
         # Validate discovery results
         assert isinstance(available_papers, list), "Should return list of paper IDs"
         if available_papers:  # Only test if files are discovered
             assert len(available_papers) > 0, "Should discover some papers"
-            assert all(isinstance(paper_id, str) for paper_id in available_papers), (
-                "All paper IDs should be strings"
-            )
-            assert all(len(paper_id) > 0 for paper_id in available_papers), (
-                "All paper IDs should be non-empty"
-            )
+            assert all(isinstance(paper_id, str) for paper_id in available_papers), "All paper IDs should be strings"
+            assert all(len(paper_id) > 0 for paper_id in available_papers), "All paper IDs should be non-empty"
 
 
 if __name__ == "__main__":
@@ -296,9 +277,7 @@ if __name__ == "__main__":
         try:
             # Load configuration
             config = load_peerread_config()
-            print(
-                f"✓ Configuration loaded: {len(config.venues)} venues, {len(config.splits)} splits"
-            )
+            print(f"✓ Configuration loaded: {len(config.venues)} venues, {len(config.splits)} splits")
 
             # Create test downloader with limited scope
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -325,9 +304,7 @@ if __name__ == "__main__":
                 download_time = time.time() - start_time
 
                 if result.success:
-                    print(
-                        f"✓ Download successful: {result.papers_downloaded} papers in {download_time:.2f}s"
-                    )
+                    print(f"✓ Download successful: {result.papers_downloaded} papers in {download_time:.2f}s")
 
                     # Test loader integration
                     loader = PeerReadLoader(test_config)
@@ -336,9 +313,7 @@ if __name__ == "__main__":
 
                     if papers:
                         paper = papers[0]
-                        print(
-                            f"✓ Sample paper: {paper.title[:50]}... ({len(paper.reviews)} reviews)"
-                        )
+                        print(f"✓ Sample paper: {paper.title[:50]}... ({len(paper.reviews)} reviews)")
 
                 else:
                     print(f"✗ Download failed: {result.error_message}")

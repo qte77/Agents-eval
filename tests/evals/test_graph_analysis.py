@@ -150,9 +150,7 @@ class TestGraphAnalysisEngine:
         assert result["tool_selection_accuracy"] == 0.0
 
     # Given: Agent interaction analysis
-    def test_agent_interaction_analysis_with_valid_interactions(
-        self, engine, sample_trace_data
-    ):
+    def test_agent_interaction_analysis_with_valid_interactions(self, engine, sample_trace_data):
         """When analyzing agent interactions, then calculates communication metrics."""
         # When interactions are analyzed
         result = engine.analyze_agent_interactions(sample_trace_data)
@@ -182,17 +180,13 @@ class TestGraphAnalysisEngine:
         # Then coordination quality is detected
         assert result["coordination_centrality"] > 0.0
 
-    def test_agent_interaction_analysis_with_empty_interactions(
-        self, engine, minimal_trace_data
-    ):
+    def test_agent_interaction_analysis_with_empty_interactions(self, engine, minimal_trace_data):
         """When no interactions exist, then returns appropriate defaults."""
         # When analyzing empty interactions
         result = engine.analyze_agent_interactions(minimal_trace_data)
 
         # Then returns appropriate defaults
-        assert (
-            result["communication_overhead"] == 1.0
-        )  # No overhead when no communication
+        assert result["communication_overhead"] == 1.0  # No overhead when no communication
         assert result["coordination_centrality"] == 0.0
 
     # Given: Task distribution analysis
@@ -253,9 +247,7 @@ class TestGraphAnalysisEngine:
         # Then perfect balance for single agent
         assert result == 1.0
 
-    def test_task_distribution_analysis_with_no_activity(
-        self, engine, minimal_trace_data
-    ):
+    def test_task_distribution_analysis_with_no_activity(self, engine, minimal_trace_data):
         """When no activity exists, then returns zero score."""
         # When analyzing no activity
         result = engine.analyze_task_distribution(minimal_trace_data)
@@ -300,14 +292,10 @@ class TestGraphAnalysisEngine:
         assert abs(result.overall_score - result.path_convergence) < 0.01
 
     @patch("app.evals.graph_analysis.logger")
-    def test_complete_evaluation_with_exception_handling(
-        self, mock_logger, engine, sample_trace_data
-    ):
+    def test_complete_evaluation_with_exception_handling(self, mock_logger, engine, sample_trace_data):
         """When analysis fails, then gracefully handles errors with baseline scores."""
         # Given trace data that will cause analysis failure
-        with patch.object(
-            engine, "analyze_tool_usage_patterns", side_effect=Exception("Test error")
-        ):
+        with patch.object(engine, "analyze_tool_usage_patterns", side_effect=Exception("Test error")):
             # When evaluation is performed
             result = engine.evaluate_graph_metrics(sample_trace_data)
 
@@ -394,9 +382,7 @@ class TestGraphAnalysisEngine:
         }
 
         # When engine is created, then ValueError is raised
-        with pytest.raises(
-            ValueError, match="min_nodes_for_analysis must be positive integer"
-        ):
+        with pytest.raises(ValueError, match="min_nodes_for_analysis must be positive integer"):
             GraphAnalysisEngine(config)
 
     def test_configuration_validation_with_invalid_centrality_measures(self):
@@ -439,9 +425,7 @@ class TestGraphAnalysisEngine:
         }
 
         # When engine is created, then ValueError is raised
-        with pytest.raises(
-            ValueError, match="Weight path_convergence must be non-negative"
-        ):
+        with pytest.raises(ValueError, match="Weight path_convergence must be non-negative"):
             GraphAnalysisEngine(config)
 
     # Given: Data validation tests
@@ -498,9 +482,7 @@ class TestGraphAnalysisEngine:
     def test_resource_limits_warning_for_large_trace(self, mock_logger, engine):
         """When trace exceeds resource limits, then logs warning."""
         # Given large trace data exceeding max_nodes (default 1000)
-        large_interactions = [
-            {"from": f"agent_{i}", "to": f"agent_{i + 1}"} for i in range(1200)
-        ]
+        large_interactions = [{"from": f"agent_{i}", "to": f"agent_{i + 1}"} for i in range(1200)]
         trace_data = GraphTraceData(
             execution_id="large_test",
             agent_interactions=large_interactions,
@@ -535,9 +517,7 @@ class TestGraphAnalysisEngine:
 
     # Given: NetworkX error handling tests
     @patch("networkx.betweenness_centrality")
-    def test_networkx_error_handling_in_agent_interactions(
-        self, mock_centrality, engine
-    ):
+    def test_networkx_error_handling_in_agent_interactions(self, mock_centrality, engine):
         """When NetworkX operation fails, then handles gracefully with fallback."""
         # Given NetworkX operation that will fail
         import networkx as nx
@@ -556,7 +536,5 @@ class TestGraphAnalysisEngine:
         result = engine.analyze_agent_interactions(trace_data)
 
         # Then fallback values are returned
-        assert (
-            result["coordination_centrality"] == 0.0
-        )  # Exception handling returns 0.0
+        assert result["coordination_centrality"] == 0.0  # Exception handling returns 0.0
         assert 0.0 <= result["communication_overhead"] <= 1.0

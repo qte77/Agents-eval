@@ -41,6 +41,11 @@
 | `make run_markdownlint INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
 | `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
 | `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notify user |
+| `make start_opik` | Start local Opik tracing stack | Docker installed | Try `docker-compose -f docker-compose.opik.yml up -d` |
+| `make stop_opik` | Stop local Opik tracing stack | Docker running | Try `docker-compose -f docker-compose.opik.yml down` |
+| `make status_opik` | Check Opik services health | Opik running | Check Docker containers manually |
+| `make setup_opik_env` | Setup Opik environment variables | Shell access | Add variables to shell profile manually |
+| `make clean_opik` | Remove all Opik trace data | Confirmation prompt | Warning: Destructive operation |
 
 ## Code Patterns Quick Reference
 

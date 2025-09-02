@@ -13,7 +13,7 @@
             "max_content_length": 1000000
         },
         "github": {
-            "model_name": "gpt-4o-mini",
+            "model_name": "gpt-4.1",
             "base_url": "https://models.inference.ai.azure.com",
             "usage_limits": 25000,
             "max_content_length": 128000

@@ -38,8 +38,7 @@ class EnhancedIntegrationTestData:
         papers.append(
             PeerReadPaper(
                 paper_id="integration_paper_001",
-                title="Advanced Neural Networks for Scientific Text Processing: "
-                "A Comprehensive Framework",
+                title="Advanced Neural Networks for Scientific Text Processing: A Comprehensive Framework",
                 abstract=(
                     "This paper presents a comprehensive framework for applying "
                     "advanced neural network architectures to scientific text processing tasks. "
@@ -297,15 +296,11 @@ class TestEnhancedPeerReadIntegration:
                 )
 
                 downloader = PeerReadDownloader(test_config)
-                result = downloader.download_venue_split(
-                    test_config.venues[0], test_config.splits[0], max_papers=3
-                )
+                result = downloader.download_venue_split(test_config.venues[0], test_config.splits[0], max_papers=3)
 
                 if result.success and result.papers_downloaded > 0:
                     loader = PeerReadLoader(test_config)
-                    papers = loader.load_papers(
-                        test_config.venues[0], test_config.splits[0]
-                    )
+                    papers = loader.load_papers(test_config.venues[0], test_config.splits[0])
                     yield papers
                 else:
                     yield []
@@ -313,9 +308,7 @@ class TestEnhancedPeerReadIntegration:
             yield []  # Fallback to empty list if real data unavailable
 
     @pytest.mark.integration
-    async def test_multi_paper_evaluation_workflow(
-        self, enhanced_test_data, evaluation_pipeline
-    ):
+    async def test_multi_paper_evaluation_workflow(self, enhanced_test_data, evaluation_pipeline):
         """Test evaluation of multiple papers with varied characteristics."""
         papers = enhanced_test_data.create_diverse_paper_set()
         scenario = enhanced_test_data.create_multi_paper_evaluation_scenario()
@@ -407,15 +400,9 @@ class TestEnhancedPeerReadIntegration:
                         expected_rec = expected["recommendation"]
 
                         if result.recommendation == expected_rec:
-                            print(
-                                f"     ✅ Matches expected recommendation: "
-                                f"{expected_rec}"
-                            )
+                            print(f"     ✅ Matches expected recommendation: {expected_rec}")
                         else:
-                            print(
-                                f"     ⚠️  Expected {expected_rec}, "
-                                f"got {result.recommendation}"
-                            )
+                            print(f"     ⚠️  Expected {expected_rec}, got {result.recommendation}")
 
                 else:
                     print("  ❌ Evaluation failed or incomplete")
@@ -438,34 +425,23 @@ class TestEnhancedPeerReadIntegration:
         # Validate performance targets
         targets = scenario["performance_targets"]
         assert total_duration <= targets["max_total_time"], (
-            f"Total time {total_duration:.2f}s exceeds target "
-            f"{targets['max_total_time']}s"
+            f"Total time {total_duration:.2f}s exceeds target {targets['max_total_time']}s"
         )
         assert success_rate >= targets["min_success_rate"], (
-            f"Success rate {success_rate:.1%} below target "
-            f"{targets['min_success_rate']:.1%}"
+            f"Success rate {success_rate:.1%} below target {targets['min_success_rate']:.1%}"
         )
 
         # Validate result consistency
         if len(evaluation_results) >= 2:
-            scores = [
-                res["result"].composite_score for res in evaluation_results.values()
-            ]
+            scores = [res["result"].composite_score for res in evaluation_results.values()]
             score_range = max(scores) - min(scores)
-            print(
-                f"   Score range: {min(scores):.3f} - {max(scores):.3f} "
-                f"(spread: {score_range:.3f})"
-            )
+            print(f"   Score range: {min(scores):.3f} - {max(scores):.3f} (spread: {score_range:.3f})")
 
             # Different quality papers should produce different scores
-            assert score_range > 0.1, (
-                "Papers with different qualities should have different scores"
-            )
+            assert score_range > 0.1, "Papers with different qualities should have different scores"
 
     @pytest.mark.integration
-    async def test_error_recovery_scenarios(
-        self, enhanced_test_data, evaluation_pipeline
-    ):
+    async def test_error_recovery_scenarios(self, enhanced_test_data, evaluation_pipeline):
         """Test error recovery and graceful degradation."""
         print("\n=== Error Recovery Scenarios ===")
 
@@ -474,10 +450,7 @@ class TestEnhancedPeerReadIntegration:
         test_paper = papers[0]  # Use high-quality paper for testing
 
         reference_reviews = [review.comments for review in test_paper.reviews]
-        agent_review = (
-            "This paper presents a comprehensive technical contribution "
-            "with solid methodology."
-        )
+        agent_review = "This paper presents a comprehensive technical contribution with solid methodology."
         execution_trace = {
             "execution_id": "error_recovery_test",
             "agent_interactions": [],
@@ -520,9 +493,7 @@ class TestEnhancedPeerReadIntegration:
         print("\n✅ Error recovery testing completed")
 
     @pytest.mark.integration
-    async def test_production_readiness_checklist(
-        self, evaluation_pipeline, enhanced_test_data
-    ):
+    async def test_production_readiness_checklist(self, evaluation_pipeline, enhanced_test_data):
         """Validate production readiness across all components."""
         print("\n=== Production Readiness Checklist ===")
 
@@ -538,12 +509,9 @@ class TestEnhancedPeerReadIntegration:
         for i in range(3):  # Limited concurrency for testing
             task_data = {
                 "paper": test_paper.abstract,
-                "review": f"Review {i + 1}: This paper presents interesting "
-                f"technical work.",
+                "review": f"Review {i + 1}: This paper presents interesting technical work.",
                 "execution_trace": {"execution_id": f"concurrent_test_{i}"},
-                "reference_reviews": [
-                    review.comments for review in test_paper.reviews[:1]
-                ],
+                "reference_reviews": [review.comments for review in test_paper.reviews[:1]],
             }
             task = evaluation_pipeline.evaluate_comprehensive(**task_data)
             concurrent_tasks.append(task)
@@ -553,19 +521,14 @@ class TestEnhancedPeerReadIntegration:
             results = await asyncio.gather(*concurrent_tasks, return_exceptions=True)
             concurrent_duration = time.time() - start_time
 
-            successful_concurrent = sum(
-                1 for r in results if hasattr(r, "composite_score")
-            )
+            successful_concurrent = sum(1 for r in results if hasattr(r, "composite_score"))
             checklist_results["concurrent_evaluation"] = {
                 "success": successful_concurrent >= 2,  # At least 2/3 should succeed
                 "count": successful_concurrent,
                 "duration": concurrent_duration,
             }
 
-            print(
-                f"   ✅ Concurrent evaluation: {successful_concurrent}/3 succeeded "
-                f"in {concurrent_duration:.2f}s"
-            )
+            print(f"   ✅ Concurrent evaluation: {successful_concurrent}/3 succeeded in {concurrent_duration:.2f}s")
 
         except Exception as e:
             checklist_results["concurrent_evaluation"] = {
@@ -602,10 +565,7 @@ class TestEnhancedPeerReadIntegration:
         }
 
         status = "✅" if memory_increase < 500 else "⚠️"
-        print(
-            f"   {status} Memory usage: +{memory_increase:.1f}MB "
-            f"(total: {memory_after:.1f}MB)"
-        )
+        print(f"   {status} Memory usage: +{memory_increase:.1f}MB (total: {memory_after:.1f}MB)")
 
         # Test 3: Log output quality
         print("3. Testing log output quality...")
@@ -614,15 +574,11 @@ class TestEnhancedPeerReadIntegration:
         # and produces structured output
         checklist_results["logging_quality"] = {
             "success": result is not None and result.evaluation_complete,
-            "structured_output": hasattr(result, "composite_score")
-            and hasattr(result, "recommendation"),
+            "structured_output": hasattr(result, "composite_score") and hasattr(result, "recommendation"),
         }
 
         if result and result.evaluation_complete:
-            print(
-                "   ✅ Structured logging: Complete evaluation with score "
-                "and recommendation"
-            )
+            print("   ✅ Structured logging: Complete evaluation with score and recommendation")
         else:
             print("   ❌ Logging issues: Incomplete or missing structured output")
 
@@ -632,22 +588,15 @@ class TestEnhancedPeerReadIntegration:
         try:
             # Test that pipeline can reload configuration
             original_config = evaluation_pipeline.config_manager.get_full_config()
-            assert isinstance(original_config, dict), (
-                "Configuration should be dictionary"
-            )
-            assert "evaluation_system" in original_config, (
-                "Should have evaluation_system config"
-            )
+            assert isinstance(original_config, dict), "Configuration should be dictionary"
+            assert "evaluation_system" in original_config, "Should have evaluation_system config"
 
             checklist_results["configuration"] = {
                 "success": True,
                 "config_keys": len(original_config.keys()),
             }
 
-            print(
-                f"   ✅ Configuration validation: {len(original_config)} "
-                f"config sections loaded"
-            )
+            print(f"   ✅ Configuration validation: {len(original_config)} config sections loaded")
 
         except Exception as e:
             checklist_results["configuration"] = {"success": False, "error": str(e)}
@@ -692,15 +641,10 @@ class TestEnhancedPeerReadIntegration:
         # Summary
         print("\n📋 Production Readiness Summary:")
         total_checks = len(checklist_results)
-        passed_checks = sum(
-            1 for r in checklist_results.values() if r.get("success", False)
-        )
+        passed_checks = sum(1 for r in checklist_results.values() if r.get("success", False))
 
         print(f"   Checks passed: {passed_checks}/{total_checks}")
-        print(
-            f"   Ready for production: "
-            f"{'✅ YES' if passed_checks >= total_checks * 0.8 else '⚠️ NEEDS ATTENTION'}"
-        )
+        print(f"   Ready for production: {'✅ YES' if passed_checks >= total_checks * 0.8 else '⚠️ NEEDS ATTENTION'}")
 
         for check_name, check_result in checklist_results.items():
             status = "✅" if check_result.get("success", False) else "❌"
@@ -708,9 +652,7 @@ class TestEnhancedPeerReadIntegration:
 
     @pytest.mark.integration
     @pytest.mark.network
-    async def test_real_data_multi_paper_scenario(
-        self, real_peerread_papers, evaluation_pipeline
-    ):
+    async def test_real_data_multi_paper_scenario(self, real_peerread_papers, evaluation_pipeline):
         """Test multi-paper scenario with real PeerRead data if available."""
         papers = real_peerread_papers
 
@@ -789,16 +731,12 @@ class TestEnhancedPeerReadIntegration:
             print(f"   Score range: {min(scores):.3f} - {max(scores):.3f}")
 
             recommendations = [r["recommendation"] for r in results]
-            rec_distribution = {
-                rec: recommendations.count(rec) for rec in set(recommendations)
-            }
+            rec_distribution = {rec: recommendations.count(rec) for rec in set(recommendations)}
             print(f"   Recommendation distribution: {rec_distribution}")
 
             print("\n   Individual results:")
             for result in results:
-                print(
-                    f"     {result['title']}: {result['score']:.3f} ({result['recommendation']})"
-                )
+                print(f"     {result['title']}: {result['score']:.3f} ({result['recommendation']})")
         else:
             print("\n❌ No successful evaluations with real data")
 
@@ -821,12 +759,8 @@ if __name__ == "__main__":
             papers = test_data.create_diverse_paper_set()
             print(f"\n📚 Testing with {len(papers)} synthetic papers:")
             for i, paper in enumerate(papers, 1):
-                quality_indicator = len(
-                    [r for r in paper.reviews if int(r.recommendation) >= 3]
-                )
-                print(
-                    f"  {i}. {paper.title[:50]}... ({quality_indicator} positive reviews)"
-                )
+                quality_indicator = len([r for r in paper.reviews if int(r.recommendation) >= 3])
+                print(f"  {i}. {paper.title[:50]}... ({quality_indicator} positive reviews)")
 
             print("\n🔄 Running multi-paper evaluation workflow...")
 
@@ -849,9 +783,7 @@ if __name__ == "__main__":
 
                     if result and result.evaluation_complete:
                         successful_papers += 1
-                        print(
-                            f"  ✅ Paper {i + 1}: {result.composite_score:.3f} ({result.recommendation})"
-                        )
+                        print(f"  ✅ Paper {i + 1}: {result.composite_score:.3f} ({result.recommendation})")
                     else:
                         print(f"  ❌ Paper {i + 1}: evaluation failed")
 
@@ -862,9 +794,7 @@ if __name__ == "__main__":
             success_rate = successful_papers / len(papers)
 
             print("\n📊 Workflow Results:")
-            print(
-                f"   Success rate: {success_rate:.1%} ({successful_papers}/{len(papers)})"
-            )
+            print(f"   Success rate: {success_rate:.1%} ({successful_papers}/{len(papers)})")
             print(f"   Total time: {workflow_duration:.2f}s")
             print(f"   Average per paper: {workflow_duration / len(papers):.2f}s")
 
@@ -883,12 +813,8 @@ if __name__ == "__main__":
                     )
                     concurrent_tasks.append(task)
 
-                concurrent_results = await asyncio.gather(
-                    *concurrent_tasks, return_exceptions=True
-                )
-                concurrent_success = sum(
-                    1 for r in concurrent_results if hasattr(r, "composite_score")
-                )
+                concurrent_results = await asyncio.gather(*concurrent_tasks, return_exceptions=True)
+                concurrent_success = sum(1 for r in concurrent_results if hasattr(r, "composite_score"))
 
                 print(f"   Concurrent processing: {concurrent_success}/2 successful")
 

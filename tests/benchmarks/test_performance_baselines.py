@@ -192,11 +192,7 @@ class PerformanceBenchmarkData:
                             "conflict_resolution",
                         ][i // 20 % 3],
                         "manager_agent": f"Agent_{i % agent_count}",
-                        "target_agents": [
-                            f"Agent_{j}"
-                            for j in range(agent_count)
-                            if j != i % agent_count
-                        ],
+                        "target_agents": [f"Agent_{j}" for j in range(agent_count) if j != i % agent_count],
                         "timestamp": i * 0.2,
                         "task": f"complex_coordination_{i // 20}",
                         "complexity": (i // 20) + 1,
@@ -281,19 +277,13 @@ class TestPerformanceBaselines:
                 execution_times.append(execution_time)
 
                 # Validate result
-                assert result is not None, (
-                    f"Tier 1 evaluation failed for {word_count} words"
-                )
-                assert result.success, (
-                    f"Tier 1 evaluation unsuccessful for {word_count} words"
-                )
+                assert result is not None, f"Tier 1 evaluation failed for {word_count} words"
+                assert result.success, f"Tier 1 evaluation unsuccessful for {word_count} words"
 
             # Calculate statistics
             mean_time = statistics.mean(execution_times)
             median_time = statistics.median(execution_times)
-            stddev_time = (
-                statistics.stdev(execution_times) if len(execution_times) > 1 else 0.0
-            )
+            stddev_time = statistics.stdev(execution_times) if len(execution_times) > 1 else 0.0
             percentile_95 = sorted(execution_times)[int(0.95 * len(execution_times))]
 
             performance_data.append(
@@ -315,9 +305,7 @@ class TestPerformanceBaselines:
 
             # Validate against target (1.0 second)
             target_time = 1.0
-            success_rate = sum(1 for t in execution_times if t <= target_time) / len(
-                execution_times
-            )
+            success_rate = sum(1 for t in execution_times if t <= target_time) / len(execution_times)
             print(f"  Success rate (≤{target_time}s): {success_rate:.1%}")
 
             # Reason: Allow some flexibility for larger papers but warn if slow
@@ -351,10 +339,7 @@ class TestPerformanceBaselines:
         performance_data = []
 
         for scenario_name, paper_words, review_words in test_scenarios:
-            print(
-                f"\nTesting {scenario_name} scenario "
-                f"({paper_words}/{review_words} words):"
-            )
+            print(f"\nTesting {scenario_name} scenario ({paper_words}/{review_words} words):")
 
             # Create test data
             paper_excerpt = benchmark_data.create_short_paper_abstract(paper_words)
@@ -415,9 +400,7 @@ class TestPerformanceBaselines:
         print("\n📊 Tier 2 Summary:")
         if performance_data:
             overall_times = [data["mean_time"] for data in performance_data]
-            overall_success = statistics.mean(
-                [data["success_rate"] for data in performance_data]
-            )
+            overall_success = statistics.mean([data["success_rate"] for data in performance_data])
             print("  Performance target: 10.0s")
             print(f"  Overall mean time: {statistics.mean(overall_times):.3f}s")
             print(f"  Overall success rate: {overall_success:.1%}")
@@ -440,10 +423,7 @@ class TestPerformanceBaselines:
         performance_data = []
 
         for complexity_name, interaction_count in complexity_levels:
-            print(
-                f"\nTesting {complexity_name} traces "
-                f"({interaction_count} interactions):"
-            )
+            print(f"\nTesting {complexity_name} traces ({interaction_count} interactions):")
 
             # Create test trace
             if interaction_count <= 50:
@@ -499,10 +479,7 @@ class TestPerformanceBaselines:
                 }
             )
 
-            print(
-                f"  Mean: {mean_time:.3f}s, Median: {median_time:.3f}s, "
-                f"Max: {max_time:.3f}s"
-            )
+            print(f"  Mean: {mean_time:.3f}s, Median: {median_time:.3f}s, Max: {max_time:.3f}s")
             print(f"  Success rate: {success_rate:.1%}")
 
             # Validate against target (15.0 seconds)
@@ -515,9 +492,7 @@ class TestPerformanceBaselines:
         print("\n📊 Tier 3 Summary:")
         if performance_data:
             overall_times = [data["mean_time"] for data in performance_data]
-            overall_success = statistics.mean(
-                [data["success_rate"] for data in performance_data]
-            )
+            overall_success = statistics.mean([data["success_rate"] for data in performance_data])
             print("  Performance target: 15.0s")
             print(f"  Overall mean time: {statistics.mean(overall_times):.3f}s")
             print(f"  Overall success rate: {overall_success:.1%}")
@@ -636,9 +611,7 @@ class TestPerformanceBaselines:
         print("\n📊 End-to-End Pipeline Summary:")
         if performance_data:
             overall_times = [data["mean_time"] for data in performance_data]
-            overall_success = statistics.mean(
-                [data["success_rate"] for data in performance_data]
-            )
+            overall_success = statistics.mean([data["success_rate"] for data in performance_data])
             print("  Performance target: 25.0s")
             print(f"  Overall mean time: {statistics.mean(overall_times):.3f}s")
             print(f"  Overall success rate: {overall_success:.1%}")
@@ -649,9 +622,7 @@ class TestPerformanceBaselines:
 
         return performance_data
 
-    async def test_performance_regression_detection(
-        self, evaluation_pipeline, benchmark_data
-    ):
+    async def test_performance_regression_detection(self, evaluation_pipeline, benchmark_data):
         """Test for performance regression detection."""
         print("\n=== Performance Regression Detection ===")
 
@@ -679,9 +650,7 @@ class TestPerformanceBaselines:
             pytest.skip("No successful baseline measurements")
 
         baseline_mean = statistics.mean(baseline_times)
-        baseline_stddev = (
-            statistics.stdev(baseline_times) if len(baseline_times) > 1 else 0.0
-        )
+        baseline_stddev = statistics.stdev(baseline_times) if len(baseline_times) > 1 else 0.0
 
         print(f"Baseline performance: {baseline_mean:.3f}s ± {baseline_stddev:.3f}s")
 
@@ -690,14 +659,10 @@ class TestPerformanceBaselines:
 
         # Current measurement should not exceed regression threshold
         assert baseline_mean < regression_threshold, (
-            f"Performance regression detected: {baseline_mean:.3f}s > "
-            f"{regression_threshold:.3f}s"
+            f"Performance regression detected: {baseline_mean:.3f}s > {regression_threshold:.3f}s"
         )
 
-        print(
-            f"✅ No performance regression detected "
-            f"(threshold: {regression_threshold:.3f}s)"
-        )
+        print(f"✅ No performance regression detected (threshold: {regression_threshold:.3f}s)")
 
 
 if __name__ == "__main__":
@@ -802,17 +767,11 @@ if __name__ == "__main__":
 
             if tier1_results:
                 tier1_times = [r["time"] for r in tier1_results]
-                print(
-                    f"Tier 1 (Traditional): {statistics.mean(tier1_times):.3f}s avg, "
-                    f"target ≤1.0s"
-                )
+                print(f"Tier 1 (Traditional): {statistics.mean(tier1_times):.3f}s avg, target ≤1.0s")
 
             if pipeline_results:
                 pipeline_times = [r["time"] for r in pipeline_results]
-                print(
-                    f"End-to-End Pipeline: {statistics.mean(pipeline_times):.3f}s avg, "
-                    f"target ≤25.0s"
-                )
+                print(f"End-to-End Pipeline: {statistics.mean(pipeline_times):.3f}s avg, target ≤25.0s")
 
             print("\n✅ Performance benchmarking completed!")
             print("Results available for performance baseline documentation.")

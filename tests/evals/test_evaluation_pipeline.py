@@ -215,14 +215,10 @@ class TestTierExecution:
     @pytest.mark.asyncio
     async def test_execute_tier1_success(self, pipeline, sample_tier1_result):
         """Test successful Tier 1 execution."""
-        with patch.object(
-            pipeline.traditional_engine, "evaluate_traditional_metrics"
-        ) as mock_eval:
+        with patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_eval:
             mock_eval.return_value = sample_tier1_result
 
-            result, execution_time = await pipeline._execute_tier1(
-                "sample paper", "sample review", ["reference"]
-            )
+            result, execution_time = await pipeline._execute_tier1("sample paper", "sample review", ["reference"])
 
             assert result == sample_tier1_result
             assert execution_time > 0
@@ -232,12 +228,8 @@ class TestTierExecution:
     async def test_execute_tier1_disabled(self, pipeline):
         """Test Tier 1 execution when disabled."""
         # Mock the configuration to disable tier 1
-        with patch.object(
-            pipeline.config_manager, "is_tier_enabled", return_value=False
-        ):
-            result, execution_time = await pipeline._execute_tier1(
-                "sample paper", "sample review", ["reference"]
-            )
+        with patch.object(pipeline.config_manager, "is_tier_enabled", return_value=False):
+            result, execution_time = await pipeline._execute_tier1("sample paper", "sample review", ["reference"])
 
             assert result is None
             assert execution_time == 0.0
@@ -245,9 +237,7 @@ class TestTierExecution:
     @pytest.mark.asyncio
     async def test_execute_tier1_timeout(self, pipeline):
         """Test Tier 1 execution timeout."""
-        with patch.object(
-            pipeline.traditional_engine, "evaluate_traditional_metrics"
-        ) as mock_eval:
+        with patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_eval:
 
             def slow_execution(*args, **kwargs):
                 import time
@@ -257,9 +247,7 @@ class TestTierExecution:
 
             mock_eval.side_effect = slow_execution
 
-            result, execution_time = await pipeline._execute_tier1(
-                "sample paper", "sample review"
-            )
+            result, execution_time = await pipeline._execute_tier1("sample paper", "sample review")
 
             assert result is None
             assert execution_time >= 1.0  # Should be at least the timeout duration
@@ -267,13 +255,9 @@ class TestTierExecution:
     @pytest.mark.asyncio
     async def test_execute_tier2_success(self, pipeline, sample_tier2_result):
         """Test successful Tier 2 execution."""
-        pipeline.llm_engine.evaluate_comprehensive = AsyncMock(
-            return_value=sample_tier2_result
-        )
+        pipeline.llm_engine.evaluate_comprehensive = AsyncMock(return_value=sample_tier2_result)
 
-        result, execution_time = await pipeline._execute_tier2(
-            "sample paper", "sample review", {"trace": "data"}
-        )
+        result, execution_time = await pipeline._execute_tier2("sample paper", "sample review", {"trace": "data"})
 
         assert result == sample_tier2_result
         assert execution_time > 0
@@ -284,30 +268,20 @@ class TestTierExecution:
     @pytest.mark.asyncio
     async def test_execute_tier2_no_trace(self, pipeline, sample_tier2_result):
         """Test Tier 2 execution without execution trace."""
-        pipeline.llm_engine.evaluate_comprehensive = AsyncMock(
-            return_value=sample_tier2_result
-        )
+        pipeline.llm_engine.evaluate_comprehensive = AsyncMock(return_value=sample_tier2_result)
 
-        result, execution_time = await pipeline._execute_tier2(
-            "sample paper", "sample review"
-        )
+        result, execution_time = await pipeline._execute_tier2("sample paper", "sample review")
 
         assert result == sample_tier2_result
-        pipeline.llm_engine.evaluate_comprehensive.assert_called_once_with(
-            "sample paper", "sample review", {}
-        )
+        pipeline.llm_engine.evaluate_comprehensive.assert_called_once_with("sample paper", "sample review", {})
 
     @pytest.mark.asyncio
     async def test_execute_tier3_success(self, pipeline, sample_tier3_result):
         """Test successful Tier 3 execution."""
-        with patch.object(
-            pipeline.graph_engine, "evaluate_graph_metrics"
-        ) as mock_analyze:
+        with patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_analyze:
             mock_analyze.return_value = sample_tier3_result
 
-            result, execution_time = await pipeline._execute_tier3(
-                {"agent_interactions": [], "tool_calls": []}
-            )
+            result, execution_time = await pipeline._execute_tier3({"agent_interactions": [], "tool_calls": []})
 
             assert result == sample_tier3_result
             assert execution_time > 0
@@ -316,9 +290,7 @@ class TestTierExecution:
     @pytest.mark.asyncio
     async def test_execute_tier3_no_trace(self, pipeline, sample_tier3_result):
         """Test Tier 3 execution without trace data."""
-        with patch.object(
-            pipeline.graph_engine, "evaluate_graph_metrics"
-        ) as mock_analyze:
+        with patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_analyze:
             mock_analyze.return_value = sample_tier3_result
 
             result, execution_time = await pipeline._execute_tier3()
@@ -346,9 +318,7 @@ class TestFallbackStrategy:
         results = EvaluationResults(tier1=sample_tier1_result)
         assert not results.is_complete()
 
-        with patch.object(
-            pipeline.performance_monitor, "record_fallback_usage"
-        ) as mock_fallback:
+        with patch.object(pipeline.performance_monitor, "record_fallback_usage") as mock_fallback:
             fallback_results = pipeline._apply_fallback_strategy(results)
 
             assert fallback_results.is_complete()
@@ -365,9 +335,7 @@ class TestFallbackStrategy:
         results = EvaluationResults()
         assert not results.is_complete()
 
-        with patch.object(
-            pipeline.performance_monitor, "record_fallback_usage"
-        ) as mock_fallback:
+        with patch.object(pipeline.performance_monitor, "record_fallback_usage") as mock_fallback:
             fallback_results = pipeline._apply_fallback_strategy(results)
 
             # Should not create fallback results without Tier 1
@@ -395,9 +363,7 @@ class TestComprehensiveEvaluation:
         """Test successful comprehensive evaluation."""
         # Mock all tier engines
         with (
-            patch.object(
-                pipeline.traditional_engine, "evaluate_traditional_metrics"
-            ) as mock_t1,
+            patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_t1,
             patch.object(pipeline.llm_engine, "evaluate_comprehensive") as mock_t2,
             patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_t3,
             patch.object(pipeline.composite_scorer, "evaluate_composite") as mock_comp,
@@ -438,9 +404,7 @@ class TestComprehensiveEvaluation:
         """Test comprehensive evaluation with fallback strategy."""
         # Mock engines - Tier 1 succeeds, others fail
         with (
-            patch.object(
-                pipeline.traditional_engine, "evaluate_traditional_metrics"
-            ) as mock_t1,
+            patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_t1,
             patch.object(pipeline.llm_engine, "evaluate_comprehensive") as mock_t2,
             patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_t3,
             patch.object(pipeline.composite_scorer, "evaluate_composite") as mock_comp,
@@ -470,9 +434,7 @@ class TestComprehensiveEvaluation:
         """Test comprehensive evaluation when all tiers fail."""
         # Mock all engines to fail
         with (
-            patch.object(
-                pipeline.traditional_engine, "evaluate_traditional_metrics"
-            ) as mock_t1,
+            patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_t1,
             patch.object(pipeline.llm_engine, "evaluate_comprehensive") as mock_t2,
             patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_t3,
         ):
@@ -506,22 +468,14 @@ class TestComprehensiveEvaluation:
     ):
         """Test performance warning when pipeline exceeds time target."""
         # Mock performance monitor to have very low time target
-        with patch.object(
-            pipeline.performance_monitor, "performance_targets"
-        ) as mock_targets:
+        with patch.object(pipeline.performance_monitor, "performance_targets") as mock_targets:
             mock_targets.update({"total_max_seconds": 0.001})
 
             with (
-                patch.object(
-                    pipeline.traditional_engine, "evaluate_traditional_metrics"
-                ) as mock_t1,
+                patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_t1,
                 patch.object(pipeline.llm_engine, "evaluate_comprehensive") as mock_t2,
-                patch.object(
-                    pipeline.graph_engine, "evaluate_graph_metrics"
-                ) as mock_t3,
-                patch.object(
-                    pipeline.composite_scorer, "evaluate_composite"
-                ) as mock_comp,
+                patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_t3,
+                patch.object(pipeline.composite_scorer, "evaluate_composite") as mock_comp,
                 patch("app.utils.log.logger.warning"),
             ):
                 mock_t1.return_value = sample_tier1_result
@@ -559,9 +513,7 @@ class TestPipelineUtilities:
             "fallback_used": False,
         }
 
-        with patch.object(
-            pipeline.performance_monitor, "get_execution_stats", return_value=mock_stats
-        ):
+        with patch.object(pipeline.performance_monitor, "get_execution_stats", return_value=mock_stats):
             stats = pipeline.get_execution_stats()
 
             assert stats["total_time"] == 4.4
@@ -581,3 +533,43 @@ class TestPipelineUtilities:
         assert summary["fallback_strategy"] == "tier1_only"
         assert "performance_targets" in summary
         assert "config_path" in summary
+
+
+class TestOpikIntegration:
+    """Test Opik integration functionality."""
+
+    def test_opik_config_initialization(self, config_file):
+        """Test that Opik configuration is properly initialized."""
+        pipeline = EvaluationPipeline(config_file)
+        
+        # Should have opik_config attribute
+        assert hasattr(pipeline, 'opik_config')
+        assert pipeline.opik_config is not None
+        
+        # Should have default values
+        assert pipeline.opik_config.enabled is False  # Default disabled
+        assert pipeline.opik_config.api_url == "http://localhost:3003"
+        assert pipeline.opik_config.workspace == "peerread-evaluation"
+
+    def test_opik_decorator_application(self, config_file):
+        """Test that Opik decorator is properly applied when available."""
+        pipeline = EvaluationPipeline(config_file)
+        
+        # Mock function to test decorator
+        def mock_func():
+            return "test"
+        
+        # Should return function unchanged when Opik not enabled
+        decorated = pipeline._apply_opik_decorator(mock_func)
+        assert callable(decorated)
+        assert decorated() == "test"
+
+    def test_opik_metadata_recording(self, config_file):
+        """Test that Opik metadata is recorded without errors."""
+        pipeline = EvaluationPipeline(config_file)
+        
+        # Should not raise errors when recording metadata
+        pipeline._record_opik_metadata(1, 1.5, result="test_result")
+        pipeline._record_opik_metadata(2, 2.0, error="test_error")
+        
+        # Metadata recording is debug-only, so just verify no exceptions

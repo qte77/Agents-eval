@@ -51,12 +51,8 @@ def get_manager(
         prompts["system_prompt_researcher"],
         [duckduckgo_search_tool()],
     )
-    analyst = SystemAgent(
-        model_analyst, AnalysisResult, prompts["system_prompt_analyst"]
-    )
-    manager = SystemAgent(
-        model_manager, ResearchResult, prompts["system_prompt_manager"]
-    )
+    analyst = SystemAgent(model_analyst, AnalysisResult, prompts["system_prompt_analyst"])
+    manager = SystemAgent(model_manager, ResearchResult, prompts["system_prompt_manager"])
     add_tools_to_manager_agent(manager, researcher, analyst)
     return manager
 

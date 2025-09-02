@@ -55,9 +55,7 @@ class LLMJudgeEngine:
             },
         )
 
-    async def create_judge_agent(
-        self, assessment_type: str, use_fallback: bool = False
-    ) -> Agent:
+    async def create_judge_agent(self, assessment_type: str, use_fallback: bool = False) -> Agent:
         """
         Create an LLM judge agent for specific assessment type.
 
@@ -76,19 +74,13 @@ class LLMJudgeEngine:
             provider = self.provider
             model = self.model
 
-        return create_evaluation_agent(
-            provider=provider, model_name=model, assessment_type=assessment_type
-        )
+        return create_evaluation_agent(provider=provider, model_name=model, assessment_type=assessment_type)
 
     async def assess_technical_accuracy(self, paper: str, review: str) -> float:
         """Assess technical accuracy of review against paper."""
         try:
             # Truncate paper content for cost efficiency
-            paper_excerpt = (
-                paper[: self.paper_excerpt_length]
-                if len(paper) > self.paper_excerpt_length
-                else paper
-            )
+            paper_excerpt = paper[: self.paper_excerpt_length] if len(paper) > self.paper_excerpt_length else paper
 
             prompt = f"""Evaluate technical accuracy of this review (1-5 scale):
             
@@ -145,9 +137,7 @@ Provide scores and brief explanation."""
 
             # Equal weighting for constructiveness aspects
             average_score = (
-                result.output.actionable_feedback
-                + result.output.balanced_critique
-                + result.output.improvement_guidance
+                result.output.actionable_feedback + result.output.balanced_critique + result.output.improvement_guidance
             ) / 15.0  # Normalize to 0-1
 
             return min(1.0, max(0.0, average_score))
@@ -157,9 +147,7 @@ Provide scores and brief explanation."""
             # Simple fallback: check for key constructive phrases
             return self._fallback_constructiveness_check(review)
 
-    async def assess_planning_rationality(
-        self, execution_trace: dict[str, Any]
-    ) -> float:
+    async def assess_planning_rationality(self, execution_trace: dict[str, Any]) -> float:
         """Assess quality of agent planning and decision-making."""
         try:
             # Extract planning summary from trace
@@ -196,9 +184,7 @@ Provide scores and brief explanation."""
             # Simple fallback based on trace structure
             return self._fallback_planning_check(execution_trace)
 
-    async def evaluate_comprehensive(
-        self, paper: str, review: str, execution_trace: dict[str, Any]
-    ) -> Tier2Result:
+    async def evaluate_comprehensive(self, paper: str, review: str, execution_trace: dict[str, Any]) -> Tier2Result:
         """Run comprehensive LLM-based evaluation."""
         fallback_used = False
         api_cost = 0.0
@@ -223,18 +209,12 @@ Provide scores and brief explanation."""
             # Handle individual assessment failures with proper type casting
             if isinstance(technical_score, Exception):
                 logger.warning(f"Technical assessment failed: {technical_score}")
-                technical_score = float(
-                    self.fallback_engine.compute_semantic_similarity(paper, review)
-                )
+                technical_score = float(self.fallback_engine.compute_semantic_similarity(paper, review))
                 fallback_used = True
 
             if isinstance(constructiveness_score, Exception):
-                logger.warning(
-                    f"Constructiveness assessment failed: {constructiveness_score}"
-                )
-                constructiveness_score = float(
-                    self._fallback_constructiveness_check(review)
-                )
+                logger.warning(f"Constructiveness assessment failed: {constructiveness_score}")
+                constructiveness_score = float(self._fallback_constructiveness_check(review))
                 fallback_used = True
 
             if isinstance(planning_score, Exception):
@@ -247,23 +227,16 @@ Provide scores and brief explanation."""
             api_cost = (total_tokens / 1000) * 0.0001  # $0.0001 per 1K tokens
 
             # Ensure all scores are float types before calculation
-            technical_score_float: float = (
-                technical_score if isinstance(technical_score, int | float) else 0.0
-            )
+            technical_score_float: float = technical_score if isinstance(technical_score, int | float) else 0.0
             constructiveness_score_float: float = (
-                constructiveness_score
-                if isinstance(constructiveness_score, int | float)
-                else 0.0
+                constructiveness_score if isinstance(constructiveness_score, int | float) else 0.0
             )
-            planning_score_float: float = (
-                planning_score if isinstance(planning_score, int | float) else 0.0
-            )
+            planning_score_float: float = planning_score if isinstance(planning_score, int | float) else 0.0
 
             # Calculate overall LLM judge score
             overall_score = (
                 technical_score_float * self.weights.get("technical_accuracy", 0.4)
-                + constructiveness_score_float
-                * self.weights.get("constructiveness", 0.3)
+                + constructiveness_score_float * self.weights.get("constructiveness", 0.3)
                 + planning_score_float * self.weights.get("planning_rationality", 0.3)
             )
 
@@ -347,9 +320,7 @@ Provide scores and brief explanation."""
         except Exception:
             return 0.5  # Neutral score when trace unavailable
 
-    def _complete_fallback(
-        self, paper: str, review: str, execution_trace: dict[str, Any]
-    ) -> Tier2Result:
+    def _complete_fallback(self, paper: str, review: str, execution_trace: dict[str, Any]) -> Tier2Result:
         """Complete fallback when all LLM assessments fail."""
         # Use traditional metrics as fallback
         semantic_score = self.fallback_engine.compute_semantic_similarity(paper, review)

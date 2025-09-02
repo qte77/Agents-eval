@@ -49,9 +49,7 @@ def get_api_key(
         )
 
 
-def get_provider_config(
-    provider: str, providers: dict[str, ProviderConfig]
-) -> ProviderConfig:
+def get_provider_config(provider: str, providers: dict[str, ProviderConfig]) -> ProviderConfig:
     """Retrieve configuration settings for the specified provider."""
     try:
         return providers[provider]

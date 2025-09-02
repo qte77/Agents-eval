@@ -58,9 +58,7 @@ class TraceCollector:
         observability_config = config.get("observability", {})
 
         self.trace_enabled = observability_config.get("trace_collection", True)
-        self.storage_path = Path(
-            observability_config.get("trace_storage_path", "./logs/traces/")
-        )
+        self.storage_path = Path(observability_config.get("trace_storage_path", "./logs/traces/"))
         self.performance_logging = observability_config.get("performance_logging", True)
 
         # Ensure storage directory exists
@@ -224,11 +222,7 @@ class TraceCollector:
         Returns:
             ProcessedTrace object with patterns, or None if no execution active
         """
-        if (
-            not self.trace_enabled
-            or not self.current_execution_id
-            or not self.current_events
-        ):
+        if not self.trace_enabled or not self.current_execution_id or not self.current_events:
             return None
 
         try:
@@ -282,8 +276,7 @@ class TraceCollector:
             "agent_interactions": len(agent_interactions),
             "tool_calls": len(tool_calls),
             "coordination_events": len(coordination_events),
-            "avg_tool_duration": sum(tc.get("duration", 0) for tc in tool_calls)
-            / max(1, len(tool_calls)),
+            "avg_tool_duration": sum(tc.get("duration", 0) for tc in tool_calls) / max(1, len(tool_calls)),
         }
 
         return ProcessedTrace(
@@ -305,9 +298,7 @@ class TraceCollector:
         try:
             # Store as JSONL file
             timestamp_str = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
-            json_file = (
-                self.storage_path / f"trace_{trace.execution_id}_{timestamp_str}.jsonl"
-            )
+            json_file = self.storage_path / f"trace_{trace.execution_id}_{timestamp_str}.jsonl"
 
             with open(json_file, "w") as f:
                 # Write as single JSON line

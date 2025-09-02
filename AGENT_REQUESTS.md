@@ -37,6 +37,16 @@ This document contains questions, clarifications, and tasks that AI agents need 
   - Human: `# TODO` but not of priority as of now. Remind me once a week.
 - [ ] Add TypeScript testing guidelines (if a TypeScript frontend is planned for the future).
   - Human: `# TODO` but not of priority as of now. Remind me once a week.
+- [ ] [HIGH] Token limit exceeded with gpt-4.1 model during PeerRead evaluation
+  **Context**: Running evaluation pipeline with PeerRead dataset papers
+  **Problem**: gpt-4.1 model has 8000 token limit, but papers exceed this limit
+  **Error**: `status_code: 413, model_name: gpt-4.1, body: {'code': 'tokens_limit_reached', 'message': 'Request body too large for gpt-4.1 model. Max size: 8000 tokens.'}`
+  **Files**: Evaluation pipeline or agent system where model is called
+  **Alternatives**: 
+    - Switch to higher-capacity model (gpt-4-turbo: 128k tokens, claude-3-sonnet: 200k tokens)
+    - Implement document chunking strategy for large papers
+    - Use smaller papers for testing (find smallest with shell command)
+  **Impact**: Blocks evaluation pipeline for papers exceeding 8k tokens
 
 ## Guidelines for Agents
 

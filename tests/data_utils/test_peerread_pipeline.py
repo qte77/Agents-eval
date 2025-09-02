@@ -219,9 +219,7 @@ async def test_complete_pipeline():
 
         print("\n📋 Ground Truth Summary:")
         print(f"   Number of reviews: {len(eval_result.ground_truth_reviews)}")
-        for i, review in enumerate(
-            eval_result.ground_truth_reviews[:2]
-        ):  # Show first 2
+        for i, review in enumerate(eval_result.ground_truth_reviews[:2]):  # Show first 2
             print(f"   Review {i + 1} recommendation: {review.recommendation}")
             print(f"   Review {i + 1} excerpt: {review.comments[:100]}...")
 

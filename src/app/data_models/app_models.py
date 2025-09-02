@@ -16,12 +16,8 @@ from pydantic_ai.tools import Tool
 from pydantic_ai.usage import UsageLimits
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-type UserPromptType = (
-    str | list[dict[str, str]] | ModelRequest | None
-)  #  (1) Input validation
-ResultBaseType = TypeVar(
-    "ResultBaseType", bound=BaseModel
-)  # (2) Generic type for model results
+type UserPromptType = str | list[dict[str, str]] | ModelRequest | None  #  (1) Input validation
+ResultBaseType = TypeVar("ResultBaseType", bound=BaseModel)  # (2) Generic type for model results
 
 
 class ResearchResult(BaseModel):
@@ -156,6 +152,4 @@ class AppEnv(BaseSettings):
     LOGFIRE_API_KEY: str = ""
     WANDB_API_KEY: str = ""
 
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

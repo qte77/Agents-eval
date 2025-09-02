@@ -73,9 +73,7 @@ class PeerReviewOrchestrator(AgentOrchestrator):
             # Step 1: Generate review using manager agent
             self.log_step("generating_review")
 
-            result = await self.manager_agent.run(
-                user_prompt=str(query), usage_limits=usage_limits
-            )
+            result = await self.manager_agent.run(user_prompt=str(query), usage_limits=usage_limits)
 
             self.log_step("review_completed")
             return str(result)
@@ -89,9 +87,7 @@ class PeerReviewOrchestrator(AgentOrchestrator):
 class EvaluationOrchestrator(AgentOrchestrator):
     """Orchestrates multi-tiered evaluation processes."""
 
-    async def run_sequential_evaluation(
-        self, evaluation_tasks: list[dict[str, Any]]
-    ) -> list[Any]:
+    async def run_sequential_evaluation(self, evaluation_tasks: list[dict[str, Any]]) -> list[Any]:
         """Run evaluation tasks in sequence."""
         self.log_step("start_sequential_evaluation")
 
@@ -111,9 +107,7 @@ class EvaluationOrchestrator(AgentOrchestrator):
         self.log_step("sequential_evaluation_complete")
         return results
 
-    async def run_parallel_evaluation(
-        self, evaluation_tasks: list[dict[str, Any]]
-    ) -> list[Any]:
+    async def run_parallel_evaluation(self, evaluation_tasks: list[dict[str, Any]]) -> list[Any]:
         """Run evaluation tasks in parallel."""
         self.log_step("start_parallel_evaluation")
 
@@ -274,16 +268,13 @@ async def run_manager_orchestrated(
     try:
         if pydantic_ai_stream:
             raise NotImplementedError(
-                "Streaming currently only possible for Agents with "
-                "output_type str not pydantic model"
+                "Streaming currently only possible for Agents with output_type str not pydantic model"
             )
         else:
             orchestrator.log_step("waiting_for_model_response")
             logger.info("Waiting for model response ...")
 
-            result = await manager.run(
-                user_prompt=str(query), usage_limits=usage_limits
-            )
+            result = await manager.run(user_prompt=str(query), usage_limits=usage_limits)
 
             orchestrator.log_step("model_response_received")
             logger.info(f"Result: {result}")
@@ -319,9 +310,7 @@ async def parallel_workflow(agents: list[Agent], query: str) -> list[Any]:
     return [result for result in results]
 
 
-async def conditional_workflow(
-    condition_func: Callable[[str], str], agent_map: dict[str, Agent], query: str
-) -> Any:
+async def conditional_workflow(condition_func: Callable[[str], str], agent_map: dict[str, Agent], query: str) -> Any:
     """Route to different agents based on conditions."""
     condition_result = condition_func(query)
 

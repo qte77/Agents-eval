@@ -25,9 +25,7 @@ from gui.config.text import (
 )
 
 
-async def render_app(
-    provider: str | None = None, chat_config_file: str | Path | None = None
-):
+async def render_app(provider: str | None = None, chat_config_file: str | Path | None = None):
     """
     Render the main app interface for running agentic queries via Streamlit.
 

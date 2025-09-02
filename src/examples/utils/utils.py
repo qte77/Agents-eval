@@ -78,9 +78,7 @@ def create_model(
         raise ValueError("API key is required for model.")
         exit()
     else:
-        return OpenAIModel(
-            model_name, provider=OpenAIProvider(base_url=base_url, api_key=api_key)
-        )
+        return OpenAIModel(model_name, provider=OpenAIProvider(base_url=base_url, api_key=api_key))
 
 
 def print_research_Result(summary: ResearchSummary, usage: RunUsage) -> None:

@@ -43,9 +43,7 @@ class GraphAnalysisEngine:
         self._validate_config(tier3_config)
 
         self.min_nodes_for_analysis = tier3_config.get("min_nodes_for_analysis", 2)
-        self.centrality_measures = tier3_config.get(
-            "centrality_measures", ["betweenness", "closeness", "degree"]
-        )
+        self.centrality_measures = tier3_config.get("centrality_measures", ["betweenness", "closeness", "degree"])
 
         # Weights for composite scoring
         self.weights = tier3_config.get(
@@ -78,9 +76,7 @@ class GraphAnalysisEngine:
             raise ValueError("min_nodes_for_analysis must be positive integer")
 
         # Validate centrality measures
-        centrality_measures = tier3_config.get(
-            "centrality_measures", ["betweenness", "closeness", "degree"]
-        )
+        centrality_measures = tier3_config.get("centrality_measures", ["betweenness", "closeness", "degree"])
         valid_measures = {"betweenness", "closeness", "degree", "eigenvector"}
         if not isinstance(centrality_measures, list):
             raise ValueError("centrality_measures must be a list")
@@ -100,19 +96,14 @@ class GraphAnalysisEngine:
             }
             for key, weight in weights.items():
                 if key not in valid_keys:
-                    raise ValueError(
-                        f"Unknown weight key: {key}. Valid keys: {valid_keys}"
-                    )
+                    raise ValueError(f"Unknown weight key: {key}. Valid keys: {valid_keys}")
                 if not isinstance(weight, int | float) or weight < 0:
                     raise ValueError(f"Weight {key} must be non-negative number")
 
             # Warn if weights sum is unusual (allow partial specifications)
             total_weight = sum(weights.values())
             if total_weight > 1.5:  # Only warn if clearly excessive
-                logger.warning(
-                    f"Graph weights sum to {total_weight:.3f}, "
-                    "this may cause scoring issues"
-                )
+                logger.warning(f"Graph weights sum to {total_weight:.3f}, this may cause scoring issues")
 
         # Validate resource limits if specified
         max_nodes = tier3_config.get("max_nodes")
@@ -124,9 +115,7 @@ class GraphAnalysisEngine:
             raise ValueError("max_edges must be integer >= 10")
 
         timeout = tier3_config.get("operation_timeout_seconds")
-        if timeout is not None and (
-            not isinstance(timeout, int | float) or timeout <= 0
-        ):
+        if timeout is not None and (not isinstance(timeout, int | float) or timeout <= 0):
             raise ValueError("operation_timeout_seconds must be positive number")
 
     def _validate_trace_data(self, trace_data: GraphTraceData) -> None:
@@ -146,9 +135,7 @@ class GraphAnalysisEngine:
             if "from" not in interaction or "to" not in interaction:
                 raise ValueError(f"Agent interaction {i} missing 'from' or 'to' field")
             if not interaction["from"] or not interaction["to"]:
-                raise ValueError(
-                    f"Agent interaction {i} has empty 'from' or 'to' field"
-                )
+                raise ValueError(f"Agent interaction {i} has empty 'from' or 'to' field")
 
         # Validate tool calls structure
         for i, call in enumerate(trace_data.tool_calls):
@@ -163,19 +150,12 @@ class GraphAnalysisEngine:
         total_events = total_interactions + total_calls
 
         if total_events > self.max_nodes:
-            logger.warning(
-                f"Trace has {total_events} events, exceeding max_nodes={self.max_nodes}"
-            )
+            logger.warning(f"Trace has {total_events} events, exceeding max_nodes={self.max_nodes}")
 
         # Estimate potential edges (interactions + tool usage patterns)
-        estimated_edges = total_interactions + (
-            total_calls * 2
-        )  # Conservative estimate
+        estimated_edges = total_interactions + (total_calls * 2)  # Conservative estimate
         if estimated_edges > self.max_edges:
-            logger.warning(
-                f"Trace may generate ~{estimated_edges} edges, "
-                f"exceeding max_edges={self.max_edges}"
-            )
+            logger.warning(f"Trace may generate ~{estimated_edges} edges, exceeding max_edges={self.max_edges}")
 
     def _with_timeout(self, func: Any, *args: Any, **kwargs: Any) -> Any:
         """Execute function with timeout protection.
@@ -193,9 +173,7 @@ class GraphAnalysisEngine:
         """
 
         def timeout_handler(signum: int, frame: Any) -> None:
-            raise TimeoutError(
-                f"Graph operation exceeded {self.operation_timeout}s timeout"
-            )
+            raise TimeoutError(f"Graph operation exceeded {self.operation_timeout}s timeout")
 
         # Set up timeout signal
         old_handler = signal.signal(signal.SIGALRM, timeout_handler)
@@ -219,9 +197,7 @@ class GraphAnalysisEngine:
             signal.alarm(0)
             signal.signal(signal.SIGALRM, old_handler)
 
-    def analyze_tool_usage_patterns(
-        self, trace_data: GraphTraceData
-    ) -> dict[str, float]:
+    def analyze_tool_usage_patterns(self, trace_data: GraphTraceData) -> dict[str, float]:
         """Analyze tool usage efficiency and selection patterns.
 
         Args:
@@ -247,9 +223,7 @@ class GraphAnalysisEngine:
                 success = call.get("success", False)
 
                 # Add nodes and edges for tool usage patterns
-                tool_graph.add_node(
-                    tool_name, type="tool", success_rate=1.0 if success else 0.0
-                )
+                tool_graph.add_node(tool_name, type="tool", success_rate=1.0 if success else 0.0)
                 tool_graph.add_node(agent_id, type="agent")
                 tool_graph.add_edge(agent_id, tool_name, weight=1.0 if success else 0.5)
 
@@ -260,14 +234,9 @@ class GraphAnalysisEngine:
             path_convergence = self._calculate_path_convergence(tool_graph)
 
             # Calculate tool selection accuracy from success rates
-            tool_nodes = [
-                n for n, d in tool_graph.nodes(data=True) if d.get("type") == "tool"
-            ]
+            tool_nodes = [n for n, d in tool_graph.nodes(data=True) if d.get("type") == "tool"]
             if tool_nodes:
-                success_rates = [
-                    tool_graph.nodes[tool].get("success_rate", 0.0)
-                    for tool in tool_nodes
-                ]
+                success_rates = [tool_graph.nodes[tool].get("success_rate", 0.0) for tool in tool_nodes]
                 tool_accuracy = sum(success_rates) / len(success_rates)
             else:
                 tool_accuracy = 0.0
@@ -281,9 +250,7 @@ class GraphAnalysisEngine:
             logger.warning(f"Tool usage pattern analysis failed: {e}")
             return {"path_convergence": 0.0, "tool_selection_accuracy": 0.0}
 
-    def analyze_agent_interactions(
-        self, trace_data: GraphTraceData
-    ) -> dict[str, float]:
+    def analyze_agent_interactions(self, trace_data: GraphTraceData) -> dict[str, float]:
         """Analyze agent-to-agent communication and coordination patterns.
 
         Args:
@@ -309,9 +276,7 @@ class GraphAnalysisEngine:
                 interaction_type = interaction.get("type", "communication")
 
                 # Weight different interaction types
-                weight = (
-                    1.0 if interaction_type in ["delegation", "coordination"] else 0.5
-                )
+                weight = 1.0 if interaction_type in ["delegation", "coordination"] else 0.5
 
                 interaction_graph.add_edge(from_agent, to_agent, weight=weight)
 
@@ -385,9 +350,7 @@ class GraphAnalysisEngine:
             if mean_activity == 0:
                 return 0.0
 
-            variance = sum((x - mean_activity) ** 2 for x in activities) / len(
-                activities
-            )
+            variance = sum((x - mean_activity) ** 2 for x in activities) / len(activities)
             std_dev = math.sqrt(variance)
 
             # Coefficient of variation: lower = better balance
@@ -418,9 +381,7 @@ class GraphAnalysisEngine:
             undirected_graph = graph.to_undirected()
             if nx.is_connected(undirected_graph):
                 try:
-                    avg_path_length = self._with_timeout(
-                        nx.average_shortest_path_length, undirected_graph
-                    )
+                    avg_path_length = self._with_timeout(nx.average_shortest_path_length, undirected_graph)
                     max_possible_length = len(graph.nodes) - 1
 
                     # Fix division by zero: ensure denominator is never zero
@@ -461,12 +422,8 @@ class GraphAnalysisEngine:
             # Extract individual metrics
             path_convergence = tool_metrics.get("path_convergence", 0.0)
             tool_accuracy = tool_metrics.get("tool_selection_accuracy", 0.0)
-            communication_efficiency = interaction_metrics.get(
-                "communication_overhead", 0.0
-            )
-            coordination_quality = interaction_metrics.get(
-                "coordination_centrality", 0.0
-            )
+            communication_efficiency = interaction_metrics.get("communication_overhead", 0.0)
+            coordination_quality = interaction_metrics.get("coordination_centrality", 0.0)
 
             # Calculate graph complexity (total unique nodes)
             unique_agents = set()
@@ -488,8 +445,7 @@ class GraphAnalysisEngine:
             return Tier3Result(
                 path_convergence=path_convergence,
                 tool_selection_accuracy=tool_accuracy,
-                communication_overhead=1.0
-                - communication_efficiency,  # Invert for overhead
+                communication_overhead=1.0 - communication_efficiency,  # Invert for overhead
                 coordination_centrality=coordination_quality,
                 task_distribution_balance=task_balance,
                 overall_score=overall_score,
@@ -508,6 +464,72 @@ class GraphAnalysisEngine:
                 overall_score=0.0,
                 graph_complexity=0,
             )
+
+    def export_trace_to_networkx(self, trace_data: GraphTraceData) -> nx.DiGraph | None:
+        """Export trace data to NetworkX graph for Opik integration.
+
+        Args:
+            trace_data: Execution trace data to convert
+
+        Returns:
+            NetworkX directed graph or None if export fails
+        """
+        try:
+            graph = nx.DiGraph()
+
+            # Add agent nodes from interactions
+            agent_nodes = set()
+            for interaction in trace_data.agent_interactions:
+                source = interaction.get("from", "unknown")
+                target = interaction.get("to", "unknown")
+                agent_nodes.add(source)
+                agent_nodes.add(target)
+
+                # Add nodes with agent type
+                if not graph.has_node(source):
+                    graph.add_node(source, type="agent", interaction_count=0)
+                if not graph.has_node(target):
+                    graph.add_node(target, type="agent", interaction_count=0)
+
+                # Add interaction edge
+                if not graph.has_edge(source, target):
+                    graph.add_edge(source, target, interaction_count=0)
+                graph.edges[source, target]["interaction_count"] += 1
+                graph.nodes[source]["interaction_count"] += 1
+                graph.nodes[target]["interaction_count"] += 1
+
+            # Add tool usage patterns
+            for tool_call in trace_data.tool_calls:
+                agent_id = tool_call.get("agent_id", "unknown")
+                tool_name = tool_call.get("tool_name", "unknown_tool")
+
+                # Add tool node
+                if not graph.has_node(tool_name):
+                    graph.add_node(tool_name, type="tool", usage_count=0)
+
+                # Add edge from agent to tool
+                if not graph.has_edge(agent_id, tool_name):
+                    graph.add_edge(agent_id, tool_name, usage_count=0)
+                graph.edges[agent_id, tool_name]["usage_count"] += 1
+                graph.nodes[tool_name]["usage_count"] += 1
+
+            # Add graph metadata for Opik
+            graph.graph.update(
+                {
+                    "execution_id": trace_data.execution_id,
+                    "total_agents": len(agent_nodes),
+                    "total_interactions": len(trace_data.agent_interactions),
+                    "total_tool_calls": len(trace_data.tool_calls),
+                    "timing_data": trace_data.timing_data,
+                }
+            )
+
+            logger.debug(f"Exported NetworkX graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges")
+            return graph
+
+        except Exception as e:
+            logger.error(f"Failed to export trace to NetworkX: {e}")
+            return None
 
 
 def evaluate_single_graph_analysis(

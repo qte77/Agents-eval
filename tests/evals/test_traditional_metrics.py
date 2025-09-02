@@ -36,8 +36,7 @@ class TestTraditionalMetricsEngine:
             "empty_first": ("", "Some text"),
             "empty_both": ("", ""),
             "academic_review": (
-                "This paper presents a novel approach to machine learning with "
-                "solid methodology and clear results.",
+                "This paper presents a novel approach to machine learning with solid methodology and clear results.",
                 "The work demonstrates strong technical contribution with "
                 "comprehensive evaluation and good presentation.",
             ),
@@ -104,27 +103,19 @@ class TestTraditionalMetricsEngine:
         text1, text2 = sample_texts["academic_review"]
 
         # Mock cosine similarity to return known value
-        with patch.object(
-            engine, "compute_cosine_similarity", return_value=0.85
-        ) as mock_cosine:
+        with patch.object(engine, "compute_cosine_similarity", return_value=0.85) as mock_cosine:
             similarity = engine.compute_semantic_similarity(text1, text2)
             assert similarity == 0.85
             mock_cosine.assert_called_once_with(text1, text2)
 
-    @patch(
-        "app.evals.traditional_metrics.TraditionalMetricsEngine._get_bertscore_model"
-    )
-    def test_semantic_similarity_fallback_on_error(
-        self, mock_bertscore, engine, sample_texts
-    ):
+    @patch("app.evals.traditional_metrics.TraditionalMetricsEngine._get_bertscore_model")
+    def test_semantic_similarity_fallback_on_error(self, mock_bertscore, engine, sample_texts):
         """Given BERTScore failure, should fallback to cosine similarity."""
         # Mock BERTScore to raise exception
         mock_bertscore.side_effect = Exception("Model loading failed")
 
         text1, text2 = sample_texts["similar"]
-        with patch.object(
-            engine, "compute_cosine_similarity", return_value=0.7
-        ) as mock_cosine:
+        with patch.object(engine, "compute_cosine_similarity", return_value=0.7) as mock_cosine:
             similarity = engine.compute_semantic_similarity(text1, text2)
             assert similarity == 0.7
             mock_cosine.assert_called_once_with(text1, text2)
@@ -190,15 +181,9 @@ class TestTraditionalMetricsEngine:
             "Different topic entirely about databases.",  # Very low similarity
         ]
 
-        with patch.object(
-            engine, "compute_cosine_similarity", side_effect=[0.2, 0.9, 0.1]
-        ):
-            with patch.object(
-                engine, "compute_jaccard_similarity", side_effect=[0.1, 0.8, 0.0]
-            ):
-                with patch.object(
-                    engine, "compute_semantic_similarity", side_effect=[0.3, 0.95, 0.1]
-                ):
+        with patch.object(engine, "compute_cosine_similarity", side_effect=[0.2, 0.9, 0.1]):
+            with patch.object(engine, "compute_jaccard_similarity", side_effect=[0.1, 0.8, 0.0]):
+                with patch.object(engine, "compute_semantic_similarity", side_effect=[0.3, 0.95, 0.1]):
                     best_scores = engine.find_best_match(agent_output, references)
 
                     # Should pick the best scores (from second reference)
@@ -241,13 +226,9 @@ class TestTraditionalMetricsEngine:
         with patch.object(engine, "find_best_match") as mock_best_match:
             from app.evals.traditional_metrics import SimilarityScores
 
-            mock_best_match.return_value = SimilarityScores(
-                cosine=0.8, jaccard=0.7, semantic=0.85
-            )
+            mock_best_match.return_value = SimilarityScores(cosine=0.8, jaccard=0.7, semantic=0.85)
 
-            result = engine.evaluate_traditional_metrics(
-                agent_output, reference_texts, start_time, end_time, config
-            )
+            result = engine.evaluate_traditional_metrics(agent_output, reference_texts, start_time, end_time, config)
 
             assert isinstance(result, Tier1Result)
             assert result.cosine_score == 0.8
@@ -265,9 +246,7 @@ def test_evaluate_single_traditional():
     agent_output = "This is a test review with good methodology."
     reference_texts = ["Test review with solid approach."]
 
-    with patch(
-        "app.evals.traditional_metrics.TraditionalMetricsEngine"
-    ) as mock_engine_class:
+    with patch("app.evals.traditional_metrics.TraditionalMetricsEngine") as mock_engine_class:
         mock_engine = Mock()
         mock_engine_class.return_value = mock_engine
 
@@ -294,12 +273,9 @@ class TestTraditionalMetricsPerformance:
             "and thorough analysis of results."
         )
         reference_texts = [
-            "The work provides extensive experimental validation of ML approaches "
-            "with comprehensive analysis.",
-            "Strong experimental methodology with detailed analysis and good "
-            "presentation quality.",
-            "Thorough evaluation with solid methodology but could improve "
-            "presentation clarity.",
+            "The work provides extensive experimental validation of ML approaches with comprehensive analysis.",
+            "Strong experimental methodology with detailed analysis and good presentation quality.",
+            "Thorough evaluation with solid methodology but could improve presentation clarity.",
         ]
 
         start_time = time.perf_counter()
@@ -320,12 +296,8 @@ class TestTraditionalMetricsPerformance:
     def test_similarity_computation_speed(self):
         """Individual similarity computations should be fast."""
         engine = TraditionalMetricsEngine()
-        text1 = (
-            "Machine learning algorithms for natural language processing applications."
-        )
-        text2 = (
-            "Deep learning approaches to NLP tasks and language understanding problems."
-        )
+        text1 = "Machine learning algorithms for natural language processing applications."
+        text2 = "Deep learning approaches to NLP tasks and language understanding problems."
 
         # Test cosine similarity speed
         start = time.perf_counter()
@@ -406,15 +378,11 @@ class TestEnhancedFeatures:
         reference = "The work shows strong methodology with excellent results."
 
         # Test basic mode
-        basic_scores = engine.compute_all_similarities(
-            agent_output, reference, enhanced=False
-        )
+        basic_scores = engine.compute_all_similarities(agent_output, reference, enhanced=False)
         assert basic_scores.levenshtein == 0.0  # Should be 0 in basic mode
 
         # Test enhanced mode
-        enhanced_scores = engine.compute_all_similarities(
-            agent_output, reference, enhanced=True
-        )
+        enhanced_scores = engine.compute_all_similarities(agent_output, reference, enhanced=True)
         assert enhanced_scores.levenshtein > 0.0  # Should have Levenshtein score
         assert 0.0 <= enhanced_scores.levenshtein <= 1.0
 
@@ -428,9 +396,7 @@ class TestEnhancedFeatures:
         ]
 
         basic_scores = engine.find_best_match(agent_output, references, enhanced=False)
-        enhanced_scores = engine.find_best_match(
-            agent_output, references, enhanced=True
-        )
+        enhanced_scores = engine.find_best_match(agent_output, references, enhanced=True)
 
         # Basic should have no Levenshtein
         assert basic_scores.levenshtein == 0.0
@@ -441,9 +407,7 @@ class TestEnhancedFeatures:
 
     def test_evaluate_enhanced_similarity_with_weights(self, engine):
         """Enhanced similarity evaluation should support config-driven weights."""
-        agent_output = (
-            "The paper shows strong technical contribution with good methodology."
-        )
+        agent_output = "The paper shows strong technical contribution with good methodology."
         references = [
             "Strong technical work with solid methodology.",
             "Good contribution but methodology needs improvement.",
@@ -456,9 +420,7 @@ class TestEnhancedFeatures:
             "semantic_weight": 0.1,
         }
 
-        similarity = engine.evaluate_enhanced_similarity(
-            agent_output, references, config_weights=custom_weights
-        )
+        similarity = engine.evaluate_enhanced_similarity(agent_output, references, config_weights=custom_weights)
 
         assert 0.0 <= similarity <= 1.0
         assert similarity > 0.4  # Should show reasonable similarity
@@ -487,9 +449,7 @@ class TestEnhancedFeatures:
 # Convenience function tests for enhanced features
 def test_evaluate_single_enhanced():
     """Test convenience function for enhanced evaluation."""
-    agent_output = (
-        "This paper presents novel machine learning approach with solid evaluation."
-    )
+    agent_output = "This paper presents novel machine learning approach with solid evaluation."
     reference_texts = ["Novel ML method with comprehensive experimental evaluation."]
 
     # Test with default weights
@@ -606,9 +566,7 @@ class TestPeerReadEvaluation:
 
         # Arrange
         paper_id = "test_003"
-        agent_review = (
-            "This is a good paper with solid contributions."  # Contains "good"
-        )
+        agent_review = "This is a good paper with solid contributions."  # Contains "good"
         ground_truth_reviews = [
             PeerReadReview(
                 impact="4",
