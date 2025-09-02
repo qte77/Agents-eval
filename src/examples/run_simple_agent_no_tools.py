@@ -8,7 +8,6 @@ from os import path
 from .utils.agent_simple_no_tools import get_research
 from .utils.utils import (
     get_api_key,
-    get_provider_config,
     load_config,
     print_research_Result,
 )
@@ -26,9 +25,8 @@ def main():
     topic = input("What topic would you like to research? ")
 
     api_key = get_api_key(provider)
-    provider_config = get_provider_config(provider, config)
 
-    result = get_research(topic, config.prompts, provider, provider_config, api_key)
+    result = get_research(topic, config.prompts, provider, config, api_key or "")
     print_research_Result(result.data, result.usage())
 
 

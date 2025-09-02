@@ -4,6 +4,9 @@ Graph-based analysis engine for Tier 3 evaluation.
 Provides NetworkX-based analysis of agent coordination patterns,
 tool usage efficiency, and communication overhead with streamlined
 implementation focusing on essential multi-agent interaction metrics.
+
+Note: This module contains type: ignore comments for NetworkX operations
+due to incomplete type hints in the NetworkX library itself.
 """
 
 import math
@@ -250,7 +253,7 @@ class GraphAnalysisEngine:
                 tool_graph.add_node(agent_id, type="agent")
                 tool_graph.add_edge(agent_id, tool_name, weight=1.0 if success else 0.5)
 
-            if len(tool_graph.nodes) < self.min_nodes_for_analysis:
+            if len(tool_graph.nodes) < self.min_nodes_for_analysis:  # type: ignore[arg-type]
                 return {"path_convergence": 0.5, "tool_selection_accuracy": 0.5}
 
             # Calculate path convergence using graph connectivity
@@ -312,12 +315,12 @@ class GraphAnalysisEngine:
 
                 interaction_graph.add_edge(from_agent, to_agent, weight=weight)
 
-            if len(interaction_graph.nodes) < self.min_nodes_for_analysis:
+            if len(interaction_graph.nodes) < self.min_nodes_for_analysis:  # type: ignore[arg-type]
                 return {"communication_overhead": 0.8, "coordination_centrality": 0.5}
 
             # Calculate communication efficiency (lower overhead = better)
-            total_edges = len(interaction_graph.edges)
-            total_nodes = len(interaction_graph.nodes)
+            total_edges = len(interaction_graph.edges)  # type: ignore[arg-type]
+            total_nodes = len(interaction_graph.nodes)  # type: ignore[arg-type]
 
             # Ideal communication: O(n log n), actual vs ideal ratio
             if total_nodes > 1:
@@ -327,10 +330,10 @@ class GraphAnalysisEngine:
                 efficiency_ratio = 1.0
 
             # Calculate coordination centrality using betweenness centrality
-            if len(interaction_graph.nodes) > 2:
-                centrality_scores = nx.betweenness_centrality(interaction_graph)
+            if len(interaction_graph.nodes) > 2:  # type: ignore[arg-type]
+                centrality_scores = nx.betweenness_centrality(interaction_graph)  # type: ignore[arg-type]
                 max_centrality = (
-                    max(centrality_scores.values()) if centrality_scores else 0.0
+                    max(centrality_scores.values()) if centrality_scores else 0.0  # type: ignore[arg-type]
                 )
             else:
                 max_centrality = 0.5
@@ -358,7 +361,7 @@ class GraphAnalysisEngine:
 
         try:
             # Combine all agent activities
-            agent_activities = {}
+            agent_activities: dict[str, int] = {}
 
             # Count tool calls per agent
             for call in trace_data.tool_calls:
@@ -374,7 +377,7 @@ class GraphAnalysisEngine:
                 return 0.0
 
             # Calculate load balance using coefficient of variation
-            activities = list(agent_activities.values())
+            activities: list[int] = list(agent_activities.values())
             if len(activities) <= 1:
                 return 1.0  # Perfect balance for single agent
 
@@ -472,7 +475,7 @@ class GraphAnalysisEngine:
                 unique_agents.add(interaction.get("to", "unknown"))
             for call in trace_data.tool_calls:
                 unique_agents.add(call.get("agent_id", "unknown"))
-            graph_complexity = len(unique_agents)
+            graph_complexity = len(unique_agents)  # type: ignore[arg-type]
 
             # Calculate weighted overall score
             overall_score = (

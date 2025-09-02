@@ -33,8 +33,7 @@ def main():
     result = get_dice(
         player_name, guess, system_prompt, provider, api_key, provider_config
     )
-    print(result.data)
-    print(f"{result._result_tool_name=}")
+    print(result)
     print(result.usage())
 
 

@@ -7,6 +7,7 @@ state management, and error handling.
 """
 
 import asyncio
+from collections.abc import Callable
 from typing import Any
 
 from pydantic import BaseModel
@@ -18,13 +19,12 @@ from app.data_models.app_models import (
     ResearchResult,
     ResearchResultSimple,
     ResearchSummary,
-    ReviewGenerationResult,
     UserPromptType,
 )
 from app.utils.log import logger
 
 
-def _validate_model_return(output_str: str, result_type: type[BaseModel]) -> BaseModel:
+def _validate_model_return[T: BaseModel](output_str: str, result_type: type[T]) -> T:
     """Validate and convert string output to expected model type."""
     try:
         return result_type.model_validate_json(output_str)
@@ -65,7 +65,7 @@ class PeerReviewOrchestrator(AgentOrchestrator):
         paper_id: str,
         query: UserPromptType,
         usage_limits: UsageLimits | None = None,
-    ) -> ReviewGenerationResult:
+    ) -> str:
         """Run complete peer review generation workflow."""
         self.log_step("start_review_workflow", {"paper_id": paper_id})
 
@@ -73,20 +73,12 @@ class PeerReviewOrchestrator(AgentOrchestrator):
             # Step 1: Generate review using manager agent
             self.log_step("generating_review")
 
-            result = await self.manager_agent.run(user_prompt=query, usage=usage_limits)
+            result = await self.manager_agent.run(
+                user_prompt=str(query), usage_limits=usage_limits
+            )
 
             self.log_step("review_completed")
-
-            if isinstance(result.data, ReviewGenerationResult):
-                return result.data
-            else:
-                # Convert to ReviewGenerationResult if needed
-                return ReviewGenerationResult(
-                    paper_id=paper_id,
-                    review=result.data,
-                    timestamp="",
-                    model_info="Manager Agent",
-                )
+            return str(result)
 
         except Exception as e:
             self.log_step("review_failed", {"error": str(e)})
@@ -200,55 +192,58 @@ class DelegationOrchestrator(AgentOrchestrator):
         """Add research delegation tool to manager."""
 
         @self.manager_agent.tool
-        async def delegate_research(
+        async def delegate_research(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
-        ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
+        ) -> ResearchResult | ResearchResultSimple:
             """Delegate research task to ResearchAgent."""
             self.log_step("delegating_research", {"query": query})
 
-            result = await self.research_agent.run(query, usage=ctx.usage)
+            if self.research_agent is None:
+                raise ValueError("Research agent not configured")
+            result = await self.research_agent.run(query)
 
-            if isinstance(
-                result.data,
-                ResearchResult | ResearchResultSimple | ReviewGenerationResult,
-            ):
-                return result.data
+            if isinstance(result, ResearchResult | ResearchResultSimple):
+                return result
             else:
-                return _validate_model_return(str(result.data), ResearchResult)
+                return _validate_model_return(str(result), ResearchResult)
 
     def _add_analysis_delegation(self):
         """Add analysis delegation tool to manager."""
 
         @self.manager_agent.tool
-        async def delegate_analysis(
+        async def delegate_analysis(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
         ) -> AnalysisResult:
             """Delegate analysis task to AnalysisAgent."""
             self.log_step("delegating_analysis", {"query": query})
 
-            result = await self.analysis_agent.run(query, usage=ctx.usage)
+            if self.analysis_agent is None:
+                raise ValueError("Analysis agent not configured")
+            result = await self.analysis_agent.run(query)
 
-            if isinstance(result.data, AnalysisResult):
-                return result.data
+            if isinstance(result, AnalysisResult):
+                return result
             else:
-                return _validate_model_return(str(result.data), AnalysisResult)
+                return _validate_model_return(str(result), AnalysisResult)
 
     def _add_synthesis_delegation(self):
         """Add synthesis delegation tool to manager."""
 
         @self.manager_agent.tool
-        async def delegate_synthesis(
+        async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
             ctx: RunContext[None], query: str
         ) -> ResearchSummary:
             """Delegate synthesis task to SynthesisAgent."""
             self.log_step("delegating_synthesis", {"query": query})
 
-            result = await self.synthesis_agent.run(query, usage=ctx.usage)
+            if self.synthesis_agent is None:
+                raise ValueError("Synthesis agent not configured")
+            result = await self.synthesis_agent.run(query)
 
-            if isinstance(result.data, ResearchSummary):
-                return result.data
+            if isinstance(result, ResearchSummary):
+                return result
             else:
-                return _validate_model_return(str(result.data), ResearchSummary)
+                return _validate_model_return(str(result), ResearchSummary)
 
 
 async def run_manager_orchestrated(
@@ -274,7 +269,6 @@ async def run_manager_orchestrated(
     # FIXME context manager try-catch
     # with error_handling_context("run_manager()"):
     model_name = getattr(manager, "model")._model_name
-    mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
 
     try:
@@ -287,7 +281,9 @@ async def run_manager_orchestrated(
             orchestrator.log_step("waiting_for_model_response")
             logger.info("Waiting for model response ...")
 
-            result = await manager.run(**mgr_cfg)
+            result = await manager.run(
+                user_prompt=str(query), usage_limits=usage_limits
+            )
 
             orchestrator.log_step("model_response_received")
             logger.info(f"Result: {result}")
@@ -307,8 +303,8 @@ async def sequential_workflow(agents: list[Agent], query: str) -> list[Any]:
     for i, agent in enumerate(agents):
         logger.info(f"Running agent {i + 1}/{len(agents)}")
         result = await agent.run(current_input)
-        results.append(result.data)
-        current_input = str(result.data)  # Use result as input for next agent
+        results.append(result)
+        current_input = str(result)  # Use result as input for next agent
 
     return results
 
@@ -320,11 +316,11 @@ async def parallel_workflow(agents: list[Agent], query: str) -> list[Any]:
     tasks = [agent.run(query) for agent in agents]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    return [result.data if hasattr(result, "data") else result for result in results]
+    return [result for result in results]
 
 
 async def conditional_workflow(
-    condition_func: callable, agent_map: dict[str, Agent], query: str
+    condition_func: Callable[[str], str], agent_map: dict[str, Agent], query: str
 ) -> Any:
     """Route to different agents based on conditions."""
     condition_result = condition_func(query)
@@ -333,6 +329,6 @@ async def conditional_workflow(
         selected_agent = agent_map[condition_result]
         logger.info(f"Selected agent for condition: {condition_result}")
         result = await selected_agent.run(query)
-        return result.data
+        return result
     else:
         raise ValueError(f"No agent found for condition: {condition_result}")

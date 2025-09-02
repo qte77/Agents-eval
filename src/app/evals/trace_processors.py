@@ -9,7 +9,7 @@ import json
 import sqlite3
 import time
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -304,7 +304,7 @@ class TraceCollector:
         """
         try:
             # Store as JSONL file
-            timestamp_str = datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
+            timestamp_str = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
             json_file = (
                 self.storage_path / f"trace_{trace.execution_id}_{timestamp_str}.jsonl"
             )
@@ -330,7 +330,7 @@ class TraceCollector:
                         len(set(ia.get("from", "") for ia in trace.agent_interactions)),
                         len(trace.tool_calls),
                         trace.performance_metrics["total_duration"],
-                        datetime.now(datetime.UTC).isoformat(),
+                        datetime.now(UTC).isoformat(),
                     ),
                 )
 
@@ -396,10 +396,10 @@ class TraceCollector:
                 ).fetchall()
 
                 # Parse events
-                agent_interactions = []
-                tool_calls = []
-                coordination_events = []
-                timing_data = {}
+                agent_interactions: list[dict[str, Any]] = []
+                tool_calls: list[dict[str, Any]] = []
+                coordination_events: list[dict[str, Any]] = []
+                timing_data: dict[str, Any] = {}
 
                 for timestamp, event_type, _agent_id, data_json in events:
                     data = json.loads(data_json)

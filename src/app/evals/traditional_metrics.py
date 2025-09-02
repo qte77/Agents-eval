@@ -91,7 +91,8 @@ class TraditionalMetricsEngine:
 
             # Calculate cosine similarity
             similarity_matrix = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])
-            return float(similarity_matrix[0, 0])
+            # Explicitly convert numpy array element to Python float
+            return float(similarity_matrix[0][0])  # type: ignore[arg-type]
 
         except Exception as e:
             logger.warning(f"TF-IDF cosine similarity failed: {e}")

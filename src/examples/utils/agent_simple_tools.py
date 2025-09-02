@@ -29,7 +29,7 @@ def get_dice(
     guess: str,
     system_prompt: str,
     provider: str,
-    api_key: str,
+    api_key: str | None,
     config: dict,
 ) -> AgentRunResult:
     """Run the dice game agent."""

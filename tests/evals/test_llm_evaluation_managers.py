@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from app.data_models.evaluation_models import Tier2Result
-from app.evals.llm_judge import LLMJudgeEngine, evaluate_single_llm_judge
+from app.evals.llm_evaluation_managers import LLMJudgeEngine
 
 
 class TestLLMJudgeEngine:
@@ -338,23 +338,29 @@ class TestLLMJudgeEngine:
 
 # Convenience function tests
 @pytest.mark.asyncio
-async def test_evaluate_single_llm_judge():
-    """Test convenience function for single LLM judge evaluation."""
+async def test_evaluate_single_llm_judge_via_pipeline():
+    """Test LLM judge evaluation through the evaluation pipeline."""
+    from app.evals.evaluation_pipeline import EvaluationPipeline
+
     paper = "Test paper content"
     review = "Test review content"
-    trace = {"agent_interactions": []}
+    trace = {"agent_interactions": [], "tool_calls": []}
 
-    with patch("app.evals.llm_judge.LLMJudgeEngine") as mock_engine_class:
-        mock_engine = Mock()
-        mock_engine_class.return_value = mock_engine
+    # Create pipeline instance
+    pipeline = EvaluationPipeline()
 
-        mock_result = Mock(spec=Tier2Result)
-        mock_engine.evaluate_llm_judge = AsyncMock(return_value=mock_result)
+    # Mock only the LLM engine
+    mock_result = Mock(spec=Tier2Result)
+    pipeline.llm_engine.evaluate_comprehensive = AsyncMock(return_value=mock_result)
 
-        result = await evaluate_single_llm_judge(paper, review, trace)
+    # Test Tier 2 execution directly
+    result, execution_time = await pipeline._execute_tier2(paper, review, trace)
 
-        assert result == mock_result
-        mock_engine.evaluate_llm_judge.assert_called_once_with(paper, review, trace)
+    assert result == mock_result
+    assert execution_time >= 0.0
+    pipeline.llm_engine.evaluate_comprehensive.assert_called_once_with(
+        paper, review, trace
+    )
 
 
 # Performance and cost tests
