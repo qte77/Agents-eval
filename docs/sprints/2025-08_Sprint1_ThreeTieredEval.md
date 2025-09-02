@@ -431,23 +431,32 @@ Agent Score = (
     - CLI interface validation and end-to-end workflow confirmation
     - PeerRead data format compatibility validated with synthetic testing
     - Production-ready status confirmed through comprehensive quality assurance
-- [ ] **Task 4.3**: PeerRead dataset integration & testing
+- [ ] **Task 4.3**: PeerRead Integration Validation & Real Dataset Testing with scoring system validation
+  - **Assigned to**: Evaluation Specialist → Python Developer → Code Reviewer
+  - **Requirements**: Leverage existing robust PeerRead integration to validate real dataset compatibility, test composite scoring with varied performance scenarios, and validate score interpretability
+  - **Reference**: docs/architecture.md for data flow patterns, existing datasets_peerread.py and evaluation_pipeline.py integration
+  - **Deliverable**: Validated PeerRead evaluation workflow with calibrated scoring system
+  - **Implementation Strategy**:
+    - **Phase 1**: Real dataset validation using existing `datasets_peerread.py` and `evaluation_pipeline.py` infrastructure
+    - **Phase 2**: Composite scoring validation with varied performance scenarios and ranking accuracy testing
+    - **Phase 3**: Performance baseline establishment and integration test enhancement
+- [ ] **Task 4.4**: Opik tracing integration & error handling testing
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
-  - **Requirements**: End-to-end testing with real PeerRead papers and reviews
-  - **Reference**: docs/architecture.md for data flow patterns
-  - **Deliverable**: Validated PeerRead evaluation workflow
-- [ ] **Task 4.4**: Observability & performance integration
-  - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
-  - **Requirements**: AgentNeo tracing for graph analysis input data
-  - **Reference**: docs/landscape/trace_observe_methods.md for tracing patterns
-  - **Deliverable**: Integrated tracing and performance monitoring
+  - **Requirements**: Deploy local Opik instance as primary tracing solution, instrument PydanticAI agents with `@track` decorators, implement step-level evaluation for Manager/Researcher/Analyst/Synthesizer interactions, and comprehensive error handling testing
+  - **Reference**: docs/landscape/landscape-agent-frameworks-infrastructure.md for Opik, Weave, and Logfire integration patterns
+  - **Deliverable**: Local Opik tracing system with agent interaction graph export and robust error handling
+  - **Implementation Strategy**:
+    - **Phase 1**: Local Opik deployment and PydanticAI instrumentation (primary solution)
+    - **Phase 2**: Step-level agent evaluation metrics (tool selection quality, plan coherence assessment)
+    - **Phase 3**: Export trace data for graph analysis and error handling validation
+  - **Optional Integrations**: Weave and Logfire implementations as secondary/fallback options, but Opik is the go-to solution for local deployment and agent-specific evaluation capabilities
 
 **Expected Deliverables**:
 
 - ✅ Functional composite scoring system
 - ✅ Integrated evaluation pipeline connecting all three tiers
-- [ ] PeerRead dataset processing with comprehensive test coverage
-- [ ] Optimized evaluation system with observability integration
+- [ ] PeerRead dataset validation with calibrated scoring system
+- [ ] Local Opik tracing with agent interaction graph export and robust error handling
 
 **Day 4 DoD**: Complete three-tier PeerRead evaluation system with composite scoring operational
 
@@ -463,71 +472,31 @@ Agent Score = (
 
 ---
 
-### **Day 5 (Aug 27): PeerRead Validation & Testing**
-
-**Objective**: Validate evaluation system with real PeerRead dataset and ensure production readiness
-
-**Tasks**:
-
-- [ ] **Task 5.1**: Comprehensive PeerRead Dataset Testing
-  - **Assigned to**: Evaluation Specialist → Python Developer → Code Reviewer
-  - Test full pipeline with actual PeerRead papers and reviews
-  - Validate all three evaluation approaches with real data
-  - **Deliverable**: Validated evaluation system with real dataset
-
-- [ ] **Task 5.2**: Scoring System Validation
-  - **Assigned to**: Evaluation Specialist → Python Developer → Code Reviewer
-  - Test composite scoring formula with varied performance scenarios
-  - Validate score interpretability and ranking accuracy
-  - **Deliverable**: Validated and calibrated scoring system
-
-- [ ] **Task 5.3**: Error Handling & Edge Case Testing
-  - **Assigned to**: Python Developer → Code Reviewer
-  - Complete error message strategy implementation
-  - Test edge cases with malformed papers, missing reviews
-  - **Deliverable**: Robust error handling system
-
-- [ ] **Task 5.4**: Documentation & Usage Guide
-  - **Assigned to**: Evaluation Specialist
-  - Create PeerRead evaluation workflow documentation
-  - Document scoring interpretation and benchmarking
-  - **Deliverable**: Complete user documentation
-
-**Day 5 DoD**: Production-ready PeerRead evaluation system with focused validation and documentation
-
----
-
-### **Day 6 (Aug 28): Final Integration & Sprint Analysis**
+### **Day 5 (Aug 27): Final Integration & Sprint Analysis**
 
 **Objective**: Complete system integration testing and prepare for production handoff
 
 **Tasks**:
 
-- [ ] **Task 6.1**: Final System Integration Testing
-  - **Assigned to**: Code Reviewer → Python Developer
-  - Complete end-to-end testing with full PeerRead workflow
-  - Performance benchmarking and optimization
-  - **Deliverable**: Production-ready evaluation system
+- [ ] **Task 5.1**: Complete System Validation & Production Readiness
+  - **Assigned to**: Code Reviewer → Python Developer → Evaluation Specialist
+  - **Requirements**: End-to-end testing with full PeerRead workflow and Opik tracing, performance benchmarking and optimization, system validation checklist verification
+  - **Reference**: All previous tasks (4.1-4.4) integration validation
+  - **Deliverable**: Production-ready three-tier evaluation system with comprehensive Opik tracing
+  - **Validation Checklist**:
+    - ✅ Traditional metrics (Tier 1) operational with real PeerRead data
+    - ✅ LLM-as-Judge (Tier 2) functional with scoring validation  
+    - ✅ Graph analysis (Tier 3) integrated with Opik trace data
+    - ✅ Composite scoring system calibrated and tested
+    - ✅ End-to-end CLI workflow validated
+    - ✅ Performance targets met (<5s latency, stable memory usage)
 
-- [ ] **Task 6.2**: Sprint Retrospective & Analysis
+- [ ] **Task 5.2**: Sprint Analysis & Future Roadmap
   - **Assigned to**: Evaluation Specialist
-  - Analyze implementation effectiveness against goals
-  - Document lessons learned and optimization opportunities
-  - **Deliverable**: Comprehensive sprint analysis report
+  - **Requirements**: Analyze sprint implementation effectiveness with focus on Opik integration benefits, document lessons learned and optimization opportunities, establish next sprint priorities
+  - **Deliverable**: Comprehensive sprint analysis report with future roadmap and handoff documentation
 
-- [ ] **Task 6.3**: Future Sprint Planning
-  - **Assigned to**: Evaluation Specialist
-  - Identify next priorities based on current implementation
-  - Plan enhancements for evaluation framework expansion
-  - **Deliverable**: Next sprint roadmap and priorities
-
-- [ ] **Task 6.4**: Final Validation & Handoff
-  - **Assigned to**: Code Reviewer → Python Developer
-  - Complete system validation checklist
-  - Prepare handoff documentation for production use
-  - **Deliverable**: Production-ready system with handoff materials
-
-**Day 6 DoD**: Complete PeerRead evaluation system ready for production use with focused analysis and future roadmap
+**Day 5 DoD**: Complete PeerRead evaluation system ready for production use with focused analysis and future roadmap
 
 ---
 
