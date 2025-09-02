@@ -1,4 +1,4 @@
-@startuml enhanced-mas-workflow
+@startuml mas-enhanced-workflow
 title Enhanced MAS Workflow - Separation of Concerns
 
 actor User

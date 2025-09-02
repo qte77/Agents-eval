@@ -6,7 +6,7 @@ component interactions, and real-world usage patterns for the evaluation system.
 
 Integration tests differ from unit tests by:
 - Testing multiple components working together
-- Using realistic data sets and scenarios  
+- Using realistic data sets and scenarios
 - Validating complete workflows and pipelines
 - Testing external integrations and data formats
 """

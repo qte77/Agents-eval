@@ -7,10 +7,11 @@ data structures and produce meaningful results with scientific paper content.
 """
 
 import asyncio
-import pytest
 import sys
 from pathlib import Path
 from typing import Any
+
+import pytest
 
 # Ensure src directory is available for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -25,12 +26,12 @@ class PeerReadTestData:
     @staticmethod
     def create_synthetic_peerread_data() -> PeerReadPaper:
         """Create synthetic PeerRead data matching the real structure."""
-        
+
         # Create sample reviews matching PeerRead format
         reviews = [
             PeerReadReview(
                 impact="4",
-                substance="4", 
+                substance="4",
                 appropriateness="4",
                 meaningful_comparison="3",
                 presentation_format="Poster",
@@ -45,12 +46,12 @@ class PeerReadTestData:
                 recommendation="4",
                 clarity="3",
                 reviewer_confidence="4",
-                is_meta_review=False
+                is_meta_review=False,
             ),
             PeerReadReview(
                 impact="3",
                 substance="4",
-                appropriateness="4", 
+                appropriateness="4",
                 meaningful_comparison="4",
                 presentation_format="Oral",
                 comments="""The technical contribution is valuable and the experimental 
@@ -60,14 +61,14 @@ class PeerReadTestData:
                 is good but could benefit from clearer explanations in the methodology 
                 section. Overall a solid paper that merits publication.""",
                 soundness_correctness="4",
-                originality="4", 
+                originality="4",
                 recommendation="3",
                 clarity="4",
                 reviewer_confidence="3",
-                is_meta_review=False
-            )
+                is_meta_review=False,
+            ),
         ]
-        
+
         # Create sample paper matching PeerRead structure
         paper = PeerReadPaper(
             paper_id="test_paper_001",
@@ -84,15 +85,18 @@ class PeerReadTestData:
             content, with particular improvements in methodology description and result 
             interpretation sections.""",
             reviews=reviews,
-            review_histories=["Initial submission", "Revised version addressing reviewer concerns"]
+            review_histories=[
+                "Initial submission",
+                "Revised version addressing reviewer concerns",
+            ],
         )
-        
+
         return paper
 
     @staticmethod
     def create_agent_generated_review() -> str:
         """Create a sample agent-generated review for comparison."""
-        
+
         return """This paper explores the application of transformer models to scientific 
         text generation with a focus on domain adaptation. The proposed approach demonstrates 
         technical soundness with comprehensive experimental validation across multiple scientific 
@@ -120,25 +124,25 @@ class PeerReadTestData:
             "agent_interactions": [
                 {
                     "from": "Manager",
-                    "to": "Researcher", 
+                    "to": "Researcher",
                     "type": "paper_analysis_request",
                     "timestamp": 1.0,
-                    "paper_id": "test_paper_001"
+                    "paper_id": "test_paper_001",
                 },
                 {
-                    "from": "Researcher", 
+                    "from": "Researcher",
                     "to": "Analyst",
                     "type": "research_data_transfer",
                     "timestamp": 2.3,
-                    "data_size": 1247
+                    "data_size": 1247,
                 },
                 {
                     "from": "Analyst",
-                    "to": "Synthesizer", 
+                    "to": "Synthesizer",
                     "type": "analysis_results",
                     "timestamp": 4.1,
-                    "analysis_complete": True
-                }
+                    "analysis_complete": True,
+                },
             ],
             "tool_calls": [
                 {
@@ -147,24 +151,24 @@ class PeerReadTestData:
                     "success": True,
                     "duration": 0.5,
                     "timestamp": 1.2,
-                    "context": "Loading paper test_paper_001"
+                    "context": "Loading paper test_paper_001",
                 },
                 {
-                    "agent_id": "Researcher", 
+                    "agent_id": "Researcher",
                     "tool_name": "reference_comparison",
                     "success": True,
                     "duration": 1.1,
                     "timestamp": 2.0,
-                    "context": "Comparing against existing reviews"
+                    "context": "Comparing against existing reviews",
                 },
                 {
                     "agent_id": "Synthesizer",
-                    "tool_name": "review_generation", 
+                    "tool_name": "review_generation",
                     "success": True,
                     "duration": 2.3,
                     "timestamp": 4.5,
-                    "context": "Generating comprehensive review"
-                }
+                    "context": "Generating comprehensive review",
+                },
             ],
             "coordination_events": [
                 {
@@ -172,9 +176,9 @@ class PeerReadTestData:
                     "manager_agent": "Manager",
                     "target_agents": ["Researcher", "Analyst"],
                     "timestamp": 1.0,
-                    "task": "comprehensive_paper_review"
+                    "task": "comprehensive_paper_review",
                 }
-            ]
+            ],
         }
 
 
@@ -192,7 +196,9 @@ class TestPeerReadIntegration:
         return EvaluationPipeline()
 
     @pytest.mark.asyncio
-    async def test_peerread_data_format_compatibility(self, peerread_data, evaluation_pipeline):
+    async def test_peerread_data_format_compatibility(
+        self, peerread_data, evaluation_pipeline
+    ):
         """Test that pipeline can handle PeerRead data structures."""
         # Create test data
         peerread_paper = peerread_data.create_synthetic_peerread_data()
@@ -207,19 +213,24 @@ class TestPeerReadIntegration:
             paper=peerread_paper.abstract,
             review=agent_review,
             execution_trace=execution_trace,
-            reference_reviews=reference_reviews
+            reference_reviews=reference_reviews,
         )
 
         # Validate results
         assert result is not None
         assert result.composite_score > 0.0
-        assert result.recommendation in ["accept", "weak_accept", "weak_reject", "reject"]
+        assert result.recommendation in [
+            "accept",
+            "weak_accept",
+            "weak_reject",
+            "reject",
+        ]
         assert result.evaluation_complete is True
 
         # Validate that PeerRead-specific data was processed correctly
         assert len(reference_reviews) == 2  # Both reviews were extracted
         assert peerread_paper.paper_id == "test_paper_001"
-        
+
         # Performance validation
         stats = evaluation_pipeline.get_execution_stats()
         assert stats["total_time"] > 0
@@ -250,9 +261,11 @@ class TestPeerReadIntegration:
         """Test pipeline with larger scientific paper content."""
         # Create paper with extended content
         peerread_paper = peerread_data.create_synthetic_peerread_data()
-        
+
         # Create longer abstract to test large context handling
-        extended_abstract = peerread_paper.abstract + """
+        extended_abstract = (
+            peerread_paper.abstract
+            + """
         
         Further experimental validation across eight different scientific domains
         demonstrates the robustness and generalizability of the proposed approach.
@@ -265,6 +278,7 @@ class TestPeerReadIntegration:
         maintains performance quality even with complex technical jargon and
         mathematical notation prevalent in scientific literature.
         """
+        )
 
         agent_review = peerread_data.create_agent_generated_review()
         execution_trace = peerread_data.create_execution_trace()
@@ -275,13 +289,13 @@ class TestPeerReadIntegration:
             paper=extended_abstract,
             review=agent_review,
             execution_trace=execution_trace,
-            reference_reviews=reference_reviews
+            reference_reviews=reference_reviews,
         )
 
         # Should handle large context successfully
         assert result is not None
         assert result.composite_score > 0.0
-        
+
         # Performance should still be reasonable
         stats = evaluation_pipeline.get_execution_stats()
         assert stats["total_time"] < 25.0
@@ -305,33 +319,34 @@ class TestPeerReadIntegration:
 
 if __name__ == "__main__":
     """Run the PeerRead integration test directly."""
+
     async def run_peerread_integration():
         data = PeerReadTestData()
         pipeline = EvaluationPipeline()
-        
+
         print("Running PeerRead integration test...")
-        
+
         peerread_paper = data.create_synthetic_peerread_data()
         agent_review = data.create_agent_generated_review()
         execution_trace = data.create_execution_trace()
         reference_reviews = [review.comments for review in peerread_paper.reviews]
-        
+
         result = await pipeline.evaluate_comprehensive(
             paper=peerread_paper.abstract,
             review=agent_review,
             execution_trace=execution_trace,
-            reference_reviews=reference_reviews
+            reference_reviews=reference_reviews,
         )
-        
-        print(f"✅ PeerRead integration test completed!")
+
+        print("✅ PeerRead integration test completed!")
         print(f"   Paper: {peerread_paper.title[:50]}...")
         print(f"   Reviews: {len(peerread_paper.reviews)} reference reviews")
         print(f"   Composite Score: {result.composite_score:.3f}")
         print(f"   Recommendation: {result.recommendation}")
-        
+
         stats = pipeline.get_execution_stats()
         print(f"   Performance: {stats['total_time']:.3f}s")
-        
+
         return result
 
     asyncio.run(run_peerread_integration())

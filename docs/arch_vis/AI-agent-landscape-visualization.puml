@@ -8,36 +8,36 @@ title AI Agent Landscape
 skinparam defaultFontSize 12
 skinparam rectangle {
   FontSize 12
-}
+}   
 
 title AI Agent Evaluation Landscape
 
 ' Explicit 3x2 matrix layout
 ' Top row
 rectangle "Development Infrastructure" as dev_infra #C8A2C8 {
-  rectangle "Package Management:\nuv\n\nCode Quality:\nRuff • pyright\n\nApplication Framework:\nStreamlit\n\nEnterprise Infrastructure:\nShakudo • Daytona\n\nAI Governance:\nLarridin • Credo AI • Fiddler AI" as dev_tools
+  rectangle "Package Management:\nuv (10-100x faster Python)\n\nCode Quality:\nRuff (10-100x faster linting) • pyright\n\nApplication Framework:\nStreamlit\n\nEnterprise Infrastructure:\nShakudo (170+ AI tools) • Daytona (90ms environments)\n\nAI Governance:\nLarridin • Credo AI (EU AI Act) • Fiddler AI" as dev_tools
 }
 
 rectangle "Observability & Monitoring" as obs #DDA0DD {
-  rectangle "Multi-Agent System Observability:\nAgentNeo • RagaAI-Catalyst\n\nLLM Application Observability:\nComet Opik • Helicone • Langfuse • Arize Phoenix\nLangtrace • LangWatch • MLflow • Uptrace\nTraceloop • Pydantic Logfire • LangSmith\n\nEnterprise/Commercial:\nNeptune.ai • Weights & Biases (Weave)\nEvidently AI • Dynatrace\n\nSecurity & Compliance:\nVijil.ai • Cekura.ai • Coval • Cequence.ai" as obs_tools
+  rectangle "Multi-Agent Observability:\nAgentNeo (decorator-based tracing)\nRagaAI-Catalyst (enterprise dashboards)\n\nLLM Application Observability:\nComet Opik (evaluation focus) • Langfuse (OpenTelemetry)\nArize Phoenix (path convergence) • Helicone (proxy-based)\nPydantic Logfire • LangSmith\n\nEnterprise/Commercial:\nNeptune.ai (foundation models) • Weights & Biases (Weave)\nEvidently AI (100+ metrics) • Dynatrace (AI-powered)\n\nSecurity & Compliance:\nVijil.ai (1.5M+ tests) • Coval (Waymo-scale testing)\nCekura.ai (YC-backed) • Cequence.ai (API protection)" as obs_tools
 }
 
 ' Middle row
 rectangle "Analysis & Metrics" as analysis #FFB6C1 {
-  rectangle "Graph Analysis:\nNetworkX • PyTorch Geometric • NetworKit\nGraphology • Graphviz\n\nVisualization:\nMatplotly • Plotly • Bokeh • Streamlit\n\nTraditional Metrics:\nscikit-learn • TorchMetrics • Hugging Face Evaluate\n\nText Evaluation:\nBLEU • ROUGE • BERTScore • CodeBLEU\nNLTK Evaluation • spaCy Similarity\n\nBehavioral Graph Construction:\nspaCy + NetworkX • Neo4j GraphRAG\nUnstructured.io • LlamaIndex PropertyGraphIndex" as analysis_tools
+  rectangle "Graph Analysis:\nNetworkX (comprehensive) • NetworKit (10-2000x faster)\nPyTorch Geometric (GNNs) • Graphology (TypeScript)\n\nVisualization:\nPlotly (interactive) • Graphviz (static) • Streamlit\n\nTraditional Metrics:\nscikit-learn (industry standard) • TorchMetrics (GPU-optimized)\nHugging Face Evaluate (100+ metrics)\n\nText Evaluation:\nBERTScore (semantic) • ROUGE (summarization)\nBLEU (translation) • spaCy Similarity\n\nPost-Execution Graph Construction:\nspaCy + NetworkX • Neo4j GraphRAG\nUnstructured.io • LlamaIndex PropertyGraphIndex\nGoogle LangExtract • Relik Framework" as analysis_tools
 }
 
 rectangle "Agent Frameworks" as frameworks #87CEEB {
-  rectangle "Multi-Agent Orchestration:\nLangGraph • CrewAI • AutoGen/AG2 • PydanticAI\nLlamaIndex Agents • Fetch.ai uAgents • Letta\n\nLLM Orchestration & Workflows:\nLangchain • Semantic Kernel • Haystack • Restack\nWithmartian • OpenRouter\n\nLarge Language Models:\nClaude 4 Opus/Sonnet • GPT-4 Turbo\nGemini-1.5-Pro • Arcee Foundation Models (AFM)\n\nLightweight & Specialized:\nsmolAgents • AutoGPT • BabyAGI • SuperAGI • Rippletide\n\nProtocol & Integration Standards:\nmcp-agent • Coral Protocol • Akka • AgentPass\nZapier • ToolSDK.ai • Make • Composio\n\nVisual Development:\nLangflow • Sim.ai • Archon • Agentstack\nOmnara • n8n\n\nMemory & Knowledge Management:\nZep • Mem0 • Cognee • Gulp.ai" as agent_tools
+  rectangle "Multi-Agent Orchestration:\nLangGraph (stateful graphs) • CrewAI (role-playing)\nAutoGen/AG2 (Microsoft) • PydanticAI (type-safe)\nLlamaIndex Agents (RAG-optimized) • Letta (MemGPT)\n\nLLM Orchestration & Workflows:\nLangchain (comprehensive) • Semantic Kernel (Microsoft)\nHaystack (RAG-focused) • Restack (event-driven)\nWithmartian (Model Router) • OpenRouter (400+ models)\n\nLarge Language Models:\nClaude 4 Opus/Sonnet (1M context) • GPT-4 Turbo (128k)\nGemini-1.5-Pro (1M context) • Arcee AFM (4.5B params)\n\nLightweight & Specialized:\nsmolAgents (HuggingFace) • AutoGPT (autonomous)\nBabyAGI (minimal) • Rippletide (99% accuracy)\n\nProtocol & Integration Standards:\nmcp-agent (MCP native) • AgentPass (OpenAPI→MCP)\nZapier MCP (8,000+ apps) • ToolSDK.ai (5,300+ servers)\nMake (visual workflows) • Composio (250+ tools)\n\nVisual Development:\nLangflow (drag-drop) • n8n (400+ integrations)\nSim.ai (open-source) • Omnara (mobile command center)\n\nMemory & Knowledge Management:\nZep (temporal graphs) • Mem0 (+26% accuracy)\nCognee (RDF ontologies) • Gulp.ai (context enhancement)" as agent_tools
 }
 
 ' Bottom row
 rectangle "Data & Web Intelligence" as data_web #98E4D6 {
-  rectangle "AI-Optimized Search APIs:\nExa.ai • Tavily • Linkup • You.com • Parallel AI\n\nWeb Scraping & Extraction:\nApify • Firecrawl • Crawl4AI • Bright Data\n\nAI Browser Automation & Computer Use:\nSkyvern • Browser Use • ChatGPT Operator\nAnthropic Computer Use • UI-TARS-desktop\n\nNo-Code Data Extraction:\nBrowse AI" as web_tools
+  rectangle "AI-Optimized Search APIs:\nExa.ai (500ms neural search) • Tavily (cited web data)\nLinkup (91.0% F-Score accuracy) • You.com (enterprise)\nParallel AI (58% accuracy vs GPT-5)\n\nWeb Scraping & Extraction:\nApify (Crawlee framework) • Firecrawl (sub-1s, YC-backed)\nCrawl4AI (open-source, zero-cost) • Bright Data (20K+ customers)\n\nAI Browser Automation & Computer Use:\nSkyvern (vision-based, YC-backed) • Browser Use (21K+ stars)\nChatGPT Operator (CUA model) • Anthropic Computer Use\nUI-TARS-desktop (ByteDance, multi-model)\n\nNo-Code Data Extraction:\nBrowse AI (500K pages, point-click)" as web_tools
 }
 
 rectangle "Evaluation & Testing" as eval #90EE90 {
-  rectangle "Agent Evaluation & Benchmarking:\nAutoGenBench • AgentBench • Langchain AgentEvals\nSwarms Agent Evaluation • Confident AI/DeepEval\nLibretto.ai • Yupp.ai • Azure AI Evaluation SDK\nBraintrust Agent Evaluation • Google ADK Evaluation\nStrands Agents Evaluation\n\nLLM Evaluation & Benchmarking:\nDeepEval • Langchain OpenEvals • Braintrust Autoevals\nHELM • LiveBench • MLFlow LLM Evaluate\n\nRAG System Evaluation:\nRAGAs • TruLens\n\nAI Model Testing & Validation:\nDeepchecks • Giskard • Patronus AI\n\nDatasets & Benchmarks:\nPeerRead • SWIF2T • BigSurvey • SciXGen\nLIAR • X-Fact • MultiFC • FEVER • Plancraft" as eval_tools
+  rectangle "Agent Evaluation & Benchmarking:\nAutoGenBench (Docker isolation) • Confident AI/DeepEval (30+ metrics)\nLibretto.ai (automated failure detection) • Yupp.ai (blockchain incentives)\nAzure AI Evaluation SDK • Braintrust (architecture-specific)\nGoogle ADK (trajectory analysis) • Strands (multi-dimensional)\n\nLLM Evaluation & Benchmarking:\nDeepEval (pytest-like) • Braintrust Autoevals (multi-dimensional)\nHELM (Stanford, 16 scenarios) • LiveBench (contamination-free)\nLangchain OpenEvals (LLM-as-judge)\n\nRAG System Evaluation:\nRAGAs (reference-free metrics) • TruLens (RAG Triad + agents)\n\nAI Model Testing & Validation:\nDeepchecks (multi-modal support) • Giskard (red-teaming)\nPatronus AI (+18% better hallucination detection)\n\nDatasets & Benchmarks:\nPeerRead (14K papers) • SWIF2T (300 peer reviews)\nBigSurvey (7K surveys) • SciXGen (205K papers)\nFEVER (185K records) • Plancraft (planning evaluation)" as eval_tools
 }
 
 ' Layout constraints to force proper matrix arrangement

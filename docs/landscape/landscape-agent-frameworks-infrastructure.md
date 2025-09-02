@@ -185,4 +185,3 @@ For enterprise observability solutions including Neptune.ai, Weights & Biases (W
 **Cloud-Only (Not Suitable):**
 
 - [AgentOps](https://www.agentops.ai/) - Cloud-focused Python SDK for AI agent monitoring with multi-agent collaboration analysis and specialized agent observability features. **Tracing Method**: Python SDK with `agentops.init()` automatic session tracking and `@agentops.record()` decorators. Uses callback-based collection with cloud-based analytics and remote data storage via proprietary API endpoints. **Low feasibility** for local evaluation due to cloud dependency and limited data export documentation. ([docs](https://docs.agentops.ai/v2/introduction))
-

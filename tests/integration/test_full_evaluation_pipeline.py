@@ -2,30 +2,27 @@
 """
 Integration test for the complete three-tier evaluation pipeline.
 
-This test validates the end-to-end evaluation workflow using realistic 
+This test validates the end-to-end evaluation workflow using realistic
 scientific paper content, demonstrating the integration of Traditional
 metrics, LLM-as-Judge evaluation, and Graph analysis components.
 """
 
 import asyncio
-import pytest
 import sys
-import time
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+import pytest
 
 # Ensure src directory is available for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from app.data_models.peerread_models import (
     GeneratedReview,
-    PeerReadPaper,
     PeerReadReview,
 )
 from app.evals.evaluation_pipeline import EvaluationPipeline
 from app.evals.trace_processors import get_trace_collector
-from app.utils.log import logger
 
 
 class RealisticTestData:
@@ -94,7 +91,7 @@ class RealisticTestData:
                 The combination of adaptive coordination and decentralized learning enables robust performance
                 even under challenging conditions. Future work will explore applications to edge computing
                 and IoT environments.
-                """
+                """,
         }
 
     @staticmethod
@@ -130,7 +127,7 @@ class RealisticTestData:
                 recommendation="4",
                 clarity="4",
                 reviewer_confidence="4",
-                is_meta_review=False
+                is_meta_review=False,
             ),
             PeerReadReview(
                 impact="3",
@@ -159,7 +156,7 @@ class RealisticTestData:
                 recommendation="3",
                 clarity="4",
                 reviewer_confidence="3",
-                is_meta_review=False
+                is_meta_review=False,
             ),
             PeerReadReview(
                 impact="4",
@@ -191,8 +188,8 @@ class RealisticTestData:
                 recommendation="5",
                 clarity="4",
                 reviewer_confidence="5",
-                is_meta_review=False
-            )
+                is_meta_review=False,
+            ),
         ]
         return reviews
 
@@ -200,83 +197,65 @@ class RealisticTestData:
     def create_agent_generated_review() -> GeneratedReview:
         """Create a realistic agent-generated review."""
         return GeneratedReview(
-            overall_assessment="""This paper presents DynamicMARL, a framework for multi-agent reinforcement
-            learning in distributed computing environments. The approach combines hierarchical task decomposition
-            with adaptive coordination mechanisms to achieve improved resource utilization and system performance.""",
-            
-            technical_evaluation="""The technical approach is sound and well-executed. The hierarchical task
-            decomposition strategy effectively addresses scalability challenges, while the adaptive coordination
-            protocol provides a good balance between autonomy and collaboration. The decentralized learning
-            algorithm is properly designed and theoretically motivated.""",
-            
-            experimental_assessment="""The experimental evaluation is comprehensive and convincing. Testing across
-            multiple distributed computing scenarios demonstrates the generality of the approach. The 23% improvement
+            impact=4,
+            substance=4,
+            appropriateness=5,
+            meaningful_comparison=4,
+            presentation_format="Oral",
+            comments="""This paper presents DynamicMARL, a framework for multi-agent reinforcement learning 
+            in distributed computing environments. The approach combines hierarchical task decomposition
+            with adaptive coordination mechanisms to achieve improved resource utilization and system performance.
+
+            Key contributions: The hierarchical task decomposition strategy effectively addresses scalability 
+            challenges, while the adaptive coordination protocol provides a good balance between autonomy and 
+            collaboration. The decentralized learning algorithm is properly designed and theoretically motivated.
+
+            Strengths: The experimental evaluation is comprehensive and convincing. Testing across multiple 
+            distributed computing scenarios demonstrates the generality of the approach. The 23% improvement
             in resource utilization and 31% reduction in task completion time represent significant practical gains.
-            The robustness evaluation under network partitions and agent failures is particularly valuable.""",
-            
-            strengths=[
-                "Novel hierarchical task decomposition approach",
-                "Comprehensive experimental validation across multiple scenarios", 
-                "Significant performance improvements over existing methods",
-                "Demonstrated robustness under failure conditions",
-                "Clear practical applications to distributed systems"
-            ],
-            
-            weaknesses=[
-                "Limited theoretical convergence analysis",
-                "Some implementation details could be clearer",
-                "Comparison with very recent work could be expanded",
-                "Scalability analysis could be more detailed"
-            ],
-            
-            recommendation="accept",
-            recommendation_confidence=0.78,
-            
-            detailed_comments="""The paper addresses an important and timely problem in multi-agent systems.
-            The proposed DynamicMARL framework represents a meaningful advance over existing approaches by
-            combining effective hierarchical decomposition with adaptive coordination.
-            
-            The experimental section is a particular strength, with thorough evaluation across diverse scenarios
-            and meaningful baseline comparisons. The robustness analysis adds significant value by demonstrating
-            practical applicability.
-            
-            While the theoretical analysis could be strengthened and some implementation details clarified,
-            the overall contribution is solid and will be of interest to the community. I recommend acceptance
-            with minor revisions to address the theoretical gaps and expand the related work discussion.""",
-            
-            questions_for_authors=[
-                "Can you provide convergence guarantees for the decentralized learning algorithm?",
-                "How does performance scale with the number of agents beyond the tested scenarios?",
-                "What are the computational overhead costs of the hierarchical decomposition?"
-            ]
+            The robustness evaluation under network partitions and agent failures is particularly valuable.
+
+            Weaknesses: Limited theoretical convergence analysis. Some implementation details could be clearer.
+            Comparison with very recent work could be expanded. Scalability analysis could be more detailed.
+
+            Technical soundness: The technical approach is sound and well-executed. The methodology is appropriate 
+            and the results are convincing.
+
+            Clarity: The paper is generally well-written and addresses a relevant problem. The presentation 
+            could be improved in some technical sections but overall clarity is good.""",
+            soundness_correctness=4,
+            originality=4,
+            recommendation=4,  # accept
+            clarity=4,
+            reviewer_confidence=4,
         )
 
-    @staticmethod 
+    @staticmethod
     def create_comprehensive_execution_trace() -> dict[str, Any]:
         """Create detailed execution trace with realistic agent coordination."""
         return {
             "execution_id": "comprehensive_test_2024_001",
             "agent_interactions": [
                 {
-                    "from": "TaskManager", 
+                    "from": "TaskManager",
                     "to": "ResearchAgent",
                     "type": "paper_analysis_request",
                     "timestamp": 1.0,
                     "data": {
                         "paper_id": "test_paper_2024_001",
                         "analysis_type": "comprehensive",
-                        "priority": "high"
-                    }
+                        "priority": "high",
+                    },
                 },
                 {
                     "from": "ResearchAgent",
-                    "to": "DataAnalyst", 
+                    "to": "DataAnalyst",
                     "type": "technical_analysis_request",
                     "timestamp": 2.3,
                     "data": {
                         "focus_areas": ["methodology", "experiments", "results"],
-                        "depth": "detailed"
-                    }
+                        "depth": "detailed",
+                    },
                 },
                 {
                     "from": "DataAnalyst",
@@ -287,19 +266,19 @@ class RealisticTestData:
                         "technical_score": 4.2,
                         "experimental_score": 4.5,
                         "novelty_score": 3.8,
-                        "analysis_complete": True
-                    }
+                        "analysis_complete": True,
+                    },
                 },
                 {
-                    "from": "ReviewerAgent", 
+                    "from": "ReviewerAgent",
                     "to": "QualityAssessor",
                     "type": "draft_review_submission",
                     "timestamp": 6.1,
                     "data": {
                         "review_length": 1247,
                         "recommendation": "accept",
-                        "confidence": 0.78
-                    }
+                        "confidence": 0.78,
+                    },
                 },
                 {
                     "from": "QualityAssessor",
@@ -308,9 +287,12 @@ class RealisticTestData:
                     "timestamp": 7.2,
                     "data": {
                         "quality_score": 0.85,
-                        "suggestions": ["expand technical analysis", "add more specific examples"],
-                        "approved": True
-                    }
+                        "suggestions": [
+                            "expand technical analysis",
+                            "add more specific examples",
+                        ],
+                        "approved": True,
+                    },
                 },
                 {
                     "from": "ReviewerAgent",
@@ -320,20 +302,20 @@ class RealisticTestData:
                     "data": {
                         "review_complete": True,
                         "final_recommendation": "accept",
-                        "review_quality": 0.85
-                    }
+                        "review_quality": 0.85,
+                    },
                 },
                 {
                     "from": "TaskManager",
-                    "to": "ArchiveAgent", 
+                    "to": "ArchiveAgent",
                     "type": "review_archival_request",
                     "timestamp": 9.0,
                     "data": {
                         "paper_id": "test_paper_2024_001",
                         "review_id": "comprehensive_test_2024_001",
-                        "archive_type": "permanent"
-                    }
-                }
+                        "archive_type": "permanent",
+                    },
+                },
             ],
             "tool_calls": [
                 {
@@ -342,15 +324,15 @@ class RealisticTestData:
                     "success": True,
                     "duration": 0.8,
                     "timestamp": 1.2,
-                    "context": "Parsing paper structure and extracting key sections"
+                    "context": "Parsing paper structure and extracting key sections",
                 },
                 {
                     "agent_id": "ResearchAgent",
-                    "tool_name": "reference_extractor", 
+                    "tool_name": "reference_extractor",
                     "success": True,
                     "duration": 0.5,
                     "timestamp": 1.8,
-                    "context": "Extracting and analyzing cited references"
+                    "context": "Extracting and analyzing cited references",
                 },
                 {
                     "agent_id": "DataAnalyst",
@@ -358,15 +340,15 @@ class RealisticTestData:
                     "success": True,
                     "duration": 1.2,
                     "timestamp": 2.8,
-                    "context": "Deep analysis of proposed methodology"
+                    "context": "Deep analysis of proposed methodology",
                 },
                 {
-                    "agent_id": "DataAnalyst", 
+                    "agent_id": "DataAnalyst",
                     "tool_name": "experiment_validator",
                     "success": True,
                     "duration": 1.8,
                     "timestamp": 3.5,
-                    "context": "Validating experimental design and statistical analysis"
+                    "context": "Validating experimental design and statistical analysis",
                 },
                 {
                     "agent_id": "DataAnalyst",
@@ -374,7 +356,7 @@ class RealisticTestData:
                     "success": True,
                     "duration": 0.7,
                     "timestamp": 4.2,
-                    "context": "Verifying reported results and statistical significance"
+                    "context": "Verifying reported results and statistical significance",
                 },
                 {
                     "agent_id": "ReviewerAgent",
@@ -382,7 +364,7 @@ class RealisticTestData:
                     "success": True,
                     "duration": 0.3,
                     "timestamp": 5.0,
-                    "context": "Generating structured review template"
+                    "context": "Generating structured review template",
                 },
                 {
                     "agent_id": "ReviewerAgent",
@@ -390,7 +372,7 @@ class RealisticTestData:
                     "success": True,
                     "duration": 0.9,
                     "timestamp": 5.8,
-                    "context": "Checking for similarity with existing work"
+                    "context": "Checking for similarity with existing work",
                 },
                 {
                     "agent_id": "QualityAssessor",
@@ -398,7 +380,7 @@ class RealisticTestData:
                     "success": True,
                     "duration": 0.6,
                     "timestamp": 7.5,
-                    "context": "Evaluating review completeness and quality"
+                    "context": "Evaluating review completeness and quality",
                 },
                 {
                     "agent_id": "ArchiveAgent",
@@ -406,8 +388,8 @@ class RealisticTestData:
                     "success": True,
                     "duration": 0.4,
                     "timestamp": 9.2,
-                    "context": "Archiving review and associated metadata"
-                }
+                    "context": "Archiving review and associated metadata",
+                },
             ],
             "coordination_events": [
                 {
@@ -418,8 +400,8 @@ class RealisticTestData:
                     "data": {
                         "task_id": "comprehensive_review_2024_001",
                         "deadline": "2024-03-15T18:00:00Z",
-                        "priority": "high"
-                    }
+                        "priority": "high",
+                    },
                 },
                 {
                     "coordination_type": "synchronization_point",
@@ -429,8 +411,8 @@ class RealisticTestData:
                     "data": {
                         "sync_type": "analysis_complete",
                         "required_agents": ["DataAnalyst"],
-                        "waiting_agents": ["ReviewerAgent"]
-                    }
+                        "waiting_agents": ["ReviewerAgent"],
+                    },
                 },
                 {
                     "coordination_type": "quality_gate",
@@ -440,10 +422,10 @@ class RealisticTestData:
                     "data": {
                         "gate_type": "review_quality_check",
                         "threshold": 0.8,
-                        "result": "passed"
-                    }
-                }
-            ]
+                        "result": "passed",
+                    },
+                },
+            ],
         }
 
 
@@ -461,7 +443,9 @@ class TestFullEvaluationPipeline:
         return EvaluationPipeline()
 
     @pytest.mark.asyncio
-    async def test_comprehensive_evaluation_workflow(self, realistic_test_data, evaluation_pipeline):
+    async def test_comprehensive_evaluation_workflow(
+        self, realistic_test_data, evaluation_pipeline
+    ):
         """Test complete evaluation workflow with realistic data."""
         # Create comprehensive test data
         paper_data = realistic_test_data.create_scientific_paper()
@@ -475,15 +459,20 @@ class TestFullEvaluationPipeline:
         # Execute comprehensive evaluation
         result = await evaluation_pipeline.evaluate_comprehensive(
             paper=paper_data["abstract"],
-            review=agent_review.detailed_comments,
+            review=agent_review.comments,
             execution_trace=execution_trace,
-            reference_reviews=reference_texts
+            reference_reviews=reference_texts,
         )
 
         # Validate results
         assert result is not None
         assert result.composite_score > 0.0
-        assert result.recommendation in ["accept", "weak_accept", "weak_reject", "reject"]
+        assert result.recommendation in [
+            "accept",
+            "weak_accept",
+            "weak_reject",
+            "reject",
+        ]
         assert result.evaluation_complete is True
 
         # Validate tier scores
@@ -511,7 +500,7 @@ class TestFullEvaluationPipeline:
             from_agent="TestManager",
             to_agent="TestAgent",
             interaction_type="test_request",
-            data={"test_type": "integration"}
+            data={"test_type": "integration"},
         )
 
         trace_collector.log_tool_call(
@@ -519,7 +508,7 @@ class TestFullEvaluationPipeline:
             tool_name="test_evaluator",
             success=True,
             duration=0.5,
-            context="Integration test validation"
+            context="Integration test validation",
         )
 
         # End trace collection
@@ -532,7 +521,9 @@ class TestFullEvaluationPipeline:
         assert len(processed_trace.tool_calls) > 0
 
     @pytest.mark.asyncio
-    async def test_error_handling_and_fallbacks(self, realistic_test_data, evaluation_pipeline):
+    async def test_error_handling_and_fallbacks(
+        self, realistic_test_data, evaluation_pipeline
+    ):
         """Test error handling and fallback mechanisms."""
         paper_data = realistic_test_data.create_scientific_paper()
         agent_review = realistic_test_data.create_agent_generated_review()
@@ -540,7 +531,7 @@ class TestFullEvaluationPipeline:
         # Test with minimal data to trigger potential fallbacks
         result = await evaluation_pipeline.evaluate_comprehensive(
             paper=paper_data["abstract"],
-            review=agent_review.detailed_comments
+            review=agent_review.comments,
             # No execution_trace or reference_reviews to test robustness
         )
 
@@ -556,34 +547,37 @@ class TestFullEvaluationPipeline:
 
 if __name__ == "__main__":
     """Run the integration test directly."""
+
     async def run_integration_test():
         data = RealisticTestData()
         pipeline = EvaluationPipeline()
-        
+
         print("Running comprehensive integration test...")
-        
+
         paper_data = data.create_scientific_paper()
         reference_reviews = data.create_reference_reviews()
         agent_review = data.create_agent_generated_review()
         execution_trace = data.create_comprehensive_execution_trace()
-        
+
         reference_texts = [review.comments for review in reference_reviews]
-        
+
         result = await pipeline.evaluate_comprehensive(
             paper=paper_data["abstract"],
-            review=agent_review.detailed_comments,
+            review=agent_review.comments,
             execution_trace=execution_trace,
-            reference_reviews=reference_texts
+            reference_reviews=reference_texts,
         )
-        
-        print(f"✅ Integration test completed successfully!")
+
+        print("✅ Integration test completed successfully!")
         print(f"   Composite Score: {result.composite_score:.3f}")
         print(f"   Recommendation: {result.recommendation}")
         print(f"   All tiers executed: {result.evaluation_complete}")
-        
+
         stats = pipeline.get_execution_stats()
-        print(f"   Performance: {stats['total_time']:.3f}s, tiers: {stats['tiers_executed']}")
-        
+        print(
+            f"   Performance: {stats['total_time']:.3f}s, tiers: {stats['tiers_executed']}"
+        )
+
         return result
 
     asyncio.run(run_integration_test())
