@@ -11,10 +11,9 @@ features:
   - cross-references
   - relationship-explanations
   - clustering-by-themes
-papers_count: 95+
+papers_count: 100+
 coverage_period: 2022-10 to 2025-08
 last_updated: 2025-09-02
-maintainer: AI Agent Evaluation Team
 ---
 
 ## Overview
@@ -31,7 +30,7 @@ This document provides a comprehensive, curated collection of research papers on
 
 ### Document Features
 
-- 95+ papers covering 2022-2025 research
+- 100+ papers covering 2022-2025 research
 - 14 thematic tags for categorization
 - Cross-references with relationship explanations
 - Chronological organization preserving research timeline
@@ -43,20 +42,20 @@ This document provides a comprehensive, curated collection of research papers on
 
 ## Paper Tags and Categories Legend
 
-- `[EVAL]` - Evaluation frameworks and benchmarks
-- `[SURVEY]` - Survey and review papers
 - `[ARCH]` - Architecture and system design
-- `[SAFETY]` - Safety, governance, and risk management
+- `[AUTO]` - Automation and workflow
 - `[BENCH]` - Benchmarking and performance measurement
-- `[TOOL]` - Tool use and integration
+- `[CODE]` - Code generation and programming
+- `[COMP]` - Compliance and observability
+- `[EVAL]` - Evaluation frameworks and benchmarks
 - `[MAS]` - Multi-agent systems
 - `[MEM]` - Memory mechanisms
 - `[PLAN]` - Planning and reasoning
-- `[CODE]` - Code generation and programming
+- `[SAFETY]` - Safety, governance, and risk management
 - `[SCI]` - Scientific discovery and research
 - `[SPEC]` - Domain-specific applications
-- `[AUTO]` - Automation and workflow
-- `[COMP]` - Compliance and observability
+- `[SURVEY]` - Survey and review papers
+- `[TOOL]` - Tool use and integration
 
 ## Thematic Clusters
 
@@ -106,11 +105,46 @@ This document provides a comprehensive, curated collection of research papers on
 - Explanations: 2507.22414 (symbolic explanations), 2402.01030 (executable actions)
 - Applications: 2506.13131 (AlphaEvolve), 2410.14393 (debug agents)
 
+**Self-Improvement & Reflection** `[AUTO]`:
+
+- Self-reflection: 2303.11366 (Reflexion foundation), 2405.06682 (self-reflection effects)
+- Recursive improvement: 2407.18219 (recursive introspection), 2410.04444 (Gödel Agent)
+- Training approaches: 2406.01495 (Re-ReST), 2508.15805 (ALAS autonomous learning)
+- Human guidance: 2507.17131 (HITL self-improvement), 2508.07407 (self-evolving survey)
+
+## Future Research Areas
+
+The following areas represent emerging or under-explored topics in agentic AI research that warrant additional investigation:
+
+**Advanced Multi-Modal Agents** - Integration of vision, audio, and text processing for comprehensive environmental understanding beyond current multi-modal benchmarks.
+
+**Long-Term Memory & Retrieval** - Advanced memory architectures for persistent knowledge retention and contextual recall across extended agent interactions.
+
+**Human-AI Collaboration** - Frameworks for seamless human-agent teamwork, including explanation mechanisms, trust calibration, and collaborative decision-making.
+
+**Adversarial Robustness** - Agent resilience against adversarial attacks, prompt injection, and manipulation attempts in production environments.
+
+**Automated Code Generation Agents** - Next-generation coding assistants with advanced debugging, testing, and architectural design capabilities.
+
+**Edge & Resource-Constrained Deployment** - Efficient agent architectures for mobile devices, IoT systems, and bandwidth-limited environments.
+
+**Governance & Policy Implementation** - Practical frameworks for regulatory compliance, audit trails, and policy enforcement in agent systems.
+
+**Long-Term Autonomy & Reliability** - Systems capable of sustained autonomous operation with minimal human intervention over extended periods.
+
+**Domain Transfer & Generalization** - Techniques for rapid agent adaptation across different domains with minimal retraining or fine-tuning.
+
 ## 2025-08
 
+- [[2508.15805] ALAS: Autonomous Learning Agent for Self-Updating Language Models](https://arxiv.org/abs/2508.15805) `[AUTO]` `[ARCH]` `cs.AI` `cs.LG`
+  - Autonomous learning framework for continuous self-updating of language models with data acquisition and fine-tuning pipeline
+  - Cross-ref: 2507.17131 (HITL self-improvement), 2410.04444 (Gödel Agent recursive improvement)
 - [[2508.10146] Agentic AI Frameworks: Architectures, Protocols, and Design Challenges](https://arxiv.org/abs/2508.10146) `[ARCH]` `[SURVEY]` `cs.AI` `cs.SE`
   - Systematic review of leading agentic AI frameworks including CrewAI, LangGraph, AutoGen, and MetaGPT with architectural analysis
   - Cross-ref: 2502.05957 (AutoAgent framework), 2501.00881 (industry applications)
+- [[2508.07407] A Comprehensive Survey of Self-Evolving AI Agents: A New Paradigm Bridging Foundation Models and Lifelong Agentic Systems](https://arxiv.org/abs/2508.07407) `[SURVEY]` `[AUTO]` `cs.AI` `cs.LG`
+  - Comprehensive survey of self-evolving agents covering evolutionary techniques, environmental feedback, and lifelong learning paradigms
+  - Cross-ref: 2507.21046 (self-evolving survey), 2505.22954 (Darwin Godel Machine)
 - [[2508.03858] MI9 - Agent Intelligence Protocol: Runtime Governance forAgentic AI Systems](https://arxiv.org/abs/2508.03858) `[SAFETY]` `[ARCH]` `cs.AI` `cs.CR`
   - Runtime governance framework for ensuring safe and controllable agentic AI systems
   - Cross-ref: 2408.02205 (complementary safety layers), 2506.04133 (similar safety framework), 2302.10329 (foundational risk analysis)
@@ -126,6 +160,9 @@ This document provides a comprehensive, curated collection of research papers on
 - [[2507.23276] How Far Are AI Scientists from Changing the World?](https://arxiv.org/abs/2507.23276), [gh/ResearAI/Awesome-AI-Scientist](https://github.com/ResearAI/Awesome-AI-Scientist) `[SCI]` `[SURVEY]`
   - Survey of research on AI scientists, AI researchers, AI engineers, and a series of AI-driven research studies
   - Cross-ref: 2408.06292 (automated scientific discovery implementation), 2506.18096 (systematic research agent analysis)
+- [[2507.17131] Enabling Self-Improving Agents to Learn at Test Time With Human-In-The-Loop Guidance](https://arxiv.org/abs/2507.17131) `[AUTO]` `[ARCH]` `cs.AI` `cs.HC`
+  - Framework for enabling agents to self-improve through human-in-the-loop guidance and knowledge gap assessment
+  - Cross-ref: 2508.15805 (ALAS autonomous learning), 2405.06682 (self-reflection effects)
 - [[2507.22414] AutoCodeSherpa: Symbolic Explanations in AI Coding Agents](https://arxiv.org/abs/2507.22414) `[CODE]` `[ARCH]`
   - Framework for providing symbolic explanations of code generation decisions in AI coding agents
   - Cross-ref: 2402.01030 (code action effectiveness), 2506.13131 (evolutionary coding approach)
@@ -309,6 +346,9 @@ This document provides a comprehensive, curated collection of research papers on
 - [[2410.06703] ST-WebAgentBench: A Benchmark for Evaluating Safety and Trustworthiness in Web Agents](https://arxiv.org/abs/2410.06703) `[BENCH]` `[SAFETY]` `cs.AI` `cs.CR`
   - Benchmark for evaluating safety and trustworthiness of web agents in enterprise environments
   - Cross-ref: 2307.13854 (WebArena foundation), 2401.13649 (VisualWebArena)
+- [[2410.04444] Gödel Agent: A Self-Referential Agent Framework for Recursive Self-Improvement](https://arxiv.org/abs/2410.04444) `[AUTO]` `[ARCH]` `cs.AI` `cs.LG`
+  - Self-referential framework inspired by Gödel machines enabling recursive self-improvement without predefined routines
+  - Cross-ref: 2505.22954 (Darwin Godel Machine), 2508.15805 (ALAS autonomous learning)
 - [[2410.02810] StateAct: State Tracking and Reasoning for Acting and Planning with Large Language Models](https://arxiv.org/abs/2410.02810) `[PLAN]` `[ARCH]` `cs.AI` `cs.CL`
   - Framework for state tracking and reasoning in LLM-based agents for improved planning and acting
   - Cross-ref: 2210.03629 (ReAct foundation), 2310.04406 (LATS reasoning)
@@ -334,6 +374,24 @@ This document provides a comprehensive, curated collection of research papers on
 - [[2408.02205] A Taxonomy of Multi-layered Runtime Guardrails for Designing Foundation Model-based Agents: Swiss Cheese Model for AI Safety by Design](https://arxiv.org/abs/2408.02205) `[SAFETY]` `[ARCH]`
   - Taxonomy of multi-layered runtime guardrails for safe foundation model-based agent design using Swiss cheese safety model
   - Cross-ref: 2508.03858 (governance protocol), 2506.04133 (TRiSM)
+
+## 2024-07
+
+- [[2407.18219] Recursive Introspection: Teaching Language Model Agents How to Self-Improve](https://arxiv.org/abs/2407.18219) `[AUTO]` `[ARCH]` `cs.AI` `cs.LG`
+  - RISE framework for fine-tuning LLMs to introduce recursive introspection and self-improvement capabilities
+  - Cross-ref: 2405.06682 (self-reflection effects), 2410.04444 (Gödel Agent recursive)
+
+## 2024-06
+
+- [[2406.01495] Re-ReST: Reflection-Reinforced Self-Training for Language Agents](https://arxiv.org/abs/2406.01495) `[AUTO]` `[ARCH]` `cs.AI` `cs.LG`
+  - Reflection-reinforced self-training approach using environmental feedback to enhance sample quality and agent performance
+  - Cross-ref: 2303.11366 (Reflexion foundation), 2407.18219 (recursive introspection)
+
+## 2024-05
+
+- [[2405.06682] Self-Reflection in LLM Agents: Effects on Problem-Solving Performance](https://arxiv.org/abs/2405.06682) `[AUTO]` `[EVAL]` `cs.AI` `cs.CL`
+  - Empirical study demonstrating significant improvement in problem-solving through self-reflection mechanisms
+  - Cross-ref: 2407.18219 (recursive introspection), 2303.11366 (Reflexion framework)
 
 ## 2024-04
 
@@ -376,6 +434,12 @@ This document provides a comprehensive, curated collection of research papers on
 - [[2308.03688] AgentBench: Evaluating LLMs as Agents](https://arxiv.org/abs/2308.03688) `[BENCH]` `[EVAL]` `cs.AI` `cs.CL`
   - Comprehensive benchmark for evaluating LLMs as autonomous agents across diverse tasks and environments
   - Cross-ref: 2404.06411 (modular benchmark evolution), 2401.13178 (multi-turn evaluation specialization)
+
+## 2023-03
+
+- [[2303.11366] Reflexion: Language Agents with Verbal Reinforcement Learning](https://arxiv.org/abs/2303.11366) `[AUTO]` `[ARCH]` `cs.AI` `cs.CL`
+  - Foundational framework for self-reflective agents using verbal reinforcement learning and iterative improvement
+  - Cross-ref: 2405.06682 (self-reflection effects), 2406.01495 (Re-ReST extension)
 
 ## 2023-02
 
