@@ -134,6 +134,16 @@ The following areas represent emerging or under-explored topics in agentic AI re
 
 **Domain Transfer & Generalization** - Techniques for rapid agent adaptation across different domains with minimal retraining or fine-tuning.
 
+### Priority Research Focus
+
+Based on current gaps and transformative potential, three areas warrant immediate attention:
+
+**1. Compositional Self-Improvement** - Moving beyond single-agent reflection to systems that can redesign their own architectures, create specialized sub-agents, and evolve coordination protocols. This represents the next leap from current self-reflection work toward truly recursive intelligence.
+
+**2. Persistent Contextual Memory** - Current agents lack genuine episodic memory across sessions. Developing memory systems that maintain context, relationships, and learned preferences over months or years is critical for practical deployment and user trust.
+
+**3. Robust Human-Agent Teaming** - Most current work treats humans as either supervisors or users. Research on agents as true collaborators—with theory-of-mind, explanation capabilities, and dynamic role adaptation—is essential for high-stakes domains like healthcare, research, and decision-making.
+
 ## 2025-08
 
 - [[2508.15805] ALAS: Autonomous Learning Agent for Self-Updating Language Models](https://arxiv.org/abs/2508.15805) `[AUTO]` `[ARCH]` `cs.AI` `cs.LG`
