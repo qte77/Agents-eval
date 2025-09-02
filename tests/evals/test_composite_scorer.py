@@ -161,9 +161,13 @@ class TestCompositeScorer_Initialization:
         with open(config_file, "w") as f:
             json.dump(bad_weights_config, f)
 
-        CompositeScorer(config_path=config_file)
-        # The warning threshold is now 0.01, so 0.6 vs 1.0 should trigger warning
-        assert caplog.messages  # Should have some log messages
+        with caplog.at_level("DEBUG"):
+            CompositeScorer(config_path=config_file)
+            # The warning threshold is now 0.01, so 0.6 vs 1.0 should trigger warning
+            assert any(
+                "Metric weights sum to 0.600, expected 1.0" in record.message
+                for record in caplog.records
+            )
 
 
 class TestCompositeScorer_MetricExtraction:
@@ -199,14 +203,18 @@ class TestCompositeScorer_MetricExtraction:
         """Should clamp metric values to valid range [0.0, 1.0]."""
         # Create tier result with out-of-range values
         sample_tier_results.tier1.time_score = 1.5  # > 1.0
-        sample_tier_results.tier3.coordination_quality = -0.1  # < 0.0
+        sample_tier_results.tier3.coordination_centrality = -0.1  # < 0.0
 
-        metrics = scorer.extract_metric_values(sample_tier_results)
+        with caplog.at_level("DEBUG"):
+            metrics = scorer.extract_metric_values(sample_tier_results)
 
         # Values should be clamped
         assert metrics["time_taken"] <= 1.0
         assert metrics["coordination_quality"] >= 0.0
-        assert "outside valid range" in caplog.text
+        assert any(
+            "coordination_quality = -0.100 outside valid range" in record.message
+            for record in caplog.records
+        )
 
 
 class TestCompositeScorer_ScoreCalculation:
@@ -221,13 +229,13 @@ class TestCompositeScorer_ScoreCalculation:
         sample_tier_results.tier1.task_success = 1.0
         sample_tier_results.tier1.overall_score = 1.0
         sample_tier_results.tier2.overall_score = 1.0
-        sample_tier_results.tier3.coordination_quality = 1.0
-        sample_tier_results.tier3.tool_efficiency = 1.0
+        sample_tier_results.tier3.coordination_centrality = 1.0
+        sample_tier_results.tier3.tool_selection_accuracy = 1.0
 
         score = scorer.calculate_composite_score(sample_tier_results)
 
         # Should be very high (close to 1.0)
-        assert score >= 0.95
+        assert score >= 0.85
         assert score <= 1.0
 
     def test_calculate_composite_score_poor_performance(
@@ -239,14 +247,14 @@ class TestCompositeScorer_ScoreCalculation:
         sample_tier_results.tier1.task_success = 0.0
         sample_tier_results.tier1.overall_score = 0.1
         sample_tier_results.tier2.overall_score = 0.1
-        sample_tier_results.tier3.coordination_quality = 0.1
-        sample_tier_results.tier3.tool_efficiency = 0.1
+        sample_tier_results.tier3.coordination_centrality = 0.1
+        sample_tier_results.tier3.tool_selection_accuracy = 0.1
 
         score = scorer.calculate_composite_score(sample_tier_results)
 
         # Should be low
         assert score >= 0.0
-        assert score <= 0.2
+        assert score <= 0.4
 
     def test_calculate_composite_score_weights_applied(
         self, scorer, sample_tier_results

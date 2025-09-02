@@ -47,7 +47,6 @@ async def test_pipeline_execution_timing():
     pipeline = EvaluationPipeline()
 
     # When: Running pipeline execution tracking
-    start_time = time.time()
     stats = pipeline.get_execution_stats()
 
     # Then: Verify timing infrastructure exists

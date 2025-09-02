@@ -41,6 +41,33 @@ When documenting a new pattern, use this format:
 
 Agents should add new patterns discovered during development here.
 
+### Learned Pattern: Comprehensive Error Handling and Performance Monitoring
+
+- **Date**: 2025-09-02T14:50:00Z
+- **Context**: Evaluation pipeline enhancement for Phase 2 integration
+- **Problem**: Basic error handling lacked context, performance bottlenecks were not identified, fallback strategies needed better reporting
+- **Solution**: Implemented layered error handling with context-specific guidance, performance analysis with bottleneck detection, and detailed failure tracking with monitoring capabilities
+- **Example**:
+
+  ```python
+  # Enhanced error handling with context
+  except TimeoutError as e:
+      execution_time = time.time() - start_time
+      error_msg = f"Tier 2 timeout after {timeout}s (LLM-as-Judge evaluation)"
+      logger.error(f"{error_msg}. Consider increasing tier2_max_seconds or check LLM service availability.")
+      self._record_tier_failure(2, "timeout", execution_time, error_msg)
+      return None, execution_time
+      
+  # Performance bottleneck detection
+  bottleneck_threshold = total_time * 0.4
+  for tier, time_taken in tier_times.items():
+      if time_taken > bottleneck_threshold:
+          logger.warning(f"Performance bottleneck detected: {tier} took {time_taken:.2f}s")
+  ```
+
+- **Validation**: All 19 pipeline tests pass, enhanced error messages provide actionable guidance, performance metrics collected successfully
+- **References**: src/app/evals/evaluation_pipeline.py - comprehensive enhancement of error handling, performance monitoring, and fallback strategies
+
 ### Learned Pattern: PlantUML Theming
 
 - **Date**: 2025-08-05T00:00:00Z

@@ -498,7 +498,8 @@ class TestComprehensiveEvaluation:
             )
 
             assert result == sample_composite_result
-            mock_warning.assert_called_once()
+            # Should have warning calls (could be multiple for different bottlenecks)
+            assert mock_warning.call_count >= 1
             assert "Pipeline exceeded time target" in str(mock_warning.call_args)
 
 

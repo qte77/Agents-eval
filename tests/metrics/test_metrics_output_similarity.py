@@ -12,7 +12,8 @@ def calculate_output_similarity(agent_output: str, expected_answer: str) -> floa
     """
     Calculate similarity score between agent output and expected answer.
 
-    This replaces the legacy metrics.output_similarity function with inline implementation.
+    This replaces the legacy metrics.output_similarity function with
+    inline implementation.
     """
     if not agent_output and not expected_answer:
         return 1.0  # Both empty strings are identical

@@ -6,7 +6,7 @@ Handles model instantiation for different providers in a unified way.
 """
 
 from pydantic_ai.models import Model
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from app.data_models.app_models import EndpointConfig, ModelDict
@@ -55,7 +55,7 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
     # Special handling for different providers
     if provider == "ollama":
         # For Ollama, use the configured base URL directly
-        return OpenAIModel(
+        return OpenAIChatModel(
             model_name=model_name,
             provider=OpenAIProvider(
                 base_url=base_url,
@@ -64,7 +64,7 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
         )
     elif provider == "openai":
         # For OpenAI, use standard OpenAI endpoint
-        return OpenAIModel(
+        return OpenAIChatModel(
             model_name=model_name,
             provider=OpenAIProvider(
                 api_key=api_key or "not-required",
@@ -72,7 +72,7 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
         )
     elif provider in ["openrouter", "github"]:
         # For OpenRouter and GitHub, use their custom base URLs with OpenAI format
-        return OpenAIModel(
+        return OpenAIChatModel(
             model_name=model_name,
             provider=OpenAIProvider(
                 base_url=base_url,
@@ -83,14 +83,14 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
         # For Gemini, we need to use Google's Gemini model directly
         # Since PydanticAI supports Gemini natively, import and use it
         try:
-            from pydantic_ai.models.gemini import GeminiModel
+            from pydantic_ai.models.google import GoogleModel
 
-            # GeminiModel uses different parameter name for API key
-            return GeminiModel(model_name=model_name)
+            # GoogleModel uses different parameter name for API key
+            return GoogleModel(model_name=model_name)
         except ImportError:
-            logger.warning("GeminiModel not available, falling back to OpenAI format")
+            logger.warning("GoogleModel not available, falling back to OpenAI format")
             # Fallback to OpenAI format with custom base URL
-            return OpenAIModel(
+            return OpenAIChatModel(
                 model_name=model_name,
                 provider=OpenAIProvider(
                     base_url=base_url,
@@ -99,7 +99,7 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
             )
     else:
         # For other providers, use their configured base URLs with OpenAI format
-        return OpenAIModel(
+        return OpenAIChatModel(
             model_name=model_name,
             provider=OpenAIProvider(
                 base_url=base_url,
@@ -153,12 +153,12 @@ def create_simple_model(
         Model: PydanticAI model instance
     """
     if provider.lower() == "openai":
-        return OpenAIModel(
+        return OpenAIChatModel(
             model_name=model_name,
             provider=OpenAIProvider(api_key=api_key or "not-required"),
         )
     elif provider.lower() == "github":
-        return OpenAIModel(
+        return OpenAIChatModel(
             model_name=model_name,
             provider=OpenAIProvider(
                 base_url="https://models.inference.ai.azure.com",
@@ -167,7 +167,7 @@ def create_simple_model(
         )
     else:
         # Generic OpenAI-compatible format
-        return OpenAIModel(
+        return OpenAIChatModel(
             model_name=model_name,
             provider=OpenAIProvider(api_key=api_key or "not-required"),
         )

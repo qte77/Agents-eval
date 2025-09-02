@@ -13,90 +13,93 @@ from app.data_models.evaluation_models import Tier2Result
 from app.evals.llm_evaluation_managers import LLMJudgeEngine
 
 
-class TestLLMJudgeEngine:
-    """Test suite for LLM-as-Judge evaluation engine."""
-
-    @pytest.fixture
-    def config(self):
-        """Fixture providing LLM judge configuration."""
-        return {
-            "tier2_llm_judge": {
-                "model": "gpt-4o-mini",
-                "max_retries": 2,
-                "timeout_seconds": 30.0,
-                "paper_excerpt_length": 2000,
-                "cost_budget_usd": 0.05,
-                "weights": {
-                    "technical_accuracy": 0.4,
-                    "constructiveness": 0.3,
-                    "planning_rationality": 0.3,
-                },
-            }
-        }
-
-    @pytest.fixture
-    def engine(self, config):
-        """Fixture providing LLMJudgeEngine instance."""
-        return LLMJudgeEngine(config)
-
-    @pytest.fixture
-    def sample_data(self):
-        """Fixture providing sample evaluation data."""
-        return {
-            "paper": """This paper presents a novel approach to machine learning using 
-                       transformer architectures for natural language processing tasks. 
-                       The methodology involves fine-tuning pre-trained models on 
-                       domain-specific datasets with comprehensive evaluation across 
-                       multiple benchmarks.""",
-            "review": """The paper demonstrates solid technical methodology with clear 
-                        experimental design. However, the evaluation could be more 
-                        comprehensive and the writing clarity could be improved. 
-                        I recommend acceptance with minor revisions to address 
-                        presentation issues.""",
-            "execution_trace": {
-                "agent_interactions": [
-                    {
-                        "from": "Manager",
-                        "to": "Researcher",
-                        "type": "task_request",
-                        "timestamp": 1.0,
-                    },
-                    {
-                        "from": "Researcher",
-                        "to": "Analyst",
-                        "type": "data_transfer",
-                        "timestamp": 2.0,
-                    },
-                ],
-                "tool_calls": [
-                    {
-                        "tool_name": "paper_retrieval",
-                        "timestamp": 1.5,
-                        "success": True,
-                        "duration": 0.5,
-                    },
-                    {
-                        "tool_name": "duckduckgo_search",
-                        "timestamp": 2.5,
-                        "success": True,
-                        "duration": 1.0,
-                    },
-                ],
-                "coordination_events": [
-                    {
-                        "coordination_type": "delegation",
-                        "target_agents": ["Researcher"],
-                        "timestamp": 1.0,
-                    }
-                ],
+@pytest.fixture
+def config():
+    """Fixture providing LLM judge configuration."""
+    return {
+        "tier2_llm_judge": {
+            "model": "gpt-4o-mini",
+            "max_retries": 2,
+            "timeout_seconds": 30.0,
+            "paper_excerpt_length": 2000,
+            "cost_budget_usd": 0.05,
+            "weights": {
+                "technical_accuracy": 0.4,
+                "constructiveness": 0.3,
+                "planning_rationality": 0.3,
             },
         }
+    }
+
+
+@pytest.fixture
+def engine(config):
+    """Fixture providing LLMJudgeEngine instance."""
+    return LLMJudgeEngine(config)
+
+
+@pytest.fixture
+def sample_data():
+    """Fixture providing sample evaluation data."""
+    return {
+        "paper": """This paper presents a novel approach to machine learning using 
+                   transformer architectures for natural language processing tasks. 
+                   The methodology involves fine-tuning pre-trained models on 
+                   domain-specific datasets with comprehensive evaluation across 
+                   multiple benchmarks.""",
+        "review": """The paper demonstrates solid technical methodology with clear 
+                    experimental design. However, the evaluation could be more 
+                    comprehensive and the writing clarity could be improved. 
+                    I recommend acceptance with minor revisions to address 
+                    presentation issues.""",
+        "execution_trace": {
+            "agent_interactions": [
+                {
+                    "from": "Manager",
+                    "to": "Researcher",
+                    "type": "task_request",
+                    "timestamp": 1.0,
+                },
+                {
+                    "from": "Researcher",
+                    "to": "Analyst",
+                    "type": "data_transfer",
+                    "timestamp": 2.0,
+                },
+            ],
+            "tool_calls": [
+                {
+                    "tool_name": "paper_retrieval",
+                    "timestamp": 1.5,
+                    "success": True,
+                    "duration": 0.5,
+                },
+                {
+                    "tool_name": "duckduckgo_search",
+                    "timestamp": 2.5,
+                    "success": True,
+                    "duration": 1.0,
+                },
+            ],
+            "coordination_events": [
+                {
+                    "coordination_type": "delegation",
+                    "target_agents": ["Researcher"],
+                    "timestamp": 1.0,
+                }
+            ],
+        },
+    }
+
+
+class TestLLMJudgeEngine:
+    """Test suite for LLM-as-Judge evaluation engine."""
 
     def test_engine_initialization(self, config):
         """Given configuration, LLM judge engine should initialize properly."""
         engine = LLMJudgeEngine(config)
 
-        assert engine.default_model == "gpt-4o-mini"
+        assert engine.model == "gpt-4o-mini"
         assert engine.max_retries == 2
         assert engine.timeout == 30.0
         assert engine.paper_excerpt_length == 2000
@@ -104,7 +107,7 @@ class TestLLMJudgeEngine:
 
     # Technical accuracy assessment tests
     @pytest.mark.asyncio
-    @patch("app.evals.llm_judge.Agent")
+    @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
     async def test_assess_technical_accuracy_success(
         self, mock_wait_for, mock_agent_class, engine, sample_data
@@ -131,7 +134,7 @@ class TestLLMJudgeEngine:
         assert 0.0 <= score <= 1.0
 
     @pytest.mark.asyncio
-    @patch("app.evals.llm_judge.Agent")
+    @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
     async def test_assess_technical_accuracy_timeout(
         self, mock_wait_for, mock_agent_class, engine, sample_data
@@ -154,7 +157,7 @@ class TestLLMJudgeEngine:
 
     # Constructiveness assessment tests
     @pytest.mark.asyncio
-    @patch("app.evals.llm_judge.Agent")
+    @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
     async def test_assess_constructiveness_success(
         self, mock_wait_for, mock_agent_class, engine, sample_data
@@ -179,7 +182,7 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     async def test_assess_constructiveness_fallback(self, engine, sample_data):
         """Given LLM failure, should use fallback constructiveness check."""
-        with patch("app.evals.llm_judge.Agent", side_effect=Exception("Model error")):
+        with patch("pydantic_ai.Agent", side_effect=Exception("Model error")):
             with patch.object(
                 engine, "_fallback_constructiveness_check", return_value=0.6
             ) as mock_fallback:
@@ -206,7 +209,7 @@ class TestLLMJudgeEngine:
 
     # Planning rationality assessment tests
     @pytest.mark.asyncio
-    @patch("app.evals.llm_judge.Agent")
+    @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
     async def test_assess_planning_rationality_success(
         self, mock_wait_for, mock_agent_class, engine, sample_data
@@ -264,7 +267,7 @@ class TestLLMJudgeEngine:
                 with patch.object(
                     engine, "assess_planning_rationality", return_value=0.75
                 ):
-                    result = await engine.evaluate_llm_judge(
+                    result = await engine.evaluate_comprehensive(
                         sample_data["paper"],
                         sample_data["review"],
                         sample_data["execution_trace"],
@@ -297,7 +300,7 @@ class TestLLMJudgeEngine:
                         "compute_semantic_similarity",
                         return_value=0.6,
                     ):
-                        result = await engine.evaluate_llm_judge(
+                        result = await engine.evaluate_comprehensive(
                             sample_data["paper"],
                             sample_data["review"],
                             sample_data["execution_trace"],
@@ -324,7 +327,7 @@ class TestLLMJudgeEngine:
                     "assess_planning_rationality",
                     side_effect=Exception("Complete failure"),
                 ):
-                    result = await engine.evaluate_llm_judge(
+                    result = await engine.evaluate_comprehensive(
                         sample_data["paper"],
                         sample_data["review"],
                         sample_data["execution_trace"],
@@ -376,7 +379,7 @@ class TestLLMJudgePerformance:
         long_paper = "This is a very long paper. " * 50  # Much longer than 100 chars
         review = "Test review"
 
-        with patch("app.evals.llm_judge.Agent") as mock_agent_class:
+        with patch("pydantic_ai.Agent") as mock_agent_class:
             mock_agent = Mock()
             mock_agent.run = AsyncMock(
                 return_value=Mock(
