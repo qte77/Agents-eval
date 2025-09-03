@@ -29,7 +29,7 @@ from app.utils.log import logger
 
 # Set up Opik imports with fallback
 OPIK_AVAILABLE: bool = False
-track = None # type: ignore
+track = None  # type: ignore
 
 try:
     from opik import track  # type: ignore

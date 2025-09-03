@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_plantuml setup_pdf_converter setup_ollama start_ollama stop_ollama clean_ollama setup_dataset_sample ruff run_cli run_gui run_profile run_plantuml prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
+.PHONY: setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_claude_code setup_gemini_cli setup_plantuml setup_pdf_converter setup_markdownlint setup_opik_env setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff test_all coverage_all type_check validate quick_validate output_unset_app_env_sh start_opik stop_opik clean_opik status_opik help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -154,13 +154,14 @@ run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 # MARK: run pandoc
 
 
-run_pandoc:  ## Convert MD to PDF using pandoc. Usage from root: dir=docs/write-up/claude/markdown_de && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf" TITLE_PAGE="$dir/01_titel_abstrakt.tex" TOC_TITLE="Inhaltsverzeichnis" | For help: make run_pandoc HELP=1
+run_pandoc:  ## Convert MD to PDF using pandoc. Usage from root: dir=docs/write-up/en && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf" TITLE_PAGE="$dir/00a_title_abstract.tex" TOC_TITLE="ToC Title" | For help: make run_pandoc HELP=1
 	if [ -n "$(HELP)" ]; then
 		$(PANDOC_SCRIPT) help
 	else
 		chmod +x $(PANDOC_SCRIPT)
-		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" "$(TITLE_PAGE)" \
-			"$(TEMPLATE)" "$(FOOTER_TEXT)" "$(TOC_TITLE)"
+		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" \
+			"$(TITLE_PAGE)" "$(TEMPLATE)" "$(FOOTER_TEXT)" \
+			"$(TOC_TITLE)"
 	fi
 
 

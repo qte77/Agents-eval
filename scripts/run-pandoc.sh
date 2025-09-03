@@ -6,13 +6,15 @@
 #  - ASCII Record Separator (\036) support for file paths with spaces
 #  - LaTeX special character escaping for footer text
 #  - File sorting to maintain proper chapter order
+#  - Automatic figure placement controls (top/bottom of pages)
+#  - Reduced vertical spacing for cleaner heading layout
 
 # Help
 if [ "$1" = "help" ]; then
     cat << 'EOF'
 Usage: $0 [input_files [output_file] [title_page] [template] [footer_text] [toc_title]]
 Examples:
-  $0 "*.md" report.pdf title.tex template.tex "Custom Footer" "Inhaltsverzeichnis"
+  $0 "*.md" report.pdf title.tex template.tex "Custom Footer" "Table of Contents"
   $0 "*.md" report.pdf title.tex template.tex "all:Footer on all pages" "Table of Contents"
   dir=docs/path && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf"
 EOF
@@ -78,16 +80,62 @@ fi
 # Add template
 [ -n "$template_file" ] && [ -f "$template_file" ] && set -- "$@" --template="$template_file"
 
+# Add header settings (figure placement + footer)
+header_temp=$(mktemp)
+cleanup_header=1
+
+# Always add figure placement controls and spacing adjustments
+cat > "$header_temp" << EOF
+\\usepackage{float}
+\\floatplacement{figure}{!tb}
+\\renewcommand{\\topfraction}{0.9}
+\\renewcommand{\\bottomfraction}{0.9}
+\\renewcommand{\\textfraction}{0.1}
+\\setcounter{topnumber}{3}
+\\setcounter{bottomnumber}{3}
+
+% Reduce vertical space above headings using standard LaTeX
+\\makeatletter
+\\renewcommand{\\@makechapterhead}[1]{%
+  \\vspace*{20\\p@}%
+  {\\parindent \\z@ \\raggedright \\normalfont
+    \\ifnum \\c@secnumdepth >\\m@ne
+        \\huge\\bfseries \\@chapapp\\space \\thechapter
+        \\par\\nobreak
+        \\vskip 20\\p@
+    \\fi
+    \\interlinepenalty\\@M
+    \\Huge \\bfseries #1\\par\\nobreak
+    \\vskip 20\\p@
+  }}
+\\renewcommand{\\@makeschapterhead}[1]{%
+  \\vspace*{20\\p@}%
+  {\\parindent \\z@ \\raggedright
+    \\normalfont
+    \\interlinepenalty\\@M
+    \\Huge \\bfseries  #1\\par\\nobreak
+    \\vskip 20\\p@
+  }}
+
+% Enable clickable cross-references
+\\usepackage{hyperref}
+\\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+\\makeatother
+EOF
+
 # Add footer (skip if using template)
 if [ -n "$footer_text" ] && [ "$footer_text" != "none" ] && [ -z "$template_file" ]; then
-    footer_temp=$(mktemp)
-    
     # Check if footer should include title/TOC pages (if footer_text contains "all:")
     if echo "$footer_text" | grep -q "^all:"; then
         # Include footer on all pages including title and TOC
         actual_footer=$(echo "$footer_text" | sed 's/^all://')
         safe_footer=$(printf '%s' "$actual_footer" | sed 's/[&\\]/\\&/g; s/#/\\#/g; s/\$/\\$/g; s/_/\\_/g; s/%/\\%/g')
-        cat > "$footer_temp" << EOF
+        cat >> "$header_temp" << EOF
 \\usepackage{fancyhdr}
 \\pagestyle{fancy}
 \\fancyhf{}
@@ -100,7 +148,7 @@ EOF
     else
         # Default: no footer on title page, roman numerals with footer on TOC, arabic+footer on content
         safe_footer=$(printf '%s' "$footer_text" | sed 's/[&\\]/\\&/g; s/#/\\#/g; s/\$/\\$/g; s/_/\\_/g; s/%/\\%/g')
-        cat > "$footer_temp" << EOF
+        cat >> "$header_temp" << EOF
 \\usepackage{fancyhdr}
 \\usepackage{etoolbox}
 \\pagestyle{fancy}
@@ -116,11 +164,10 @@ EOF
 \\appto\\tableofcontents{\\clearpage\\pagenumbering{arabic}\\setcounter{page}{1}}
 EOF
     fi
-    set -- "$@" -H "$footer_temp"
-    cleanup_footer=1
-else
-    cleanup_footer=0
 fi
+
+# Add the header to pandoc arguments
+set -- "$@" -H "$header_temp"
 
 # Enable extended globbing
 [ -n "${BASH_VERSION}" ] && shopt -s extglob 2>/dev/null
@@ -131,7 +178,7 @@ eval "pandoc \"\$@\" $title_arg -o \"\$output_file\" $input_files"
 result=$?
 
 # Cleanup
-[ "$cleanup_footer" -eq 1 ] && rm -f "$footer_temp"
+[ "$cleanup_header" -eq 1 ] && rm -f "$header_temp"
 
 # Check result
 if [ $result -eq 0 ]; then

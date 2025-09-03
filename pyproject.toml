@@ -10,8 +10,6 @@ requires-python = "==3.13.*"
 license = "bsd-3-clause"
 dependencies = [
     "agentops>=0.4.14",
-    "datasets>=4.0.0",
-    "google-genai>=1.26.0",
     "httpx>=0.28.1",
     "logfire>=3.16.1",
     "loguru>=0.7.3",
@@ -22,14 +20,11 @@ dependencies = [
     "pydantic-settings>=2.9.1",
     # "torchmetrics[text]>=1.4.0",  # Modern ROUGE, BLEU, text metrics (2024+ maintained) - DISABLED due to sentencepiece build issues
     "scikit-learn>=1.7.1",  # F1, precision, recall, accuracy metrics
-    "nltk>=3.9.1",  # BLEU score computation (2024)
     "textdistance>=4.6.3",  # Multiple text similarity algorithms (2024)
     "networkx>=3.5",  # Graph analysis (May 29, 2025 maintained)
-    "scalene>=1.5.51",
+    # "scalene>=1.5.54",  # High-performance CPU, GPU, and memory profiler
     "weave>=0.51.49",
     "opik>=1.8.0",  # Tracing
-    "opentelemetry-api>=1.36.0",
-    "opentelemetry-sdk>=1.36.0",
 ]
 
 [project.urls]
