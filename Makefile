@@ -68,8 +68,8 @@ setup_plantuml:  ## Setup PlantUML with docker, $(PLANTUML_SCRIPT) and $(PLANTUM
 	docker pull $(PLANTUML_CONTAINER)
 	echo "PlantUML docker version: $$(docker run --rm $(PLANTUML_CONTAINER) --version)"
 
-setup_pdf_converter:  ## Setup PDF converter tools. For usage: make setup_pdf_converter HELP=1
-	if [ -n "$(HELP)" ]; then
+setup_pdf_converter:  ## Setup PDF converter tools. Usage: make setup_pdf_converter CONVERTER=pandoc | For help: make setup_pdf_converter HELP
+	if [ -n "$(HELP)" ] || [ "$(origin HELP)" = "command line" ]; then
 		$(PDF_CONVERTER_SCRIPT) help
 	else
 		chmod +x $(PDF_CONVERTER_SCRIPT)
@@ -178,7 +178,7 @@ run_markdownlint:  ## Lint markdown files. Usage from root dir: make run_markdow
 # MARK: run app
 
 
-run_cli:  ## Run app on CLI only
+run_cli:  ## Run app on CLI only. Usage: make run_cli ARGS="--help" or make run_cli ARGS="--download-peerread-samples-only"
 	PYTHONPATH=$(SRC_PATH) uv run python $(CLI_PATH) $(ARGS)
 
 run_gui:  ## Run app with Streamlit GUI
