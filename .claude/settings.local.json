@@ -4,6 +4,9 @@
     "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
     "DISABLE_TELEMETRY": "1"
   },
+  "enabledMcpjsonServers": [
+    "context7"
+  ],
   "permissions": {
     "allow": [
       "Bash(date:*)",
@@ -25,6 +28,7 @@
       "Edit(tests/**/*.py)",
       "Edit(tests/**/*.json)",
       "WebFetch(domain:github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md)",
+      "WebFetch(domain:docs.anthropic.com/en/docs/claude-code/claude_code_docs_map.md)",
       "WebFetch(domain:docs.anthropic.com)"
     ],
     "deny": [
