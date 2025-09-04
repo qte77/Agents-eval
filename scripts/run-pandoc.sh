@@ -8,14 +8,18 @@
 #  - File sorting to maintain proper chapter order
 #  - Automatic figure placement controls (top/bottom of pages)
 #  - Reduced vertical spacing for cleaner heading layout
+#  - Multilingual support (English, German, Spanish, French, Italian)
+#  - Language-specific figure/table/TOC/bibliography names
+#  - Custom TOC title override capability
+#  - Clickable cross-references and hyperlinks
 
 # Help
 if [ "$1" = "help" ]; then
     cat << 'EOF'
-Usage: $0 [input_files [output_file] [title_page] [template] [footer_text] [toc_title]]
+Usage: $0 [input_files [output_file] [title_page] [template] [footer_text] [toc_title] [language] [number_sections]]
 Examples:
   $0 "*.md" report.pdf title.tex template.tex "Custom Footer" "Table of Contents"
-  $0 "*.md" report.pdf title.tex template.tex "all:Footer on all pages" "Table of Contents"
+  $0 "*.md" report.pdf "" "" "" "" "en-US" "false"  # Disable section numbering
   dir=docs/path && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf"
 EOF
     exit 0
@@ -36,6 +40,8 @@ title_file="$3"
 template_file="$4"
 footer_text="${5:-${PROJECT_NAME} v${VERSION}}"
 toc_title="$6"
+language="${7:-en-US}"
+number_sections="${8:-true}"
 
 # Handle separator-delimited file lists
 RS_CHAR=$(printf '\036')
@@ -45,9 +51,18 @@ else
     input_files="$input_files_raw"
 fi
 
-# Build base command
-set -- --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex -M protrusion --from markdown+smart -V pagestyle=plain
+# Build base command with language metadata
+set -- --toc --toc-depth=2 \
+       -V geometry:margin=1in \
+       -V documentclass=report \
+       --pdf-engine=pdflatex \
+       -M protrusion \
+       --from markdown+smart \
+       -V pagestyle=plain \
+       --metadata lang="$language"
 
+# Add number-sections if enabled
+[ "$number_sections" = "true" ] && set -- "$@" --number-sections
 # Add custom TOC title if specified
 [ -n "$toc_title" ] && set -- "$@" -V toc-title="$toc_title"
 
@@ -93,6 +108,67 @@ cat > "$header_temp" << EOF
 \\renewcommand{\\textfraction}{0.1}
 \\setcounter{topnumber}{3}
 \\setcounter{bottomnumber}{3}
+
+% Language-specific figure and table names
+EOF
+
+# Add language-specific commands
+case "$language" in
+    de-DE|de)
+        figure_name="Abbildung"
+        table_name="Tabelle"
+        contents_name="Inhaltsverzeichnis"
+        bibliography_name="Literaturverzeichnis"
+        ;;
+    es-ES|es)
+        figure_name="Figura"
+        table_name="Tabla"
+        contents_name="Índice"
+        bibliography_name="Bibliografía"
+        ;;
+    fr-FR|fr)
+        figure_name="Figure"
+        table_name="Tableau"
+        contents_name="Table des matières"
+        bibliography_name="Bibliographie"
+        ;;
+    it-IT|it)
+        figure_name="Figura"
+        table_name="Tabella"
+        contents_name="Indice"
+        bibliography_name="Bibliografia"
+        ;;
+    *)
+        figure_name="Figure"
+        table_name="Table"
+        contents_name=""
+        bibliography_name=""
+        ;;
+esac
+
+# Apply language settings
+cat >> "$header_temp" << EOF
+\\renewcommand{\\figurename}{$figure_name}
+\\renewcommand{\\tablename}{$table_name}
+EOF
+
+# Add contents name only if specified (non-English languages)
+[ -n "$contents_name" ] && cat >> "$header_temp" << EOF
+\\renewcommand{\\contentsname}{$contents_name}
+EOF
+
+# Add bibliography name only if specified (non-English languages)
+[ -n "$bibliography_name" ] && cat >> "$header_temp" << EOF
+\\renewcommand{\\bibname}{$bibliography_name}
+\\renewcommand{\\refname}{$bibliography_name}
+EOF
+
+# Override TOC title if explicitly provided
+[ -n "$toc_title" ] && cat >> "$header_temp" << EOF
+\\renewcommand{\\contentsname}{$toc_title}
+EOF
+
+cat >> "$header_temp" << EOF
 
 % Reduce vertical space above headings using standard LaTeX
 \\makeatletter

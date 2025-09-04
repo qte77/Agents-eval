@@ -154,14 +154,14 @@ run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 # MARK: run pandoc
 
 
-run_pandoc:  ## Convert MD to PDF using pandoc. Usage from root: dir=docs/write-up/en && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf" TITLE_PAGE="$dir/00_title_abstract.tex" TOC_TITLE="ToC Title" | For help: make run_pandoc HELP=1
+run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_pandoc INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" TITLE_PAGE="$$dir/title.tex" TOC_TITLE="ToC" LANGUAGE="en-US" NUMBER_SECTIONS="true" | Help: make run_pandoc HELP=1
 	if [ -n "$(HELP)" ]; then
 		$(PANDOC_SCRIPT) help
 	else
 		chmod +x $(PANDOC_SCRIPT)
 		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" \
 			"$(TITLE_PAGE)" "$(TEMPLATE)" "$(FOOTER_TEXT)" \
-			"$(TOC_TITLE)"
+			"$(TOC_TITLE)" "$(LANGUAGE)" "$(NUMBER_SECTIONS)"
 	fi
 
 

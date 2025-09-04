@@ -318,6 +318,83 @@ This hierarchy prevents the confusion between "what could be built" (landscape r
 - Command execution → [Complete Command Reference](#complete-command-reference)
 - Testing approach → [Testing Strategy & Guidelines](#testing-strategy--guidelines)
 
+### Context7 MCP Documentation Access
+
+This project integrates with Context7 MCP for accessing comprehensive documentation. The following project dependencies have excellent Context7 coverage.
+
+**Note:** Context7 MCP access may require a `CONTEXT7_API_KEY` environment variable. Check your project's `.env` file or MCP configuration for authentication setup.
+
+#### Core Dependencies Available
+
+- `/agentops-ai/agentops`
+- `/delgan/loguru`
+- `/lightning-ai/torchmetrics`
+- `/microsoft/markitdown`
+- `/networkx/networkx`
+- `/pydantic/logfire`
+- `/pydantic/pydantic`
+- `/pydantic/pydantic-ai`
+- `/scikit-learn/scikit-learn`
+- `/wandb/weave`
+
+#### Development & Testing Tools Available
+
+- `/pytest-dev/pytest`
+- `/pytest-dev/pytest-asyncio`
+- `/pytest-dev/pytest-cov`
+- `/websites/opentelemetry_io`
+- `/websites/streamlit_io`
+
+#### Optional Dependencies Available
+
+- `/plasma-umass/scalene`
+
+#### Context7 MCP Usage Examples
+
+```bash
+# Search for a library to get its Context7-compatible ID
+mcp__context7__resolve-library-id --libraryName "pydantic"
+
+# Fetch comprehensive documentation for a specific library
+mcp__context7__get-library-docs --context7CompatibleLibraryID "/pydantic/pydantic" --tokens 8000
+
+# Get focused documentation on specific topics
+mcp__context7__get-library-docs --context7CompatibleLibraryID "/pydantic/pydantic-ai" --topic "agents" --tokens 5000
+```
+
+#### Common Workflow
+
+1. Use `resolve-library-id` to find the correct Context7 library ID
+2. Use `get-library-docs` with the returned ID to access comprehensive documentation
+3. Specify `--topic` parameter to focus on specific functionality areas
+4. Adjust `--tokens` parameter based on needed detail level (default: 10,000)
+
+#### Troubleshooting Common MCP Issues
+
+**Authentication Errors:**
+
+- Verify `CONTEXT7_API_KEY` is set in your environment or `.env` file
+- Check MCP server configuration in `.mcp.json` or Claude settings
+- Ensure Context7 MCP server is enabled and running
+
+**Library Not Found:**
+
+- Try alternative library names (e.g., "scikit-learn" vs "sklearn")
+- Check if library is available by browsing Context7 documentation
+- Use partial names if exact match fails
+
+**Token Limit Exceeded:**
+
+- Reduce `--tokens` parameter (try 5000, 2000, 1000)
+- Use `--topic` to focus on specific functionality
+- Make multiple targeted requests instead of one large request
+
+**Network/Connection Issues:**
+
+- Check internet connectivity
+- Verify Context7 service status
+- Try requests with smaller token limits first
+
 ### Requests to Humans
 
 **For agent escalation and human collaboration, see [AGENT_REQUESTS.md](AGENT_REQUESTS.md).**
