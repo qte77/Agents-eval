@@ -174,7 +174,11 @@ set -- "$@" -H "$header_temp"
 
 # Run pandoc
 echo "Converting '$input_files_raw' to '$output_file'..."
-eval "pandoc \"\$@\" $title_arg -o \"\$output_file\" $input_files"
+if [ -n "$title_arg" ]; then
+    pandoc "$@" $title_arg -o "$output_file" $input_files
+else
+    pandoc "$@" -o "$output_file" $input_files
+fi
 result=$?
 
 # Cleanup
