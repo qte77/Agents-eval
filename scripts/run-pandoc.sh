@@ -17,9 +17,18 @@
 if [ "$1" = "help" ]; then
     cat << 'EOF'
 Usage: $0 [input_files [output_file] [title_page] [template] [footer_text] [toc_title] [language] [number_sections]]
+
+Available Languages:
+  en-US, en    English (default)
+  de-DE, de    German
+  es-ES, es    Spanish
+  fr-FR, fr    French
+  it-IT, it    Italian
+
 Examples:
   $0 "*.md" report.pdf title.tex template.tex "Custom Footer" "Table of Contents"
   $0 "*.md" report.pdf "" "" "" "" "en-US" "false"  # Disable section numbering
+  $0 "*.md" report.pdf "" "" "" "" "de-DE" "true"   # German with section numbering
   dir=docs/path && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf"
 EOF
     exit 0

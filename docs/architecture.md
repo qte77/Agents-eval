@@ -177,13 +177,55 @@ The evaluation framework is built around large context window models capable of 
 - Recommendation scoring with config weights and confidence threshold (0.8)
 - Performance trend analysis with configurable evaluation parameters
 
-### Sprint 2: Architectural Refactoring (Future)
+## Implementation Status
 
-The evaluation framework will be refactored into three independent engines:
+**Detailed Timeline**: See [development-timeline.md](development-timeline.md) for comprehensive sprint history, dependencies, and development phases.
 
-- **Agents Engine**: Pure agent orchestration and execution
-- **Dataset Engine**: PeerRead data loading, caching, and validation  
-- **Eval Engine**: Evaluation metrics calculation and scoring
+### Current Implementation (Sprint 1 Complete)
+
+The three-tiered evaluation framework is fully operational with the following components:
+
+**✅ Tier 1 - Traditional Metrics** (`src/app/evals/traditional_metrics.py`):
+
+- Cosine similarity using TF-IDF vectorization
+- Jaccard similarity with enhanced textdistance support
+- Semantic similarity (BERTScore fallback to cosine)
+- Execution time measurement and normalization
+- Task success assessment with configurable thresholds
+
+**✅ Tier 2 - LLM-as-a-Judge** (`src/app/evals/llm_evaluation_managers.py`):
+
+- Quality assessment using gpt-4o-mini model
+- Planning rationality evaluation
+- Technical accuracy scoring
+- Cost-budgeted evaluation with retry mechanisms
+
+**✅ Tier 3 - Graph Analysis** (`src/app/evals/graph_analysis.py`):
+
+- NetworkX-based behavioral pattern analysis
+- Agent coordination quality measurement
+- Tool usage effectiveness evaluation
+- Performance bottleneck detection
+
+**✅ Composite Scoring** (`src/app/evals/composite_scorer.py`):
+
+- Six-metric weighted formula implementation
+- Recommendation mapping (accept/weak_accept/weak_reject/reject)
+- Configuration-driven weights from `config_eval.json`
+
+**✅ Evaluation Pipeline** (`src/app/evals/evaluation_pipeline.py`):
+
+- End-to-end evaluation orchestration
+- Performance monitoring and error handling
+- Fallback strategies and timeout management
+
+### Development Timeline
+
+**Current Phase**: Sprint 3 (Advanced Features) - In Progress  
+**Architecture Phase**: Sprint 2 (SoC/SRP Refactoring) - Planned  
+**Foundation Phase**: Sprint 1 (Three-tiered Evaluation) - ✅ Complete
+
+For detailed sprint information, implementation status, and development dependencies, see [development-timeline.md](development-timeline.md).
 
 ## Key Dependencies
 
@@ -203,7 +245,7 @@ The system relies on several key technology categories for implementation and ev
 - **Responsibilities**:
   - Coordinates the research, analysis, and synthesis agents.
   - Delegates research tasks to the Research Agent.
-  - Delegates analysis tasks to the Analysis Agent.
+  - Delegates analysis tasks to the Analyst Agent.
   - Delegates synthesis tasks to the Synthesizer Agent.
   - Ensures the accuracy of the information.
 - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)

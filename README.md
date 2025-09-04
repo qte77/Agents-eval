@@ -106,13 +106,12 @@ WANDB_API_KEY="xyz"
 
 ### Project Outline
 
-**Current Phase**: Sprint 1 - Three-Tiered Evaluation Framework Implementation
-
 **System**: Multi-agent evaluation pipeline (Manager → Researcher → Analyst → Synthesizer) with PydanticAI, processing PeerRead scientific papers through large context models.
 
 **Evaluation Approach**: Traditional metrics + LLM-as-a-Judge + Graph-based complexity analysis → Composite scoring
 
-**Next**: Sprint 2 architectural refactoring (engine separation), then advanced evaluation features and production deployment.
+**Requirements**: See [PRD.md](docs/PRD.md) for functional requirements and feature specifications.  
+**Implementation**: See [architecture.md](docs/architecture.md) for technical details, current status, and development timeline.
 
 ## Customer Journey and User Story
 
@@ -159,13 +158,15 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 
 ```json
 {
-    "evaluators_and_weights": {
-        "planning_rational": "1/6",
-        "task_success": "1/6",
-        "tool_efficiency": "1/6",
-        "coordination_quality": "1/6",
-        "time_taken": "1/6",
-        "text_similarity": "1/6"
+    "composite_scoring": {
+        "metrics_and_weights": {
+            "time_taken": 0.167,
+            "task_success": 0.167,
+            "coordination_quality": 0.167,
+            "tool_efficiency": 0.167,
+            "planning_rationality": 0.167,
+            "output_similarity": 0.167
+        }
     }
 }
 ```
@@ -251,27 +252,19 @@ This project includes a context framework for AI coding agents designed for stru
 
 ### Documentation Hierarchy
 
-The framework uses a layered documentation approach:
+**Project Documentation**: See [CONTRIBUTING.md](CONTRIBUTING.md#documentation-hierarchy) for complete project authority structure and single source of truth principles.
 
-```bash
+**AI Agent Framework**: The framework uses a layered documentation approach:
+
+```text
 CLAUDE.md (entry point)
     ↓
-AGENTS.md (core agent instructions)
+AGENTS.md (core agent instructions, decision framework, etc.)
     ↓
-├── CONTRIBUTING.md (shared development workflows & standards)
+├── CONTRIBUTING.md (human and agent shared development workflows & standards)
 ├── AGENT_REQUESTS.md (agentic requests to humans, escalation & collaboration)
-└── AGENT_LEARNINGS.md (agentic pattern discovery & knowledge sharing)
+└── AGENT_LEARNINGS.md (agentic pattern discovery, knowledge & solution sharing, long-term memory)
 ```
-
-
-### Core Components
-
-- **AGENTS.md**: Core agent instructions with project patterns, conventions, and decision framework
-- **CONTRIBUTING.md**: Shared development workflows, coding standards, and collaboration guidelines  
-- **AGENT_REQUESTS.md**: Human escalation process and active collaboration requests
-- **AGENT_LEARNINGS.md**: Accumulated patterns, solutions, and knowledge sharing
-- **docs/architecture.md**: Detailed system architecture, agents, and data flow
-- **docs/landscape/**: Comprehensive AI agent ecosystem analysis and evaluation resources
 
 ### Agent Development Workflow
 

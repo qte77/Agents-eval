@@ -65,7 +65,7 @@ When facing conflicting instructions or ambiguous situations, use this priority 
 
 1. **User instructions** override agent rules (except security conflicts → escalate)
 2. **AGENTS.md compliance** overrides project patterns  
-3. **Documentation hierarchy** (PRD.md → architecture.md → Sprint docs)
+3. **Documentation hierarchy** - See [CONTRIBUTING.md](CONTRIBUTING.md#documentation-hierarchy) for complete authority structure
 4. **Project patterns** from existing codebase
 5. **General best practices** as fallback
 
