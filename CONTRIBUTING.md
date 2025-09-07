@@ -285,6 +285,28 @@ This hierarchy prevents the confusion between "what could be built" (landscape r
 
 ## Human-Agent Collaboration
 
+### Git Worktree Development Workflow
+
+**For parallel feature development and safe integration testing:**
+
+```bash
+# Create feature worktree
+git worktree add --track -b feat/feature-name ../Agents-eval-feature main
+
+# Test integration without committing  
+cd ../Agents-eval-integration
+git merge --no-commit --no-ff feat/feature-name
+make validate
+git reset --hard HEAD  # Clean reset, no commits made
+
+# Integration testing scripts
+./scripts/worktrees/setup-opik.sh          # Setup Opik deployment
+./scripts/worktrees/integration-workflow.sh test-all  # Test all features
+./scripts/worktrees/cleanup-worktrees.sh   # Clean up when done
+```
+
+**Benefits**: Parallel development, safe integration testing, no commit conflicts
+
 ### Agent Integration Guidelines
 
 **For comprehensive AI agent instructions, see [AGENTS.md](AGENTS.md).**
@@ -295,6 +317,7 @@ This hierarchy prevents the confusion between "what could be built" (landscape r
 - Technical implementation standards → This document
 - Command execution → [Complete Command Reference](#complete-command-reference)
 - Testing approach → [Testing Strategy & Guidelines](#testing-strategy--guidelines)
+- Git worktree workflows → Above section
 
 ### Context7 MCP Documentation Access
 
