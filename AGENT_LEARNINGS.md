@@ -1,45 +1,18 @@
 # Agent Learning Documentation
 
-This document captures patterns, solutions, and important insights discovered by AI agents during development. It serves as a growing knowledge base that helps both current and future agents avoid common pitfalls and apply proven solutions.
+Non-obvious patterns that prevent repeated mistakes.
 
-## Purpose
+## Template
 
-- **Knowledge Accumulation**: Preserve solutions and patterns discovered during development
-- **Pattern Sharing**: Help agents learn from each other's experiences
-- **Mistake Prevention**: Document common pitfalls and their solutions
-- **Best Practice Evolution**: Track how coding practices improve over time
+- **Context**: When/where this applies
+- **Problem**: What issue this solves  
+- **Solution**: Implementation approach
+- **Example**: Working code
+- **References**: Related files
 
-## Template for New Learnings
+Document when you discover novel solutions or common pitfalls that others might face.
 
-When documenting a new pattern, use this format:
-
-**Structure:**
-
-- **Date**: [ISO timestamp - use `date -u "+%Y-%m-%dT%H:%M:%SZ"`]
-- **Context**: [When/where this pattern applies]
-- **Problem**: [What issue this solves]
-- **Solution**: [Implementation approach]
-- **Example**: [Code example with language specified]
-- **Validation**: [How to verify this works]
-- **References**: [Related files, documentation, or PRs]
-
-**Example Entry:**
-
-```markdown
-### Learned Pattern: Async Error Handling in Agents
-
-- **Date**: 2025-07-20T14:30:00Z
-- **Context**: PydanticAI agent processing with timeouts
-- **Problem**: Agents hanging on long requests without proper timeout handling
-- **Solution**: Use asyncio.wait_for with context manager for cleanup
-- **Example**: Use asyncio.wait_for with timeout and proper cleanup
-- **Validation**: Test with deliberately slow mock responses
-- **References**: src/app/agents/agent_system.py:142
-```
-
-## Active Learning Entries
-
-Agents should add new patterns discovered during development here.
+## Learned Patterns
 
 ### Learned Pattern: Comprehensive Error Handling and Performance Monitoring
 
@@ -105,55 +78,3 @@ Agents should add new patterns discovered during development here.
 - **Example**: Mock for unit tests, but validate real URLs/APIs early: `requests.head(url)` to verify accessibility before full implementation. Test actual download with small samples during development
 - **Validation**: Test actual network requests during development, not just after implementation. Explicitly validate download functionality works with real data
 - **References**: PeerRead integration - discovered incorrect URL assumptions that mocks didn't catch
-
-## Guidelines for Adding Learnings
-
-### When to Document
-
-- **Novel Solutions**: When you solve a problem in a way not covered by existing documentation
-- **Common Pitfalls**: When you encounter and solve a tricky issue that others might face
-- **Performance Insights**: When you discover performance optimization techniques
-- **Integration Patterns**: When you successfully integrate new libraries or services
-- **Error Resolution**: When you solve complex debugging or configuration issues
-
-### What to Include
-
-- **Specific Context**: Be clear about when this pattern applies
-- **Complete Solutions**: Include enough detail for another agent to implement
-- **Working Examples**: Provide code examples that actually work
-- **Validation Steps**: How to verify the solution works correctly
-- **Related Information**: Link to relevant files, docs, or external resources
-
-### What NOT to Document
-
-- **Basic Language Features**: Standard Python/library usage covered in official docs
-- **Temporary Workarounds**: Solutions that are meant to be replaced
-- **Project-Specific Details**: Information that only applies to this exact codebase
-- **Incomplete Solutions**: Partial patterns that haven't been fully validated
-
-## Pattern Categories
-
-### Development Workflow
-
-- Build system optimizations
-- Testing strategies
-- Code organization patterns
-
-### Technical Solutions
-
-- Library integration approaches
-- Performance optimization techniques
-- Error handling patterns
-
-### Project-Specific
-
-- Architecture decisions
-- Data flow patterns
-- Configuration management
-
-## Archive Policy
-
-- Keep entries current and relevant
-- Archive outdated patterns to separate section
-- Update patterns when better solutions are discovered
-- Reference patterns in AGENTS.md when they become standard practice

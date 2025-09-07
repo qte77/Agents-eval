@@ -106,12 +106,10 @@ orchestration. For detailed architecture, see
 1. **Separation of Concerns (MANDATORY)**:
    - **Architects MUST NOT implement code** - only design, plan, and specify
      requirements
-   - **Developers MUST NOT make architectural decisions** - follow architect
-     specifications exactly
+   - **Developers MUST NOT make architectural decisions** - follow architect specifications exactly
    - **Evaluators MUST NOT implement** - only design evaluation frameworks and
      metrics
-   - **Code reviewers MUST focus solely on quality, security, and standards
-     compliance**
+   - **Code reviewers MUST focus solely on quality, security, and standards compliance**
    - **NEVER cross role boundaries** without explicit handoff documentation
 
 2. **Command Execution (MANDATORY)**:
@@ -150,12 +148,10 @@ orchestration. For detailed architecture, see
 
 ### Role-Specific Agent Boundaries
 
-**ARCHITECTS (backend-architect, agent-systems-architect,
-evaluation-specialist):**
+**ARCHITECTS (backend-architect, agent-systems-architect, evaluation-specialist):**
 
 - **SCOPE**: Design, plan, specify requirements, create architecture diagrams
-- **DELIVERABLES**: Technical specifications, architecture documents, requirement
-  lists
+- **DELIVERABLES**: Technical specifications, architecture documents, requirement lists
 - **FORBIDDEN**: Writing implementation code, making code changes, running tests
 - **HANDOFF**: Must provide focused specifications to developers before any implementation begins
 
