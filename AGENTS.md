@@ -1,137 +1,77 @@
-# Agent instructions for `Agents-eval` repository
+# Agent Instructions for Agents-eval
 
-**This file contains behavioral rules, compliance requirements, and decision frameworks specifically for AI coding agents.** For technical development workflows and coding standards (shared by both humans and AI agents), see [CONTRIBUTING.md](CONTRIBUTING.md). For project overview and navigation, see [README.md](README.md).
+**Behavioral rules, compliance requirements, and decision frameworks for AI coding
+agents.** For technical workflows and coding standards, see
+[CONTRIBUTING.md](CONTRIBUTING.md). For project overview, see
+[README.md](README.md).
 
-This file serves as the primary behavioral guideline for AI coding agents, defining mandatory compliance requirements, role boundaries, and quality standards for autonomous development work.
+**External References:**
 
-## Table of Contents
-
-### Getting Started
-
-- [Project Structure](#project-structure) - Development environment and project organization
-- [Decision Framework for Agents](#decision-framework-for-agents) - Conflict resolution and priorities
-- [Core Rules & AI Behavior](#core-rules--ai-behavior) - Fundamental guidelines
-
-### Project Understanding
-
-- [Architecture Overview](#architecture-overview) - System design and data flow
-- [Codebase Structure & Modularity](#codebase-structure--modularity) - Organization principles
-
-### AI Agent Behavior & Compliance
-
-- [Agent Neutrality Requirements](#agent-neutrality-requirements) - Requirement-driven design principles
-- [Subagent Role Boundaries](#subagent-role-boundaries) - Role separation and coordination
-- [Quality Thresholds](#quality-thresholds) - Task readiness assessment
-
-### Development Workflow
-
-- [Testing Strategy](#testing-strategy) - Testing approach for agents
-- [Quality Thresholds](#quality-thresholds) - Task readiness assessment
-
-### Utilities & References
-
-- [Agent Quick Reference](#agent-quick-reference) - Critical reminders
-
-### External References
-
-- @CONTRIBUTING.md - Command reference, pre-commit checklist, testing guidelines, code style patterns, and human collaboration workflows
-- @AGENT_REQUESTS.md - Escalation and human collaboration
+- @CONTRIBUTING.md - Command reference, testing guidelines, code style patterns
+- @AGENT_REQUESTS.md - Escalation and human collaboration  
 - @AGENT_LEARNINGS.md - Pattern discovery and knowledge sharing
-
-## Project Structure
-
-**For development environment setup and project structure guidance, see [CONTRIBUTING.md](CONTRIBUTING.md).**
 
 ## Core Rules & AI Behavior
 
-- Follow established project structure and organization patterns.
-- Aim for Software Development Lifecycle (SDLC) principles like maintainability, modularity, reusability, and adaptability for coding agents and humans alike
-- Follow Behavior Driven Development (BDD) approach for feature development (see [CONTRIBUTING.md](CONTRIBUTING.md#agent-specific-testing-guidelines) for detailed methodology)
-- Always follow established coding patterns, conventions, and architectural decisions (see [CONTRIBUTING.md](CONTRIBUTING.md#style-patterns--documentation) for detailed standards).
-- **Never assume missing context.** Ask questions if you are uncertain about requirements or implementation details.
-- **Never hallucinate libraries or functions.** Only use known, verified Python packages listed in `pyproject.toml`. When introducing new packages, verify they exist on [PyPI](https://pypi.org) first.
-- **Always confirm file paths and module names** exist before referencing them in code or tests.
-- **Never delete or overwrite existing code** unless explicitly instructed to or as part of a documented refactoring task.
-- If something doesn't make sense architecturally, from a developer experience standpoint, or product-wise, please add it to the **`Requests to Humans`** section below.
-- When you learn something new about the codebase or introduce a new concept, **update this file (`AGENTS.md`)** to reflect the new knowledge. This is YOUR FILE! It should grow and evolve with you.
+- Follow SDLC principles: maintainability, modularity, reusability, adaptability
+- Use BDD approach for feature development
+- **Never assume missing context** - Ask questions if uncertain about requirements
+- **Never hallucinate libraries** - Only use packages verified in `pyproject.toml`
+- **Always confirm file paths exist** before referencing in code or tests
+- **Never delete existing code** unless explicitly instructed or documented refactoring
+- **Document new patterns** in AGENT_LEARNINGS.md (concise, laser-focused, streamlined)
+- **Request human feedback** in AGENT_REQUESTS.md (concise, laser-focused, streamlined)
 
-## Decision Framework for Agents
+## Decision Framework
 
-When facing conflicting instructions or ambiguous situations, use this priority hierarchy:
+**Priority Order:** User instructions → AGENTS.md compliance → Documentation
+hierarchy → Project patterns → General best practices
 
-### Decision Framework
+**Information Source Rules:**
 
-**Priority Order (highest to lowest):**
+- **Requirements/scope:** PRD.md ONLY (PRIMARY AUTHORITY)
+- **User workflows:** UserStory.md ONLY (AUTHORITY)  
+- **Technical implementation:** architecture.md ONLY (AUTHORITY)
+- **Current status:** Sprint documents ONLY (AUTHORITY)
+- **Operations:** Usage guides ONLY (AUTHORITY)
+- **Research:** Landscape documents (INFORMATIONAL ONLY)
 
-1. **User instructions** override agent rules (except security conflicts → escalate)
-2. **AGENTS.md compliance** overrides project patterns  
-3. **Documentation hierarchy** - See [CONTRIBUTING.md](CONTRIBUTING.md#documentation-hierarchy) for complete authority structure
-4. **Project patterns** from existing codebase
-5. **General best practices** as fallback
-
-**When unclear or conflicted → escalate to AGENT_REQUESTS.md**  
-
-**Agent-Specific Information Source Rules:**
-
-1. **Need requirements or scope validation?** → **PRD.md ONLY** (PRIMARY AUTHORITY)
-2. **Need user workflow understanding?** → **UserStory.md ONLY** (AUTHORITY)
-3. **Need technical implementation approach?** → **architecture.md ONLY** (AUTHORITY)
-4. **Need current implementation status?** → **Sprint documents ONLY** (AUTHORITY)
-5. **Need operational procedures?** → **Usage guides ONLY** (AUTHORITY)
-6. **Need technology research?** → **Landscape documents** (INFORMATIONAL ONLY)
-
-**Critical Agent Anti-Scope-Creep Rules:**
+**Anti-Scope-Creep Rules:**
 
 - **NEVER implement landscape possibilities without PRD.md validation**
 - **Landscape documents are research input ONLY, not implementation requirements**
 - **Always validate implementation decisions against PRD.md scope boundaries**
-- **If landscape docs suggest capabilities beyond PRD.md scope, escalate to AGENT_REQUESTS.md**
 
-**Agent Anti-Redundancy Rules:**
+**Anti-Redundancy Rules:**
 
-- **NEVER duplicate information across documents** - always reference the authoritative source
-- **Before adding information, check if it exists in the authority document**
-- **Update the authoritative document, then remove duplicates elsewhere**
+- **NEVER duplicate information across documents** - reference authoritative sources
+- **Update authoritative document, then remove duplicates elsewhere**
 
-### When to Stop and Ask
+**When to Escalate to AGENT_REQUESTS.md:**
 
-**Always stop and ask for clarification when:**
-
-- Explicit user instructions conflict with safety/security practices
-- Multiple AGENTS.md rules contradict each other  
-- Required information is completely missing from all sources
+- User instructions conflict with safety/security practices
+- AGENTS.md rules contradict each other
+- Required information completely missing
 - Actions would significantly change project architecture
-
-**Don't stop to ask when:**
-
-- Clear hierarchy exists to resolve the conflict
-- Standard patterns can be followed safely
-- Minor implementation details need decisions
 
 ## Architecture Overview
 
-This is a Multi-Agent System (MAS) evaluation framework using **PydanticAI** for agent orchestration. For detailed architecture and component descriptions, see [README.md](README.md).
+Multi-Agent System (MAS) evaluation framework using **PydanticAI** for agent
+orchestration. For detailed architecture, see
+[architecture.md](docs/architecture.md).
 
-## Codebase Structure & Modularity
+**Code Organization Principles:**
 
-### Main Components
+- Maintain modularity: Keep files focused and manageable
+- Follow established patterns: Use consistent structure and naming
+- Avoid conflicts: Choose module names that don't conflict with existing libraries
+- Use clear organization: Group related functionality with descriptive naming
 
-See the project structure in the repository root directory for key application entry points and core modules.
-
-### Code Organization Principles
-
-- **Maintain modularity**: Keep files focused and manageable in size
-- **Follow established patterns**: Use consistent project structure and naming conventions
-- **Avoid conflicts**: Choose module names that don't conflict with existing libraries
-- **Use clear organization**: Group related functionality and use descriptive naming
-
-**For detailed coding standards, file organization rules, and specific examples, see [CONTRIBUTING.md](CONTRIBUTING.md#style-patterns--documentation).**
+## AI Agent Behavior & Compliance
 
 ## Agent Neutrality Requirements
 
 **ALL AI AGENTS MUST MAINTAIN STRICT NEUTRALITY AND REQUIREMENT-DRIVEN DESIGN:**
-
-### Information Source Requirements (MANDATORY)
 
 1. **Extract requirements from specified documents ONLY**
    - Read provided sprint documents, task descriptions, or reference materials
@@ -140,9 +80,8 @@ See the project structure in the repository root directory for key application e
    - Do NOT assume production-level complexity unless specified
 
 2. **Request clarification for ambiguous scope**
-   - If task boundaries are unclear, ASK the main agent for clarification
+   - If task boundaries are unclear, ASK for clarification
    - If complexity level is not specified, ASK for target complexity
-   - If integration points are unclear, ASK for specific requirements
    - Do NOT assume scope or make architectural decisions without validation
 
 3. **Design to stated requirements exactly**
@@ -151,29 +90,12 @@ See the project structure in the repository root directory for key application e
    - Follow "minimal," "streamlined," or "focused" guidance literally
    - Do NOT over-engineer solutions beyond stated needs
 
-### Example Neutral vs Problematic Prompts
-
-**✅ GOOD (Neutral) Prompt:**
-
-```text
-"Design composite scoring system per Task 4.1 requirements in docs/sprints/2025-08_Sprint1_ThreeTieredEval.md lines 374-394. 
-Target: 100-200 lines total. 
-Scope: Simple scoring formula only, no tier integration.
-If requirements unclear, request specific clarification."
-```
-
-**❌ BAD (Assumption-Heavy) Prompt:**
-
-```text
-"Design comprehensive composite scoring system with advanced tier integration, 
-complex normalization, extensive error handling, and production-ready architecture."
-```
-
-### Scope Validation Checkpoints (MANDATORY)
+**Scope Validation Checkpoints (MANDATORY):**
 
 - **Before design completion**: Validate design stays within specified task scope
 - **Before handoff**: Confirm complexity matches stated targets
-- **During review**: Check implementation matches original requirements, not assumed needs
+- **During review**: Check implementation matches original requirements, not assumed
+  needs
 
 ## Subagent Role Boundaries
 
@@ -182,14 +104,18 @@ complex normalization, extensive error handling, and production-ready architectu
 **ALL SUBAGENTS MUST STRICTLY ADHERE TO THE FOLLOWING:**
 
 1. **Separation of Concerns (MANDATORY)**:
-   - **Architects MUST NOT implement code** - only design, plan, and specify requirements
-   - **Developers MUST NOT make architectural decisions** - follow architect specifications exactly
-   - **Evaluators MUST NOT implement** - only design evaluation frameworks and metrics
-   - **Code reviewers MUST focus solely on quality, security, and standards compliance**
+   - **Architects MUST NOT implement code** - only design, plan, and specify
+     requirements
+   - **Developers MUST NOT make architectural decisions** - follow architect
+     specifications exactly
+   - **Evaluators MUST NOT implement** - only design evaluation frameworks and
+     metrics
+   - **Code reviewers MUST focus solely on quality, security, and standards
+     compliance**
    - **NEVER cross role boundaries** without explicit handoff documentation
 
 2. **Command Execution (MANDATORY)**:
-   - **ALWAYS use make recipes** - see [CONTRIBUTING.md](CONTRIBUTING.md#unified-command-reference) for complete command reference
+   - **ALWAYS use make recipes** - See [Complete Command Reference](CONTRIBUTING.md#complete-command-reference)
    - **Document any deviation** from make commands with explicit reason
 
 3. **Quality Validation (MANDATORY)**:
@@ -198,15 +124,21 @@ complex normalization, extensive error handling, and production-ready architectu
    - **MUST NOT proceed** with type errors or lint failures
 
 4. **Coding Style Adherence (MANDATORY)**:
-   - **MUST follow project patterns** - see [CONTRIBUTING.md](CONTRIBUTING.md#style-patterns--documentation) for detailed standards
+   - **MUST follow project patterns** - see
+     [CONTRIBUTING.md](CONTRIBUTING.md#style-patterns--documentation) for detailed
+     standards
    - **MUST write concise, focused code** with no unnecessary features
 
 5. **Documentation Updates (MANDATORY)**:
-   - **MUST update documentation** - see [CONTRIBUTING.md](CONTRIBUTING.md#style-patterns--documentation) for requirements
-   - **MUST update AGENTS.md** when learning new patterns
+   - **MUST update documentation** - see
+     [CONTRIBUTING.md](CONTRIBUTING.md#style-patterns--documentation) for
+     requirements
+   - **MUST update AGENT_LEARNINGS.md** when learning new patterns (concise,
+     laser-focused, streamlined)
 
 6. **Testing Requirements (MANDATORY)**:
-   - **MUST create tests** for new functionality - see [CONTRIBUTING.md](CONTRIBUTING.md#testing-strategy--guidelines) for approach
+   - **MUST create tests** for new functionality - see
+     [CONTRIBUTING.md](CONTRIBUTING.md#testing-strategy--guidelines) for approach
    - **MUST achieve meaningful validation** with appropriate mocking strategy
 
 7. **Code Standards (MANDATORY)**:
@@ -218,10 +150,12 @@ complex normalization, extensive error handling, and production-ready architectu
 
 ### Role-Specific Agent Boundaries
 
-**ARCHITECTS (backend-architect, agent-systems-architect, evaluation-specialist):**
+**ARCHITECTS (backend-architect, agent-systems-architect,
+evaluation-specialist):**
 
 - **SCOPE**: Design, plan, specify requirements, create architecture diagrams
-- **DELIVERABLES**: Technical specifications, architecture documents, requirement lists
+- **DELIVERABLES**: Technical specifications, architecture documents, requirement
+  lists
 - **FORBIDDEN**: Writing implementation code, making code changes, running tests
 - **HANDOFF**: Must provide focused specifications to developers before any implementation begins
 
@@ -273,11 +207,9 @@ RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross in
 - **Alignment**: 8/10 - Follows project patterns and architectural decisions
 - **Success**: 7/10 - Confident in completing task correctly
 
-**Below threshold → gather more context or escalate to AGENT_REQUESTS.md**  
+### Below Threshold Action
 
-## Testing Strategy
-
-**For comprehensive testing guidelines and BDD approach, see [CONTRIBUTING.md](CONTRIBUTING.md#testing-strategy--guidelines).**
+Gather more context or escalate to AGENT_REQUESTS.md
 
 ## Agent Quick Reference
 
@@ -285,7 +217,8 @@ RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross in
 
 - Read AGENTS.md → CONTRIBUTING.md for technical details
 - Confirm role: Architect|Developer|Reviewer
-- Verify quality thresholds met (Context: 8/10, Clarity: 7/10, Alignment: 8/10, Success: 7/10)
+- Verify quality thresholds met (Context: 8/10, Clarity: 7/10, Alignment: 8/10,
+  Success: 7/10)
 
 **During Task:**
 
@@ -297,5 +230,6 @@ RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross in
 
 - Run `make validate` - must pass all checks
 - Update CHANGELOG.md for non-trivial changes
-- Document new patterns in AGENT_LEARNINGS.md
+- Document new patterns in AGENT_LEARNINGS.md (concise, laser-focused,
+  streamlined)
 - Escalate to AGENT_REQUESTS.md if blocked

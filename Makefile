@@ -41,6 +41,7 @@ setup_dev:  ## Install uv and deps, Download and start Ollama
 	$(MAKE) -s setup_claude_code
 	$(MAKE) -s setup_gemini_cli
 	$(MAKE) -s setup_markdownlint
+	$(MAKE) -s setup_plantuml
 
 setup_prod_ollama:
 	$(MAKE) -s setup_prod
@@ -63,10 +64,15 @@ setup_gemini_cli:  ## Setup Gemini CLI, node.js and npm have to be present
 	echo "Gemini CLI version: $$(gemini --version)"
 
 setup_plantuml:  ## Setup PlantUML with docker, $(PLANTUML_SCRIPT) and $(PLANTUML_CONTAINER)
-	echo "Setting up PlantUML docker ..."
 	chmod +x $(PLANTUML_SCRIPT)
-	docker pull $(PLANTUML_CONTAINER)
-	echo "PlantUML docker version: $$(docker run --rm $(PLANTUML_CONTAINER) --version)"
+	if ! command -v plantuml >/dev/null 2>&1; then
+		echo "Setting up PlantUML ..."
+		sudo apt-get -yyqq update
+		sudo apt-get -yyqq install plantuml graphviz
+	else
+		echo "PlantUML already installed"
+	fi
+	plantuml -version | grep "PlantUML version"
 
 setup_pdf_converter:  ## Setup PDF converter tools. Usage: make setup_pdf_converter CONVERTER=pandoc | For help: make setup_pdf_converter HELP
 	if [ -n "$(HELP)" ] || [ "$(origin HELP)" = "command line" ]; then

@@ -84,22 +84,17 @@
 
 ### Environment Setup
 
-The project requirements are stated in `pyproject.toml`. Your development environment should be set up automatically using the provided `Makefile`, which configures the virtual environment.
-
-Code formatting and type checking are managed by **ruff** and **pyright** and orchestrated via the `Makefile`.
-
-**See the [Complete Command Reference](#complete-command-reference) section for all available commands with error recovery procedures.**
+The project requirements are in `pyproject.toml`. Use the provided `Makefile` to set up your development environment automatically. Code formatting and type checking are managed by **ruff** and **pyright**.
 
 ### Testing Strategy & Guidelines
 
-**Always create focused, efficient tests** for new features following the testing hierarchy below:
+**Always create focused, efficient tests** for new features:
 
 #### Unit Tests (Always Required)
 
 - **Mock external dependencies** (HTTP requests, file systems, APIs) using `@patch`
 - **Test business logic** and data validation efficiently
 - **Test error handling** for all failure modes and edge cases
-- **Ensure deterministic behavior** - tests should pass consistently
 - Use `pytest` with clear arrange/act/assert structure
 - Tests must live in the `tests/` folder, mirroring the `src/app/` structure
 
@@ -107,34 +102,21 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 
 - **Test real external integrations** at least once during implementation
 - **Verify actual URLs, APIs, and data formats** work as expected
-- **Document any external dependencies** that could change over time
 - **Use real test data** when feasible, fallback to representative samples
-- **Include in implementation validation** but may be excluded from CI if unreliable
 
-#### When to Mock vs Real Testing
-
-- **Mock for**: Unit tests, CI/CD pipelines, deterministic behavior, fast feedback
-- **Real test for**: Initial implementation validation, external API changes, data format verification
-- **Always test real integrations** during feature development, then mock for ongoing automated tests
-- **Document real test results** in implementation logs for future reference
-
-#### Agent-Specific Testing Guidelines
-
-**BDD Approach (Behavior Driven Development):**
+#### BDD Approach (Behavior Driven Development)
 
 - **Write tests first**, then implement corresponding code
 - Keep iterations **concise** to maintain low complexity
 - **Iteratively improve** tests and code until feature requirements are met
 - All code quality and tests must **pass before advancing** to the next step
 
-#### Testing Anti-Patterns to Avoid
+**Testing Guidelines:**
 
-- ❌ **Only mocking external dependencies** without ever testing real integration
-- ❌ **Assuming external APIs work** without verification during implementation
-- ❌ **Testing only happy paths** - always include error cases
-- ❌ **Brittle tests** that break with minor changes to implementation details
-
-**To run tests** see the [Complete Command Reference](#complete-command-reference) for all testing commands with error recovery procedures.
+- **Mock for**: Unit tests, CI/CD pipelines, deterministic behavior
+- **Real test for**: Initial implementation validation, external API changes
+- **Always test real integrations** during development, then mock for automated tests
+- **Avoid**: Only mocking without real testing, testing only happy paths, brittle tests
 
 ## Style, Patterns & Documentation
 
@@ -173,20 +155,16 @@ Code formatting and type checking are managed by **ruff** and **pyright** and or
 
 ### Code Pattern Examples
 
-**Reference**: Follow these code pattern guidelines:
+**Follow these guidelines:**
 
 - ✅ Pydantic model usage vs ❌ direct dictionaries
 - ✅ Absolute imports vs ❌ relative imports  
 - ✅ Specific error handling vs ❌ generic try/catch
 - ✅ Complete docstrings vs ❌ minimal documentation
-- ✅ Structured testing patterns vs ❌ minimal tests
-- ✅ Configuration validation patterns
-- ✅ Structured logging approaches
 - ✅ Concise, focused implementations vs ❌ verbose, feature-heavy code
 - ✅ Minimal dependencies vs ❌ heavy library usage
-- ✅ Streamlined file structures vs ❌ complex hierarchies
 
-**Quick Reference**: Always prefer type-validated, well-documented, concise code with specific error handling over generic approaches. **Analyze existing codebase patterns before implementing anything new.**
+**Always analyze existing codebase patterns before implementing anything new.**
 
 ### CHANGELOG.md Requirements
 
@@ -320,80 +298,27 @@ This hierarchy prevents the confusion between "what could be built" (landscape r
 
 ### Context7 MCP Documentation Access
 
-This project integrates with Context7 MCP for accessing comprehensive documentation. The following project dependencies have excellent Context7 coverage.
-
-**Note:** Context7 MCP access may require a `CONTEXT7_API_KEY` environment variable. Check your project's `.env` file or MCP configuration for authentication setup.
+This project integrates with Context7 MCP for accessing comprehensive documentation. Context7 MCP access may require a `CONTEXT7_API_KEY` environment variable.
 
 #### Core Dependencies Available
 
-- `/agentops-ai/agentops`
-- `/delgan/loguru`
-- `/lightning-ai/torchmetrics`
-- `/microsoft/markitdown`
-- `/networkx/networkx`
-- `/pydantic/logfire`
-- `/pydantic/pydantic`
-- `/pydantic/pydantic-ai`
-- `/scikit-learn/scikit-learn`
-- `/wandb/weave`
+- `/agentops-ai/agentops`, `/delgan/loguru`, `/lightning-ai/torchmetrics`
+- `/microsoft/markitdown`, `/networkx/networkx`, `/pydantic/logfire`
+- `/pydantic/pydantic`, `/pydantic/pydantic-ai`, `/scikit-learn/scikit-learn`
+- `/wandb/weave`, `/pytest-dev/pytest`, `/websites/streamlit_io`
 
-#### Development & Testing Tools Available
-
-- `/pytest-dev/pytest`
-- `/pytest-dev/pytest-asyncio`
-- `/pytest-dev/pytest-cov`
-- `/websites/opentelemetry_io`
-- `/websites/streamlit_io`
-
-#### Optional Dependencies Available
-
-- `/plasma-umass/scalene`
-
-#### Context7 MCP Usage Examples
+#### Usage Examples
 
 ```bash
-# Search for a library to get its Context7-compatible ID
+# Search for a library ID
 mcp__context7__resolve-library-id --libraryName "pydantic"
 
-# Fetch comprehensive documentation for a specific library
+# Get documentation
 mcp__context7__get-library-docs --context7CompatibleLibraryID "/pydantic/pydantic" --tokens 8000
 
-# Get focused documentation on specific topics
+# Focus on specific topics  
 mcp__context7__get-library-docs --context7CompatibleLibraryID "/pydantic/pydantic-ai" --topic "agents" --tokens 5000
 ```
-
-#### Common Workflow
-
-1. Use `resolve-library-id` to find the correct Context7 library ID
-2. Use `get-library-docs` with the returned ID to access comprehensive documentation
-3. Specify `--topic` parameter to focus on specific functionality areas
-4. Adjust `--tokens` parameter based on needed detail level (default: 10,000)
-
-#### Troubleshooting Common MCP Issues
-
-**Authentication Errors:**
-
-- Verify `CONTEXT7_API_KEY` is set in your environment or `.env` file
-- Check MCP server configuration in `.mcp.json` or Claude settings
-- Ensure Context7 MCP server is enabled and running
-
-**Library Not Found:**
-
-- Try alternative library names (e.g., "scikit-learn" vs "sklearn")
-- Check if library is available by browsing Context7 documentation
-- Use partial names if exact match fails
-
-**Token Limit Exceeded:**
-
-- Reduce `--tokens` parameter (try 5000, 2000, 1000)
-- Use `--topic` to focus on specific functionality
-- Make multiple targeted requests instead of one large request
-
-**Network/Connection Issues:**
-
-- Check internet connectivity
-- Verify Context7 service status
-- Try requests with smaller token limits first
 
 ### Requests to Humans
 
