@@ -52,7 +52,7 @@
 - `src/app/evals/metrics_sweep_engine.py` (new, extends pipeline)  
 - `src/app/agents/opik_instrumentation.py` (complete implementation)
 - `src/gui/pages/run_app.py` (connect to pipeline)
-- `docker-compose.opik.yml` (new, official Opik deployment)
+- `docker-compose.opik.yaml` (new, official Opik deployment)
 - `pyproject.toml` (add `nltk>=3.8`, `rouge-score>=0.1.13`, `sentence-transformers>=3.0.0`)
 
 ## **Opik Implementation Requirements**
@@ -68,7 +68,7 @@
 
 **Files to create**:
 
-- `docker-compose.opik.yml` - Official Opik + ClickHouse + Redis stack
+- `docker-compose.opik.yaml` - Official Opik + ClickHouse + Redis stack
 - `scripts/worktrees/setup-opik.sh` - Automated deployment script
 - `.env.opik` - Environment variables for local deployment
 

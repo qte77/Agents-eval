@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_claude_code setup_gemini_cli setup_plantuml setup_pdf_converter setup_markdownlint setup_opik_env setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff test_all coverage_all type_check validate quick_validate output_unset_app_env_sh start_opik stop_opik clean_opik status_opik help
+.PHONY: setup_prod setup_dev setup_dev_full setup_prod_ollama setup_dev_ollama setup_claude_code setup_gemini_cli setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff test_all coverage_all type_check validate quick_validate output_unset_app_env_sh setup_opik start_opik stop_opik clean_opik status_opik setup_opik_env help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -42,6 +42,10 @@ setup_dev:  ## Install uv and deps, Download and start Ollama
 	$(MAKE) -s setup_gemini_cli
 	$(MAKE) -s setup_markdownlint
 	$(MAKE) -s setup_plantuml
+	
+setup_dev_full: ## Complete dev setup including Opik tracing stack
+	$(MAKE) -s setup_dev
+	$(MAKE) -s setup_opik
 
 setup_prod_ollama:
 	$(MAKE) -s setup_prod
@@ -86,14 +90,6 @@ setup_markdownlint:  ## Setup markdownlint CLI, node.js and npm have to be prese
 	echo "Setting up markdownlint CLI ..."
 	npm install -gs markdownlint-cli
 	echo "markdownlint version: $$(markdownlint --version)"
-
-setup_opik_env:  ## Setup Opik environment variables for local development
-	echo "Setting up Opik environment variables ..."
-	echo "export OPIK_URL_OVERRIDE=http://localhost:3003" >> ~/.bashrc
-	echo "export OPIK_WORKSPACE=peerread-evaluation" >> ~/.bashrc
-	echo "export OPIK_PROJECT_NAME=sprint1-evaluation" >> ~/.bashrc
-	echo "Environment variables added to ~/.bashrc"
-	echo "Run: source ~/.bashrc"
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
@@ -193,7 +189,7 @@ run_gui:  ## Run app with Streamlit GUI
 
 run_profile:  ## Profile app with scalene
 	uv run scalene --outfile \
-		"$(APP_PATH)/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
+		"$(APP_PATH)/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
 		"$(APP_PATH)/main.py"
 
 
@@ -235,31 +231,46 @@ output_unset_app_env_sh:  ## Unset app environment variables
 
 # MARK: opik
 
+setup_opik:  ## Complete Opik setup (start services + configure environment)
+	echo "Setting up Opik tracing stack..."
+	$(MAKE) start_opik
+	echo "Waiting for services to be healthy..."
+	sleep 20
+	$(MAKE) setup_opik_env
+	echo "Opik setup complete!"
+
+setup_opik_env:  ## Setup Opik environment variables for local development
+	echo "Setting up Opik environment variables ..."
+	echo "export OPIK_URL_OVERRIDE=http://localhost:8080" >> ~/.bashrc  # do not send to comet.com/api
+	echo "export OPIK_WORKSPACE=peerread-evaluation" >> ~/.bashrc
+	echo "export OPIK_PROJECT_NAME=peerread-evaluation" >> ~/.bashrc
+	echo "Environment variables added to ~/.bashrc"
+	echo "Run: source ~/.bashrc"
 
 start_opik:  ## Start local Opik tracing with ClickHouse database
-	# FIXME add officla opik setup
 	# https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml
 	# https://www.comet.com/docs/opik/self-host/local_deployment/
 	echo "Starting Opik stack with ClickHouse ..."
-	docker-compose -f docker-compose.opik.yml up -d
-	echo "Opik UI: http://localhost:5173"
-	echo "Opik API: http://localhost:3003"
+	docker-compose -f docker-compose.opik.yaml up -d
+	echo "Frontend: http://localhost:5173"
+	echo "Backend API: http://localhost:8080"
+	echo "ClickHouse: http://localhost:8123"
 
 stop_opik:  ## Stop local Opik tracing stack
 	echo "Stopping Opik stack ..."
-	docker-compose -f docker-compose.opik.yml down
+	docker-compose -f docker-compose.opik.yaml down
 
 clean_opik:  ## Stop Opik and remove all trace data (WARNING: destructive)
 	echo "WARNING: This will remove all Opik trace data!"
 	echo "Press Ctrl+C to cancel, Enter to continue..."
 	read
-	docker-compose -f docker-compose.opik.yml down -v
+	docker-compose -f docker-compose.opik.yaml down -v
 
 status_opik:  ## Check Opik services health status
 	echo "Checking Opik services status ..."
-	docker-compose -f docker-compose.opik.yml ps
+	docker-compose -f docker-compose.opik.yaml ps
 	echo "API Health:"
-	curl -f http://localhost:3003/health 2>/dev/null && \
+	curl -f http://localhost:8080/health-check 2>/dev/null && \
 		echo "Opik API healthy" || echo "Opik API not responding"
 	echo "ClickHouse:"
 	curl -s http://localhost:8123/ping 2>/dev/null && \

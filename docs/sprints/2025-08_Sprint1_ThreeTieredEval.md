@@ -444,10 +444,10 @@ Agent Score = (
 - [ ] **Task 4.4**: Opik tracing integration with ClickHouse analytics & error handling testing
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
   - **Requirements**: Deploy local Opik instance as primary tracing solution, instrument PydanticAI agents with `@track` decorators, implement step-level evaluation for Manager/Researcher/Analyst/Synthesizer interactions, leverage ClickHouse for analytical queries, and comprehensive error handling testing
-  - **Reference**: docs/landscape/landscape-agent-frameworks-infrastructure.md for Opik integration patterns, existing docker-compose.opik.yml with ClickHouse backend
+  - **Reference**: docs/landscape/landscape-agent-frameworks-infrastructure.md for Opik integration patterns, existing docker-compose.opik.yaml with ClickHouse backend
   - **Deliverable**: Local Opik tracing system with ClickHouse-powered analytics, agent interaction graph export, and robust error handling
   - **Implementation Strategy**:
-    - **Phase 1**: Local Opik deployment using existing docker-compose.opik.yml with ClickHouse backend (database: opik, user: opik/opik123, ports: 8123 HTTP, 9000 native)
+    - **Phase 1**: Local Opik deployment using existing docker-compose.opik.yaml with ClickHouse backend (database: opik, user: opik/opik123, ports: 8123 HTTP, 9000 native)
     - **Phase 2**: PydanticAI agent instrumentation with enhanced metadata for graph analysis export
     - **Phase 3**: ClickHouse analytical queries for agent performance trends, tool usage patterns, and coordination effectiveness metrics
     - **Phase 4**: Export enhanced trace data for NetworkX graph construction and composite scoring integration
@@ -463,12 +463,12 @@ Agent Score = (
   - **Reference**: 
     - Official documentation: https://www.comet.com/docs/opik/self-host/local_deployment/
     - Official Docker Compose: https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml
-    - Existing configuration: docker-compose.opik.yml
+    - Existing configuration: docker-compose.opik.yaml
   - **Deliverable**: Production-ready local Opik deployment with official configuration
   - **Implementation Strategy**:
     - **Phase 1**: Review official Opik deployment documentation and Docker Compose configuration
     - **Phase 2**: Deploy using official repository setup and validate services health
-    - **Phase 3**: Integrate with existing docker-compose.opik.yml configuration
+    - **Phase 3**: Integrate with existing docker-compose.opik.yaml configuration
     - **Phase 4**: Verify deployment compatibility with Task 4.4 tracing requirements
 
 **Expected Deliverables**:

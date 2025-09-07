@@ -25,6 +25,7 @@ logs/
 scalene-profiles
 profile.html
 profile.json
+.opik_install_reported
 
 # OS generated files
 .DS_Store
