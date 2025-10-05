@@ -460,9 +460,9 @@ Agent Score = (
 - [ ] **Task 4.5**: Deploy Opik locally using official repository
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
   - **Requirements**: Deploy local Opik instance using official documentation and repository, validate deployment with health checks, and integrate with existing docker-compose setup
-  - **Reference**: 
-    - Official documentation: https://www.comet.com/docs/opik/self-host/local_deployment/
-    - Official Docker Compose: https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml
+  - **Reference**:
+    - Official documentation: <https://www.comet.com/docs/opik/self-host/local_deployment/>
+    - Official Docker Compose: <https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml>
     - Existing configuration: docker-compose.opik.yaml
   - **Deliverable**: Production-ready local Opik deployment with official configuration
   - **Implementation Strategy**:

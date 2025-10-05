@@ -15,6 +15,7 @@ The Agents-eval system currently has **basic PDF processing capabilities** imple
 ### 1. Core PDF Processing Components
 
 #### 1.1 Primary PDF Processing Implementation
+
 - **Location**: `/workspaces/Agents-eval/src/app/agents/peerread_tools.py`
 - **Key Function**: `read_paper_pdf()` (lines 27-65)
 - **Library**: `markitdown[pdf]>=0.1.2`
@@ -22,6 +23,7 @@ The Agents-eval system currently has **basic PDF processing capabilities** imple
 - **Limitation**: No page-level extraction (entire PDF as single text block)
 
 #### 1.2 PeerRead Dataset Integration
+
 - **Location**: `/workspaces/Agents-eval/src/app/data_utils/datasets_peerread.py`
 - **Key Methods**:
   - `load_parsed_pdf_content()` (lines 460-500): Extracts text from pre-parsed JSON
@@ -30,6 +32,7 @@ The Agents-eval system currently has **basic PDF processing capabilities** imple
 - **Performance**: Optimized for PeerRead dataset structure
 
 #### 1.3 Agent Tool Integration
+
 - **Implementation**: Agent tools in `peerread_tools.py`
 - **Key Tool**: `read_paper_pdf_tool()` (lines 131-146)
 - **Integration Point**: Manager agent tool system
@@ -48,11 +51,13 @@ PeerRead Paper Request
 ### 3. Existing Dependencies and Libraries
 
 #### 3.1 Core Dependencies (from pyproject.toml)
+
 - **markitdown[pdf]>=0.1.2**: Primary PDF extraction library
 - **pydantic>=2.10.6**: Data validation and models
 - **httpx>=0.28.1**: HTTP operations for dataset downloads
 
 #### 3.2 Supporting Libraries
+
 - **loguru>=0.7.3**: Logging infrastructure
 - **pydantic-ai-slim>=0.2.12**: Agent framework integration
 
@@ -183,6 +188,7 @@ PeerRead Paper Request
 ## Recommendations for Large Context Integration
 
 ### Phase 1: Core Enhancement (1-2 Days)
+
 1. **Token Counting Integration**
    - Add tiktoken for OpenAI models
    - Add Anthropic tokenizer for Claude models
@@ -194,6 +200,7 @@ PeerRead Paper Request
    - Add fallback strategies
 
 ### Phase 2: Advanced Features (2-3 Days)
+
 1. **Intelligent Chunking**
    - Implement section-aware chunking
    - Add semantic boundary detection
@@ -205,6 +212,7 @@ PeerRead Paper Request
    - Add monitoring and analytics
 
 ### Phase 3: Integration Testing (1 Day)
+
 1. **End-to-End Testing**
    - Validate with real PeerRead papers
    - Test across different paper sizes
@@ -213,11 +221,13 @@ PeerRead Paper Request
 ## Technical Debt and Maintenance Notes
 
 ### Current Technical Debt
+
 1. **TODO Items in Code**: Context manager error handling (line 196 in peerread_tools.py)
 2. **Limited Error Types**: Generic ValueError usage instead of specific exceptions
 3. **Configuration Coupling**: Hard-coded parameters in some processing functions
 
 ### Maintenance Considerations
+
 1. **Dependency Management**: MarkItDown library updates may affect extraction quality
 2. **Dataset Evolution**: PeerRead dataset structure changes could impact parsing
 3. **Model API Changes**: LLM provider changes may affect integration points
@@ -227,6 +237,7 @@ PeerRead Paper Request
 The current PDF processing implementation provides a **solid foundation** for basic text extraction and PeerRead dataset integration. However, **significant enhancements are required** for optimal large context model integration. The existing architecture is well-designed for extension, making the planned enhancements feasible within the projected timeline.
 
 **Key Success Factors for Enhancement**:
+
 - Preserve existing agent integration patterns
 - Maintain backward compatibility with current workflows  
 - Implement comprehensive testing for new features

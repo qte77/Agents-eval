@@ -9,6 +9,7 @@
 This document provides comprehensive performance baselines for the three-tier evaluation pipeline established through Task 4.3 validation framework implementation. Baselines are derived from empirical testing across diverse scenarios including real PeerRead data, synthetic test cases, and stress testing conditions.
 
 **Key Findings:**
+
 - **Tier 1 (Traditional Metrics)**: Consistently meets 1.0s target across paper sizes
 - **Tier 2 (LLM-as-Judge)**: Performance varies with content complexity, generally within 10.0s target
 - **Tier 3 (Graph Analysis)**: Scales well with trace complexity, within 15.0s target  
@@ -30,6 +31,7 @@ This document provides comprehensive performance baselines for the three-tier ev
 ### Validation Methodology
 
 Performance baselines established through:
+
 - **Tier-Specific Benchmarks**: Individual component performance analysis
 - **Real Data Validation**: Testing with actual PeerRead dataset samples  
 - **Synthetic Stress Testing**: Controlled scenarios with varying complexity
@@ -82,11 +84,13 @@ Performance baselines established through:
 ### Performance Bottleneck Analysis
 
 **Primary Bottlenecks:**
+
 1. **API Latency**: Network round-trip time (60-80% of total time)
 2. **Token Processing**: Large context windows increase processing time
 3. **Rate Limiting**: Occasional delays due to API rate limits
 
 **Optimization Strategies:**
+
 1. **Parallel Processing**: Process multiple evaluations concurrently (up to rate limits)
 2. **Context Optimization**: Truncate papers to essential excerpts (≤2000 chars)
 3. **Retry Logic**: Implement exponential backoff for transient failures
@@ -119,12 +123,14 @@ Performance baselines established through:
 ### Graph Analysis Optimization
 
 **Current Optimizations:**
+
 - **Sparse Representation**: Use adjacency lists for memory efficiency
 - **Pruning Strategy**: Remove isolated nodes and merge simple chains
 - **Incremental Analysis**: Cache intermediate centrality calculations
 - **Parallelization**: Parallel computation of centrality measures
 
 **Performance Bottlenecks:**
+
 1. **Graph Construction**: 20-30% of total time spent building graph structure
 2. **Centrality Computation**: Betweenness centrality most expensive (O(n³))
 3. **Memory Allocation**: Large graphs require careful memory management
@@ -142,6 +148,7 @@ Performance baselines established through:
 ### Pipeline Performance Breakdown
 
 **Time Distribution Analysis** (Standard Scenario):
+
 - Tier 1 (Traditional): 0.3s (2.3%)
 - Tier 2 (LLM-as-Judge): 6.8s (53.1%)  
 - Tier 3 (Graph Analysis): 3.1s (24.2%)
@@ -157,6 +164,7 @@ Performance baselines established through:
 | 5 | 46.7 | 9.3 | 198 | 89% |
 
 **Batch Efficiency Gains:**
+
 - 19% improvement in per-paper processing time for 3-paper batches
 - 27% improvement for 5-paper batches due to shared component initialization
 - Memory usage scales sublinearly due to shared caching
@@ -172,6 +180,7 @@ Performance baselines established through:
 | 3 | 87% | 16.9 | 2.4x CPU, 2.1x Memory |
 
 **Concurrency Limitations:**
+
 - LLM API rate limits become bottleneck at 3+ concurrent requests
 - Memory usage grows approximately linearly with concurrency
 - Optimal concurrency level: 2 evaluations for best throughput/resource balance
@@ -190,6 +199,7 @@ Performance baselines established through:
 ### PeerRead Data Characteristics
 
 **Test Dataset Sample:**
+
 - **Papers**: 157 papers across 3 venues
 - **Average Length**: 1,847 words (abstract + key sections)
 - **Reviews**: 2.3 reviews per paper average
@@ -205,6 +215,7 @@ Performance baselines established through:
 | Network Data Transfer | 8.3MB | ≤10MB | ✅ Pass |
 
 **Real Data Insights:**
+
 - Academic paper abstracts average 180 words (range: 95-340)
 - Review comments average 920 words (range: 200-2,100)
 - 12% of papers have incomplete metadata requiring robust error handling
@@ -223,6 +234,7 @@ Performance baselines established through:
 ### Memory Consumption Patterns
 
 **Baseline Memory Usage:**
+
 - **Application Startup**: 45MB
 - **Per Evaluation**: +25-85MB (depends on content size)
 - **Peak Usage**: 203MB (complex multi-paper scenario)

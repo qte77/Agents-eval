@@ -15,19 +15,22 @@ The Agents-eval system currently has **limited large context model integration**
 ### 1. Existing LLM Integration
 
 #### 1.1 Core Agent Framework
+
 - **Location**: `/workspaces/Agents-eval/src/app/agents/agent_system.py`
 - **Framework**: PydanticAI-based agent system
 - **Current Models**: Basic support for OpenAI models via PydanticAI
 - **Limitation**: No large context optimization or model-specific handling
 
 #### 1.2 Model Configuration Structure
+
 - **Location**: `/workspaces/Agents-eval/src/app/agents/llm_model_funs.py`
 - **Status**: Contains `NotImplementedError` for Gemini and HuggingFace providers
 - **Current Support**: OpenAI models only
 - **Missing**: Large context model configurations and specifications
 
 #### 1.3 Configuration System
-- **Locations**: 
+
+- **Locations**:
   - `/workspaces/Agents-eval/src/app/config/config_chat.json`
   - `/workspaces/Agents-eval/src/app/utils/load_settings.py`
 - **Current Capability**: Basic model configuration
@@ -36,12 +39,14 @@ The Agents-eval system currently has **limited large context model integration**
 ### 2. Architecture vs Implementation Gap
 
 #### 2.1 Designed Architecture (Documented)
+
 - **Documentation**: `/workspaces/Agents-eval/docs/architecture/large_context_integration.md`
 - **Scope**: Comprehensive design for 200k+ token context models
 - **Features**: Model selection, chunking, optimization strategies
 - **Status**: **Design only - not implemented**
 
 #### 2.2 Implementation Status
+
 - **Core Components**: ❌ Not implemented
 - **Model Selection**: ❌ Not implemented  
 - **Token Counting**: ❌ Not implemented
@@ -51,6 +56,7 @@ The Agents-eval system currently has **limited large context model integration**
 ### 3. Current Dependencies Analysis
 
 #### 3.1 Available Dependencies (from pyproject.toml)
+
 ```toml
 "google-genai>=1.26.0"          # Google Gemini support available
 "pydantic-ai-slim[openai]>=0.2.12"  # OpenAI integration
@@ -60,6 +66,7 @@ The Agents-eval system currently has **limited large context model integration**
 ```
 
 #### 3.2 Missing Dependencies for Large Context
+
 - **tiktoken**: Not present - needed for OpenAI token counting
 - **anthropic**: Not present - needed for Claude model integration  
 - **Token counting libraries**: Missing for accurate context management
@@ -80,24 +87,28 @@ The Agents-eval system currently has **limited large context model integration**
 ### Critical Missing Components
 
 #### 1. Token Counting Infrastructure
+
 - **Current State**: Non-existent
 - **Required Capability**: Model-specific token counting
 - **Impact**: Cannot determine context utilization
 - **Implementation Effort**: Medium (2-3 days)
 
 #### 2. Model Selection Logic
+
 - **Current State**: Hard-coded model usage
 - **Required Capability**: Intelligent model selection based on content size
 - **Impact**: Inefficient resource utilization and potential failures
 - **Implementation Effort**: Medium (2-3 days)
 
 #### 3. Context Window Management
+
 - **Current State**: No awareness of model limits
 - **Required Capability**: Context optimization and utilization tracking
 - **Impact**: High costs and processing failures
 - **Implementation Effort**: High (3-4 days)
 
 #### 4. Content Chunking System
+
 - **Current State**: Basic text extraction only
 - **Required Capability**: Intelligent document segmentation
 - **Impact**: Cannot handle large papers
@@ -106,18 +117,21 @@ The Agents-eval system currently has **limited large context model integration**
 ### Secondary Missing Components
 
 #### 1. Streaming Support
+
 - **Current State**: Synchronous processing only  
 - **Required Capability**: Streaming responses for large content
 - **Impact**: Poor user experience for long processing
 - **Implementation Effort**: Medium (2-3 days)
 
 #### 2. Cost Optimization
+
 - **Current State**: No cost awareness
 - **Required Capability**: Model selection based on cost/performance
 - **Impact**: High operational costs
 - **Implementation Effort**: Medium (2 days)
 
 #### 3. Performance Monitoring
+
 - **Current State**: Basic logging
 - **Required Capability**: Context utilization and performance metrics
 - **Impact**: Limited optimization insights
@@ -128,13 +142,16 @@ The Agents-eval system currently has **limited large context model integration**
 ### Current Compatibility Issues
 
 #### 1. Paper Size Distribution Analysis
+
 Based on dataset structure analysis:
+
 - **Small Papers** (<50k tokens): ~40% - Can use any model
 - **Medium Papers** (50k-100k tokens): ~35% - Need large context models
 - **Large Papers** (100k-200k tokens): ~20% - Need chunking or largest context models
 - **Very Large Papers** (>200k tokens): ~5% - Require chunking strategies
 
 #### 2. Content Complexity Factors
+
 - **Academic Format**: Dense technical content increases token count
 - **Citation Density**: Heavy referencing impacts context efficiency
 - **Mathematical Content**: Equations and formulas require special handling
@@ -143,21 +160,25 @@ Based on dataset structure analysis:
 ### Integration Readiness by Paper Type
 
 #### Small Papers (< 50k tokens)
+
 - **Current Capability**: ✅ Supported with basic models
 - **Large Context Benefit**: Cost optimization through model selection
 - **Required Enhancement**: Model selection logic
 
 #### Medium Papers (50k-100k tokens)  
+
 - **Current Capability**: ❌ May exceed basic model limits
 - **Large Context Benefit**: Full context processing without chunking
 - **Required Enhancement**: Context limit detection and model switching
 
 #### Large Papers (100k-200k tokens)
+
 - **Current Capability**: ❌ Cannot process effectively
 - **Large Context Benefit**: Single-pass processing with largest context models
 - **Required Enhancement**: Full large context integration
 
 #### Very Large Papers (>200k tokens)
+
 - **Current Capability**: ❌ Cannot process
 - **Large Context Benefit**: Reduced chunking with intelligent segmentation
 - **Required Enhancement**: Advanced chunking and multi-pass processing
@@ -181,24 +202,28 @@ Based on dataset structure analysis:
 ### Development Timeline Estimate
 
 #### Phase 1: Foundation (2-3 days)
+
 - Add missing dependencies (tiktoken, anthropic clients)
 - Implement basic token counting
 - Create model selection framework
 - Basic context limit awareness
 
 #### Phase 2: Core Features (3-4 days)  
+
 - Implement intelligent model selection
 - Add context optimization
 - Create basic chunking strategies
 - Integrate with existing agent system
 
 #### Phase 3: Advanced Features (2-3 days)
+
 - Add streaming support
 - Implement cost optimization
 - Create performance monitoring
 - Advanced chunking algorithms
 
 #### Phase 4: Testing and Integration (2-3 days)
+
 - End-to-end testing with PeerRead papers
 - Performance optimization
 - Cost validation
@@ -246,12 +271,14 @@ Based on dataset structure analysis:
 ## Success Metrics
 
 ### Technical Metrics
+
 - **Context Utilization**: >80% average context window usage
 - **Processing Success Rate**: >95% for all paper sizes
 - **Cost Efficiency**: <$1.00 average cost per paper
 - **Processing Speed**: <30 seconds for papers <200k tokens
 
 ### Quality Metrics  
+
 - **Content Preservation**: >99% content retention in chunking
 - **Analysis Quality**: Maintain review quality across processing strategies
 - **Error Recovery**: >90% successful fallback recovery
@@ -262,6 +289,7 @@ Based on dataset structure analysis:
 While the Agents-eval system has **excellent architectural designs** for large context model integration, the **implementation gap is significant**. The current system can only effectively process small papers with basic models. However, the foundation is solid and the existing architecture provides clear guidance for implementation.
 
 **Key Implementation Priorities**:
+
 1. Add missing dependencies and basic token counting
 2. Implement model selection logic for context optimization
 3. Create intelligent chunking for oversized content
