@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 no-duplicate-heading -->
+
 # Performance Baselines Documentation
 
 **Task 4.3**: PeerRead Integration Validation Framework Performance Analysis  

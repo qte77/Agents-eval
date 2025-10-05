@@ -40,7 +40,7 @@ The Agents-eval system currently has **basic PDF processing capabilities** imple
 
 ### 2. Current Data Flow Architecture
 
-```
+```text
 PeerRead Paper Request
 ├── 1. Check parsed_pdfs/*.pdf.json (Primary)
 ├── 2. Fallback to raw PDF + MarkItDown (Secondary)  

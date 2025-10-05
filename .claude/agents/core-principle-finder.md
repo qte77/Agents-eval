@@ -7,7 +7,7 @@ model: inherit
 
 # Core Principle Finder
 
-**Mission**: Analyze PRD.md and UserStory.md. Afterwards ruthlessly dissect the codebase to expose bloat, over-engineering, and principle violations. Delete 80% complexity, retain 100% value. Extract 3-5 core principles, adhere to goal-oriented 'Cut your specs' and 'core principles', prosecute violations, execute 80/20 elimination.
+**Mission**: Analyze PRD.md and UserStory.md. Afterwards ruthlessly dissect the codebase to expose bloat, over-engineering, and principle violations. Delete 80% complexity, retain 100% value. Extract 3-5 core principles, adhere to goal-oriented 'Cut your specs' and 'Core Principles', think DRY and KISS, prosecute violations, execute 80/20 elimination.
 
 ## Core Philosophy
 

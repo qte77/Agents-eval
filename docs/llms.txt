@@ -1738,60 +1738,70 @@
 
 /assets/images/MAS-C4-Detailed-dark.png
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-C4-Detailed-dark.png>
 
 --------------------------------------------------------------------------------
 
 /assets/images/MAS-C4-Detailed-light.png
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-C4-Detailed-light.png>
 
 --------------------------------------------------------------------------------
 
 /assets/images/MAS-C4-Overview-dark.png
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-C4-Overview-dark.png>
 
 --------------------------------------------------------------------------------
 
 /assets/images/MAS-C4-Overview-light.png
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-C4-Overview-light.png>
 
 --------------------------------------------------------------------------------
 
 /assets/images/MAS-Review-Workflow-dark.png
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-Review-Workflow-dark.png>
 
 --------------------------------------------------------------------------------
 
 /assets/images/MAS-Review-Workflow-light.png
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/MAS-Review-Workflow-light.png>
 
 --------------------------------------------------------------------------------
 
 /assets/images/customer-journey-activity-dark.png
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/customer-journey-activity-dark.png>
 
 --------------------------------------------------------------------------------
 
 /assets/images/customer-journey-activity-light.png
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/customer-journey-activity-light.png>
 
 --------------------------------------------------------------------------------
 
 /assets/images/metrics-eval-sweep-dark.png
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/metrics-eval-sweep-dark.png>
 
 --------------------------------------------------------------------------------
 
 /assets/images/metrics-eval-sweep-light.png
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/assets/images/metrics-eval-sweep-light.png>
 
 --------------------------------------------------------------------------------
@@ -4044,6 +4054,7 @@
 
 /src/app/agents/__init__.py
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/src/app/agents/__init__.py>
 
 --------------------------------------------------------------------------------
@@ -4203,6 +4214,7 @@
 
 /src/app/config/__init__.py
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/src/app/config/__init__.py>
 
 --------------------------------------------------------------------------------
@@ -4405,6 +4417,7 @@
 
 /src/app/data_models/__init__.py
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/src/app/data_models/__init__.py>
 
 --------------------------------------------------------------------------------
@@ -4615,6 +4628,7 @@
 
 /src/app/data_utils/__init__.py
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/src/app/data_utils/__init__.py>
 
 --------------------------------------------------------------------------------
@@ -4674,7 +4688,7 @@
 50 |         paper_ids: set[str] = set()
 51 |         for filepath in all_files:
 52 |             filename = Path(filepath).stem
-53 |             paper_id: str = filename.split("*")[0]  # Extract paper_id from filename
+53 |             paper_id: str = filename.split["*"](0)  # Extract paper_id from filename
 54 |             paper_ids.add(paper_id)
 55 |
 56 |         # Load latest review for each paper
@@ -4812,6 +4826,7 @@
 
 /src/app/evals/__init__.py
 --------------------------------------------------------------------------------
+
 <https://raw.githubusercontent.com/qte77/Agents-eval/bump-21-main/src/app/evals/__init__.py>
 
 --------------------------------------------------------------------------------
