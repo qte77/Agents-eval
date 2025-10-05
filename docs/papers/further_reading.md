@@ -1,9 +1,10 @@
 ---
 title: Further Reading - Research Papers
 description: Comprehensive curated list of research papers and academic resources for AI agent evaluation with thematic tagging, cross-references, and clustering
-date: 2025-09-02
 category: research
-version: 2.0.0
+arxiv_categories: cs.AI, cs.MA, cs.CL, cs.LG, cs.SE, cs.CR
+arxiv_search_url: "http://export.arxiv.org/api/query?search_query=(all:agent+OR+all:agentic+OR+all:multi-agent)&sortBy=submittedDate&sortOrder=descending"
+version: 2.1.0
 tags: [agentic-ai, evaluation, benchmarking, multi-agent-systems, safety, architecture, tool-use, planning, scientific-discovery, code-generation]
 features:
   - chronological-organization
@@ -11,9 +12,10 @@ features:
   - cross-references
   - relationship-explanations
   - clustering-by-themes
-papers_count: 100+
-coverage_period: 2022-10 to 2025-08
-last_updated: 2025-09-02
+papers_count: 154+
+coverage_period: 2022-10 to 2025-10
+updated: 2025-10-05
+created: 2025-08-24
 ---
 
 ## Overview
@@ -64,6 +66,7 @@ This document provides a comprehensive, curated collection of research papers on
 - Key papers: 2308.03688 (AgentBench), 2404.06411 (AgentQuest), 2401.13178 (AgentBoard)
 - Web agents: 2307.13854 (WebArena), 2401.13649 (VisualWebArena), 2410.06703 (ST-WebAgentBench)
 - Tool evaluation: 2307.16789 (ToolLLM), 2310.03128 (MetaTool), 2406.12045 (τ-bench)
+- Recent 2025: 2510.02271 (InfoMosaic-Bench), 2510.02190 (Deep Research benchmark), 2510.01670 (BLIND-ACT), 2510.01654 (CLASP security)
 - 2411.13768 (evaluation-driven), 2507.17257 (identity evals), 2503.16416 (evaluation survey)
 
 **Architecture & System Design** `[ARCH]`:
@@ -76,12 +79,14 @@ This document provides a comprehensive, curated collection of research papers on
 
 - Constitutional AI: 2212.08073 (foundational), 2406.07814 (collective), 2501.17112 (inverse)
 - Core: 2302.10329 (harms analysis), 2506.04133 (TRiSM), 2408.02205 (guardrails)
+- Recent 2025: 2510.02286 (adversarial dialogue), 2510.01586 (AdvEvo-MARL), 2510.01569 (InvThink), 2510.02204 (reasoning-execution gaps)
 - Multi-agent: 2503.13657 (MAS failures), 2402.04247 (safeguarding over autonomy)
 
 **Tool Use & Integration** `[TOOL]`:
 
 - Benchmarks: 2307.16789 (ToolLLM), 2310.03128 (MetaTool), 2406.12045 (τ-bench)
 - Surveys: 2405.17935 (tool learning), 2404.11584 (tool calling architectures)
+- Recent 2025: 2510.01524 (WALT web agents), 2510.01179 (TOUCAN datasets), 2510.02271 (InfoMosaic-Bench)
 - Applications: 2410.22457 (tool integration), 2410.09713 (agentic IR)
 
 **Multi-Agent Systems** `[MAS]`:
@@ -103,6 +108,7 @@ This document provides a comprehensive, curated collection of research papers on
 **Code Generation** `[CODE]`:
 
 - Explanations: 2507.22414 (symbolic explanations), 2402.01030 (executable actions)
+- Recent 2025: 2510.02185 (FalseCrashReducer), 2510.01379 (multi-LLM orchestration), 2510.01003 (repository memory)
 - Applications: 2506.13131 (AlphaEvolve), 2410.14393 (debug agents)
 
 **Self-Improvement & Reflection** `[AUTO]`:
@@ -144,11 +150,167 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 **3. Robust Human-Agent Teaming** - Most current work treats humans as either supervisors or users. Research on agents as true collaborators—with theory-of-mind, explanation capabilities, and dynamic role adaptation—is essential for high-stakes domains like healthcare, research, and decision-making.
 
+## 2025-10
+
+- [[2510.02297] Interactive Training: Feedback-Driven Neural Network Optimization](https://arxiv.org/abs/2510.02297) `[AUTO]` `[ARCH]` `cs.LG`
+  - Framework enabling real-time human or AI agent intervention during neural network training with dynamic optimization parameter adjustments
+  - Cross-ref: 2507.17131 (HITL self-improvement), 2405.06682 (feedback effects)
+- [[2510.02286] Tree-based Dialogue Reinforced Policy Optimization for Red-Teaming Attacks](https://arxiv.org/abs/2510.02286) `[SAFETY]` `[AUTO]` `cs.LG`
+  - DialTree-RPO reinforcement learning framework for discovering multi-turn attack strategies in dialogue settings
+  - Cross-ref: 2510.01586 (adversarial safety), 2506.04133 (TRiSM safety framework)
+- [[2510.02271] InfoMosaic-Bench: Evaluating Multi-Source Information Seeking in Tool-Augmented Agents](https://arxiv.org/abs/2510.02271) `[BENCH]` `[TOOL]` `[EVAL]` `cs.CL`
+  - Benchmark testing agents' ability to integrate general web search with domain-specific tools across six domains
+  - Cross-ref: 2405.17935 (tool learning survey), 2505.15872 (InfoDeepSeek RAG)
+- [[2510.02263] RLAD: Training LLMs to Discover Abstractions for Solving Reasoning Problems](https://arxiv.org/abs/2510.02263) `[PLAN]` `[AUTO]` `cs.AI`
+  - Two-player reinforcement learning approach enabling LLMs to generate and use reasoning abstractions
+  - Cross-ref: 2510.01833 (plan-then-action), 2402.02716 (planning survey)
+- [[2510.02250] The Unreasonable Effectiveness of Scaling Agents for Computer Use](https://arxiv.org/abs/2510.02250) `[ARCH]` `[BENCH]` `cs.AI`
+  - Behavior Best-of-N (bBoN) method for scaling computer-use agents via multiple rollouts and trajectory selection
+  - Cross-ref: 2510.01670 (BLIND-ACT benchmark), 2501.16150 (computer use review)
+- [[2510.02245] ExGRPO: Learning to Reason from Experience](https://arxiv.org/abs/2510.02245) `[AUTO]` `[PLAN]` `cs.LG`
+  - Framework for organizing and prioritizing valuable reasoning experiences in reinforcement learning
+  - Cross-ref: 2405.06682 (self-reflection effects), 2406.01495 (Re-ReST)
+- [[2510.02227] More Than One Teacher: Adaptive Multi-Guidance Policy Optimization](https://arxiv.org/abs/2510.02227) `[AUTO]` `[ARCH]` `cs.CL`
+  - Adaptive Multi-Guidance Policy Optimization (AMPO) leveraging multiple teacher models for enhanced exploration
+  - Cross-ref: 2510.02245 (ExGRPO), 2507.17131 (HITL guidance)
+- [[2510.02209] StockBench: Can LLM Agents Trade Stocks Profitably In Real-world Markets?](https://arxiv.org/abs/2510.02209) `[BENCH]` `[SPEC]` `cs.LG`
+  - Multi-month benchmark evaluating LLM agents' capabilities in real-world stock trading with sequential decision-making
+  - Cross-ref: 2408.06361 (financial trading survey), 2501.00881 (industry applications)
+- [[2510.02204] Say One Thing, Do Another? Diagnosing Reasoning-Execution Gaps in VLM-Powered Mobile-Use Agents](https://arxiv.org/abs/2510.02204) `[SAFETY]` `[EVAL]` `cs.CL`
+  - Framework for diagnosing misalignments between reasoning and execution in vision-language mobile agents
+  - Cross-ref: 2510.01670 (blind goal-directedness), 2501.16150 (computer use review)
+- [[2510.02190] A Rigorous Benchmark with Multidimensional Evaluation for Deep Research Agents](https://arxiv.org/abs/2510.02190) `[BENCH]` `[SCI]` `[EVAL]` `cs.AI`
+  - Comprehensive benchmark for Deep Research Agents with 214 expert-curated queries and multidimensional scoring
+  - Cross-ref: 2506.18096 (deep research agents), 2501.04227 (research assistants)
+- [[2510.02185] FalseCrashReducer: Mitigating False Positive Crashes in OSS-Fuzz-Gen Using Agentic AI](https://arxiv.org/abs/2510.02185) `[CODE]` `[MAS]` `cs.SE`
+  - AI-driven strategies reducing false positives in multi-agent fuzz driver generation systems
+  - Cross-ref: 2503.14713 (test generation), 2410.14393 (debug agents)
+- [[2510.02157] Agentic Reasoning and Refinement through Semantic Interaction](https://arxiv.org/abs/2510.02157) `[PLAN]` `[ARCH]` `cs.HC`
+  - VIS-ReAct two-agent framework for report refinement using semantic interactions in human-LLM collaboration
+  - Cross-ref: 2507.17131 (HITL self-improvement), 2411.00927 (ReSpAct)
+- [[2510.02139] BioinfoMCP: A Unified Platform Enabling MCP Interfaces in Agentic Bioinformatics](https://arxiv.org/abs/2510.02139) `[SPEC]` `[MAS]` `[TOOL]` `cs.MA`
+  - Platform converting bioinformatics tools to MCP-compliant servers for natural-language interaction
+  - Cross-ref: 2510.01724 (MetaboT), 2501.06590 (ChemAgent)
+- [[2510.02087] Cooperative Guidance for Aerial Defense in Multiagent Systems](https://arxiv.org/abs/2510.02087) `[MAS]` `[SPEC]` `cs.MA`
+  - Cooperative guidance framework for multi-drone aerial defense with time-constrained interception
+  - Cross-ref: 2510.01869 (TACOS multi-drone), 2507.05178 (CREW benchmark)
+- [[2510.01869] TACOS: Task Agnostic COordinator of a multi-drone System](https://arxiv.org/abs/2510.01869) `[MAS]` `[ARCH]` `cs.RO`
+  - Natural language control framework for multi-UAV systems using LLMs for high-level task delegation
+  - Cross-ref: 2510.02087 (aerial defense), 2501.06322 (collaboration mechanisms)
+- [[2510.01833] Plan Then Action: High-Level Planning Guidance Reinforcement Learning for LLM Reasoning](https://arxiv.org/abs/2510.01833) `[PLAN]` `[AUTO]` `cs.AI`
+  - Two-stage framework generating high-level guidance then using RL to optimize reasoning trajectories
+  - Cross-ref: 2402.02716 (planning survey), 2310.04406 (LATS)
+- [[2510.01815] Human-AI Teaming Co-Learning in Military Operations](https://arxiv.org/abs/2510.01815) `[SAFETY]` `[ARCH]` `cs.AI`
+  - Co-learning model for human-AI teams with adjustable autonomy and multi-layered control
+  - Cross-ref: 2507.17131 (HITL self-improvement), 2402.04247 (safeguarding priority)
+- [[2510.01751] A cybersecurity AI agent selection and decision support framework](https://arxiv.org/abs/2510.01751) `[SPEC]` `[SAFETY]` `[ARCH]` `cs.AI`
+  - Framework aligning AI agent architectures with NIST Cybersecurity Framework for threat response
+  - Cross-ref: 2510.01654 (CLASP security), 2506.04133 (TRiSM)
+- [[2510.01724] MetaboT: AI-based agent for natural language-based interaction with metabolomics knowledge graphs](https://arxiv.org/abs/2510.01724) `[SPEC]` `[MAS]` `[TOOL]` `cs.AI`
+  - Multi-agent system translating natural language to SPARQL queries for metabolomics knowledge graphs
+  - Cross-ref: 2510.02139 (BioinfoMCP), 2501.06590 (ChemAgent)
+- [[2510.01670] Just Do It!? Computer-Use Agents Exhibit Blind Goal-Directedness](https://arxiv.org/abs/2510.01670) `[BENCH]` `[SAFETY]` `[EVAL]` `cs.AI`
+  - BLIND-ACT benchmark systematically evaluating agents' tendency to pursue goals without considering feasibility
+  - Cross-ref: 2510.02250 (computer use scaling), 2510.02204 (reasoning-execution gaps)
+- [[2510.01654] SoK: Measuring What Matters for Closed-Loop Security Agents](https://arxiv.org/abs/2510.01654) `[BENCH]` `[SAFETY]` `[SPEC]` `cs.CL`
+  - CLASP framework for evaluating autonomous cybersecurity agents with Closed-Loop Capability Score
+  - Cross-ref: 2510.01751 (cybersecurity framework), 2506.04133 (TRiSM)
+- [[2510.01635] MIMIC: Integrating Diverse Personality Traits for Better Game Testing Using Large Language Model](https://arxiv.org/abs/2510.01635) `[SPEC]` `[CODE]` `cs.SE`
+  - Framework integrating personality traits into gaming agents for improved test coverage
+  - Cross-ref: 2503.14713 (test generation), 2505.22583 (GitGoodBench)
+- [[2510.01586] AdvEvo-MARL: Shaping Internalized Safety through Adversarial Co-Evolution](https://arxiv.org/abs/2510.01586) `[SAFETY]` `[MAS]` `[AUTO]` `cs.AI`
+  - Multi-agent RL framework improving safety by jointly optimizing attackers and defenders
+  - Cross-ref: 2510.02286 (adversarial attacks), 2506.04133 (TRiSM)
+- [[2510.01569] InvThink: Towards AI Safety via Inverse Reasoning](https://arxiv.org/abs/2510.01569) `[SAFETY]` `[ARCH]` `cs.AI`
+  - Method for LLMs to enumerate and analyze potential harms before generating responses
+  - Cross-ref: 2501.17112 (inverse constitutional AI), 2508.03858 (governance protocol)
+- [[2510.01553] IoDResearch: Deep Research on Private Heterogeneous Data](https://arxiv.org/abs/2510.01553) `[SCI]` `[MAS]` `cs.IR`
+  - Multi-agent framework for deep research on private heterogeneous scientific data with knowledge graphs
+  - Cross-ref: 2510.02190 (deep research benchmark), 2506.18096 (deep research agents)
+- [[2510.01538] TimeSeriesScientist: A General-Purpose AI Agent for Time Series Analysis](https://arxiv.org/abs/2510.01538) `[SCI]` `[SPEC]` `cs.LG`
+  - LLM-driven framework with specialized agents for time series forecasting and analysis
+  - Cross-ref: 2501.04227 (research assistants), 2506.18096 (deep research agents)
+- [[2510.01531] Information Seeking for Robust Decision Making under Partial Observability](https://arxiv.org/abs/2510.01531) `[PLAN]` `[ARCH]` `cs.AI`
+  - InfoSeeker framework integrating planning with information seeking for decision-making under uncertainty
+  - Cross-ref: 2402.02716 (planning survey), 2410.09713 (agentic IR)
+- [[2510.01524] WALT: Web Agents that Learn Tools](https://arxiv.org/abs/2510.01524) `[TOOL]` `[ARCH]` `cs.CV`
+  - Framework for web agents reverse-engineering website functionalities as reusable tools
+  - Cross-ref: 2405.17935 (tool learning), 2510.02271 (InfoMosaic-Bench)
+- [[2510.01427] A Tale of LLMs and Induced Small Proxies: Scalable Agents for Knowledge Mining](https://arxiv.org/abs/2510.01427) `[SCI]` `[ARCH]` `cs.AI`
+  - Falconer collaborative framework combining LLM reasoning with lightweight proxy models for knowledge mining
+  - Cross-ref: 2510.01553 (IoDResearch), 2506.18096 (deep research agents)
+- [[2510.01379] Beyond Single LLMs: Enhanced Code Generation via Multi-Stage Performance-Guided LLM Orchestration](https://arxiv.org/abs/2510.01379) `[CODE]` `[ARCH]` `cs.SE`
+  - Multi-stage orchestration framework routing coding tasks to optimal LLMs across programming languages
+  - Cross-ref: 2507.22414 (code explanations), 2506.13131 (AlphaEvolve)
+- [[2510.01359] Breaking the Code: Security Assessment of AI Code Agents Through Systematic Jailbreaking Attacks](https://arxiv.org/abs/2510.01359) `[SAFETY]` `[CODE]` `cs.CR`
+  - Security evaluation of code-generating AI agents through systematic jailbreaking attack testing
+  - Cross-ref: 2510.01569 (InvThink safety), 2506.04133 (TRiSM)
+- [[2510.01297] SimCity: Multi-Agent Urban Development Simulation with Rich Interactions](https://arxiv.org/abs/2510.01297) `[MAS]` `[SPEC]` `cs.MA`
+  - Multi-agent framework for macroeconomic simulation using LLMs modeling heterogeneous urban agents
+  - Cross-ref: 2507.05178 (CREW benchmark), 2501.06322 (collaboration mechanisms)
+- [[2510.01179] TOUCAN: Synthesizing 1.5M Tool-Agentic Data from Real-World MCP Environments](https://arxiv.org/abs/2510.01179) `[TOOL]` `[BENCH]` `cs.LG`
+  - Large dataset of tool-agentic interactions using real-world Model Context Protocols for training
+  - Cross-ref: 2405.17935 (tool learning survey), 2510.02271 (InfoMosaic-Bench)
+- [[2510.01003] Improving Code Localization with Repository Memory](https://arxiv.org/abs/2510.01003) `[CODE]` `[MEM]` `cs.SE`
+  - Augmenting language agents with repository memory leveraging commit history for code understanding
+  - Cross-ref: 2404.13501 (memory mechanisms), 2410.14393 (debug agents)
+
+## 2025-09
+
+- [[2509.24877] The Emergence of Social Science of Large Language Models](https://arxiv.org/abs/2509.24877) `[SURVEY]` `[ARCH]` `cs.AI`
+  - Systematic review of 270 studies examining LLM social interactions and computational taxonomy
+  - Cross-ref: 2503.21460 (LLM agent survey), 2308.11432 (foundational survey)
+- [[2509.00629] Can Multi-turn Self-refined Single Agent LMs with Retrieval Solve Hard Coding Problems?](https://arxiv.org/abs/2509.00629) `[CODE]` `[BENCH]` `cs.CL`
+  - ICPC benchmark with 254 competitive programming problems achieving 42.2% solve rate with self-refinement
+  - Cross-ref: 2505.22583 (GitGoodBench), 2410.14393 (debug agents)
+- [[2509.00625] NetGent: Agent-Based Automation of Network Application Workflows](https://arxiv.org/abs/2509.00625) `[AUTO]` `[SPEC]` `cs.AI`
+  - AI agent framework compiling natural-language workflow rules into executable code for network automation
+  - Cross-ref: 2505.22967 (MermaidFlow workflows), 2502.05957 (AutoAgent)
+- [[2509.00616] TimeCopilot](https://arxiv.org/abs/2509.00616) `[SCI]` `[SPEC]` `cs.LG`
+  - Open-source agentic framework for time series forecasting combining models with LLMs and natural language explanations
+  - Cross-ref: 2510.01538 (TimeSeriesScientist), 2501.04227 (research assistants)
+- [[2509.00581] SQL-of-Thought: Multi-agentic Text-to-SQL with Guided Error Correction](https://arxiv.org/abs/2509.00581) `[MAS]` `[CODE]` `cs.DB`
+  - Multi-agent framework for natural language to SQL conversion with schema linking and error correction
+  - Cross-ref: 2508.15809 (Chain-of-Query), 2402.01030 (executable actions)
+- [[2509.00559] Social World Models](https://arxiv.org/abs/2509.00559) `[ARCH]` `[SPEC]` `cs.AI`
+  - Structured social world representation for agent reasoning about social interactions and theory-of-mind
+  - Cross-ref: 2509.24877 (social science LLMs), 2510.01815 (human-AI teaming)
+- [[2509.00531] MobiAgent: A Systematic Framework for Customizable Mobile Agents](https://arxiv.org/abs/2509.00531) `[SPEC]` `[ARCH]` `cs.MA`
+  - Comprehensive mobile agent system with advanced GUI perception and planning capabilities
+  - Cross-ref: 2501.16150 (computer use review), 2510.02250 (computer use scaling)
+- [[2509.24380] Agentic Services Computing](https://arxiv.org/abs/2509.24380) `[SURVEY]` `[ARCH]` `cs.SE`
+  - Lifecycle-driven framework for Agentic Service Computing examining multi-agent service design and evolution
+  - Cross-ref: 2508.10146 (agentic frameworks), 2501.10114 (infrastructure)
+- [[2509.23988] LLM/Agent-as-Data-Analyst: A Survey](https://arxiv.org/abs/2509.23988) `[SURVEY]` `[SPEC]` `cs.AI`
+  - Review of LLM and agent techniques for data analysis across different modalities
+  - Cross-ref: 2503.21460 (LLM agent survey), 2501.04227 (research assistants)
+- [[2510.00078] Adaptive and Resource-efficient Agentic AI Systems for Mobile and Embedded Devices: A Survey](https://arxiv.org/abs/2510.00078) `[SURVEY]` `[ARCH]` `cs.LG`
+  - Survey of adaptive, resource-efficient agentic AI for mobile and embedded device deployment
+  - Cross-ref: 2508.10146 (agentic frameworks), 2501.10114 (infrastructure)
+
 ## 2025-08
 
+- [[2508.21803] Automated Clinical Problem Detection from SOAP Notes using a Collaborative Multi-Agent LLM Architecture](https://arxiv.org/abs/2508.21803) `[MAS]` `[SPEC]` `cs.AI`
+  - Collaborative multi-agent system for clinical problem identification with hierarchical debate for diagnostic conclusions
+  - Cross-ref: 2507.16940 (AURA medical agent), 2501.06322 (collaboration mechanisms)
+- [[2508.15809] Chain-of-Query: Unleashing the Power of LLMs in SQL-Aided Table Understanding via Multi-Agent Collaboration](https://arxiv.org/abs/2508.15809) `[MAS]` `[CODE]` `cs.CL`
+  - Multi-agent framework for SQL generation and table understanding with clause-by-clause generation strategy
+  - Cross-ref: 2509.00581 (SQL-of-Thought), 2402.01030 (executable actions)
 - [[2508.15805] ALAS: Autonomous Learning Agent for Self-Updating Language Models](https://arxiv.org/abs/2508.15805) `[AUTO]` `[ARCH]` `cs.AI` `cs.LG`
   - Autonomous learning framework for continuous self-updating of language models with data acquisition and fine-tuning pipeline
   - Cross-ref: 2507.17131 (HITL self-improvement), 2410.04444 (Gödel Agent recursive improvement)
+- [[2508.11120] Towards Reliable Multi-Agent Systems for Marketing Applications via Reflection, Memory, and Planning](https://arxiv.org/abs/2508.11120) `[MAS]` `[MEM]` `[SPEC]` `cs.CL`
+  - Multi-agent framework for audience curation with iterative planning, tool verification, and long-term memory
+  - Cross-ref: 2404.13501 (memory mechanisms), 2501.06322 (collaboration mechanisms)
+- [[2508.11030] Families' Vision of Generative AI Agents for Household Safety](https://arxiv.org/abs/2508.11030) `[SPEC]` `[SAFETY]` `cs.HC`
+  - Multi-agent system design for household safety with privacy-preserving principles and family-centric roles
+  - Cross-ref: 2510.01815 (human-AI teaming), 2506.04133 (TRiSM safety)
+- [[2508.10572] Towards Agentic AI for Multimodal-Guided Video Object Segmentation](https://arxiv.org/abs/2508.10572) `[SPEC]` `[ARCH]` `cs.CV`
+  - Multi-modal agent system for video object segmentation using LLMs for dynamic workflow generation
+  - Cross-ref: 2408.08632 (multimodal benchmarking), 2507.16940 (AURA multimodal)
+- [[2508.10494] A Unified Multi-Agent Framework for Universal Multimodal Understanding and Generation](https://arxiv.org/abs/2508.10494) `[MAS]` `[ARCH]` `cs.LG`
+  - MAGUS modular framework for multimodal understanding and generation via multi-agent collaboration
+  - Cross-ref: 2408.08632 (multimodal benchmarking), 2501.06322 (collaboration mechanisms)
 - [[2508.10146] Agentic AI Frameworks: Architectures, Protocols, and Design Challenges](https://arxiv.org/abs/2508.10146) `[ARCH]` `[SURVEY]` `cs.AI` `cs.SE`
   - Systematic review of leading agentic AI frameworks including CrewAI, LangGraph, AutoGen, and MetaGPT with architectural analysis
   - Cross-ref: 2502.05957 (AutoAgent framework), 2501.00881 (industry applications)
@@ -164,12 +326,24 @@ Based on current gaps and transformative potential, three areas warrant immediat
 - [[2508.00414] Cognitive Kernel-Pro: A Framework for Deep Research Agents and Agent Foundation Models Training](https://www.arxiv.org/abs/2508.00414) `[SCI]` `[ARCH]` `cs.AI` `cs.LG`
   - Training framework for developing specialized research agents with enhanced cognitive capabilities
   - Cross-ref: 2506.18096 (research agent foundations), 2501.04227 (practical research applications)
+- [[2508.00032] Strategic Communication and Language Bias in Multi-Agent LLM Coordination](https://arxiv.org/abs/2508.00032) `[MAS]` `[ARCH]` `cs.MA`
+  - Examines how communication influences cooperative behavior in multi-agent LLM systems
+  - Cross-ref: 2507.05178 (CREW benchmark), 2501.06322 (collaboration mechanisms)
 
 ## 2025-07
 
 - [[2507.23276] How Far Are AI Scientists from Changing the World?](https://arxiv.org/abs/2507.23276), [gh/ResearAI/Awesome-AI-Scientist](https://github.com/ResearAI/Awesome-AI-Scientist) `[SCI]` `[SURVEY]`
   - Survey of research on AI scientists, AI researchers, AI engineers, and a series of AI-driven research studies
   - Cross-ref: 2408.06292 (automated scientific discovery implementation), 2506.18096 (systematic research agent analysis)
+- [[2507.23096] ChatVis: Large Language Model Agent for Generating Scientific Visualizations](https://arxiv.org/abs/2507.23096) `[CODE]` `[SPEC]` `cs.HC`
+  - LLM assistant for generating Python code for scientific visualizations using chain-of-thought and RAG
+  - Cross-ref: 2507.22414 (code explanations), 2410.09713 (agentic IR)
+- [[2507.23095] SMART-Editor: A Multi-Agent Framework for Human-Like Design Editing](https://arxiv.org/abs/2507.23095) `[MAS]` `[ARCH]` `cs.CL`
+  - Framework for compositional layout and content editing with reward-guided refinement
+  - Cross-ref: 2501.06322 (collaboration mechanisms), 2510.02157 (VIS-ReAct)
+- [[2507.22800] The Multi-Agent Fault Localization System Based on Monte Carlo Tree Search Approach](https://arxiv.org/abs/2507.22800) `[MAS]` `[SPEC]` `cs.SE`
+  - Multi-agent system for root cause analysis in microservices using LLMs with knowledge-based approach
+  - Cross-ref: 2510.01751 (cybersecurity framework), 2501.06322 (collaboration mechanisms)
 - [[2507.17131] Enabling Self-Improving Agents to Learn at Test Time With Human-In-The-Loop Guidance](https://arxiv.org/abs/2507.17131) `[AUTO]` `[ARCH]` `cs.AI` `cs.HC`
   - Framework for enabling agents to self-improve through human-in-the-loop guidance and knowledge gap assessment
   - Cross-ref: 2508.15805 (ALAS autonomous learning), 2405.06682 (self-reflection effects)
@@ -206,6 +380,15 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-06
 
+- [[2506.23408] Do LLMs Dream of Discrete Algorithms?](https://arxiv.org/abs/2506.23408) `[PLAN]` `[ARCH]` `cs.LG`
+  - Neurosymbolic approach augmenting LLMs with logic-based reasoning modules for improved agent planning precision
+  - Cross-ref: 2210.03629 (ReAct planning), 2310.04406 (LATS reasoning)
+- [[2506.23329] IR3D-Bench: Evaluating Vision-Language Model Scene Understanding as Agentic Inverse Rendering](https://arxiv.org/abs/2506.23329) `[BENCH]` `[EVAL]` `cs.CV`
+  - Benchmark challenging vision-language agents to recreate 3D scene structures through tool use
+  - Cross-ref: 2408.08632 (multimodal benchmarking), 2510.02271 (InfoMosaic-Bench)
+- [[2506.23306] GATSim: Urban Mobility Simulation with Generative Agents](https://arxiv.org/abs/2506.23306) `[MAS]` `[SPEC]` `cs.AI`
+  - Urban mobility simulation framework using generative agents with adaptive behaviors and memory systems
+  - Cross-ref: 2510.01297 (SimCity urban simulation), 2404.13501 (memory mechanisms)
 - [[2506.18096] Deep Research Agents: A Systematic Examination And Roadmap](https://arxiv.org/abs/2506.18096), [gh/ai-agents-2030/awesome-deep-research-agent](https://github.com/ai-agents-2030/awesome-deep-research-agent) `[SCI]` `[SURVEY]`
   - Comprehensive examination of AI agents for research tasks with roadmap for future development
   - Cross-ref: 2507.23276 (AI scientist impact assessment), 2501.04227 (practical research implementation)
@@ -247,6 +430,10 @@ Based on current gaps and transformative potential, three areas warrant immediat
 - [[2505.15872] InfoDeepSeek: Benchmarking Agentic InformationSeeking for Retrieval-Augmented Generation](https://arxiv.org/abs/2505.15872) `[BENCH]` `[TOOL]`
   - Benchmark for evaluating agentic information-seeking capabilities in RAG systems
   - Cross-ref: 2410.09713 (agentic IR), 2507.10584 (compliance RAG)
+- [[2505.18705] AI-Researcher: Fully Autonomous Research System from Literature Review to Publication](https://arxiv.org/abs/2505.18705), [gh/HKUDS/AI-Researcher](https://github.com/HKUDS/AI-Researcher) `[RESEARCH]` `[AUTO]` **NeurIPS 2025 Spotlight**
+  - Fully autonomous AI research system transforming scientific discovery from literature review to publication-ready manuscripts
+  - Features Writer Agent for automatic paper generation and Scientist-Bench for systematic research quality evaluation
+  - Cross-ref: 2408.14033 (MLR-Copilot), 2501.10120 (PaSa), 2509.06917 (Paper2Agent)
 
 ## 2025-04
 
@@ -314,6 +501,10 @@ Based on current gaps and transformative potential, three areas warrant immediat
 - [[2501.00881] Agentic Systems: A Guide to Transforming Industries with Vertical AI Agents](https://arxiv.org/abs/2501.00881) `[SPEC]` `[SURVEY]`
   - Guide for implementing vertical AI agents across different industries and use cases
   - Cross-ref: 2412.04093 (practical considerations), 2408.06361 (financial trading)
+- [[2501.10120] PaSa: LLM-Powered Paper Search Agent with Reinforcement Learning](https://arxiv.org/abs/2501.10120) `[RESEARCH]` `[TOOL]`
+  - LLM-powered paper search agent using reinforcement learning trained on AutoScholarQuery dataset with 35k academic queries
+  - Autonomous search workflow with tool invocation, paper reading, and reference filtering for comprehensive scholarly search
+  - Cross-ref: 2505.18705 (AI-Researcher), 2312.07559 (PaperQA), 2501.04227 (Agent Laboratory)
 
 ## 2024-12
 
@@ -374,6 +565,10 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2024-08
 
+- [[2408.14033] MLR-Copilot: Autonomous Machine Learning Research Framework](https://arxiv.org/abs/2408.14033), [gh/du-nlp-lab/MLR-Copilot](https://github.com/du-nlp-lab/MLR-Copilot) `[RESEARCH]` `[AUTO]`
+  - Autonomous machine learning research framework with three-phase pipeline for idea generation, implementation, and validation
+  - Mimics researchers' thought processes for systematic ML research automation and executable research contributions
+  - Cross-ref: 2505.18705 (AI-Researcher), 2501.10120 (PaSa), 2408.06292 (AI Scientist)
 - [[2408.06361] Large Language Model Agent in Financial Trading: A Survey](https://arxiv.org/abs/2408.06361)
   - Survey of LLM agents in financial trading applications and market analysis
 - [[2408.06292] The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery](https://arxiv.org/abs/2408.06292)
@@ -445,6 +640,13 @@ Based on current gaps and transformative potential, three areas warrant immediat
   - Comprehensive benchmark for evaluating LLMs as autonomous agents across diverse tasks and environments
   - Cross-ref: 2404.06411 (modular benchmark evolution), 2401.13178 (multi-turn evaluation specialization)
 
+## 2023-04
+
+- [[2304.05376] ChemCrow: LLM Chemistry Agent with Expert-Designed Tools](https://arxiv.org/abs/2304.05376) `[RESEARCH]` `[SCI]` `[TOOL]`
+  - LLM chemistry agent augmented with 18 expert-designed tools for organic synthesis, drug discovery, and materials design
+  - Autonomous synthesis planning and execution with emergent capabilities from tool combination
+  - Cross-ref: 2310.10632 (BioPlanner), 2501.06590 (ChemAgent), 2505.18705 (AI-Researcher)
+
 ## 2023-03
 
 - [[2303.11366] Reflexion: Language Agents with Verbal Reinforcement Learning](https://arxiv.org/abs/2303.11366) `[AUTO]` `[ARCH]` `cs.AI` `cs.CL`
@@ -468,12 +670,23 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2023-10
 
+- [[2310.10632] BioPlanner: Automated AI Approach for Protocol Planning in Biology](https://arxiv.org/abs/2310.10632), [gh/bioplanner/bioplanner](https://github.com/bioplanner/bioplanner) `[RESEARCH]` `[SCI]`
+  - Automated protocol generation for biological experiments using LLMs with BIOPROT dataset of 9,000+ protocols
+  - Generates accurate experimental protocols from natural language with real-world laboratory validation
+  - Cross-ref: 2505.18705 (AI-Researcher), 2304.05376 (ChemCrow), 2501.06590 (ChemAgent)
 - [[2310.04406] Language Agent Tree Search Unifies Reasoning Acting and Planning in Language Models](https://arxiv.org/abs/2310.04406) `[PLAN]` `[ARCH]` `cs.AI` `cs.CL`
   - LATS framework integrating Monte Carlo Tree Search with LM reasoning, acting, and planning capabilities
   - Cross-ref: 2210.03629 (ReAct foundation), 2410.02810 (StateAct)
 - [[2310.03128] MetaTool Benchmark for Large Language Models: Deciding Whether to Use Tools and Which to Use](https://arxiv.org/abs/2310.03128) `[BENCH]` `[TOOL]` `cs.AI` `cs.CL`
   - Benchmark for evaluating LLM tool selection and usage decision-making capabilities
   - Cross-ref: 2307.16789 (ToolLLM), 2406.12045 (τ-bench)
+
+## 2023-12
+
+- [[2312.07559] PaperQA: Open-Source RAG Agent for Scientific Literature Question Answering](https://arxiv.org/abs/2312.07559), [gh/whitead/paper-qa](https://github.com/whitead/paper-qa) `[RESEARCH]` `[TOOL]`
+  - RAG agent for answering questions over scientific literature with hallucination reduction and provenance tracking
+  - Information retrieval across full-text articles with source attribution for transparent evaluation evidence
+  - Cross-ref: 2505.18705 (AI-Researcher), 2501.10120 (PaSa), 2509.06917 (Paper2Agent)
 
 ## 2022-12
 
