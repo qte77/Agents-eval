@@ -4,5 +4,13 @@
             "type": "sse",
             "url": "https://mcp.context7.com/sse"
         }
+    },
+    "exa": {
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp",
+      "headers": {},
+      "env": {
+        "EXA_API_KEY": "${EXA_API_KEY}"
+      }
     }
 }
