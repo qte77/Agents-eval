@@ -1,11 +1,11 @@
 {
   "name": "make setup_dev",
-  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.14",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:1": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
         "version": "latest",
-        "moby": true
+        "moby": false
     }
   },
   "customizations": {
