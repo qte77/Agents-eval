@@ -1,5 +1,5 @@
 {
     "name": "make setup_dev_ollama",
-    "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
+    "image": "mcr.microsoft.com/vscode/devcontainers/python:3.14",
     "postCreateCommand": "make setup_dev_ollama"
 }
