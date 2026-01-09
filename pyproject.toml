@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = "==3.13.*"
 license = "bsd-3-clause"
 dependencies = [
-    "agentops>=0.4.14",
+    # "agentops>=0.4.14",
     "httpx>=0.28.1",
     "logfire>=3.16.1",
     "loguru>=0.7.3",
