@@ -14,18 +14,18 @@ tags:
   - self-evolving-agents
   - runtime-governance
 author: AI Research Team
-created: 2025-09-02
-updated: 2025-10-05
-version: 2.1.0
-papers_analyzed: 154+
-coverage_period: 2022-10 to 2025-10-05
+papers_analyzed: 212+
+coverage_period: 2022-10 to 2026-01-11
 related_documents:
   - further_reading.md
+created: 2025-09-02
+updated: 2026-01-11
+version: 3.0.0
 ---
 
 ## Executive Summary
 
-Analysis of 154+ research papers (2022-2025) and 27+ production frameworks reveals convergence toward multi-dimensional agent evaluation methodologies. Key developments include self-evolving agent capabilities, runtime governance protocols, and compositional self-improvement approaches that require evaluation framework evolution.
+Analysis of 208+ research papers (2022-2026) and 27+ production frameworks reveals convergence toward multi-dimensional agent evaluation methodologies. Key developments include self-evolving agent capabilities, runtime governance protocols, and compositional self-improvement approaches that require evaluation framework evolution.
 
 **Related Documentation**: See [Further Reading](further_reading.md) for
 comprehensive research paper analysis and cross-references.
@@ -55,6 +55,17 @@ while supporting migration between orchestration approaches.
 - **Compositional Self-Improvement**: Next-generation approach to truly recursive intelligence systems
 
 **Recent Developments (Sept-Oct 2025)**: 54 new papers added covering emerging benchmarks (InfoMosaic-Bench, BLIND-ACT, Deep Research Agents), advanced safety (adversarial co-evolution, reasoning-execution gaps), tool integration (WALT, TOUCAN), and specialized applications (clinical agents, mobile agents, SQL generation). These additions strengthen the evaluation framework foundation across computer use, safety assessment, and multi-agent collaboration domains.
+
+### Recent Developments (Nov 2025 - Jan 2026)
+
+**58 new papers added** covering critical advances:
+
+- **Enterprise Evaluation Frameworks**: CLEAR framework (2511.14136) with ρ=0.83 production correlation, AgentArch (2509.10769) benchmarking 18 configurations, TheAgentCompany (2412.14161) for real-world tasks
+- **Scientific Benchmarks from AgentBeats**: SciCode (2407.13168) research coding, CORE-Bench (2409.11363) reproducibility, OSWorld (2404.07972) OS/web tasks, τ²-bench (2506.07982) dual-control tool evaluation
+- **Safety Benchmark Ecosystem**: Four new benchmarks - SALAD-Bench (ACL 2024), Agent-SafetyBench (349 environments), SafeAgentBench (embodied agents), AgentHarm (ICLR 2025)
+- **Memory Systems Revolution**: MAGMA multi-graph architecture (2601.03236), MACLA 2,800× faster memory construction (2512.18950), comprehensive memory surveys
+- **Multi-Agent Reasoning**: MAR Multi-Agent Reflexion (2512.20845), scaling agent systems to 180 configurations (2512.08296)
+- **Code Generation Evolution**: SE 3.0 vision (2507.15003), comprehensive code generation surveys (2508.00083, 2508.11126)
 
 **Research Impact on Evaluation**:
 
@@ -107,7 +118,7 @@ This evolution transcends any specific framework implementation, establishing ev
 
 **Research Validation**: See [further_reading.md](further_reading.md) for complete
 citations. Key papers: 2507.02825 (benchmarking best practices), 2411.13768
-(evaluation-driven approaches), 2503.16416 (evaluation survey).
+(evaluation-driven), 2503.16416 (evaluation survey), 2507.21504 (evaluation taxonomy), 2511.14136 (CLEAR enterprise framework).
 
 ### 2. Self-Evolving Agent Systems Integration
 
@@ -146,11 +157,33 @@ and [MCP](https://docs.anthropic.com/en/docs/mcp) standardization.
 ### Production Framework Integration Matrix
 
 | Framework | Core Principle | Agents-eval Integration | Research Backing |
-|-----------|---------------|------------------------|------------------|
+| ----------- | --------------- | ------------------------ | ------------------ |
 | **[Anthropic Multi-Agent](https://www.anthropic.com/engineering/multi-agent-research-system)** | Orchestrator-Worker Pattern | Direct match with Manager agent | 90% faster research processing |
 | **[12-Factor Agents](https://github.com/humanlayer/12-factor-agents)** | Modular, stateless design | Sprint 2 engine separation | Production reliability principles |
 | **[Agents-Towards-Production](https://github.com/NirDiamant/agents-towards-production)** | Security & deployment patterns | Enhanced evaluation metrics | Comprehensive guardrails |
 | **[DeepAgents](https://github.com/langchain-ai/deepagents)** | Context quarantine & planning | Advanced coordination | Deep architecture benefits |
+| **[Inspect AI](https://inspect.aisi.org.uk/)** | Dataset-Solver-Scorer model | Direct PydanticAI support | UK AISI standard, 100+ evals |
+| **[Bloom](https://github.com/safety-research/bloom)** | Four-stage behavioral eval | LLM-as-Judge enhancement | Elicitation rate metric |
+| **[Petri](https://github.com/safety-research/petri)** | Auditor-Target-Judge | Multi-turn assessment | Built on Inspect AI |
+| **[DeepEval](https://deepeval.com/guides/guides-ai-agent-evaluation)** | Three-layer evaluation model | Component-level metrics | GEval custom criteria |
+| **[Pydantic Evals](https://ai.pydantic.dev/evals/)** | Span-based behavior assessment | Wrappable evaluators + Logfire observability | Post-execution analysis alignment |
+| **[Arize Phoenix](https://arize.com/docs/phoenix/evaluation/concepts-evals/evaluating-multi-agent-systems)** | Multi-level coordination eval | Handoff quality metrics, coordination patterns | Pre-built agent evaluators |
+| **[Claude Eval Framework](https://platform.claude.com/docs/en/test-and-evaluate/)** | SMART criteria + grading hierarchy | Validates three-tier approach | Bloom 0.86 correlation |
+
+#### Failure Mode Taxonomy (Anthropic Engineering)
+
+**Source**: [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
+
+Production insights from Anthropic's two-agent harness pattern mapping directly to Agents-eval metrics:
+
+| Failure Mode | Impact | Maps to Metric | Detection Method |
+| ------------ | ------ | -------------- | ---------------- |
+| Premature completion | Agent declares done too early | `task_success` | Review completeness validation |
+| Undocumented progress | No state/progress trail | `coordination_quality` | Progress logging analysis |
+| Testing gaps | Missing verification steps | `tool_efficiency` | Test execution coverage |
+| Setup confusion | Bad initial environment | (new) Initialization rate | Environment readiness check |
+
+**Application**: These failure modes provide concrete evaluation criteria for assessing agent reliability and robustness in long-running scenarios.
 
 ### Academic Research Synthesis
 
@@ -175,6 +208,21 @@ and [MCP](https://docs.anthropic.com/en/docs/mcp) standardization.
 
    **Application**: Benchmark for evaluating agents' multi-source information integration and tool usage effectiveness
 
+5. **Production Framework Metrics** (New Discoveries 2026-01)
+   - **Path Convergence** (Arize Phoenix): `optimal_path_length / avg_path_length` for efficiency measurement
+   - **Handoff Quality** (Arize Phoenix Multi-Agent): Appropriateness, information transfer, timing in agent transitions
+   - **Semantic Outcome** (LangSmith): Complete conversation outcome vs. per-step task success
+   - **Evaluator Alignment** (Arize Self-Improving): Meta-evaluation comparing LLM judges to human annotations
+
+   **Application**: Enhance Tier 3 graph analysis with path efficiency metrics; add handoff quality to coordination assessment; implement meta-evaluation for Tier 2 LLM-as-Judge validation
+
+6. **Research Plan Evaluation** (New Discovery 2026-01)
+   - **Rubric-based Self-grading** ([2512.23707]): RL training with generator-verifier gap, 70% expert preference
+   - **Long-horizon Partial Progress** ([2512.18470]): Fix Rate metric for multi-file evolution tasks
+   - **Hierarchical Memory Assessment** ([2512.10398]): Persistent note-taking evaluation for extended reasoning
+
+   **Application**: Enhance Tier 2 with rubric-based self-assessment; add `fix_rate` metric for partial progress on complex tasks; evaluate agent memory persistence patterns
+
 #### Safety and Trust Integration
 
 **Security Research Application**:
@@ -191,7 +239,13 @@ and [MCP](https://docs.anthropic.com/en/docs/mcp) standardization.
    - `[2510.02204] Reasoning-Execution Gap Diagnosis`
    - `[2510.01359] Code Agent Security Assessment`
 
-**Integration**: Enhance evaluation framework with reasoning-execution alignment validation and security assessment capabilities.
+4. **Safety Benchmarks** (Recent 2024-2025)
+   - `[2402.05044] SALAD-Bench`: Hierarchical safety with three-level taxonomy (ACL 2024)
+   - `[2412.14470] Agent-SafetyBench`: 349 environments, 2,000 test cases, 8 risk categories
+   - `[2412.13178] SafeAgentBench`: First embodied agent safety benchmark, 750 tasks
+   - `[2410.09024] AgentHarm`: Benchmark for harmful behaviors (ICLR 2025)
+
+**Integration**: Enhance evaluation framework with reasoning-execution alignment validation, security assessment capabilities, and Tier 5 Governance evaluation with standardized safety benchmarks and risk category assessment.
 
 ## Academic Research Insights
 
@@ -221,6 +275,10 @@ and [MCP](https://docs.anthropic.com/en/docs/mcp) standardization.
 
 **Research Foundation**:
 
+- `[2311.12983] GAIA`: General AI Assistants (466 questions, 92% human vs 15% GPT-4)
+- `[2509.10769] AgentArch`: Enterprise agent architectures (18 configurations)
+- `[2503.01935] MultiAgentBench`: Multi-agent collaboration and competition quality
+- `[2512.08296] Scaling Agent Systems`: 180 configurations across 5 architectures
 - `[2510.02271] InfoMosaic-Bench: Multi-Source Information Seeking Evaluation`
 - `[2510.02190] Deep Research Agents: Rigorous Multidimensional Benchmark`
 - `[2510.01670] BLIND-ACT: Computer-Use Agents Evaluation`
@@ -248,6 +306,9 @@ and [MCP](https://docs.anthropic.com/en/docs/mcp) standardization.
 
 - `[2501.06322] Multi-Agent Collaboration Mechanisms Survey`
 - `[2503.13657] Why Do Multi-Agent LLM Systems Fail?`
+- `[2512.20845] MAR: Multi-Agent Reflexion`: Diverse reasoning personas with judge model synthesis
+- `[2511.02303] Lazy to Deliberation`: Framework transitioning multi-agent reasoning approaches
+- `[2505.21298] LLMs Miss the Multi-Agent Mark`: Analysis of LLM limitations in MAS scenarios
 - `[2508.21803] Clinical Multi-Agent: Hierarchical Debate for Diagnosis`
 - `[2508.11120] Marketing Multi-Agent: Memory and Planning Integration`
 - `[2509.00531] MobiAgent: Mobile Agent System Framework`
@@ -270,6 +331,16 @@ and [MCP](https://docs.anthropic.com/en/docs/mcp) standardization.
 - `[2509.00629] Competitive Programming Benchmark with Self-Refinement`
 
 **Application**: Benchmark for evaluating code generation agent capabilities with correctness and self-refinement assessment.
+
+#### Memory Systems for Agent Evaluation
+
+**Key Papers**:
+
+- `[2512.13564] Memory in the Age of AI Agents`: Comprehensive survey on memory as core capability
+- `[2601.03236] MAGMA`: Multi-graph architecture (semantic, temporal, causal, entity)
+- `[2512.18950] MACLA`: Hierarchical procedural memory, 2,800× faster construction
+
+**Application**: Inform Self-Assessment tier (Tier 4) with memory consistency evaluation and identity persistence tracking across agent interactions.
 
 #### Domain-Specific Agent Benchmarks
 
@@ -314,7 +385,7 @@ For detailed technical specifications, see [architecture.md](../architecture.md)
 
 ### Core Methodology Innovations
 
-- **Framework-Agnostic Assessment**: Multi-dimensional approach integrating 154+ research papers
+- **Framework-Agnostic Assessment**: Multi-dimensional approach integrating 208+ research papers
 - **Post-Execution Behavioral Analysis**: Novel methodology for retrospective agent coordination assessment
 - **Research Benchmarking**: PeerRead specialization enabling standardized academic evaluation
 - **Protocol Integration**: [MCP](https://docs.anthropic.com/en/docs/mcp) and [A2A](https://github.com/google/A2A) standardization support
@@ -347,12 +418,12 @@ agent technologies mature.
 
 ## Conclusion
 
-Analysis of 154+ papers and 27+ frameworks reveals convergence toward
+Analysis of 208+ papers and 27+ frameworks reveals convergence toward
 multi-dimensional agent evaluation. Agents-eval's framework-agnostic methodology
 integrates research advances with production requirements including
 [MCP](https://docs.anthropic.com/en/docs/mcp) and [A2A](https://github.com/google/A2A) protocols.
 
-**Technical Foundation**: Research integration (154+ papers), production validation
+**Technical Foundation**: Research integration (208+ papers), production validation
 (multiple frameworks), domain application (PeerRead specialization), architectural
 patterns (framework-independent methodology).
 

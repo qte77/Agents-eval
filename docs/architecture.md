@@ -1,9 +1,10 @@
 ---
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
-date: 2025-08-31
+created: 2025-08-31
+updated: 2026-01-11
 category: architecture
-version: 1.0.0
+version: 1.0.1
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -221,11 +222,24 @@ The three-tiered evaluation framework is fully operational with the following co
 
 ### Development Timeline
 
-**Current Phase**: Sprint 3 (Advanced Features) - In Progress  
-**Architecture Phase**: Sprint 2 (SoC/SRP Refactoring) - Planned  
+**Current Phase**: Sprint 3 (Advanced Features) - In Progress
+**Architecture Phase**: Sprint 2 (SoC/SRP Refactoring) - Planned
 **Foundation Phase**: Sprint 1 (Three-tiered Evaluation) - ✅ Complete
 
 For detailed sprint information, implementation status, and development dependencies, see [development-timeline.md](development-timeline.md).
+
+### New Metrics for Implementation
+
+Candidate metrics identified from production frameworks and recent research for future evaluation enhancement:
+
+| Metric | Source | Current Gap | Complexity | Impact |
+| -------- | -------- | ------------- | ------------ | -------- |
+| `path_convergence` | Arize Phoenix | No path efficiency | Low | Medium |
+| `handoff_quality` | Arize Multi-Agent | No inter-agent transition | Medium | High |
+| `fix_rate` | SWE-EVO [2512.18470] | Binary task success only | Low | High |
+| `rubric_alignment` | [2512.23707] | No self-grading assessment | Medium | High |
+
+**Integration Priority**: `fix_rate` (immediate value for partial progress) → `path_convergence` (Tier 3 enhancement) → `rubric_alignment` (Tier 2 self-assessment)
 
 ## Key Dependencies
 

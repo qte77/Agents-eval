@@ -4,7 +4,6 @@ description: Comprehensive curated list of research papers and academic resource
 category: research
 arxiv_categories: cs.AI, cs.MA, cs.CL, cs.LG, cs.SE, cs.CR
 arxiv_search_url: "http://export.arxiv.org/api/query?search_query=(all:agent+OR+all:agentic+OR+all:multi-agent)&sortBy=submittedDate&sortOrder=descending"
-version: 2.1.0
 tags: [agentic-ai, evaluation, benchmarking, multi-agent-systems, safety, architecture, tool-use, planning, scientific-discovery, code-generation]
 features:
   - chronological-organization
@@ -12,10 +11,11 @@ features:
   - cross-references
   - relationship-explanations
   - clustering-by-themes
-papers_count: 154+
-coverage_period: 2022-10 to 2025-10
-updated: 2025-10-05
+papers_count: 236+
+coverage_period: 2020-10 to 2026-01
 created: 2025-08-24
+updated: 2026-01-11
+version: 3.0.0
 ---
 
 ## Overview
@@ -32,7 +32,7 @@ This document provides a comprehensive, curated collection of research papers on
 
 ### Document Features
 
-- 100+ papers covering 2022-2025 research
+- 232+ papers covering 2020-2026 research
 - 14 thematic tags for categorization
 - Cross-references with relationship explanations
 - Chronological organization preserving research timeline
@@ -63,59 +63,89 @@ This document provides a comprehensive, curated collection of research papers on
 
 **Evaluation & Benchmarking** `[EVAL]` `[BENCH]`:
 
-- Key papers: 2308.03688 (AgentBench), 2404.06411 (AgentQuest), 2401.13178 (AgentBoard)
-- Web agents: 2307.13854 (WebArena), 2401.13649 (VisualWebArena), 2410.06703 (ST-WebAgentBench)
-- Tool evaluation: 2307.16789 (ToolLLM), 2310.03128 (MetaTool), 2406.12045 (τ-bench)
-- Recent 2025: 2510.02271 (InfoMosaic-Bench), 2510.02190 (Deep Research benchmark), 2510.01670 (BLIND-ACT), 2510.01654 (CLASP security)
-- 2411.13768 (evaluation-driven), 2507.17257 (identity evals), 2503.16416 (evaluation survey)
+- General benchmarks: 2308.03688 (AgentBench), 2404.06411 (AgentQuest), 2401.13178 (AgentBoard), 2311.12983 (GAIA)
+- Web agents: 2307.13854 (WebArena), 2401.13649 (VisualWebArena), 2410.06703 (ST-WebAgentBench), 2404.07972 (OSWorld), 2412.05467 (BrowserGym), 2504.01382 (Online-Mind2Web), 2207.01206 (WebShop)
+- Tool evaluation: 2307.16789 (ToolLLM), 2310.03128 (MetaTool), 2406.12045 (τ-bench), 2506.07982 (τ²-bench), 2304.08244 (API-Bank EMNLP 2023), BFCL
+- Scientific: 2407.13168 (SciCode), 2409.11363 (CORE-Bench)
+- Enterprise: 2509.10769 (AgentArch), 2511.14136 (CLEAR framework), 2412.14161 (TheAgentCompany), 2411.07763 (Spider 2.0), 2411.02305 (CRMArena), 2508.00828 (Finance), 2501.14654 (MedAgentBench)
+- Code/SE: 2407.18901 (AppWorld), SWE-bench verified, 2404.10952 (USACO), 2507.05558 (Smart Contract)
+- Safety/Security: 2504.14064 (DoomArena), 2504.18575 (WASP), 2506.02548 (CyberGym)
+- Gaming/Embodied: 2407.13943 (Werewolf), 2310.08367 (Minecraft), 2010.03768 (ALFWorld), 2407.18416 (PersonaGym)
+- Multi-agent: 2503.01935 (MultiAgentBench), 2512.08296 (scaling agent systems), 2507.05178 (CREW)
+- Safety: 2402.05044 (SALAD-Bench ACL 2024), 2412.14470 (Agent-SafetyBench), 2412.13178 (SafeAgentBench), 2410.09024 (AgentHarm ICLR 2025)
+- Recent 2025-2026: 2510.02271 (InfoMosaic-Bench), 2510.02190 (Deep Research), 2510.01670 (BLIND-ACT), 2512.12791 (assessment framework)
+- Surveys: 2503.16416 (evaluation survey), 2507.21504 (LLM agents survey), 2411.13768 (evaluation-driven), 2501.11067 (IntellAgent)
 
 **Architecture & System Design** `[ARCH]`:
 
-- Foundation: 2308.11432 (foundational survey), 2404.11584 (architecture landscape)
-- Frameworks: 2508.10146 (agentic AI frameworks), 2501.10114 (infrastructure)
+- Foundation: 2308.11432 (foundational survey), 2404.11584 (architecture landscape), 2510.09244 (fundamentals)
+- Frameworks: 2508.10146 (agentic AI frameworks), 2501.10114 (infrastructure), 2601.01743 (AI agent systems)
+- Surveys: 2510.25445 (comprehensive survey), 2503.23037 (agentic LLMs), 2506.01438 (architectural frameworks)
 - Governance: 2508.03858 (governance protocol), 2503.00237 (systems theory)
 
 **Safety & Risk Management** `[SAFETY]`:
 
 - Constitutional AI: 2212.08073 (foundational), 2406.07814 (collective), 2501.17112 (inverse)
-- Core: 2302.10329 (harms analysis), 2506.04133 (TRiSM), 2408.02205 (guardrails)
+- Core frameworks: 2302.10329 (harms analysis), 2506.04133 (TRiSM), 2408.02205 (guardrails), 2507.06134 (OpenAgentSafety)
+- Security: 2510.23883 (agentic AI security), 2512.06659 (cybersecurity evolution)
+- Safety benchmarks: 2402.05044 (SALAD-Bench ACL 2024), 2412.14470 (Agent-SafetyBench), 2412.13178 (SafeAgentBench), 2410.09024 (AgentHarm ICLR 2025)
+- Monitoring: 2507.11473 (CoT monitorability), 2512.20798 (constraint violations), 2601.00911 (privacy-preserving)
+- Reports: 2510.13653 (AI safety first update), 2511.19863 (AI safety second update)
 - Recent 2025: 2510.02286 (adversarial dialogue), 2510.01586 (AdvEvo-MARL), 2510.01569 (InvThink), 2510.02204 (reasoning-execution gaps)
 - Multi-agent: 2503.13657 (MAS failures), 2402.04247 (safeguarding over autonomy)
 
 **Tool Use & Integration** `[TOOL]`:
 
-- Benchmarks: 2307.16789 (ToolLLM), 2310.03128 (MetaTool), 2406.12045 (τ-bench)
+- Benchmarks: 2307.16789 (ToolLLM), 2310.03128 (MetaTool), 2406.12045 (τ-bench), 2304.08244 (API-Bank EMNLP 2023), BFCL
 - Surveys: 2405.17935 (tool learning), 2404.11584 (tool calling architectures)
-- Recent 2025: 2510.01524 (WALT web agents), 2510.01179 (TOUCAN datasets), 2510.02271 (InfoMosaic-Bench)
+- Augmentation: 2506.04625 (Tool-MVR meta-verification), 2511.18194 (agent-as-graph), 2512.16214 (PDE-Agent)
+- MCP applications: 2512.03955 (Blocksworld MCP), 2510.02139 (BioinfoMCP), 2509.06917 (Paper2Agent)
+- Recent 2025: 2510.01524 (WALT web agents), 2510.01179 (TOUCAN datasets), 2510.02271 (InfoMosaic-Bench), 2512.03420 (HarnessAgent)
 - Applications: 2410.22457 (tool integration), 2410.09713 (agentic IR)
 
 **Multi-Agent Systems** `[MAS]`:
 
-- Collaboration: 2507.05178 (CREW benchmark), 2501.06322 (collaboration mechanisms)
-- Analysis: 2503.13657 (failure analysis), 2507.02097 (recommender systems)
+- Collaboration: 2507.05178 (CREW benchmark), 2501.06322 (collaboration mechanisms), 2512.20845 (MAR reflexion)
+- Benchmarks: 2503.01935 (MultiAgentBench), 2512.08296 (scaling agent systems), 2505.12371 (MedAgentBoard)
+- Analysis: 2503.13657 (failure analysis), 2505.21298 (LLMs miss the mark), 2511.02303 (lazy to deliberation)
+- Applications: 2507.02097 (recommender systems), 2512.20618 (LongVideoAgent), 2512.16214 (PDE-Agent)
+- Recent 2026: 2601.03328 (design patterns evaluation)
 
 **Planning & Reasoning** `[PLAN]`:
 
 - ReAct family: 2210.03629 (ReAct), 2411.00927 (ReSpAct), 2310.04406 (LATS)
-- Core: 2402.02716 (planning survey), 2508.03682 (self-questioning)
-- Applications: 2410.22457 (task decomposition), 2404.11584 (reasoning architectures)
+- Core: 2402.02716 (planning survey), 2508.03682 (self-questioning), 2512.14474 (model-first reasoning)
+- Training: 2508.00344 (PilotRL global planning), 2510.01833 (plan-then-action), 2511.02303 (lazy to deliberation)
+- Multi-agent: 2512.20845 (MAR), 2512.08296 (scaling agent systems)
+- Applications: 2410.22457 (task decomposition), 2404.11584 (reasoning architectures), 2512.03955 (Blocksworld MCP)
 
 **Scientific Discovery** `[SCI]`:
 
-- Research agents: 2506.18096 (deep research), 2508.00414 (cognitive kernel)
+- Research agents: 2506.18096 (deep research), 2508.00414 (cognitive kernel), 2509.06917 (Paper2Agent)
 - Discovery: 2408.06292 (AI scientist), 2503.08979 (scientific discovery survey)
 
 **Code Generation** `[CODE]`:
 
+- Surveys: 2508.00083 (comprehensive survey), 2508.11126 (agentic programming), 2511.18538 (code foundation models)
+- SE 3.0: 2507.15003 (AI teammates), 2510.21413 (context engineering), 2512.14012 (professional developers)
+- Automation: 2505.18646 (SEW self-evolving), 2504.17192 (Paper2Code), 2510.09721 (software engineering benchmarks)
 - Explanations: 2507.22414 (symbolic explanations), 2402.01030 (executable actions)
-- Recent 2025: 2510.02185 (FalseCrashReducer), 2510.01379 (multi-LLM orchestration), 2510.01003 (repository memory)
+- Recent 2025: 2510.02185 (FalseCrashReducer), 2510.01379 (multi-LLM orchestration), 2510.01003 (repository memory), 2512.03420 (HarnessAgent)
 - Applications: 2506.13131 (AlphaEvolve), 2410.14393 (debug agents)
+
+**Memory Systems** `[MEM]`:
+
+- Surveys: 2512.13564 (memory in AI agents), 2512.23343 (AI meets brain), 2404.13501 (memory mechanisms)
+- Frameworks: 2601.03236 (MAGMA multi-graph), 2601.01885 (agentic memory), 2502.12110 (A-Mem)
+- Learning: 2512.18950 (MACLA hierarchical procedural), 2511.18423 (GAM deep research), 2509.25250 (long-running agents)
+- Applications: 2510.01003 (repository memory), 2508.11120 (marketing MAS)
 
 **Self-Improvement & Reflection** `[AUTO]`:
 
-- Self-reflection: 2303.11366 (Reflexion foundation), 2405.06682 (self-reflection effects)
+- Self-reflection: 2303.11366 (Reflexion foundation), 2405.06682 (self-reflection effects), 2512.20845 (MAR)
 - Recursive improvement: 2407.18219 (recursive introspection), 2410.04444 (Gödel Agent)
-- Training approaches: 2406.01495 (Re-ReST), 2508.15805 (ALAS autonomous learning)
+- Training approaches: 2406.01495 (Re-ReST), 2508.15805 (ALAS autonomous learning), 2508.00344 (PilotRL)
+- Workflows: 2505.18646 (SEW self-evolving), 2505.22967 (MermaidFlow), 2506.04625 (Tool-MVR)
 - Human guidance: 2507.17131 (HITL self-improvement), 2508.07407 (self-evolving survey)
 
 ## Future Research Areas
@@ -150,8 +180,121 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 **3. Robust Human-Agent Teaming** - Most current work treats humans as either supervisors or users. Research on agents as true collaborators—with theory-of-mind, explanation capabilities, and dynamic role adaptation—is essential for high-stakes domains like healthcare, research, and decision-making.
 
+## 2026-01
+
+- [[2601.03328] LLM-Enabled Multi-Agent Systems: Empirical Evaluation and Insights into Emerging Design Patterns & Paradigms](https://arxiv.org/abs/2601.03328) `[MAS]` `[EVAL]` `[ARCH]` `cs.MA` `cs.AI`
+  - Empirical evaluation of LLM-based multi-agent systems with analysis of emerging design patterns and architectural paradigms
+  - Cross-ref: 2507.05178 (CREW benchmark), 2501.06322 (collaboration mechanisms), 2506.01438 (architectural frameworks)
+- [[2601.03236] MAGMA: A Multi-Graph based Agentic Memory Architecture for AI Agents](https://arxiv.org/abs/2601.03236) `[MEM]` `[ARCH]` `cs.AI` `cs.LG`
+  - Multi-graph memory architecture representing memories across semantic, temporal, causal, and entity graphs with hierarchical intent-aware querying
+  - Cross-ref: 2512.13564 (memory systems survey), 2601.01885 (agentic memory), 2404.13501 (memory mechanisms)
+- [[2601.01885] Agentic Memory: Learning Unified Long-Term and Short-Term Memory Management for Large Language Model Agents](https://arxiv.org/abs/2601.01885) `[MEM]` `[ARCH]` `cs.AI` `cs.CL`
+  - Unified framework integrating long-term and short-term memory management as tool-based actions in agent policy
+  - Cross-ref: 2512.13564 (memory systems), 2404.13501 (memory survey), 2511.18423 (GAM)
+- [[2601.01743] AI Agent Systems: Architectures, Applications, and Evaluation](https://arxiv.org/abs/2601.01743) `[ARCH]` `[SAFETY]` `[SURVEY]` `cs.AI`
+  - Comprehensive survey of AI agent system architectures with focus on tool-centric safety risks and security challenges
+  - Cross-ref: 2508.10146 (agentic frameworks), 2510.23883 (agentic AI security), 2506.04133 (TRiSM)
+- [[2601.00911] Device-Native Autonomous Agents for Privacy-Preserving Negotiations](https://arxiv.org/abs/2601.00911) `[SAFETY]` `[SPEC]` `cs.AI` `cs.CR`
+  - Framework for privacy-preserving autonomous agent negotiations running on local devices
+  - Cross-ref: 2510.01815 (human-AI teaming), 2503.06416 (negotiation competition)
+
+## 2025-12
+
+- [[2512.23343] AI Meets Brain: Memory Systems from Cognitive Neuroscience to Autonomous Agents](https://arxiv.org/abs/2512.23343) `[MEM]` `[SURVEY]` `[ARCH]` `cs.AI` `cs.HC`
+  - Unified survey bridging cognitive neuroscience and AI agent memory systems with agentic perspective on external memory design
+  - Cross-ref: 2512.13564 (memory age survey), 2404.13501 (memory mechanisms), 2601.03236 (MAGMA)
+- [[2512.20845] MAR: Multi-Agent Reflexion Improves Reasoning Abilities in LLMs](https://arxiv.org/abs/2512.20845) `[MAS]` `[PLAN]` `[AUTO]` `cs.AI` `cs.CL`
+  - Multi-agent extension of Reflexion with diverse reasoning personas and judge model for unified reflection synthesis
+  - Cross-ref: 2303.11366 (Reflexion foundation), 2405.06682 (self-reflection effects), 2501.06322 (collaboration mechanisms)
+- [[2512.20798] A Benchmark for Evaluating Outcome-Driven Constraint Violations in Autonomous AI Agents](https://arxiv.org/abs/2512.20798) `[BENCH]` `[SAFETY]` `[EVAL]` `cs.AI` `cs.CR`
+  - Benchmark evaluating agents that independently take unethical or dangerous actions toward KPI achievement
+  - Cross-ref: 2510.01670 (BLIND-ACT), 2507.06134 (OpenAgentSafety), 2506.04133 (TRiSM)
+- [[2512.20618] LongVideoAgent: Multi-Agent Reasoning with Long Videos](https://arxiv.org/abs/2512.20618) `[MAS]` `[SPEC]` `cs.CV` `cs.AI`
+  - Multi-agent framework for reasoning over long video content with distributed processing
+  - Cross-ref: 2508.10494 (MAGUS multimodal), 2501.06322 (collaboration mechanisms)
+- [[2512.18950] Learning Hierarchical Procedural Memory for LLM Agents through Bayesian Selection and Contrastive Refinement](https://arxiv.org/abs/2512.18950) `[MEM]` `[AUTO]` `cs.AI` `cs.LG`
+  - MACLA system constructing hierarchical procedural memory 2,800× faster than parameter-training baselines
+  - Accepted at AAMAS 2026
+  - Cross-ref: 2512.13564 (memory systems), 2511.18423 (GAM), 2404.13501 (memory survey)
+- [[2512.16214] PDE-Agent: A toolchain-augmented multi-agent framework for PDE solving](https://arxiv.org/abs/2512.16214) `[MAS]` `[TOOL]` `[SPEC]` `cs.AI` `cs.CE`
+  - First toolchain-augmented multi-agent framework for automated PDE solving from natural language descriptions
+  - Cross-ref: 2511.18194 (agent-as-graph), 2405.17935 (tool learning), 2501.06322 (collaboration)
+- [[2512.14474] Model-First Reasoning LLM Agents: Reducing Hallucinations through Explicit Problem Modeling](https://arxiv.org/abs/2512.14474) `[PLAN]` `[ARCH]` `cs.AI` `cs.CL`
+  - Two-phase paradigm where LLM constructs explicit problem model before solution planning, reducing constraint violations
+  - Cross-ref: 2210.03629 (ReAct), 2402.02716 (planning survey), 2510.01833 (plan-then-action)
+- [[2512.14012] Professional Software Developers Don't Vibe, They Control](https://arxiv.org/abs/2512.14012) `[CODE]` `[SPEC]` `cs.SE` `cs.AI`
+  - Analysis of professional developer requirements for AI coding agents emphasizing control over automation
+  - Cross-ref: 2508.00083 (code generation survey), 2507.15003 (SE 3.0)
+- [[2512.13564] Memory in the Age of AI Agents](https://arxiv.org/abs/2512.13564) `[MEM]` `[SURVEY]` `cs.AI` `cs.CL`
+  - Comprehensive survey of memory as core capability for foundation model-based agents addressing field fragmentation
+  - Cross-ref: 2404.13501 (memory mechanisms survey), 2512.23343 (neuroscience perspective), 2601.01885 (agentic memory)
+- [[2512.23707] Training AI Co-Scientists Using Rubric Rewards](https://arxiv.org/abs/2512.23707) `[SCI]` `[AUTO]` `[EVAL]` `cs.AI` `cs.CL`
+  - RL training for research plan generation with self-grading rubrics; 70% expert preference, cross-domain validation
+  - Cross-ref: 2303.11366 (Reflexion), 2506.18096 (deep research agents), 2508.00414 (cognitive kernel)
+- [[2512.18470] SWE-EVO: Benchmarking Coding Agents in Long-Horizon Software Evolution Scenarios](https://arxiv.org/abs/2512.18470) `[BENCH]` `[CODE]` `[EVAL]` `cs.SE` `cs.AI`
+  - Long-horizon evolution benchmark; 48 tasks, avg 21 files, 874 tests; introduces Fix Rate metric for partial progress
+  - Cross-ref: 2508.00083 (code generation survey), 2507.15003 (SE 3.0), 2512.14012 (professional developers)
+- [[2512.12791] Beyond Task Completion: An Assessment Framework for Evaluating Agentic AI Systems](https://arxiv.org/abs/2512.12791) `[EVAL]` `[ARCH]` `[SAFETY]` `cs.AI` `cs.SE`
+  - Assessment framework across four pillars (LLM, Memory, Tools, Environment) with static and dynamic analysis phases
+  - Cross-ref: 2511.14136 (CLEAR framework), 2503.16416 (evaluation survey), 2506.04133 (TRiSM)
+- [[2512.10398] Confucius Code Agent: Scalable Agent Scaffolding for Real-World Codebases](https://arxiv.org/abs/2512.10398) `[CODE]` `[ARCH]` `cs.SE` `cs.AI`
+  - Hierarchical working memory + persistent note-taking for large codebases; 54.3% on SWE-Bench-Pro
+  - Cross-ref: 2512.18470 (SWE-EVO), 2512.13564 (memory systems), 2508.00083 (code generation)
+- [[2512.08296] Towards a Science of Scaling Agent Systems](https://arxiv.org/abs/2512.08296) `[MAS]` `[BENCH]` `[ARCH]` `cs.AI` `cs.MA`
+  - Controlled evaluation of five agent architectures across 180 configurations spanning diverse benchmarks
+  - Cross-ref: 2507.05178 (CREW benchmark), 2509.10769 (AgentArch), 2501.06322 (collaboration)
+- [[2512.06659] The Evolution of Agentic AI in Cybersecurity: From Single LLM Reasoners to Multi-Agent Systems and Autonomous Pipelines](https://arxiv.org/abs/2512.06659) `[SPEC]` `[MAS]` `[SURVEY]` `cs.CR` `cs.AI`
+  - Survey of agentic AI evolution in cybersecurity from tool-augmented agents to autonomous investigative pipelines
+  - Cross-ref: 2510.01751 (cybersecurity framework), 2510.01654 (CLASP), 2511.18194 (agent-as-graph)
+- [[2512.03955] Benchmark for Planning and Control with Large Language Model Agents: Blocksworld with Model Context Protocol](https://arxiv.org/abs/2512.03955) `[BENCH]` `[PLAN]` `[TOOL]` `cs.AI` `cs.RO`
+  - Planning and control benchmark using MCP for Blocksworld domain evaluation
+  - Cross-ref: 2402.02716 (planning survey), 2510.02139 (BioinfoMCP), 2509.06917 (Paper2Agent MCP)
+- [[2512.03420] HarnessAgent: Scaling Automatic Fuzzing Harness Construction with Tool-Augmented LLM Pipelines](https://arxiv.org/abs/2512.03420) `[CODE]` `[TOOL]` `[SPEC]` `cs.SE` `cs.CR`
+  - Tool-augmented agentic framework for automated fuzzing harness construction at scale
+  - Cross-ref: 2510.02185 (FalseCrashReducer), 2405.17935 (tool learning)
+
+## 2025-11
+
+- [[2511.19863] International AI Safety Report 2025: Second Key Update: Technical Safeguards and Risk Management](https://arxiv.org/abs/2511.19863) `[SAFETY]` `[SURVEY]` `cs.AI` `cs.CY`
+  - Second key update covering advances in adversarial training, data curation, and monitoring systems for AI safety
+  - Cross-ref: 2510.13653 (first key update), 2506.04133 (TRiSM), 2508.03858 (governance protocol)
+- [[2511.18538] From Code Foundation Models to Agents and Applications: A Practical Guide to Code Intelligence](https://arxiv.org/abs/2511.18538) `[CODE]` `[SURVEY]` `[ARCH]` `cs.SE` `cs.AI`
+  - Practical guide covering evolution from code foundation models to agentic applications
+  - Cross-ref: 2508.00083 (code generation survey), 2508.11126 (agentic programming), 2507.15003 (SE 3.0)
+- [[2511.18423] General Agentic Memory Via Deep Research](https://arxiv.org/abs/2511.18423) `[MEM]` `[ARCH]` `cs.AI` `cs.IR`
+  - GAM framework following just-in-time compilation principle for optimized runtime contexts with simple offline memory
+  - Cross-ref: 2512.13564 (memory survey), 2601.01885 (agentic memory), 2512.18950 (MACLA)
+- [[2511.18194] Agent-as-a-Graph: Knowledge Graph-Based Tool and Agent Retrieval for LLM Multi-Agent Systems](https://arxiv.org/abs/2511.18194) `[MAS]` `[TOOL]` `[ARCH]` `cs.AI` `cs.IR`
+  - Knowledge graph representation for tools and agents with weighted reciprocal rank fusion for reranking
+  - Cross-ref: 2405.17935 (tool learning), 2512.16214 (PDE-Agent), 2501.06322 (collaboration)
+- [[2511.14136] Beyond Accuracy: A Multi-Dimensional Framework for Evaluating Enterprise Agentic AI Systems](https://arxiv.org/abs/2511.14136) `[EVAL]` `[BENCH]` `[ARCH]` `cs.AI` `cs.SE`
+  - CLEAR framework (Cost, Latency, Efficacy, Assurance, Reliability) for enterprise agent evaluation with ρ=0.83 production correlation
+  - Cross-ref: 2509.10769 (AgentArch enterprise), 2512.12791 (assessment framework), 2503.16416 (evaluation survey)
+- [[2511.02303] Unlocking the Power of Multi-Agent LLM for Reasoning: From Lazy Agents to Deliberation](https://arxiv.org/abs/2511.02303) `[MAS]` `[PLAN]` `cs.AI` `cs.CL`
+  - Framework transitioning from lazy to deliberative reasoning in multi-agent LLM systems
+  - Cross-ref: 2512.20845 (MAR), 2501.06322 (collaboration mechanisms), 2402.02716 (planning survey)
+
 ## 2025-10
 
+- [[2510.25445] Agentic AI: A Comprehensive Survey of Architectures, Applications, and Future Directions](https://arxiv.org/abs/2510.25445) `[SURVEY]` `[ARCH]` `cs.AI`
+  - Comprehensive survey of agentic AI covering architectures, diverse applications, and future research directions
+  - Cross-ref: 2308.11432 (foundational survey), 2503.21460 (LLM agent survey), 2508.10146 (frameworks)
+- [[2510.23883] Agentic AI Security: Threats, Defenses, Evaluation, and Open Challenges](https://arxiv.org/abs/2510.23883) `[SAFETY]` `[EVAL]` `[SURVEY]` `cs.CR` `cs.AI`
+  - Survey of agentic AI security covering attack methodologies, defense strategies, benchmarks, and open challenges
+  - Cross-ref: 2507.06134 (OpenAgentSafety), 2510.01654 (CLASP), 2506.04133 (TRiSM), 2601.01743 (AI agent systems)
+- [[2510.21413] Context Engineering for AI Agents in Open-Source Software](https://arxiv.org/abs/2510.21413) `[CODE]` `[ARCH]` `cs.SE` `cs.AI`
+  - Framework for deliberate context design and information structuring for LLMs in open-source development
+  - Cross-ref: 2508.00083 (code generation survey), 2507.15003 (SE 3.0), 2510.09244 (building agents fundamentals)
+- [[2510.13653] International AI Safety Report 2025: First Key Update: Capabilities and Risk Implications](https://arxiv.org/abs/2510.13653) `[SAFETY]` `[SURVEY]` `cs.AI` `cs.CY`
+  - First key update with capability improvements and implications for biological, cyber, monitoring, and controllability risks
+  - Authors: Yoshua Bengio and 72 others
+  - Cross-ref: 2511.19863 (second key update), 2302.10329 (harms analysis), 2506.04133 (TRiSM)
+- [[2510.09721] A Comprehensive Survey on Benchmarks and Solutions in Software Engineering of LLM-Empowered Agentic System](https://arxiv.org/abs/2510.09721) `[SURVEY]` `[CODE]` `[BENCH]` `cs.SE` `cs.AI`
+  - Survey analyzing 100 MAS LLMs benchmarks and evaluations papers published 2023-2025
+  - Cross-ref: 2508.00083 (code generation), 2503.16416 (evaluation survey), 2507.02825 (benchmark practices)
+- [[2510.09244] Fundamentals of Building Autonomous LLM Agents](https://arxiv.org/abs/2510.09244) `[ARCH]` `[SURVEY]` `cs.AI` `cs.CL`
+  - Technical fundamentals covering agent perception, memory, reasoning, planning, and execution capabilities
+  - Cross-ref: 2308.11432 (foundational survey), 2404.11584 (architecture landscape), 2503.21460 (LLM agent survey)
 - [[2510.02297] Interactive Training: Feedback-Driven Neural Network Optimization](https://arxiv.org/abs/2510.02297) `[AUTO]` `[ARCH]` `cs.LG`
   - Framework enabling real-time human or AI agent intervention during neural network training with dynamic optimization parameter adjustments
   - Cross-ref: 2507.17131 (HITL self-improvement), 2405.06682 (feedback effects)
@@ -257,6 +400,16 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-09
 
+- [[2509.25250] Memory Management and Contextual Consistency for Long-Running Low-Code Agents](https://arxiv.org/abs/2509.25250) `[MEM]` `[ARCH]` `cs.AI` `cs.SE`
+  - Memory management framework ensuring contextual consistency in long-running low-code agent systems
+  - Cross-ref: 2512.13564 (memory survey), 2511.18423 (GAM), 2404.13501 (memory mechanisms)
+- [[2509.10769] AgentArch: A Comprehensive Benchmark to Evaluate Agent Architectures in Enterprise](https://arxiv.org/abs/2509.10769) `[BENCH]` `[EVAL]` `[ARCH]` `cs.AI` `cs.SE`
+  - Benchmark evaluating 18 agent architecture configurations on enterprise use cases across orchestration, prompting, memory, and tools
+  - Cross-ref: 2511.14136 (CLEAR framework), 2512.08296 (scaling agent systems), 2308.03688 (AgentBench)
+- [[2509.06917] Paper2Agent: Reimagining Research Papers As Interactive and Reliable AI Agents](https://arxiv.org/abs/2509.06917) `[RESEARCH]` `[AUTO]` `[TOOL]` `cs.AI` `cs.SE`
+  - Framework converting research papers into interactive AI agents using Model Context Protocol servers with automated testing
+  - Systematically analyzes papers and codebases to construct MCP servers for dynamic knowledge dissemination
+  - Cross-ref: 2505.18705 (AI-Researcher), 2312.07559 (PaperQA), 2501.04227 (research assistants)
 - [[2509.24877] The Emergence of Social Science of Large Language Models](https://arxiv.org/abs/2509.24877) `[SURVEY]` `[ARCH]` `cs.AI`
   - Systematic review of 270 studies examining LLM social interactions and computational taxonomy
   - Cross-ref: 2503.21460 (LLM agent survey), 2308.11432 (foundational survey)
@@ -290,6 +443,17 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-08
 
+- [[2508.00828] FinanceBench: Measuring Finance Domain Knowledge of LLM Agents](https://arxiv.org/abs/2508.00828) `[BENCH]` `[SPEC]` `cs.CL`
+  - Benchmark for evaluating agents on SEC filing research and financial analysis automation
+- [[2508.11126] AI Agentic Programming: A Survey of Techniques, Challenges, and Opportunities](https://arxiv.org/abs/2508.11126) `[CODE]` `[SURVEY]` `cs.SE` `cs.AI`
+  - Survey of agentic programming paradigm where LLM agents autonomously plan, execute, and interact with development tools
+  - Cross-ref: 2508.00083 (code generation survey), 2511.18538 (code foundation models), 2507.15003 (SE 3.0)
+- [[2508.00344] PilotRL: Training Language Model Agents via Global Planning-Guided Progressive Reinforcement Learning](https://arxiv.org/abs/2508.00344) `[AUTO]` `[PLAN]` `cs.AI` `cs.LG`
+  - Global planning-guided RL framework achieving state-of-the-art with LLaMA3.1-8B-Instruct surpassing GPT-4o by 3.60%
+  - Cross-ref: 2510.01833 (plan-then-action), 2402.02716 (planning survey), 2406.01495 (Re-ReST)
+- [[2508.00083] A Survey on Code Generation with LLM-based Agents](https://arxiv.org/abs/2508.00083) `[CODE]` `[SURVEY]` `cs.SE` `cs.AI`
+  - Comprehensive survey of LLM code generation agents covering autonomy and expanded scope throughout SDLC
+  - Cross-ref: 2508.11126 (agentic programming), 2511.18538 (code foundation models), 2507.15003 (SE 3.0)
 - [[2508.21803] Automated Clinical Problem Detection from SOAP Notes using a Collaborative Multi-Agent LLM Architecture](https://arxiv.org/abs/2508.21803) `[MAS]` `[SPEC]` `cs.AI`
   - Collaborative multi-agent system for clinical problem identification with hierarchical debate for diagnostic conclusions
   - Cross-ref: 2507.16940 (AURA medical agent), 2501.06322 (collaboration mechanisms)
@@ -332,6 +496,20 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-07
 
+- [[2507.05558] Can LLM Agents Exploit Smart Contract Vulnerabilities?](https://arxiv.org/abs/2507.05558) `[BENCH]` `[SAFETY]` `cs.CR`
+  - Benchmark for vulnerability exploitation assessment in smart contracts
+- [[2507.21504] Evaluation and Benchmarking of LLM Agents: A Survey](https://arxiv.org/abs/2507.21504) `[EVAL]` `[BENCH]` `[SURVEY]` `cs.AI` `cs.CL`
+  - Taxonomy of LLM agent evaluation covering objectives (behavior, capabilities, reliability, safety) and process (interaction, datasets, metrics, environments)
+  - Cross-ref: 2503.16416 (evaluation survey), 2507.02825 (benchmark best practices), 2411.13768 (evaluation-driven)
+- [[2507.15003] The Rise of AI Teammates in Software Engineering (SE) 3.0: How Autonomous Coding Agents Are Reshaping Software Engineering](https://arxiv.org/abs/2507.15003) `[CODE]` `[SURVEY]` `cs.SE` `cs.AI`
+  - SE 3.0 vision of intent-driven conversational development with autonomous AI teammates operating at task level
+  - Cross-ref: 2508.00083 (code generation survey), 2508.11126 (agentic programming), 2511.18538 (code foundation models)
+- [[2507.11473] Chain of Thought Monitorability: A New and Fragile Opportunity for AI Safety](https://arxiv.org/abs/2507.11473) `[SAFETY]` `[EVAL]` `cs.AI` `cs.LG`
+  - Framework for monitoring LLM agent chain-of-thought reasoning with holistic risk assessments
+  - Cross-ref: 2510.13653 (AI safety report), 2506.04133 (TRiSM), 2508.03858 (governance protocol)
+- [[2507.06134] OpenAgentSafety: A Comprehensive Framework for Evaluating Real-World AI Agent Safety](https://arxiv.org/abs/2507.06134) `[SAFETY]` `[EVAL]` `[BENCH]` `cs.AI` `cs.CR`
+  - Comprehensive framework for evaluating AI agent safety in real-world deployment scenarios
+  - Cross-ref: 2506.04133 (TRiSM framework), 2508.03858 (governance protocol), 2410.06703 (ST-WebAgentBench)
 - [[2507.23276] How Far Are AI Scientists from Changing the World?](https://arxiv.org/abs/2507.23276), [gh/ResearAI/Awesome-AI-Scientist](https://github.com/ResearAI/Awesome-AI-Scientist) `[SCI]` `[SURVEY]`
   - Survey of research on AI scientists, AI researchers, AI engineers, and a series of AI-driven research studies
   - Cross-ref: 2408.06292 (automated scientific discovery implementation), 2506.18096 (systematic research agent analysis)
@@ -380,6 +558,14 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-06
 
+- [[2506.07982] τ²-bench: A Benchmark for Tool Use with Dual-Control User-Agent Interactions](https://arxiv.org/abs/2506.07982) `[BENCH]` `[TOOL]` `[EVAL]` `cs.AI` `cs.CL`
+  - Extension of τ-bench with dual-control evaluation for user-agent tool interactions
+  - Cross-ref: 2406.12045 (τ-bench), 2307.16789 (ToolLLM)
+- [[2506.04625] Advancing Tool-Augmented Large Language Models via Meta-Verification and Reflection Learning](https://arxiv.org/abs/2506.04625) `[TOOL]` `[AUTO]` `cs.AI` `cs.CL`
+  - Tool-MVR framework achieving state-of-the-art on StableToolBench, surpassing ToolLLM by 23.9% and GPT-4 by 15.3%
+  - Cross-ref: 2307.16789 (ToolLLM), 2405.17935 (tool learning survey), 2406.12045 (τ-bench)
+- [[2506.02548] CyberGym: Real CVE Vulnerability Assessment Benchmark](https://arxiv.org/abs/2506.02548) `[BENCH]` `[SAFETY]` `cs.CR`
+  - Security benchmark for evaluating agents on real CVE vulnerability detection and assessment
 - [[2506.23408] Do LLMs Dream of Discrete Algorithms?](https://arxiv.org/abs/2506.23408) `[PLAN]` `[ARCH]` `cs.LG`
   - Neurosymbolic approach augmenting LLMs with logic-based reasoning modules for improved agent planning precision
   - Cross-ref: 2210.03629 (ReAct planning), 2310.04406 (LATS reasoning)
@@ -407,6 +593,19 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-05
 
+- [[2505.23135] VERINA: A Benchmark for Code Verification and Proof Generation](https://arxiv.org/abs/2505.23135) `[BENCH]` `[CODE]` `cs.SE`
+  - Code verification and automated proof generation benchmark
+- [[2505.18878] CRMArena-Pro: Expanded Business Scenario Diversity](https://arxiv.org/abs/2505.18878) `[BENCH]` `[SPEC]` `cs.AI`
+  - Extended CRM benchmark with expanded business scenario coverage
+- [[2505.21298] Large Language Models Miss the Multi-Agent Mark](https://arxiv.org/abs/2505.21298) `[MAS]` `[EVAL]` `cs.AI` `cs.CL`
+  - Analysis of LLM limitations in multi-agent scenarios with evaluation of collaborative performance gaps
+  - Cross-ref: 2503.01935 (MultiAgentBench), 2507.05178 (CREW benchmark), 2501.06322 (collaboration mechanisms)
+- [[2505.18646] SEW: Self-Evolving Agentic Workflows for Automated Code Generation](https://arxiv.org/abs/2505.18646) `[CODE]` `[AUTO]` `cs.SE` `cs.AI`
+  - Self-evolving framework automatically generating and optimizing multi-agent workflows without hand-crafted designs
+  - Cross-ref: 2508.00083 (code generation survey), 2507.21046 (self-evolving survey), 2408.08435 (automated design)
+- [[2505.12371] MedAgentBoard: Benchmarking Multi-Agent Collaboration with Conventional Methods for Diverse Medical Tasks](https://arxiv.org/abs/2505.12371) `[BENCH]` `[MAS]` `[SPEC]` `cs.AI` `cs.CL`
+  - Comprehensive medical benchmark for multi-agent collaboration across visual QA, lay summaries, EHR prediction, and workflow automation
+  - Cross-ref: 2507.16940 (AURA medical), 2508.21803 (clinical problem detection), 2507.05178 (CREW)
 - [[2505.22967] MermaidFlow: Redefining Agentic WorkflowGeneration via Safety-Constrained EvolutionaryProgramming](https://arxiv.org/abs/2505.22967), [gh/chengqiArchy/MermaidFlow](https://github.com/chengqiArchy/MermaidFlow) `[AUTO]` `[SAFETY]`
   - Safety-constrained evolutionary programming approach for agentic workflow generation
   - Cross-ref: 2408.08435 (automated design), 2507.21046 (self-evolving survey)
@@ -437,6 +636,18 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-04
 
+- [[2504.05559] SciSciGPT: Advancing Human-AI Collaboration in the Science of Science](https://arxiv.org/abs/2504.05559) `[SCI]` `[ARCH]` `[MAS]` `cs.AI` `cs.DL`
+  - Open-source AI collaborator with LLM Agent capability maturity model for human-AI research partnerships
+  - Cross-ref: 2506.18096 (deep research agents), 2509.06917 (Paper2Agent), 2508.00414 (cognitive kernel)
+- [[2504.01382] Online-Mind2Web: Live Web Task Evaluation Benchmark](https://arxiv.org/abs/2504.01382) `[BENCH]` `[TOOL]` `cs.AI`
+  - Live web agent evaluation with 300 real-world tasks
+- [[2504.14064] DoomArena: Security Threat Testing for Agent Frameworks](https://arxiv.org/abs/2504.14064) `[BENCH]` `[SAFETY]` `cs.CR`
+  - Security benchmark testing agent framework vulnerabilities and threat resilience
+- [[2504.18575] WASP: Prompt Injection Attack Resilience Benchmark](https://arxiv.org/abs/2504.18575) `[BENCH]` `[SAFETY]` `cs.CR`
+  - Benchmark for evaluating agent resilience to prompt injection attacks
+- [[2504.17192] Paper2Code: Automating Code Generation from Scientific Papers in Machine Learning](https://arxiv.org/abs/2504.17192) `[CODE]` `[SCI]` `[AUTO]` `cs.SE` `cs.AI`
+  - Multi-agent framework transforming ML papers into functional code with planning, analysis, and modular generation
+  - Cross-ref: 2509.06917 (Paper2Agent), 2508.00083 (code generation survey), 2505.18705 (AI-Researcher)
 - [[2504.19678] From LLM Reasoning to Autonomous AI Agents: A Comprehensive Review](https://arxiv.org/abs/2504.19678)
   - Comprehensive review of the evolution from LLM reasoning to fully autonomous AI agents
 - [[2504.16902] Building A Secure Agentic AI ApplicationLeveraging Google's A2A Protocol](https://arxiv.org/abs/2504.16902)
@@ -444,6 +655,12 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-03
 
+- [[2503.23037] Agentic Large Language Models, a survey](https://arxiv.org/abs/2503.23037) `[SURVEY]` `[ARCH]` `cs.AI` `cs.CL`
+  - Survey of agentic LLMs showing mutual benefits across retrieval, tool use, reflection, reasoning, and multi-agent collaboration
+  - Cross-ref: 2503.21460 (LLM agent survey), 2308.11432 (foundational survey), 2510.09244 (fundamentals)
+- [[2503.01935] MultiAgentBench: Evaluating the Collaboration and Competition of LLM agents](https://arxiv.org/abs/2503.01935) `[BENCH]` `[MAS]` `[EVAL]` `cs.AI` `cs.MA`
+  - Comprehensive benchmark for multi-agent systems measuring collaboration and competition quality across diverse coordination protocols
+  - Cross-ref: 2507.05178 (CREW benchmark), 2512.08296 (scaling agent systems), 2501.06322 (collaboration mechanisms)
 - [[2503.21460] Large Language Model Agent: A Survey on Methodology, Applications and Challenges](https://arxiv.org/abs/2503.21460) `[SURVEY]` `[ARCH]`
   - Comprehensive survey of LLM agents covering methodology, applications, and current challenges
   - Cross-ref: 2308.11432 (foundational survey), 2404.11584 (architecture landscape)
@@ -468,6 +685,9 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-02
 
+- [[2502.12110] A-Mem: Agentic Memory for LLM Agents](https://arxiv.org/abs/2502.12110) `[MEM]` `[ARCH]` `cs.AI` `cs.CL`
+  - Autonomous memory system with contextual description generation and connection establishment for continuous evolution
+  - Cross-ref: 2512.13564 (memory survey), 2601.01885 (agentic memory), 2512.18950 (MACLA)
 - [[2502.14776] SurveyX: Academic Survey Automation via Large Language Models](https://arxiv.org/abs/2502.14776) `[AUTO]` `[SCI]`
   - Framework for automating academic survey generation and literature review using LLMs
   - Cross-ref: 2506.18096 (deep research agents), 2501.04227 (research assistants)
@@ -480,6 +700,12 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-01
 
+- [[2501.14654] MedAgentBench: Benchmark for Virtual EHR Healthcare Workflows](https://arxiv.org/abs/2501.14654) `[BENCH]` `[SPEC]` `cs.AI`
+  - Healthcare agent benchmark evaluating performance on virtual electronic health record workflows
+- [[2501.11067] IntellAgent: A Multi-Agent Framework for Evaluating Conversational AI Systems](https://arxiv.org/abs/2501.11067), [gh/plurai-ai/intellagent](https://github.com/plurai-ai/intellagent) `[EVAL]` `[MAS]` `[BENCH]` `cs.AI` `cs.CL`
+  - Multi-agent framework for comprehensive diagnosis and optimization of conversational agents using simulated realistic synthetic interactions
+  - Provides systematic evaluation methodology to uncover agent blind spots and improve performance
+  - Cross-ref: 2503.16416 (evaluation survey), 2507.02825 (benchmark best practices), 2411.13768 (evaluation-driven)
 - [[2501.17112] Decoding Human Preferences in Alignment: An Improved Approach to Inverse Constitutional AI](https://arxiv.org/abs/2501.17112) `[SAFETY]` `[ARCH]` `cs.AI` `cs.LG`
   - Improved approach for inverse constitutional AI and human preference alignment in agent systems
   - Cross-ref: 2406.07814 (collective constitutional AI), 2212.08073 (foundational constitutional AI)
@@ -508,12 +734,25 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2024-12
 
+- [[2412.14470] Agent-SafetyBench: Evaluating the Safety of LLM Agents](https://arxiv.org/abs/2412.14470) `[BENCH]` `[SAFETY]` `[EVAL]` `cs.AI` `cs.CL`
+  - Safety benchmark with 349 interaction environments and 2,000 test cases evaluating 8 risk categories and 10 failure modes
+  - Cross-ref: 2412.13178 (SafeAgentBench), 2507.06134 (OpenAgentSafety), 2402.05044 (SALAD-Bench)
+- [[2412.14161] TheAgentCompany: Benchmarking LLM Agents on Consequential Real World Tasks](https://arxiv.org/abs/2412.14161) `[BENCH]` `[EVAL]` `cs.AI` `cs.SE`
+  - Benchmark testing agents in simulated software company environment with real-world consequential tasks
+  - Cross-ref: 2509.10769 (AgentArch enterprise), 2511.14136 (CLEAR framework), 2308.03688 (AgentBench)
+- [[2412.13178] SafeAgentBench: A Benchmark for Safe Task Planning of Embodied LLM Agents](https://arxiv.org/abs/2412.13178) `[BENCH]` `[SAFETY]` `[SPEC]` `cs.AI` `cs.RO`
+  - First comprehensive benchmark for safety-aware task planning with 750 tasks covering 10 hazards in embodied agents
+  - Cross-ref: 2412.14470 (Agent-SafetyBench), 2507.06134 (OpenAgentSafety), 2512.20798 (constraint violations)
 - [[2412.17149] A Multi-AI Agent System for Autonomous Optimization of Agentic AISolutions via Iterative Refinement and LLM-Driven Feedback Loop](https://arxiv.org/abs/2412.17149) `[MAS]` `[AUTO]`
   - Multi-agent system for autonomous optimization of agentic AI solutions using iterative refinement and LLM feedback loops
   - Cross-ref: 2408.08435 (automated design), 2507.18074 (architecture discovery)
 - [[2412.04093] Practical Considerations for Agentic LLM Systems](https://arxiv.org/abs/2412.04093) `[ARCH]` `[COMP]`
   - Practical guidance for implementing and deploying agentic LLM systems in production
   - Cross-ref: 2411.05285 (agentops taxonomy), 2502.05957 (AutoAgent)
+- [[2412.05467] BrowserGym: A Gym Environment for Web Task Automation](https://arxiv.org/abs/2412.05467) `[BENCH]` `[TOOL]` `cs.AI`
+  - Web agent benchmarking ecosystem with standardized evaluation framework
+- [[2412.17259] LegalAgentBench: Evaluating LLM Agents in Legal Domain](https://arxiv.org/abs/2412.17259) `[BENCH]` `[SPEC]` `cs.CL`
+  - Benchmark for evaluating agents in Chinese legal domain tasks
 
 ## 2024-11
 
@@ -532,9 +771,17 @@ Based on current gaps and transformative potential, three areas warrant immediat
 - [[2411.05285] A taxonomy of agentops for enabling observability of foundation model based agents](https://arxiv.org/abs/2411.05285) `[COMP]` `[ARCH]`
   - Taxonomy and framework for observability and operations of foundation model-based agents
   - Cross-ref: 2412.04093 (practical considerations), 2507.10584 (compliance RAG)
+- [[2411.07763] Spider 2.0: Evaluating Language Models on Real-World Enterprise Text-to-SQL Workflows](https://arxiv.org/abs/2411.07763) `[BENCH]` `[SPEC]` `cs.DB`
+  - Enterprise text-to-SQL benchmark with real-world database workflows
+- [[2411.02305] CRMArena: Understanding the Capacity of LLM Agents to Perform Professional CRM Tasks](https://arxiv.org/abs/2411.02305) `[BENCH]` `[SPEC]` `cs.AI`
+  - Benchmark for evaluating agents on enterprise CRM professional scenarios
 
 ## 2024-10
 
+- [[2410.09024] AgentHarm: A Benchmark for Measuring Harmfulness of LLM Agents](https://arxiv.org/abs/2410.09024) `[BENCH]` `[SAFETY]` `[EVAL]` `cs.AI` `cs.CR`
+  - Benchmark measuring harmful behaviors in LLM agents across malicious and benign agentic scenarios
+  - Accepted at ICLR 2025
+  - Cross-ref: 2512.20798 (constraint violations), 2507.06134 (OpenAgentSafety), 2510.23883 (agentic AI security)
 - [[2410.22457] Advancing Agentic Systems: Dynamic Task Decomposition, Tool Integration and Evaluation using Novel Metrics and Dataset](https://arxiv.org/abs/2410.22457) `[EVAL]` `[TOOL]` `[PLAN]`
   - Framework for dynamic task decomposition and tool integration in agentic systems with evaluation metrics
   - Cross-ref: 2405.17935 (foundational tool learning theory), 2402.02716 (planning mechanism foundations)
@@ -563,6 +810,12 @@ Based on current gaps and transformative potential, three areas warrant immediat
   - Approach for creating self-evolving software systems using generative and agentic AI
   - Cross-ref: 2507.21046 (self-evolving survey), 2505.22954 (Darwin Godel)
 
+## 2024-09
+
+- [[2409.11363] CORE-Bench: Fostering the Credibility of Published Research Through a Computational Reproducibility Agent Benchmark](https://arxiv.org/abs/2409.11363) `[BENCH]` `[SCI]` `[EVAL]` `cs.AI`
+  - Computational reproducibility benchmark for assessing agent ability to verify research claims
+  - Cross-ref: 2407.13168 (SciCode), 2412.14161 (TheAgentCompany)
+
 ## 2024-08
 
 - [[2408.14033] MLR-Copilot: Autonomous Machine Learning Research Framework](https://arxiv.org/abs/2408.14033), [gh/du-nlp-lab/MLR-Copilot](https://github.com/du-nlp-lab/MLR-Copilot) `[RESEARCH]` `[AUTO]`
@@ -582,6 +835,15 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2024-07
 
+- [[2407.13168] SciCode: A Research Coding Benchmark Curated by Scientists](https://arxiv.org/abs/2407.13168) `[BENCH]` `[CODE]` `[SCI]` `cs.AI` `cs.SE`
+  - Scientific domain code problems requiring research-level understanding
+  - Cross-ref: 2507.15003 (SE 3.0), 2508.00083 (code generation survey)
+- [[2407.18901] AppWorld: A Controllable World of Apps and People for Benchmarking Interactive Coding Agents](https://arxiv.org/abs/2407.18901) `[BENCH]` `[CODE]` `cs.SE`
+  - Multi-app coding agent benchmark with controllable environments
+- [[2407.18416] PersonaGym: Evaluating Persona Agents and LLMs](https://arxiv.org/abs/2407.18416) `[BENCH]` `[SPEC]` `cs.CL`
+  - Benchmark for persona-following agent evaluation
+- [[2407.13943] Werewolf Arena: Strategic Reasoning in LLM Agents](https://arxiv.org/abs/2407.13943) `[BENCH]` `[SPEC]` `cs.AI`
+  - Social deduction game benchmark for strategic reasoning assessment
 - [[2407.18219] Recursive Introspection: Teaching Language Model Agents How to Self-Improve](https://arxiv.org/abs/2407.18219) `[AUTO]` `[ARCH]` `cs.AI` `cs.LG`
   - RISE framework for fine-tuning LLMs to introduce recursive introspection and self-improvement capabilities
   - Cross-ref: 2405.06682 (self-reflection effects), 2410.04444 (Gödel Agent recursive)
@@ -600,6 +862,9 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2024-04
 
+- [[2404.07972] OSWorld: Benchmarking Multimodal Agents for Open-Ended Tasks in Real Computer Environments](https://arxiv.org/abs/2404.07972) `[BENCH]` `[EVAL]` `[TOOL]` `cs.AI`
+  - Comprehensive OS/web task benchmark across multiple applications with real-world grounding
+  - Cross-ref: 2307.13854 (WebArena), 2412.14161 (TheAgentCompany), 2401.13649 (VisualWebArena)
 - [[2404.13501] A Survey on the Memory Mechanism of Large Language Model based Agents](https://arxiv.org/abs/2404.13501) `[MEM]` `[SURVEY]`
   - Survey of memory mechanisms and architectures in LLM-based agent systems
   - Cross-ref: 2507.16940 (complex reasoning memory needs), 2503.21460 (broader agent architecture context)
@@ -609,9 +874,15 @@ Based on current gaps and transformative potential, three areas warrant immediat
 - [[2404.06411] AgentQuest: A Modular Benchmark Framework to Measure Progress and Improve LLM Agents](https://arxiv.org/abs/2404.06411) `[BENCH]` `[EVAL]`
   - Modular benchmark framework for measuring progress and improvement in LLM agent capabilities
   - Cross-ref: 2308.03688 (comprehensive benchmarking precedent), 2401.13178 (multi-turn evaluation focus)
+- [[2404.10952] Can Language Models Solve Olympiad Programming?](https://arxiv.org/abs/2404.10952) `[BENCH]` `[CODE]` `cs.AI`
+  - USACO benchmark for programming competition problem-solving
 
 ## 2024-02
 
+- [[2402.05044] SALAD-Bench: A Hierarchical and Comprehensive Safety Benchmark for Large Language Models](https://arxiv.org/abs/2402.05044) `[BENCH]` `[SAFETY]` `[EVAL]` `cs.CL` `cs.AI`
+  - Hierarchical safety benchmark with large scale, rich diversity, and intricate three-level taxonomy
+  - Accepted at ACL 2024 (Findings)
+  - Cross-ref: 2412.14470 (Agent-SafetyBench), 2507.06134 (OpenAgentSafety), 2510.23883 (agentic AI security)
 - [[2402.06360] CoSearchAgent: A Lightweight Collaborative Search Agent with Large Language Models](https://arxiv.org/abs/2402.06360) `[TOOL]` `[MAS]`
   - Lightweight collaborative search agent system using LLMs for information retrieval
   - Cross-ref: 2410.09713 (agentic IR), 2505.15872 (InfoDeepSeek)
@@ -642,6 +913,10 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2023-04
 
+- [[2304.08244] API-Bank: A Comprehensive Benchmark for Tool-Augmented LLMs](https://arxiv.org/abs/2304.08244) `[BENCH]` `[TOOL]` `[EVAL]` `cs.CL` `cs.AI`
+  - Comprehensive benchmark with 73 API tools, 314 tool-use dialogues, and 753 API calls for evaluating planning, retrieval, and calling
+  - Published at EMNLP 2023; includes 1,888 training dialogues from 2,138 APIs across 1,000 domains
+  - Cross-ref: 2307.16789 (ToolLLM), 2310.03128 (MetaTool), 2405.17935 (tool learning survey)
 - [[2304.05376] ChemCrow: LLM Chemistry Agent with Expert-Designed Tools](https://arxiv.org/abs/2304.05376) `[RESEARCH]` `[SCI]` `[TOOL]`
   - LLM chemistry agent augmented with 18 expert-designed tools for organic synthesis, drug discovery, and materials design
   - Autonomous synthesis planning and execution with emergent capabilities from tool combination
@@ -679,6 +954,8 @@ Based on current gaps and transformative potential, three areas warrant immediat
   - Cross-ref: 2210.03629 (ReAct foundation), 2410.02810 (StateAct)
 - [[2310.03128] MetaTool Benchmark for Large Language Models: Deciding Whether to Use Tools and Which to Use](https://arxiv.org/abs/2310.03128) `[BENCH]` `[TOOL]` `cs.AI` `cs.CL`
   - Benchmark for evaluating LLM tool selection and usage decision-making capabilities
+- [[2310.08367] Minecraft Gaming Agent Benchmark](https://arxiv.org/abs/2310.08367) `[BENCH]` `[SPEC]` `cs.AI`
+  - Open-ended game environment for evaluating agent learning and exploration
   - Cross-ref: 2307.16789 (ToolLLM), 2406.12045 (τ-bench)
 
 ## 2023-12
@@ -687,6 +964,13 @@ Based on current gaps and transformative potential, three areas warrant immediat
   - RAG agent for answering questions over scientific literature with hallucination reduction and provenance tracking
   - Information retrieval across full-text articles with source attribution for transparent evaluation evidence
   - Cross-ref: 2505.18705 (AI-Researcher), 2501.10120 (PaSa), 2509.06917 (Paper2Agent)
+
+## 2023-11
+
+- [[2311.12983] GAIA: a benchmark for General AI Assistants](https://arxiv.org/abs/2311.12983) `[BENCH]` `[EVAL]` `cs.AI` `cs.CL`
+  - Benchmark with 466 real-world questions requiring reasoning, multi-modality, web browsing, and tool-use proficiency
+  - Human performance: 92% vs GPT-4 with plugins: 15%; leaderboard at [https://huggingface.co/gaia-benchmark](https://huggingface.co/gaia-benchmark)
+  - Cross-ref: 2308.03688 (AgentBench), 2404.06411 (AgentQuest), 2307.13854 (WebArena)
 
 ## 2022-12
 
@@ -699,3 +983,57 @@ Based on current gaps and transformative potential, three areas warrant immediat
 - [[2210.03629] ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629) `[PLAN]` `[ARCH]` `cs.AI` `cs.CL`
   - Foundational ReAct framework for interleaving reasoning and acting in language model agents
   - Cross-ref: 2411.00927 (ReSpAct extension), 2310.04406 (LATS integration)
+
+## 2022-07
+
+- [[2207.01206] WebShop: Towards Scalable Real-World Web Interaction with Grounded Language Agents](https://arxiv.org/abs/2207.01206) `[BENCH]` `[SPEC]` `cs.AI`
+  - E-commerce web interaction benchmark for evaluating grounded language agents
+
+## 2020-10
+
+- [[2010.03768] ALFWorld: Aligning Text and Embodied Environments for Interactive Learning](https://arxiv.org/abs/2010.03768) `[BENCH]` `[SPEC]` `cs.AI`
+  - Text-to-embodied task alignment benchmark for interactive agent learning
+
+## Practitioner Resources
+
+Industry blog posts and engineering articles providing implementation insights and production patterns.
+
+- [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) - Anthropic Engineering (2025)
+  - Two-agent harness pattern: Initializer + Coding agents for context window management
+  - Key patterns: JSON feature lists, git-based state tracking, incremental development
+  - Failure modes: Premature completion, undocumented progress, testing gaps, setup confusion
+  - Cross-ref: 2512.13564 (memory systems), 2509.25250 (long-running agents), 2510.01003 (repository memory)
+- [Inspect AI](https://inspect.aisi.org.uk/) - UK AI Safety Institute (2025)
+  - 100+ pre-built evaluations, three-component model (datasets, solvers, scorers)
+  - Direct PydanticAI support, MCP integration, multi-agent compositions
+  - Cross-ref: 2507.21504 (evaluation taxonomy), 2503.16416 (evaluation survey)
+- [Bloom](https://github.com/safety-research/bloom) - Anthropic (2025)
+  - Four-stage behavioral evaluation: Understanding → Ideation → Rollout → Judgment
+  - Elicitation rate metric (≥7/10 threshold), meta-judge for suite-level analysis
+  - Cross-ref: 2507.06134 (OpenAgentSafety), 2412.14470 (Agent-SafetyBench)
+- [Petri](https://github.com/safety-research/petri) - Anthropic (2025)
+  - Auditor/Target/Judge architecture for alignment auditing, built on Inspect AI
+  - Multi-turn audits, transcript scoring (deception, oversight subversion, harmful content)
+  - Cross-ref: 2410.09024 (AgentHarm), 2402.05044 (SALAD-Bench)
+- [DeepEval AI Agent Evaluation Guide](https://deepeval.com/guides/guides-ai-agent-evaluation) - Confident AI (2025)
+  - Three-layer evaluation model: Reasoning (plan quality/adherence), Action (tool/argument correctness), Execution (task completion/efficiency)
+  - Component-level metric attachment via `@observe()` decorator pattern
+  - GEval framework for custom LLM-as-Judge criteria using plain English definitions
+  - Cross-ref: 2503.16416 (evaluation survey), 2507.21504 (LLM agents survey)
+- [Pydantic Evals](https://ai.pydantic.dev/evals/) - Pydantic (2025)
+  - Span-based evaluation using OpenTelemetry for internal agent behavior analysis
+  - Loosely coupled framework evaluating any callable (not dependent on pydantic-ai)
+  - Flexible scoring (0.0-1.0 float) with Logfire integration for web-based visualization
+  - Philosophy: "Correctness depends on how the answer was reached, not just the final output"
+  - Cross-ref: 2411.05285 (AgentOps observability taxonomy), 2503.16416 (evaluation survey)
+- [Arize Phoenix Multi-Agent Evaluation](https://arize.com/docs/phoenix/evaluation/concepts-evals/evaluating-multi-agent-systems) - Arize (2025)
+  - Three evaluation strategies: Agent Handoff, System-Level, Coordination
+  - Multi-level metrics: Agent, Interaction, System, User performance measurement
+  - Five coordination patterns: Network, Supervisor, Hierarchical, Tool-calling, Custom Workflow
+  - Handoff evaluation: Appropriateness, information transfer, timing
+  - Cross-ref: 2501.06322 (collaboration mechanisms), 2503.13657 (MAS failures), 2512.08296 (scaling agent systems)
+- [Claude Evaluation Framework](https://platform.claude.com/docs/en/test-and-evaluate/develop-tests) - Anthropic (2025)
+  - SMART success criteria (Specific, Measurable, Achievable, Relevant); grading hierarchy: Code-based (fastest) → LLM-based (nuanced) → Human (flexible)
+  - Best practice: Volume over quality; encourage reasoning before scoring
+  - Bloom correlation: Claude Opus 4.1 (0.86), Sonnet 4.5 (0.75) with human scores
+  - Cross-ref: Bloom (alignment.anthropic.com), 2503.16416 (evaluation survey)

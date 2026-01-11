@@ -13,6 +13,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Comprehensive benchmark catalog expansion: 40+ benchmarks from further_reading.md integrated into landscape-evaluation-data-resources.md across 10 categories (General Agent, Web Agents, Code/SE, Tool Use, Scientific, Enterprise, Multi-Agent, Safety/Security, Planning, Specialized Domains). Key additions: **CORE-Bench** (computational reproducibility - highly relevant for PeerRead), **MultiAgentBench** (multi-agent coordination evaluation), WebArena/VisualWebArena/BrowserGym (web interaction), ToolLLM/MetaTool/StableToolBench (tool usage), CLEAR framework (enterprise metrics with ρ=0.83 production correlation), safety benchmarks (SALAD-Bench, Agent-SafetyBench, SafeAgentBench, AgentHarm, WASP, CyberGym)
+- Research paper expansion: 232+ papers covering 2020-2026 (from 154+)
+- Practitioner resources section in further_reading.md with Anthropic engineering insights
+- Evaluation frameworks: Inspect AI (UK AISI, PydanticAI support), Bloom (behavioral evals), Petri (alignment auditing), DeepEval (three-layer evaluation model)
+- DeepEval integration analysis: Three-layer model (Reasoning/Action/Execution), component-level metrics, GEval custom criteria
+- Failure mode taxonomy from Anthropic harness pattern mapped to evaluation metrics
+- Key benchmarks from survey papers: GAIA, API-Bank, SALAD-Bench, Agent-SafetyBench, SafeAgentBench, AgentHarm
+- AgentBeats Competition benchmarks (20 added): Scientific (SciCode, CORE-Bench), Web (BrowserGym, Online-Mind2Web, WebShop), Enterprise (Spider 2.0, CRMArena, CRMArena-Pro, Finance, MedAgentBench), Code (AppWorld, USACO, VERINA), Safety (DoomArena, WASP, CyberGym, Smart Contract), Gaming/Embodied (Werewolf, Minecraft, ALFWorld, PersonaGym), Legal (LegalAgentBench)
+- AgentBeats Competition participation guide (AgentBeats_basics.md): OUTSTANDING opportunities for Research Agent Track ($16k), Multi-Agent Track (category-defining), and AAA Track with dual-track submission strategy, implementation roadmap, and immediate next steps
+- Tool evaluation expansion: τ²-bench (2506.07982) dual-control user-agent evaluation
+- OS/Web benchmarks: OSWorld (2404.07972) comprehensive task evaluation
+- Memory systems research: MAGMA, MACLA, comprehensive memory surveys
+- Enterprise evaluation frameworks: CLEAR (ρ=0.83), AgentArch, TheAgentCompany, MultiAgentBench
+- Pydantic Evals to Practitioner Resources: Span-based evaluation with OpenTelemetry, Logfire integration, philosophy validates post-execution behavioral analysis
+- Arize Phoenix Multi-Agent to Practitioner Resources: Three evaluation strategies (Agent Handoff, System-Level, Coordination), multi-level metrics, five coordination patterns
+- Production Framework Integration Matrix: Added Pydantic Evals and Arize Phoenix rows (now 10 frameworks)
+- New candidate metrics from production frameworks: path_convergence (Arize Phoenix), handoff_quality (Arize Multi-Agent), semantic_outcome (LangSmith), evaluator_alignment (Self-Improving Evals)
+- Research papers: Rubric Rewards AI Co-Scientists [2512.23707], SWE-EVO long-horizon benchmark [2512.18470], Confucius Code Agent [2512.10398], SciSciGPT [2504.05559]
+- New Metrics for Implementation section in architecture.md: fix_rate, rubric_alignment, path_convergence, handoff_quality
+- SWE-EVO benchmark to landscape-evaluation-data-resources.md with Fix Rate metric for partial progress evaluation
+- SciSciGPT to landscape-research-agents.md with LLM Agent capability maturity model
+- Research Plan Evaluation methodology to research_integration_analysis.md: rubric-based self-grading, long-horizon partial progress, hierarchical memory assessment
+- Claude Evaluation Framework to Practitioner Resources: SMART criteria, grading hierarchy (Code→LLM→Human), Bloom correlation 0.86
+- Claude Eval Framework to Integration Matrix (now 11 frameworks): validates three-tier approach
 - Clear audience targeting for all main documentation files
 - PyPI verification requirement for new package introductions in AGENTS.md
 - architecture.md: Comprehensive system architecture documentation
@@ -30,6 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Research integration analysis: Updated to 208+ papers with 2022-2026 coverage (version 3.0.0)
+- Further reading document: Enhanced with 54 new papers including safety benchmarks and memory systems
+- Research validation references: Added CLEAR framework and evaluation taxonomy citations
 - Enhanced error handling in evaluation pipeline with detailed context logging and specific guidance for different error types
 - Improved performance monitoring with bottleneck detection and comprehensive metrics collection
 - Enhanced fallback strategy reliability with better status reporting and detailed failure tracking

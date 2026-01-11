@@ -10,6 +10,7 @@ tags:
   - peerread-evaluation
 version: 1.0.0
 ---
+<!-- markdownlint-disable MD024 no-duplicate-heading -->
 
 Comprehensive catalog of evaluation metrics for AI agent systems, with
 definitions, use cases, and primary research references for each metric.
@@ -204,6 +205,112 @@ definitions, use cases, and primary research references for each metric.
 - **Limitations**: Doesn't account for task complexity differences
 - **Reference**: [Multi-agent coordination in distributed systems](https://link.springer.com/article/10.1007/s10458-013-9235-1) (coordination metrics)
 - **Landscape Reference**: [Agent Frameworks](landscape.md#1-agent-frameworks)
+
+### Production Framework Metrics
+
+Metrics derived from production evaluation frameworks and competition benchmarks
+
+#### Plan Adherence
+
+- **Definition**: Degree to which agent follows its own generated execution plan
+- **Use Case**: Detect agents that generate good plans but deviate during execution
+- **Calculation**: `planned_steps_executed / total_planned_steps`
+- **Strengths**: Separates planning quality from execution discipline
+- **Limitations**: Requires plan extraction and step matching
+- **Reference**: DeepEval PlanAdherenceMetric
+- **Landscape Reference**: [DeepEval Framework](landscape.md#agent-evaluation--benchmarking)
+
+#### Argument Correctness
+
+- **Definition**: Accuracy of arguments passed to tool calls beyond tool selection
+- **Use Case**: Detect subtle tool misuse where correct tool is called with wrong parameters
+- **Calculation**: `correct_arguments / total_tool_calls`
+- **Strengths**: Catches parameter-level errors missed by tool selection metrics
+- **Limitations**: Requires ground truth for argument values
+- **Reference**: DeepEval ArgumentCorrectnessMetric
+
+#### Handoff Quality
+
+- **Definition**: Effectiveness of context transfer between agents in multi-agent systems
+- **Use Case**: Evaluate multi-agent coordination efficiency
+- **Calculation**: `successful_handoffs / total_handoffs` with context preservation score
+- **Strengths**: Quantifies multi-agent coordination effectiveness
+- **Limitations**: Requires handoff event detection and context comparison
+- **Reference**: Arize Phoenix Multi-Agent Evaluation
+- **Landscape Reference**: [Arize Phoenix](landscape.md#llm-application-observability)
+
+#### Semantic Outcome
+
+- **Definition**: Meaningful task completion beyond surface-level metrics
+- **Use Case**: Evaluate if agent achieved the underlying intent, not just literal task
+- **Measurement**: LLM-as-Judge assessment of outcome meaningfulness
+- **Strengths**: Captures intent fulfillment vs. task completion
+- **Limitations**: Requires clear outcome definitions
+- **Reference**: LangSmith Multi-turn Evals
+
+#### Evaluator Alignment
+
+- **Definition**: Consistency between different evaluation methods on same outputs
+- **Use Case**: Validate evaluation reliability and detect metric drift
+- **Calculation**: Correlation coefficient between evaluator scores
+- **Strengths**: Ensures evaluation trustworthiness
+- **Limitations**: Requires multiple evaluation methods
+- **Reference**: Self-Improving LLM Evals (Arize)
+
+#### Fix Rate
+
+- **Definition**: Percentage of issues successfully resolved in long-horizon tasks
+- **Use Case**: Measure partial progress in complex multi-step tasks
+- **Calculation**: `issues_fixed / total_issues_attempted`
+- **Strengths**: Rewards incremental progress, not just full completion
+- **Limitations**: Requires issue tracking and resolution verification
+- **Reference**: SWE-EVO Benchmark (arXiv:2512.18470)
+
+#### Rubric Alignment
+
+- **Definition**: Degree to which agent output matches structured evaluation criteria
+- **Use Case**: Self-grading against predefined quality rubrics
+- **Calculation**: Weighted rubric criterion scores
+- **Strengths**: Enables reproducible quality assessment
+- **Limitations**: Requires rubric design and criterion weighting
+- **Reference**: Rubric Rewards for AI Co-Scientists (arXiv:2512.23707)
+
+#### Elicitation Rate
+
+- **Definition**: Percentage of evaluation runs achieving threshold score (≥7/10)
+- **Use Case**: Measure behavioral consistency across multiple runs
+- **Calculation**: `runs_above_threshold / total_runs`
+- **Strengths**: Simple, threshold-based behavioral assessment
+- **Limitations**: Requires multiple runs and score threshold definition
+- **Reference**: Bloom Framework (Anthropic)
+- **Landscape Reference**: [Bloom](further_reading.md#practitioner-resources)
+
+#### Session Continuity
+
+- **Definition**: Quality of state preservation across agent sessions or context windows
+- **Use Case**: Evaluate long-running agent performance with context handoffs
+- **Measurement**: State reconstruction accuracy after session boundary
+- **Strengths**: Critical for production agents with context limits
+- **Limitations**: Requires session boundary detection and state comparison
+- **Reference**: Anthropic Effective Harnesses Pattern
+
+#### Scope Adherence
+
+- **Definition**: Alignment between planned work scope and actual executed work
+- **Use Case**: Detect scope creep or premature completion in agents
+- **Calculation**: `overlap(planned_scope, actual_scope) / planned_scope`
+- **Strengths**: Identifies planning-execution gaps
+- **Limitations**: Requires scope definition and extraction
+- **Reference**: Anthropic Effective Harnesses Pattern
+
+#### Verification Coverage
+
+- **Definition**: Completeness of agent self-testing and validation
+- **Use Case**: Measure how thoroughly agent verifies its own work
+- **Calculation**: `verified_outputs / total_outputs`
+- **Strengths**: Quantifies agent reliability and self-correction
+- **Limitations**: Requires verification action detection
+- **Reference**: Anthropic Effective Harnesses Pattern
 
 ### Observability-Based Metrics
 
