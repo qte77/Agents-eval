@@ -1,8 +1,8 @@
 ---
 title: AgentBeats Competition Participation Guide
 description: Strategic analysis and participation roadmap for AgentX-AgentBeats competition covering outstanding tracks (Research Agent, Multi-Agent, AAA), unique differentiators, and implementation priorities for Agents-eval project
-updated: 2026-01-11
 created: 2026-01-11
+updated: 2026-01-11
 ---
 
 ## Overview
@@ -66,7 +66,7 @@ Complete evaluation infrastructure
 3. **Composite academic scoring** - 6 balanced metrics mapping to accept/reject decisions (mirrors real peer review)
 4. **Three-tier graceful degradation** - Fast metrics (<1s) → LLM quality → Graph complexity, with fallback strategies
 
-**Bottom line**: Agents-eval doesn't just test if agents work—it reveals **how well they work together**, filling a gap that no existing benchmark addresses.
+**Bottom line**: Agents-eval doesn't just test if agents work — it reveals **how well they work together**, filling a gap that no existing benchmark addresses.
 
 ---
 
