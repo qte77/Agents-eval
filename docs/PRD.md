@@ -152,6 +152,22 @@ The system implements comprehensive metrics for assessing agent performance acro
 - **Agent Coordination Quality:** Evaluates effectiveness of multi-agent collaboration and delegation.
 - **Resource Utilization:** Monitors computational resources, API calls, and token usage.
 
+### Research-Validated Metrics (Planned)
+
+Based on Stanford's Agents4Science conference findings:
+
+#### Citation Accuracy Metrics
+- **Reference Hallucination Detection:** Automated verification that agent-generated citations and references exist (56% of AI-generated papers contained hallucinated references).
+- **Citation Accuracy Score:** Percentage of verifiable references in agent outputs.
+
+#### Reviewer Quality Metrics
+- **Reviewer Calibration Score:** Alignment with human expert baseline using historical PeerRead accepted/rejected papers for calibration.
+- **Reviewer Consistency Score:** Agreement across multiple evaluations of the same content.
+
+#### Agent Social Dynamics
+- **Agent Speaking Order Tracking:** Monitor which agent responds first and most frequently in multi-agent coordination (speaking order affects outcomes).
+- **Coordination Balance:** Measure communication distribution across agents to detect dominance patterns.
+
 ### Monitoring & Observability
 
 - **Opik Integration:** Primary platform for agent execution traces, performance monitoring, and observability.

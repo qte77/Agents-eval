@@ -256,9 +256,9 @@ Production insights from Anthropic's two-agent harness pattern mapping directly 
 6. **Scalable MAS Oversight** (Agents4Science 2025)
    - `HDO (Hierarchical Delegated Oversight)`: Framework with PAC-Bayesian bounds on misalignment risk enabling weak overseers to delegate verification through structured debates
    - Addresses sublinear scaling problem where oversight difficulty grows disproportionately with agent count
-   - **Application**: Tier 5 Governance with provable alignment guarantees for multi-agent coordination
+   - **Application**: Tier 3 Graph Analysis with provable alignment guarantees for multi-agent coordination oversight
 
-**Integration**: Enhance evaluation framework with reasoning-execution alignment validation, security assessment capabilities, Tier 5 Governance evaluation with standardized safety benchmarks, adversarial robustness testing for LLM-as-Judge tier, and hierarchical oversight protocols for multi-agent systems.
+**Integration**: Enhance evaluation framework with reasoning-execution alignment validation, security assessment capabilities, Tier 3 coordination governance evaluation with standardized safety benchmarks, adversarial robustness testing for LLM-as-Judge tier, and hierarchical oversight protocols for multi-agent systems.
 
 ## Academic Research Insights
 
@@ -356,7 +356,7 @@ Production insights from Anthropic's two-agent harness pattern mapping directly 
 - `[2512.18950] MACLA`: Hierarchical procedural memory, 2,800× faster construction
 - `Behavioral Fingerprinting` (Agents4Science 2025): Diagnostic Prompt Suite analyzing 18 models revealing behavioral profiles beyond performance metrics; documents ISTJ/ESTJ personality clustering reflecting deliberate alignment choices
 
-**Application**: Inform Self-Assessment tier (Tier 4) with memory consistency evaluation, identity persistence tracking across agent interactions, and behavioral profiling for agent identity evaluation.
+**Application**: Inform Tier 2 (LLM-as-a-Judge) and Tier 3 (Graph Analysis) with memory consistency evaluation, identity persistence tracking across agent interactions, and behavioral profiling for agent self-assessment quality.
 
 #### Domain-Specific Agent Benchmarks
 
@@ -370,14 +370,17 @@ Production insights from Anthropic's two-agent harness pattern mapping directly 
 
 ### Current System Enhancement (Sprint 1+)
 
-**Five-Tier Evaluation Integration** (see [architecture.md](../architecture.md) for current implementation):
+**Three-Tier Evaluation Integration** (see [architecture.md](../architecture.md) for current implementation):
 
 ```yaml
-Tier 1 - Traditional: BLEU, ROUGE, BERTScore + performance prediction
-Tier 2 - LLM-Judge: Quality assessment + self-assessment + identity consistency  
-Tier 3 - Graph-Based: Behavioral patterns + governance + coordination effectiveness
-Tier 4 - Self-Assessment: Agent identity evaluation and consistency measurement
-Tier 5 - Governance: MI9 protocol + TRiSM security + runtime control
+Current Three-Tier Architecture:
+Tier 1 - Traditional: BLEU, ROUGE, BERTScore + performance prediction + execution time
+Tier 2 - LLM-Judge: Quality assessment + self-assessment + identity consistency evaluation
+Tier 3 - Graph-Based: Behavioral patterns + coordination governance + multi-agent oversight + delegation depth
+
+Future Enhancements (Planned):
+- Advanced identity consistency measurement (extends Tier 2)
+- MI9 protocol + TRiSM security + runtime control (extends Tier 3)
 ```
 
 ### Future Architecture (Sprint 2+)

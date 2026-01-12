@@ -167,7 +167,7 @@ definitions, use cases, and primary research references for each metric.
 - **Strengths**: Captures behavioral patterns, reveals alignment choices
 - **Limitations**: Requires diagnostic prompt suite, model-dependent patterns
 - **Reference**: Behavioral Fingerprinting of LLMs (Agents4Science 2025)
-- **Application**: Inform Tier 4 Self-Assessment for agent identity persistence across interactions
+- **Application**: Inform Tier 3 Graph Analysis for agent identity persistence and behavioral consistency tracking across interactions
 
 ### Multi-Agent Coordination Metrics
 

@@ -101,7 +101,7 @@ The evaluation framework is built around large context window models capable of 
 
 #### LLM-as-a-Judge Framework
 
-**Location**: `src/app/evals/llm_judge.py`
+**Location**: `src/app/evals/llm_evaluation_managers.py`
 
 - **Planning Rational Assessment** (config: `planning_rational`):
   - Decision-making process quality evaluation
@@ -118,7 +118,7 @@ The evaluation framework is built around large context window models capable of 
 
 #### Graph-Based Complexity Analysis
 
-**Location**: `src/app/evals/graph_complexity.py`
+**Location**: `src/app/evals/graph_analysis.py`
 
 **Approach**: Post-execution behavioral analysis where agents autonomously decide tool use during execution, then observability logs are processed to construct behavioral graphs for retrospective evaluation.
 
@@ -242,7 +242,7 @@ Candidate metrics identified from production frameworks and recent research for 
 | `coordination_topology` | Evolutionary Boids (Agents4Science) | No breadth vs depth | Low | Medium |
 | `delegation_depth` | HDO (Agents4Science) | No hierarchy verification | Low | High |
 
-**Integration Priority**: `fix_rate` → `evaluator_consensus` (Tier 2 robustness) → `delegation_depth` (Tier 5 Governance) → `coordination_topology` (Tier 3 pattern detection) → `path_convergence` (Tier 3 efficiency) → `rubric_alignment` (Tier 2 self-assessment)
+**Integration Priority**: `fix_rate` → `evaluator_consensus` (Tier 2 robustness) → `delegation_depth` (Tier 3 coordination) → `coordination_topology` (Tier 3 pattern detection) → `path_convergence` (Tier 3 efficiency) → `rubric_alignment` (Tier 2 self-assessment)
 
 ## Key Dependencies
 
@@ -294,6 +294,43 @@ The system relies on several key technology categories for implementation and ev
   - Outputs a well-formatted scientific report using the provided data.
   - Maintains the original facts, conclusions, and sources.
 - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+
+### Critic Agent (Planned - Sprint 3)
+
+- **Description**: Dedicated skeptical reviewer that participates in all agent interactions to reduce hallucinations and compounding errors. Based on Stanford Virtual Lab research showing critic agents significantly improve output quality.
+- **Responsibilities**:
+  - Challenge assumptions in Researcher outputs
+  - Question methodology in Analyst assessments
+  - Flag potential hallucinations in Synthesizer reports
+  - Provide conservative feedback to reduce errors
+  - Participate in both group coordination and individual agent assessments
+- **Location**: Planned for `src/app/agents/critic_agent.py` or extension of `agent_system.py`
+- **Research Basis**: Stanford's Virtual Lab demonstrated that dedicated critic agents reduce compounding errors in multi-agent systems
+
+## Research-Validated Evaluation Enhancements (Planned)
+
+Based on Stanford's Agents4Science conference (300+ AI-generated papers analyzed):
+
+### Priority 1: Citation Hallucination Detection
+
+- **Metric**: `reference_accuracy_score`
+- **Finding**: 56% of AI-generated papers contained ≥1 hallucinated reference
+- **Implementation**: Automated web search verification of cited sources
+- **Location**: Planned for `src/app/evals/citation_validator.py`
+
+### Priority 2: Reviewer Calibration
+
+- **Metric**: `reviewer_calibration_score`, `reviewer_consistency_score`
+- **Finding**: Claude most balanced (closest to human experts), GPT most conservative, Gemini most sycophantic
+- **Implementation**: Tune LLM-as-Judge using PeerRead accepted/rejected baseline
+- **Location**: Enhancement to `src/app/evals/llm_evaluation_managers.py`
+
+### Priority 3: Social Dynamics Tracking
+
+- **Metrics**: `agent_dominance_score`, `coordination_balance`
+- **Finding**: Agent speaking order affects outcome quality
+- **Implementation**: Extract from Opik traces - agent invocation order, message frequency/length
+- **Location**: Enhancement to `src/app/evals/graph_analysis.py`
 
 ## Tools Available
 
