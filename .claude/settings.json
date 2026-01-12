@@ -12,11 +12,14 @@
   "enabledMcpjsonServers": ["context7", "exa"],
   "permissions": {
     "allow": [
+      "Bash(bash:.claude/scripts/ralph/*.sh:*)",
+      "Bash(chmod:+x:.claude/scripts/ralph/*.sh)",
       "Bash(date:*)",
       "Bash(git:diff:*)",
       "Bash(git:log:*)",
       "Bash(git:status:*)",
       "Bash(git log --grep:*)",
+      "Bash(jq:*)",
       "Bash(make:*)",
       "Bash(tree:*)",
       "Bash(uv sync:*)",
@@ -26,6 +29,8 @@
       "Edit(AGENT_LEARNINGS.md)",
       "Edit(AGENT_REQUESTS.md)",
       "Edit(docs/**/*.md)",
+      "Edit(docs/ralph/*.json)",
+      "Edit(docs/ralph/*.txt)",
       "Edit(src/**/*.py)",
       "Edit(src/**/*.json)",
       "Edit(tests/**/*.py)",
@@ -37,7 +42,9 @@
       "mcp__exa__deep_researcher_start",
       "mcp__exa__deep_researcher_check",
       "mcp__exa__crawling",
+      "Read(.claude/skills/**/*.md)",
       "SlashCommand",
+      "Skill",
       "WebFetch(domain:github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md)",
       "WebFetch(domain:docs.anthropic.com/en/docs/claude-code/claude_code_docs_map.md)",
       "WebFetch(domain:docs.anthropic.com)"

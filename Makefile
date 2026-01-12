@@ -277,6 +277,40 @@ status_opik:  ## Check Opik services health status
 		echo "ClickHouse healthy" || echo "ClickHouse not responding"
 
 
+# MARK: ralph
+
+
+ralph_init:  ## Initialize Ralph loop environment
+	echo "Initializing Ralph loop environment ..."
+	bash .claude/scripts/ralph/init.sh
+
+ralph:  ## Run Ralph autonomous development loop (use ITERATIONS=N to set max iterations)
+	echo "Starting Ralph loop ..."
+	ITERATIONS=$${ITERATIONS:-25}
+	bash .claude/scripts/ralph/ralph.sh $$ITERATIONS
+
+ralph_status:  ## Show Ralph loop progress and status
+	echo "Ralph Loop Status"
+	echo "================="
+	if [ -f docs/ralph/prd.json ]; then \
+		total=$$(jq '.stories | length' docs/ralph/prd.json); \
+		passing=$$(jq '[.stories[] | select(.passes == true)] | length' docs/ralph/prd.json); \
+		echo "Stories: $$passing/$$total completed"; \
+		echo ""; \
+		echo "Incomplete stories:"; \
+		jq -r '.stories[] | select(.passes == false) | "  - [\(.id)] \(.title)"' docs/ralph/prd.json; \
+	else \
+		echo "prd.json not found. Run 'make ralph_init' first."; \
+	fi
+
+ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
+	echo "WARNING: This will reset Ralph loop state!"
+	echo "Press Ctrl+C to cancel, Enter to continue..."
+	read
+	rm -f docs/ralph/prd.json docs/ralph/progress.txt
+	echo "Ralph state cleaned. Run 'make ralph_init' to reinitialize."
+
+
 # MARK: help
 
 

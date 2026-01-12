@@ -1,0 +1,20 @@
+{
+  "project": "Agents-eval",
+  "source": "docs/PRD.md",
+  "generated": "TEMPLATE",
+  "description": "Task tracking for Ralph loop autonomous execution",
+  "stories": [
+    {
+      "id": "STORY-EXAMPLE",
+      "title": "Example story - replace with real stories",
+      "description": "This is a placeholder. Use generating-prd skill to populate from PRD.md",
+      "acceptance": [
+        "Run: claude -p and ask 'Use generating-prd skill to create prd.json'",
+        "Skill will parse PRD.md and populate real stories here"
+      ],
+      "files": ["docs/ralph/prd.json"],
+      "passes": false,
+      "completed_at": null
+    }
+  ]
+}
