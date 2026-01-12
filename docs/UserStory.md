@@ -1,4 +1,10 @@
-# User Story
+---
+title: User Story - AI Agent Evaluation
+description: User story and acceptance criteria for AI researchers evaluating multi-agent systems using PeerRead dataset
+date: 2025-09-01
+category: user-story
+version: 1.0.0
+---
 
 ## Introduction
 

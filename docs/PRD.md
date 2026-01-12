@@ -1,4 +1,10 @@
-# Product Requirements Document (PRD) for Agents-eval
+---
+title: Product Requirements Document (PRD) for Agents-eval
+description: Comprehensive product requirements document for the multi-agent AI system evaluation framework
+date: 2025-09-01
+category: requirements
+version: 1.0.0
+---
 
 ## Overview
 
@@ -139,7 +145,7 @@ The system implements comprehensive metrics for assessing agent performance acro
 - **Output Similarity:** Evaluates how closely agent outputs match expected results using string comparison.
 - **Task Completion Rate:** Tracks successful completion of assigned tasks across different scenarios.
 
-### Planned Advanced Metrics
+### Required Advanced Metrics
 
 - **Semantic Similarity:** Enhanced text comparison using embedding-based similarity scores.
 - **Tool Usage Effectiveness:** Measures how appropriately agents select and utilize available tools.

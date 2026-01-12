@@ -1,0 +1,80 @@
+@startuml mas-enhanced-workflow
+title Enhanced MAS Workflow - Separation of Concerns
+
+actor User
+participant "CLI/GUI Entry Point" as MainApp
+participant "Manager Agent" as Manager
+participant "Review Evaluator" as Evaluator
+participant "PeerRead Loader" as Loader
+participant "Review Storage Manager" as Storage
+participant "PeerRead Downloader" as Downloader
+participant "PeerRead Dataset\n(GitHub)" as ExternalDataset
+participant "LLM Providers" as LLM
+
+User -> MainApp: Request task
+activate MainApp
+
+MainApp -> Manager: Orchestrate review process
+activate Manager
+
+Manager -> Loader: get_peerread_paper(paper_id)
+activate Loader
+Loader --> Manager: PeerReadPaper
+deactivate Loader
+
+Manager -> LLM: Generate review
+activate LLM
+LLM --> Manager: Review content
+deactivate LLM
+
+Manager -> Storage: save_structured_review()
+activate Storage
+Storage --> Manager: File path
+deactivate Storage
+
+Manager --> MainApp: Return result
+deactivate Manager
+
+MainApp -> Evaluator: Evaluate review quality
+activate Evaluator
+
+Evaluator -> Loader: get_peerread_paper(paper_id)
+activate Loader
+Loader --> Evaluator: PeerReadPaper with reviews
+deactivate Loader
+
+Evaluator -> Evaluator: calculate_similarity_metrics()
+Evaluator -> Evaluator: create_evaluation_result()
+
+Evaluator --> MainApp: Evaluation results
+deactivate Evaluator
+
+MainApp --> User: Display results
+deactivate MainApp
+
+note right of Loader
+  SRP: Only responsible for data loading
+  SoC: Separated from agent logic and evaluation logic
+end note
+
+note right of Evaluator
+  SRP: Only responsible for evaluation metrics
+  SoC: Separated from data loading and agent execution
+end note
+
+note right of Manager
+  SRP: Only responsible for agent orchestration
+  SoC: Delegates to specialized components for data and evaluation
+end note
+
+== Background Data Download Process ==
+
+Downloader -> ExternalDataset: Download dataset files
+activate Downloader
+activate ExternalDataset
+ExternalDataset --> Downloader: Paper data
+deactivate ExternalDataset
+Downloader -> Downloader: Cache files locally
+deactivate Downloader
+
+@enduml

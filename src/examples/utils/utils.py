@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 from pydantic import ValidationError
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
-from pydantic_ai.usage import Usage
+from pydantic_ai.usage import RunUsage
 
-from .data_models import Config
+from .data_models import Config, ResearchSummary
 
 API_SUFFIX = "_API_KEY"
 
@@ -78,12 +78,10 @@ def create_model(
         raise ValueError("API key is required for model.")
         exit()
     else:
-        return OpenAIModel(
-            model_name, provider=OpenAIProvider(base_url=base_url, api_key=api_key)
-        )
+        return OpenAIModel(model_name, provider=OpenAIProvider(base_url=base_url, api_key=api_key))
 
 
-def print_research_Result(summary: dict, usage: Usage) -> None:
+def print_research_Result(summary: ResearchSummary, usage: RunUsage) -> None:
     """Output structured summary of the research topic."""
 
     print(f"\n=== Research Summary: {summary.topic} ===")

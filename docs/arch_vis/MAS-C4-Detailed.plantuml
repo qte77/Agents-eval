@@ -4,7 +4,7 @@ title MAS Architecture Detailed
 !log Current 'STYLE' dvar: STYLE
 !log About to include: styles/github-STYLE.puml
 !include styles/github-STYLE.puml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+!include external/C4_Component.puml
 
 LAYOUT_LEFT_RIGHT()
 ' LAYOUT_WITH_LEGEND()
@@ -14,8 +14,15 @@ System(config, "Configuration", "Provides runtime settings for models, providers
 
 System_Boundary(agents_eval, "Agents-eval Platform") {
     Container(main_app, "Main Application", "Python", "CLI+GUI entrypoint, orchestrates agents/sessions")
+    
+    System_Boundary(eval_components, "Three tiered Evaluation System") {
+        Container(traditional_eval, "Traditional Metrics", "Python", "text similarity, execution time, ...")
+        Container(llm_judge, "LLM-as-a-Judge", "Python+LLM", "Review quality + agentic execution assessment") 
+        Container(graph_analysis, "Graph Analysis", "Python", "Tool calls + agent interaction complexity")
+        Container(composite_scorer, "Composite Scorer", "Python", "Final score: Results / Time / Complexity")
+    }
 
-    Container(eval, "Eval System", "Python+JSON", "Evaluates reviews against ground truth")
+
     Container(agent_system, "Agent System", "Python/PydanticAI", "Multi-agent orchestration (Manager/Researcher/Analyst/Synthesizer)")
 
     Container(datasets, "Dataset Integration", "Python+JSON", "Loads and provides access to benchmark datasets (e.g., PeerRead)")
@@ -24,11 +31,11 @@ System_Boundary(agents_eval, "Agents-eval Platform") {
     Container(dataset_storage, "Dataset Storage", "File System", "Persistent storage for downloaded datasets (JSON+PDF)")
 
     ' Enforce vertical stacking:
-    main_app -[hidden]-> eval
+    main_app -[hidden]-> eval_components
     main_app -[hidden]-> agent_system
 
     agent_system -[hidden]-> datasets
-    eval -[hidden]-> datasets
+    eval_components -[hidden]-> datasets
 
     datasets -[hidden]-> review_storage
     datasets -[hidden]-> dataset_storage
@@ -52,14 +59,19 @@ Rel(user, main_app, "Submits review generation tasks", "CLI/Streamlit")
 Rel(user, config, "Adjusts for tasks", "CLI/Streamlit")
 Rel(config, main_app, "Provides runtime settings", "JSON")
 Rel(main_app, agent_system, "Initiates agent tasks", "PydanticAI")
-Rel(main_app, eval, "Initiates evaluation tasks", "PydanticAI")
+Rel(main_app, eval_components, "Initiates evaluation tasks", "PydanticAI")
 Rel(agent_system, datasets, "Provides papers/data", "Dataset API")
-Rel(eval, datasets, "Provides papers/data", "Dataset API")
+Rel(eval_components, datasets, "Provides papers/data", "Dataset API")
 Rel(datasets, review_storage, "Saves reviews", "File I/O")
 Rel(datasets, dataset_storage, "Saves datasets", "File I/O")
 
+' Three tiered eval system
+Rel(composite_scorer, traditional_eval, "Traditional scores", "Data")
+Rel(composite_scorer, llm_judge, "Judge scores", "Data")
+Rel(composite_scorer, graph_analysis, "Complexity scores", "Data")
+
 ' Dotted relations for external services
-Rel_D(eval, llm_providers, "Queries", "LLM-as-a-Judge")
+Rel_D(eval_components, llm_providers, "Queries", "LLM-as-a-Judge")
 Rel_D(agent_system, llm_providers, "Queries", "chat/completion")
 Rel_D(agent_system, tools, "Queries", "API")
 Rel_D(agent_system, obs, "Sends", "logger, introspection")

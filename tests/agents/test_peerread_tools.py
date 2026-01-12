@@ -59,7 +59,7 @@ class TestPeerReadAgentTools:
     def test_add_peerread_tools_to_manager(self, mock_agent):
         """Test adding PeerRead tools to manager agent."""
         # Import here to avoid import errors if module doesn't exist yet
-        from app.agents.peerread_tools import add_peerread_tools_to_manager
+        from app.tools.peerread_tools import add_peerread_tools_to_manager
 
         # Act
         add_peerread_tools_to_manager(mock_agent)
@@ -72,7 +72,7 @@ class TestPeerReadAgentTools:
     def test_add_peerread_review_tools_to_manager(self, mock_agent):
         """Test adding PeerRead review persistence tools to manager agent."""
         # Import here to avoid import errors if module doesn't exist yet
-        from app.agents.peerread_tools import add_peerread_review_tools_to_manager
+        from app.tools.peerread_tools import add_peerread_review_tools_to_manager
 
         # Act
         add_peerread_review_tools_to_manager(mock_agent)
@@ -84,12 +84,10 @@ class TestPeerReadAgentTools:
 
     @patch("app.agents.peerread_tools.load_peerread_config")
     @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_get_peerread_paper_tool_success(
-        self, mock_loader_class, mock_config, sample_paper, sample_config
-    ):
+    def test_get_peerread_paper_tool_success(self, mock_loader_class, mock_config, sample_paper, sample_config):
         """Test successful paper retrieval via agent tool."""
         # Import here to avoid import errors if module doesn't exist yet
-        from app.agents.peerread_tools import add_peerread_tools_to_manager
+        from app.tools.peerread_tools import add_peerread_tools_to_manager
 
         # Arrange
         mock_config.return_value = sample_config
@@ -107,12 +105,10 @@ class TestPeerReadAgentTools:
 
     @patch("app.agents.peerread_tools.load_peerread_config")
     @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_get_peerread_paper_tool_not_found(
-        self, mock_loader_class, mock_config, sample_config
-    ):
+    def test_get_peerread_paper_tool_not_found(self, mock_loader_class, mock_config, sample_config):
         """Test paper retrieval when paper is not found."""
         # Import here to avoid import errors if module doesn't exist yet
-        from app.agents.peerread_tools import add_peerread_tools_to_manager
+        from app.tools.peerread_tools import add_peerread_tools_to_manager
 
         # Arrange
         mock_config.return_value = sample_config
@@ -129,12 +125,10 @@ class TestPeerReadAgentTools:
 
     @patch("app.agents.peerread_tools.load_peerread_config")
     @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_query_peerread_papers_tool(
-        self, mock_loader_class, mock_config, sample_paper, sample_config
-    ):
+    def test_query_peerread_papers_tool(self, mock_loader_class, mock_config, sample_paper, sample_config):
         """Test paper querying via agent tool."""
         # Import here to avoid import errors if module doesn't exist yet
-        from app.agents.peerread_tools import add_peerread_tools_to_manager
+        from app.tools.peerread_tools import add_peerread_tools_to_manager
 
         # Arrange
         mock_config.return_value = sample_config
@@ -166,9 +160,7 @@ class TestPeerReadAgentTools:
         with (
             patch("app.agents.peerread_tools.load_peerread_config") as mock_config,
             patch("app.agents.peerread_tools.PeerReadLoader") as mock_loader_class,
-            patch(
-                "app.agents.peerread_tools.ReviewPersistence"
-            ) as mock_persistence_class,
+            patch("app.agents.peerread_tools.ReviewPersistence") as mock_persistence_class,
         ):
             # Setup mocks
             mock_config.return_value = sample_config
@@ -233,7 +225,7 @@ class TestToolIntegration:
     def test_tool_functions_exist(self):
         """Test that tool integration functions exist and are callable."""
         # Import here to avoid import errors if module doesn't exist yet
-        from app.agents.peerread_tools import (
+        from app.tools.peerread_tools import (
             add_peerread_review_tools_to_manager,
             add_peerread_tools_to_manager,
         )
@@ -245,7 +237,7 @@ class TestToolIntegration:
     def test_tool_integration_with_none_agent(self):
         """Test tool integration handles None agent gracefully."""
         # Import here to avoid import errors if module doesn't exist yet
-        from app.agents.peerread_tools import add_peerread_tools_to_manager
+        from app.tools.peerread_tools import add_peerread_tools_to_manager
 
         # Act & Assert - Should not raise error with None
         # Note: In practice, this would fail, but we're testing the import works
@@ -260,7 +252,7 @@ class TestToolIntegration:
     def test_tool_error_logging(self, mock_logger):
         """Test that tool errors are properly logged."""
         # Import here to avoid import errors if module doesn't exist yet
-        from app.agents.peerread_tools import add_peerread_tools_to_manager
+        from app.tools.peerread_tools import add_peerread_tools_to_manager
 
         # Create a real agent to test with
         test_agent = Agent(model="test", output_type=BaseModel)
@@ -279,7 +271,7 @@ class TestToolErrorHandling:
     def test_config_loading_error_handling(self, mock_config):
         """Test handling of configuration loading errors."""
         # Import here to avoid import errors if module doesn't exist yet
-        from app.agents.peerread_tools import add_peerread_tools_to_manager
+        from app.tools.peerread_tools import add_peerread_tools_to_manager
 
         # Arrange
         mock_config.side_effect = Exception("Config loading failed")
@@ -294,7 +286,7 @@ class TestToolErrorHandling:
     def test_import_error_handling(self):
         """Test that imports work correctly."""
         # Act & Assert - All imports should work
-        from app.agents.peerread_tools import (
+        from app.tools.peerread_tools import (
             add_peerread_review_tools_to_manager,
             add_peerread_tools_to_manager,
         )
@@ -326,7 +318,7 @@ class TestPaperPDFReading:
 
     def test_read_paper_pdf_full(self, sample_pdf_path):
         """Test reading the entire PDF."""
-        from app.agents.peerread_tools import read_paper_pdf
+        from app.tools.peerread_tools import read_paper_pdf
 
         # Read PDF
         result = read_paper_pdf(None, sample_pdf_path)
@@ -339,7 +331,7 @@ class TestPaperPDFReading:
 
     def test_read_paper_pdf_entire_document(self, sample_pdf_path):
         """Test reading the entire PDF (pagination not supported)."""
-        from app.agents.peerread_tools import read_paper_pdf
+        from app.tools.peerread_tools import read_paper_pdf
 
         # Read entire PDF (only option available)
         result = read_paper_pdf(None, sample_pdf_path)
@@ -352,7 +344,7 @@ class TestPaperPDFReading:
 
     def test_read_paper_pdf_nonexistent(self):
         """Test error handling for non-existent PDF."""
-        from app.agents.peerread_tools import read_paper_pdf
+        from app.tools.peerread_tools import read_paper_pdf
 
         # Attempt to read non-existent PDF
         with pytest.raises(FileNotFoundError):
@@ -360,7 +352,7 @@ class TestPaperPDFReading:
 
     def test_read_paper_pdf_invalid_file(self, tmp_path):
         """Test error handling for invalid file type."""
-        from app.agents.peerread_tools import read_paper_pdf
+        from app.tools.peerread_tools import read_paper_pdf
 
         # Create a dummy text file
         invalid_file = tmp_path / "invalid.txt"

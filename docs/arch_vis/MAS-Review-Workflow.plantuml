@@ -1,5 +1,5 @@
 @startuml MAS-Review-Workflow
-title MAS Review Workflow
+title PeerRead Evaluation Workflow
 
 !log Current 'STYLE' dvar: STYLE
 !log About to include: styles/github-STYLE.puml
@@ -9,43 +9,54 @@ actor User
 participant "Manager Agent" as Manager
 participant "Researcher Agent" as Researcher
 database "PeerRead Dataset" as DB
-participant "LLM" as LLM
+participant "Large Context LLM" as LLM
+entity "Evaluation System" as EvalSystem
 entity "ReviewPersistence" as Persistence
 
-User -> Manager: Request to review paper "X"
+User -> Manager: Request to evaluate paper "X"
 activate Manager
 
 Manager -> DB: Get paper content for "X"
 activate DB
-DB --> Manager: Return paper content
+DB --> Manager: Return full paper content
 deactivate DB
 
 note right of Manager
-  The Manager now loads the
-  `review_template.md` and
-  fills it with the paper's data.
+  Large context models (Claude 4, Gemini 2.5, ...)
+  process full papers without chunking.
+  Execution is traced for evaluation.
 end note
 
-Manager -> LLM: Generate review using filled template
+Manager -> LLM: Generate review using large context
 activate LLM
-LLM --> Manager: Return structured review (ReviewGenerationResult)
+LLM --> Manager: Return comprehensive review + traces
 deactivate LLM
 
-Manager -> Persistence: Save review for paper "X"
+Manager -> Persistence: Save review + execution traces
 activate Persistence
-Persistence -> Persistence: Create timestamped JSON file
+Persistence -> Persistence: Create timestamped JSON file with metadata
 Persistence --> Manager: Confirm save
 deactivate Persistence
-
-Manager --> User: Acknowledge completion
 
 group Optional Delegation
     Manager -> Researcher: Delegate research query
     activate Researcher
-    Researcher -> Researcher: Use DuckDuckGo Search
-    Researcher -> Manager: Return research results
+    Researcher -> Researcher: Use DuckDuckGo, Tavily, Exa, ...
+    Researcher --> Manager: Return research results
     deactivate Researcher
 end group
 
+Manager -> EvalSystem: Initiate three-tier evaluation
+activate EvalSystem
+
+EvalSystem -> EvalSystem: Traditional Metrics (Text similarity, execution time, ...)
+EvalSystem -> EvalSystem: LLM-as-a-Judge (quality + execution assessment)
+EvalSystem -> EvalSystem: Graph Analysis (tool calls + complexity)
+EvalSystem -> EvalSystem: Composite Score = (Results / Time / Complexity)
+
+EvalSystem --> Manager: Complete evaluation results
+deactivate EvalSystem
+
+Manager --> User: Final agent performance score
 deactivate Manager
 @enduml

@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: all setup_prod setup_dev setup_prod_ollama setup_dev_ollama setup_dev_claude setup_claude_code setup_plantuml setup_pdf_converter setup_ollama start_ollama stop_ollama clean_ollama ruff run_cli run_gui run_profile run_plantuml prp_gen_claude prp_exe_claude test_all coverage_all type_check validate quick_validate output_unset_app_env_sh help
+.PHONY: setup_prod setup_dev setup_dev_full setup_prod_ollama setup_dev_ollama setup_claude_code setup_gemini_cli setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff test_all coverage_all type_check validate quick_validate output_unset_app_env_sh setup_opik start_opik stop_opik clean_opik status_opik setup_opik_env help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -21,36 +21,8 @@ PLANTUML_CONTAINER := plantuml/plantuml:latest
 PLANTUML_SCRIPT := scripts/generate-plantuml-png.sh
 PANDOC_SCRIPT := scripts/run-pandoc.sh
 PDF_CONVERTER_SCRIPT := scripts/setup-pdf-converter.sh
-PRP_DEF_PATH := /context/PRPs/features
-PRP_CLAUDE_GEN_CMD := generate-prp
-PRP_CLAUDE_EXE_CMD := execute-prp
 PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex
 PANDOC_TITLE_FILE := 01_titel_abstrakt.md
-
-
-# MARK: claude commands
-
-
-# construct the full path to the PRP definition file
-define CLAUDE_PRP_RUNNER
-	echo "Starting Claude Code PRP runner ..."
-	# 1. Extract arguments and validate that they are not empty.
-	prp_file=$(firstword $(strip $(1)))
-	cmd_prp=$(firstword $(strip $(2)))
-	if [ -z "$${prp_file}" ]; then
-		echo "Error: ARGS for PRP filename is empty. Please provide a PRP filename."
-		exit 1
-	fi
-	if [ -z "$${cmd_prp}" ]; then
-		echo "Error: ARGS for command is empty. Please provide a command."
-		exit 2
-	fi
-	cmd_prp="/project:$${cmd_prp} $(PRP_DEF_PATH)/$${prp_file}"
-	cmd_cost="/cost"
-	echo "Executing command '$${cmd_prp}' ..."
-	claude -p "$${cmd_prp}" 2>&1
-	claude -p "$${cmd_cost}" 2>&1
-endef
 
 
 # MARK: setup
@@ -68,6 +40,12 @@ setup_dev:  ## Install uv and deps, Download and start Ollama
 	echo "npm version: $$(npm --version)"
 	$(MAKE) -s setup_claude_code
 	$(MAKE) -s setup_gemini_cli
+	$(MAKE) -s setup_markdownlint
+	$(MAKE) -s setup_plantuml
+	
+setup_dev_full: ## Complete dev setup including Opik tracing stack
+	$(MAKE) -s setup_dev
+	$(MAKE) -s setup_opik
 
 setup_prod_ollama:
 	$(MAKE) -s setup_prod
@@ -90,18 +68,28 @@ setup_gemini_cli:  ## Setup Gemini CLI, node.js and npm have to be present
 	echo "Gemini CLI version: $$(gemini --version)"
 
 setup_plantuml:  ## Setup PlantUML with docker, $(PLANTUML_SCRIPT) and $(PLANTUML_CONTAINER)
-	echo "Setting up PlantUML docker ..."
 	chmod +x $(PLANTUML_SCRIPT)
-	docker pull $(PLANTUML_CONTAINER)
-	echo "PlantUML docker version: $$(docker run --rm $(PLANTUML_CONTAINER) --version)"
+	if ! command -v plantuml >/dev/null 2>&1; then
+		echo "Setting up PlantUML ..."
+		sudo apt-get -yyqq update
+		sudo apt-get -yyqq install plantuml graphviz
+	else
+		echo "PlantUML already installed"
+	fi
+	plantuml -version | grep "PlantUML version"
 
-setup_pdf_converter:  ## Setup PDF converter tools. For usage: make setup_pdf_converter HELP=1
-	if [ -n "$(HELP)" ]; then
+setup_pdf_converter:  ## Setup PDF converter tools. Usage: make setup_pdf_converter CONVERTER=pandoc | For help: make setup_pdf_converter HELP
+	if [ -n "$(HELP)" ] || [ "$(origin HELP)" = "command line" ]; then
 		$(PDF_CONVERTER_SCRIPT) help
 	else
 		chmod +x $(PDF_CONVERTER_SCRIPT)
 		$(PDF_CONVERTER_SCRIPT) "$(CONVERTER)"
 	fi
+
+setup_markdownlint:  ## Setup markdownlint CLI, node.js and npm have to be present
+	echo "Setting up markdownlint CLI ..."
+	npm install -gs markdownlint-cli
+	echo "markdownlint version: $$(markdownlint --version)"
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
@@ -122,6 +110,23 @@ clean_ollama:  ## Remove local Ollama from system
 	done
 	echo "Cleaning up ..."
 	rm -f $(BIN)
+
+setup_dataset_sample:  ## Download small sample of PeerRead dataset
+	echo "Downloading small sample of PeerRead dataset ..."
+	$(MAKE) -s run_cli ARGS=--download-peerread-samples-only
+	$(MAKE) -s dataset_get_smallest
+
+setup_dataset_full:  ## Download full PeerRead dataset
+	echo "Downloading full PeerRead dataset ..."
+	$(MAKE) -s run_cli ARGS=--download-peerread-full-only
+	$(MAKE) -s dataset_get_smallest
+
+dataset_get_smallest:
+	SMALLEST_N=10
+	DATASETS_PATH='datasets/peerread'
+	echo "Finding smallest $${SMALLEST_N} parsed PDFs in $${DATASETS_PATH}..."
+	find $$DATASETS_PATH -path "*/parsed_pdfs/*.json" \
+		-type f -printf '%s %p\n' 2>/dev/null | sort -n | head -$$SMALLEST_N
 
 
 # MARK: run ollama
@@ -151,20 +156,32 @@ run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 # MARK: run pandoc
 
 
-run_pandoc:  ## Convert MD to PDF using pandoc. Usage from root: dir=docs/write-up/claude/markdown_de && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf" TITLE_PAGE="$dir/01_titel_abstrakt.tex" TOC_TITLE="Inhaltsverzeichnis" | For help: make run_pandoc HELP=1
+run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_pandoc INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" TITLE_PAGE="$$dir/title.tex" TOC_TITLE="ToC" LANGUAGE="en-US" NUMBER_SECTIONS="true" | Help: make run_pandoc HELP=1
 	if [ -n "$(HELP)" ]; then
 		$(PANDOC_SCRIPT) help
 	else
 		chmod +x $(PANDOC_SCRIPT)
-		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" "$(TITLE_PAGE)" \
-			"$(TEMPLATE)" "$(FOOTER_TEXT)" "$(TOC_TITLE)"
+		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" \
+			"$(TITLE_PAGE)" "$(TEMPLATE)" "$(FOOTER_TEXT)" \
+			"$(TOC_TITLE)" "$(LANGUAGE)" "$(NUMBER_SECTIONS)"
 	fi
+
+
+# MARK: run markdownlint
+
+
+run_markdownlint:  ## Lint markdown files. Usage from root dir: make run_markdownlint INPUT_FILES="docs/**/*.md"
+	if [ -z "$(INPUT_FILES)" ]; then
+		echo "Error: No input files specified. Use INPUT_FILES=\"docs/**/*.md\""
+		exit 1
+	fi
+	markdownlint $(INPUT_FILES) --fix
 
 
 # MARK: run app
 
 
-run_cli:  ## Run app on CLI only
+run_cli:  ## Run app on CLI only. Usage: make run_cli ARGS="--help" or make run_cli ARGS="--download-peerread-samples-only"
 	PYTHONPATH=$(SRC_PATH) uv run python $(CLI_PATH) $(ARGS)
 
 run_gui:  ## Run app with Streamlit GUI
@@ -172,26 +189,16 @@ run_gui:  ## Run app with Streamlit GUI
 
 run_profile:  ## Profile app with scalene
 	uv run scalene --outfile \
-		"$(APP_PATH)/scalene-profiles/profile-$(date +%Y%m%d-%H%M%S)" \
+		"$(APP_PATH)/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
 		"$(APP_PATH)/main.py"
-
-
-# MARK: Claude Code Context
-
-
-prp_gen_claude:  ## generates the PRP from the file passed in ARGS
-	$(call CLAUDE_PRP_RUNNER, $(ARGS), $(PRP_CLAUDE_GEN_CMD))
-
-prp_exe_claude:  ## executes the PRP from the file passed in ARGS
-	$(call CLAUDE_PRP_RUNNER, $(ARGS), $(PRP_CLAUDE_EXE_CMD))
 
 
 # MARK: Sanity
 
 
 ruff:  ## Lint: Format and check with ruff
-	uv run ruff format
-	uv run ruff check --fix
+	uv run ruff format --exclude tests
+	uv run ruff check --fix --exclude tests
 
 test_all:  ## Run all tests
 	uv run pytest
@@ -201,7 +208,7 @@ coverage_all:  ## Get test coverage
 	uv run coverage report -m
 
 type_check:  ## Check for static typing errors
-	uv run pyright
+	uv run pyright src
 
 validate:  ## Complete pre-commit validation sequence
 	echo "Running complete validation sequence ..."
@@ -220,6 +227,54 @@ output_unset_app_env_sh:  ## Unset app environment variables
 	uf="./unset_env.sh"
 	echo "Outputing '$${uf}' ..."
 	printenv | awk -F= '/_API_KEY=/ {print "unset " $$1}' > $$uf
+
+
+# MARK: opik
+
+setup_opik:  ## Complete Opik setup (start services + configure environment)
+	echo "Setting up Opik tracing stack..."
+	$(MAKE) start_opik
+	echo "Waiting for services to be healthy..."
+	sleep 20
+	$(MAKE) setup_opik_env
+	echo "Opik setup complete!"
+
+setup_opik_env:  ## Setup Opik environment variables for local development
+	echo "Setting up Opik environment variables ..."
+	echo "export OPIK_URL_OVERRIDE=http://localhost:8080" >> ~/.bashrc  # do not send to comet.com/api
+	echo "export OPIK_WORKSPACE=peerread-evaluation" >> ~/.bashrc
+	echo "export OPIK_PROJECT_NAME=peerread-evaluation" >> ~/.bashrc
+	echo "Environment variables added to ~/.bashrc"
+	echo "Run: source ~/.bashrc"
+
+start_opik:  ## Start local Opik tracing with ClickHouse database
+	# https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml
+	# https://www.comet.com/docs/opik/self-host/local_deployment/
+	echo "Starting Opik stack with ClickHouse ..."
+	docker-compose -f docker-compose.opik.yaml up -d
+	echo "Frontend: http://localhost:5173"
+	echo "Backend API: http://localhost:8080"
+	echo "ClickHouse: http://localhost:8123"
+
+stop_opik:  ## Stop local Opik tracing stack
+	echo "Stopping Opik stack ..."
+	docker-compose -f docker-compose.opik.yaml down
+
+clean_opik:  ## Stop Opik and remove all trace data (WARNING: destructive)
+	echo "WARNING: This will remove all Opik trace data!"
+	echo "Press Ctrl+C to cancel, Enter to continue..."
+	read
+	docker-compose -f docker-compose.opik.yaml down -v
+
+status_opik:  ## Check Opik services health status
+	echo "Checking Opik services status ..."
+	docker-compose -f docker-compose.opik.yaml ps
+	echo "API Health:"
+	curl -f http://localhost:8080/health-check 2>/dev/null && \
+		echo "Opik API healthy" || echo "Opik API not responding"
+	echo "ClickHouse:"
+	curl -s http://localhost:8123/ping 2>/dev/null && \
+		echo "ClickHouse healthy" || echo "ClickHouse not responding"
 
 
 # MARK: help

@@ -7,28 +7,133 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Guiding Principles
-
-- Changelogs are for humans, not machines.
-- There should be an entry for every single version.
-- The same types of changes should be grouped.
-- Versions and sections should be linkable.
-- The latest version comes first.
-- The release date of each version is displayed.
-- Mention whether you follow Semantic Versioning.
-
-## Types of changes
-
-- `Added` for new features.
-- `Changed` for changes in existing functionality.
-- `Deprecated` for soon-to-be removed features.
-- `Removed` for now removed features.
-- `Fixed` for any bug fixes.
-- `Security` in case of vulnerabilities.
+**Types of changes**: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`
 
 ## [Unreleased]
 
+### Added
+
+- Comprehensive benchmark catalog expansion: 40+ benchmarks from further_reading.md integrated into landscape-evaluation-data-resources.md across 10 categories (General Agent, Web Agents, Code/SE, Tool Use, Scientific, Enterprise, Multi-Agent, Safety/Security, Planning, Specialized Domains). Key additions: **CORE-Bench** (computational reproducibility - highly relevant for PeerRead), **MultiAgentBench** (multi-agent coordination evaluation), WebArena/VisualWebArena/BrowserGym (web interaction), ToolLLM/MetaTool/StableToolBench (tool usage), CLEAR framework (enterprise metrics with ρ=0.83 production correlation), safety benchmarks (SALAD-Bench, Agent-SafetyBench, SafeAgentBench, AgentHarm, WASP, CyberGym)
+- Research paper expansion: 232+ papers covering 2020-2026 (from 154+)
+- Practitioner resources section in further_reading.md with Anthropic engineering insights
+- Evaluation frameworks: Inspect AI (UK AISI, PydanticAI support), Bloom (behavioral evals), Petri (alignment auditing), DeepEval (three-layer evaluation model)
+- DeepEval integration analysis: Three-layer model (Reasoning/Action/Execution), component-level metrics, GEval custom criteria
+- Failure mode taxonomy from Anthropic harness pattern mapped to evaluation metrics
+- Key benchmarks from survey papers: GAIA, API-Bank, SALAD-Bench, Agent-SafetyBench, SafeAgentBench, AgentHarm
+- AgentBeats Competition benchmarks (20 added): Scientific (SciCode, CORE-Bench), Web (BrowserGym, Online-Mind2Web, WebShop), Enterprise (Spider 2.0, CRMArena, CRMArena-Pro, Finance, MedAgentBench), Code (AppWorld, USACO, VERINA), Safety (DoomArena, WASP, CyberGym, Smart Contract), Gaming/Embodied (Werewolf, Minecraft, ALFWorld, PersonaGym), Legal (LegalAgentBench)
+- AgentBeats Competition participation guide (AgentBeats_basics.md): OUTSTANDING opportunities for Research Agent Track ($16k), Multi-Agent Track (category-defining), and AAA Track with dual-track submission strategy, implementation roadmap, and immediate next steps
+- Tool evaluation expansion: τ²-bench (2506.07982) dual-control user-agent evaluation
+- OS/Web benchmarks: OSWorld (2404.07972) comprehensive task evaluation
+- Memory systems research: MAGMA, MACLA, comprehensive memory surveys
+- Enterprise evaluation frameworks: CLEAR (ρ=0.83), AgentArch, TheAgentCompany, MultiAgentBench
+- Pydantic Evals to Practitioner Resources: Span-based evaluation with OpenTelemetry, Logfire integration, philosophy validates post-execution behavioral analysis
+- Arize Phoenix Multi-Agent to Practitioner Resources: Three evaluation strategies (Agent Handoff, System-Level, Coordination), multi-level metrics, five coordination patterns
+- Production Framework Integration Matrix: Added Pydantic Evals and Arize Phoenix rows (now 10 frameworks)
+- New candidate metrics from production frameworks: path_convergence (Arize Phoenix), handoff_quality (Arize Multi-Agent), semantic_outcome (LangSmith), evaluator_alignment (Self-Improving Evals)
+- Research papers: Rubric Rewards AI Co-Scientists [2512.23707], SWE-EVO long-horizon benchmark [2512.18470], Confucius Code Agent [2512.10398], SciSciGPT [2504.05559]
+- New Metrics for Implementation section in architecture.md: fix_rate, rubric_alignment, path_convergence, handoff_quality
+- SWE-EVO benchmark to landscape-evaluation-data-resources.md with Fix Rate metric for partial progress evaluation
+- SciSciGPT to landscape-research-agents.md with LLM Agent capability maturity model
+- Research Plan Evaluation methodology to research_integration_analysis.md: rubric-based self-grading, long-horizon partial progress, hierarchical memory assessment
+- Claude Evaluation Framework to Practitioner Resources: SMART criteria, grading hierarchy (Code→LLM→Human), Bloom correlation 0.86
+- Claude Eval Framework to Integration Matrix (now 11 frameworks): validates three-tier approach
+- Clear audience targeting for all main documentation files
+- PyPI verification requirement for new package introductions in AGENTS.md
+- architecture.md: Comprehensive system architecture documentation
+- landscape analysis: AI agent ecosystem split into focused documents (landscape.md overview, landscape-agent-frameworks-infrastructure.md, landscape-evaluation-data-resources.md)
+- agent_eval_metrics.md: Evaluation metrics catalog
+- Comprehensive three-tier evaluation pipeline test with realistic scientific paper data
+- Full pipeline workflow demonstration with PeerRead-compatible data models
+- Performance monitoring and observability testing with trace collection
+- Error handling and fallback strategy validation across all evaluation tiers
+- Task 4.3: Complete PeerRead integration validation framework with 7 comprehensive test files
+- Real dataset validation testing for PeerRead data compatibility and performance
+- Composite scoring validation with 5 performance scenarios and edge case testing
+- Performance baseline documentation with empirical analysis and optimization recommendations
+- Enhanced integration testing with multi-paper scenarios and production readiness validation
+
+### Changed
+
+- Research integration analysis: Updated to 208+ papers with 2022-2026 coverage (version 3.0.0)
+- Further reading document: Enhanced with 54 new papers including safety benchmarks and memory systems
+- Research validation references: Added CLEAR framework and evaluation taxonomy citations
+- Enhanced error handling in evaluation pipeline with detailed context logging and specific guidance for different error types
+- Improved performance monitoring with bottleneck detection and comprehensive metrics collection
+- Enhanced fallback strategy reliability with better status reporting and detailed failure tracking
+- Added configuration validation to prevent invalid pipeline configurations
+- Improved logging throughout pipeline execution with performance insights and failure analysis
+
+### Fixed
+
+- Evaluation pipeline integration: Fixed data model field name mismatches in composite scorer tests
+- Test integration issues: Corrected field mappings between Tier3Result model and composite scorer expectations
+- trace_observe_methods.md: Observability analysis
+- Modular architecture with functional separation: agents/, evals/, llms/, tools/
+- LLM provider abstraction layer with multi-provider support
+- Agent factory patterns for creating specialized agents
+- Evaluation engine orchestration and management systems
+- Configuration-based prompt management for evaluation agents
+- Comprehensive docstrings for all major modules (agents/, data_models/, config/)
+- GitHub models integration with OpenAI-compatible API
+- Three-tier evaluation system with traditional metrics, LLM-as-judge, and trace collection
+- Typed Pydantic models for LLM assessment results (TechnicalAccuracyAssessment, ConstructivenessAssessment, PlanningRationalityAssessment)
+- Composite scoring system integrating all three evaluation tiers into unified assessment
+- MetricNormalizer with six normalization functions for consistent scoring ranges
+- CompositeScorer with weighted aggregation of normalized metrics
+- RecommendationEngine with threshold-based paper acceptance recommendations
+- TierIntegrationManager orchestrating fallback handling for missing evaluation tiers
+- Performance-optimized composite scoring achieving <100ms latency target
+- Comprehensive test suite with >95% coverage for composite scoring system
+- Enhanced type safety with explicit type annotations for trace processors and evaluation pipelines
+- Modern datetime handling with timezone-aware UTC timestamps
+- Comprehensive exception handling patterns for evaluation fallback mechanisms
+
+### Changed
+
+- Documentation structure: clarified purpose statements for README.md (humans), AGENTS.md (agents), CONTRIBUTING.md (shared)
+- AGENTS.md: streamlined content, removed duplicated architecture information
+- CHANGELOG.md: reduced boilerplate, consolidated change type descriptions
+- README.md: major reorganization, moved detailed content to dedicated docs
+- Restructured codebase from monolithic to modular architecture
+- Migrated LLM functionality from single file to focused modules
+- Updated GUI import paths to use new modular structure
+- Refactored agent creation to use configuration-based prompts
+- Shortened evaluation prompt strings for improved readability
+
+### Fixed
+
+- Import errors after architectural restructuring
+- Line length violations in evaluation modules
+- CLI argument parsing for proper provider selection
+- GUI import paths to work with new module structure
+- Time score calculation in traditional metrics to prevent negative values
+- PydanticAI deprecation warnings where feasible
+- Datetime deprecation warnings by migrating to datetime.now(datetime.UTC)
+- Type safety issues in trace processors with explicit type annotations
+- BaseException type issues in evaluation pipelines with proper exception handling
+- LLM assessment model definitions with comprehensive Pydantic validation
+- Data model imports using direct module references instead of `__init__.py` exports
+- Graph analysis engine configuration validation now allows partial weight specifications for improved usability
+- Test data structures in graph analysis tests to include required fields
+- NetworkX error handling test expectations to match actual fallback behavior
+
+### Removed
+
+- Obsolete context/ directory and .claude/commands framework references
+- FRP (Feature Requirements Prompt) command references from documentation
+- Redundant architecture details from AGENTS.md
+- Monolithic llm_model_funs.py file after successful migration
+
 ## [3.2.0] - 2025-08-19
+
+### Added
+
+- Evaluation engine for PeerRead dataset
+- Documentation updates: separation of human and agent files, clear CONTRIBUTING.md
+
+### Fixed
+
+- Cleaned up obsolete documentation and logs, removed outdated markdown files and datasets
 
 ## [3.1.0] - 2025-08-10
 
@@ -59,7 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - PeerRead dataset functionality
 - PeerRead agent usage documentation to reflect new architecture with `data_models` instead of `datamodels` path structure
-- Eval functionality in spearate system
+- Eval functionality in separate system
 - Gemini CLI as fallback for Claude Code CLI
 
 ## [2.0.0] - 2025-07-06
@@ -103,7 +208,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 2025-03-16
 
-- feta(devconatiner): Refactor devcontainer setup: remove old configurations and add new setup targets for development and Ollama
+- feat(devcontainer): Refactor devcontainer setup: remove old configurations and add new setup targets for development and Ollama
 - feat(devcontainer): Changed from vscode to astral-sh devcontainer
 - feat(devcontainer): Changed to vscode container, added postcreatecommand make setup_env
 - feat(devcontainer): restructure environment setup with new devcontainer configurations
@@ -173,6 +278,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - devcontainer: python only, w/o Jetbrains clutter from default devcontainer
 - ollama: server and model download successful
 - agent: tools use full run red
-- pytest: e2e runm final result red
+- pytest: e2e run, final result red
 - Readme: basic project info
 - pyproject.toml

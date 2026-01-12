@@ -1,0 +1,161 @@
+@startuml research-chronological-timeline
+title Agent Evaluation Research Evolution Timeline (2022-2025)
+
+!ifndef STYLE
+!define STYLE light
+!endif
+!include styles/github-STYLE.puml
+
+participant "Oct 2022" as oct2022 #LightCoral
+participant "Dec 2022" as dec2022 #LightCoral
+participant "2023" as year2023 #LightBlue  
+participant "Early 2024" as early2024 #LightGreen
+participant "Mid 2024" as mid2024 #LightGreen
+participant "Late 2024" as late2024 #LightGreen
+participant "May 2025" as may2025 #LightYellow
+participant "Jun 2025" as jun2025 #LightYellow
+participant "Jul 2025" as jul2025 #LightYellow
+participant "Aug 2025" as aug2025 #LightYellow
+
+== Foundation Era (Basic agent frameworks emerge) ==
+note over oct2022 #87CEEB
+**ReAct: Reasoning + Acting**
+(2210.03629)
+Basic agent reasoning patterns
+[ARCH]
+end note
+
+note over dec2022 #DDA0DD
+**Constitutional AI Foundation**
+(2212.08073)
+Safety principles established
+[SAFETY]
+end note
+
+== Early Development (Initial benchmarking attempts and tool integration) ==
+note over year2023 #FFB6C1
+**Basic Tool Learning Frameworks**
+Initial tool integration patterns
+[TOOL]
+end note
+
+== Systematic Evaluation Era (Comprehensive benchmarks and framework maturation) ==
+note over early2024 #90EE90
+**AgentBoard Benchmark** (2401.13178)
+First systematic benchmarks
+**AgentQuest Evaluation** (2404.06411)
+Advanced evaluation methods
+[EVAL]
+end note
+
+note over early2024 #87CEEB
+**Architecture Landscape** (2404.11584)
+Framework analysis patterns
+[ARCH]
+end note
+
+note over mid2024 #FFB6C1
+**τ-bench Tool Evaluation** (2406.12045)
+Tool assessment frameworks
+**ToolLLM Framework** (2307.16789)
+Comprehensive tool integration
+[TOOL]
+end note
+
+note over mid2024 #90EE90
+**WebArena Web Agents** (2307.13854)
+Domain-specific benchmarks
+**AgentBench Comprehensive** (2308.03688)
+Multi-domain evaluation
+[EVAL]
+end note
+
+note over late2024 #87CEEB
+**LATS Planning System** (2310.04406)
+Advanced planning capabilities
+[ARCH]
+end note
+
+== Self-Evolving Intelligence Era (Multi-agent collaboration and identity evaluation) ==
+note over may2025 #F0E68C
+**Deep Research Agents**
+(2506.18096)
+Systematic research patterns
+[SCI]
+end note
+
+note over jun2025 #DDA0DD
+**TRiSM Safety Framework**
+(2506.04133)
+Comprehensive safety protocols
+[SAFETY]
+end note
+
+note over jul2025 #98E4D6
+**CREW Collaboration Benchmark**
+(2507.05178)
+Multi-agent coordination
+[MAS]
+end note
+
+note over jul2025 #90EE90
+**Identity Evaluation**
+(2507.17257)
+Agent consistency measurement
+[EVAL]
+end note
+
+== Breakthrough Period (Self-evolving systems and runtime governance) ==
+
+note over aug2025 #87CEEB
+**Self-Evolving Agents Survey**
+(2508.07407)
+Autonomous learning systems
+[ARCH]
+end note
+
+note over aug2025 #87CEEB
+**ALAS Autonomous Learning**
+(2508.15805)
+Self-updating capabilities
+[ARCH]
+end note
+
+note over aug2025 #87CEEB
+**Agentic AI Frameworks**
+(2508.10146)
+Production-ready architecture
+[ARCH]
+end note
+
+note over aug2025 #DDA0DD
+**MI9 Governance Protocol**
+(2508.03858)
+Runtime governance standards
+[SAFETY]
+end note
+
+note over oct2022, aug2025
+**Research Evolution Summary:**
+Foundation (2022) → Development (2023) → Systematic Evaluation (2024) → Self-Evolving Intelligence (2025)
+end note
+
+legend bottom
+**Research Category Legend:**
+|= Color |= Category |= Tag |
+| <color:#DDA0DD>████</color> | Safety & Governance | [SAFETY] |
+| <color:#87CEEB>████</color> | Architecture & Systems | [ARCH] |
+| <color:#90EE90>████</color> | Evaluation & Benchmarking | [EVAL] |
+| <color:#FFB6C1>████</color> | Tool Use & Integration | [TOOL] |
+| <color:#98E4D6>████</color> | Multi-Agent Systems | [MAS] |
+| <color:#F0E68C>████</color> | Scientific Discovery | [SCI] |
+
+**Paper Selection Criteria:**
+• Foundational breakthroughs (Constitutional AI, ReAct)
+• Major benchmarks shaping the field (AgentBench, WebArena)
+• Framework evolution milestones (Architecture Landscape)
+• 2025-08 breakthrough cluster (Self-Evolving Agents, MI9)
+• Representative papers showing category evolution
+endlegend
+
+@enduml

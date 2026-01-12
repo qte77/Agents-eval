@@ -42,12 +42,8 @@ def parse_args(argv: list[str]) -> dict[str, str | bool]:
         "--no-stream": "Disable streaming output",
         "--chat-config-file": "Specify the path to the chat configuration file",
         "--paper-number": "Specify paper number for PeerRead review generation",
-        "--download-peerread-full-only": (
-            "Download all of the PeerRead dataset and exit (setup mode)"
-        ),
-        "--download-peerread-samples-only": (
-            "Download a small sample of the PeerRead dataset and exit (setup mode)"
-        ),
+        "--download-peerread-full-only": ("Download all of the PeerRead dataset and exit (setup mode)"),
+        "--download-peerread-samples-only": ("Download a small sample of the PeerRead dataset and exit (setup mode)"),
         "--peerread-max-papers-per-sample-download": (
             "Specify max papers to download per split, overrides sample default"
         ),

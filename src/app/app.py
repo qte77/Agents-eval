@@ -73,9 +73,7 @@ async def main(
             raise
 
     if download_peerread_samples_only:
-        logger.info(
-            f"Downloading only {peerread_max_papers_per_sample_download} samples"
-        )
+        logger.info(f"Downloading only {peerread_max_papers_per_sample_download} samples")
         try:
             download_peerread_dataset(peerread_max_papers_per_sample_download)
             logger.info("Setup completed successfully. Exiting.")
@@ -102,21 +100,16 @@ async def main(
                 if not query:
                     paper_review_template = prompts.get(
                         "paper_review_query",
-                        "Generate a structured peer review for paper '{paper_number}' "
-                        "from PeerRead dataset.",
+                        "Generate a structured peer review for paper '{paper_number}' from PeerRead dataset.",
                     )
                     query = paper_review_template.format(paper_number=paper_number)
                 logger.info(f"Paper review mode enabled for paper {paper_number}")
             elif not query:
                 # Prompt user for input when no query is provided
-                default_prompt = prompts.get(
-                    "default_query", "What would you like to research? "
-                )
+                default_prompt = prompts.get("default_query", "What would you like to research? ")
                 query = input(f"{default_prompt} ")
             chat_env_config = AppEnv()
-            agent_env = setup_agent_env(
-                chat_provider, query, chat_config, chat_env_config
-            )
+            agent_env = setup_agent_env(chat_provider, query, chat_config, chat_env_config)
 
             # FIXME enhance login, not every run?
             login(PROJECT_NAME, chat_env_config)

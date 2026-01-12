@@ -14,9 +14,7 @@ from .data_models import Config, ResearchSummary
 from .utils import create_model
 
 
-def _create_research_agent(
-    model: OpenAIModel, result_type: ResearchSummary, system_prompt: str
-) -> Agent:
+def _create_research_agent(model: OpenAIModel, result_type: ResearchSummary, system_prompt: str) -> Agent:
     """
     Create a research agent with the specified model, result type, and system prompt.
     """
@@ -30,11 +28,14 @@ def get_research(
     provider: str,
     provider_config: Config,
     api_key: str,
-) -> AgentRunResult:
+) -> AgentRunResult[ResearchSummary]:
     """Run the research agent to generate a structured summary of a research topic."""
 
     model = create_model(
-        provider_config["base_url"], provider_config["model_name"], api_key, provider
+        provider_config.providers[provider].base_url,
+        provider_config.providers[provider].model_name,
+        api_key,
+        provider,
     )
     agent = _create_research_agent(model, ResearchSummary, prompts["system_prompt"])
 

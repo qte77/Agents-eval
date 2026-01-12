@@ -16,20 +16,20 @@ Functions:
         Set up the agent environment based on the provided configuration.
 """
 
-from pydantic_ai.usage import Usage
+from pydantic_ai.usage import RunUsage
 
 from app.data_models.app_models import ResearchSummary
 from app.utils.log import logger
 
 
-def log_research_result(summary: ResearchSummary, usage: Usage) -> None:
+def log_research_result(summary: ResearchSummary, usage: RunUsage) -> None:
     """
     Prints the research summary and usage details in a formatted manner.
 
     Args:
         summary (Dict): A dictionary containing the research summary with keys 'topic',
             'key_points', 'key_points_explanation', and 'conclusion'.
-        usage (Usage): An object containing usage details to be printed.
+        usage (RunUsage): An object containing usage details to be printed.
     """
 
     logger.info(f"\n=== Research Summary: {summary.topic} ===")

@@ -1,4 +1,10 @@
-# Strategy for Maintaining `AGENTS.md`
+---
+title: Strategy for Maintaining AGENTS.md
+description: Guidelines for keeping AGENTS.md synchronized with codebase changes for effective AI agent operation
+date: 2025-09-01
+category: maintenance
+version: 1.0.0
+---
 
 This document outlines a strategy to ensure `AGENTS.md` remains synchronized with the state of the codebase, preventing it from becoming outdated. A reliable `AGENTS.md` is critical for the effective and safe operation of AI agents.
 

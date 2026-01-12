@@ -22,13 +22,13 @@ sys.path.insert(0, "src")
 from pydantic_ai.usage import UsageLimits
 
 from app.agents.agent_system import get_manager
-from app.agents.llm_model_funs import get_api_key, get_provider_config
 from app.data_models.app_models import AppEnv, ChatConfig
 from app.data_utils.datasets_peerread import (
     PeerReadDownloader,
     PeerReadLoader,
     load_peerread_config,
 )
+from app.llms.providers import get_api_key, get_provider_config
 
 
 @pytest.mark.asyncio
@@ -201,7 +201,7 @@ async def test_complete_pipeline():
     # Step 6: Evaluate review against ground truth
     print("\n📊 Step 6: Evaluating review against ground truth...")
     try:
-        from app.evals.peerread_evaluation import create_evaluation_result
+        from app.evals.traditional_metrics import create_evaluation_result
 
         # Create evaluation result
         eval_result = create_evaluation_result(
@@ -219,9 +219,7 @@ async def test_complete_pipeline():
 
         print("\n📋 Ground Truth Summary:")
         print(f"   Number of reviews: {len(eval_result.ground_truth_reviews)}")
-        for i, review in enumerate(
-            eval_result.ground_truth_reviews[:2]
-        ):  # Show first 2
+        for i, review in enumerate(eval_result.ground_truth_reviews[:2]):  # Show first 2
             print(f"   Review {i + 1} recommendation: {review.recommendation}")
             print(f"   Review {i + 1} excerpt: {review.comments[:100]}...")
 

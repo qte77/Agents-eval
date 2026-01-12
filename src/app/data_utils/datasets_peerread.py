@@ -46,10 +46,7 @@ def download_peerread_dataset(
     try:
         # Load configuration
         config = load_peerread_config()
-        logger.info(
-            f"Loaded PeerRead config: {len(config.venues)} venues, "
-            f"{len(config.splits)} splits"
-        )
+        logger.info(f"Loaded PeerRead config: {len(config.venues)} venues, {len(config.splits)} splits")
 
         # Initialize downloader
         downloader = PeerReadDownloader(config)
@@ -70,14 +67,10 @@ def download_peerread_dataset(
         for venue in config.venues:
             for split in config.splits:
                 logger.info(f"Downloading {venue}/{split}...")
-                result = downloader.download_venue_split(
-                    venue, split, max_papers=max_papers
-                )
+                result = downloader.download_venue_split(venue, split, max_papers=max_papers)
 
                 if result.success:
-                    logger.info(
-                        f"✓ {venue}/{split}: {result.papers_downloaded} downloaded"
-                    )
+                    logger.info(f"✓ {venue}/{split}: {result.papers_downloaded} downloaded")
                     total_downloaded += result.papers_downloaded
                 else:
                     error_msg = f"✗ {venue}/{split}: {result.error_message}"
@@ -94,9 +87,7 @@ def download_peerread_dataset(
                 try:
                     papers = loader.load_papers(venue, split)
                     verification_count += len(papers)
-                    logger.info(
-                        f"✓ Verified {venue}/{split}: {len(papers)} papers loaded"
-                    )
+                    logger.info(f"✓ Verified {venue}/{split}: {len(papers)} papers loaded")
                 except Exception as e:
                     logger.error(f"✗ Verification failed for {venue}/{split}: {e}")
                     failed_downloads.append(f"{venue}/{split} (verification)")
@@ -110,17 +101,13 @@ def download_peerread_dataset(
         if failed_downloads:
             logger.warning(f"Failed downloads/verifications: {failed_downloads}")
             # Don't raise exception for partial failures - venue might not have data
-            logger.warning(
-                "Some downloads failed, but continuing (this may be expected)"
-            )
+            logger.warning("Some downloads failed, but continuing (this may be expected)")
             raise Exception(f"Failed to download from {len(failed_downloads)} sources.")
 
         if total_downloaded == 0 and verification_count == 0:
             raise Exception("No papers were downloaded or verified successfully")
 
-        logger.info(
-            "✓ PeerRead dataset download and verification completed successfully"
-        )
+        logger.info("✓ PeerRead dataset download and verification completed successfully")
 
     except Exception as e:
         error_msg = f"PeerRead dataset download failed: {e}"
@@ -194,14 +181,10 @@ class PeerReadDownloader:
             ValueError: If venue or split is invalid.
         """
         if venue not in self.config.venues:
-            raise ValueError(
-                f"Invalid venue: {venue}. Valid venues: {self.config.venues}"
-            )
+            raise ValueError(f"Invalid venue: {venue}. Valid venues: {self.config.venues}")
 
         if split not in self.config.splits:
-            raise ValueError(
-                f"Invalid split: {split}. Valid splits: {self.config.splits}"
-            )
+            raise ValueError(f"Invalid split: {split}. Valid splits: {self.config.splits}")
 
         # Construct filename based on data type
         if data_type == "reviews":
@@ -211,14 +194,9 @@ class PeerReadDownloader:
         elif data_type == "pdfs":
             filename = f"{paper_id}.pdf"
         else:
-            raise ValueError(
-                f"Invalid data_type: {data_type}. Valid types: reviews, "
-                f"parsed_pdfs, pdfs"
-            )
+            raise ValueError(f"Invalid data_type: {data_type}. Valid types: reviews, parsed_pdfs, pdfs")
 
-        return (
-            f"{self.config.raw_github_base_url}/{venue}/{split}/{data_type}/{filename}"
-        )
+        return f"{self.config.raw_github_base_url}/{venue}/{split}/{data_type}/{filename}"
 
     def _discover_available_files(
         self,
@@ -240,9 +218,7 @@ class PeerReadDownloader:
         api_url = f"{self.config.github_api_base_url}/{venue}/{split}/{data_type}"
 
         try:
-            logger.info(
-                f"Discovering {data_type} files in {venue}/{split} via GitHub API"
-            )
+            logger.info(f"Discovering {data_type} files in {venue}/{split} via GitHub API")
             response = self.client.get(api_url, timeout=self.config.download_timeout)
             response.raise_for_status()
 
@@ -267,15 +243,10 @@ class PeerReadDownloader:
             return sorted(paper_ids)
 
         except RequestError as e:
-            logger.error(
-                f"Failed to discover {data_type} files for {venue}/{split}: {e}"
-            )
+            logger.error(f"Failed to discover {data_type} files for {venue}/{split}: {e}")
             return []
         except (KeyError, ValueError) as e:
-            logger.error(
-                f"Failed to parse GitHub API response for "
-                f"{venue}/{split}/{data_type}: {e}"
-            )
+            logger.error(f"Failed to parse GitHub API response for {venue}/{split}/{data_type}: {e}")
             return []
 
     def download_file(
@@ -304,8 +275,7 @@ class PeerReadDownloader:
         for attempt in range(self.config.max_retries):
             try:
                 logger.info(
-                    f"Downloading {data_type}/{paper_id} from {url} "
-                    f"(Attempt {attempt + 1}/{self.config.max_retries})"
+                    f"Downloading {data_type}/{paper_id} from {url} (Attempt {attempt + 1}/{self.config.max_retries})"
                 )
 
                 response = self.client.get(url, timeout=self.config.download_timeout)
@@ -333,10 +303,7 @@ class PeerReadDownloader:
             except JSONDecodeError as e:
                 logger.error(f"Invalid JSON for {data_type}/{paper_id}: {e}")
                 return None
-        logger.error(
-            f"Failed to download {data_type}/{paper_id} after "
-            f"{self.config.max_retries} attempts."
-        )
+        logger.error(f"Failed to download {data_type}/{paper_id} after {self.config.max_retries} attempts.")
         return None
 
     def download_venue_split(
@@ -476,9 +443,7 @@ class PeerReadLoader:
                     # Find all parsed PDF files for this paper_id
                     # Assuming filenames are like 'PAPER_ID.pdf.json'
                     # If multiple revisions, we'll just take the first one found for now
-                    parsed_files = sorted(
-                        parsed_pdfs_path.glob(f"{paper_id}.pdf.json"), reverse=True
-                    )
+                    parsed_files = sorted(parsed_pdfs_path.glob(f"{paper_id}.pdf.json"), reverse=True)
                     if parsed_files:
                         latest_parsed_file = parsed_files[0]
                         try:
@@ -487,16 +452,12 @@ class PeerReadLoader:
 
                             # Extract and concatenate text from all sections
                             full_text: list[str] = []
-                            for section in parsed_data.get("metadata", {}).get(
-                                "sections", []
-                            ):
+                            for section in parsed_data.get("metadata", {}).get("sections", []):
                                 if "text" in section:
                                     full_text.append(section["text"])
                             return "\n".join(full_text).strip()
                         except Exception as e:
-                            logger.warning(
-                                f"Failed to load/parse {latest_parsed_file}: {e}"
-                            )
+                            logger.warning(f"Failed to load/parse {latest_parsed_file}: {e}")
         return None
 
     def get_raw_pdf_path(self, paper_id: str) -> str | None:
@@ -555,16 +516,12 @@ class PeerReadLoader:
                     title=paper_data["title"],
                     abstract=paper_data["abstract"],
                     reviews=reviews,
-                    review_histories=[
-                        " ".join(map(str, h)) for h in paper_data.get("histories", [])
-                    ],
+                    review_histories=[" ".join(map(str, h)) for h in paper_data.get("histories", [])],
                 )
                 validated_papers.append(paper)
 
             except Exception as e:
-                logger.warning(
-                    f"Failed to validate paper {paper_data.get('id', 'unknown')}: {e}"
-                )
+                logger.warning(f"Failed to validate paper {paper_data.get('id', 'unknown')}: {e}")
                 continue
 
         return validated_papers
@@ -634,9 +591,7 @@ class PeerReadLoader:
         # Search across all venues and splits in reviews directory
         for venue in self.config.venues:
             for split in self.config.splits:
-                cache_path = (
-                    self.cache_dir / venue / split / "reviews" / f"{paper_id}.json"
-                )
+                cache_path = self.cache_dir / venue / split / "reviews" / f"{paper_id}.json"
                 if cache_path.exists():
                     try:
                         with open(cache_path, encoding="utf-8") as f:
@@ -677,9 +632,7 @@ class PeerReadLoader:
                     continue
 
         # Apply filters
-        filtered_papers = [
-            paper for paper in all_papers if len(paper.reviews) >= min_reviews
-        ]
+        filtered_papers = [paper for paper in all_papers if len(paper.reviews) >= min_reviews]
 
         # Apply limit
         if limit:

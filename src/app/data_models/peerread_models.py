@@ -33,9 +33,7 @@ class PeerReadReview(BaseModel):
     recommendation: str = Field(description="Overall recommendation score (1-5)")
     clarity: str = Field(description="Clarity score (1-5)")
     reviewer_confidence: str = Field(description="Reviewer confidence score (1-5)")
-    is_meta_review: bool | None = Field(
-        default=None, description="Whether this is a meta review"
-    )
+    is_meta_review: bool | None = Field(default=None, description="Whether this is a meta review")
 
 
 class PeerReadPaper(BaseModel):
@@ -45,9 +43,7 @@ class PeerReadPaper(BaseModel):
     title: str = Field(description="Paper title")
     abstract: str = Field(description="Paper abstract")
     reviews: list[PeerReadReview] = Field(description="Peer reviews for this paper")
-    review_histories: list[str] = Field(
-        default_factory=list, description="Paper revision histories"
-    )
+    review_histories: list[str] = Field(default_factory=list, description="Paper revision histories")
 
 
 class PeerReadConfig(BaseModel):
@@ -73,21 +69,11 @@ class PeerReadConfig(BaseModel):
         default=["acl_2017", "conll_2016", "iclr_2017"],
         description="Available conference venues",
     )
-    splits: list[str] = Field(
-        default=["train", "test", "dev"], description="Available data splits"
-    )
-    max_papers_per_query: int = Field(
-        default=100, description="Maximum papers to return per query"
-    )
-    download_timeout: int = Field(
-        default=30, description="Timeout for download requests in seconds"
-    )
-    max_retries: int = Field(
-        default=5, description="Maximum number of retry attempts for downloads"
-    )
-    retry_delay_seconds: int = Field(
-        default=5, description="Delay in seconds between retry attempts"
-    )
+    splits: list[str] = Field(default=["train", "test", "dev"], description="Available data splits")
+    max_papers_per_query: int = Field(default=100, description="Maximum papers to return per query")
+    download_timeout: int = Field(default=30, description="Timeout for download requests in seconds")
+    max_retries: int = Field(default=5, description="Maximum number of retry attempts for downloads")
+    retry_delay_seconds: int = Field(default=5, description="Delay in seconds between retry attempts")
     similarity_metrics: dict[str, float] = Field(
         default={"cosine_weight": 0.6, "jaccard_weight": 0.4},
         description="Weights for similarity metrics",
@@ -100,9 +86,7 @@ class DownloadResult(BaseModel):
     success: bool = Field(description="Whether download was successful")
     cache_path: str = Field(description="Path to cached data")
     papers_downloaded: int = Field(default=0, description="Number of papers downloaded")
-    error_message: str | None = Field(
-        default=None, description="Error message if download failed"
-    )
+    error_message: str | None = Field(default=None, description="Error message if download failed")
 
 
 class GeneratedReview(BaseModel):
@@ -113,13 +97,9 @@ class GeneratedReview(BaseModel):
     all required fields are present with proper validation.
     """
 
-    impact: int = Field(
-        ..., ge=1, le=5, description="Impact rating (1=minimal, 5=high impact)"
-    )
+    impact: int = Field(..., ge=1, le=5, description="Impact rating (1=minimal, 5=high impact)")
 
-    substance: int = Field(
-        ..., ge=1, le=5, description="Substance/depth rating (1=shallow, 5=substantial)"
-    )
+    substance: int = Field(..., ge=1, le=5, description="Substance/depth rating (1=shallow, 5=substantial)")
 
     appropriateness: int = Field(
         ...,
@@ -135,9 +115,7 @@ class GeneratedReview(BaseModel):
         description="Related work comparison rating (1=poor, 5=excellent)",
     )
 
-    presentation_format: Literal["Poster", "Oral"] = Field(
-        ..., description="Recommended presentation format"
-    )
+    presentation_format: Literal["Poster", "Oral"] = Field(..., description="Recommended presentation format")
 
     comments: str = Field(
         ...,
@@ -164,8 +142,7 @@ class GeneratedReview(BaseModel):
         ...,
         ge=1,
         le=5,
-        description="Overall recommendation (1=strong reject, 2=reject, "
-        "3=borderline, 4=accept, 5=strong accept)",
+        description="Overall recommendation (1=strong reject, 2=reject, 3=borderline, 4=accept, 5=strong accept)",
     )
 
     clarity: int = Field(
@@ -194,9 +171,7 @@ class GeneratedReview(BaseModel):
         ]
 
         v_lower = v.lower()
-        missing_sections = [
-            section for section in required_sections if section not in v_lower
-        ]
+        missing_sections = [section for section in required_sections if section not in v_lower]
 
         if missing_sections:
             # Just warn but don't fail - LLM might use different wording
@@ -229,16 +204,10 @@ class ReviewGenerationResult(BaseModel):
     Contains the structured review along with metadata.
     """
 
-    paper_id: str = Field(
-        ..., description=("The unique paper identifier provided by PeerRead")
-    )
-    review: GeneratedReview = Field(
-        ..., description="The structured review povided by LLM"
-    )
+    paper_id: str = Field(..., description=("The unique paper identifier provided by PeerRead"))
+    review: GeneratedReview = Field(..., description="The structured review povided by LLM")
     timestamp: str = Field(..., description="Generation timestamp in ISO format")
     model_info: str = Field(
         ...,
-        description=(
-            "Information about the generating model: your model name, version, etc."
-        ),
+        description=("Information about the generating model: your model name, version, etc."),
     )

@@ -3,9 +3,7 @@ from typing import Any
 from streamlit import empty, info
 
 
-def render_output(
-    result: Any = None, info_str: str | None = None, type: str | None = None
-):
+def render_output(result: Any = None, info_str: str | None = None, type: str | None = None):
     """
     Renders the output in a Streamlit app based on the provided type.
 

@@ -30,11 +30,8 @@ def main():
     api_key = get_api_key(provider)
     provider_config = get_provider_config(provider, config)
 
-    result = get_dice(
-        player_name, guess, system_prompt, provider, api_key, provider_config
-    )
-    print(result.data)
-    print(f"{result._result_tool_name=}")
+    result = get_dice(player_name, guess, system_prompt, provider, api_key, provider_config)
+    print(result)
     print(result.usage())
 
 

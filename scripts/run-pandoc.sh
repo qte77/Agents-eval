@@ -6,14 +6,29 @@
 #  - ASCII Record Separator (\036) support for file paths with spaces
 #  - LaTeX special character escaping for footer text
 #  - File sorting to maintain proper chapter order
+#  - Automatic figure placement controls (top/bottom of pages)
+#  - Reduced vertical spacing for cleaner heading layout
+#  - Multilingual support (English, German, Spanish, French, Italian)
+#  - Language-specific figure/table/TOC/bibliography names
+#  - Custom TOC title override capability
+#  - Clickable cross-references and hyperlinks
 
 # Help
 if [ "$1" = "help" ]; then
     cat << 'EOF'
-Usage: $0 [input_files [output_file] [title_page] [template] [footer_text] [toc_title]]
+Usage: $0 [input_files [output_file] [title_page] [template] [footer_text] [toc_title] [language] [number_sections]]
+
+Available Languages:
+  en-US, en    English (default)
+  de-DE, de    German
+  es-ES, es    Spanish
+  fr-FR, fr    French
+  it-IT, it    Italian
+
 Examples:
-  $0 "*.md" report.pdf title.tex template.tex "Custom Footer" "Inhaltsverzeichnis"
-  $0 "*.md" report.pdf title.tex template.tex "all:Footer on all pages" "Table of Contents"
+  $0 "*.md" report.pdf title.tex template.tex "Custom Footer" "Table of Contents"
+  $0 "*.md" report.pdf "" "" "" "" "en-US" "false"  # Disable section numbering
+  $0 "*.md" report.pdf "" "" "" "" "de-DE" "true"   # German with section numbering
   dir=docs/path && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf"
 EOF
     exit 0
@@ -34,6 +49,8 @@ title_file="$3"
 template_file="$4"
 footer_text="${5:-${PROJECT_NAME} v${VERSION}}"
 toc_title="$6"
+language="${7:-en-US}"
+number_sections="${8:-true}"
 
 # Handle separator-delimited file lists
 RS_CHAR=$(printf '\036')
@@ -43,9 +60,18 @@ else
     input_files="$input_files_raw"
 fi
 
-# Build base command
-set -- --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex -M protrusion --from markdown+smart -V pagestyle=plain
+# Build base command with language metadata
+set -- --toc --toc-depth=2 \
+       -V geometry:margin=1in \
+       -V documentclass=report \
+       --pdf-engine=pdflatex \
+       -M protrusion \
+       --from markdown+smart \
+       -V pagestyle=plain \
+       --metadata lang="$language"
 
+# Add number-sections if enabled
+[ "$number_sections" = "true" ] && set -- "$@" --number-sections
 # Add custom TOC title if specified
 [ -n "$toc_title" ] && set -- "$@" -V toc-title="$toc_title"
 
@@ -78,16 +104,123 @@ fi
 # Add template
 [ -n "$template_file" ] && [ -f "$template_file" ] && set -- "$@" --template="$template_file"
 
+# Add header settings (figure placement + footer)
+header_temp=$(mktemp)
+cleanup_header=1
+
+# Always add figure placement controls and spacing adjustments
+cat > "$header_temp" << EOF
+\\usepackage{float}
+\\floatplacement{figure}{!tb}
+\\renewcommand{\\topfraction}{0.9}
+\\renewcommand{\\bottomfraction}{0.9}
+\\renewcommand{\\textfraction}{0.1}
+\\setcounter{topnumber}{3}
+\\setcounter{bottomnumber}{3}
+
+% Language-specific figure and table names
+EOF
+
+# Add language-specific commands
+case "$language" in
+    de-DE|de)
+        figure_name="Abbildung"
+        table_name="Tabelle"
+        contents_name="Inhaltsverzeichnis"
+        bibliography_name="Literaturverzeichnis"
+        ;;
+    es-ES|es)
+        figure_name="Figura"
+        table_name="Tabla"
+        contents_name="Índice"
+        bibliography_name="Bibliografía"
+        ;;
+    fr-FR|fr)
+        figure_name="Figure"
+        table_name="Tableau"
+        contents_name="Table des matières"
+        bibliography_name="Bibliographie"
+        ;;
+    it-IT|it)
+        figure_name="Figura"
+        table_name="Tabella"
+        contents_name="Indice"
+        bibliography_name="Bibliografia"
+        ;;
+    *)
+        figure_name="Figure"
+        table_name="Table"
+        contents_name=""
+        bibliography_name=""
+        ;;
+esac
+
+# Apply language settings
+cat >> "$header_temp" << EOF
+\\renewcommand{\\figurename}{$figure_name}
+\\renewcommand{\\tablename}{$table_name}
+EOF
+
+# Add contents name only if specified (non-English languages)
+[ -n "$contents_name" ] && cat >> "$header_temp" << EOF
+\\renewcommand{\\contentsname}{$contents_name}
+EOF
+
+# Add bibliography name only if specified (non-English languages)
+[ -n "$bibliography_name" ] && cat >> "$header_temp" << EOF
+\\renewcommand{\\bibname}{$bibliography_name}
+\\renewcommand{\\refname}{$bibliography_name}
+EOF
+
+# Override TOC title if explicitly provided
+[ -n "$toc_title" ] && cat >> "$header_temp" << EOF
+\\renewcommand{\\contentsname}{$toc_title}
+EOF
+
+cat >> "$header_temp" << EOF
+
+% Reduce vertical space above headings using standard LaTeX
+\\makeatletter
+\\renewcommand{\\@makechapterhead}[1]{%
+  \\vspace*{20\\p@}%
+  {\\parindent \\z@ \\raggedright \\normalfont
+    \\ifnum \\c@secnumdepth >\\m@ne
+        \\huge\\bfseries \\@chapapp\\space \\thechapter
+        \\par\\nobreak
+        \\vskip 20\\p@
+    \\fi
+    \\interlinepenalty\\@M
+    \\Huge \\bfseries #1\\par\\nobreak
+    \\vskip 20\\p@
+  }}
+\\renewcommand{\\@makeschapterhead}[1]{%
+  \\vspace*{20\\p@}%
+  {\\parindent \\z@ \\raggedright
+    \\normalfont
+    \\interlinepenalty\\@M
+    \\Huge \\bfseries  #1\\par\\nobreak
+    \\vskip 20\\p@
+  }}
+
+% Enable clickable cross-references
+\\usepackage{hyperref}
+\\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+\\makeatother
+EOF
+
 # Add footer (skip if using template)
 if [ -n "$footer_text" ] && [ "$footer_text" != "none" ] && [ -z "$template_file" ]; then
-    footer_temp=$(mktemp)
-    
     # Check if footer should include title/TOC pages (if footer_text contains "all:")
     if echo "$footer_text" | grep -q "^all:"; then
         # Include footer on all pages including title and TOC
         actual_footer=$(echo "$footer_text" | sed 's/^all://')
         safe_footer=$(printf '%s' "$actual_footer" | sed 's/[&\\]/\\&/g; s/#/\\#/g; s/\$/\\$/g; s/_/\\_/g; s/%/\\%/g')
-        cat > "$footer_temp" << EOF
+        cat >> "$header_temp" << EOF
 \\usepackage{fancyhdr}
 \\pagestyle{fancy}
 \\fancyhf{}
@@ -100,7 +233,7 @@ EOF
     else
         # Default: no footer on title page, roman numerals with footer on TOC, arabic+footer on content
         safe_footer=$(printf '%s' "$footer_text" | sed 's/[&\\]/\\&/g; s/#/\\#/g; s/\$/\\$/g; s/_/\\_/g; s/%/\\%/g')
-        cat > "$footer_temp" << EOF
+        cat >> "$header_temp" << EOF
 \\usepackage{fancyhdr}
 \\usepackage{etoolbox}
 \\pagestyle{fancy}
@@ -116,22 +249,25 @@ EOF
 \\appto\\tableofcontents{\\clearpage\\pagenumbering{arabic}\\setcounter{page}{1}}
 EOF
     fi
-    set -- "$@" -H "$footer_temp"
-    cleanup_footer=1
-else
-    cleanup_footer=0
 fi
+
+# Add the header to pandoc arguments
+set -- "$@" -H "$header_temp"
 
 # Enable extended globbing
 [ -n "${BASH_VERSION}" ] && shopt -s extglob 2>/dev/null
 
 # Run pandoc
 echo "Converting '$input_files_raw' to '$output_file'..."
-eval "pandoc \"\$@\" $title_arg -o \"\$output_file\" $input_files"
+if [ -n "$title_arg" ]; then
+    pandoc "$@" $title_arg -o "$output_file" $input_files
+else
+    pandoc "$@" -o "$output_file" $input_files
+fi
 result=$?
 
 # Cleanup
-[ "$cleanup_footer" -eq 1 ] && rm -f "$footer_temp"
+[ "$cleanup_header" -eq 1 ] && rm -f "$header_temp"
 
 # Check result
 if [ $result -eq 0 ]; then

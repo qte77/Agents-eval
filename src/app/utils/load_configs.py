@@ -6,6 +6,8 @@ files against Pydantic models, with error handling and logging support.
 """
 
 import json
+import os
+from dataclasses import dataclass
 from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
@@ -51,3 +53,31 @@ def load_config(config_path: str | Path, data_model: type[BaseModel]) -> BaseMod
         msg = failed_to_load_config(str(e))
         logger.exception(msg)
         raise Exception(msg) from e
+
+
+# FIXME convert to pydantic data model ?
+@dataclass
+class OpikConfig:
+    """Configuration for Opik tracing integration."""
+
+    enabled: bool = False
+    api_url: str = "http://localhost:3003"
+    workspace: str = "peerread-evaluation"
+    project: str = "agent-evaluation"
+    log_start_trace_span: bool = True
+    batch_size: int = 100
+    timeout_seconds: float = 30.0
+
+    @classmethod
+    def from_config(cls, config: dict[str, any]) -> "OpikConfig":
+        """Create OpikConfig from evaluation config dictionary."""
+        observability = config.get("observability", {})
+        return cls(
+            enabled=observability.get("opik_enabled", False),
+            api_url=os.getenv("OPIK_URL_OVERRIDE", "http://localhost:3003"),
+            workspace=os.getenv("OPIK_WORKSPACE", "peerread-evaluation"),
+            project=os.getenv("OPIK_PROJECT_NAME", "agent-evaluation"),
+            log_start_trace_span=observability.get("opik_log_start_trace_span", True),
+            batch_size=observability.get("opik_batch_size", 100),
+            timeout_seconds=observability.get("opik_timeout_seconds", 30.0),
+        )

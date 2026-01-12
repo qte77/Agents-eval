@@ -1,0 +1,72 @@
+@startuml research-integration-visualization
+title Research Integration Analysis: Multi-Framework Convergence
+
+!ifndef STYLE
+!define STYLE light
+!endif
+!include styles/github-STYLE.puml
+
+skinparam defaultFontSize 12
+skinparam rectangle {
+  FontSize 12
+}   
+
+title Agent Evaluation Research Integration & Framework Convergence
+
+' Explicit 3x2 matrix layout
+' Top row
+rectangle "Academic Research Foundation" as research #FFB6C1 {
+  rectangle "Research Evolution (2022-2025):\n100+ papers analyzed\n\nParadigm Shifts:\nSelf-Evolving Agent Systems (2508.07407)\nFramework Architecture Maturation (2508.10146)\nRuntime Governance Protocols (2508.03858)\nIdentity & Self-Assessment (2507.17257)\n\nKey Evaluation Research:\nAgentBench (2308.03688) • AgentQuest (2404.06411)\nWebArena (2307.13854) • ToolLLM (2307.16789)\nEvaluation Survey (2503.16416)" as research_papers
+}
+
+rectangle "Five-Tier Evaluation Architecture" as architecture #87CEEB {
+  rectangle "Framework-Agnostic Methodology:\n\nTier 1 - Traditional Metrics:\nBLEU • ROUGE • BERTScore • Performance Prediction\n\nTier 2 - LLM-as-Judge:\nQuality Assessment • Self-Assessment • Identity Consistency\n\nTier 3 - Graph-Based Analysis:\nBehavioral Patterns • Governance • Coordination\n\nTier 4 - Self-Assessment:\nAgent Identity • Consistency Measurement\n\nTier 5 - Runtime Governance:\nMI9 Protocol • TRiSM Security • Runtime Control" as eval_tiers
+}
+
+' Middle row
+rectangle "Production Framework Integration" as frameworks #98E4D6 {
+  rectangle "Multi-Agent Orchestration:\nAnthropic Multi-Agent (Orchestrator-Worker)\nPydanticAI (Type-Safe) • LangGraph (Stateful)\nCrewAI (Role-Playing) • AutoGen/AG2\n\n12-Factor Agents (Modular Design)\nDeepAgents (Context Quarantine)\nLetta/MemGPT (Advanced Memory)\n\nProtocol Standardization:\nMCP Protocol Ecosystem\nA2A Communication Standards\n\nProduction Patterns:\n27+ Frameworks • 20+ Evaluation Platforms\n11 Observability Patterns" as framework_tools
+}
+
+rectangle "Implementation Architecture" as implementation #90EE90 {
+  rectangle "Current System (Sprint 1+):\nThree-Tier Validation (PeerRead)\nPost-Execution Analysis\nPydanticAI Integration\n\nFuture Architecture (Sprint 2+):\nEvaluation Engine (Multi-tier + adapters)\nCoordination Engine (Cross-framework)\nObservability Engine (Behavioral analysis)\nGovernance Engine (Safety + compliance)\n\nTechnical Innovation:\nFramework-Agnostic Assessment\nBehavioral Graph Construction\nZero Runtime Overhead Analysis" as impl_details
+}
+
+' Bottom row
+rectangle "Safety & Governance Research" as safety #DDA0DD {
+  rectangle "Runtime Governance Protocols:\nMI9 Agent Intelligence Protocol\nConstitutional AI (2212.08073)\nTRiSM Framework (2506.04133)\n\nSafety Research Integration:\nHarms Analysis (2302.10329)\nGuardrails Framework (2408.02205)\nMAS Failure Analysis (2503.13657)\n\nCompliance & Control:\nReal-time Behavior Monitoring\nPolicy Enforcement\nRisk Assessment Integration\n\nProduction Security:\n27+ Framework Safety Patterns" as safety_tools
+}
+
+rectangle "Strategic Positioning & Impact" as strategy #C8A2C8 {
+  rectangle "Core Methodology Innovations:\nFramework-Agnostic Assessment\nPost-Execution Behavioral Analysis\nResearch Benchmarking (PeerRead)\n\nEcosystem Integration:\nAcademic Collaboration\nIndustry Standardization\nCommunity Adoption\n\nStrategic Differentiation:\nProcess Analysis vs Outcome-Only\nComprehensive Multi-Dimensional\nZero Performance Overhead\n\nValidation Results:\n90% Faster Research Processing\nProduction Reliability Principles" as strategic_value
+}
+
+' Layout constraints to force proper matrix arrangement
+research -[hidden]right- architecture
+research -[hidden]down- frameworks
+architecture -[hidden]down- implementation
+frameworks -[hidden]right- implementation
+frameworks -[hidden]down- safety
+implementation -[hidden]down- strategy
+safety -[hidden]right- strategy
+
+' Primary research-to-implementation flow
+research --> architecture : validates & informs
+architecture --> implementation : guides design
+implementation --> strategy : demonstrates value
+
+' Framework integration flows
+frameworks --> architecture : requires evaluation
+frameworks --> implementation : integration patterns
+frameworks --> safety : governance needs
+
+' Safety and governance integration
+safety --> architecture : governance requirements
+safety --> implementation : security patterns
+safety --> strategy : trust & reliability
+
+' Strategic positioning flows
+strategy --> research : drives research priorities
+strategy --> frameworks : influences adoption
+
+@enduml

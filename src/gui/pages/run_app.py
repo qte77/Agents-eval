@@ -10,7 +10,7 @@ from pathlib import Path
 
 from streamlit import button, exception, header, info, subheader, text_input, warning
 
-from app.main import main
+from app.app import main
 from app.utils.log import logger
 from gui.components.output import render_output
 from gui.config.text import (
@@ -25,9 +25,7 @@ from gui.config.text import (
 )
 
 
-async def render_app(
-    provider: str | None = None, chat_config_file: str | Path | None = None
-):
+async def render_app(provider: str | None = None, chat_config_file: str | Path | None = None):
     """
     Render the main app interface for running agentic queries via Streamlit.
 
