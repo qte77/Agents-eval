@@ -6,6 +6,7 @@
 ## Root Cause
 
 AGENTS.md written before Skills/Ralph infrastructure existed:
+
 - No reference to `.claude/skills/`
 - No reference to Ralph autonomous execution
 - Skills reference AGENTS.md (one-way), should be bidirectional
@@ -40,11 +41,13 @@ AGENTS.md written before Skills/Ralph infrastructure existed:
 ### 2. Update Subagent Section Header (Line 100)
 
 **Change from:**
+
 ```markdown
 ## Subagent Role Boundaries
 ```
 
 **Change to:**
+
 ```markdown
 ## Agent Role Boundaries
 
@@ -58,6 +61,7 @@ AGENTS.md written before Skills/Ralph infrastructure existed:
 ### 3. Update Agent Quick Reference Post-Task (Line 225-231)
 
 **Change from:**
+
 ```markdown
 **Post-Task:**
 
@@ -68,6 +72,7 @@ AGENTS.md written before Skills/Ralph infrastructure existed:
 ```
 
 **Change to:**
+
 ```markdown
 **Post-Task:**
 
@@ -100,6 +105,7 @@ AGENTS.md written before Skills/Ralph infrastructure existed:
 ## Verification
 
 After changes:
+
 - [ ] AGENTS.md mentions `.claude/skills/` infrastructure
 - [ ] AGENTS.md mentions Ralph loop
 - [ ] Bidirectional awareness: AGENTS.md ↔ Skills

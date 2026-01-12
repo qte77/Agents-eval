@@ -1,7 +1,8 @@
-# Core Principles Skill - Implementation Summary
-
-**Date**: 2026-01-11
-**Status**: ✅ COMPLETE
+---
+title: Core Principles Skill - Implementation Summary
+created: 2026-01-11
+updated: 2026-01-11
+---
 
 ## What Was Created
 
@@ -27,17 +28,20 @@ This skill encodes the project's core principles and MUST be applied to ALL task
 ## Integration
 
 **All skills now reference core-principles:**
+
 - ✅ designing-backend
 - ✅ implementing-python
 - ✅ reviewing-code
 - ✅ generating-prd
 
 **Ralph prompt updated:**
+
 - ✅ Iteration prompt now applies core-principles FIRST
 
 ## Usage
 
 The skill is automatically discovered by Claude Code. It triggers when:
+
 - Starting any task
 - Making design decisions
 - Writing code
@@ -50,6 +54,7 @@ The skill is automatically discovered by Claude Code. It triggers when:
 ## Before/After Checklist
 
 The skill provides a pre-task checklist:
+
 - [ ] Does this serve user value?
 - [ ] Is this the simplest approach?
 - [ ] Am I duplicating existing work?
@@ -62,12 +67,9 @@ The skill provides a pre-task checklist:
 ## Impact
 
 This ensures:
+
 - No over-engineering
 - No unnecessary complexity
 - Focus on user value
 - Rigorous decision-making
 - Quick, high-impact delivery
-
----
-
-**Result**: Every task now enforces core principles automatically ✅

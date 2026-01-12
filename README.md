@@ -73,13 +73,13 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 [.env.example](.env.example) contains examples for usage of API keys and variables.
 
 ```text
-# inference EP
+# inference EP example
 GEMINI_API_KEY="xyz"
 
 # tools
 TAVILY_API_KEY=""
 
-# log/mon/trace
+# log/mon/trace example
 WANDB_API_KEY="xyz"
 ```
 
@@ -138,7 +138,7 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
 - **Workflow**:
   1. **MAS**: PDF → Review Generation → Persistent Storage (`src/app/data_utils/reviews/`)
   2. **External Evaluation**: Load Reviews → Similarity Analysis → Results
-- **Documentation**: See [PeerRead Agent Usage Guide](docs/peerread-agent-usage.md)
+- **Documentation**: See [PeerRead Agent Usage Guide](docs/howtos/maintaining-agents-md.md)
 
 ### Review Workflow
 
@@ -147,10 +147,6 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
   <img src="assets/images/MAS-Review-Workflow-dark.png#gh-light-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
   <img src="assets/images/MAS-Review-Workflow-light.png#gh-dark-mode-only" alt="Review Workflow" title="Review Workflow" width="80%" />
 </details>
-
-### LLM-as-a-Judge
-
-`# TODO`
 
 ### Custom Evaluations Metrics Baseline
 
@@ -181,51 +177,31 @@ As configured in [config_eval.json](src/app/config/config_eval.json).
 
 ### Project Repo Structure
 
-```sh
-|- .devcontainer  # pre-configured dev env
-|- .github  # workflows
-|- .streamlit  # config.toml
-|- .vscode  # extensions, settings
-|- assets/images  # generated diagrams (PNG)
-|- docs
-   |- arch_vis  # PlantUML source files + generation tools
-   |- architecture.md  # detailed system architecture
-   |- landscape/       # landscape analysis and evaluation tools
-      |- landscape.md  # AI agent ecosystem overview
-      |- landscape-agent-frameworks-infrastructure.md  # agent frameworks & tools
-      |- landscape-evaluation-data-resources.md  # evaluation frameworks & datasets
-      |- agent_eval_metrics.md  # evaluation metrics catalog
-      \- trace_observe_methods.md  # observability analysis
-   \- papers/  # research papers and analysis
-|- src  # source code
-   |- app
-      |- agents
-      |- config
-      |- evals
-      |- utils
-      |- main.py
-      \- py.typed
-   |- examples
-   |- gui
-   \- run_gui.py
-|- tests
-|- .env.example  # example env vars
-|- .gitignore
-|- .gitmessage
-|- AGENTS.md  # AI agent instructions and guidelines
-|- CHANGELOG.md  # project history
-|- CLAUDE.md  # points to AGENTS.md
-|- CONTRIBUTING.md  # shared human and agent development workflows
-|- AGENT_REQUESTS.md  # agent-human escalation
-|- AGENT_LEARNINGS.md  # accumulated agent knowledge
-|- Dockerfile  # create app image
-|- LICENSE.md
-|- Makefile  # helper scripts
-|- mkdocs.yaml  # docu from docstrings
-|- pyproject.toml  # project settings
-|- README.md  # project description (for humans)
-\- uv.lock  # resolved package versions
-```
+<details>
+<summary><strong>Expand Structure</strong></summary>
+
+**Key Directories:**
+
+- `src/app/` - Core application (agents, config, evals, utils)
+- `docs/` - Architecture, landscape analysis, sprint docs
+- `tests/` - Test suite mirroring src structure
+- `.claude/` - Claude Code skills and Ralph loop scripts
+
+**Documentation:**
+
+- `AGENTS.md` - AI agent instructions
+- `CONTRIBUTING.md` - Development workflows
+- `architecture.md` - System design details
+
+**Configuration:**
+
+- `pyproject.toml` - Dependencies and project settings
+- `Makefile` - Development commands
+- `.env.example` - Environment variables template
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for complete structure details.
+
+</details>
 
 ## Related Work
 
@@ -240,8 +216,6 @@ For a comprehensive overview of AI agent frameworks, evaluation tools, datasets,
 - [Project architecture](docs/architecture.md)
 - [List of papers inspected](docs/papers/further_reading.md)
 - [AI Agent Evaluation Landscape](docs/landscape/landscape.md)
-- [Visualization of Papers inspected](https://claude.ai/public/artifacts/7761a54c-f49b-486b-9e28-7aa2de8b3c86)
-- [Visualization of related frameworks inspected](https://claude.ai/public/artifacts/e883fe7a-f500-4acc-b397-d6b73e1765ed)
 - [Agents-eval Enhancement Recommendations based on the Papers](https://qte77.github.io/ai-agents-eval-enhancement-recommendations/)
 - [Papers Meta Review](https://qte77.github.io/ai-agents-eval-papers-meta-review/)
 - [Papers Comprehensive Analysis](https://qte77.github.io/ai-agents-eval-comprehensive-analysis/)

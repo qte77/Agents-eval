@@ -108,7 +108,7 @@ Before finishing, ask yourself:
 - **Beneficial enhancements or quick wins?** - Identify opportunities
 - **Something to delete?** - Remove obsolete/unnecessary code
 
-**IMPORTANT**: Do NOT alter files based on these checks. Only output suggestions to the user.
+**IMPORTANT**: Do NOT alter files based on this review. Only output suggestions to the user.
 
 Let the user decide on additional changes.
 

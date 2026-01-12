@@ -125,7 +125,7 @@ The evaluation framework is built around large context window models capable of 
 ##### Integration Workflow
 
 1. **Agent Execution** → PydanticAI agents (Manager/Researcher/Analyst/Synthesizer) autonomously decide tool use and coordination strategies during PeerRead paper processing
-2. **Observability Logging** → AgentNeo and Comet Opik capture comprehensive execution traces, tool usage patterns, and agent interactions in real-time
+2. **Observability Logging** → Opik captures comprehensive execution traces, tool usage patterns, and agent interactions in real-time
 3. **Graph Construction** → spaCy + NetworkX and Google LangExtract process trace logs to build behavioral graphs showing coordination patterns and decision flows
 4. **Analysis** → NetworkX and NetworKit analyze coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
 

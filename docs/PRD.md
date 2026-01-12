@@ -109,11 +109,11 @@ The project implements a comprehensive evaluation pipeline using the **PeerRead 
 
 ### Monitoring & Logging
 
-- **agentops:** Agent operations monitoring and tracking.
-- **logfire:** Structured logging and observability.
+- **opik:** Primary trace and observability platform for agent execution monitoring.
 - **loguru:** Enhanced logging capabilities.
-- **weave:** ML experiment tracking and evaluation.
-- **scalene:** Performance profiling for Python.
+- **scalene:** (Optional) Performance profiling for Python.
+- **weave:** (Optional) ML experiment tracking and evaluation.
+- **logfire:** (Optional) Structured logging and observability.
 
 ### Development & Testing
 
@@ -154,10 +154,10 @@ The system implements comprehensive metrics for assessing agent performance acro
 
 ### Monitoring & Observability
 
-- **AgentOps Integration:** Real-time agent behavior tracking and performance monitoring.
-- **Logfire Integration:** Structured logging for debugging and analysis.
-- **Weave Integration:** ML experiment tracking for evaluation pipeline optimization.
-- **Performance Profiling:** Scalene integration for detailed Python performance analysis.
+- **Opik Integration:** Primary platform for agent execution traces, performance monitoring, and observability.
+- **Scalene Integration:** (Optional) Performance profiling for detailed Python performance analysis.
+- **Weave Integration:** (Optional) ML experiment tracking for evaluation pipeline optimization.
+- **Logfire Integration:** (Optional) Structured logging for debugging and analysis.
 
 ## Future Enhancements
 

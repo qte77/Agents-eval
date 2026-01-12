@@ -38,7 +38,8 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
    - Monitor agent coordination and tool usage effectiveness.
 5. **Analyze the results:**
    - Review output logs and Streamlit UI to assess agent performance.
-   - Use integrated monitoring tools (AgentOps, Logfire, Weave) for detailed analysis.
+   - Use Opik for execution traces and detailed observability.
+   - Optionally use additional monitoring tools (Weave, Scalene, Logfire) for extended analysis.
 
 ### Expected Outcomes
 
@@ -62,10 +63,10 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
    - These metrics should be modular and easily integratable with existing evaluation logic.
 
 3. **Comprehensive Monitoring & Observability:**
-   - The system should integrate AgentOps for real-time agent behavior tracking.
-   - The system should provide Logfire integration for structured logging and debugging.
-   - The system should support Weave integration for ML experiment tracking and evaluation optimization.
-   - Performance profiling should be available through Scalene integration.
+   - The system should provide Opik integration as the primary platform for agent execution traces and observability.
+   - Performance profiling should optionally be available through Scalene integration.
+   - The system should optionally support Weave integration for ML experiment tracking and evaluation optimization.
+   - The system should optionally support Logfire integration for structured logging and debugging.
 
 4. **Enhanced CLI and GUI Interactions:**
    - The system should offer both Make-based CLI commands and a Streamlit GUI for user interaction.
@@ -82,7 +83,7 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 
 - **Standardized Agent Evaluation:** Agents-eval provides a structured approach with PeerRead benchmarks for evaluating agentic AI systems, enabling consistent comparison across different implementations.
 - **Multi-Agent System Insights:** The platform offers unique visibility into delegation patterns, coordination effectiveness, and specialization benefits in multi-agent workflows.
-- **Comprehensive Observability:** Integrated monitoring tools (AgentOps, Logfire, Weave, Scalene) provide deep insights into agent behavior, performance bottlenecks, and resource utilization.
+- **Comprehensive Observability:** Opik provides primary tracing and observability for agent execution, with optional monitoring tools (Weave, Scalene, Logfire) for extended insights into agent behavior, performance bottlenecks, and resource utilization.
 - **Framework Flexibility:** The system supports multiple frameworks (pydantic-ai, future LangChain integration) and allows for custom metric development, making it adaptable to diverse research needs.
 - **Enhanced Developer Experience:** Multiple setup options (Claude Code, Ollama, basic dev) combined with CLI and GUI interfaces cater to different development preferences and workflows.
 - **Production-Ready Tooling:** Built-in code quality checks, testing frameworks, and documentation generation support serious research and development efforts.
@@ -115,7 +116,7 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 
 5. **Results Analysis:**
    - User reviews performance metrics: completion time (e.g., 45 seconds), output similarity score (0.87).
-   - User analyzes agent coordination patterns via AgentOps dashboard.
+   - User analyzes agent coordination patterns and execution traces.
    - User compares results against baseline single-agent performance.
 
 6. **Insights & Iteration:**
@@ -130,7 +131,6 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 
 ### Additional Notes
 
-- **Current Status:** The project is under active development with core PeerRead evaluation and multi-agent coordination features implemented (v3.1.0).
 - **Dependencies:** Built on Python 3.13 with pydantic-ai-slim, supporting OpenAI, DuckDuckGo, and Tavily integrations.
 - **Development Tools:** Comprehensive toolchain including pytest for testing, ruff for linting, pyright for type checking, and mkdocs for documentation.
 - **References:**
