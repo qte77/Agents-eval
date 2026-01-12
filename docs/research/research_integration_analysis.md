@@ -14,18 +14,18 @@ tags:
   - self-evolving-agents
   - runtime-governance
 author: AI Research Team
-papers_analyzed: 212+
-coverage_period: 2022-10 to 2026-01-11
+papers_analyzed: 226+
+coverage_period: 2022-10 to 2026-01-12
 related_documents:
   - further_reading.md
 created: 2025-09-02
-updated: 2026-01-11
-version: 3.0.0
+updated: 2026-01-12
+version: 3.1.0
 ---
 
 ## Executive Summary
 
-Analysis of 208+ research papers (2022-2026) and 27+ production frameworks reveals convergence toward multi-dimensional agent evaluation methodologies. Key developments include self-evolving agent capabilities, runtime governance protocols, and compositional self-improvement approaches that require evaluation framework evolution.
+Analysis of 226+ research papers (2022-2026) and 27+ production frameworks reveals convergence toward multi-dimensional agent evaluation methodologies. Key developments include self-evolving agent capabilities, runtime governance protocols, compositional self-improvement approaches, behavioral profiling, LLM evaluator robustness, and scalable MAS oversight.
 
 **Related Documentation**: See [Further Reading](further_reading.md) for
 comprehensive research paper analysis and cross-references.
@@ -66,6 +66,9 @@ while supporting migration between orchestration approaches.
 - **Memory Systems Revolution**: MAGMA multi-graph architecture (2601.03236), MACLA 2,800× faster memory construction (2512.18950), comprehensive memory surveys
 - **Multi-Agent Reasoning**: MAR Multi-Agent Reflexion (2512.20845), scaling agent systems to 180 configurations (2512.08296)
 - **Code Generation Evolution**: SE 3.0 vision (2507.15003), comprehensive code generation surveys (2508.00083, 2508.11126)
+- **Agent Evaluation Paradigms** (Agents4Science 2025): Behavioral Fingerprinting (LLM profiling across 18 models), TEAM-PHI (multi-LLM evaluator consensus)
+- **Safety & Oversight** (Agents4Science 2025): BadScientist (LLM reviewer vulnerabilities 67-82%), HDO (scalable MAS oversight with PAC-Bayesian bounds)
+- **Coordination Patterns** (Agents4Science 2025): Evolutionary Boids (decentralized agent societies), Strategic Reasoning (agent reasoning gap diagnosis)
 
 **Research Impact on Evaluation**:
 
@@ -245,7 +248,17 @@ Production insights from Anthropic's two-agent harness pattern mapping directly 
    - `[2412.13178] SafeAgentBench`: First embodied agent safety benchmark, 750 tasks
    - `[2410.09024] AgentHarm`: Benchmark for harmful behaviors (ICLR 2025)
 
-**Integration**: Enhance evaluation framework with reasoning-execution alignment validation, security assessment capabilities, and Tier 5 Governance evaluation with standardized safety benchmarks and risk category assessment.
+5. **LLM Evaluator Vulnerabilities** (Agents4Science 2025)
+   - `BadScientist`: Five manipulation strategies (TooGoodGains, BaselineSelect, StatTheater, CoherencePolish, ProofGap) achieve 67-82% LLM reviewer acceptance rates
+   - Reveals concern-acceptance conflict where LLM reviewers flag integrity issues yet assign acceptance-level scores
+   - **Implication**: LLM-as-Judge tier (Tier 2) requires adversarial robustness validation and meta-evaluation to detect manipulation
+
+6. **Scalable MAS Oversight** (Agents4Science 2025)
+   - `HDO (Hierarchical Delegated Oversight)`: Framework with PAC-Bayesian bounds on misalignment risk enabling weak overseers to delegate verification through structured debates
+   - Addresses sublinear scaling problem where oversight difficulty grows disproportionately with agent count
+   - **Application**: Tier 5 Governance with provable alignment guarantees for multi-agent coordination
+
+**Integration**: Enhance evaluation framework with reasoning-execution alignment validation, security assessment capabilities, Tier 5 Governance evaluation with standardized safety benchmarks, adversarial robustness testing for LLM-as-Judge tier, and hierarchical oversight protocols for multi-agent systems.
 
 ## Academic Research Insights
 
@@ -312,8 +325,10 @@ Production insights from Anthropic's two-agent harness pattern mapping directly 
 - `[2508.21803] Clinical Multi-Agent: Hierarchical Debate for Diagnosis`
 - `[2508.11120] Marketing Multi-Agent: Memory and Planning Integration`
 - `[2509.00531] MobiAgent: Mobile Agent System Framework`
+- `Evolutionary Boids` (Agents4Science 2025): Decentralized coordination via local rules (cohesion/separation/alignment); agents generate shallow-wide tool graphs vs. deep compositional hierarchies
+- `HDO` (Agents4Science 2025): Hierarchical delegation graphs with PAC-Bayesian bounds; addresses sublinear scaling where oversight difficulty grows disproportionately with agent count
 
-**Application**: Inform graph-based complexity analysis with failure mode detection, coordination effectiveness metrics, and domain-specific collaboration patterns.
+**Application**: Enhance Tier 3 graph analysis with decentralized coordination pattern detection (Boids-style emergent behaviors) and hierarchical verification path analysis (HDO formal bounds). Coordination topology analysis: shallow-wide vs. deep-narrow agent graphs.
 
 #### Scalability and Performance
 
@@ -339,8 +354,9 @@ Production insights from Anthropic's two-agent harness pattern mapping directly 
 - `[2512.13564] Memory in the Age of AI Agents`: Comprehensive survey on memory as core capability
 - `[2601.03236] MAGMA`: Multi-graph architecture (semantic, temporal, causal, entity)
 - `[2512.18950] MACLA`: Hierarchical procedural memory, 2,800× faster construction
+- `Behavioral Fingerprinting` (Agents4Science 2025): Diagnostic Prompt Suite analyzing 18 models revealing behavioral profiles beyond performance metrics; documents ISTJ/ESTJ personality clustering reflecting deliberate alignment choices
 
-**Application**: Inform Self-Assessment tier (Tier 4) with memory consistency evaluation and identity persistence tracking across agent interactions.
+**Application**: Inform Self-Assessment tier (Tier 4) with memory consistency evaluation, identity persistence tracking across agent interactions, and behavioral profiling for agent identity evaluation.
 
 #### Domain-Specific Agent Benchmarks
 
@@ -385,7 +401,7 @@ For detailed technical specifications, see [architecture.md](../architecture.md)
 
 ### Core Methodology Innovations
 
-- **Framework-Agnostic Assessment**: Multi-dimensional approach integrating 208+ research papers
+- **Framework-Agnostic Assessment**: Multi-dimensional approach integrating 226+ research papers
 - **Post-Execution Behavioral Analysis**: Novel methodology for retrospective agent coordination assessment
 - **Research Benchmarking**: PeerRead specialization enabling standardized academic evaluation
 - **Protocol Integration**: [MCP](https://docs.anthropic.com/en/docs/mcp) and [A2A](https://github.com/google/A2A) standardization support
@@ -418,12 +434,12 @@ agent technologies mature.
 
 ## Conclusion
 
-Analysis of 208+ papers and 27+ frameworks reveals convergence toward
+Analysis of 226+ papers and 27+ frameworks reveals convergence toward
 multi-dimensional agent evaluation. Agents-eval's framework-agnostic methodology
 integrates research advances with production requirements including
 [MCP](https://docs.anthropic.com/en/docs/mcp) and [A2A](https://github.com/google/A2A) protocols.
 
-**Technical Foundation**: Research integration (208+ papers), production validation
+**Technical Foundation**: Research integration (226+ papers), production validation
 (multiple frameworks), domain application (PeerRead specialization), architectural
 patterns (framework-independent methodology).
 

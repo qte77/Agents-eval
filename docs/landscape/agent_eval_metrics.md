@@ -1,14 +1,14 @@
 ---
 title: Agent Evaluation Metrics Survey
 description: Survey of agent evaluation metrics from the landscape analysis, focused on practical implementation for PeerRead multi-agent evaluation
-date: 2025-08-24
+date: 2026-01-12
 status: draft
 category: technical-analysis
 tags:
   - agent-evaluation
   - metrics
   - peerread-evaluation
-version: 1.0.0
+version: 1.1.0
 ---
 <!-- markdownlint-disable MD024 no-duplicate-heading -->
 
@@ -159,6 +159,16 @@ definitions, use cases, and primary research references for each metric.
 - **Reference**: [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
 - **Landscape Reference**: [Arize Phoenix - LLM-as-a-Judge Templates](landscape.md#llm-application-observability)
 
+#### Behavioral Fingerprint Profile
+
+- **Definition**: Diagnostic assessment revealing agent behavioral characteristics beyond performance metrics
+- **Use Case**: Agent identity evaluation, consistency tracking, alignment validation
+- **Components**: Personality clustering (ISTJ/ESTJ patterns), semantic robustness, sycophancy detection
+- **Strengths**: Captures behavioral patterns, reveals alignment choices
+- **Limitations**: Requires diagnostic prompt suite, model-dependent patterns
+- **Reference**: Behavioral Fingerprinting of LLMs (Agents4Science 2025)
+- **Application**: Inform Tier 4 Self-Assessment for agent identity persistence across interactions
+
 ### Multi-Agent Coordination Metrics
 
 *See also: [Graph Analysis & Network Tools](landscape.md#7-graph-analysis--network-tools) and [Agent Frameworks](landscape.md#1-agent-frameworks) in landscape.md*
@@ -255,7 +265,8 @@ Metrics derived from production evaluation frameworks and competition benchmarks
 - **Calculation**: Correlation coefficient between evaluator scores
 - **Strengths**: Ensures evaluation trustworthiness
 - **Limitations**: Requires multiple evaluation methods
-- **Reference**: Self-Improving LLM Evals (Arize)
+- **Reference**: Self-Improving LLM Evals (Arize), TEAM-PHI (Agents4Science 2025)
+- **Recent Advance**: TEAM-PHI demonstrates multi-LLM evaluator consensus through majority voting matches supervised evaluation without costly expert annotations
 
 #### Fix Rate
 
@@ -379,6 +390,18 @@ Metrics derived from production evaluation frameworks and competition benchmarks
 - **Limitations**: Requires comprehensive attack vectors
 - **Reference**: [Prompt injection attacks against large language models](https://arxiv.org/abs/2302.12173)
 - **Landscape Reference**: [Giskard - Security Testing](landscape.md#ai-model-testing--validation-platforms)
+
+#### LLM Evaluator Vulnerability
+
+- **Definition**: Susceptibility of LLM-based evaluators to manipulation strategies
+- **Use Case**: Validate robustness of LLM-as-Judge evaluation tier
+- **Attack Vectors**: TooGoodGains (exaggerating metrics), BaselineSelect (cherry-picking), StatTheater (statistical facades), CoherencePolish (presentation quality), ProofGap (hiding oversights)
+- **Observed Rate**: 67-82% acceptance rates for manipulated content
+- **Critical Issue**: Concern-acceptance conflict where reviewers flag issues yet assign acceptance scores
+- **Strengths**: Identifies critical LLM judge vulnerabilities
+- **Limitations**: Requires adversarial testing framework
+- **Reference**: BadScientist (Agents4Science 2025)
+- **Mitigation**: Implement adversarial robustness validation and meta-evaluation to detect manipulation
 
 ## Implementation Frameworks
 

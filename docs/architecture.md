@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-01-11
+updated: 2026-01-12
 category: architecture
-version: 1.0.1
+version: 1.1.0
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -238,8 +238,11 @@ Candidate metrics identified from production frameworks and recent research for 
 | `handoff_quality` | Arize Multi-Agent | No inter-agent transition | Medium | High |
 | `fix_rate` | SWE-EVO [2512.18470] | Binary task success only | Low | High |
 | `rubric_alignment` | [2512.23707] | No self-grading assessment | Medium | High |
+| `evaluator_consensus` | TEAM-PHI (Agents4Science) | Single LLM judge | Low | High |
+| `coordination_topology` | Evolutionary Boids (Agents4Science) | No breadth vs depth | Low | Medium |
+| `delegation_depth` | HDO (Agents4Science) | No hierarchy verification | Low | High |
 
-**Integration Priority**: `fix_rate` (immediate value for partial progress) → `path_convergence` (Tier 3 enhancement) → `rubric_alignment` (Tier 2 self-assessment)
+**Integration Priority**: `fix_rate` → `evaluator_consensus` (Tier 2 robustness) → `delegation_depth` (Tier 5 Governance) → `coordination_topology` (Tier 3 pattern detection) → `path_convergence` (Tier 3 efficiency) → `rubric_alignment` (Tier 2 self-assessment)
 
 ## Key Dependencies
 

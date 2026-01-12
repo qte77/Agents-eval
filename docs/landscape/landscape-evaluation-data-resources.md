@@ -2,9 +2,9 @@
 title: Evaluation & Data Resources Landscape
 description: Comprehensive overview of evaluation frameworks, datasets, benchmarks, and analysis tools for AI agent systems and academic research applications
 created: 2025-08-23
-updated: 2025-01-24
+updated: 2026-01-12
 category: landscape
-version: 1.1.0
+version: 1.2.0
 ---
 
 This document provides a comprehensive overview of evaluation frameworks, datasets, benchmarks, graph analysis tools, and research resources relevant to evaluating AI agent systems and academic research applications. It includes technical details, feasibility assessments, integration scenarios, and project-specific guidance for the PeerRead evaluation use case.
@@ -274,6 +274,8 @@ This document provides a comprehensive overview of evaluation frameworks, datase
 - [WASP](https://arxiv.org/abs/2504.18575) - Prompt injection attack resilience benchmark testing agents' security against adversarial inputs. **Evaluation Focus**: Prompt injection resilience, adversarial input handling, security vulnerability assessment, attack mitigation capabilities. **High feasibility** with security focus. **Integration:** Test PeerRead agents' resilience to adversarial papers attempting to manipulate review generation, benchmark security against malicious inputs, validate robust evaluation under attempted gaming. **Sources:** [arXiv 2504.18575](https://arxiv.org/abs/2504.18575)
 
 - [CyberGym](https://arxiv.org/abs/2506.02548) - Real CVE (Common Vulnerabilities and Exposures) vulnerability assessment benchmark for security evaluation. **Evaluation Focus**: Real-world vulnerability assessment, security analysis capabilities, CVE identification and analysis, practical security evaluation. **Medium feasibility** with cybersecurity specialization. **Integration:** Adapt security analysis patterns for research integrity assessment, benchmark systematic vulnerability identification in research methodologies, test agents on detecting potential flaws in experimental designs. **Sources:** [arXiv 2506.02548](https://arxiv.org/abs/2506.02548)
+
+- [BadScientist](https://openreview.net/forum?id=7MPstNz66e) - LLM evaluator vulnerability assessment exposing critical weaknesses in AI-driven review systems through manipulation strategies. **Evaluation Focus**: LLM-as-judge robustness testing, evaluator manipulation detection, concern-acceptance conflict identification, adversarial review generation. **High feasibility** with direct relevance to LLM-based evaluation. **Key Finding**: Five manipulation strategies (TooGoodGains, BaselineSelect, StatTheater, CoherencePolish, ProofGap) achieve 67-82% acceptance rates from LLM reviewers. **Integration:** Validate robustness of Tier 2 LLM-as-Judge evaluation against adversarial inputs, implement meta-evaluation to detect manipulated reviews, benchmark PeerRead agent resilience to gaming attempts. **Critical Implication**: Requires adversarial validation layer for LLM-based evaluation systems. **Sources:** [Agents4Science 2025](https://openreview.net/forum?id=7MPstNz66e)
 
 ### Planning & Reasoning Benchmarks
 
