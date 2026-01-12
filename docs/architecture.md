@@ -180,7 +180,7 @@ The evaluation framework is built around large context window models capable of 
 
 ## Implementation Status
 
-**Detailed Timeline**: See [development-timeline.md](development-timeline.md) for comprehensive sprint history, dependencies, and development phases.
+**Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
 ### Current Implementation (Sprint 1 Complete)
 
@@ -222,11 +222,11 @@ The three-tiered evaluation framework is fully operational with the following co
 
 ### Development Timeline
 
-**Current Phase**: Sprint 3 (Advanced Features) - In Progress
-**Architecture Phase**: Sprint 2 (SoC/SRP Refactoring) - Planned
+**Current Phase**: Sprint 2 (SoC/SRP Refactoring) - Planned (Next Priority)
+**Advanced Features Phase**: Sprint 3 - Blocked (awaiting Sprint 2)
 **Foundation Phase**: Sprint 1 (Three-tiered Evaluation) - ✅ Complete
 
-For detailed sprint information, implementation status, and development dependencies, see [development-timeline.md](development-timeline.md).
+For detailed sprint information, implementation status, and development dependencies, see [roadmap.md](roadmap.md).
 
 ### New Metrics for Implementation
 

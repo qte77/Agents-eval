@@ -14,11 +14,13 @@ agents.** For technical workflows and coding standards, see
 ## Claude Code Infrastructure
 
 **Skills** (`.claude/skills/`): Modular capabilities with progressive disclosure
+
 - `core-principles` - MANDATORY for all tasks (KISS, DRY, YAGNI, verification)
 - `designing-backend`, `implementing-python`, `reviewing-code`, `generating-prd`
 - See individual SKILL.md files for usage triggers and instructions
 
 **Ralph Loop** (`.claude/scripts/ralph/`): Autonomous task execution system
+
 - `make ralph_init` - Initialize environment and state files
 - `make ralph ITERATIONS=N` - Run autonomous development loop
 - State tracking: `docs/ralph/prd.json` (tasks), `docs/ralph/progress.txt` (learnings)
