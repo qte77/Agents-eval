@@ -14,18 +14,18 @@ tags:
   - self-evolving-agents
   - runtime-governance
 author: AI Research Team
-papers_analyzed: 226+
-coverage_period: 2022-10 to 2026-01-12
+papers_analyzed: 228+
+coverage_period: 2022-10 to 2026-01-13
 related_documents:
   - further_reading.md
 created: 2025-09-02
-updated: 2026-01-12
-version: 3.1.0
+updated: 2026-01-13
+version: 3.1.1
 ---
 
 ## Executive Summary
 
-Analysis of 226+ research papers (2022-2026) and 27+ production frameworks reveals convergence toward multi-dimensional agent evaluation methodologies. Key developments include self-evolving agent capabilities, runtime governance protocols, compositional self-improvement approaches, behavioral profiling, LLM evaluator robustness, and scalable MAS oversight.
+Analysis of 228+ research papers (2022-2026) and 27+ production frameworks reveals convergence toward multi-dimensional agent evaluation methodologies. Key developments include self-evolving agent capabilities, runtime governance protocols, compositional self-improvement approaches, behavioral profiling, LLM evaluator robustness, and scalable MAS oversight.
 
 **Related Documentation**: See [Further Reading](further_reading.md) for
 comprehensive research paper analysis and cross-references.
@@ -61,7 +61,7 @@ while supporting migration between orchestration approaches.
 **58 new papers added** covering critical advances:
 
 - **Enterprise Evaluation Frameworks**: CLEAR framework (2511.14136) with ρ=0.83 production correlation, AgentArch (2509.10769) benchmarking 18 configurations, TheAgentCompany (2412.14161) for real-world tasks
-- **Scientific Benchmarks from AgentBeats**: SciCode (2407.13168) research coding, CORE-Bench (2409.11363) reproducibility, OSWorld (2404.07972) OS/web tasks, τ²-bench (2506.07982) dual-control tool evaluation
+- **Scientific Benchmarks from AgentBeats**: SciCode (2407.13168) research coding, CORE-Bench (2409.11363) reproducibility, OSWorld (2404.07972) OS/web tasks, τ-bench (2406.12045) pass^k consistency metrics, τ²-bench (2506.07982) dual-control tool evaluation
 - **Safety Benchmark Ecosystem**: Four new benchmarks - SALAD-Bench (ACL 2024), Agent-SafetyBench (349 environments), SafeAgentBench (embodied agents), AgentHarm (ICLR 2025)
 - **Memory Systems Revolution**: MAGMA multi-graph architecture (2601.03236), MACLA 2,800× faster memory construction (2512.18950), comprehensive memory surveys
 - **Multi-Agent Reasoning**: MAR Multi-Agent Reflexion (2512.20845), scaling agent systems to 180 configurations (2512.08296)
@@ -252,6 +252,7 @@ Production insights from Anthropic's two-agent harness pattern mapping directly 
    - `BadScientist`: Five manipulation strategies (TooGoodGains, BaselineSelect, StatTheater, CoherencePolish, ProofGap) achieve 67-82% LLM reviewer acceptance rates
    - Reveals concern-acceptance conflict where LLM reviewers flag integrity issues yet assign acceptance-level scores
    - **Implication**: LLM-as-Judge tier (Tier 2) requires adversarial robustness validation and meta-evaluation to detect manipulation
+   - `Can We Trust AI Benchmarks?` [2502.06559]: Interdisciplinary review of ~100 studies identifying dataset biases, data contamination, gaming, and misaligned incentives in AI evaluation
 
 6. **Scalable MAS Oversight** (Agents4Science 2025)
    - `HDO (Hierarchical Delegated Oversight)`: Framework with PAC-Bayesian bounds on misalignment risk enabling weak overseers to delegate verification through structured debates
@@ -404,7 +405,7 @@ For detailed technical specifications, see [architecture.md](../architecture.md)
 
 ### Core Methodology Innovations
 
-- **Framework-Agnostic Assessment**: Multi-dimensional approach integrating 226+ research papers
+- **Framework-Agnostic Assessment**: Multi-dimensional approach integrating 228+ research papers
 - **Post-Execution Behavioral Analysis**: Novel methodology for retrospective agent coordination assessment
 - **Research Benchmarking**: PeerRead specialization enabling standardized academic evaluation
 - **Protocol Integration**: [MCP](https://docs.anthropic.com/en/docs/mcp) and [A2A](https://github.com/google/A2A) standardization support
@@ -437,12 +438,12 @@ agent technologies mature.
 
 ## Conclusion
 
-Analysis of 226+ papers and 27+ frameworks reveals convergence toward
+Analysis of 228+ papers and 27+ frameworks reveals convergence toward
 multi-dimensional agent evaluation. Agents-eval's framework-agnostic methodology
 integrates research advances with production requirements including
 [MCP](https://docs.anthropic.com/en/docs/mcp) and [A2A](https://github.com/google/A2A) protocols.
 
-**Technical Foundation**: Research integration (226+ papers), production validation
+**Technical Foundation**: Research integration (228+ papers), production validation
 (multiple frameworks), domain application (PeerRead specialization), architectural
 patterns (framework-independent methodology).
 

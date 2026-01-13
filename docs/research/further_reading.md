@@ -11,11 +11,11 @@ features:
   - cross-references
   - relationship-explanations
   - clustering-by-themes
-papers_count: 250+
+papers_count: 253+
 coverage_period: 2020-10 to 2026-01
 created: 2025-08-24
-updated: 2026-01-12
-version: 3.1.0
+updated: 2026-01-13
+version: 3.1.1
 ---
 
 ## Overview
@@ -279,6 +279,9 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-10
 
+- [[2510.26887] The Denario Project: Deep Knowledge AI Agents for Scientific Discovery](https://arxiv.org/abs/2510.26887) `[SCI]` `[MAS]` `[AUTO]` `cs.AI`
+  - Multi-agent system for scientific research: idea generation, code execution, paper drafting; generated 11 AI-authored papers across disciplines
+  - Cross-ref: 2506.18096 (deep research agents), 2502.14776 (SurveyX)
 - [[2510.25445] Agentic AI: A Comprehensive Survey of Architectures, Applications, and Future Directions](https://arxiv.org/abs/2510.25445) `[SURVEY]` `[ARCH]` `cs.AI`
   - Comprehensive survey of agentic AI covering architectures, diverse applications, and future research directions
   - Cross-ref: 2308.11432 (foundational survey), 2503.21460 (LLM agent survey), 2508.10146 (frameworks)
@@ -748,6 +751,9 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-02
 
+- [[2502.06559] Can We Trust AI Benchmarks? An Interdisciplinary Review](https://arxiv.org/abs/2502.06559) `[BENCH]` `[EVAL]` `[SURVEY]` `cs.AI`
+  - Interdisciplinary review of ~100 studies on benchmark shortcomings: dataset biases, data contamination, construct validity, and gaming
+  - Cross-ref: 2507.02825 (agentic benchmark checklist), 2308.03688 (AgentBench)
 - [[2502.12110] A-Mem: Agentic Memory for LLM Agents](https://arxiv.org/abs/2502.12110) `[MEM]` `[ARCH]` `cs.AI` `cs.CL`
   - Autonomous memory system with contextual description generation and connection establishment for continuous evolution
   - Cross-ref: 2512.13564 (memory survey), 2601.01885 (agentic memory), 2512.18950 (MACLA)
@@ -913,6 +919,9 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2024-06
 
+- [[2406.12045] τ-bench: A Benchmark for Tool-Agent-User Interaction](https://arxiv.org/abs/2406.12045) `[BENCH]` `[TOOL]` `[EVAL]` `cs.AI` `cs.CL`
+  - Benchmark evaluating agents on tool use, user interaction, and domain-specific rule adherence; introduces pass^k consistency metric
+  - Cross-ref: 2506.07982 (τ²-bench), 2307.16789 (ToolLLM), 2308.03688 (AgentBench)
 - [[2406.01495] Re-ReST: Reflection-Reinforced Self-Training for Language Agents](https://arxiv.org/abs/2406.01495) `[AUTO]` `[ARCH]` `cs.AI` `cs.LG`
   - Reflection-reinforced self-training approach using environmental feedback to enhance sample quality and agent performance
   - Cross-ref: 2303.11366 (Reflexion foundation), 2407.18219 (recursive introspection)
