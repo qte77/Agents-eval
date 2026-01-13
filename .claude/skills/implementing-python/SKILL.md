@@ -13,6 +13,8 @@ Creates **focused, streamlined** Python implementations following architect spec
 
 **MANDATORY COMPLIANCE**: Follow @AGENTS.md Agent Neutrality Requirements - implement architect specifications exactly.
 
+**MANDATORY STANDARDS**: Follow @docs/best-practices/python-best-practices.md for all Python coding patterns (security, types, imports, errors, docstrings, testing).
+
 - **Concise implementation**: Avoid verbose code or unnecessary features
 - **Focused functionality**: Match complexity level (simple functions vs complex classes)
 - **Streamlined approach**: Existing dependencies primary, new packages fallback only
@@ -52,6 +54,7 @@ All type checks, linting, and tests must pass.
 
 ## References
 
+- See @docs/best-practices/python-best-practices.md for Python coding standards
 - See @AGENTS.md for mandatory compliance requirements
 - See @CONTRIBUTING.md for coding standards and patterns
 - Verify dependencies in `pyproject.toml`
