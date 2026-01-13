@@ -1,9 +1,9 @@
 ---
 title: Evaluation & Data Resources Landscape
 description: Comprehensive overview of evaluation frameworks, datasets, benchmarks, and analysis tools for AI agent systems and academic research applications
+category: landscape
 created: 2025-08-23
 updated: 2026-01-12
-category: landscape
 version: 1.2.0
 ---
 
@@ -13,6 +13,7 @@ This document provides a comprehensive overview of evaluation frameworks, datase
 
 - [Agent Frameworks & Infrastructure Landscape](landscape-agent-frameworks-infrastructure.md) - Agent frameworks, LLM orchestration, observability tools, and development infrastructure
 - [Research Agents Landscape](./landscape-research-agents.md) - Autonomous research agents, specialized AI models, discovery platforms, and research support frameworks
+- [Agent Evaluation Metrics Survey](./agent_eval_metrics.md) - Comprehensive metric definitions, calculations, and use cases for measuring agent performance
 
 ## 1. Evaluation Frameworks
 
