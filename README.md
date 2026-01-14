@@ -37,7 +37,7 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 - **Core Resources:**
   - **Development Standards**: [CONTRIBUTING.md](CONTRIBUTING.md) - Commands, workflows, coding patterns
   - **System Architecture**: [docs/architecture.md](docs/architecture.md) - Technical design and decisions
-  - **Current Sprint**: [Sprint 1 Status](docs/sprints/2025-08_Sprint1_ThreeTieredEval.md) - Active development
+  - **Development Roadmap**: [Roadmap Status](docs/roadmap.md)
 - **Development Flow:** Setup → Code → `make validate` → Commit
 
 ## AI Agent
@@ -66,7 +66,9 @@ For version history have a look at the [CHANGELOG](CHANGELOG.md).
 - `make run_cli` or `make run_cli ARGS="--help"`
   - `make run_cli ARGS="--paper-number=350 --chat-provider=ollama"`
 - `make run_gui`
-- `make test_all`
+- `make test_all
+
+See [CONTRIBUTING.md](CONTRIBUTING.md#instant-commands) for complete command reference including setup, validation, and testing commands.
 
 ### Environment
 
@@ -138,7 +140,7 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
 - **Workflow**:
   1. **MAS**: PDF → Review Generation → Persistent Storage (`src/app/data_utils/reviews/`)
   2. **External Evaluation**: Load Reviews → Similarity Analysis → Results
-- **Documentation**: See [PeerRead Agent Usage Guide](docs/howtos/maintaining-agents-md.md)
+- **Documentation**: See [PeerRead Agent Usage Guide](docs/howtos/peerread-agent-usage.md)
 
 ### Review Workflow
 
@@ -150,22 +152,9 @@ The system includes comprehensive integration with the [PeerRead dataset](https:
 
 ### Custom Evaluations Metrics Baseline
 
-As configured in [config_eval.json](src/app/config/config_eval.json).
+Six metrics with equal weights (0.167 each): `time_taken`, `task_success`, `coordination_quality`, `tool_efficiency`, `planning_rationality`, `output_similarity`.
 
-```json
-{
-    "composite_scoring": {
-        "metrics_and_weights": {
-            "time_taken": 0.167,
-            "task_success": 0.167,
-            "coordination_quality": 0.167,
-            "tool_efficiency": 0.167,
-            "planning_rationality": 0.167,
-            "output_similarity": 0.167
-        }
-    }
-}
-```
+See [config_eval.json](src/app/config/config_eval.json) for current configuration.
 
 ### Eval Metrics Sweep
 
@@ -214,7 +203,7 @@ For a comprehensive overview of AI agent frameworks, evaluation tools, datasets,
 ## Further Reading
 
 - [Project architecture](docs/architecture.md)
-- [List of papers inspected](docs/papers/further_reading.md)
+- [List of papers inspected](docs/research/further_reading.md)
 - [AI Agent Evaluation Landscape](docs/landscape/landscape.md)
 - [Agents-eval Enhancement Recommendations based on the Papers](https://qte77.github.io/ai-agents-eval-enhancement-recommendations/)
 - [Papers Meta Review](https://qte77.github.io/ai-agents-eval-papers-meta-review/)

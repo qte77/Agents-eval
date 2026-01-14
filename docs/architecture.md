@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-01-12
+updated: 2026-01-13
 category: architecture
-version: 1.1.0
+version: 3.2.0
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -103,7 +103,7 @@ The evaluation framework is built around large context window models capable of 
 
 **Location**: `src/app/evals/llm_evaluation_managers.py`
 
-- **Planning Rational Assessment** (config: `planning_rational`):
+- **Planning Rationality Assessment** (config: `planning_rationality`):
   - Decision-making process quality evaluation
   - Reasoning chain coherence analysis
   - Strategic planning effectiveness
@@ -153,7 +153,7 @@ The evaluation framework is built around large context window models capable of 
   - Node count (discrete actions) → feeds into coordination_quality scoring
   - Edge density (interaction frequency) → affects tool_efficiency evaluation
   - Path optimization → impacts time_taken scoring through coordination analysis
-  - Pattern recognition → influences planning_rational assessment via behavioral analysis
+  - Pattern recognition → influences planning_rationality assessment via behavioral analysis
 
 #### Composite Scoring System
 
@@ -167,13 +167,12 @@ The evaluation framework is built around large context window models capable of 
 - `task_success`: 0.167 (16.7% - review completion and accuracy)
 - `coordination_quality`: 0.167 (16.7% - agent interaction effectiveness)
 - `tool_efficiency`: 0.167 (16.7% - tool usage optimization)
-- `planning_rational`: 0.167 (16.7% - decision-making quality)
+- `planning_rationality`: 0.167 (16.7% - decision-making quality)
 - `output_similarity`: 0.167 (16.7% - similarity to PeerRead ground truth)
 
 **Configuration-Based Output**:
 
-- Final weighted score using six config metrics (0.167 each)
-- Individual metric breakdowns: time_taken, task_success, coordination_quality, tool_efficiency, planning_rational, output_similarity
+- Final weighted score using six metrics above (0.167 each)
 - Similarity metrics selection (cosine, jaccard, semantic) with semantic as default
 - Recommendation scoring with config weights and confidence threshold (0.8)
 - Performance trend analysis with configurable evaluation parameters
@@ -222,9 +221,9 @@ The three-tiered evaluation framework is fully operational with the following co
 
 ### Development Timeline
 
-**Current Phase**: Sprint 2 (SoC/SRP Refactoring) - Planned (Next Priority)
-**Advanced Features Phase**: Sprint 3 - Blocked (awaiting Sprint 2)
-**Foundation Phase**: Sprint 1 (Three-tiered Evaluation) - ✅ Complete
+**Foundation Phase**: Sprint 1 (Three-tiered Evaluation) - ✅ Complete (Aug 23-28, 2025)
+**Refactoring Phase**: Sprint 2 (SoC/SRP Refactoring) - 📋 Not Started (Next Priority)
+**Advanced Features Phase**: Sprint 3 - 📋 Blocked (awaiting Sprint 2 completion)
 
 For detailed sprint information, implementation status, and development dependencies, see [roadmap.md](roadmap.md).
 

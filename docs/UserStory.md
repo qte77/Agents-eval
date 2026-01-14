@@ -1,9 +1,10 @@
 ---
 title: User Story - AI Agent Evaluation
 description: User story and acceptance criteria for AI researchers evaluating multi-agent systems using PeerRead dataset
-date: 2025-09-01
+created: 2025-09-01
+updated: 2026-01-13
 category: user-story
-version: 1.0.0
+version: 3.2.0
 ---
 
 ## Introduction
@@ -23,13 +24,10 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 ### Steps
 
 1. **Set up the environment:**
-   - Use `make setup_dev` for basic development environment.
-   - Use `make setup_dev_claude` for Claude Code integration.
-   - Use `make setup_dev_ollama` for local Ollama server setup.
+   - See [CONTRIBUTING.md § Complete Command Reference](../CONTRIBUTING.md#complete-command-reference) for setup commands.
    - Configure API keys and variables in `.env.example` and rename to `.env`.
 2. **Run the evaluation pipeline:**
-   - Execute the CLI with `make run_cli` or the GUI with `make run_gui`.
-   - Run code quality checks with `make validate` or `make quick_validate`.
+   - See [CONTRIBUTING.md § Instant Commands](../CONTRIBUTING.md#instant-commands) for execution and validation commands.
 3. **Configure evaluation metrics:**
    - Adjust weights in `src/app/config/config_eval.json`.
    - Configure agent behavior in `src/app/config/config_chat.json`.

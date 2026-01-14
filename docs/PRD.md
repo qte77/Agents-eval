@@ -2,8 +2,9 @@
 title: Product Requirements Document (PRD) for Agents-eval
 description: Comprehensive product requirements document for the multi-agent AI system evaluation framework
 date: 2025-09-01
+updated: 2026-01-13
 category: requirements
-version: 1.0.0
+version: 3.2.0
 ---
 
 ## Overview
@@ -24,13 +25,7 @@ The project implements a comprehensive evaluation pipeline using the **PeerRead 
 
 ### CLI
 
-- **Command Line Interface:**
-  - Environment setup commands: `make setup_dev`, `make setup_dev_claude`, `make setup_dev_ollama`
-  - Code quality commands: `make ruff`, `make type_check`, `make validate`, `make quick_validate`
-  - Application execution: `make run_cli`, `make run_gui`
-  - Testing commands: `make test_all`, `make coverage_all`
-  - Ollama server management: `make setup_ollama`, `make start_ollama`, `make stop_ollama`
-  - PeerRead dataset evaluation commands with configurable agent systems
+- **Command Line Interface:** See [CONTRIBUTING.md § Complete Command Reference](../CONTRIBUTING.md#complete-command-reference) for setup, validation, testing, and execution commands
   - Multi-agent system orchestration with delegation capabilities
 
 ### Frontend (Streamlit)
@@ -157,14 +152,17 @@ The system implements comprehensive metrics for assessing agent performance acro
 Based on Stanford's Agents4Science conference findings:
 
 #### Citation Accuracy Metrics
+
 - **Reference Hallucination Detection:** Automated verification that agent-generated citations and references exist (56% of AI-generated papers contained hallucinated references).
 - **Citation Accuracy Score:** Percentage of verifiable references in agent outputs.
 
 #### Reviewer Quality Metrics
+
 - **Reviewer Calibration Score:** Alignment with human expert baseline using historical PeerRead accepted/rejected papers for calibration.
 - **Reviewer Consistency Score:** Agreement across multiple evaluations of the same content.
 
 #### Agent Social Dynamics
+
 - **Agent Speaking Order Tracking:** Monitor which agent responds first and most frequently in multi-agent coordination (speaking order affects outcomes).
 - **Coordination Balance:** Measure communication distribution across agents to detect dominance patterns.
 

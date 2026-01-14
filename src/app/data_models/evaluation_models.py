@@ -201,7 +201,7 @@ class EvaluationConfig(BaseModel):
             "task_success": 0.167,
             "coordination_quality": 0.167,
             "tool_efficiency": 0.167,
-            "planning_rational": 0.167,
+            "planning_rationality": 0.167,
             "output_similarity": 0.167,
         },
         description="Composite scoring weights",
