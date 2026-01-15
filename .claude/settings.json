@@ -53,8 +53,6 @@
       "Bash(awk:*)",
       "Bash(cat:*)",
       "Bash(find:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(grep:*)",
       "Bash(head:*)",
@@ -68,6 +66,8 @@
       "Bash(touch:*)"
     ],
     "ask": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
       "Edit(.claude/**)",
       "Edit(AGENTS.md)",
       "Edit(CLAUDE.md)",
