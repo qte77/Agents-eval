@@ -2,7 +2,7 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-01-13
+updated: 2026-01-14
 category: architecture
 version: 3.2.0
 ---
@@ -27,10 +27,32 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 
 ### Evaluation Pipeline Flow
 
-1. **Traditional Metrics**: Text similarity (BLEU, ROUGE, BERTScore), execution time measurement
+1. **Traditional Metrics**: Text similarity (BLEU, ROUGE), execution time measurement
 2. **LLM-as-a-Judge**: Review quality assessment, agentic execution analysis
 3. **Graph-Based Analysis**: Tool call complexity, agent interaction mapping
 4. **Composite Scoring**: Final score calculation using formula: (Agentic Results / Execution Time / Graph Complexity)
+
+### Three-Tier Validation Strategy
+
+**Core Principle:** Tiers validate and enhance each other for robust evaluation.
+
+| Tier | Role | Focus |
+| ------ | ------ | ------- |
+| Tier 1 (Traditional) | VALIDATOR | Fast, objective text similarity baseline |
+| Tier 2 (LLM-Judge) | VALIDATOR | Semantic quality assessment |
+| Tier 3 (Graph) | PRIMARY | Coordination patterns from Opik traces |
+
+**Validation Logic:**
+
+- **All 3 tiers agree** → High confidence in MAS quality
+- **Tier 3 good, Tier 1/2 fail** → Good coordination, poor output quality
+- **Tier 1/2 good, Tier 3 fail** → Good output, inefficient coordination
+
+**Design Goals:**
+
+- **Graph (Tier 3)**: Rich analysis from Opik traces - PRIMARY innovation
+- **Traditional (Tier 1)**: Keep SIMPLE - lightweight metrics only
+- **LLM-Judge (Tier 2)**: Keep SIMPLE - single LLM call, structured output
 
 ### Evaluation Approach Decision Tree
 
@@ -189,7 +211,7 @@ The three-tiered evaluation framework is fully operational with the following co
 
 - Cosine similarity using TF-IDF vectorization
 - Jaccard similarity with enhanced textdistance support
-- Semantic similarity (BERTScore fallback to cosine)
+- Semantic similarity using TF-IDF cosine
 - Execution time measurement and normalization
 - Task success assessment with configurable thresholds
 
@@ -200,12 +222,13 @@ The three-tiered evaluation framework is fully operational with the following co
 - Technical accuracy scoring
 - Cost-budgeted evaluation with retry mechanisms
 
-**✅ Tier 3 - Graph Analysis** (`src/app/evals/graph_analysis.py`):
+**✅ Tier 3 - Graph Analysis (PRIMARY)** (`src/app/evals/graph_analysis.py`):
 
-- NetworkX-based behavioral pattern analysis
+- NetworkX-based behavioral pattern analysis **from Opik traces**
 - Agent coordination quality measurement
 - Tool usage effectiveness evaluation
 - Performance bottleneck detection
+- **Primary differentiator** - all other tiers validate this
 
 **✅ Composite Scoring** (`src/app/evals/composite_scorer.py`):
 
@@ -249,7 +272,7 @@ The system relies on several key technology categories for implementation and ev
 
 **Core Technologies**: See [Agent Frameworks](landscape-agent-frameworks-infrastructure.md#1-agent-frameworks) for PydanticAI agent orchestration details, [Graph Analysis & Network Tools](landscape-evaluation-data-resources.md#6-graph-analysis--network-tools) for NetworkX complexity analysis capabilities, and [Large Language Models](landscape-agent-frameworks-infrastructure.md#2-large-language-models) for LLM integration approaches.
 
-**Evaluation Tools**: See [Traditional Metrics Libraries](landscape-evaluation-data-resources.md#7-traditional-metrics-libraries) for NLTK, Rouge-Score, and BERTScore implementation details and feasibility assessments.
+**Evaluation Tools**: See [Traditional Metrics Libraries](landscape-evaluation-data-resources.md#7-traditional-metrics-libraries) for NLTK and Rouge-Score implementation details and feasibility assessments.
 
 **Development Infrastructure**: See [Development Infrastructure](landscape-agent-frameworks-infrastructure.md#development-infrastructure) for uv, Streamlit, Ruff, and pyright integration approaches and alternatives.
 

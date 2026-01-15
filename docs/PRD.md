@@ -2,7 +2,7 @@
 title: Product Requirements Document (PRD) for Agents-eval
 description: Comprehensive product requirements document for the multi-agent AI system evaluation framework
 date: 2025-09-01
-updated: 2026-01-13
+updated: 2026-01-14
 category: requirements
 version: 3.2.0
 ---
@@ -36,25 +36,6 @@ The project implements a comprehensive evaluation pipeline using the **PeerRead 
   - Multi-agent system performance visualization.
   - Real-time monitoring of agent execution and delegation.
 
-### (Optional) Backend (FastAPI)
-
-- **Multi-Agent System Architecture:**
-  - **Manager Agent:** Primary orchestrator for task delegation and coordination.
-  - **Researcher Agent:** Specialized for information gathering using DuckDuckGo search tools.
-  - **Analyst Agent:** Focused on data analysis and validation of research findings.
-  - **Synthesizer Agent:** Responsible for generating comprehensive reports and summaries.
-- **Agentic System Integration:**
-  - Support for adding tools to agents using pydantic-ai.
-  - PeerRead-specific tools for paper analysis and review processing.
-  - Ensure agents can use tools effectively and return expected results.
-- **Model Management:**
-  - Ability to download, list, and manage models using the `ollama` Python package.
-  - Support for multiple LLM providers (OpenAI, Gemini, HuggingFace).
-- **API Endpoints:**
-  - Endpoint to start and check the status of the Ollama server.
-  - Endpoint to download and manage models.
-  - Endpoint to run tests and return results.
-  - Endpoints for PeerRead evaluation pipeline execution.
 
 ## Non-Functional Requirements
 
@@ -147,9 +128,11 @@ The system implements comprehensive metrics for assessing agent performance acro
 - **Agent Coordination Quality:** Evaluates effectiveness of multi-agent collaboration and delegation.
 - **Resource Utilization:** Monitors computational resources, API calls, and token usage.
 
-### Research-Validated Metrics (Planned)
+See [roadmap.md](roadmap.md) for implementation timeline.
 
-Based on Stanford's Agents4Science conference findings:
+### Research-Validated Metrics
+
+Based on Stanford's Agents4Science conference findings.
 
 #### Citation Accuracy Metrics
 
@@ -175,7 +158,6 @@ Based on Stanford's Agents4Science conference findings:
 
 ## Future Enhancements
 
-- **Integration with More Frameworks:** Expand compatibility with other agentic system frameworks. Meaning other popular agentic system frameworks like LangChain, AutoGen, CrewAI, LangGraph, Semantic Kernel, and smolAgents.
 - **Advanced Evaluation Metrics:** Implement semantic similarity, reasoning quality assessment, and multi-modal evaluation capabilities.
 - **Performance Optimization:** Further optimize for latency and resource usage.
 - **User Feedback:** Implement a feedback loop for users to report issues or suggest improvements.

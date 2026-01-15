@@ -23,7 +23,7 @@
 1. **Replace Custom Metrics with Third-Party Packages**:
    - **Replace** custom cosine similarity (`traditional_metrics.py:64-111`) with **ROUGE-Score package**
    - **Replace** custom Jaccard implementation (`traditional_metrics.py:113-169`) with **NLTK metrics**
-   - **Replace** custom semantic similarity (`traditional_metrics.py:212-231`) with **sentence-transformers** or **BERTScore**
+   - **Replace** custom semantic similarity (`traditional_metrics.py:212-231`) with **sentence-transformers**
    - **Use** existing `textdistance>=4.6.3` library instead of custom Levenshtein
    - **Delete** custom implementations, **import** third-party functions only
    - Update `pyproject.toml` dependencies: `nltk>=3.8`, `rouge-score>=0.1.13`, `sentence-transformers>=3.0.0`
