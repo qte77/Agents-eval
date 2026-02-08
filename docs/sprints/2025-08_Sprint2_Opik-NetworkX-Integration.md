@@ -8,12 +8,13 @@ version: 1.0.0
 
 ## Sprint Goal
 
-**IMPLEMENT Opik + NetworkX Integration (code working) BEFORE Sprint 3 (SoC/SRP refactoring)**
+*IMPLEMENT Opik + NetworkX Integration (code working) BEFORE Sprint 3 (SoC/SRP refactoring)
 
 Deploy local Opik tracing infrastructure AND connect it to NetworkX Graph Analysis to make Tier 3 (Graph - PRIMARY) fully operational with Opik traces.
 
 **Critical Execution Order:**
-```
+
+```text
 Sprint 2: IMPLEMENT Opik + NetworkX (code working)
               │
               ▼ MUST BE COMPLETE (code implemented, tested, working)
@@ -44,10 +45,12 @@ Sprint 3: SoC/SRP cleanup/optimization (ONLY THEN)
 ## MUST Deliver (Before Sprint 3 Can Start)
 
 ### 1. Isolated Observability Module
+
 **Location:** `src/app/observability/`
 
 **Structure:**
-```
+
+```text
 src/app/observability/
 ├── __init__.py
 ├── tracer_interface.py      # Abstract Tracer (ABC)
@@ -58,6 +61,7 @@ src/app/observability/
 ```
 
 **Anti-Pattern Prevention:**
+
 - ❌ NO `import opik` in core files (agents/, evals/)
 - ❌ NO Opik-specific code in evaluation_pipeline.py
 - ✅ YES dependency injection via `Tracer` interface
@@ -68,12 +72,14 @@ src/app/observability/
 ### 2. Local Opik Deployment
 
 **Requirements:**
+
 - Local Opik deployment using existing `docker-compose.opik.yaml`
 - ClickHouse backend configured and accessible
 - Health checks passing
 - Make recipe: `make deploy_opik` and `make stop_opik`
 
 **Deliverables:**
+
 - `make deploy_opik` → Opik + ClickHouse running locally
 - Opik dashboard accessible at `http://localhost:5173`
 - ClickHouse accessible for trace queries
@@ -83,16 +89,19 @@ src/app/observability/
 ### 3. Opik Traces → NetworkX Graph Conversion
 
 **Requirements:**
+
 - Opik captures agent execution traces
 - Trace data exported to NetworkX graph format
 - Graph analysis metrics computed from Opik data
 
 **Implementation:**
+
 - `OpikTracer.export_to_networkx()` method
 - Update `graph_analysis.py` to accept Opik-sourced graphs
 - Preserve existing graph analysis logic
 
 **Success Criteria:**
+
 - Run evaluation → Opik logs traces → Export to NetworkX → Graph metrics work
 - No regression in graph analysis functionality
 
@@ -101,6 +110,7 @@ src/app/observability/
 ### 4. Tier 3 (Graph) Fully Operational with Opik
 
 **Requirements:**
+
 - All graph metrics working with Opik-sourced data:
   - Path convergence
   - Coordination centrality
@@ -113,6 +123,7 @@ src/app/observability/
 ### 5. Abstract Tracer Interface (Dependency Injection)
 
 **Pattern:**
+
 ```python
 # tracer_interface.py
 from abc import ABC, abstractmethod
@@ -135,6 +146,7 @@ class OpikTracer(Tracer):
 ```
 
 **Usage in core code:**
+
 ```python
 # evaluation_pipeline.py (CORRECT)
 def run_evaluation(
@@ -146,6 +158,7 @@ def run_evaluation(
 ```
 
 **DON'T:**
+
 ```python
 # evaluation_pipeline.py (WRONG)
 from app.observability.opik_client import opik  # ❌ Hard dependency
@@ -156,6 +169,7 @@ from app.observability.opik_client import opik  # ❌ Hard dependency
 ### 6. Configuration-Driven Enable/Disable
 
 **File:** `config/config_observability.json`
+
 ```json
 {
   "enabled": true,
@@ -169,6 +183,7 @@ from app.observability.opik_client import opik  # ❌ Hard dependency
 ```
 
 **Code:**
+
 ```python
 # Main entrypoint
 from app.observability.tracer_factory import create_tracer
@@ -184,6 +199,7 @@ else:
 ## Success Criteria
 
 ### Functional Requirements
+
 - [ ] Run `make deploy_opik` → Opik + ClickHouse running
 - [ ] Run evaluation pipeline → Opik captures traces
 - [ ] Traces visible in Opik dashboard
@@ -192,6 +208,7 @@ else:
 - [ ] All 3 tiers operational: Traditional + LLM-Judge + Graph (from Opik)
 
 ### Architecture Requirements
+
 - [ ] Opik code isolated in `src/app/observability/`
 - [ ] Zero `import opik` in core files (agents/, evals/)
 - [ ] Tracer injected via parameters, not imported directly
@@ -199,6 +216,7 @@ else:
 - [ ] Sprint 3 (SoC/SRP) can move `observability/` module cleanly
 
 ### Testing Requirements
+
 - [ ] Evaluation works with Opik enabled
 - [ ] Evaluation works with Opik disabled
 - [ ] `make validate` passes
@@ -210,23 +228,28 @@ else:
 ## Refactor-Friendly Implementation Guidelines
 
 ### 1. Isolation
+
 **Principle:** All Opik code in one module
 
 **DO:**
+
 - Single `src/app/observability/` module
 - Clear module boundary
 - No leakage into other modules
 
 **DON'T:**
+
 - Scatter Opik imports across codebase
 - Mix Opik logic with business logic
 
 ---
 
 ### 2. Dependency Injection
+
 **Principle:** No hard dependencies on Opik
 
 **DO:**
+
 ```python
 def agent_method(tracer: Optional[Tracer] = None):
     if tracer:
@@ -234,6 +257,7 @@ def agent_method(tracer: Optional[Tracer] = None):
 ```
 
 **DON'T:**
+
 ```python
 from observability.opik_client import opik
 def agent_method():
@@ -243,42 +267,51 @@ def agent_method():
 ---
 
 ### 3. Interface-Driven
+
 **Principle:** Code depends on interfaces, not implementations
 
 **DO:**
+
 - Define `Tracer` abstract base class
 - Implement `OpikTracer(Tracer)`
 - Core code uses `Tracer`, not `OpikTracer`
 
 **DON'T:**
+
 - Direct usage of Opik classes in core code
 - Type hints with concrete Opik types
 
 ---
 
 ### 4. Configuration-Driven
+
 **Principle:** Enable/disable without code changes
 
 **DO:**
+
 - Read from `config_observability.json`
 - Factory pattern: `create_tracer(provider)`
 - Environment variable overrides
 
 **DON'T:**
+
 - Hardcoded `OPIK_AVAILABLE` flags scattered everywhere
 - Feature flags in code
 
 ---
 
 ### 5. Minimal Touch Points
+
 **Principle:** Instrument only at entry points
 
 **Touch Points (ONLY these):**
+
 1. `src/app/agents/agent_system.py` - Agent execution entry
 2. `src/app/evals/evaluation_pipeline.py` - Pipeline entry
 3. `src/app/main.py` - CLI entry (optional)
 
 **DON'T:**
+
 - Add tracing to every helper function
 - Instrument internal implementation details
 
@@ -287,6 +320,7 @@ def agent_method():
 ## Implementation Checklist
 
 ### Phase 1: Isolated Module Setup (Day 1)
+
 - [ ] Create `src/app/observability/` directory
 - [ ] Define `Tracer` abstract interface (`tracer_interface.py`)
 - [ ] Implement `OpikTracer` concrete class (`opik_tracer.py`)
@@ -295,6 +329,7 @@ def agent_method():
 - [ ] Add unit tests for `OpikTracer`
 
 ### Phase 2: Local Deployment (Day 1-2)
+
 - [ ] Test existing `docker-compose.opik.yaml`
 - [ ] Add `make deploy_opik` and `make stop_opik` commands
 - [ ] Add health check script (`scripts/check_opik_health.sh`)
@@ -302,6 +337,7 @@ def agent_method():
 - [ ] Verify Opik dashboard accessible
 
 ### Phase 3: Minimal Instrumentation (Day 2-3)
+
 - [ ] Add `@track` decorator to `agent_system.py:run_agent()`
 - [ ] Add optional `tracer` parameter to `evaluation_pipeline.py`
 - [ ] Wire tracer via dependency injection in `main.py`
@@ -309,6 +345,7 @@ def agent_method():
 - [ ] Test: Verify evaluation works with tracer=None
 
 ### Phase 4: Graph Export (Day 3-4)
+
 - [ ] Implement `OpikTracer.export_to_networkx()`
 - [ ] Update `graph_analysis.py` to accept external graphs
 - [ ] Test: Graph metrics work with Opik-sourced data
@@ -316,6 +353,7 @@ def agent_method():
 - [ ] Performance benchmark: Measure Opik overhead
 
 ### Phase 5: Integration Testing (Day 4-5)
+
 - [ ] Run full evaluation with Opik enabled
 - [ ] Run full evaluation with Opik disabled
 - [ ] Verify: All 3 tiers produce consistent results
@@ -323,6 +361,7 @@ def agent_method():
 - [ ] Document: Integration architecture in `docs/opik-integration-architecture.md`
 
 ### Phase 6: Validation & Handoff (Day 5-7)
+
 - [ ] Code review: Check isolation, dependency injection, interfaces
 - [ ] Performance validation: Opik overhead < 10%
 - [ ] Documentation review: Complete and accurate
@@ -336,19 +375,19 @@ def agent_method():
 ```makefile
 # Opik deployment commands
 deploy_opik:
-	docker-compose -f docker-compose.opik.yaml up -d
-	@echo "Opik deployed. Dashboard: http://localhost:5173"
+ docker-compose -f docker-compose.opik.yaml up -d
+ @echo "Opik deployed. Dashboard: http://localhost:5173"
 
 stop_opik:
-	docker-compose -f docker-compose.opik.yaml down
+ docker-compose -f docker-compose.opik.yaml down
 
 status_opik:
-	docker-compose -f docker-compose.opik.yaml ps
-	@./scripts/check_opik_health.sh
+ docker-compose -f docker-compose.opik.yaml ps
+ @./scripts/check_opik_health.sh
 
 clean_opik:
-	docker-compose -f docker-compose.opik.yaml down -v
-	@echo "WARNING: All Opik trace data deleted"
+ docker-compose -f docker-compose.opik.yaml down -v
+ @echo "WARNING: All Opik trace data deleted"
 ```
 
 ---
@@ -356,7 +395,9 @@ clean_opik:
 ## Documentation to Create
 
 ### 1. `docs/opik-integration-architecture.md`
+
 **Content:**
+
 - Design principles (isolation, dependency injection, interfaces)
 - Integration points (3-5 locations)
 - Configuration schema
@@ -364,7 +405,9 @@ clean_opik:
 - Why this design (enables Sprint 3 refactoring)
 
 ### 2. `README.md` updates
+
 **Add section:**
+
 ```markdown
 ## Opik Tracing (Optional)
 
@@ -374,14 +417,15 @@ make deploy_opik
 ```
 
 Run evaluation with tracing:
+
 ```bash
 make run_cli  # Opik traces automatically if deployed
 ```
 
 View traces:
+
 ```bash
 open http://localhost:5173
-```
 ```
 
 ---
@@ -391,6 +435,7 @@ open http://localhost:5173
 Before Sprint 3 (SoC/SRP refactoring) can start:
 
 ### Deliverables Checklist
+
 - [ ] All Phase 1-6 tasks completed
 - [ ] Opik + NetworkX fully operational
 - [ ] Documentation complete
@@ -398,9 +443,11 @@ Before Sprint 3 (SoC/SRP refactoring) can start:
 - [ ] Performance validated
 
 ### Handoff Document
+
 Create: `docs/sprints/handoffs/sprint2-to-sprint3.md`
 
 **Content:**
+
 - Sprint 2 accomplishments
 - `observability/` module structure
 - Integration points in codebase
