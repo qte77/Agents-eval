@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_dev_full setup_prod_ollama setup_dev_ollama setup_claude_code setup_gemini_cli setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff test_all coverage_all type_check validate quick_validate output_unset_app_env_sh setup_opik start_opik stop_opik clean_opik status_opik setup_opik_env help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_opik setup_opik_env start_opik stop_opik clean_opik status_opik ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_status ralph_clean ralph_reorganize help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -324,35 +324,58 @@ status_opik:  ## Check Opik services health status
 # MARK: ralph
 
 
+ralph_userstory:  ## [Optional] Create UserStory.md interactively. Usage: make ralph_userstory
+	echo "Creating UserStory.md through interactive Q&A ..."
+	claude -p "/generating-interactive-userstory-md"
+
+ralph_prd_md:  ## [Optional] Generate PRD.md from UserStory.md
+	echo "Generating PRD.md from UserStory.md ..."
+	claude -p "/generating-prd-md-from-userstory-md"
+
+ralph_prd_json:  ## [Optional] Generate PRD.json from PRD.md
+	echo "Generating PRD.json from PRD.md ..."
+	claude -p "/generating-prd-json-from-prd-md"
+
 ralph_init:  ## Initialize Ralph loop environment
 	echo "Initializing Ralph loop environment ..."
-	bash .claude/scripts/ralph/init.sh
+	bash ralph/scripts/init.sh
 
-ralph:  ## Run Ralph autonomous development loop (use ITERATIONS=N to set max iterations)
+ralph_run:  ## Run Ralph autonomous development loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku)
 	echo "Starting Ralph loop ..."
-	ITERATIONS=$${ITERATIONS:-25}
-	bash .claude/scripts/ralph/ralph.sh $$ITERATIONS
+	RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) bash ralph/scripts/ralph.sh
 
 ralph_status:  ## Show Ralph loop progress and status
 	echo "Ralph Loop Status"
 	echo "================="
-	if [ -f docs/ralph/prd.json ]; then \
-		total=$$(jq '.stories | length' docs/ralph/prd.json); \
-		passing=$$(jq '[.stories[] | select(.passes == true)] | length' docs/ralph/prd.json); \
-		echo "Stories: $$passing/$$total completed"; \
-		echo ""; \
-		echo "Incomplete stories:"; \
-		jq -r '.stories[] | select(.passes == false) | "  - [\(.id)] \(.title)"' docs/ralph/prd.json; \
-	else \
-		echo "prd.json not found. Run 'make ralph_init' first."; \
+	if [ -f ralph/docs/prd.json ]; then
+		total=$$(jq '.stories | length' ralph/docs/prd.json)
+		passing=$$(jq '[.stories[] | select(.passes == true)] | length' ralph/docs/prd.json)
+		echo "Stories: $$passing/$$total completed"
+		echo ""
+		echo "Incomplete stories:"
+		jq -r '.stories[] | select(.passes == false) | "  - [\(.id)] \(.title)"' ralph/docs/prd.json
+	else
+		echo "prd.json not found. Run 'make ralph_init' first."
 	fi
 
 ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
 	echo "WARNING: This will reset Ralph loop state!"
 	echo "Press Ctrl+C to cancel, Enter to continue..."
 	read
-	rm -f docs/ralph/prd.json docs/ralph/progress.txt
+	rm -f ralph/docs/prd.json ralph/docs/progress.txt
 	echo "Ralph state cleaned. Run 'make ralph_init' to reinitialize."
+
+ralph_reorganize:  ## Archive current PRD and start new iteration. Usage: make ralph_reorganize NEW_PRD=path/to/new.md [VERSION=2]
+	if [ -z "$(NEW_PRD)" ]; then
+		echo "Error: NEW_PRD parameter required"
+		echo "Usage: make ralph_reorganize NEW_PRD=docs/PRD-New.md [VERSION=2]"
+		exit 1
+	fi
+	VERSION_ARG=""
+	if [ -n "$(VERSION)" ]; then
+		VERSION_ARG="-v $(VERSION)"
+	fi
+	bash ralph/scripts/reorganize_prd.sh $$VERSION_ARG $(NEW_PRD)
 
 
 # MARK: help

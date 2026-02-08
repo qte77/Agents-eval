@@ -1,0 +1,67 @@
+---
+title: Product Requirements Document
+version: 1.0
+---
+
+# Product Requirements Document: {{PROJECT_NAME}}
+
+## Project Overview
+
+{{PROJECT_OVERVIEW}}
+
+---
+
+## Functional Requirements
+
+<!-- PARSER REQUIREMENT: Use exactly "#### Feature N:" format -->
+
+#### Feature 1: {{FEATURE_NAME}}
+
+**Description**: {{FEATURE_DESCRIPTION}}
+
+**Acceptance Criteria**:
+- [ ] {{CRITERION_1}}
+- [ ] {{CRITERION_2}}
+
+**Technical Requirements**:
+- {{TECH_REQ_1}}
+- {{TECH_REQ_2}}
+
+**Files**:
+- `{{FILE_PATH_1}}`
+- `{{FILE_PATH_2}}`
+
+---
+
+#### Feature 2: {{FEATURE_NAME}}
+
+**Description**: {{FEATURE_DESCRIPTION}}
+
+<!-- For complex features, use sub-features with ##### N.N format -->
+##### 2.1 {{SUB_FEATURE_NAME}}
+
+**Acceptance Criteria**:
+- [ ] {{SUB_CRITERION_1}}
+
+**Files**:
+- `{{SUB_FILE_PATH}}`
+
+---
+
+## Non-Functional Requirements
+
+{{NON_FUNCTIONAL_REQUIREMENTS}}
+
+## Out of Scope
+
+{{OUT_OF_SCOPE}}
+
+---
+
+## Notes for Ralph Loop
+
+<!-- PARSER REQUIREMENT: Include story count in parentheses -->
+<!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
+Story Breakdown - Phase 1 ({{STORY_COUNT}} stories total):
+- **Feature 1 ({{FEATURE_NAME}})** → STORY-001: {{STORY_TITLE}}
+- **Feature 2 ({{FEATURE_NAME}})** → STORY-002: {{STORY_TITLE}}, STORY-003: {{STORY_TITLE}} (depends: STORY-002)

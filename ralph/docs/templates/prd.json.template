@@ -1,0 +1,22 @@
+{
+  "project": "RDI-AgentBeats-TheBulletproofProtocol",
+  "description": "A concise project description",
+  "source": "docs/PRD.md",
+  "generated": "TEMPLATE",
+  "stories": [
+    {
+      "id": "STORY-EXAMPLE",
+      "title": "Example story - replace with real stories",
+      "description": "This is a placeholder. Run make ralph_prd_json to populate from PRD.md",
+      "acceptance": [
+        "Run: make ralph_prd_json",
+        "Skill will parse PRD.md and populate real stories here"
+      ],
+      "files": ["ralph/docs/prd.json"],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "",
+      "depends_on": []
+    }
+  ]
+}

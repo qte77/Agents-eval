@@ -1,0 +1,24 @@
+# Ralph Loop Progress Log
+
+Initialized: {{DATE}}
+Project: RDI-AgentBeats-TheBulletproofProtocol
+
+This file tracks the progress of Ralph loop autonomous execution.
+Each iteration appends its results here.
+
+---
+
+## Setup
+
+Ralph loop infrastructure:
+- Scripts: ralph/scripts/ (ralph.sh, init.sh, reorganize_prd.sh)
+- Templates: ralph/docs/templates/ (prd.json.template, progress.txt.template)
+- State files: ralph/docs/ (prd.json, progress.txt)
+- Skills: .claude/skills/ (designing-backend, implementing-python, reviewing-code, generating-prd)
+
+Next steps:
+1. Run `make ralph_init` to validate environment
+2. Generate real prd.json: `claude -p` then ask to use generating-prd skill
+3. Execute Ralph loop: `make ralph_run ITERATIONS=5`
+
+---
