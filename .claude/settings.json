@@ -4,6 +4,7 @@
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1",
     "CLAUDE_CODE_SUBAGENT_MODEL": "opusplan",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "0",    
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
     "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL": "",
     "OTEL_EXPORTER_OTLP_PROTOCOL": "",
@@ -22,10 +23,15 @@
       "write": {
         "allowOnly": [
           "/tmp/claude-1000",
-          ".git/"
+          ".git/",
+          ".git/objects/",
+          ".git/refs/",
+          ".git/logs/",
+          ".git/COMMIT_EDITMSG",
+          ".git/index"
         ]
       }
-    }  
+    }
   },
   "permissions": {
     "allow": [

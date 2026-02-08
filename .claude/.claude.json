@@ -10,5 +10,5 @@
   "autoInstallIdeExtension": true,
   "officialMarketplaceAutoInstallAttempted": true,
   "officialMarketplaceAutoInstalled": true,
-  "claudeInChromeDefaultEnabled": true
+  "claudeInChromeDefaultEnabled": false
 }
