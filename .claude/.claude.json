@@ -1,0 +1,5 @@
+{
+  "installMethod": "native",
+  "preferredNotifChannel": "iterm2",
+  "diffTool": "terminal"
+}

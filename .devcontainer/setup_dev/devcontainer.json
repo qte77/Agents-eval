@@ -1,6 +1,6 @@
 {
-  "name": "make setup_dev",
-  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.14",
+  "name": "make setup_devc",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
@@ -8,5 +8,5 @@
         "moby": false
     }
   },
-  "postCreateCommand": "make setup_dev"
+  "postCreateCommand": "make setup_devc"
 }
