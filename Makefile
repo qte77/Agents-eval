@@ -23,6 +23,8 @@ PANDOC_SCRIPT := scripts/run-pandoc.sh
 PDF_CONVERTER_SCRIPT := scripts/setup-pdf-converter.sh
 PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex
 PANDOC_TITLE_FILE := 01_titel_abstrakt.md
+BIBLIOGRAPHY :=
+CSL :=
 
 
 # MARK: setup
@@ -185,14 +187,15 @@ run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 # MARK: run pandoc
 
 
-run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_pandoc INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" TITLE_PAGE="$$dir/title.tex" TOC_TITLE="ToC" LANGUAGE="en-US" NUMBER_SECTIONS="true" | Help: make run_pandoc HELP=1
+run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_pandoc INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" BIBLIOGRAPHY="$$dir/refs.bib" CSL="$$dir/style.csl" | Help: make run_pandoc HELP=1
 	if [ -n "$(HELP)" ]; then
 		$(PANDOC_SCRIPT) help
 	else
 		chmod +x $(PANDOC_SCRIPT)
 		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" \
 			"$(TITLE_PAGE)" "$(TEMPLATE)" "$(FOOTER_TEXT)" \
-			"$(TOC_TITLE)" "$(LANGUAGE)" "$(NUMBER_SECTIONS)"
+			"$(TOC_TITLE)" "$(LANGUAGE)" "$(NUMBER_SECTIONS)" \
+			"$(BIBLIOGRAPHY)" "$(CSL)"
 	fi
 
 

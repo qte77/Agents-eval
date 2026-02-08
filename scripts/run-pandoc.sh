@@ -16,26 +16,37 @@
 # Help
 if [ "$1" = "help" ]; then
     cat << 'EOF'
-Usage: $0 [input_files [output_file] [title_page] [template] [footer_text] [toc_title] [language] [number_sections]]
+Usage: $0 [input_files] [output_file] [title_page] [template] [footer_text] [toc_title] [language] [number_sections] [bibliography] [csl]
 
-Available Languages:
-  en-US, en    English (default)
-  de-DE, de    German
-  es-ES, es    Spanish
-  fr-FR, fr    French
-  it-IT, it    Italian
+Arguments:
+  input_files      Markdown files to convert (glob or \036-separated)
+  output_file      Output PDF path (default: output.pdf)
+  title_page       LaTeX title page file
+  template         LaTeX template file
+  footer_text      Footer text ("none" to disable, "all:text" for all pages)
+  toc_title        Custom table of contents heading
+  language         en-US (default), de-DE, es-ES, fr-FR, it-IT
+  number_sections  true (default) or false
+  bibliography     BibTeX .bib file — enables --citeproc with IEEE [1] style
+  csl              Custom CSL file — overrides default IEEE style
 
 Examples:
   $0 "*.md" report.pdf title.tex template.tex "Custom Footer" "Table of Contents"
-  $0 "*.md" report.pdf "" "" "" "" "en-US" "false"  # Disable section numbering
-  $0 "*.md" report.pdf "" "" "" "" "de-DE" "true"   # German with section numbering
-  dir=docs/path && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" OUTPUT_FILE="$dir/report.pdf"
+  $0 "*.md" report.pdf "" "" "" "" "en-US" "false"                 # No section numbers
+  $0 "*.md" report.pdf "" "" "" "" "de-DE" "true"                  # German
+  $0 "*.md" r.pdf "" "" "" "" "en-US" "true" "refs.bib"            # IEEE citations
+  $0 "*.md" r.pdf "" "" "" "" "en-US" "true" "refs.bib" "apa.csl" # APA citations
+  dir=docs/path && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" \
+    OUTPUT_FILE="$dir/report.pdf" BIBLIOGRAPHY="$dir/refs.bib"
 EOF
     exit 0
 fi
 
+# Resolve project root to absolute path (before any cd)
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
 # Extract name and version from [project] section
-PROJECT_FILE="$(dirname "$0")/../pyproject.toml"
+PROJECT_FILE="$PROJECT_ROOT/pyproject.toml"
 project_section=$(mktemp)
 sed -n '/^\[project\]/,/^\[/p' "$PROJECT_FILE" | head -n -1 > "$project_section"
 PROJECT_NAME=$(grep -E '^name[[:space:]]*=' "$project_section" | head -1 | sed -E 's/^name[[:space:]]*=[[:space:]]*"([^"]*)".*/\1/')
@@ -51,6 +62,8 @@ footer_text="${5:-${PROJECT_NAME} v${VERSION}}"
 toc_title="$6"
 language="${7:-en-US}"
 number_sections="${8:-true}"
+bibliography_file="$9"
+csl_file="${10}"
 
 # Handle separator-delimited file lists
 RS_CHAR=$(printf '\036')
@@ -91,8 +104,14 @@ if echo "$input_files" | grep -q "/"; then
         done
         [ -n "$title_file" ] && [ -f "$title_file" ] && title_arg="-B $(basename "$title_file")"
         
-        # Change directory and update paths
+        # Convert relative paths to absolute before cd
         case "$output_file" in /*) ;; *) output_file="$(pwd)/$output_file" ;; esac
+        if [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ]; then
+            case "$bibliography_file" in /*) ;; *) bibliography_file="$(pwd)/$bibliography_file" ;; esac
+        fi
+        if [ -n "$csl_file" ] && [ -f "$csl_file" ]; then
+            case "$csl_file" in /*) ;; *) csl_file="$(pwd)/$csl_file" ;; esac
+        fi
         cd "$work_dir"
         input_files=$(printf '%s\n' $temp_files | sort | tr '\n' ' ' | sed 's/^ *//; s/ *$//')
     fi
@@ -253,6 +272,24 @@ fi
 
 # Add the header to pandoc arguments
 set -- "$@" -H "$header_temp"
+
+# Add bibliography/citation support if provided
+if [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ]; then
+    set -- "$@" --citeproc --bibliography="$bibliography_file"
+    set -- "$@" -M link-citations=true
+    echo "Bibliography: $bibliography_file"
+    if [ -n "$csl_file" ] && [ -f "$csl_file" ]; then
+        set -- "$@" --csl="$csl_file"
+        echo "Citation style: $csl_file"
+    else
+        # Pandoc default is Chicago author-date; use IEEE numeric [1] style
+        default_csl="$PROJECT_ROOT/scripts/citation-styles/ieee.csl"
+        if [ -f "$default_csl" ]; then
+            set -- "$@" --csl="$default_csl"
+        fi
+        echo "Citation style: IEEE (default)"
+    fi
+fi
 
 # Enable extended globbing
 [ -n "${BASH_VERSION}" ] && shopt -s extglob 2>/dev/null

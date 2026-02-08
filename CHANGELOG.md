@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `generating-writeup` skill: academic/technical writeup generation with pandoc citation support, IEEE `[1]` default style, and `template.md` for document structure
+- Pandoc `--citeproc` integration: `BIBLIOGRAPHY` and `CSL` variables in `make run_pandoc`, auto-resolves IEEE CSL from `scripts/citation-styles/ieee.csl`
 - Claude Code Skills infrastructure (5 skills): core-principles (KISS, DRY, YAGNI), designing-backend, implementing-python, reviewing-code, generating-prd
 - Ralph Loop autonomous execution system (.claude/scripts/ralph/): ralph.sh orchestrator, prompt.md, init.sh
 - Template-based state file management (.claude/templates/ralph/): prd.json.template, progress.txt.template
