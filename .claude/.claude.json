@@ -1,5 +1,14 @@
 {
   "installMethod": "native",
-  "preferredNotifChannel": "iterm2",
-  "diffTool": "terminal"
+  "preferredNotifChannel": "terminal_bell",
+  "diffTool": "terminal",
+  "fileCheckpointingEnabled": true,
+  "terminalProgressBarEnabled": true,
+  "respectGitignore": true,
+  "theme": "dark",
+  "editorMode": "normal",
+  "autoInstallIdeExtension": true,
+  "officialMarketplaceAutoInstallAttempted": true,
+  "officialMarketplaceAutoInstalled": true,
+  "claudeInChromeDefaultEnabled": true
 }

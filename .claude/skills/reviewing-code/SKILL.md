@@ -1,23 +1,27 @@
 ---
 name: reviewing-code
 description: Provides concise, focused code reviews matching exact task complexity requirements. Use when reviewing code quality, security, or when the user asks for code review.
+compatibility: Designed for Claude Code
+metadata:
+  argument-hint: [file-or-directory]
+  allowed-tools: Read, Grep, Glob, WebFetch, WebSearch
 ---
 
-# Code Review
+# Review Context
 
-Delivers **focused, streamlined** code reviews matching stated task requirements exactly. No over-analysis.
+- Changed files: !`git diff --name-only HEAD~1 2>/dev/null || echo "No recent commits"`
+- Staged files: !`git diff --staged --name-only`
 
-## Core Principles
+## Code Review
 
-**MANDATORY**: Always apply @core-principles skill first - User Experience, KISS, DRY, YAGNI, root-cause thinking.
+**Scope**: $ARGUMENTS
 
-**MANDATORY COMPLIANCE**: Follow @AGENTS.md Agent Neutrality Requirements - review against task specs exactly.
+Delivers **focused, streamlined** code reviews matching stated task
+requirements exactly. No over-analysis.
 
-- **Concise reviews**: Avoid verbose feedback or unnecessary suggestions
-- **Focused validation**: Match review depth to complexity (simple vs complex tasks)
-- **Streamlined approach**: Security and compliance primary, optimization suggestions secondary
-- **Review only**: No code implementation or architectural changes
-- **Requirement-driven**: Validate against task requirements, not production standards
+## Python Standards
+
+See `docs/best-practices/python-best-practices.md` for comprehensive Python guidelines.
 
 ## Workflow
 
@@ -29,8 +33,12 @@ Delivers **focused, streamlined** code reviews matching stated task requirements
 
 ## Review Strategy
 
-**Simple Tasks (100-200 lines)**: Security, compliance, requirements match, basic quality
-**Complex Tasks (500+ lines)**: Above plus architecture, performance, comprehensive testing
+**Simple Tasks (100-200 lines)**: Security, compliance, requirements match,
+basic quality
+
+**Complex Tasks (500+ lines)**: Above plus architecture, performance,
+comprehensive testing
+
 **Always**: Use existing project patterns, immediate use after implementation
 
 ## Review Checklist
@@ -49,7 +57,7 @@ Delivers **focused, streamlined** code reviews matching stated task requirements
 
 **Code Quality**:
 
-- [ ] Follows project patterns in `src/app/`
+- [ ] Follows project patterns in `src/`
 - [ ] Proper type hints and docstrings
 - [ ] Tests cover stated functionality
 
@@ -58,9 +66,3 @@ Delivers **focused, streamlined** code reviews matching stated task requirements
 **Simple Tasks**: CRITICAL issues only, clear approval when requirements met
 **Complex Tasks**: CRITICAL/WARNINGS/SUGGESTIONS with specific fixes
 **All reviews**: Concise, streamlined, no unnecessary complexity analysis
-
-## References
-
-- See @AGENTS.md for mandatory compliance requirements
-- See @CONTRIBUTING.md for code standards
-- See @docs/architecture.md for architectural patterns

@@ -1,39 +1,40 @@
 ---
 name: implementing-python
 description: Implements concise, streamlined Python code matching exact architect specifications. Use when writing Python code, creating modules, or when the user asks to implement features in Python.
+compatibility: Designed for Claude Code
+metadata:
+  argument-hint: [feature-name]
+  allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch
 ---
 
 # Python Implementation
 
-Creates **focused, streamlined** Python implementations following architect specifications exactly. No over-engineering.
+**Target**: $ARGUMENTS
 
-## Core Principles
+Creates **focused, streamlined** Python implementations following architect
+specifications exactly. No over-engineering.
 
-**MANDATORY**: Always apply @core-principles skill first - User Experience, KISS, DRY, YAGNI, root-cause thinking.
+## Python Standards
 
-**MANDATORY COMPLIANCE**: Follow @AGENTS.md Agent Neutrality Requirements - implement architect specifications exactly.
-
-**MANDATORY STANDARDS**: Follow @docs/best-practices/python-best-practices.md for all Python coding patterns (security, types, imports, errors, docstrings, testing).
-
-- **Concise implementation**: Avoid verbose code or unnecessary features
-- **Focused functionality**: Match complexity level (simple functions vs complex classes)
-- **Streamlined approach**: Existing dependencies primary, new packages fallback only
-- **Implementation only**: No architectural decisions beyond specifications
-- **Requirement-driven**: Follow architect specs exactly, don't add functionality
+See `docs/best-practices/python-best-practices.md` for comprehensive Python guidelines.
 
 ## Workflow
 
 1. **Read architect specifications** from provided documents
 2. **Validate scope** - Simple (100-200 lines) vs Complex (500+ lines)
-3. **Study existing patterns** in `src/app/` structure
+3. **Study existing patterns** in `src/` structure
 4. **Implement minimal solution** matching stated functionality
 5. **Create focused tests** matching task complexity
 6. **Run `make validate`** and fix all issues
 
 ## Implementation Strategy
 
-**Simple Tasks**: Minimal functions, basic error handling, lightweight dependencies, focused tests
-**Complex Tasks**: Class-based architecture, comprehensive validation, necessary dependencies, full test coverage
+**Simple Tasks**: Minimal functions, basic error handling, lightweight
+dependencies, focused tests
+
+**Complex Tasks**: Class-based architecture, comprehensive validation,
+necessary dependencies, full test coverage
+
 **Always**: Use existing project patterns, pass `make validate`
 
 ## Output Standards
@@ -51,10 +52,3 @@ make validate
 ```
 
 All type checks, linting, and tests must pass.
-
-## References
-
-- See @docs/best-practices/python-best-practices.md for Python coding standards
-- See @AGENTS.md for mandatory compliance requirements
-- See @CONTRIBUTING.md for coding standards and patterns
-- Verify dependencies in `pyproject.toml`

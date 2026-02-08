@@ -1,0 +1,24 @@
+#!/bin/bash
+
+input=$(cat)
+cwd=$(echo "$input" | jq -r '.workspace.current_dir')
+model=$(echo "$input" | jq -r '.model.id')
+agent=$(echo "$input" | jq -r '.agent.type // "main"')
+version=$(echo "$input" | jq -r '.version // ""')
+cost=$(
+    echo "$input" | jq -r 'if .cost.total_cost_usd then (.cost.total_cost_usd * 100 | round / 100 | tostring) + "$" else "" end'
+)
+duration=$(
+    echo "$input" | jq -r '((.cost.total_api_duration_ms // 0) / 1000 / 60 | round | tostring) + "m"'
+)
+exc_context=$(echo "$input" | jq -r '.cost.exceeds_200k_tokens // false')
+exc_output=$(echo "$input" | jq -r '.usage.exceeds_output_limit // false')
+user=$(whoami)
+time=$(date +%H:%M:%S)
+
+if git rev-parse --git-dir >/dev/null 2>&1; then
+    branch=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)
+    else branch=""
+fi
+
+printf "\\033[0;31magent:%s \\033[0;33mmodel:%s \\033[2mver:%s \\033[0;34mcost:%s \\033[0;36mdur:%s \\033[0;31m>200k:%s\\033[0m\\n\\033[2mdir:%s \\033[0;36mbranch:%s \\033[0;32muser:%s \\033[0;35mtime:%s\\033[0m" "$agent" "$model" "$version" "$cost" "$duration" "$exc_context" "$(basename "$cwd")" "$branch" "$user" "$time"
