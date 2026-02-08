@@ -146,11 +146,11 @@ Skills are auto-discovered by Claude Code. Trigger by:
 - [x] State files in `docs/ralph/`
 - [x] Makefile recipes added
 - [x] Settings.json permissions configured
-- [ ] **PENDING**: Run `make ralph_init` to validate environment
-- [ ] **PENDING**: Generate real prd.json from PRD.md
-- [ ] **PENDING**: Execute single iteration test
-- [ ] **PENDING**: Verify progress.txt updates
-- [ ] **PENDING**: Confirm git commits created
+- [x] **PENDING**: Run `make ralph_init` to validate environment
+- [x] **PENDING**: Generate real prd.json from PRD.md
+- [x] **PENDING**: Execute single iteration test
+- [x] **PENDING**: Verify progress.txt updates
+- [x] **PENDING**: Confirm git commits created
 
 ## Next Steps
 

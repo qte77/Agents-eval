@@ -36,7 +36,6 @@ The project implements a comprehensive evaluation pipeline using the **PeerRead 
   - Multi-agent system performance visualization.
   - Real-time monitoring of agent execution and delegation.
 
-
 ## Non-Functional Requirements
 
 - **Maintainability:**

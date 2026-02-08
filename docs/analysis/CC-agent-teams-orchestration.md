@@ -55,7 +55,7 @@ with:
 ### High Relevance Areas
 
 | Use Case | Fit | Rationale |
-|----------|-----|-----------|
+| -------- | --- | --------- |
 | Parallel code review (security + performance + coverage) | Strong | Existing `reviewing-code` skill; agent teams let 3 reviewers run simultaneously with different lenses |
 | Cross-layer feature implementation (backend + tests) | Strong | Enforces role separation (architect/developer/reviewer) that AGENTS.md mandates |
 | Research + competing hypotheses debugging | Strong | Adversarial debate pattern addresses anchoring bias in single-agent investigation |
@@ -135,7 +135,7 @@ Teams maps naturally to this project's multi-agent review generation architectur
 ### Mapping to Project Architecture
 
 | Agent Teams Role | Project Equivalent | Responsibility |
-|------------------|--------------------|----------------|
+| ---------------- | ------------------ | -------------- |
 | Lead | Manager agent | Orchestrates work, defines tasks, reviews results |
 | Teammate A | Researcher track | Paper analysis, data extraction, prompt development |
 | Teammate B | Analyst track | Evaluation metrics, scoring pipeline, statistical analysis |
@@ -417,7 +417,7 @@ async def run_benchmark(papers: list, pipeline: EvaluationPipeline):
 ### What Each Tier Measures in the Benchmark
 
 | Tier | What It Reveals About the MAS |
-|------|-------------------------------|
+| ---- | ----------------------------- |
 | **Tier 1** — Traditional metrics | Does multi-agent delegation produce reviews that are closer to reference reviews than a single-pass agent? |
 | **Tier 2** — LLM-as-Judge | Does the analyst approval loop improve technical accuracy and constructiveness vs no validation (single) or parallel-only validation (teams)? |
 | **Tier 3** — Graph analysis | How much coordination overhead does the delegation chain add? Is the MAS's path convergence efficient or wasteful compared to simpler topologies? |
@@ -425,7 +425,7 @@ async def run_benchmark(papers: list, pipeline: EvaluationPipeline):
 ### Expected Results
 
 | Dimension | PydanticAI MAS | Single-Agent Baseline | Parallel-Agents Baseline |
-|-----------|---------------|----------------------|--------------------------|
+| --------- | ------------- | -------------------- | ------------------------ |
 | **Tier 1 score** | Highest — approval loop refines output before synthesis | Lower — no refinement step | Medium — parallel inputs to synthesizer |
 | **Tier 2 score** | Highest — analyst validates before synthesis | Lower — single-pass, no validation | Comparable — independent analyst assessment |
 | **Tier 3 score** | Full graph data — delegation chain is traceable | Minimal — single node, no graph | Medium — parallel edges, gather node |
@@ -442,7 +442,7 @@ reconsidered in favor of parallel-then-merge.
 ### Key Files for Implementation
 
 | File | Role in Benchmark |
-|------|-------------------|
+| ---- | ----------------- |
 | `agent_system.py` | Primary MAS — `run_manager()` entry point |
 | `orchestration.py` | `AgentOrchestrator` for benchmark logging, `parallel_workflow` for teams baseline |
 | `agent_factories.py` | `AgentFactory` creates agents for baselines with same model config |
@@ -451,6 +451,308 @@ reconsidered in favor of parallel-then-merge.
 | `peerread_tools.py` | `query_peerread_papers` — selects test set |
 | `config_chat.json` | System prompts — MAS uses role-specific prompts, baselines use review-focused prompts |
 | `config_eval.json` | Tier weights and fallback strategy for fair scoring |
+
+## Tracing & Observability for the Benchmark
+
+### The Observability Gap
+
+The PydanticAI MAS has full Opik tracing — agent delegation
+calls, tier execution metadata, and timing — via `track()`
+wrappers in `opik_instrumentation.py` and
+`evaluation_pipeline.py`. The CC-style baselines need
+equivalent observability. Three approaches exist; OTel is
+the best fit because the infrastructure is already in place.
+
+### Approach 1 (Recommended): CC OTel → Opik
+
+**Why this fits:**
+
+1. **Already configured** — `.claude/settings.json` has
+   three OTEL env vars (lines 9-11), currently disabled:
+
+   ```json
+   "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL": "",
+   "OTEL_EXPORTER_OTLP_PROTOCOL": "",
+   "OTEL_LOGS_EXPORTER": ""
+   ```
+
+2. **Richest data** — CC's OTel export includes:
+   - **Metrics**: `claude_code.token.usage`
+     (input/output/cache), `claude_code.cost.usage` (USD),
+     `claude_code.session.count`,
+     `claude_code.active_time.total`
+   - **Events/Logs**: `claude_code.tool_result`
+     (tool_name, success, duration_ms),
+     `claude_code.api_request`
+     (model, cost_usd, tokens, duration_ms),
+     `claude_code.api_error`, `claude_code.tool_decision`
+
+3. **Reuses existing Opik ClickHouse** — the OTel Collector
+   forwards to the same ClickHouse instance Opik uses
+
+#### Settings Changes Required
+
+**Current vars to enable** (in `.claude/settings.json`):
+
+- `OTEL_EXPORTER_OTLP_METRICS_PROTOCOL`:
+  `""` → `"grpc"` — metrics export protocol
+- `OTEL_EXPORTER_OTLP_PROTOCOL`:
+  `""` → `"grpc"` — general OTLP protocol
+- `OTEL_LOGS_EXPORTER`:
+  `""` → `"otlp"` — logs/events exporter type
+
+**New vars to add:**
+
+- `CLAUDE_CODE_ENABLE_TELEMETRY`: `"1"`
+  — master switch (required before OTEL vars work)
+- `OTEL_METRICS_EXPORTER`: `"otlp"`
+  — metrics exporter type
+- `OTEL_EXPORTER_OTLP_ENDPOINT`:
+  `"http://localhost:4317"` — OTel Collector gRPC
+
+**Optional tuning:**
+
+- `OTEL_LOG_TOOL_DETAILS`: `"1"`
+  — include MCP/tool/skill names
+- `OTEL_LOG_USER_PROMPTS`: `"1"`
+  — include prompt content (off by default)
+- `OTEL_RESOURCE_ATTRIBUTES`:
+  `"project=peerread-benchmark"` — Opik filter tag
+- `OTEL_METRIC_EXPORT_INTERVAL`: `"10000"`
+  — 10s intervals for testing (default 60s)
+
+Full enabled config:
+
+```json
+"env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp",
+    "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+    "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL": "grpc"
+}
+```
+
+#### Infrastructure Addition
+
+- Add an OTel Collector container to
+  `docker-compose.opik.yaml` (or separate compose)
+- Collector config: receive OTLP on `:4317`,
+  export to Opik ClickHouse on `:8123`
+
+### Approach 2: CC Hooks → Opik Manual Traces
+
+A Python hook script for `PostToolUse` that calls
+`opik.trace()` directly.
+
+- Lower setup — single script in `.claude/hooks/`
+- Coarser data — tool-level only, no token/cost
+- No OTel Collector dependency
+- Sufficient for coarse Tier 3 execution graphs
+
+```python
+#!/usr/bin/env python3
+"""CC PostToolUse hook — logs tool calls to Opik."""
+import json
+import sys
+
+from opik import Opik
+
+client = Opik(project_name="cc-benchmark")
+hook_event = json.loads(sys.stdin.read())
+
+client.trace(
+    name=f"cc_tool_{hook_event.get('tool_name', 'unknown')}",
+    input={"tool_input": hook_event.get("tool_input", "")},
+    output={
+        "tool_output": hook_event.get("tool_output", ""),
+    },
+    metadata={
+        "session_id": hook_event.get("session_id", ""),
+        "source": "cc-hook",
+    },
+)
+```
+
+### Approach 3: Langfuse for CC + Opik for PydanticAI
+
+Fallback — Langfuse has an official CC integration and
+community tooling (`claude-langfuse-monitor`).
+
+- Turnkey setup, richest CC-specific features
+- Splits observability across two platforms
+- Use only if OTel approach proves insufficient
+
+### Comparison
+
+<!-- markdownlint-disable MD013 -->
+
+| Dimension | OTel → Opik (rec.) | Hooks → Opik | Langfuse |
+| --------- | ------------------ | ------------ | -------- |
+| Same Opik instance | Yes | Yes | No |
+| Token/cost tracking | Yes | No | Yes |
+| Tool-level traces | Yes | Yes | Yes |
+| LLM-call traces | Yes | No | Yes |
+| Agent Teams | Session-level | Start/Stop hooks | Official |
+| Setup complexity | Medium (Collector) | Low (script) | Low (npm) |
+| Unified dashboard | Yes | Yes | No |
+| In settings.json | Yes (vars exist) | No | No |
+
+<!-- markdownlint-enable MD013 -->
+
+### Integration with Existing Opik Setup
+
+The OTel approach plugs into the existing stack:
+
+- `OpikConfig` in `load_configs.py:60`
+  — url, workspace, project, batch settings
+- `track()` wrappers in `opik_instrumentation.py:76`
+- `_record_opik_metadata()` in
+  `evaluation_pipeline.py:389`
+- Docker stack in `docker-compose.opik.yaml`
+  (11 containers, ClickHouse backend)
+- Opik frontend at `:5173` for side-by-side
+  trace comparison of MAS vs baselines
+
+### Standalone CC OTel Plugin
+
+CC telemetry is infrastructure-level (env vars + OTel
+Collector), not application-level (Python decorators).
+It should be enableable/disableable without touching
+`src/app/agents/` or the PydanticAI Opik setup.
+
+Proposed structure:
+
+```text
+src/app/
+├── agents/
+│   └── opik_instrumentation.py  ← existing (untouched)
+│
+└── cc_otel/                     ← standalone plugin
+    ├── __init__.py              ← enable/disable/is_enabled
+    ├── config.py                ← CCOtelConfig
+    ├── collector.py             ← OTel Collector lifecycle
+    ├── hooks.py                 ← optional: Approach 2 fallback
+    └── README.md                ← setup + env var reference
+```
+
+Key design points:
+
+1. **Separate from PydanticAI Opik** — existing `track()`
+   wrappers and `OpikConfig` stay untouched
+2. **Python-first** — config, collector lifecycle, and
+   hook logic are all Python
+3. **Enable/disable programmatically** —
+   `cc_otel.enable()` sets env vars,
+   `cc_otel.disable()` clears them
+4. **Composable** — collector attaches to existing
+   Opik ClickHouse or runs standalone
+5. **Graceful degradation** — `CC_OTEL_AVAILABLE` flag,
+   try/except import, no-op when unavailable
+
+`CCOtelConfig` example:
+
+```python
+from dataclasses import dataclass, field
+
+
+@dataclass
+class CCOtelConfig:
+    """Configuration for CC OpenTelemetry tracing."""
+
+    enabled: bool = False
+    endpoint: str = "http://localhost:4317"
+    protocol: str = "grpc"
+    metrics_exporter: str = "otlp"
+    logs_exporter: str = "otlp"
+    log_tool_details: bool = True
+    log_user_prompts: bool = False
+    export_interval_ms: int = 60000
+    resource_attributes: dict[str, str] = field(
+        default_factory=lambda: {
+            "project": "peerread-benchmark",
+        }
+    )
+
+    def to_env_vars(self) -> dict[str, str]:
+        """Export as env vars for settings.json."""
+        env = {
+            "CLAUDE_CODE_ENABLE_TELEMETRY": (
+                "1" if self.enabled else "0"
+            ),
+            "OTEL_METRICS_EXPORTER": (
+                self.metrics_exporter
+            ),
+            "OTEL_LOGS_EXPORTER": self.logs_exporter,
+            "OTEL_EXPORTER_OTLP_PROTOCOL": self.protocol,
+            "OTEL_EXPORTER_OTLP_ENDPOINT": self.endpoint,
+            "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL": (
+                self.protocol
+            ),
+        }
+        if self.log_tool_details:
+            env["OTEL_LOG_TOOL_DETAILS"] = "1"
+        if self.log_user_prompts:
+            env["OTEL_LOG_USER_PROMPTS"] = "1"
+        if self.resource_attributes:
+            attrs = ",".join(
+                f"{k}={v}"
+                for k, v in self.resource_attributes.items()
+            )
+            env["OTEL_RESOURCE_ATTRIBUTES"] = attrs
+        return env
+```
+
+Public API:
+
+```python
+import os
+
+from app.cc_otel.config import CCOtelConfig
+
+
+def enable(config: CCOtelConfig | None = None) -> None:
+    """Activate CC OTel telemetry via env vars."""
+    cfg = config or CCOtelConfig(enabled=True)
+    for key, value in cfg.to_env_vars().items():
+        os.environ[key] = value
+
+
+def disable() -> None:
+    """Deactivate CC OTel telemetry."""
+    os.environ["CLAUDE_CODE_ENABLE_TELEMETRY"] = "0"
+
+
+def is_enabled() -> bool:
+    """Check if CC telemetry is active."""
+    return os.environ.get(
+        "CLAUDE_CODE_ENABLE_TELEMETRY",
+    ) == "1"
+```
+
+### References
+
+- [CC Monitoring/OTel docs][cc-mon]
+  — OTEL env var reference, metrics/events
+- [CC Settings docs][cc-set]
+  — env section, `CLAUDE_CODE_ENABLE_TELEMETRY`
+- [CC ROI Measurement Guide][cc-roi]
+  — Docker Compose, Prometheus/OTel setups
+- [CC on Bedrock monitoring][cc-bed]
+- [OTel exporter spec][otel-spec]
+- [Langfuse CC integration][langfuse]
+  — Approach 3 reference
+- [Opik Anthropic integration][opik-anth]
+  — `track_anthropic` wrapper
+
+[cc-mon]: https://code.claude.com/docs/en/monitoring-usage
+[cc-set]: https://code.claude.com/docs/en/settings
+[cc-roi]: https://github.com/anthropics/claude-code-monitoring-guide
+[cc-bed]: https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/blob/main/assets/docs/MONITORING.md
+[otel-spec]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md
+[langfuse]: https://langfuse.com/integrations/other/claude-code
+[opik-anth]: https://www.comet.com/docs/opik/integrations/anthropic
 
 ## Recommendation
 
