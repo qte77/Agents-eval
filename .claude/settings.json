@@ -28,7 +28,8 @@
           ".git/refs/",
           ".git/logs/",
           ".git/COMMIT_EDITMSG",
-          ".git/index"
+          ".git/index",
+          "/home/vscode/.cache/uv"
         ]
       }
     }
