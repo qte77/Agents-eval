@@ -2,60 +2,76 @@
 
 You are executing a single story from the Ralph autonomous development loop.
 
+## CRITICAL: Separate Git Commits Per Phase
+
+You MUST make **separate git commits** for each workflow phase. This is
+verified automatically — the Ralph loop will **reject your work and reset
+everything** if commits are missing or bundled.
+
+**Required commits (minimum 2):**
+
+1. `git add tests/ && git commit -m "test(STORY-XXX): ... [RED]"` — after writing failing tests
+2. `git add src/ && git commit -m "feat(STORY-XXX): ... [GREEN]"` — after passing implementation
+3. `git add . && git commit -m "refactor(STORY-XXX): ... [REFACTOR]"` — after cleanup (optional)
+
+**DO NOT** bundle all work into a single commit.
+**DO NOT** skip commits and describe what you "would have committed."
+**DO NOT** ask for git permission — you already have it.
+
 ## Critical Rules (Apply FIRST)
 
-- **Core Principles**: Auto-applied via rules - KISS, DRY, YAGNI, user-centric
-- **MANDATORY**: Read and follow `AGENTS.md` compliance requirements
+- **MANDATORY**: Read and follow project compliance requirements
 - **One story only**: Complete the current story, don't start others
 - **Atomic changes**: Keep changes focused and minimal
 - **Quality first**: All changes must pass `make validate`
 - **No scope creep**: Implement exactly what the story requires
 
-## Your Task
+## References
 
-Follow TDD workflow below. Tests MUST be written FIRST.
-
-## Workflow (TDD - MANDATORY)
-
-**RED → GREEN → REFACTOR cycle:**
-
-### RED: Write failing tests FIRST
-
-- Read story from prd.json, write FAILING tests for acceptance criteria
-  - Create test file in `tests/` (e.g., `tests/test_messenger.py`)
-  - Write tests that verify each acceptance criterion
-  - Run tests - they MUST fail (code doesn't exist yet)
-  - **COMMIT TESTS FIRST**: `git add tests/ && git commit -m "test(STORY-XXX): add failing tests [RED]"`
-
-### GREEN: Minimal implementation
-
-- Study patterns in `src/`, implement MINIMAL code to pass tests
-  - Create/modify implementation file (e.g., `src/agentbeats/messenger.py`)
-  - Write simplest code that makes tests pass
-  - Run tests - they MUST pass now
-  - **COMMIT IMPLEMENTATION**: `git add src/ && git commit -m "feat(STORY-XXX): implement to pass tests [GREEN]"`
-
-### REFACTOR: Clean up
-
-- Clean up code while keeping tests passing
-  - Remove duplication (DRY)
-  - Simplify logic (KISS)
-  - Ensure `make validate` passes
-  - **COMMIT REFACTORINGS** (if any): `git add . && git commit -m "refactor(STORY-XXX): cleanup [REFACTOR]"`
-
-**Final step**: Verify all acceptance criteria met
-
-**CRITICAL**: Tests MUST be committed BEFORE implementation. This ensures verifiable TDD compliance and provides audit trail for agent evaluation.
+- `docs/best-practices/python-best-practices.md` — Python development
+- `docs/best-practices/tdd-best-practices.md` — TDD methodology
 
 ## Available Skills
 
-You have access to these skills:
+Relevant skills for story implementation (others may also be available):
 
-- `designing-backend` - For architecture decisions
-- `implementing-python` - For Python code implementation
-- `reviewing-code` - For self-review before completion
+- `testing-python` — Test writing (TDD/BDD)
+- `implementing-python` — Code implementation
+- `designing-backend` — Architecture decisions
+- `reviewing-code` — Self-review before completion
 
 Use skills appropriately based on task requirements.
+
+## Your Task
+
+Follow the project's testing best practices. Tests MUST be written and
+**committed** FIRST.
+
+## Workflow
+
+### RED: Write failing tests
+
+- Read story acceptance criteria, write FAILING tests
+  - Run tests — they MUST fail (code doesn't exist yet)
+  - **STOP AND COMMIT NOW**: `git add tests/ && git commit -m "test(STORY-XXX): add failing tests [RED]"`
+  - Do NOT proceed to GREEN until this commit is made
+
+### GREEN: Minimal implementation
+
+- Implement MINIMAL code to pass tests
+  - Run tests — they MUST pass now
+  - **STOP AND COMMIT NOW**: `git add src/ && git commit -m "feat(STORY-XXX): implement to pass tests [GREEN]"`
+  - Do NOT proceed to REFACTOR until this commit is made
+
+### REFACTOR: Clean up
+
+- Clean up while keeping tests passing
+  - Ensure `make validate` passes
+  - **COMMIT REFACTORINGS** (if any): `git add . && git commit -m "refactor(STORY-XXX): cleanup [REFACTOR]"`
+
+**CRITICAL**: The Ralph loop counts your commits and checks for `[RED]` and
+`[GREEN]` markers. If these commits are missing, ALL your work will be reset
+and you must start over.
 
 ## Quality Gates
 
@@ -65,11 +81,15 @@ Before marking the story complete:
 make validate
 ```
 
-Must pass:
+All checks (formatting, type checking, tests) must pass.
 
-- [ ] Code formatting (ruff)
-- [ ] Type checking (pyright)
-- [ ] All tests (pytest)
+## Reminder: Commit Discipline
+
+Your work is verified by checking git history. Before finishing, confirm:
+
+- [ ] `[RED]` commit exists (tests committed before implementation)
+- [ ] `[GREEN]` commit exists (implementation committed after tests pass)
+- [ ] Commits are separate (not bundled into one)
 
 ## Current Story Details
 

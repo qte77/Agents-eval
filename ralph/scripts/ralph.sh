@@ -24,6 +24,11 @@
 # - Script verifies commits were made in correct order: RED → GREEN → REFACTOR
 # - Checks for [RED], [GREEN], and [REFACTOR]/[BLUE] markers in commit messages
 #
+# NOTE: This script currently enforces TDD only (check_tdd_commits).
+# Supporting BDD (Given-When-Then) would require refactoring the commit
+# verification logic to accept alternative markers and workflow patterns.
+# Future: Add RALPH_TEST_WORKFLOW=tdd|bdd switch to select verification strategy.
+#
 
 set -euo pipefail
 
