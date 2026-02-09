@@ -236,7 +236,9 @@ class EvaluationPipeline:
         except TimeoutError:
             execution_time = time.time() - start_time
             error_msg = f"Tier 2 timeout after {timeout}s (LLM-as-Judge evaluation)"
-            logger.error(f"{error_msg}. Consider increasing tier2_max_seconds or check LLM service availability.")
+            logger.error(
+                f"{error_msg}. Consider increasing tier2_max_seconds or check LLM service availability."
+            )
             self.performance_monitor.record_tier_failure(2, "timeout", execution_time, error_msg)
             self._record_opik_metadata(2, execution_time, error=error_msg)
             return None, execution_time
@@ -251,12 +253,16 @@ class EvaluationPipeline:
             elif "authentication" in str(e).lower():
                 logger.error("Authentication failed - check API keys and configuration")
             elif "connection" in str(e).lower():
-                logger.error("Connection failed - check network connectivity and service availability")
+                logger.error(
+                    "Connection failed - check network connectivity and service availability"
+                )
             self.performance_monitor.record_tier_failure(2, "error", execution_time, str(e))
             self._record_opik_metadata(2, execution_time, error=error_msg)
             return None, execution_time
 
-    async def _execute_tier3(self, execution_trace: dict[str, Any] | None = None) -> tuple[Tier3Result | None, float]:
+    async def _execute_tier3(
+        self, execution_trace: dict[str, Any] | None = None
+    ) -> tuple[Tier3Result | None, float]:
         """Execute Graph Analysis evaluation (Tier 3).
 
         Args:
@@ -296,7 +302,9 @@ class EvaluationPipeline:
                 )
 
             result = await asyncio.wait_for(
-                asyncio.create_task(asyncio.to_thread(self.graph_engine.evaluate_graph_metrics, trace_data)),
+                asyncio.create_task(
+                    asyncio.to_thread(self.graph_engine.evaluate_graph_metrics, trace_data)
+                ),
                 timeout=timeout,
             )
 
@@ -309,7 +317,9 @@ class EvaluationPipeline:
         except TimeoutError:
             execution_time = time.time() - start_time
             error_msg = f"Tier 3 timeout after {timeout}s (Graph analysis evaluation)"
-            logger.error(f"{error_msg}. Consider increasing tier3_max_seconds or simplifying trace data.")
+            logger.error(
+                f"{error_msg}. Consider increasing tier3_max_seconds or simplifying trace data."
+            )
             self.performance_monitor.record_tier_failure(3, "timeout", execution_time, error_msg)
             self._record_opik_metadata(3, execution_time, error=error_msg)
             return None, execution_time
@@ -341,7 +351,9 @@ class EvaluationPipeline:
         fallback_applied = False
 
         if fallback_strategy == "tier1_only" and results.tier1:
-            logger.info("Applying tier1_only fallback strategy - creating fallback results for missing tiers")
+            logger.info(
+                "Applying tier1_only fallback strategy - creating fallback results for missing tiers"
+            )
 
             # Create fallback results for missing tiers to enable composite scoring
             if not results.tier2:
@@ -376,17 +388,24 @@ class EvaluationPipeline:
                 logger.info(f"Fallback strategy '{fallback_strategy}' applied successfully.")
 
         elif not results.tier1:
-            logger.warning(f"Cannot apply fallback strategy '{fallback_strategy}' - Tier 1 results unavailable")
+            logger.warning(
+                f"Cannot apply fallback strategy '{fallback_strategy}' - Tier 1 results unavailable"
+            )
 
         return results
 
     def _apply_opik_decorator(self, func: Any) -> Any:
         """Apply Opik tracking decorator if available and enabled."""
         if self._opik_decorator_enabled:
-            return track(name="evaluation_pipeline_comprehensive", tags=["evaluation", "three-tier", "pipeline"])(func)
+            return track(
+                name="evaluation_pipeline_comprehensive",
+                tags=["evaluation", "three-tier", "pipeline"],
+            )(func)
         return func
 
-    def _record_opik_metadata(self, tier: int, execution_time: float, result: Any = None, error: str | None = None):
+    def _record_opik_metadata(
+        self, tier: int, execution_time: float, result: Any = None, error: str | None = None
+    ):
         """Record tier execution metadata for Opik tracing."""
         if not self._opik_decorator_enabled:
             return
@@ -492,7 +511,9 @@ class EvaluationPipeline:
         except Exception as e:
             total_time = time.time() - pipeline_start
             error_type = type(e).__name__
-            logger.error(f"Pipeline evaluation failed after {total_time:.2f}s with {error_type}: {e}")
+            logger.error(
+                f"Pipeline evaluation failed after {total_time:.2f}s with {error_type}: {e}"
+            )
 
             # Record pipeline-level failure for monitoring
             # Note: Using tier 0 for pipeline-level failures

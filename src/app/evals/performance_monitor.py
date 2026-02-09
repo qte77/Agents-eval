@@ -65,7 +65,9 @@ class PerformanceMonitor:
 
         logger.debug(f"Recorded tier {tier} execution: {duration:.3f}s")
 
-    def record_tier_failure(self, tier: int, failure_type: str, execution_time: float, error_msg: str) -> None:
+    def record_tier_failure(
+        self, tier: int, failure_type: str, execution_time: float, error_msg: str
+    ) -> None:
         """Record tier failure details for monitoring and analysis.
 
         Args:
@@ -149,8 +151,12 @@ class PerformanceMonitor:
                 actual_time = tier_times[tier_key]
 
                 if actual_time > target_time:
-                    warning_msg = f"Tier {tier_num} exceeded target: {actual_time:.2f}s > {target_time}s"
-                    self._record_performance_warning(f"tier{tier_num}_time_exceeded", warning_msg, actual_time)
+                    warning_msg = (
+                        f"Tier {tier_num} exceeded target: {actual_time:.2f}s > {target_time}s"
+                    )
+                    self._record_performance_warning(
+                        f"tier{tier_num}_time_exceeded", warning_msg, actual_time
+                    )
 
         # Check total time target
         if "total_max_seconds" in self.performance_targets:

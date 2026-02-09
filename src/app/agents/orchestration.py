@@ -310,7 +310,9 @@ async def parallel_workflow(agents: list[Agent], query: str) -> list[Any]:
     return [result for result in results]
 
 
-async def conditional_workflow(condition_func: Callable[[str], str], agent_map: dict[str, Agent], query: str) -> Any:
+async def conditional_workflow(
+    condition_func: Callable[[str], str], agent_map: dict[str, Agent], query: str
+) -> Any:
     """Route to different agents based on conditions."""
     condition_result = condition_func(query)
 

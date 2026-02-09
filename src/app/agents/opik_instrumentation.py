@@ -92,7 +92,9 @@ class OpikInstrumentationManager:
 
         return decorator
 
-    async def _extract_context_info(self, args: tuple[Any, ...], kwargs: dict[str, Any]) -> dict[str, Any]:
+    async def _extract_context_info(
+        self, args: tuple[Any, ...], kwargs: dict[str, Any]
+    ) -> dict[str, Any]:
         """Extract context information from function arguments."""
         context_info = {"input": {}, "metadata": {}}
 

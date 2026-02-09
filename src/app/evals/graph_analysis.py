@@ -43,7 +43,9 @@ class GraphAnalysisEngine:
         self._validate_config(tier3_config)
 
         self.min_nodes_for_analysis = tier3_config.get("min_nodes_for_analysis", 2)
-        self.centrality_measures = tier3_config.get("centrality_measures", ["betweenness", "closeness", "degree"])
+        self.centrality_measures = tier3_config.get(
+            "centrality_measures", ["betweenness", "closeness", "degree"]
+        )
 
         # Weights for composite scoring
         self.weights = tier3_config.get(
@@ -76,7 +78,9 @@ class GraphAnalysisEngine:
             raise ValueError("min_nodes_for_analysis must be positive integer")
 
         # Validate centrality measures
-        centrality_measures = tier3_config.get("centrality_measures", ["betweenness", "closeness", "degree"])
+        centrality_measures = tier3_config.get(
+            "centrality_measures", ["betweenness", "closeness", "degree"]
+        )
         valid_measures = {"betweenness", "closeness", "degree", "eigenvector"}
         if not isinstance(centrality_measures, list):
             raise ValueError("centrality_measures must be a list")
@@ -103,7 +107,9 @@ class GraphAnalysisEngine:
             # Warn if weights sum is unusual (allow partial specifications)
             total_weight = sum(weights.values())
             if total_weight > 1.5:  # Only warn if clearly excessive
-                logger.warning(f"Graph weights sum to {total_weight:.3f}, this may cause scoring issues")
+                logger.warning(
+                    f"Graph weights sum to {total_weight:.3f}, this may cause scoring issues"
+                )
 
         # Validate resource limits if specified
         max_nodes = tier3_config.get("max_nodes")
@@ -155,7 +161,9 @@ class GraphAnalysisEngine:
         # Estimate potential edges (interactions + tool usage patterns)
         estimated_edges = total_interactions + (total_calls * 2)  # Conservative estimate
         if estimated_edges > self.max_edges:
-            logger.warning(f"Trace may generate ~{estimated_edges} edges, exceeding max_edges={self.max_edges}")
+            logger.warning(
+                f"Trace may generate ~{estimated_edges} edges, exceeding max_edges={self.max_edges}"
+            )
 
     def _with_timeout(self, func: Any, *args: Any, **kwargs: Any) -> Any:
         """Execute function with timeout protection.
@@ -236,7 +244,9 @@ class GraphAnalysisEngine:
             # Calculate tool selection accuracy from success rates
             tool_nodes = [n for n, d in tool_graph.nodes(data=True) if d.get("type") == "tool"]
             if tool_nodes:
-                success_rates = [tool_graph.nodes[tool].get("success_rate", 0.0) for tool in tool_nodes]
+                success_rates = [
+                    tool_graph.nodes[tool].get("success_rate", 0.0) for tool in tool_nodes
+                ]
                 tool_accuracy = sum(success_rates) / len(success_rates)
             else:
                 tool_accuracy = 0.0
@@ -381,7 +391,9 @@ class GraphAnalysisEngine:
             undirected_graph = graph.to_undirected()
             if nx.is_connected(undirected_graph):
                 try:
-                    avg_path_length = self._with_timeout(nx.average_shortest_path_length, undirected_graph)
+                    avg_path_length = self._with_timeout(
+                        nx.average_shortest_path_length, undirected_graph
+                    )
                     max_possible_length = len(graph.nodes) - 1
 
                     # Fix division by zero: ensure denominator is never zero
@@ -524,7 +536,9 @@ class GraphAnalysisEngine:
                 }
             )
 
-            logger.debug(f"Exported NetworkX graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges")
+            logger.debug(
+                f"Exported NetworkX graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges"
+            )
             return graph
 
         except Exception as e:

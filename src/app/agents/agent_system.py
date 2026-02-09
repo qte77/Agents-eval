@@ -92,7 +92,9 @@ def _add_tools_to_manager_agent(
     research_agent: Agent[None, BaseModel] | None = None,
     analysis_agent: Agent[None, BaseModel] | None = None,
     synthesis_agent: Agent[None, BaseModel] | None = None,
-    result_type: type[ResearchResult | ResearchResultSimple | ReviewGenerationResult] = ResearchResult,
+    result_type: type[
+        ResearchResult | ResearchResultSimple | ReviewGenerationResult
+    ] = ResearchResult,
 ):
     """
     Adds tools to the manager agent for delegating tasks to research, analysis, and
@@ -166,7 +168,9 @@ def _add_tools_to_manager_agent(
 
     if synthesis_agent is not None:
         # Apply Opik tracing decorator
-        opik_decorator_synthesis = get_opik_decorator("synthesizer", "synthesis", "integration_synthesis")
+        opik_decorator_synthesis = get_opik_decorator(
+            "synthesizer", "synthesis", "integration_synthesis"
+        )
 
         @opik_decorator_synthesis
         @manager_agent.tool
@@ -249,9 +253,13 @@ def _create_manager(
     active_agents = [
         agent
         for agent in [
-            f"researcher({models.model_researcher.model_name})" if models.model_researcher else None,
+            f"researcher({models.model_researcher.model_name})"
+            if models.model_researcher
+            else None,
             f"analyst({models.model_analyst.model_name})" if models.model_analyst else None,
-            f"synthesiser({models.model_synthesiser.model_name})" if models.model_synthesiser else None,
+            f"synthesiser({models.model_synthesiser.model_name})"
+            if models.model_synthesiser
+            else None,
         ]
         if agent
     ]
@@ -354,7 +362,9 @@ def get_manager(
             "provider_config": provider_config,
         }
     )
-    models = create_agent_models(model_config, include_researcher, include_analyst, include_synthesiser)
+    models = create_agent_models(
+        model_config, include_researcher, include_analyst, include_synthesiser
+    )
     manager = _create_manager(prompts, models, provider, enable_review_tools)
 
     # Conditionally add review tools based on flag
@@ -520,7 +530,9 @@ def setup_agent_env(
     # Load usage limits from config instead of hardcoding
     usage_limits = None
     if provider_config.usage_limits is not None:
-        usage_limits = UsageLimits(request_limit=10, total_tokens_limit=provider_config.usage_limits)
+        usage_limits = UsageLimits(
+            request_limit=10, total_tokens_limit=provider_config.usage_limits
+        )
 
     return EndpointConfig.model_validate(
         {

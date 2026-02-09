@@ -170,7 +170,9 @@ class CompositeScorer:
         # Each metric maps to specific fields from evaluation tier results
         metrics = {
             # From Tier 1: Traditional metrics + execution performance
-            "time_taken": self._normalize_time_score(results.tier1.time_score),  # normalized execution time
+            "time_taken": self._normalize_time_score(
+                results.tier1.time_score
+            ),  # normalized execution time
             "task_success": results.tier1.task_success,  # binary completion flag
             "output_similarity": results.tier1.overall_score,  # weighted similarity
             # From Tier 2: LLM-as-Judge quality assessment - use specific metric

@@ -14,7 +14,9 @@ from .data_models import Config, ResearchSummary
 from .utils import create_model
 
 
-def _create_research_agent(model: OpenAIModel, result_type: ResearchSummary, system_prompt: str) -> Agent:
+def _create_research_agent(
+    model: OpenAIModel, result_type: ResearchSummary, system_prompt: str
+) -> Agent:
     """
     Create a research agent with the specified model, result type, and system prompt.
     """

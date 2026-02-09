@@ -43,7 +43,9 @@ class PeerReadPaper(BaseModel):
     title: str = Field(description="Paper title")
     abstract: str = Field(description="Paper abstract")
     reviews: list[PeerReadReview] = Field(description="Peer reviews for this paper")
-    review_histories: list[str] = Field(default_factory=list, description="Paper revision histories")
+    review_histories: list[str] = Field(
+        default_factory=list, description="Paper revision histories"
+    )
 
 
 class PeerReadConfig(BaseModel):
@@ -71,9 +73,15 @@ class PeerReadConfig(BaseModel):
     )
     splits: list[str] = Field(default=["train", "test", "dev"], description="Available data splits")
     max_papers_per_query: int = Field(default=100, description="Maximum papers to return per query")
-    download_timeout: int = Field(default=30, description="Timeout for download requests in seconds")
-    max_retries: int = Field(default=5, description="Maximum number of retry attempts for downloads")
-    retry_delay_seconds: int = Field(default=5, description="Delay in seconds between retry attempts")
+    download_timeout: int = Field(
+        default=30, description="Timeout for download requests in seconds"
+    )
+    max_retries: int = Field(
+        default=5, description="Maximum number of retry attempts for downloads"
+    )
+    retry_delay_seconds: int = Field(
+        default=5, description="Delay in seconds between retry attempts"
+    )
     similarity_metrics: dict[str, float] = Field(
         default={"cosine_weight": 0.6, "jaccard_weight": 0.4},
         description="Weights for similarity metrics",
@@ -99,7 +107,9 @@ class GeneratedReview(BaseModel):
 
     impact: int = Field(..., ge=1, le=5, description="Impact rating (1=minimal, 5=high impact)")
 
-    substance: int = Field(..., ge=1, le=5, description="Substance/depth rating (1=shallow, 5=substantial)")
+    substance: int = Field(
+        ..., ge=1, le=5, description="Substance/depth rating (1=shallow, 5=substantial)"
+    )
 
     appropriateness: int = Field(
         ...,
@@ -115,7 +125,9 @@ class GeneratedReview(BaseModel):
         description="Related work comparison rating (1=poor, 5=excellent)",
     )
 
-    presentation_format: Literal["Poster", "Oral"] = Field(..., description="Recommended presentation format")
+    presentation_format: Literal["Poster", "Oral"] = Field(
+        ..., description="Recommended presentation format"
+    )
 
     comments: str = Field(
         ...,

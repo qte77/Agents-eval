@@ -146,7 +146,9 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         return read_paper_pdf(ctx, pdf_path)
 
 
-def add_peerread_review_tools_to_manager(manager_agent: Agent[None, BaseModel], max_content_length: int = 15000):
+def add_peerread_review_tools_to_manager(
+    manager_agent: Agent[None, BaseModel], max_content_length: int = 15000
+):
     """Add PeerRead review generation and persistence tools to the manager agent.
 
     Args:
@@ -188,17 +190,23 @@ def add_peerread_review_tools_to_manager(manager_agent: Agent[None, BaseModel], 
             paper_content_for_template = loader.load_parsed_pdf_content(paper_id)
 
             if not paper_content_for_template:
-                logger.warning(f"No parsed PDF content found for paper {paper_id}. Attempting to read raw PDF.")
+                logger.warning(
+                    f"No parsed PDF content found for paper {paper_id}. Attempting to read raw PDF."
+                )
                 raw_pdf_path = loader.get_raw_pdf_path(paper_id)
                 if raw_pdf_path:
                     try:
                         paper_content_for_template = read_paper_pdf(ctx, raw_pdf_path)
                         logger.info(f"Successfully read raw PDF for paper {paper_id}.")
                     except Exception as e:
-                        logger.warning(f"Failed to read raw PDF for paper {paper_id}: {e}. Using abstract as fallback.")
+                        logger.warning(
+                            f"Failed to read raw PDF for paper {paper_id}: {e}. Using abstract as fallback."
+                        )
                         paper_content_for_template = paper.abstract
                 else:
-                    logger.warning(f"No raw PDF found for paper {paper_id}. Using abstract as fallback.")
+                    logger.warning(
+                        f"No raw PDF found for paper {paper_id}. Using abstract as fallback."
+                    )
                     paper_content_for_template = paper.abstract
 
             # Use centralized path resolution for template

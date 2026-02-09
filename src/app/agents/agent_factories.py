@@ -53,7 +53,8 @@ class AgentFactory:
 
         agent = Agent(
             model=models.model_manager,
-            system_prompt=system_prompt or "You are a manager agent responsible for coordinating tasks.",
+            system_prompt=system_prompt
+            or "You are a manager agent responsible for coordinating tasks.",
         )
 
         logger.info("Created manager agent")
@@ -67,7 +68,8 @@ class AgentFactory:
 
         agent = Agent(
             model=models.model_researcher,
-            system_prompt=system_prompt or "You are a researcher agent specialized in information gathering.",
+            system_prompt=system_prompt
+            or "You are a researcher agent specialized in information gathering.",
         )
 
         logger.info("Created researcher agent")
@@ -95,7 +97,8 @@ class AgentFactory:
 
         agent = Agent(
             model=models.model_synthesiser,
-            system_prompt=system_prompt or "You are a synthesiser agent specialized in combining information.",
+            system_prompt=system_prompt
+            or "You are a synthesiser agent specialized in combining information.",
         )
 
         logger.info("Created synthesiser agent")
@@ -152,7 +155,9 @@ def create_evaluation_agent(
                 "You are an expert at evaluating planning quality of agent executions. "
                 "Focus on logical flow and decision quality."
             ),
-            "general": ("You are an expert evaluator providing structured assessments of text quality and content."),
+            "general": (
+                "You are an expert evaluator providing structured assessments of text quality and content."
+            ),
         }
         system_prompt = default_prompts.get(assessment_type, default_prompts["general"])
 

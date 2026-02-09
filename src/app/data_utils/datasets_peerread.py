@@ -46,7 +46,9 @@ def download_peerread_dataset(
     try:
         # Load configuration
         config = load_peerread_config()
-        logger.info(f"Loaded PeerRead config: {len(config.venues)} venues, {len(config.splits)} splits")
+        logger.info(
+            f"Loaded PeerRead config: {len(config.venues)} venues, {len(config.splits)} splits"
+        )
 
         # Initialize downloader
         downloader = PeerReadDownloader(config)
@@ -194,7 +196,9 @@ class PeerReadDownloader:
         elif data_type == "pdfs":
             filename = f"{paper_id}.pdf"
         else:
-            raise ValueError(f"Invalid data_type: {data_type}. Valid types: reviews, parsed_pdfs, pdfs")
+            raise ValueError(
+                f"Invalid data_type: {data_type}. Valid types: reviews, parsed_pdfs, pdfs"
+            )
 
         return f"{self.config.raw_github_base_url}/{venue}/{split}/{data_type}/{filename}"
 
@@ -246,7 +250,9 @@ class PeerReadDownloader:
             logger.error(f"Failed to discover {data_type} files for {venue}/{split}: {e}")
             return []
         except (KeyError, ValueError) as e:
-            logger.error(f"Failed to parse GitHub API response for {venue}/{split}/{data_type}: {e}")
+            logger.error(
+                f"Failed to parse GitHub API response for {venue}/{split}/{data_type}: {e}"
+            )
             return []
 
     def download_file(
@@ -303,7 +309,9 @@ class PeerReadDownloader:
             except JSONDecodeError as e:
                 logger.error(f"Invalid JSON for {data_type}/{paper_id}: {e}")
                 return None
-        logger.error(f"Failed to download {data_type}/{paper_id} after {self.config.max_retries} attempts.")
+        logger.error(
+            f"Failed to download {data_type}/{paper_id} after {self.config.max_retries} attempts."
+        )
         return None
 
     def download_venue_split(
@@ -443,7 +451,9 @@ class PeerReadLoader:
                     # Find all parsed PDF files for this paper_id
                     # Assuming filenames are like 'PAPER_ID.pdf.json'
                     # If multiple revisions, we'll just take the first one found for now
-                    parsed_files = sorted(parsed_pdfs_path.glob(f"{paper_id}.pdf.json"), reverse=True)
+                    parsed_files = sorted(
+                        parsed_pdfs_path.glob(f"{paper_id}.pdf.json"), reverse=True
+                    )
                     if parsed_files:
                         latest_parsed_file = parsed_files[0]
                         try:
@@ -516,7 +526,9 @@ class PeerReadLoader:
                     title=paper_data["title"],
                     abstract=paper_data["abstract"],
                     reviews=reviews,
-                    review_histories=[" ".join(map(str, h)) for h in paper_data.get("histories", [])],
+                    review_histories=[
+                        " ".join(map(str, h)) for h in paper_data.get("histories", [])
+                    ],
                 )
                 validated_papers.append(paper)
 

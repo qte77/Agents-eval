@@ -132,7 +132,9 @@ class TraditionalMetricsEngine:
         if enhanced:
             try:
                 # Use textdistance library for robust Jaccard similarity
-                return float(textdistance.jaccard.normalized_similarity(text1.lower(), text2.lower()))
+                return float(
+                    textdistance.jaccard.normalized_similarity(text1.lower(), text2.lower())
+                )
             except Exception as e:
                 logger.warning(f"Enhanced Jaccard similarity failed: {e}")
                 # Fall through to basic implementation
@@ -188,7 +190,9 @@ class TraditionalMetricsEngine:
 
         try:
             # Use textdistance for character-level Levenshtein similarity
-            return float(textdistance.levenshtein.normalized_similarity(text1.lower(), text2.lower()))
+            return float(
+                textdistance.levenshtein.normalized_similarity(text1.lower(), text2.lower())
+            )
         except Exception as e:
             logger.warning(f"Levenshtein similarity calculation failed: {e}")
             # Fallback to simple character overlap ratio
@@ -247,7 +251,9 @@ class TraditionalMetricsEngine:
         normalized_score = math.exp(-duration)
         return max(0.0, min(1.0, normalized_score))
 
-    def assess_task_success(self, similarity_scores: SimilarityScores, threshold: float = 0.8) -> float:
+    def assess_task_success(
+        self, similarity_scores: SimilarityScores, threshold: float = 0.8
+    ) -> float:
         """Assess task completion success based on similarity threshold.
 
         Args:
@@ -287,7 +293,9 @@ class TraditionalMetricsEngine:
             SimilarityScores container with all computed metrics
         """
         cosine_score = self.compute_cosine_similarity(agent_output, reference_text)
-        jaccard_score = self.compute_jaccard_similarity(agent_output, reference_text, enhanced=enhanced)
+        jaccard_score = self.compute_jaccard_similarity(
+            agent_output, reference_text, enhanced=enhanced
+        )
         semantic_score = self.compute_semantic_similarity(agent_output, reference_text)
 
         # Add Levenshtein similarity when enhanced mode is enabled
@@ -318,7 +326,10 @@ class TraditionalMetricsEngine:
         if not reference_texts:
             return SimilarityScores(cosine=0.0, jaccard=0.0, semantic=0.0, levenshtein=0.0)
 
-        all_scores = [self.compute_all_similarities(agent_output, ref, enhanced=enhanced) for ref in reference_texts]
+        all_scores = [
+            self.compute_all_similarities(agent_output, ref, enhanced=enhanced)
+            for ref in reference_texts
+        ]
 
         # Take maximum score for each metric (best match approach)
         best_cosine = max(scores.cosine for scores in all_scores)
@@ -358,7 +369,9 @@ class TraditionalMetricsEngine:
 
         # Calculate execution metrics
         time_score = self.measure_execution_time(start_time, end_time)
-        task_success = self.assess_task_success(best_scores, config.get("confidence_threshold", 0.8))
+        task_success = self.assess_task_success(
+            best_scores, config.get("confidence_threshold", 0.8)
+        )
 
         # Calculate weighted overall score
         weights = config.get(
@@ -430,7 +443,9 @@ class TraditionalMetricsEngine:
 
             # Calculate weighted average
             weighted_score = (
-                cosine_sim * cosine_weight + jaccard_sim * jaccard_weight + levenshtein_sim * semantic_weight
+                cosine_sim * cosine_weight
+                + jaccard_sim * jaccard_weight
+                + levenshtein_sim * semantic_weight
             )
 
             return min(1.0, max(0.0, weighted_score))

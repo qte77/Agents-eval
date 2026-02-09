@@ -276,7 +276,8 @@ class TraceCollector:
             "agent_interactions": len(agent_interactions),
             "tool_calls": len(tool_calls),
             "coordination_events": len(coordination_events),
-            "avg_tool_duration": sum(tc.get("duration", 0) for tc in tool_calls) / max(1, len(tool_calls)),
+            "avg_tool_duration": sum(tc.get("duration", 0) for tc in tool_calls)
+            / max(1, len(tool_calls)),
         }
 
         return ProcessedTrace(
