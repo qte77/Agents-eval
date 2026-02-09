@@ -104,7 +104,7 @@ class TestCompositeScorer:
     """Test suite for CompositeScorer functionality."""
 
 
-class TestCompositeScorer_Initialization:
+class TestCompositeScorerInitialization:
     """Test CompositeScorer initialization and configuration."""
 
     def test_scorer_initialization_with_valid_config(self, scorer):
@@ -169,7 +169,7 @@ class TestCompositeScorer_Initialization:
             pass  # Test passes if no exception is raised
 
 
-class TestCompositeScorer_MetricExtraction:
+class TestCompositeScorerMetricExtraction:
     """Test metric extraction from tier results."""
 
     def test_extract_metric_values_complete_results(self, scorer, sample_tier_results):
@@ -215,7 +215,7 @@ class TestCompositeScorer_MetricExtraction:
         # Test passes if values are properly clamped as expected
 
 
-class TestCompositeScorer_ScoreCalculation:
+class TestCompositeScorerScoreCalculation:
     """Test composite score calculation."""
 
     def test_calculate_composite_score_perfect_performance(self, scorer, sample_tier_results):
@@ -261,7 +261,7 @@ class TestCompositeScorer_ScoreCalculation:
         assert abs(score - expected_score) < 0.001
 
 
-class TestCompositeScorer_RecommendationMapping:
+class TestCompositeScorerRecommendationMapping:
     """Test recommendation mapping from scores."""
 
     def test_map_to_recommendation_accept(self, scorer):
@@ -292,7 +292,7 @@ class TestCompositeScorer_RecommendationMapping:
         assert scorer.get_recommendation_weight("reject") == -1.0
 
 
-class TestCompositeScorer_Integration:
+class TestCompositeScorerIntegration:
     """Test complete composite evaluation integration."""
 
     def test_evaluate_composite_complete_flow(self, scorer, sample_tier_results):
@@ -338,7 +338,7 @@ class TestCompositeScorer_Integration:
         assert 0.0 <= time_score_2 <= 1.0
 
 
-class TestCompositeScorer_Utils:
+class TestCompositeScorerUtils:
     """Test utility functions."""
 
     def test_get_scoring_summary(self, scorer):
@@ -366,19 +366,23 @@ class TestCompositeScorer_Utils:
 
 
 # Integration test with actual config file
-class TestCompositeScorer_RealConfig:
+class TestCompositeScorerRealConfig:
     """Test with actual configuration file from the project."""
 
     def test_with_real_config_file(self):
         """Should work with the actual config_eval.json from the project."""
-        real_config_path = Path(__file__).parent.parent.parent / "src" / "app" / "config" / "config_eval.json"
+        real_config_path = (
+            Path(__file__).parent.parent.parent / "src" / "app" / "config" / "config_eval.json"
+        )
 
         if real_config_path.exists():
             scorer = CompositeScorer(config_path=real_config_path)
 
             # Verify basic functionality
             assert len(scorer.weights) == 6
-            assert abs(sum(scorer.weights.values()) - 1.0) < 0.01  # Allow for floating point precision
+            assert (
+                abs(sum(scorer.weights.values()) - 1.0) < 0.01
+            )  # Allow for floating point precision
 
             summary = scorer.get_scoring_summary()
             assert summary["metrics_count"] == 6
@@ -398,12 +402,12 @@ class TestAgentAssessment:
             error_occurred=False,
             output_length=100,
         )
-        
+
         # Should return valid AgentMetrics object
         assert 0.0 <= metrics.tool_selection_score <= 1.0
-        assert 0.0 <= metrics.plan_coherence_score <= 1.0  
+        assert 0.0 <= metrics.plan_coherence_score <= 1.0
         assert 0.0 <= metrics.coordination_score <= 1.0
-        
+
         # Should have composite score
         composite = metrics.get_agent_composite_score()
         assert 0.0 <= composite <= 1.0
@@ -416,14 +420,14 @@ class TestAgentAssessment:
             error_occurred=False,
             output_length=100,
         )
-        
+
         error_metrics = scorer.assess_agent_performance(
             execution_time=5.0,
             tools_used=["tool1"],
             error_occurred=True,  # Should reduce coherence score
             output_length=100,
         )
-        
+
         # Error should result in lower coherence score
         assert error_metrics.plan_coherence_score < normal_metrics.plan_coherence_score
 
@@ -435,13 +439,21 @@ class TestAgentAssessment:
             error_occurred=False,
             output_length=100,
         )
-        
+
         over_tooled_metrics = scorer.assess_agent_performance(
             execution_time=5.0,
-            tools_used=["tool1", "tool2", "tool3", "tool4", "tool5", "tool6", "tool7"],  # Too many tools
+            tools_used=[
+                "tool1",
+                "tool2",
+                "tool3",
+                "tool4",
+                "tool5",
+                "tool6",
+                "tool7",
+            ],  # Too many tools
             error_occurred=False,
             output_length=100,
         )
-        
+
         # Over-tooling should result in lower tool selection score
         assert over_tooled_metrics.tool_selection_score < normal_metrics.tool_selection_score

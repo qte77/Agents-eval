@@ -264,8 +264,12 @@ class TestPeerReadRealDatasetValidation:
         assert isinstance(available_papers, list), "Should return list of paper IDs"
         if available_papers:  # Only test if files are discovered
             assert len(available_papers) > 0, "Should discover some papers"
-            assert all(isinstance(paper_id, str) for paper_id in available_papers), "All paper IDs should be strings"
-            assert all(len(paper_id) > 0 for paper_id in available_papers), "All paper IDs should be non-empty"
+            assert all(isinstance(paper_id, str) for paper_id in available_papers), (
+                "All paper IDs should be strings"
+            )
+            assert all(len(paper_id) > 0 for paper_id in available_papers), (
+                "All paper IDs should be non-empty"
+            )
 
 
 if __name__ == "__main__":
@@ -277,7 +281,9 @@ if __name__ == "__main__":
         try:
             # Load configuration
             config = load_peerread_config()
-            print(f"✓ Configuration loaded: {len(config.venues)} venues, {len(config.splits)} splits")
+            print(
+                f"✓ Configuration loaded: {len(config.venues)} venues, {len(config.splits)} splits"
+            )
 
             # Create test downloader with limited scope
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -304,7 +310,9 @@ if __name__ == "__main__":
                 download_time = time.time() - start_time
 
                 if result.success:
-                    print(f"✓ Download successful: {result.papers_downloaded} papers in {download_time:.2f}s")
+                    print(
+                        f"✓ Download successful: {result.papers_downloaded} papers in {download_time:.2f}s"
+                    )
 
                     # Test loader integration
                     loader = PeerReadLoader(test_config)
@@ -313,7 +321,9 @@ if __name__ == "__main__":
 
                     if papers:
                         paper = papers[0]
-                        print(f"✓ Sample paper: {paper.title[:50]}... ({len(paper.reviews)} reviews)")
+                        print(
+                            f"✓ Sample paper: {paper.title[:50]}... ({len(paper.reviews)} reviews)"
+                        )
 
                 else:
                     print(f"✗ Download failed: {result.error_message}")

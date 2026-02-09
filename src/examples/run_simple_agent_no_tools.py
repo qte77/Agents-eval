@@ -9,7 +9,7 @@ from .utils.agent_simple_no_tools import get_research
 from .utils.utils import (
     get_api_key,
     load_config,
-    print_research_Result,
+    print_research_result,
 )
 
 CONFIG_FILE = "config.json"
@@ -27,7 +27,7 @@ def main():
     api_key = get_api_key(provider)
 
     result = get_research(topic, config.prompts, provider, config, api_key or "")
-    print_research_Result(result.data, result.usage())
+    print_research_result(result.data, result.usage())
 
 
 if __name__ == "__main__":

@@ -192,7 +192,9 @@ class PerformanceBenchmarkData:
                             "conflict_resolution",
                         ][i // 20 % 3],
                         "manager_agent": f"Agent_{i % agent_count}",
-                        "target_agents": [f"Agent_{j}" for j in range(agent_count) if j != i % agent_count],
+                        "target_agents": [
+                            f"Agent_{j}" for j in range(agent_count) if j != i % agent_count
+                        ],
                         "timestamp": i * 0.2,
                         "task": f"complex_coordination_{i // 20}",
                         "complexity": (i // 20) + 1,
@@ -305,7 +307,9 @@ class TestPerformanceBaselines:
 
             # Validate against target (1.0 second)
             target_time = 1.0
-            success_rate = sum(1 for t in execution_times if t <= target_time) / len(execution_times)
+            success_rate = sum(1 for t in execution_times if t <= target_time) / len(
+                execution_times
+            )
             print(f"  Success rate (≤{target_time}s): {success_rate:.1%}")
 
             # Reason: Allow some flexibility for larger papers but warn if slow
@@ -767,11 +771,15 @@ if __name__ == "__main__":
 
             if tier1_results:
                 tier1_times = [r["time"] for r in tier1_results]
-                print(f"Tier 1 (Traditional): {statistics.mean(tier1_times):.3f}s avg, target ≤1.0s")
+                print(
+                    f"Tier 1 (Traditional): {statistics.mean(tier1_times):.3f}s avg, target ≤1.0s"
+                )
 
             if pipeline_results:
                 pipeline_times = [r["time"] for r in pipeline_results]
-                print(f"End-to-End Pipeline: {statistics.mean(pipeline_times):.3f}s avg, target ≤25.0s")
+                print(
+                    f"End-to-End Pipeline: {statistics.mean(pipeline_times):.3f}s avg, target ≤25.0s"
+                )
 
             print("\n✅ Performance benchmarking completed!")
             print("Results available for performance baseline documentation.")

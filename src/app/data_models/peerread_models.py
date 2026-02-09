@@ -154,7 +154,10 @@ class GeneratedReview(BaseModel):
         ...,
         ge=1,
         le=5,
-        description="Overall recommendation (1=strong reject, 2=reject, 3=borderline, 4=accept, 5=strong accept)",
+        description=(
+            "Overall recommendation (1=strong reject, 2=reject, 3=borderline, "
+            "4=accept, 5=strong accept)"
+        ),
     )
 
     clarity: int = Field(
@@ -172,7 +175,7 @@ class GeneratedReview(BaseModel):
     )
 
     @field_validator("comments")
-    def validate_comments_structure(cls, v: str) -> str:
+    def validate_comments_structure(cls, v: str) -> str:  # noqa: N805
         """Ensure comments contain key review sections."""
         required_sections = [
             "contributions",

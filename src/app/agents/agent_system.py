@@ -427,7 +427,8 @@ async def run_manager(
     try:
         if pydantic_ai_stream:
             raise NotImplementedError(
-                "Streaming currently only possible for Agents with output_type str not pydantic model"
+                "Streaming currently only possible for Agents with output_type "
+                "str not pydantic model"
             )
             # logger.info("Streaming model response ...")
             # result = await manager.run(**mgr_cfg)

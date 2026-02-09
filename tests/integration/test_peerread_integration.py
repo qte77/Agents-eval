@@ -35,11 +35,11 @@ class PeerReadTestData:
                 appropriateness="4",
                 meaningful_comparison="3",
                 presentation_format="Poster",
-                comments="""This paper presents a solid approach to transformer-based 
-                language modeling for scientific text. The methodology is sound and 
-                the experimental validation is comprehensive. The results demonstrate 
-                significant improvements over baseline methods. Minor issues with 
-                presentation clarity that should be addressed. I recommend acceptance 
+                comments="""This paper presents a solid approach to transformer-based
+                language modeling for scientific text. The methodology is sound and
+                the experimental validation is comprehensive. The results demonstrate
+                significant improvements over baseline methods. Minor issues with
+                presentation clarity that should be addressed. I recommend acceptance
                 with minor revisions.""",
                 soundness_correctness="4",
                 originality="3",
@@ -54,11 +54,11 @@ class PeerReadTestData:
                 appropriateness="4",
                 meaningful_comparison="4",
                 presentation_format="Oral",
-                comments="""The technical contribution is valuable and the experimental 
-                design is appropriate. The paper addresses an important problem in 
-                scientific text generation. Some concerns about generalizability of 
-                the approach across different scientific domains. The writing quality 
-                is good but could benefit from clearer explanations in the methodology 
+                comments="""The technical contribution is valuable and the experimental
+                design is appropriate. The paper addresses an important problem in
+                scientific text generation. Some concerns about generalizability of
+                the approach across different scientific domains. The writing quality
+                is good but could benefit from clearer explanations in the methodology
                 section. Overall a solid paper that merits publication.""",
                 soundness_correctness="4",
                 originality="4",
@@ -73,16 +73,16 @@ class PeerReadTestData:
         paper = PeerReadPaper(
             paper_id="test_paper_001",
             title="Transformer-Based Language Models for Scientific Text Generation: A Comprehensive Study",
-            abstract="""Recent advances in transformer architectures have shown remarkable 
-            success in natural language processing tasks. This paper investigates their 
-            application to scientific text generation, focusing on automatic paper summarization 
-            and review generation. We present a novel fine-tuning approach that leverages 
-            domain-specific scientific corpora and evaluates performance across multiple 
-            scientific disciplines. Our experiments demonstrate significant improvements 
-            in coherence, factual accuracy, and domain-specific terminology usage compared 
-            to general-purpose language models. The results suggest that specialized training 
-            on scientific text can substantially enhance the quality of generated scientific 
-            content, with particular improvements in methodology description and result 
+            abstract="""Recent advances in transformer architectures have shown remarkable
+            success in natural language processing tasks. This paper investigates their
+            application to scientific text generation, focusing on automatic paper summarization
+            and review generation. We present a novel fine-tuning approach that leverages
+            domain-specific scientific corpora and evaluates performance across multiple
+            scientific disciplines. Our experiments demonstrate significant improvements
+            in coherence, factual accuracy, and domain-specific terminology usage compared
+            to general-purpose language models. The results suggest that specialized training
+            on scientific text can substantially enhance the quality of generated scientific
+            content, with particular improvements in methodology description and result
             interpretation sections.""",
             reviews=reviews,
             review_histories=[
@@ -97,23 +97,23 @@ class PeerReadTestData:
     def create_agent_generated_review() -> str:
         """Create a sample agent-generated review for comparison."""
 
-        return """This paper explores the application of transformer models to scientific 
-        text generation with a focus on domain adaptation. The proposed approach demonstrates 
-        technical soundness with comprehensive experimental validation across multiple scientific 
-        domains. The methodology is well-designed and the results show clear improvements over 
-        baseline approaches. 
+        return """This paper explores the application of transformer models to scientific
+        text generation with a focus on domain adaptation. The proposed approach demonstrates
+        technical soundness with comprehensive experimental validation across multiple scientific
+        domains. The methodology is well-designed and the results show clear improvements over
+        baseline approaches.
 
-        Strengths include the thorough experimental design, appropriate baseline comparisons, 
-        and comprehensive evaluation metrics. The paper addresses an important problem in 
-        automated scientific text generation. The writing is generally clear and the technical 
+        Strengths include the thorough experimental design, appropriate baseline comparisons,
+        and comprehensive evaluation metrics. The paper addresses an important problem in
+        automated scientific text generation. The writing is generally clear and the technical
         content is accessible.
 
-        Areas for improvement include more detailed analysis of failure cases and discussion 
-        of limitations. The generalizability claims could be better supported with additional 
+        Areas for improvement include more detailed analysis of failure cases and discussion
+        of limitations. The generalizability claims could be better supported with additional
         experiments. Some sections would benefit from clearer explanations.
 
-        Overall, this is a solid technical contribution that advances the field of scientific 
-        text generation. I recommend acceptance with minor revisions to address the presentation 
+        Overall, this is a solid technical contribution that advances the field of scientific
+        text generation. I recommend acceptance with minor revisions to address the presentation
         issues and expand the discussion of limitations."""
 
     @staticmethod
@@ -264,7 +264,7 @@ class TestPeerReadIntegration:
         extended_abstract = (
             peerread_paper.abstract
             + """
-        
+
         Further experimental validation across eight different scientific domains
         demonstrates the robustness and generalizability of the proposed approach.
         We evaluate on computational linguistics, machine learning, computer vision,

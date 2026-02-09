@@ -89,7 +89,7 @@ class LLMJudgeEngine:
             )
 
             prompt = f"""Evaluate technical accuracy of this review (1-5 scale):
-            
+
 Paper Excerpt: {paper_excerpt}
 
 Review: {review}
@@ -125,7 +125,7 @@ Provide scores and brief explanation."""
         """Assess constructiveness and helpfulness of review."""
         try:
             prompt = f"""Evaluate constructiveness of this review (1-5 scale):
-            
+
 Review: {review}
 
 Rate each aspect (1=poor, 5=excellent):
@@ -162,7 +162,7 @@ Provide scores and brief explanation."""
             planning_summary = self._extract_planning_decisions(execution_trace)
 
             prompt = f"""Evaluate planning rationality of this execution (1-5 scale):
-            
+
 Execution Summary: {planning_summary}
 
 Rate each aspect (1=poor, 5=excellent):

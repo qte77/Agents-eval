@@ -22,8 +22,8 @@ async def run_simple_evaluation():
     # Sample data
     sample_paper = """
     This paper presents a novel approach to transformer-based language models
-    for scientific text generation. The methodology involves fine-tuning 
-    pre-trained models on domain-specific datasets with comprehensive 
+    for scientific text generation. The methodology involves fine-tuning
+    pre-trained models on domain-specific datasets with comprehensive
     evaluation across multiple benchmarks.
     """
 

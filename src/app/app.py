@@ -100,7 +100,8 @@ async def main(
                 if not query:
                     paper_review_template = prompts.get(
                         "paper_review_query",
-                        "Generate a structured peer review for paper '{paper_number}' from PeerRead dataset.",
+                        "Generate a structured peer review for paper "
+                        "'{paper_number}' from PeerRead dataset.",
                     )
                     query = paper_review_template.format(paper_number=paper_number)
                 logger.info(f"Paper review mode enabled for paper {paper_number}")

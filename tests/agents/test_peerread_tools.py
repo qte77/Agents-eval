@@ -84,7 +84,9 @@ class TestPeerReadAgentTools:
 
     @patch("app.agents.peerread_tools.load_peerread_config")
     @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_get_peerread_paper_tool_success(self, mock_loader_class, mock_config, sample_paper, sample_config):
+    def test_get_peerread_paper_tool_success(
+        self, mock_loader_class, mock_config, sample_paper, sample_config
+    ):
         """Test successful paper retrieval via agent tool."""
         # Import here to avoid import errors if module doesn't exist yet
         from app.tools.peerread_tools import add_peerread_tools_to_manager
@@ -125,7 +127,9 @@ class TestPeerReadAgentTools:
 
     @patch("app.agents.peerread_tools.load_peerread_config")
     @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_query_peerread_papers_tool(self, mock_loader_class, mock_config, sample_paper, sample_config):
+    def test_query_peerread_papers_tool(
+        self, mock_loader_class, mock_config, sample_paper, sample_config
+    ):
         """Test paper querying via agent tool."""
         # Import here to avoid import errors if module doesn't exist yet
         from app.tools.peerread_tools import add_peerread_tools_to_manager

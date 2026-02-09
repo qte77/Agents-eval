@@ -218,7 +218,9 @@ class TestTierExecution:
         with patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_eval:
             mock_eval.return_value = sample_tier1_result
 
-            result, execution_time = await pipeline._execute_tier1("sample paper", "sample review", ["reference"])
+            result, execution_time = await pipeline._execute_tier1(
+                "sample paper", "sample review", ["reference"]
+            )
 
             assert result == sample_tier1_result
             assert execution_time > 0
@@ -229,7 +231,9 @@ class TestTierExecution:
         """Test Tier 1 execution when disabled."""
         # Mock the configuration to disable tier 1
         with patch.object(pipeline.config_manager, "is_tier_enabled", return_value=False):
-            result, execution_time = await pipeline._execute_tier1("sample paper", "sample review", ["reference"])
+            result, execution_time = await pipeline._execute_tier1(
+                "sample paper", "sample review", ["reference"]
+            )
 
             assert result is None
             assert execution_time == 0.0
@@ -257,7 +261,9 @@ class TestTierExecution:
         """Test successful Tier 2 execution."""
         pipeline.llm_engine.evaluate_comprehensive = AsyncMock(return_value=sample_tier2_result)
 
-        result, execution_time = await pipeline._execute_tier2("sample paper", "sample review", {"trace": "data"})
+        result, execution_time = await pipeline._execute_tier2(
+            "sample paper", "sample review", {"trace": "data"}
+        )
 
         assert result == sample_tier2_result
         assert execution_time > 0
@@ -273,7 +279,9 @@ class TestTierExecution:
         result, execution_time = await pipeline._execute_tier2("sample paper", "sample review")
 
         assert result == sample_tier2_result
-        pipeline.llm_engine.evaluate_comprehensive.assert_called_once_with("sample paper", "sample review", {})
+        pipeline.llm_engine.evaluate_comprehensive.assert_called_once_with(
+            "sample paper", "sample review", {}
+        )
 
     @pytest.mark.asyncio
     async def test_execute_tier3_success(self, pipeline, sample_tier3_result):
@@ -281,7 +289,9 @@ class TestTierExecution:
         with patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_analyze:
             mock_analyze.return_value = sample_tier3_result
 
-            result, execution_time = await pipeline._execute_tier3({"agent_interactions": [], "tool_calls": []})
+            result, execution_time = await pipeline._execute_tier3(
+                {"agent_interactions": [], "tool_calls": []}
+            )
 
             assert result == sample_tier3_result
             assert execution_time > 0
@@ -472,7 +482,9 @@ class TestComprehensiveEvaluation:
             mock_targets.update({"total_max_seconds": 0.001})
 
             with (
-                patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_t1,
+                patch.object(
+                    pipeline.traditional_engine, "evaluate_traditional_metrics"
+                ) as mock_t1,
                 patch.object(pipeline.llm_engine, "evaluate_comprehensive") as mock_t2,
                 patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_t3,
                 patch.object(pipeline.composite_scorer, "evaluate_composite") as mock_comp,
@@ -513,7 +525,9 @@ class TestPipelineUtilities:
             "fallback_used": False,
         }
 
-        with patch.object(pipeline.performance_monitor, "get_execution_stats", return_value=mock_stats):
+        with patch.object(
+            pipeline.performance_monitor, "get_execution_stats", return_value=mock_stats
+        ):
             stats = pipeline.get_execution_stats()
 
             assert stats["total_time"] == 4.4
@@ -541,11 +555,11 @@ class TestOpikIntegration:
     def test_opik_config_initialization(self, config_file):
         """Test that Opik configuration is properly initialized."""
         pipeline = EvaluationPipeline(config_file)
-        
+
         # Should have opik_config attribute
-        assert hasattr(pipeline, 'opik_config')
+        assert hasattr(pipeline, "opik_config")
         assert pipeline.opik_config is not None
-        
+
         # Should have default values
         assert pipeline.opik_config.enabled is False  # Default disabled
         assert pipeline.opik_config.api_url == "http://localhost:3003"
@@ -554,11 +568,11 @@ class TestOpikIntegration:
     def test_opik_decorator_application(self, config_file):
         """Test that Opik decorator is properly applied when available."""
         pipeline = EvaluationPipeline(config_file)
-        
+
         # Mock function to test decorator
         def mock_func():
             return "test"
-        
+
         # Should return function unchanged when Opik not enabled
         decorated = pipeline._apply_opik_decorator(mock_func)
         assert callable(decorated)
@@ -567,9 +581,9 @@ class TestOpikIntegration:
     def test_opik_metadata_recording(self, config_file):
         """Test that Opik metadata is recorded without errors."""
         pipeline = EvaluationPipeline(config_file)
-        
+
         # Should not raise errors when recording metadata
         pipeline._record_opik_metadata(1, 1.5, result="test_result")
         pipeline._record_opik_metadata(2, 2.0, error="test_error")
-        
+
         # Metadata recording is debug-only, so just verify no exceptions

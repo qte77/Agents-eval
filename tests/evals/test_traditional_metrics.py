@@ -183,7 +183,9 @@ class TestTraditionalMetricsEngine:
 
         with patch.object(engine, "compute_cosine_similarity", side_effect=[0.2, 0.9, 0.1]):
             with patch.object(engine, "compute_jaccard_similarity", side_effect=[0.1, 0.8, 0.0]):
-                with patch.object(engine, "compute_semantic_similarity", side_effect=[0.3, 0.95, 0.1]):
+                with patch.object(
+                    engine, "compute_semantic_similarity", side_effect=[0.3, 0.95, 0.1]
+                ):
                     best_scores = engine.find_best_match(agent_output, references)
 
                     # Should pick the best scores (from second reference)
@@ -228,7 +230,9 @@ class TestTraditionalMetricsEngine:
 
             mock_best_match.return_value = SimilarityScores(cosine=0.8, jaccard=0.7, semantic=0.85)
 
-            result = engine.evaluate_traditional_metrics(agent_output, reference_texts, start_time, end_time, config)
+            result = engine.evaluate_traditional_metrics(
+                agent_output, reference_texts, start_time, end_time, config
+            )
 
             assert isinstance(result, Tier1Result)
             assert result.cosine_score == 0.8
@@ -420,7 +424,9 @@ class TestEnhancedFeatures:
             "semantic_weight": 0.1,
         }
 
-        similarity = engine.evaluate_enhanced_similarity(agent_output, references, config_weights=custom_weights)
+        similarity = engine.evaluate_enhanced_similarity(
+            agent_output, references, config_weights=custom_weights
+        )
 
         assert 0.0 <= similarity <= 1.0
         assert similarity > 0.4  # Should show reasonable similarity

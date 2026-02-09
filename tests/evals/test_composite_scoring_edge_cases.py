@@ -536,7 +536,9 @@ if __name__ == "__main__":
             for tier_name, evaluation in missing_tier_cases:
                 try:
                     result = scorer.calculate_composite_score(evaluation)
-                    print(f"  ✓ Missing {tier_name}: score={result.composite_score:.3f}, rec={result.recommendation}")
+                    print(
+                        f"  ✓ Missing {tier_name}: score={result.composite_score:.3f}, rec={result.recommendation}"
+                    )
                 except Exception as e:
                     print(f"  ✗ Missing {tier_name}: failed with {type(e).__name__}: {e}")
 
@@ -545,7 +547,9 @@ if __name__ == "__main__":
             try:
                 extreme_eval = test_data.create_extreme_values_evaluation()
                 result = scorer.calculate_composite_score(extreme_eval)
-                print(f"  ✓ Extreme values: score={result.composite_score:.3f}, rec={result.recommendation}")
+                print(
+                    f"  ✓ Extreme values: score={result.composite_score:.3f}, rec={result.recommendation}"
+                )
             except Exception as e:
                 print(f"  ✗ Extreme values: failed with {type(e).__name__}: {e}")
 
@@ -554,7 +558,9 @@ if __name__ == "__main__":
             try:
                 failed_eval = test_data.create_failed_tiers_evaluation()
                 result = scorer.calculate_composite_score(failed_eval)
-                print(f"  ✓ Failed executions: score={result.composite_score:.3f}, rec={result.recommendation}")
+                print(
+                    f"  ✓ Failed executions: score={result.composite_score:.3f}, rec={result.recommendation}"
+                )
             except Exception as e:
                 print(f"  ✗ Failed executions: failed with {type(e).__name__}: {e}")
 
@@ -563,7 +569,9 @@ if __name__ == "__main__":
             try:
                 empty_eval = test_data.create_all_tiers_missing_evaluation()
                 result = scorer.calculate_composite_score(empty_eval)
-                print(f"  ✓ All missing: score={result.composite_score:.3f}, rec={result.recommendation}")
+                print(
+                    f"  ✓ All missing: score={result.composite_score:.3f}, rec={result.recommendation}"
+                )
             except Exception as e:
                 print(f"  ✓ All missing: appropriately failed with {type(e).__name__}")
 

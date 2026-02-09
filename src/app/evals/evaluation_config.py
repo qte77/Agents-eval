@@ -71,7 +71,8 @@ class EvaluationConfig:
         except json.JSONDecodeError as e:
             error_msg = f"Invalid JSON in pipeline configuration: {e}"
             logger.error(
-                f"{error_msg}. Check file syntax at line {e.lineno if hasattr(e, 'lineno') else 'unknown'}."
+                f"{error_msg}. Check file syntax at line "
+                f"{e.lineno if hasattr(e, 'lineno') else 'unknown'}."
             )
             raise json.JSONDecodeError(error_msg, e.doc, e.pos) from e
 

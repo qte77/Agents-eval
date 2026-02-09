@@ -156,7 +156,8 @@ def create_evaluation_agent(
                 "Focus on logical flow and decision quality."
             ),
             "general": (
-                "You are an expert evaluator providing structured assessments of text quality and content."
+                "You are an expert evaluator providing structured assessments "
+                "of text quality and content."
             ),
         }
         system_prompt = default_prompts.get(assessment_type, default_prompts["general"])

@@ -102,23 +102,33 @@ class TestPeerReadFormatCompatibility:
 
             # Validate each review
             for j, review in enumerate(paper.reviews):
-                assert isinstance(review, PeerReadReview), f"Paper {i}, Review {j} is not PeerReadReview instance"
+                assert isinstance(review, PeerReadReview), (
+                    f"Paper {i}, Review {j} is not PeerReadReview instance"
+                )
 
                 # Validate review fields
                 assert review.impact is not None, f"Paper {i}, Review {j} missing impact"
-                assert review.recommendation is not None, f"Paper {i}, Review {j} missing recommendation"
+                assert review.recommendation is not None, (
+                    f"Paper {i}, Review {j} missing recommendation"
+                )
                 assert review.comments is not None, f"Paper {i}, Review {j} missing comments"
                 assert len(review.comments.strip()) > 0, f"Paper {i}, Review {j} has empty comments"
 
                 # Validate score ranges (PeerRead uses 1-5 scale)
                 impact_val = int(review.impact)
-                assert 1 <= impact_val <= 5, f"Paper {i}, Review {j} impact out of range: {impact_val}"
+                assert 1 <= impact_val <= 5, (
+                    f"Paper {i}, Review {j} impact out of range: {impact_val}"
+                )
 
                 rec_val = int(review.recommendation)
-                assert 1 <= rec_val <= 5, f"Paper {i}, Review {j} recommendation out of range: {rec_val}"
+                assert 1 <= rec_val <= 5, (
+                    f"Paper {i}, Review {j} recommendation out of range: {rec_val}"
+                )
 
     @pytest.mark.integration
-    async def test_evaluation_pipeline_real_data_integration(self, real_peerread_data, evaluation_pipeline):
+    async def test_evaluation_pipeline_real_data_integration(
+        self, real_peerread_data, evaluation_pipeline
+    ):
         """Test evaluation pipeline with real PeerRead data."""
         papers = real_peerread_data
 
@@ -133,16 +143,16 @@ class TestPeerReadFormatCompatibility:
 
         # Create synthetic agent review for testing
         agent_review = f"""This paper titled "{paper.title}" presents an interesting approach.
-        
+
         The abstract suggests a solid methodology with comprehensive evaluation.
         The work addresses important questions in the field and demonstrates
         technical competence. The approach appears sound and the experimental
         design seems appropriate.
-        
+
         Strengths include clear problem formulation and systematic evaluation.
         Areas for improvement might include more detailed analysis of limitations
         and expanded discussion of related work.
-        
+
         Overall, this appears to be a valuable contribution to the field."""
 
         # Create synthetic execution trace
@@ -226,11 +236,15 @@ class TestPeerReadFormatCompatibility:
 
         for i, paper in enumerate(papers):
             # Test handling of optional fields
-            assert hasattr(paper, "review_histories"), f"Paper {i} missing review_histories attribute"
+            assert hasattr(paper, "review_histories"), (
+                f"Paper {i} missing review_histories attribute"
+            )
 
             # review_histories can be empty list or None
             if paper.review_histories is not None:
-                assert isinstance(paper.review_histories, list), f"Paper {i} review_histories should be list"
+                assert isinstance(paper.review_histories, list), (
+                    f"Paper {i} review_histories should be list"
+                )
 
             # Test review field variations
             for j, review in enumerate(paper.reviews):
@@ -269,7 +283,9 @@ class TestPeerReadFormatCompatibility:
             # Validate review characteristics
             for j, review in enumerate(paper.reviews[:2]):  # Check first 2 reviews
                 comment_words = len(review.comments.split())
-                assert comment_words > 10, f"Paper {i}, Review {j} comments too short: {comment_words} words"
+                assert comment_words > 10, (
+                    f"Paper {i}, Review {j} comments too short: {comment_words} words"
+                )
                 # No upper limit as some reviews can be very detailed
 
     @pytest.mark.integration
@@ -316,7 +332,7 @@ class TestPeerReadFormatCompatibility:
 
             # Validate model operations
             paper_dict = paper.model_dump()
-            reconstructed = PeerReadPaper.model_validate(paper_dict)
+            PeerReadPaper.model_validate(paper_dict)
 
             processing_time = time.time() - start_time
 
@@ -334,8 +350,12 @@ class TestPeerReadFormatCompatibility:
             assert processing_time < 1.0, f"Paper {i} processing too slow: {processing_time:.3f}s"
 
         # Validate overall performance characteristics
-        avg_processing_time = sum(p["processing_time"] for p in performance_data) / len(performance_data)
-        assert avg_processing_time < 0.1, f"Average processing time too high: {avg_processing_time:.3f}s"
+        avg_processing_time = sum(p["processing_time"] for p in performance_data) / len(
+            performance_data
+        )
+        assert avg_processing_time < 0.1, (
+            f"Average processing time too high: {avg_processing_time:.3f}s"
+        )
 
 
 if __name__ == "__main__":
@@ -367,7 +387,9 @@ if __name__ == "__main__":
 
                 # Test download and validation
                 downloader = PeerReadDownloader(test_config)
-                result = downloader.download_venue_split(test_config.venues[0], test_config.splits[0], max_papers=1)
+                result = downloader.download_venue_split(
+                    test_config.venues[0], test_config.splits[0], max_papers=1
+                )
 
                 if result.success:
                     print(f"✓ Sample download successful: {result.papers_downloaded} papers")
@@ -385,7 +407,7 @@ if __name__ == "__main__":
 
                         # Test serialization
                         paper_dict = paper.model_dump()
-                        reconstructed = PeerReadPaper.model_validate(paper_dict)
+                        PeerReadPaper.model_validate(paper_dict)
                         print("✓ Serialization test passed")
 
                         # Test evaluation pipeline integration
@@ -403,7 +425,9 @@ if __name__ == "__main__":
                         )
                         eval_time = time.time() - start_time
 
-                        print(f"✓ Pipeline integration: {eval_time:.2f}s, score={result.composite_score:.3f}")
+                        print(
+                            f"✓ Pipeline integration: {eval_time:.2f}s, score={result.composite_score:.3f}"
+                        )
                 else:
                     print(f"✗ Download failed: {result.error_message}")
                     print("Note: This may be expected if network access is limited")

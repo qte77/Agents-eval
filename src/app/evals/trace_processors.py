@@ -96,7 +96,7 @@ class TraceCollector:
                         event_type TEXT,
                         agent_id TEXT,
                         data TEXT,
-                        FOREIGN KEY (execution_id) 
+                        FOREIGN KEY (execution_id)
                         REFERENCES trace_executions (execution_id)
                     )
                 """)
@@ -310,8 +310,8 @@ class TraceCollector:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute(
                     """
-                    INSERT OR REPLACE INTO trace_executions 
-                    (execution_id, start_time, end_time, agent_count, 
+                    INSERT OR REPLACE INTO trace_executions
+                    (execution_id, start_time, end_time, agent_count,
                      tool_count, total_duration, created_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
@@ -330,7 +330,7 @@ class TraceCollector:
                 for event in self.current_events:
                     conn.execute(
                         """
-                        INSERT INTO trace_events 
+                        INSERT INTO trace_events
                         (execution_id, timestamp, event_type, agent_id, data)
                         VALUES (?, ?, ?, ?, ?)
                     """,
@@ -379,8 +379,8 @@ class TraceCollector:
                 # Get events
                 events = conn.execute(
                     """
-                    SELECT timestamp, event_type, agent_id, data 
-                    FROM trace_events 
+                    SELECT timestamp, event_type, agent_id, data
+                    FROM trace_events
                     WHERE execution_id = ?
                     ORDER BY timestamp
                 """,
@@ -436,9 +436,9 @@ class TraceCollector:
             with sqlite3.connect(self.db_path) as conn:
                 executions = conn.execute(
                     """
-                    SELECT execution_id, start_time, end_time, agent_count, 
+                    SELECT execution_id, start_time, end_time, agent_count,
                            tool_count, total_duration, created_at
-                    FROM trace_executions 
+                    FROM trace_executions
                     ORDER BY created_at DESC
                     LIMIT ?
                 """,

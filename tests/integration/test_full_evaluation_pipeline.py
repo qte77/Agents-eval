@@ -38,7 +38,7 @@ class RealisticTestData:
                 This paper presents a novel framework for multi-agent reinforcement learning (MARL) that addresses
                 the challenge of dynamic task allocation in distributed computing environments. Our approach,
                 dubbed DynamicMARL, combines hierarchical task decomposition with adaptive coordination mechanisms
-                to enable efficient resource utilization and improved system performance. We introduce a 
+                to enable efficient resource utilization and improved system performance. We introduce a
                 decentralized learning algorithm that allows agents to autonomously discover optimal task
                 assignments while maintaining global coordination objectives.
 
@@ -202,15 +202,15 @@ class RealisticTestData:
             appropriateness=5,
             meaningful_comparison=4,
             presentation_format="Oral",
-            comments="""This paper presents DynamicMARL, a framework for multi-agent reinforcement learning 
+            comments="""This paper presents DynamicMARL, a framework for multi-agent reinforcement learning
             in distributed computing environments. The approach combines hierarchical task decomposition
             with adaptive coordination mechanisms to achieve improved resource utilization and system performance.
 
-            Key contributions: The hierarchical task decomposition strategy effectively addresses scalability 
-            challenges, while the adaptive coordination protocol provides a good balance between autonomy and 
+            Key contributions: The hierarchical task decomposition strategy effectively addresses scalability
+            challenges, while the adaptive coordination protocol provides a good balance between autonomy and
             collaboration. The decentralized learning algorithm is properly designed and theoretically motivated.
 
-            Strengths: The experimental evaluation is comprehensive and convincing. Testing across multiple 
+            Strengths: The experimental evaluation is comprehensive and convincing. Testing across multiple
             distributed computing scenarios demonstrates the generality of the approach. The 23% improvement
             in resource utilization and 31% reduction in task completion time represent significant practical gains.
             The robustness evaluation under network partitions and agent failures is particularly valuable.
@@ -218,10 +218,10 @@ class RealisticTestData:
             Weaknesses: Limited theoretical convergence analysis. Some implementation details could be clearer.
             Comparison with very recent work could be expanded. Scalability analysis could be more detailed.
 
-            Technical soundness: The technical approach is sound and well-executed. The methodology is appropriate 
+            Technical soundness: The technical approach is sound and well-executed. The methodology is appropriate
             and the results are convincing.
 
-            Clarity: The paper is generally well-written and addresses a relevant problem. The presentation 
+            Clarity: The paper is generally well-written and addresses a relevant problem. The presentation
             could be improved in some technical sections but overall clarity is good.""",
             soundness_correctness=4,
             originality=4,
@@ -443,7 +443,9 @@ class TestFullEvaluationPipeline:
         return EvaluationPipeline()
 
     @pytest.mark.asyncio
-    async def test_comprehensive_evaluation_workflow(self, realistic_test_data, evaluation_pipeline):
+    async def test_comprehensive_evaluation_workflow(
+        self, realistic_test_data, evaluation_pipeline
+    ):
         """Test complete evaluation workflow with realistic data."""
         # Create comprehensive test data
         paper_data = realistic_test_data.create_scientific_paper()
@@ -535,7 +537,7 @@ class TestFullEvaluationPipeline:
         assert result.recommendation is not None
 
         # Check if fallback was used
-        stats = evaluation_pipeline.get_execution_stats()
+        evaluation_pipeline.get_execution_stats()
         # Fallback usage depends on API availability, but should not crash
 
 

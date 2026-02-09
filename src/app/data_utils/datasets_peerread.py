@@ -281,7 +281,8 @@ class PeerReadDownloader:
         for attempt in range(self.config.max_retries):
             try:
                 logger.info(
-                    f"Downloading {data_type}/{paper_id} from {url} (Attempt {attempt + 1}/{self.config.max_retries})"
+                    f"Downloading {data_type}/{paper_id} from {url} "
+                    f"(Attempt {attempt + 1}/{self.config.max_retries})"
                 )
 
                 response = self.client.get(url, timeout=self.config.download_timeout)

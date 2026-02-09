@@ -268,7 +268,8 @@ async def run_manager_orchestrated(
     try:
         if pydantic_ai_stream:
             raise NotImplementedError(
-                "Streaming currently only possible for Agents with output_type str not pydantic model"
+                "Streaming currently only possible for Agents with output_type "
+                "str not pydantic model"
             )
         else:
             orchestrator.log_step("waiting_for_model_response")

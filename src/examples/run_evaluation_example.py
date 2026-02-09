@@ -31,8 +31,8 @@ async def run_evaluation_example():
     # Sample data for demonstration
     sample_paper = """
     This paper presents a novel approach to transformer-based language models
-    for scientific text generation. The methodology involves fine-tuning 
-    pre-trained models on domain-specific datasets with comprehensive 
+    for scientific text generation. The methodology involves fine-tuning
+    pre-trained models on domain-specific datasets with comprehensive
     evaluation across multiple benchmarks. The authors demonstrate significant
     improvements in coherence and factual accuracy compared to baseline methods.
     The experimental setup includes rigorous ablation studies and statistical
@@ -42,9 +42,9 @@ async def run_evaluation_example():
     agent_generated_review = """
     The paper demonstrates solid technical methodology with clear experimental
     design and comprehensive evaluation. The transformer-based approach shows
-    promise for scientific text generation. However, the evaluation could be 
-    more comprehensive in terms of human evaluation metrics. The writing 
-    clarity is good but could be improved in the methodology section. 
+    promise for scientific text generation. However, the evaluation could be
+    more comprehensive in terms of human evaluation metrics. The writing
+    clarity is good but could be improved in the methodology section.
     I recommend acceptance with minor revisions to address the evaluation
     limitations and improve presentation clarity.
     """
@@ -56,7 +56,7 @@ async def run_evaluation_example():
         with presentation that should be addressed before publication.
         """,
         """
-        Good work on transformer applications to scientific domains. The 
+        Good work on transformer applications to scientific domains. The
         evaluation is thorough and the results support the claims. Some
         concerns about generalizability that could be addressed.
         """,

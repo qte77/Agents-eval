@@ -166,17 +166,17 @@ async def test_complete_pipeline():
         # Create query for paper review
         review_query = f"""
         Please review the following scientific paper comprehensively:
-        
+
         Title: {test_paper.title}
-        
+
         Abstract: {test_paper.abstract}
-        
+
         Write a detailed peer review covering:
         1. Impact and significance of the work
         2. Technical substance and methodology
         3. Clarity and presentation quality
         4. Overall recommendation (accept/reject with reasoning)
-        
+
         Be specific and constructive in your feedback.
         """
 
@@ -237,7 +237,7 @@ async def test_complete_pipeline():
         2. Querying for papers from acl_2017 with at least 1 review using
         query_peerread_papers
         3. Evaluating a simple review using evaluate_paper_review
-        
+
         For the evaluation, use this sample review text:
         "This paper presents interesting ideas but lacks sufficient experimental
         validation. The methodology is sound but the results are not convincing

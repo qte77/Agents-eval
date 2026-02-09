@@ -537,7 +537,8 @@ class GraphAnalysisEngine:
             )
 
             logger.debug(
-                f"Exported NetworkX graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges"
+                f"Exported NetworkX graph: {graph.number_of_nodes()} nodes, "
+                f"{graph.number_of_edges()} edges"
             )
             return graph
 

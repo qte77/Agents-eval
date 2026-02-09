@@ -67,11 +67,11 @@ class EnhancedIntegrationTestData:
                         clarity="4",
                         reviewer_confidence="4",
                         is_meta_review=False,
-                        comments="""This is an exceptional paper that makes significant 
-                    contributions to scientific text processing. The proposed multi-scale 
-                    attention mechanism is novel and well-motivated. The experimental 
-                    evaluation is comprehensive and demonstrates clear improvements over 
-                    strong baselines. The writing is clear and the technical content is 
+                        comments="""This is an exceptional paper that makes significant
+                    contributions to scientific text processing. The proposed multi-scale
+                    attention mechanism is novel and well-motivated. The experimental
+                    evaluation is comprehensive and demonstrates clear improvements over
+                    strong baselines. The writing is clear and the technical content is
                     sound. I recommend acceptance.""",
                     ),
                     PeerReadReview(
@@ -86,10 +86,10 @@ class EnhancedIntegrationTestData:
                         clarity="3",
                         reviewer_confidence="3",
                         is_meta_review=False,
-                        comments="""The paper addresses an important problem and proposes a 
-                    reasonable solution. The technical approach is sound and the experimental 
-                    results are convincing. However, the presentation could be improved with 
-                    clearer explanations of the attention mechanism. Overall a solid 
+                        comments="""The paper addresses an important problem and proposes a
+                    reasonable solution. The technical approach is sound and the experimental
+                    results are convincing. However, the presentation could be improved with
+                    clearer explanations of the attention mechanism. Overall a solid
                     contribution that merits publication.""",
                     ),
                 ],
@@ -105,15 +105,15 @@ class EnhancedIntegrationTestData:
             PeerReadPaper(
                 paper_id="integration_paper_002",
                 title="Machine Learning Approaches for Academic Paper Classification",
-                abstract="""We investigate the application of machine learning techniques 
-            for automatic classification of academic papers across different scientific 
-            domains. Our study compares traditional feature-based methods with modern 
-            deep learning approaches. We evaluate performance on a large corpus of 
-            papers from multiple conferences and journals. The results show that 
-            transformer-based models achieve the best performance, with significant 
-            improvements over bag-of-words baselines. However, the computational cost 
-            of these methods remains a practical concern for large-scale deployment. 
-            We also analyze the impact of different feature extraction strategies and 
+                abstract="""We investigate the application of machine learning techniques
+            for automatic classification of academic papers across different scientific
+            domains. Our study compares traditional feature-based methods with modern
+            deep learning approaches. We evaluate performance on a large corpus of
+            papers from multiple conferences and journals. The results show that
+            transformer-based models achieve the best performance, with significant
+            improvements over bag-of-words baselines. However, the computational cost
+            of these methods remains a practical concern for large-scale deployment.
+            We also analyze the impact of different feature extraction strategies and
             training data characteristics on classification accuracy.""",
                 reviews=[
                     PeerReadReview(
@@ -128,11 +128,11 @@ class EnhancedIntegrationTestData:
                         clarity="3",
                         reviewer_confidence="3",
                         is_meta_review=False,
-                        comments="""This paper provides a useful comparison of different 
-                    approaches for academic paper classification. The experimental setup is 
-                    reasonable and the results are clearly presented. However, the technical 
-                    contribution is somewhat limited as it primarily compares existing methods 
-                    without proposing significant innovations. The work would benefit from 
+                        comments="""This paper provides a useful comparison of different
+                    approaches for academic paper classification. The experimental setup is
+                    reasonable and the results are clearly presented. However, the technical
+                    contribution is somewhat limited as it primarily compares existing methods
+                    without proposing significant innovations. The work would benefit from
                     deeper analysis of the results.""",
                     ),
                 ],
@@ -145,12 +145,12 @@ class EnhancedIntegrationTestData:
             PeerReadPaper(
                 paper_id="integration_paper_003",
                 title="Text Mining for Research Papers",
-                abstract="""This paper explores text mining techniques for analyzing research papers. 
-            We apply various natural language processing methods to extract insights from academic 
-            literature. The approach includes preprocessing steps, feature extraction, and 
-            classification algorithms. We test our method on a small dataset of papers from 
-            computer science conferences. The results show some promise but are limited by the 
-            dataset size and evaluation methodology. Future work could explore larger datasets 
+                abstract="""This paper explores text mining techniques for analyzing research papers.
+            We apply various natural language processing methods to extract insights from academic
+            literature. The approach includes preprocessing steps, feature extraction, and
+            classification algorithms. We test our method on a small dataset of papers from
+            computer science conferences. The results show some promise but are limited by the
+            dataset size and evaluation methodology. Future work could explore larger datasets
             and more sophisticated analysis techniques.""",
                 reviews=[
                     PeerReadReview(
@@ -165,11 +165,11 @@ class EnhancedIntegrationTestData:
                         clarity="2",
                         reviewer_confidence="3",
                         is_meta_review=False,
-                        comments="""This paper addresses a relevant problem but suffers from several 
-                    significant weaknesses. The technical approach is not well-motivated and lacks 
-                    novelty. The experimental evaluation is insufficient with a very small dataset 
-                    and limited baselines. The writing quality is poor with numerous grammatical 
-                    errors and unclear explanations. The contribution is not sufficient for 
+                        comments="""This paper addresses a relevant problem but suffers from several
+                    significant weaknesses. The technical approach is not well-motivated and lacks
+                    novelty. The experimental evaluation is insufficient with a very small dataset
+                    and limited baselines. The writing quality is poor with numerous grammatical
+                    errors and unclear explanations. The contribution is not sufficient for
                     publication at this venue.""",
                     ),
                     PeerReadReview(
@@ -184,10 +184,10 @@ class EnhancedIntegrationTestData:
                         clarity="2",
                         reviewer_confidence="4",
                         is_meta_review=False,
-                        comments="""I cannot recommend this paper for acceptance. The technical 
-                    contribution is minimal and the experimental validation is completely inadequate. 
-                    The related work section is superficial and does not properly position the work. 
-                    The authors need to significantly strengthen both the technical content and 
+                        comments="""I cannot recommend this paper for acceptance. The technical
+                    contribution is minimal and the experimental validation is completely inadequate.
+                    The related work section is superficial and does not properly position the work.
+                    The authors need to significantly strengthen both the technical content and
                     experimental evaluation before resubmission.""",
                     ),
                 ],
@@ -296,7 +296,9 @@ class TestEnhancedPeerReadIntegration:
                 )
 
                 downloader = PeerReadDownloader(test_config)
-                result = downloader.download_venue_split(test_config.venues[0], test_config.splits[0], max_papers=3)
+                result = downloader.download_venue_split(
+                    test_config.venues[0], test_config.splits[0], max_papers=3
+                )
 
                 if result.success and result.papers_downloaded > 0:
                     loader = PeerReadLoader(test_config)
@@ -328,11 +330,11 @@ class TestEnhancedPeerReadIntegration:
             reference_reviews = [review.comments for review in paper.reviews]
 
             # Create synthetic agent-generated review
-            agent_review = f"""This paper titled "{paper.title}" presents work in the 
-            field of scientific text processing. The abstract suggests a methodical approach 
-            with experimental validation. The technical content appears to address relevant 
-            problems in the domain. The scope and complexity of the work seem appropriate 
-            for academic publication. The methodology described indicates systematic 
+            agent_review = f"""This paper titled "{paper.title}" presents work in the
+            field of scientific text processing. The abstract suggests a methodical approach
+            with experimental validation. The technical content appears to address relevant
+            problems in the domain. The scope and complexity of the work seem appropriate
+            for academic publication. The methodology described indicates systematic
             evaluation with comparison to existing approaches."""
 
             # Create execution trace
@@ -435,7 +437,9 @@ class TestEnhancedPeerReadIntegration:
         if len(evaluation_results) >= 2:
             scores = [res["result"].composite_score for res in evaluation_results.values()]
             score_range = max(scores) - min(scores)
-            print(f"   Score range: {min(scores):.3f} - {max(scores):.3f} (spread: {score_range:.3f})")
+            print(
+                f"   Score range: {min(scores):.3f} - {max(scores):.3f} (spread: {score_range:.3f})"
+            )
 
             # Different quality papers should produce different scores
             assert score_range > 0.1, "Papers with different qualities should have different scores"
@@ -450,7 +454,9 @@ class TestEnhancedPeerReadIntegration:
         test_paper = papers[0]  # Use high-quality paper for testing
 
         reference_reviews = [review.comments for review in test_paper.reviews]
-        agent_review = "This paper presents a comprehensive technical contribution with solid methodology."
+        agent_review = (
+            "This paper presents a comprehensive technical contribution with solid methodology."
+        )
         execution_trace = {
             "execution_id": "error_recovery_test",
             "agent_interactions": [],
@@ -528,7 +534,9 @@ class TestEnhancedPeerReadIntegration:
                 "duration": concurrent_duration,
             }
 
-            print(f"   ✅ Concurrent evaluation: {successful_concurrent}/3 succeeded in {concurrent_duration:.2f}s")
+            print(
+                f"   ✅ Concurrent evaluation: {successful_concurrent}/3 succeeded in {concurrent_duration:.2f}s"
+            )
 
         except Exception as e:
             checklist_results["concurrent_evaluation"] = {
@@ -574,7 +582,8 @@ class TestEnhancedPeerReadIntegration:
         # and produces structured output
         checklist_results["logging_quality"] = {
             "success": result is not None and result.evaluation_complete,
-            "structured_output": hasattr(result, "composite_score") and hasattr(result, "recommendation"),
+            "structured_output": hasattr(result, "composite_score")
+            and hasattr(result, "recommendation"),
         }
 
         if result and result.evaluation_complete:
@@ -644,7 +653,9 @@ class TestEnhancedPeerReadIntegration:
         passed_checks = sum(1 for r in checklist_results.values() if r.get("success", False))
 
         print(f"   Checks passed: {passed_checks}/{total_checks}")
-        print(f"   Ready for production: {'✅ YES' if passed_checks >= total_checks * 0.8 else '⚠️ NEEDS ATTENTION'}")
+        print(
+            f"   Ready for production: {'✅ YES' if passed_checks >= total_checks * 0.8 else '⚠️ NEEDS ATTENTION'}"
+        )
 
         for check_name, check_result in checklist_results.items():
             status = "✅" if check_result.get("success", False) else "❌"
@@ -783,7 +794,9 @@ if __name__ == "__main__":
 
                     if result and result.evaluation_complete:
                         successful_papers += 1
-                        print(f"  ✅ Paper {i + 1}: {result.composite_score:.3f} ({result.recommendation})")
+                        print(
+                            f"  ✅ Paper {i + 1}: {result.composite_score:.3f} ({result.recommendation})"
+                        )
                     else:
                         print(f"  ❌ Paper {i + 1}: evaluation failed")
 
@@ -814,7 +827,9 @@ if __name__ == "__main__":
                     concurrent_tasks.append(task)
 
                 concurrent_results = await asyncio.gather(*concurrent_tasks, return_exceptions=True)
-                concurrent_success = sum(1 for r in concurrent_results if hasattr(r, "composite_score"))
+                concurrent_success = sum(
+                    1 for r in concurrent_results if hasattr(r, "composite_score")
+                )
 
                 print(f"   Concurrent processing: {concurrent_success}/2 successful")
 

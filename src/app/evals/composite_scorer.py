@@ -135,7 +135,8 @@ class CompositeScorer:
             logger.warning("Recommendation thresholds are not in descending order")
 
         logger.debug(
-            f"Configuration validation completed: {len(self.weights)} metrics, weights sum = {total_weight:.3f}"
+            f"Configuration validation completed: {len(self.weights)} metrics, "
+            f"weights sum = {total_weight:.3f}"
         )
 
     def extract_metric_values(self, results: EvaluationResults) -> dict[str, float]:

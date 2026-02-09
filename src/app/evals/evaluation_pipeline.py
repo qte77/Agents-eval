@@ -237,7 +237,8 @@ class EvaluationPipeline:
             execution_time = time.time() - start_time
             error_msg = f"Tier 2 timeout after {timeout}s (LLM-as-Judge evaluation)"
             logger.error(
-                f"{error_msg}. Consider increasing tier2_max_seconds or check LLM service availability."
+                f"{error_msg}. Consider increasing tier2_max_seconds or check "
+                "LLM service availability."
             )
             self.performance_monitor.record_tier_failure(2, "timeout", execution_time, error_msg)
             self._record_opik_metadata(2, execution_time, error=error_msg)
@@ -352,7 +353,8 @@ class EvaluationPipeline:
 
         if fallback_strategy == "tier1_only" and results.tier1:
             logger.info(
-                "Applying tier1_only fallback strategy - creating fallback results for missing tiers"
+                "Applying tier1_only fallback strategy - creating fallback "
+                "results for missing tiers"
             )
 
             # Create fallback results for missing tiers to enable composite scoring

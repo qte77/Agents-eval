@@ -285,7 +285,9 @@ class TestCompositeScoreInterpretability:
 
         # Validate consistency
         assert len(set(scores)) == 1, f"Scores not consistent across runs: {set(scores)}"
-        assert len(set(recommendations)) == 1, f"Recommendations not consistent: {set(recommendations)}"
+        assert len(set(recommendations)) == 1, (
+            f"Recommendations not consistent: {set(recommendations)}"
+        )
 
         # Calculate statistical measures
         score_mean = statistics.mean(scores)
@@ -294,7 +296,9 @@ class TestCompositeScoreInterpretability:
         # Standard deviation should be effectively zero
         assert score_stddev < 0.001, f"Score standard deviation too high: {score_stddev}"
 
-        print(f"✓ Consistency test: {len(scores)} runs, score={score_mean:.6f}, stddev={score_stddev:.6f}")
+        print(
+            f"✓ Consistency test: {len(scores)} runs, score={score_mean:.6f}, stddev={score_stddev:.6f}"
+        )
 
     async def test_recommendation_boundary_conditions(self, composite_scorer):
         """Test recommendation mapping at threshold boundaries."""
@@ -320,7 +324,9 @@ class TestCompositeScoreInterpretability:
             # Use scorer's internal recommendation mapping method
             actual_rec = composite_scorer._map_score_to_recommendation(score)
 
-            assert actual_rec == expected_rec, f"Score {score:.3f} should map to '{expected_rec}', got '{actual_rec}'"
+            assert actual_rec == expected_rec, (
+                f"Score {score:.3f} should map to '{expected_rec}', got '{actual_rec}'"
+            )
 
         print(f"✓ Boundary conditions: tested {len(boundary_cases)} threshold cases")
 
@@ -368,8 +374,12 @@ class TestCompositeScoreInterpretability:
         assert hasattr(result, "tier3_contribution"), "Missing tier3_contribution"
 
         # Tier contributions should sum to approximately 1.0
-        total_contribution = result.tier1_contribution + result.tier2_contribution + result.tier3_contribution
-        assert abs(total_contribution - 1.0) < 0.1, f"Tier contributions sum to {total_contribution}, should be ~1.0"
+        total_contribution = (
+            result.tier1_contribution + result.tier2_contribution + result.tier3_contribution
+        )
+        assert abs(total_contribution - 1.0) < 0.1, (
+            f"Tier contributions sum to {total_contribution}, should be ~1.0"
+        )
 
         # All contributions should be non-negative
         assert result.tier1_contribution >= 0, "Tier 1 contribution should be non-negative"
@@ -419,11 +429,15 @@ class TestCompositeScoreInterpretability:
             results[metric] = result.composite_score
 
             # Dominant metric should produce reasonable score
-            assert result.composite_score > 0.3, f"Dominant {metric} should improve score, got {result.composite_score}"
+            assert result.composite_score > 0.3, (
+                f"Dominant {metric} should improve score, got {result.composite_score}"
+            )
 
         # Test that different dominant metrics produce different scores
         score_values = list(results.values())
-        assert len(set(score_values)) > 1, "Different dominant metrics should produce different scores"
+        assert len(set(score_values)) > 1, (
+            "Different dominant metrics should produce different scores"
+        )
 
         print("✓ Dominant metric impact:")
         for metric, score in results.items():
@@ -465,7 +479,8 @@ class TestCompositeScoreInterpretability:
             # Slightly modify the base evaluation
             modified_evaluation = EvaluationResults(
                 tier1=Tier1Result(
-                    semantic_similarity=base_evaluation.tier1.semantic_similarity + variation * 0.01,
+                    semantic_similarity=base_evaluation.tier1.semantic_similarity
+                    + variation * 0.01,
                     cosine_similarity=base_evaluation.tier1.cosine_similarity + variation * 0.01,
                     jaccard_similarity=base_evaluation.tier1.jaccard_similarity + variation * 0.01,
                     bert_score=base_evaluation.tier1.bert_score + variation * 0.01,
@@ -487,7 +502,9 @@ class TestCompositeScoreInterpretability:
 
         # But variation should be reasonable (not chaotic)
         score_range = max(scores) - min(scores)
-        assert score_range < 0.1, f"Score variation too large for small input changes: {score_range}"
+        assert score_range < 0.1, (
+            f"Score variation too large for small input changes: {score_range}"
+        )
 
         print(f"✓ Score granularity: {len(unique_scores)} unique scores, range={score_range:.6f}")
 
@@ -544,7 +561,9 @@ if __name__ == "__main__":
 
             # Test metric contributions
             result = scorer.calculate_composite_score(evaluation)
-            tier_sum = result.tier1_contribution + result.tier2_contribution + result.tier3_contribution
+            tier_sum = (
+                result.tier1_contribution + result.tier2_contribution + result.tier3_contribution
+            )
             print(f"✓ Tier contributions sum to {tier_sum:.3f}")
             print(
                 f"  T1: {result.tier1_contribution:.3f}, "

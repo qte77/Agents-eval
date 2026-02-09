@@ -5,7 +5,6 @@ backward-compatible re-exports work properly for zero-breakage migration.
 """
 
 
-
 def test_common_module_imports():
     """Test that common module exports are available."""
 

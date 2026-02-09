@@ -200,7 +200,8 @@ def add_peerread_review_tools_to_manager(
                         logger.info(f"Successfully read raw PDF for paper {paper_id}.")
                     except Exception as e:
                         logger.warning(
-                            f"Failed to read raw PDF for paper {paper_id}: {e}. Using abstract as fallback."
+                            f"Failed to read raw PDF for paper {paper_id}: {e}. "
+                            "Using abstract as fallback."
                         )
                         paper_content_for_template = paper.abstract
                 else:

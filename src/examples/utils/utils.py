@@ -81,7 +81,7 @@ def create_model(
         return OpenAIModel(model_name, provider=OpenAIProvider(base_url=base_url, api_key=api_key))
 
 
-def print_research_Result(summary: ResearchSummary, usage: RunUsage) -> None:
+def print_research_result(summary: ResearchSummary, usage: RunUsage) -> None:
     """Output structured summary of the research topic."""
 
     print(f"\n=== Research Summary: {summary.topic} ===")

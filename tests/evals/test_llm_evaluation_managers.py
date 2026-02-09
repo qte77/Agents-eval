@@ -42,15 +42,15 @@ def engine(config):
 def sample_data():
     """Fixture providing sample evaluation data."""
     return {
-        "paper": """This paper presents a novel approach to machine learning using 
-                   transformer architectures for natural language processing tasks. 
-                   The methodology involves fine-tuning pre-trained models on 
-                   domain-specific datasets with comprehensive evaluation across 
+        "paper": """This paper presents a novel approach to machine learning using
+                   transformer architectures for natural language processing tasks.
+                   The methodology involves fine-tuning pre-trained models on
+                   domain-specific datasets with comprehensive evaluation across
                    multiple benchmarks.""",
-        "review": """The paper demonstrates solid technical methodology with clear 
-                    experimental design. However, the evaluation could be more 
-                    comprehensive and the writing clarity could be improved. 
-                    I recommend acceptance with minor revisions to address 
+        "review": """The paper demonstrates solid technical methodology with clear
+                    experimental design. However, the evaluation could be more
+                    comprehensive and the writing clarity could be improved.
+                    I recommend acceptance with minor revisions to address
                     presentation issues.""",
         "execution_trace": {
             "agent_interactions": [
@@ -109,7 +109,9 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
-    async def test_assess_technical_accuracy_success(self, mock_wait_for, mock_agent_class, engine, sample_data):
+    async def test_assess_technical_accuracy_success(
+        self, mock_wait_for, mock_agent_class, engine, sample_data
+    ):
         """Should return normalized technical accuracy score when succeeds."""
         # Mock LLM response - create mock result with output attribute
         mock_assessment_output = Mock()
@@ -135,13 +137,19 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
-    async def test_assess_technical_accuracy_timeout(self, mock_wait_for, mock_agent_class, engine, sample_data):
+    async def test_assess_technical_accuracy_timeout(
+        self, mock_wait_for, mock_agent_class, engine, sample_data
+    ):
         """Given LLM timeout, should fallback to semantic similarity."""
         mock_agent_class.return_value = Mock()
         mock_wait_for.side_effect = TimeoutError("LLM request timed out")
 
-        with patch.object(engine.fallback_engine, "compute_semantic_similarity", return_value=0.75) as mock_fallback:
-            score = await engine.assess_technical_accuracy(sample_data["paper"], sample_data["review"])
+        with patch.object(
+            engine.fallback_engine, "compute_semantic_similarity", return_value=0.75
+        ) as mock_fallback:
+            score = await engine.assess_technical_accuracy(
+                sample_data["paper"], sample_data["review"]
+            )
 
             assert score == 0.75
             mock_fallback.assert_called_once_with(sample_data["paper"], sample_data["review"])
@@ -150,7 +158,9 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
-    async def test_assess_constructiveness_success(self, mock_wait_for, mock_agent_class, engine, sample_data):
+    async def test_assess_constructiveness_success(
+        self, mock_wait_for, mock_agent_class, engine, sample_data
+    ):
         """Should return normalized constructiveness score when assessment succeeds."""
         # Mock LLM response - create mock result with output attribute
         mock_assessment_output = Mock()
@@ -176,7 +186,9 @@ class TestLLMJudgeEngine:
     async def test_assess_constructiveness_fallback(self, engine, sample_data):
         """Given LLM failure, should use fallback constructiveness check."""
         with patch("pydantic_ai.Agent", side_effect=Exception("Model error")):
-            with patch.object(engine, "_fallback_constructiveness_check", return_value=0.6) as mock_fallback:
+            with patch.object(
+                engine, "_fallback_constructiveness_check", return_value=0.6
+            ) as mock_fallback:
                 score = await engine.assess_constructiveness(sample_data["review"])
 
                 assert score == 0.6
@@ -202,7 +214,9 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     @patch("pydantic_ai.Agent")
     @patch("asyncio.wait_for")
-    async def test_assess_planning_rationality_success(self, mock_wait_for, mock_agent_class, engine, sample_data):
+    async def test_assess_planning_rationality_success(
+        self, mock_wait_for, mock_agent_class, engine, sample_data
+    ):
         """Given successful LLM assessment, should return normalized planning score."""
         # Mock LLM response - create mock result with output attribute
         mock_assessment_output = Mock()
@@ -405,6 +419,10 @@ class TestLLMJudgePerformance:
     async def test_timeout_handling(self, engine, sample_data):
         """Should handle LLM request timeouts gracefully."""
         with patch("asyncio.wait_for", side_effect=TimeoutError("Request timed out")):
-            with patch.object(engine.fallback_engine, "compute_semantic_similarity", return_value=0.5):
-                score = await engine.assess_technical_accuracy(sample_data["paper"], sample_data["review"])
+            with patch.object(
+                engine.fallback_engine, "compute_semantic_similarity", return_value=0.5
+            ):
+                score = await engine.assess_technical_accuracy(
+                    sample_data["paper"], sample_data["review"]
+                )
                 assert score == 0.5  # Should use fallback

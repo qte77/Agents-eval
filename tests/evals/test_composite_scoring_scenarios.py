@@ -274,9 +274,15 @@ class TestCompositeScoringSCenarios:
         composite_result = composite_scorer.calculate_composite_score(evaluation_results)
 
         # Validate result structure
-        assert composite_result is not None, f"Composite result should not be None for {scenario_name}"
-        assert hasattr(composite_result, "composite_score"), f"Missing composite_score for {scenario_name}"
-        assert hasattr(composite_result, "recommendation"), f"Missing recommendation for {scenario_name}"
+        assert composite_result is not None, (
+            f"Composite result should not be None for {scenario_name}"
+        )
+        assert hasattr(composite_result, "composite_score"), (
+            f"Missing composite_score for {scenario_name}"
+        )
+        assert hasattr(composite_result, "recommendation"), (
+            f"Missing recommendation for {scenario_name}"
+        )
 
         # Validate score range
         min_score, max_score = expected_score_range
@@ -317,7 +323,9 @@ class TestCompositeScoringSCenarios:
             recommendations.append(result.recommendation)
 
         # All scores should be identical (deterministic)
-        assert all(abs(score - scores[0]) < 0.001 for score in scores), f"Scores not consistent across runs: {scores}"
+        assert all(abs(score - scores[0]) < 0.001 for score in scores), (
+            f"Scores not consistent across runs: {scores}"
+        )
 
         # All recommendations should be identical
         assert all(rec == recommendations[0] for rec in recommendations), (
@@ -495,7 +503,9 @@ if __name__ == "__main__":
                 )
 
             # Test ranking
-            sorted_results = sorted(results.items(), key=lambda x: x[1].composite_score, reverse=True)
+            sorted_results = sorted(
+                results.items(), key=lambda x: x[1].composite_score, reverse=True
+            )
             print("\n✓ Final ranking:")
             for i, (name, result) in enumerate(sorted_results, 1):
                 print(f"  {i}. {name}: {result.composite_score:.3f} ({result.recommendation})")

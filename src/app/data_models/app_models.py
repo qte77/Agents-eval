@@ -100,7 +100,7 @@ class AgentConfig(BaseModel):
     )  # (4) Suppress Error non-Pydantic types caused by <class 'openai.AsyncOpenAI'>
 
     @field_validator("tools", mode="before")
-    def validate_tools(cls, v: list[Any]) -> list[Tool | None]:
+    def validate_tools(cls, v: list[Any]) -> list[Tool | None]:  # noqa: N805
         """Validate that all tools are instances of Tool."""
         if not v:
             return []

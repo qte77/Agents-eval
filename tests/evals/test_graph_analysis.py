@@ -292,10 +292,14 @@ class TestGraphAnalysisEngine:
         assert abs(result.overall_score - result.path_convergence) < 0.01
 
     @patch("app.evals.graph_analysis.logger")
-    def test_complete_evaluation_with_exception_handling(self, mock_logger, engine, sample_trace_data):
+    def test_complete_evaluation_with_exception_handling(
+        self, mock_logger, engine, sample_trace_data
+    ):
         """When analysis fails, then gracefully handles errors with baseline scores."""
         # Given trace data that will cause analysis failure
-        with patch.object(engine, "analyze_tool_usage_patterns", side_effect=Exception("Test error")):
+        with patch.object(
+            engine, "analyze_tool_usage_patterns", side_effect=Exception("Test error")
+        ):
             # When evaluation is performed
             result = engine.evaluate_graph_metrics(sample_trace_data)
 
