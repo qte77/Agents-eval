@@ -12,23 +12,29 @@
 #  - Language-specific figure/table/TOC/bibliography names
 #  - Custom TOC title override capability
 #  - Clickable cross-references and hyperlinks
+#  - Auto-generated List of Figures after TOC (configurable)
+#  - Auto-generated List of Tables after TOC (configurable)
+#  - Unnumbered title page option (configurable)
 
 # Help
 if [ "$1" = "help" ]; then
     cat << 'EOF'
-Usage: $0 [input_files] [output_file] [title_page] [template] [footer_text] [toc_title] [language] [number_sections] [bibliography] [csl]
+Usage: $0 [input_files] [output_file] [title_page] [template] [footer_text] [toc_title] [language] [number_sections] [bibliography] [csl] [list_of_figures] [list_of_tables] [unnumbered_title]
 
 Arguments:
-  input_files      Markdown files to convert (glob or \036-separated)
-  output_file      Output PDF path (default: output.pdf)
-  title_page       LaTeX title page file
-  template         LaTeX template file
-  footer_text      Footer text ("none" to disable, "all:text" for all pages)
-  toc_title        Custom table of contents heading
-  language         en-US (default), de-DE, es-ES, fr-FR, it-IT
-  number_sections  true (default) or false
-  bibliography     BibTeX .bib file — enables --citeproc with IEEE [1] style
-  csl              Custom CSL file — overrides default IEEE style
+  input_files       Markdown files to convert (glob or \036-separated)
+  output_file       Output PDF path (default: output.pdf)
+  title_page        LaTeX title page file
+  template          LaTeX template file
+  footer_text       Footer text ("none" to disable, "all:text" for all pages)
+  toc_title         Custom table of contents heading
+  language          en-US (default), de-DE, es-ES, fr-FR, it-IT
+  number_sections   true (default) or false
+  bibliography      BibTeX .bib file — enables --citeproc with IEEE [1] style
+  csl               Custom CSL file — overrides default IEEE style
+  list_of_figures   true (default) or false — auto-generate List of Figures after TOC
+  list_of_tables    true (default) or false — auto-generate List of Tables after TOC
+  unnumbered_title  true (default) or false — suppress page number on title page
 
 Examples:
   $0 "*.md" report.pdf title.tex template.tex "Custom Footer" "Table of Contents"
@@ -36,8 +42,10 @@ Examples:
   $0 "*.md" report.pdf "" "" "" "" "de-DE" "true"                  # German
   $0 "*.md" r.pdf "" "" "" "" "en-US" "true" "refs.bib"            # IEEE citations
   $0 "*.md" r.pdf "" "" "" "" "en-US" "true" "refs.bib" "apa.csl" # APA citations
+  $0 "*.md" r.pdf "" "" "" "" "" "" "" "" "false" "false"          # No LoF/LoT
   dir=docs/path && make run_pandoc INPUT_FILES="$(printf '%s\036' $dir/*.md)" \
     OUTPUT_FILE="$dir/report.pdf" BIBLIOGRAPHY="$dir/refs.bib"
+  make run_pandoc ... LIST_OF_FIGURES=false LIST_OF_TABLES=false   # Disable auto-lists
 EOF
     exit 0
 fi
@@ -45,9 +53,13 @@ fi
 # Resolve project root to absolute path (before any cd)
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
+# Setup temp directory (writable in sandbox)
+TEMP_DIR="$PROJECT_ROOT/.tmp"
+mkdir -p "$TEMP_DIR"
+
 # Extract name and version from [project] section
 PROJECT_FILE="$PROJECT_ROOT/pyproject.toml"
-project_section=$(mktemp)
+project_section=$(mktemp -p "$TEMP_DIR")
 sed -n '/^\[project\]/,/^\[/p' "$PROJECT_FILE" | head -n -1 > "$project_section"
 PROJECT_NAME=$(grep -E '^name[[:space:]]*=' "$project_section" | head -1 | sed -E 's/^name[[:space:]]*=[[:space:]]*"([^"]*)".*/\1/')
 VERSION=$(grep -E '^version[[:space:]]*=' "$project_section" | head -1 | sed -E 's/^version[[:space:]]*=[[:space:]]*"([^"]*)".*/\1/')
@@ -64,6 +76,9 @@ language="${7:-en-US}"
 number_sections="${8:-true}"
 bibliography_file="$9"
 csl_file="${10}"
+list_of_figures="${11:-true}"
+list_of_tables="${12:-true}"
+unnumbered_title="${13:-true}"
 
 # Handle separator-delimited file lists
 RS_CHAR=$(printf '\036')
@@ -124,7 +139,7 @@ fi
 [ -n "$template_file" ] && [ -f "$template_file" ] && set -- "$@" --template="$template_file"
 
 # Add header settings (figure placement + footer)
-header_temp=$(mktemp)
+header_temp=$(mktemp -p "$TEMP_DIR")
 cleanup_header=1
 
 # Always add figure placement controls and spacing adjustments
@@ -229,8 +244,16 @@ cat >> "$header_temp" << EOF
     citecolor=blue,
     urlcolor=blue
 }
+\\usepackage{etoolbox}
 \\makeatother
 EOF
+
+# Suppress page number on title page (always-injected, independent of footer)
+if [ "$unnumbered_title" = "true" ]; then
+    cat >> "$header_temp" << EOF
+\\AtBeginDocument{\\thispagestyle{empty}}
+EOF
+fi
 
 # Add footer (skip if using template)
 if [ -n "$footer_text" ] && [ "$footer_text" != "none" ] && [ -z "$template_file" ]; then
@@ -254,7 +277,6 @@ EOF
         safe_footer=$(printf '%s' "$footer_text" | sed 's/[&\\]/\\&/g; s/#/\\#/g; s/\$/\\$/g; s/_/\\_/g; s/%/\\%/g')
         cat >> "$header_temp" << EOF
 \\usepackage{fancyhdr}
-\\usepackage{etoolbox}
 \\pagestyle{fancy}
 \\fancyhf{}
 \\renewcommand{\\headrulewidth}{0pt}
@@ -263,8 +285,28 @@ EOF
 \\fancyfoot[R]{\\thepage}
 \\fancypagestyle{empty}{\\fancyhf{}\\renewcommand{\\headrulewidth}{0pt}\\renewcommand{\\footrulewidth}{0pt}}
 \\fancypagestyle{plain}{\\fancyhf{}\\fancyfoot[L]{$safe_footer}\\fancyfoot[R]{\\thepage}\\renewcommand{\\headrulewidth}{0pt}\\renewcommand{\\footrulewidth}{0.4pt}}
-\\AtBeginDocument{\\pagenumbering{roman}\\thispagestyle{empty}}
+\\AtBeginDocument{\\pagenumbering{roman}}
 \\preto\\tableofcontents{\\clearpage\\pagenumbering{roman}\\setcounter{page}{1}}
+EOF
+    fi
+fi
+
+# Auto-generate List of Figures / List of Tables after TOC (before arabic page numbering)
+if [ "$list_of_figures" = "true" ]; then
+    cat >> "$header_temp" << EOF
+\\appto\\tableofcontents{\\clearpage\\listoffigures}
+EOF
+fi
+if [ "$list_of_tables" = "true" ]; then
+    cat >> "$header_temp" << EOF
+\\appto\\tableofcontents{\\clearpage\\listoftables}
+EOF
+fi
+
+# Switch to arabic page numbering after TOC/LoF/LoT (when footer provides roman numerals)
+if [ -n "$footer_text" ] && [ "$footer_text" != "none" ] && [ -z "$template_file" ]; then
+    if ! echo "$footer_text" | grep -q "^all:"; then
+        cat >> "$header_temp" << EOF
 \\appto\\tableofcontents{\\clearpage\\pagenumbering{arabic}\\setcounter{page}{1}}
 EOF
     fi

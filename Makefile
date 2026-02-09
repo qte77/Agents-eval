@@ -25,6 +25,9 @@ PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=rep
 PANDOC_TITLE_FILE := 01_titel_abstrakt.md
 BIBLIOGRAPHY :=
 CSL :=
+LIST_OF_FIGURES :=
+LIST_OF_TABLES :=
+UNNUMBERED_TITLE :=
 
 
 # MARK: setup
@@ -187,7 +190,7 @@ run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 # MARK: run pandoc
 
 
-run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_pandoc INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" BIBLIOGRAPHY="$$dir/refs.bib" CSL="$$dir/style.csl" | Help: make run_pandoc HELP=1
+run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_pandoc INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" [BIBLIOGRAPHY="$$dir/refs.bib"] [CSL="$$dir/style.csl"] | Help: make run_pandoc HELP=1
 	if [ -n "$(HELP)" ]; then
 		$(PANDOC_SCRIPT) help
 	else
@@ -195,7 +198,8 @@ run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_p
 		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" \
 			"$(TITLE_PAGE)" "$(TEMPLATE)" "$(FOOTER_TEXT)" \
 			"$(TOC_TITLE)" "$(LANGUAGE)" "$(NUMBER_SECTIONS)" \
-			"$(BIBLIOGRAPHY)" "$(CSL)"
+			"$(BIBLIOGRAPHY)" "$(CSL)" \
+			"$(LIST_OF_FIGURES)" "$(LIST_OF_TABLES)" "$(UNNUMBERED_TITLE)"
 	fi
 
 
@@ -385,7 +389,6 @@ ralph_reorganize:  ## Archive current PRD and start new iteration. Usage: make r
 
 
 help:  ## Displays this message with available recipes
-	# TODO add stackoverflow source
 	echo "Usage: make [recipe]"
 	echo "Recipes:"
 	awk '/^[a-zA-Z0-9_-]+:.*?##/ {

@@ -21,6 +21,9 @@ dist/
 *.log
 logs/
 
+# Temporary files
+.tmp/
+
 # Traces
 scalene-profiles
 profile.html
