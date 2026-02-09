@@ -2,9 +2,9 @@
 title: User Story - AI Agent Evaluation
 description: User story and acceptance criteria for AI researchers evaluating multi-agent systems using PeerRead dataset
 created: 2025-09-01
-updated: 2026-01-14
+updated: 2026-02-09
 category: user-story
-version: 3.2.0
+version: 3.3.0
 ---
 
 ## Introduction
@@ -20,6 +20,9 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 - Benchmark agent performance on scientific paper review tasks using the PeerRead dataset.
 - Get use-case agnostic metrics for comprehensive assessment across different domains.
 - Monitor and analyze agent behavior using integrated observability tools.
+- Extend the evaluation pipeline with new metrics via a plugin system without modifying core pipeline code.
+- Configure evaluation behavior (tier weights, timeouts, LLM model) via environment variables instead of JSON files.
+- Get structured audit trails of evaluation decisions for debugging and compliance.
 
 ### Steps
 
@@ -27,17 +30,22 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
    - See [CONTRIBUTING.md § Complete Command Reference](../CONTRIBUTING.md#complete-command-reference) for setup commands.
    - Configure API keys and variables in `.env.example` and rename to `.env`.
 2. **Run the evaluation pipeline:**
-   - See [CONTRIBUTING.md § Instant Commands](../CONTRIBUTING.md#instant-commands) for execution and validation commands.
+   - **Fastest path:** `make quick_start` (downloads sample data, evaluates smallest paper).
+   - See [CONTRIBUTING.md § Instant Commands](../CONTRIBUTING.md#instant-commands) for all execution and validation commands.
 3. **Configure evaluation metrics:**
-   - Adjust weights in `src/app/config/config_eval.json`.
-   - Configure agent behavior in `src/app/config/config_chat.json`.
+   - **Recommended:** Configure via environment variables (`JUDGE_*` for pipeline, `AGENT_*` for agents, `EVAL_*` for shared settings).
+   - Defaults defined in Pydantic Settings classes (`src/app/*/settings.py`) - version-controlled, type-safe.
+   - Override any setting via `.env` file (deployment-specific, never committed).
+   - (Legacy) JSON config files (`config_eval.json`, `config_chat.json`) deprecated - migrating to Pydantic Settings per [12-Factor #3](best-practices/mas-design-principles.md) and [MAESTRO security principles](best-practices/mas-security.md).
 4. **Execute multi-agent workflows:**
-   - Run PeerRead evaluation with Manager → Researcher → Analyst → Synthesizer delegation.
+   - Run PeerRead review generation with Manager → Researcher → Analyst → Synthesizer delegation.
+   - Evaluation runs automatically after generation (Sprint 2); use `--skip-eval` for generation-only mode.
    - Monitor agent coordination and tool usage effectiveness.
 5. **Analyze the results:**
    - Review output logs and Streamlit UI to assess agent performance.
    - Use Opik for execution traces and detailed observability.
-   - Optionally use additional monitoring tools (Weave, Scalene, Logfire) for extended analysis.
+   - Optionally use additional monitoring tools (Weave, Logfire) for extended analysis.
+   - Profile performance with `make run_profile` (Scalene).
 
 ### Expected Outcomes
 
@@ -47,12 +55,15 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 - **Tool Integration Assessment:** Evaluation of how effectively agents utilize DuckDuckGo search and PeerRead-specific tools.
 - **Observability Insights:** Detailed execution traces, resource utilization patterns, and behavioral analytics.
 - **Comparative Analysis:** Data-driven assessment enabling comparison between different agentic systems and configurations.
+- **Plugin Extensibility:** New evaluation metrics addable without modifying pipeline code.
+- **Configuration Flexibility:** Tier weights, timeouts, LLM model configurable via env vars.
 
 ### Acceptance Criteria
 
-1. **Multi-Agent Evaluation Pipeline:** ✅ **Implemented**
-   - The system should provide a comprehensive evaluation pipeline supporting Manager, Researcher, Analyst, and Synthesizer agent roles.
-   - The pipeline should measure core agentic capabilities: task decomposition, tool integration, delegation effectiveness, and coordination quality.
+1. **Multi-Agent Evaluation Pipeline:** 🟡 **Partially Implemented**
+   - ✅ MAS review generation with Manager, Researcher, Analyst, and Synthesizer agent roles.
+   - ✅ Three-tier evaluation engine (traditional metrics, LLM-as-Judge, graph analysis) exists as standalone module.
+   - 📋 Generation and evaluation not yet wired together in CLI flow (Sprint 2, [PRD Feature 9b](PRD.md#feature-9b-wire-evaluation-after-review-generation)). Evaluation runs by default with `--skip-eval` opt-out.
    - The pipeline should support the pydantic-ai framework with standardized PeerRead dataset benchmarks.
 
 2. **Advanced Metric Development:** 🟡 **Partially Implemented**
@@ -62,7 +73,8 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 
 3. **Comprehensive Monitoring & Observability:** 🟡 **Partially Implemented**
    - 🟡 Opik integration available but optional (full deployment planned for Sprint 3).
-   - ❌ Scalene, Weave, and Logfire integrations not yet implemented (planned).
+   - 🟡 Weave and Logfire dependencies installed and imported; full integration planned.
+   - ❌ Scalene integration not yet implemented (planned).
 
 4. **Enhanced CLI and GUI Interactions:** ✅ **Implemented**
    - ✅ Make-based CLI commands and Streamlit GUI available for user interaction.
@@ -74,6 +86,33 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
    - ✅ Comprehensive documentation for setup, usage, and testing with PeerRead evaluation examples.
    - ✅ Feedback mechanisms available through GitHub issues.
    - ✅ Detailed agent workflow documentation and best practices provided.
+
+6. **Plugin-Based Evaluation Architecture:** 📋 **Planned**
+   - Evaluation metrics registered as plugins implementing typed `EvaluatorPlugin` interface.
+   - Each plugin is a stateless reducer: `evaluate(context) -> BaseModel` (12-Factor #12).
+   - Plugins control what context passes to the next tier (12-Factor #3).
+   - Plugin errors produce structured partial results, not crashes (12-Factor #9).
+   - Per-plugin timeouts configurable via `JudgeSettings` (MAESTRO Execution Layer).
+   - All inter-plugin data uses typed Pydantic models, not raw dicts (MAESTRO Agent Logic Layer).
+
+7. **Security-Aligned Design:** 📋 **Planned**
+   - Input validation at each plugin boundary (MAESTRO Integration Layer).
+   - Rule-based fallback when LLM judge fails (MAESTRO Model Layer).
+   - Thread-safe trace store for evaluation audit trail (MAESTRO Monitoring Layer).
+   - Graceful degradation -- tier failures produce partial results (MAESTRO Environment Layer).
+
+8. **Test-Driven Quality:** 📋 **Planned**
+   - TDD per story following testing-strategy.md (no anti-patterns from Patterns to Remove).
+   - Hypothesis property tests for critical scoring math.
+   - E2E integration tests for full pipeline validation.
+   - `make validate` passes at every story boundary.
+
+9. **Multi-Channel Access:** 📋 **Planned**
+   - Evaluate agents via CLI for local development.
+   - Call evaluation API programmatically via FastAPI REST endpoints.
+   - Access via MCP server for AI-to-AI evaluation workflows.
+   - Existing Streamlit UI for interactive exploration.
+   - Consistent results across all deployment channels.
 
 ### Benefits
 
@@ -91,12 +130,12 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 **Steps:**
 
 1. **Environment Setup:**
-   - User runs `make setup_dev_claude` to configure Claude Code integration.
+   - User runs `make setup_dev` to configure development environment (includes Claude Code).
    - User configures API keys in `.env` for OpenAI and other providers.
 
 2. **Agent Configuration:**
-   - User configures a 4-agent system (Manager, Researcher, Analyst, Synthesizer) in `config_chat.json`.
-   - User enables DuckDuckGo search tools for the Researcher agent.
+   - User configures 4-agent system prompts (Manager, Researcher, Analyst, Synthesizer) via `config_chat.json` (migrating to Pydantic Settings).
+   - Agent creation and tool assignment handled by `agent_factories.py`.
    - User sets up PeerRead dataset access and processing tools.
 
 3. **Evaluation Execution:**
@@ -110,10 +149,10 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
    - **Analyst** validates research findings and performs detailed paper analysis.
    - **Synthesizer** generates comprehensive review combining all agent insights.
 
-5. **Results Analysis:**
+5. **Results Analysis** (Sprint 2: evaluation wired automatically after generation):
    - User reviews performance metrics: completion time (e.g., 45 seconds), output similarity score (0.87).
    - User analyzes agent coordination patterns and execution traces.
-   - User compares results against baseline single-agent performance.
+   - User compares results against baseline single-agent performance ([PRD Feature 9](PRD.md#feature-9-cc-style-evaluation-baselines)).
 
 6. **Insights & Iteration:**
    - User identifies that delegation overhead reduced efficiency by 15% but improved review quality by 23%.
@@ -127,7 +166,7 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 
 ### Additional Notes
 
-- **Dependencies:** Built on Python 3.13 with pydantic-ai-slim, supporting OpenAI, DuckDuckGo, and Tavily integrations.
+- **Dependencies:** Built on Python 3.13 with pydantic-ai-slim (OpenAI, DuckDuckGo, Tavily), scikit-learn + textdistance (Tier 1 metrics), and networkx (Tier 3 graph analysis).
 - **Development Tools:** Comprehensive toolchain including pytest for testing, ruff for linting, pyright for type checking, and mkdocs for documentation.
 - **References:**
   - Use the [CHANGELOG](https://github.com/qte77/Agents-eval/blob/main/CHANGELOG.md) for version history and feature updates.

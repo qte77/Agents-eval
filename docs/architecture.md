@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-01-14
+updated: 2026-02-09
 category: architecture
-version: 3.2.0
+version: 3.3.0
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -106,7 +106,7 @@ The evaluation framework is built around large context window models capable of 
 
 #### Traditional Evaluation Metrics
 
-**Location**: `src/app/evals/traditional_metrics.py`
+**Location**: `src/app/judge/plugins/traditional.py` (Sprint 2 migration from `src/app/evals/traditional_metrics.py`)
 
 - **Output Similarity Assessment** (config: `output_similarity`):
   - Cosine similarity (primary metric from config)
@@ -123,7 +123,7 @@ The evaluation framework is built around large context window models capable of 
 
 #### LLM-as-a-Judge Framework
 
-**Location**: `src/app/evals/llm_evaluation_managers.py`
+**Location**: `src/app/judge/plugins/llm_judge.py` (Sprint 2 migration from `src/app/evals/llm_evaluation_managers.py`)
 
 - **Planning Rationality Assessment** (config: `planning_rationality`):
   - Decision-making process quality evaluation
@@ -140,7 +140,7 @@ The evaluation framework is built around large context window models capable of 
 
 #### Graph-Based Complexity Analysis
 
-**Location**: `src/app/evals/graph_analysis.py`
+**Location**: `src/app/judge/plugins/graph_metrics.py` (Sprint 2 migration from `src/app/evals/graph_analysis.py`)
 
 **Approach**: Post-execution behavioral analysis where agents autonomously decide tool use during execution, then observability logs are processed to construct behavioral graphs for retrospective evaluation.
 
@@ -179,7 +179,7 @@ The evaluation framework is built around large context window models capable of 
 
 #### Composite Scoring System
 
-**Location**: `src/app/evals/composite_scorer.py`
+**Location**: `src/app/judge/composite_scorer.py` (Sprint 2 migration from `src/app/evals/composite_scorer.py`)
 
 **Formula**: `Agent Score = Weighted Sum of Six Core Metrics`
 
@@ -236,11 +236,63 @@ The three-tiered evaluation framework is fully operational with the following co
 - Recommendation mapping (accept/weak_accept/weak_reject/reject)
 - Configuration-driven weights from `config_eval.json`
 
-**✅ Evaluation Pipeline** (`src/app/evals/evaluation_pipeline.py`):
+**✅ Evaluation Pipeline** (`src/app/judge/agent.py` - Sprint 2 migration from `src/app/evals/evaluation_pipeline.py`):
 
 - End-to-end evaluation orchestration
 - Performance monitoring and error handling
 - Fallback strategies and timeout management
+
+### Plugin Architecture (Sprint 2 - Planned)
+
+**Design Principles**: See [best-practices/mas-design-principles.md](best-practices/mas-design-principles.md) for 12-Factor Agents, Anthropic Harnesses, and PydanticAI integration patterns.
+
+**Security Framework**: See [best-practices/mas-security.md](best-practices/mas-security.md) for OWASP MAESTRO 7-layer security model.
+
+#### EvaluatorPlugin Interface
+
+All evaluation engines (Traditional, LLM-Judge, Graph) implement the typed `EvaluatorPlugin` abstract base class:
+
+```python
+class EvaluatorPlugin(ABC):
+    @property
+    @abstractmethod
+    def name(self) -> str: ...
+
+    @property
+    @abstractmethod
+    def tier(self) -> int: ...
+
+    @abstractmethod
+    def evaluate(self, context: BaseModel) -> BaseModel: ...
+
+    @abstractmethod
+    def get_context_for_next_tier(self, result: BaseModel) -> BaseModel: ...
+```
+
+#### PluginRegistry
+
+Central registry for plugin discovery and tier-ordered execution. Plugins register at import time and are executed in tier order (1 → 2 → 3) with typed context passing between tiers.
+
+#### JudgeSettings Configuration
+
+Replaces `EvaluationConfig` JSON with `pydantic-settings` BaseSettings class using `JUDGE_` environment variable prefix:
+
+```python
+class JudgeSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="JUDGE_")
+
+    tier1_timeout: int = 30
+    tier2_timeout: int = 60
+    tier3_timeout: int = 45
+    tier_weights: dict[int, float] = {1: 0.33, 2: 0.33, 3: 0.34}
+    # ... other settings
+```
+
+JSON fallback available during migration period via `json_file` parameter.
+
+#### Typed Context Passing
+
+All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_context_for_next_tier()` method returns typed context consumed by the next tier's `evaluate()` method.
 
 ### Development Timeline
 
@@ -410,6 +462,47 @@ Each architectural decision includes:
 - **Alternatives**: Real-time graph construction, embedded monitoring, manual analysis
 - **Rationale**: Avoids performance overhead, enables comprehensive analysis, preserves agent autonomy
 - **Status**: Active
+
+#### ADR-005: Plugin-Based Evaluation Architecture
+
+- **Date**: 2026-02-09
+- **Decision**: Wrap existing evaluation engines in `EvaluatorPlugin` interface with `PluginRegistry` for tier-ordered execution
+- **Context**: Need extensibility without modifying core pipeline code; enable new metrics without breaking existing functionality
+- **Alternatives**: Direct engine refactoring, new parallel pipeline, microservices architecture
+- **Rationale**: Pure adapter pattern preserves existing engines; 12-Factor #4/#10/#12 (backing services, dev/prod parity, stateless processes); MAESTRO Agent Logic Layer typed interfaces
+- **Status**: Active
+
+#### ADR-006: pydantic-settings Migration
+
+- **Date**: 2026-02-09
+- **Decision**: Replace JSON config files with `BaseSettings` classes (`JudgeSettings`, `CommonSettings`) using environment variables
+- **Context**: Need 12-Factor #3 (config in env) compliance; eliminate JSON parsing overhead; enable per-environment configuration
+- **Alternatives**: Keep JSON, YAML config, TOML config, mixed approach
+- **Rationale**: Type-safe config with Pydantic validation; environment variable support; JSON fallback during transition; aligns with 12-Factor app principles
+- **Status**: Active
+
+#### ADR-007: Optional Container-Based Deployment
+
+- **Date**: 2026-02-09
+- **Decision**: Support both local (default) and containerized (optional) deployment modes for MAS orchestrator and judge components
+- **Context**: Future need for distributed evaluation, parallel judge execution, production isolation, and scalable infrastructure; current single-machine execution sufficient but architecture should enable growth
+- **Alternatives**:
+  - Local-only - simple but doesn't scale
+  - Container-only - production-ready but development friction
+  - Hybrid (chosen) - local default, containers optional
+  - Microservices - over-engineered for current scale
+- **Rationale**:
+  - Local execution remains default (zero friction for development)
+  - Containers optional (opt-in for production/CI/CD scenarios)
+  - API-first communication (FastAPI Feature 10 enables inter-container communication)
+  - Stateless judge design (plugin architecture naturally supports containerization)
+  - 12-Factor #6 compliance (execute as stateless processes)
+  - Parallel evaluation via multiple judge replicas per tier
+- **Implementation**:
+  - Phase 1 (Sprint 2): Document pattern only, no implementation
+  - Phase 2 (Sprint 3+): Docker images, compose files, deployment docs
+  - Prerequisite: FastAPI API stability (Feature 10 dependency)
+- **Status**: Proposed (deferred to Sprint 3+)
 
 ## Agentic System Architecture
 
