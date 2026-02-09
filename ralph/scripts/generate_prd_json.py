@@ -113,8 +113,8 @@ def parse_features(prd_content: str) -> dict[int, Feature]:
             "files": files,
         }
 
-        # Parse sub-features for features with ##### headings
-        if feature_num in (5, 10):
+        # Parse sub-features for features with ##### headings (dynamic detection)
+        if re.search(r'##### \d+\.\d+', feature_content):
             sub_features = parse_subfeatures(feature_content)
             if sub_features:
                 features[feature_num]["sub_features"] = sub_features

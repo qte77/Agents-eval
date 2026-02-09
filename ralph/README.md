@@ -1,18 +1,22 @@
-# Ralph Loop - Autonomous TDD development loop with Claude Code
+# Ralph Loop - Autonomous TDD Development with Claude Code
 
-Autonomous AI development loop that iteratively implements stories until all acceptance criteria pass.
+Autonomous AI development loop that iteratively implements stories
+until all acceptance criteria pass.
 
 ## What is Ralph?
 
-Named after Ralph Wiggum from The Simpsons, this technique by Geoffrey Huntley implements self-referential AI development loops. The agent sees its own previous work in files and git history, iteratively improving until completion.
+Named after Ralph Wiggum from The Simpsons, this technique by
+Geoffrey Huntley implements self-referential AI development loops.
+The agent sees its own previous work in files and git history,
+iteratively improving until completion.
 
 **Core Loop:**
 
 ```text
 while stories remain:
   1. Read prd.json, pick next story (passes: false)
-  2. Implement story
-  3. Run typecheck + tests (TDD: red → green → refactor)
+  2. Implement story (TDD: red → green → refactor)
+  3. Run typecheck + tests
   4. If passing: commit, mark done, log learnings
   5. Repeat until all pass (or context limit)
 ```
@@ -30,127 +34,47 @@ make ralph_run MAX_ITERATIONS=25    # Run autonomous development
 make ralph_status                   # Check progress
 ```
 
-**Configuration:**
-
-Environment variables control Ralph behavior:
+**Configuration** (environment variables):
 
 - `RALPH_MODEL` - Model selection: sonnet (default), opus, haiku
 - `MAX_ITERATIONS` - Loop limit (default: 25)
 - `REQUIRE_REFACTOR` - Enforce REFACTOR phase (default: false)
 
-**Sources:**
-
-- [Ralph Wiggum as a "software engineer"](https://ghuntley.com/ralph/) - Geoffrey Huntley
-- [ralph-loop@claude-plugins-official](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/ralph-loop)
-
----
-
-## Extended Functionality
+## Design Principles
 
 ### TDD Enforcement (Red-Green-Refactor)
 
-Stories require verifiable acceptance criteria with TDD workflow:
-
 1. **Red** - Write failing test (commit with `[RED]` marker)
 2. **Green** - Implement until tests pass (commit with `[GREEN]` marker)
-3. **Refactor** - Clean up, optimize (optional: commit with `[REFACTOR]` marker)
+3. **Refactor** - Clean up (optional, commit with `[REFACTOR]` marker)
 
-The Ralph script enforces chronological commit verification and checks for proper phase markers.
+### Effective Agent Harnesses
+
+Follows [Anthropic's production harness patterns](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents):
+
+1. **Incremental Boundaries** - Story-by-story execution; one feature per
+   session, commit before moving on
+2. **State Management** - prd.json (task status) + progress.txt (learnings) +
+   git history (code); each session reads prior context before acting
+3. **Checkpointing** - Git commits per story enable resumption from
+   known-good states
+4. **Error Recovery** - `git revert` recovers failed stories without manual
+   intervention
+5. **Human-in-the-Loop** - Structured prompts: read progress → select story →
+   implement → test → commit
 
 ### Compound Engineering
 
 Learnings compound over time: **Plan** → **Work** → **Assess** → **Compound**
 
-Sources: [Compound Engineering](https://every.to/chain-of-thought/compound-engineering-how-every-codes-with-agents)
+Source: [Compound Engineering](https://every.to/chain-of-thought/compound-engineering-how-every-codes-with-agents)
 
-### ACE-FCA (Context Engineering)
+### Context Engineering (ACE-FCA)
 
-Context window management for quality output. See `.claude/rules/context-management.md`
+Context window management for quality output.
+See `.claude/rules/context-management.md`.
 
 Source: [ACE-FCA](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/ace-fca.md)
-
-### Claude Code Sandbox
-
-OS-level isolation for safer autonomous execution.
-
-**Why:** Reduces approval fatigue and enables autonomy. Instead of approving every bash command, sandboxing creates defined boundaries where Claude can work freely.
-
-**How:** Uses OS primitives (bubblewrap on Linux/WSL2, Seatbelt on macOS) for:
-
-- **Filesystem isolation** - Write access limited to working directory; system files protected
-- **Network isolation** - Only approved domains accessible; blocks data exfiltration
-
-**What it protects against:**
-
-- Prompt injection attacks
-- Malicious dependencies (npm packages with harmful code)
-- Compromised build scripts
-- Unauthorized API calls or data exfiltration
-
-```bash
-make setup_sandbox  # Install bubblewrap + socat (Linux/WSL2)
-```
-
-Enable via `/sandbox` command in Claude Code. Configure in `settings.json`.
-
-Source: [Claude Code Sandboxing](https://code.claude.com/docs/en/sandboxing)
-
-### Skills and Rules
-
-- `.claude/skills/` - Agent capabilities (generating-prd, researching-codebase)
-- `.claude/rules/` - Behavioral guidelines (core-principles, context-management)
-
-**Skills vs Commands:** Custom slash commands have been merged into skills. A file at `.claude/commands/review.md` and a skill at `.claude/skills/review/SKILL.md` both create `/review` and work the same way. Existing `.claude/commands/` files keep working. Skills add optional features:
-
-- Directory for supporting files (templates, examples, scripts)
-- Frontmatter to control invocation (`disable-model-invocation`, `user-invocable`)
-- Ability for Claude to auto-load when relevant
-- `context: fork` for subagent execution
-
-### Advanced Skill Patterns
-
-Skills support dynamic context injection via shell command preprocessing:
-
-```yaml
----
-name: pr-summary
-context: fork
-agent: Explore
----
-## Context
-- PR diff: !`gh pr diff`
-- Changed files: !`gh pr diff --name-only`
-
-Summarize this pull request...
-```
-
-**Dynamic content:** The `!`command`` syntax executes before Claude receives the prompt, replacing placeholders with live output. Useful for injecting git status, test results, or API responses.
-
-**Subagent execution:** Use `context: fork` to run skills in isolated subagent context. Available built-in agents:
-
-| Agent | Model | Tools | Use Case |
-| ------- | ------- | ------- | ---------- |
-| `Explore` | Haiku (fast) | Read-only | Codebase search, file discovery |
-| `Plan` | Inherited | Read-only | Research for planning |
-| `general-purpose` | Inherited | All | Complex multi-step tasks |
-
-Source: [Claude Code Skills](https://code.claude.com/docs/en/skills#advanced-patterns), [Subagents](https://code.claude.com/docs/en/sub-agents#built-in-subagents)
-
----
-
-## Quick Start
-
-See [TEMPLATE_USAGE.md](docs/TEMPLATE_USAGE.md) for setup and commands reference.
-
-## Security
-
-**Ralph runs with `--dangerously-skip-permissions`** - all operations execute without approval.
-
-**Only use in:** Isolated environments (DevContainers, VMs).
-
-### Devcontainer Firewall (Optional)
-
-For enhanced network security, adopt Claude Code's [reference devcontainer](https://github.com/anthropics/claude-code/tree/main/.devcontainer) which includes an iptables firewall with default-deny policy. Requires custom Dockerfile with `NET_ADMIN`/`NET_RAW` capabilities. See [devcontainer docs](https://code.claude.com/docs/en/devcontainer).
 
 ## Workflow
 
@@ -158,59 +82,94 @@ For enhanced network security, adopt Claude Code's [reference devcontainer](http
 PRD.md → prd.json → Ralph Loop → src/ + tests/ → progress.txt
 ```
 
-### Phase-Specific PRD Management
+### Sprint-Specific PRD Management
 
-**Project uses phase-specific PRDs:**
+Each sprint gets its own PRD file. Ralph reads `docs/PRD.md`, which
+symlinks to the active sprint:
 
-- `docs/GreenAgent-PRD.md` - Phase 1 (Green Agent benchmark)
-- `docs/PurpleAgent-PRD.md` - Phase 2 (Purple Agent competition)
-
-**Ralph tooling expects `docs/PRD.md`:**
-
-- `docs/PRD.md` is a **symlink** to the currently active phase PRD
-- `generate_prd_json.py` parses only `PRD.md` (no changes needed)
-
-**Switching phases:**
-
-```bash
-# Switch to Phase 1 (Green Agent)
-cd docs && ln -sf GreenAgent-PRD.md PRD.md
-
-# Switch to Phase 2 (Purple Agent)
-cd docs && ln -sf PurpleAgent-PRD.md PRD.md
+```
+docs/
+├── PRD.md → PRD-Sprint2.md   # Symlink (active)
+├── PRD-Sprint1.md             # Completed
+├── PRD-Sprint2.md             # Active
+└── PRD-Sprint3.md             # Planned
 ```
 
-**Current:** `PRD.md` → `GreenAgent-PRD.md` (Phase 1 active)
+**Switching sprints:**
+
+```bash
+# Archive current sprint
+git tag sprint-2-complete -a -m "Sprint 2 complete"
+mkdir -p docs/archive/sprint2/
+cp ralph/docs/{prd.json,progress.txt} docs/archive/sprint2/
+
+# Activate next sprint
+cd docs && ln -sf PRD-Sprint3.md PRD.md
+make ralph_prd_json
+make ralph_run MAX_ITERATIONS=25
+```
+
+**Why separate files?**
+
+- Single PRD with 50+ stories across sprints overwhelms Ralph's context
+- Completed sprint details pollute active sprint focus
+- Each sprint PRD stays at 10-20 stories (manageable scope)
+- Historical PRDs preserved as immutable records
+
+**Story IDs**: Sequential across sprints (STORY-001... STORY-011 in Sprint 2,
+STORY-012... in Sprint 3). Unique IDs across project lifetime.
+
+**prd.json**: Fresh start per sprint. Archive before transition.
+
+## Security
+
+**Ralph runs with `--dangerously-skip-permissions`** - all operations
+execute without approval.
+
+**Only use in:** Isolated environments (DevContainers, VMs).
+
+For network isolation, see Claude Code's
+[reference devcontainer](https://github.com/anthropics/claude-code/tree/main/.devcontainer)
+with iptables firewall.
+
+## Quick Start
+
+See [TEMPLATE_USAGE.md](docs/TEMPLATE_USAGE.md) for setup and commands.
 
 ## Structure
 
 ```text
 ralph/
-├── CHANGELOG.md            # Ralph Loop version history
-├── README.md               # Methodology (this file)
+├── CHANGELOG.md               # Version history
+├── README.md                  # This file
 ├── docs/
-│   ├── LEARNINGS.md        # Patterns and lessons learned
-│   ├── prd.json            # Story tracking (gitignored)
-│   ├── progress.txt        # Execution log (gitignored)
-│   ├── TEMPLATE_USAGE.md       # Setup and usage guide
-│   └── templates/          # Project templates
+│   ├── LEARNINGS.md           # Patterns and lessons
+│   ├── prd.json               # Story tracking (gitignored)
+│   ├── progress.txt           # Execution log (gitignored)
+│   ├── TEMPLATE_USAGE.md      # Setup guide
+│   └── templates/             # Project templates
 │       ├── prd.json.template
 │       ├── prd.md.template
 │       ├── progress.txt.template
 │       ├── prompt.md
 │       └── userstory.md.template
 └── scripts/
-    ├── ralph.sh            # Main orchestration script
-    ├── generate_prd_json.py # PRD.md → prd.json parser
-    ├── init.sh             # Environment validation
-    ├── reorganize_prd.sh   # Archive and iterate
-    ├── setup_project.sh    # Interactive project setup
+    ├── ralph.sh               # Main orchestration
+    ├── generate_prd_json.py   # PRD.md → prd.json parser
+    ├── init.sh                # Environment validation
+    ├── reorganize_prd.sh      # Archive and iterate
+    ├── setup_project.sh       # Interactive setup
     └── lib/
-        └── common.sh       # Shared utilities
+        └── common.sh          # Shared utilities
 ```
+
+## Sources
+
+- [Ralph Wiggum technique](https://ghuntley.com/ralph/) - Geoffrey Huntley
+- [Anthropic: Effective Harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
+- [Compound Engineering](https://every.to/chain-of-thought/compound-engineering-how-every-codes-with-agents)
+- [ACE-FCA](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/ace-fca.md)
 
 ---
 
-## Version History
-
-See [CHANGELOG.md](CHANGELOG.md) for Ralph Loop version history and changes.
+See [CHANGELOG.md](CHANGELOG.md) for version history.
