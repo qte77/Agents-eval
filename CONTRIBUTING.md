@@ -26,8 +26,9 @@
 | Command | Purpose | Prerequisites | Error Recovery |
 |---------|---------|---------------|----------------|
 | `make setup_dev` | Install all dev dependencies | Makefile exists, uv installed | Try `uv sync --dev` directly |
-| `make setup_dev_claude` | Setup with Claude Code CLI | Above + Claude Code available | Manual setup per Claude docs |
+| `make setup_claude_code` | Setup Claude Code CLI | Above + Claude Code available | Manual setup per Claude docs |
 | `make setup_dev_ollama` | Setup with Ollama local LLM | Above + Ollama installed | Check Ollama installation |
+| `make quick_start` | Download samples + evaluate smallest paper | API key in `.env` | `make setup_dataset_sample` then `make run_cli ARGS="--paper-number=ID"` |
 | `make run_cli` | Run CLI application | Dev environment setup | Try `uv run python src/app/main.py` |
 | `make run_cli ARGS="--help"` | Run CLI with arguments | Above | Try `uv run python src/app/main.py --help` |
 | `make run_gui` | Run Streamlit GUI | Above + Streamlit installed | Try `uv run streamlit run src/run_gui.py` |

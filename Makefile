@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_opik setup_opik_env start_opik stop_opik clean_opik status_opik ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_status ralph_clean ralph_reorganize help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_opik setup_opik_env start_opik stop_opik clean_opik status_opik ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_status ralph_clean ralph_reorganize help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -215,6 +215,25 @@ run_markdownlint:  ## Lint markdown files. Usage from root dir: make run_markdow
 
 
 # MARK: run app
+
+
+quick_start:  ## Download sample data and run evaluation on smallest paper
+	echo "=== Quick Start: Download samples + evaluate smallest paper ==="
+	if [ ! -d datasets/peerread ]; then \
+		echo "Downloading PeerRead samples ..."; \
+		$(MAKE) -s run_cli ARGS=--download-peerread-samples-only; \
+	else \
+		echo "PeerRead dataset already present, skipping download."; \
+	fi
+	PAPER_ID=$$(find datasets/peerread -path "*/parsed_pdfs/*.json" \
+		-type f -printf '%s %p\n' 2>/dev/null | sort -n | head -1 \
+		| sed 's|.*/parsed_pdfs/||;s|\.pdf\.json||')
+	if [ -z "$$PAPER_ID" ]; then \
+		echo "ERROR: No papers found. Run 'make setup_dataset_sample' first."; \
+		exit 1; \
+	fi
+	echo "Selected smallest paper: $$PAPER_ID"
+	$(MAKE) -s run_cli ARGS="--paper-number=$$PAPER_ID"
 
 
 run_cli:  ## Run app on CLI only. Usage: make run_cli ARGS="--help" or make run_cli ARGS="--download-peerread-samples-only"
