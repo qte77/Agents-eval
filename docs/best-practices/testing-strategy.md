@@ -1,13 +1,13 @@
 ---
 title: Testing Strategy
-version: 5.0
+version: 6.0.0
 applies-to: Agents and humans
 purpose: High-level testing strategy aligned with KISS/DRY/YAGNI
 see-also: tdd-best-practices.md, bdd-best-practices.md
 ---
 
-**Purpose**: What to test, when to use TDD/BDD/Hypothesis, test
-organization, running commands.
+**Purpose**: What to test, when to use each tool, test organization,
+running commands.
 
 ## Core Principles
 
@@ -50,15 +50,30 @@ organization, running commands.
 
 ## Testing Approach
 
-### Current Focus: TDD (with pytest + Hypothesis)
+### Tool Selection Guide
+
+Each tool answers a different testing question. Pick the right one:
+
+| Tool | Question it answers | Input | Output assertion | Use for |
+| --- | --- | --- | --- | --- |
+| **pytest** | Does this logic produce the right result? | Known, specific | Manual `assert` | TDD, unit tests, integration tests |
+| **Hypothesis** | Does this hold for ALL inputs? | Generated, random | Property invariants | Edge cases, math, parsers |
+| **inline-snapshot** | Does this output still look the same? | Known, specific | Auto-captured structure | Regression, contracts, model dumps |
+| **pytest-bdd** | Does this meet acceptance criteria? | Scenario-driven | Given-When-Then | Stakeholder validation |
+
+**One-line rule**: pytest for **logic**, Hypothesis for
+**properties**, inline-snapshot for **structure**,
+pytest-bdd for **behavior specs**.
+
+### TDD with pytest + Hypothesis (Primary)
 
 **Primary methodology**: Test-Driven Development (TDD)
 
 **Tools** (see `tdd-best-practices.md`):
 
 - **pytest**: Core tool for all TDD tests (specific test cases)
-- **Hypothesis**: Optional extension for property-based edge case
-  testing (generative tests)
+- **Hypothesis**: Extension for property-based edge case testing
+  (generative tests)
 
 **When to use each**:
 
@@ -79,6 +94,55 @@ organization, running commands.
 
 See [Hypothesis documentation](https://hypothesis.readthedocs.io/) for
 usage patterns.
+
+### Inline Snapshots: Regression & Contract Tests (Supplementary)
+
+**inline-snapshot** auto-captures complex output structures directly
+in test source code. It complements TDD — it does not replace it.
+
+**When to use**:
+
+- Pydantic `.model_dump()` output (full structure, auto-maintained)
+- Complex return dicts (nested structures, parser outputs)
+- Format conversion results (serialization, transformations)
+- Integration results (multi-field response objects)
+
+**When NOT to use**:
+
+- TDD Red-Green-Refactor (snapshots can't fail before code exists)
+- Hypothesis property tests (random inputs produce varying output)
+- Simple value checks (`assert score >= 0.85`)
+- Range/bound assertions (`0.0 <= x <= 1.0`)
+- Relative comparisons (`assert a < b`)
+
+```python
+from inline_snapshot import snapshot
+
+# REGRESSION - Capture full structure, auto-update on changes
+def test_user_serialization():
+    user = create_user(name="Alice", role="admin")
+    assert user.model_dump() == snapshot()
+    # pytest --inline-snapshot=create  → fills snapshot
+    # pytest --inline-snapshot=fix     → updates when model changes
+
+# NON-DETERMINISTIC VALUES - Use dirty-equals for dynamic fields
+from dirty_equals import IsDatetime
+def test_result_with_timestamp():
+    result = process(input_data)
+    assert result.model_dump() == snapshot({
+        "score": 0.85,
+        "timestamp": IsDatetime(),  # Not managed by snapshot
+    })
+```
+
+**Commands**:
+
+- `pytest --inline-snapshot=create` - Fill empty `snapshot()` calls
+- `pytest --inline-snapshot=fix` - Update changed snapshots
+- `pytest --inline-snapshot=review` - Interactive review mode
+
+**Constraint**: Standard `pytest` runs validate snapshots normally.
+No changes needed to `make validate` or CI.
 
 ### BDD: Stakeholder Collaboration (Optional)
 
@@ -237,13 +301,15 @@ Before writing a test, ask:
 1. Does this test **behavior** (keep) or **implementation** (skip)?
 2. Would this catch a **real bug** (keep) or is it **trivial** (skip)?
 3. Is this testing **our code** (keep) or **a library** (skip)?
-4. Which approach:
-   - **TDD** (default) - Unit tests, business logic, known edge cases
+4. Which tool:
+   - **pytest** (default) - Unit tests, business logic, known edge cases
    - **Hypothesis** - Unknown edge cases (any input), numeric invariants
-   - **BDD** (optional) - Acceptance criteria, stakeholder communication
+   - **inline-snapshot** - Complex output structures, model dumps, contracts
+   - **pytest-bdd** (optional) - Acceptance criteria, stakeholder communication
 
 ## References
 
 - TDD practices: `docs/best-practices/tdd-best-practices.md`
 - BDD practices: `docs/best-practices/bdd-best-practices.md`
 - [Hypothesis Documentation](https://hypothesis.readthedocs.io/)
+- [inline-snapshot Documentation](https://15r10nk.github.io/inline-snapshot/)

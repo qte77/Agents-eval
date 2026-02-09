@@ -1,11 +1,11 @@
-# Python bytecode
-__pycache__/
-*.py[cod]
-
 # environment
 .venv/
 *.env
 unset_env.sh
+
+# Python bytecode
+__pycache__/
+*.py[cod]
 
 # Distribution / packaging
 build/
@@ -16,6 +16,12 @@ dist/
 .pytest_cache/
 .coverage/
 .coverage
+.hypothesis/
+
+# Sanity Checks
+.complexipy_cache/
+.ruff_cache/
+.mypy_cache/
 
 # Logs
 *.log
@@ -42,12 +48,6 @@ Thumbs.db
 reference/
 site/
 
-# linting
-.ruff_cache/
-
-# type checking
-.mypy_cache/
-
 # project specific
 wandb/
 data/
@@ -55,12 +55,7 @@ test_data/
 datasets/
 write-up/
 
-# Ralph state files (generated from templates)
-docs/ralph/prd.json
-docs/ralph/progress.txt
-
-# mermaid
-package.json
-package-lock.json
-puppeteer-config.json
+# npm
 node_modules/
+package-lock.json
+package.json
