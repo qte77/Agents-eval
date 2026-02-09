@@ -6,7 +6,7 @@ login state, perform a one-time login, and check if the user is logged in.
 
 from os import environ
 
-from agentops import init as agentops_init  # type: ignore[reportUnknownVariableType]
+# from agentops import init as agentops_init  # type: ignore[reportUnknownVariableType]
 from logfire import configure as logfire_conf
 from wandb import login as wandb_login
 from weave import init as weave_init
