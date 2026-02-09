@@ -6,7 +6,8 @@ purpose: High-level testing strategy aligned with KISS/DRY/YAGNI
 see-also: tdd-best-practices.md, bdd-best-practices.md
 ---
 
-**Purpose**: What to test, when to use TDD/BDD/Hypothesis, test organization, running commands.
+**Purpose**: What to test, when to use TDD/BDD/Hypothesis, test
+organization, running commands.
 
 ## Core Principles
 
@@ -22,13 +23,16 @@ see-also: tdd-best-practices.md, bdd-best-practices.md
 
 1. Business logic - Core algorithms, calculations, decision rules
 2. Integration points - API handling, external service interactions
-3. Edge cases with real impact - Empty inputs, error propagation, boundary conditions
+3. Edge cases with real impact - Empty inputs, error propagation,
+   boundary conditions
 4. Contracts - API response formats, model transformations
 
 **Low-Value** (Avoid these):
 
-1. Library behavior - Pydantic validation, `os.environ` reading, framework internals
-2. Trivial assertions - `x is not None`, `isinstance(x, SomeClass)`, `hasattr()`, `callable()`
+1. Library behavior - Pydantic validation, `os.environ` reading,
+   framework internals
+2. Trivial assertions - `x is not None`, `isinstance(x, SomeClass)`,
+   `hasattr()`, `callable()`
 3. Default values - Unless defaults encode business rules
 4. Documentation content - String contains checks
 
@@ -36,11 +40,11 @@ see-also: tdd-best-practices.md, bdd-best-practices.md
 
 | Pattern | Why Remove | Example |
 | --------- | ------------ | --------- |
-| Import/existence | Python/imports handle this | `test_module_exists()` |
-| Field existence | Pydantic validates at instantiation | `test_model_has_field_x()` |
-| Default constants | Testing `300 == 300` | `assert DEFAULT_TIMEOUT == 300` |
-| Over-granular | Consolidate into schema validation | 8 tests for one model |
-| Type checks | Type checker (pyright) handles | `assert isinstance(result, dict)` |
+| Import/existence | Python/imports handle | `test_module_exists()` |
+| Field existence | Pydantic validates | `test_model_has_field_x()` |
+| Default constants | Testing `300 == 300` | `assert DEFAULT == 300` |
+| Over-granular | Consolidate to schema | 8 tests for one model |
+| Type checks | pyright handles | `assert isinstance(r, dict)` |
 
 **Rule**: If the test wouldn't catch a real bug, remove it.
 
@@ -53,31 +57,36 @@ see-also: tdd-best-practices.md, bdd-best-practices.md
 **Tools** (see `tdd-best-practices.md`):
 
 - **pytest**: Core tool for all TDD tests (specific test cases)
-- **Hypothesis**: Optional extension for property-based edge case testing (generative tests)
+- **Hypothesis**: Optional extension for property-based edge case
+  testing (generative tests)
 
 **When to use each**:
 
-- **pytest**: Known cases (specific inputs, API contracts, known edge cases)
-- **Hypothesis**: Unknown edge cases (any string, any number, invariants for ALL inputs)
+- **pytest**: Known cases (specific inputs, API contracts,
+  known edge cases)
+- **Hypothesis**: Unknown edge cases (any string, any number,
+  invariants for ALL inputs)
 
 ### Hypothesis Test Priorities (Edge Cases within TDD)
 
 | Priority | Area | Why | Example |
 | ---------- | ------ | ----- | --------- |
-| **CRITICAL** | Scoring/math formulas | Math must work for ALL inputs | `test_score_always_in_bounds()` |
-| **CRITICAL** | Loop termination | Must terminate for ANY input | `test_processor_always_terminates()` |
-| **HIGH** | Input validation | Handle arbitrary text safely | `test_parser_never_crashes()` |
-| **HIGH** | Output serialization | Must always produce valid JSON | `test_output_always_serializable()` |
-| **MEDIUM** | Invariant sums | Total equals component sum | `test_total_equals_sum()` |
+| **CRITICAL** | Math formulas | All inputs work | `test_score_bounds()` |
+| **CRITICAL** | Loop termination | Always terminates | `test_terminates()` |
+| **HIGH** | Input validation | Arbitrary text ok | `test_parser_safe()` |
+| **HIGH** | Serialization | Valid JSON always | `test_output_valid()` |
+| **MEDIUM** | Invariant sums | Total equals sum | `test_total_sum()` |
 
-See [Hypothesis documentation](https://hypothesis.readthedocs.io/) for usage patterns.
+See [Hypothesis documentation](https://hypothesis.readthedocs.io/) for
+usage patterns.
 
 ### BDD: Stakeholder Collaboration (Optional)
 
 **BDD** (see `bdd-best-practices.md`) - Different approach from TDD:
 
 - **TDD**: Developer-driven, Red-Green-Refactor, all test levels
-- **BDD**: Stakeholder-driven, Given-When-Then, acceptance criteria in plain language
+- **BDD**: Stakeholder-driven, Given-When-Then, acceptance criteria
+  in plain language
 
 **When to use BDD**:
 
@@ -164,10 +173,14 @@ def test_order_repository_saves_order(tmp_path):
 
 ### Priority Test Areas
 
-1. **Core business logic** - Algorithms, calculations, decision rules (unit tests)
-2. **API contracts** - Request/response formats, protocol handling (unit + integration)
-3. **Edge cases** - Empty/null inputs, boundary values, numeric stability (unit with Hypothesis)
-4. **Integration points** - External services, database operations (integration tests)
+1. **Core business logic** - Algorithms, calculations, decision rules
+   (unit tests)
+2. **API contracts** - Request/response formats, protocol handling
+   (unit + integration)
+3. **Edge cases** - Empty/null inputs, boundary values,
+   numeric stability (unit with Hypothesis)
+4. **Integration points** - External services, database operations
+   (integration tests)
 
 ## Test Organization
 
@@ -197,29 +210,8 @@ tests/
 
 ## Running Tests
 
-```bash
-# Make recipes (project standard)
-make test_all              # All tests
-make test_quick            # Rerun failed tests only (fast iteration)
-make test_coverage         # Tests with coverage gate (70% threshold)
-
-# Direct pytest (for specific suites)
-pytest tests/unit/         # Unit tests only
-pytest tests/integration/  # Integration tests only
-pytest -k pattern          # Filter by name
-pytest -m marker           # Filter by marker
-```
-
-See `Makefile` for all recipes or `pytest --help` for full CLI reference.
-
-## Pre-Commit Validation
-
-```bash
-make validate              # Full validation (ruff, pyright, complexity, tests)
-make quick_validate        # Fast validation (ruff, pyright only - no tests)
-```
-
-Run `make validate` before committing to ensure all quality gates pass.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md#complete-command-reference)
+for all make recipes and test commands.
 
 ## Naming Conventions
 
@@ -235,7 +227,8 @@ test_score_always_in_bounds()
 test_percentile_ordering()
 ```
 
-**Benefits**: Clear ownership, easier filtering (`pytest -k test_user_`), better organization
+**Benefits**: Clear ownership, easier filtering (`pytest -k test_user_`),
+better organization
 
 ## Decision Checklist
 

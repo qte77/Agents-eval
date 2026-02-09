@@ -3,6 +3,7 @@ title: Python Best Practices Reference
 version: 2.0
 applies-to: Agents and humans
 purpose: Security-first Python coding standards with type safety and testing patterns
+see-also: testing-strategy.md, tdd-best-practices.md
 ---
 
 ## Security (Non-Negotiable)
@@ -272,22 +273,21 @@ async def process_multiple_items(items: list[str]) -> list[dict]:
 ## Testing
 
 For comprehensive testing guidance, see:
-- **[testing-strategy.md](testing-strategy.md)** - What to test, TDD/BDD approach, mocking strategy, test organization
-- **[tdd-best-practices.md](tdd-best-practices.md)** - Red-Green-Refactor cycle, AAA structure, test patterns
-- **[bdd-best-practices.md](bdd-best-practices.md)** - Given-When-Then scenarios for stakeholder collaboration
 
-Quick validation commands:
+- **[testing-strategy.md](testing-strategy.md)** - What to test,
+  TDD/BDD approach, mocking strategy, test organization
+- **[tdd-best-practices.md](tdd-best-practices.md)** - Red-Green-Refactor
+  cycle, AAA structure, test patterns
+- **[bdd-best-practices.md](bdd-best-practices.md)** - Given-When-Then
+  scenarios for stakeholder collaboration
 
-```bash
-make validate          # Full validation (ruff + type check + tests)
-make quick_validate    # Fast validation (ruff + type check only)
-make test_all          # Run all tests
-```
+For all make recipes and validation commands, see
+[CONTRIBUTING.md](../../CONTRIBUTING.md#complete-command-reference).
 
 ## Common Mistakes
 
 | Mistake | Impact | Fix |
-|---------|--------|-----|
+| ------- | ------ | --- |
 | Hardcoded API keys | Security breach | Use `BaseSettings` with `.env` |
 | `Optional[str]` syntax | Outdated style | Use `str \| None` |
 | `List[str]` annotation | Outdated style | Use `list[str]` |
