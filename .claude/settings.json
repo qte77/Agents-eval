@@ -4,32 +4,29 @@
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1",
     "CLAUDE_CODE_SUBAGENT_MODEL": "opusplan",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "0",    
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "0",
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
     "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL": "",
     "OTEL_EXPORTER_OTLP_PROTOCOL": "",
     "OTEL_LOGS_EXPORTER": ""
   },
+  "outputStyle": "default",
+  "spinnerTipsEnabled": true,
+  "prefersReducedMotion": true,
   "sandbox": {
-    "enabled": true,
+    "enabled": false,
     "autoAllowBashIfSandboxed": true,
-    "allowUnsandboxedCommands": false,
+    "allowUnsandboxedCommands": true,
+    "enableWeakerNestedSandbox": false,
     "network": {
       "allowLocalBinding": true,
       "allowedHosts": ["api.github.com"]
     },
-    "enableWeakerNestedSandbox": false,
     "filesystem": {
       "write": {
         "allowOnly": [
           "/tmp/claude-1000",
-          ".git/",
-          ".git/objects/",
-          ".git/refs/",
-          ".git/logs/",
-          ".git/COMMIT_EDITMSG",
-          ".git/index",
-          "/home/vscode/.cache/uv"
+          ".git"
         ]
       }
     }
@@ -37,12 +34,12 @@
   "permissions": {
     "allow": [
       "Bash(date:*)",
-      "Bash(git add:*)",
+      "Bash(git:add:*)",
       "Bash(git:diff:*)",
       "Bash(git:log:*)",
       "Bash(git:status:*)",
-      "Bash(git log --grep:*)",
-      "Bash(git rev-list:*)",
+      "Bash(git:log:--grep:*)",
+      "Bash(git:rev-list:*)",
       "Bash(jq:*)",
       "Bash(make:*)",
       "Bash(tree:*)",
@@ -59,6 +56,8 @@
       "Edit(ralph/docs/*.txt)",
       "Edit(src/**/*.py)",
       "Edit(src/**/*.json)",
+      "mcp__exa__web_search_exa",
+      "mcp__ide__getDiagnostics",
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs",
       "Read(.claude/skills/)",
@@ -70,7 +69,7 @@
       "Bash(awk:*)",
       "Bash(cat:*)",
       "Bash(find:*)",
-      "Bash(git push:*)",
+      "Bash(git:push:*)",
       "Bash(grep:*)",
       "Bash(head:*)",
       "Bash(ls:*)",
@@ -86,7 +85,7 @@
       "Bash(bash:ralph/scripts/*.sh:*)",
       "Bash(chmod:+x:ralph/scripts/*.sh)",
       "Bash(git clean:*)",
-      "Bash(git commit:*)",
+      "Bash(git:commit:*)",
       "Bash(git reset:*)",
       "Bash(mv:*)",
       "Bash(mkdir:*)",
@@ -111,10 +110,7 @@
     "security-guidance@claude-plugins-official": true
   },
   "attribution": {
-    "commit": "Co-Authored-By: Claude <noreply@anthropic.com>",
+    "commit": "🤖 Co-Authored-By: Claude <noreply@anthropic.com>",
     "pr": "🤖 Generated with Claude <noreply@anthropic.com>"
-  },
-  "outputStyle": "default",
-  "spinnerTipsEnabled": true,
-  "prefersReducedMotion": true
+  }
 }

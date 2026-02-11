@@ -9,7 +9,8 @@
     }
   },
   "containerEnv": {
-    "UV_LINK_MODE": "copy"
+    "UV_LINK_MODE": "copy",
+    "UV_CACHE_DIR": "/tmp/claude-1000/uv-cache"
   },
   "postCreateCommand": "make setup_devc"
 }

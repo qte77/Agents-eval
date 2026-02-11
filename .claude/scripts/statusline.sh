@@ -3,7 +3,6 @@
 input=$(cat)
 cwd=$(echo "$input" | jq -r '.workspace.current_dir')
 model=$(echo "$input" | jq -r '.model.id')
-agent=$(echo "$input" | jq -r '.agent.type // "main"')
 version=$(echo "$input" | jq -r '.version // ""')
 cost=$(
     echo "$input" | jq -r 'if .cost.total_cost_usd then (.cost.total_cost_usd * 100 | round / 100 | tostring) + "$" else "" end'
@@ -11,8 +10,26 @@ cost=$(
 duration=$(
     echo "$input" | jq -r '((.cost.total_api_duration_ms // 0) / 1000 / 60 | round | tostring) + "m"'
 )
-exc_context=$(echo "$input" | jq -r '.cost.exceeds_200k_tokens // false')
-exc_output=$(echo "$input" | jq -r '.usage.exceeds_output_limit // false')
+lines_added=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
+lines_removed=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
+lines_changed="+${lines_added}/-${lines_removed}"
+tokens_in=$(echo "$input" | jq -r '((.context_window.total_input_tokens // 0) / 1000 | floor | tostring) + "k"')
+tokens_out=$(echo "$input" | jq -r '((.context_window.total_output_tokens // 0) / 1000 | floor | tostring) + "k"')
+tokens="${tokens_in}/${tokens_out}"
+remaining_pct=$(echo "$input" | jq -r '.context_window.remaining_percentage // 100')
+remaining=$(echo "$input" | jq -r '(.context_window.remaining_percentage // 100) / 100' | sed 's/^0\./\./')
+
+# Color remaining based on threshold (warn when running LOW)
+if [ "$remaining_pct" -le 25 ]; then
+    ctx_color="\\033[93;41m"  # Bright yellow fg, red bg - VERY LOW
+elif [ "$remaining_pct" -le 50 ]; then
+    ctx_color="\\033[91;48;5;237m"  # Bright red fg, dark gray bg - LOW
+else
+    ctx_color="\\033[0;32m"   # Normal green fg - OK
+fi
+
+exc_context=$(echo "$input" | jq -r '.exceeds_200k_tokens // false')
+
 user=$(whoami)
 time=$(date +%H:%M:%S)
 
@@ -21,4 +38,4 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
     else branch=""
 fi
 
-printf "\\033[0;31magent:%s \\033[0;33mmodel:%s \\033[2mver:%s \\033[0;34mcost:%s \\033[0;36mdur:%s \\033[0;31m>200k:%s\\033[0m\\n\\033[2mdir:%s \\033[0;36mbranch:%s \\033[0;32muser:%s \\033[0;35mtime:%s\\033[0m" "$agent" "$model" "$version" "$cost" "$duration" "$exc_context" "$(basename "$cwd")" "$branch" "$user" "$time"
+printf "\\033[0;33mmodel:%s \\033[2mver:%s \\033[0;34mcost:%s \\033[0;36mdur:%s\\n\\033[0;32mlines:%s \\033[2mtokens(i/o):%s ${ctx_color}ctx(left):%s\\033[0m \\033[0;31m>200k:%s\\033[0m\\n\\033[2mdir:%s \\033[0;36mbranch:%s \\033[0;32muser:%s \\033[0;35mtime:%s\\033[0m" "$model" "$version" "$cost" "$duration" "$lines_changed" "$tokens" "$remaining" "$exc_context" "$(basename "$cwd")" "$branch" "$user" "$time"

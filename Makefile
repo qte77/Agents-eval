@@ -40,6 +40,7 @@ setup_prod:  ## Install uv and deps
 
 setup_dev:  ## Install uv and deps, claude code, mdlint, plantuml
 	echo "Setting up dev environment ..."
+	# sudo apt-get install -y gh
 	pip install uv -q
 	uv sync --all-groups
 	echo "npm version: $$(npm --version)"

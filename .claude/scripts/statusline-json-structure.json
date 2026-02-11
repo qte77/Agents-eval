@@ -1,0 +1,38 @@
+{
+  "session_id": "<uuid>",
+  "transcript_path": "<path>",
+  "cwd": "<path>",
+  "model": {
+    "id": "<model-id>",
+    "display_name": "<model-name>"
+  },
+  "workspace": {
+    "current_dir": "<path>",
+    "project_dir": "<path>"
+  },
+  "version": "<version>",
+  "output_style": {
+    "name": "<style>"
+  },
+  "cost": {
+    "total_cost_usd": 0.0,
+    "total_duration_ms": 0,
+    "total_api_duration_ms": 0,
+    "total_lines_added": 0,
+    "total_lines_removed": 0
+  },
+  "context_window": {
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "context_window_size": 200000,
+    "current_usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0
+    },
+    "used_percentage": 0,
+    "remaining_percentage": 100
+  },
+  "exceeds_200k_tokens": false
+}
