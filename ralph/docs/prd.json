@@ -1,250 +1,43 @@
 {
   "project": "Agents-eval",
-  "description": "Comprehensive product requirements document for the multi-agent AI system evaluation framework",
-  "source": "PRD.md",
-  "generated": "2026-02-09 21:54:46",
+  "description": "Settings migration, eval wiring, trace capture, graph-vs-text comparison",
+  "source": "docs/PRD-Sprint2.md",
+  "generated": "2026-02-11T00:00:00Z",
   "stories": [
     {
       "id": "STORY-001",
-      "title": "Create common/ module",
-      "description": "Extract shared utilities into `common/` module with pydantic-settings configuration following [12-Factor #3 (Config)](../best-practices/mas-design-principles.md) and [MAESTRO Integration Layer](../best-practices/mas-security.md).",
+      "title": "Migrate EvaluationConfig to JudgeSettings pydantic-settings",
+      "description": "Replace JSON-based EvaluationConfig with JudgeSettings(BaseSettings) using JUDGE_ env prefix. Defaults in code, overridable via .env. Reuse CommonSettings pattern.",
       "acceptance": [
-        "`common/` module with log + error_messages + shared models + CommonSettings",
-        "`CommonSettings(BaseSettings)` with `EVAL_` env prefix and typed defaults in code",
-        "Backward-compatible re-exports from original locations",
-        "`make validate` passes",
-        "`CommonSettings` includes per-provider `max_content_length` defaults",
-        "`generate_paper_review_content_from_template` truncates `paper_content_for_template` to `max_content_length` before formatting into template",
-        "Truncation preserves abstract (always included) and truncates body with `[TRUNCATED]` marker",
-        "Warning logged when truncation occurs with original vs truncated size"
+        "JudgeSettings(BaseSettings) with JUDGE_ env prefix replaces EvaluationConfig",
+        "Typed defaults in code: tier weights, timeouts, model selection, enabled tiers",
+        "EvaluationPipeline uses JudgeSettings instead of loading config_eval.json",
+        "Existing evaluation tests pass with settings-based config",
+        "Timeout fields use bounded validators (gt=0, le=300)",
+        "Time tracking pattern standardized across all tiers",
+        "Existing test fixtures updated: pipeline uses JudgeSettings, JSON fixtures removed",
+        "make validate passes"
       ],
       "files": [
-        "src/app/common/__init__.py",
-        "src/app/common/models.py",
-        "src/app/common/settings.py",
-        "src/app/common/log.py",
-        "src/app/common/error_messages.py",
-        "src/app/agents/peerread_tools.py"
+        "src/app/evals/settings.py",
+        "src/app/evals/evaluation_config.py",
+        "src/app/evals/evaluation_pipeline.py",
+        "src/app/evals/composite_scorer.py"
       ],
       "passes": false,
       "completed_at": null,
-      "content_hash": "5bee3014bc0bc66162e6b5d940b78cd70ad30325971170d8c7f44475a3ca59d2",
+      "content_hash": "",
       "depends_on": []
     },
     {
       "id": "STORY-002",
-      "title": "Create judge/ skeleton with settings",
-      "description": "Restructure `evals/` into `judge/` with EvaluatorPlugin interface, pydantic-settings, and typed context passing between tiers.",
+      "title": "Wire evaluate_comprehensive after run_manager",
+      "description": "Connect run_manager() output to EvaluationPipeline.evaluate_comprehensive() in app.py. Add --skip-eval CLI flag. Pipeline uses JudgeSettings from STORY-001.",
       "acceptance": [
-        "`JudgeSettings(BaseSettings)` with `JUDGE_` env prefix replacing EvaluationConfig",
-        "Typed defaults in code (tier weights, timeouts, model selection)",
-        "JSON config deprecated - settings from code defaults + env var overrides only",
-        "Evaluation models moved to `judge/models.py` with Pydantic validation",
-        "`make validate` passes"
-      ],
-      "files": [
-        "src/app/judge/settings.py",
-        "src/app/judge/models.py"
-      ],
-      "passes": false,
-      "completed_at": null,
-      "content_hash": "030ef2149e08b6a392f36a1b9455c210ea9406a9aff15b1ef71485b36698d8eb",
-      "depends_on": [
-        "STORY-001"
-      ]
-    },
-    {
-      "id": "STORY-003",
-      "title": "Create EvaluatorPlugin base and registry",
-      "description": "Restructure `evals/` into `judge/` with EvaluatorPlugin interface, pydantic-settings, and typed context passing between tiers.",
-      "acceptance": [
-        "`EvaluatorPlugin` ABC with name/tier/evaluate/get_context_for_next_tier",
-        "`PluginRegistry` for registration and tier-ordered execution",
-        "Typed Pydantic models at all plugin boundaries",
-        "Structured error results from plugins"
-      ],
-      "files": [
-        "src/app/judge/plugins/base.py",
-        "src/app/judge/plugins/__init__.py"
-      ],
-      "passes": false,
-      "completed_at": null,
-      "content_hash": "4d521b6f39beaf1248c5beff5f6dddcceccd6dd4e1e50b316fb4395071f1e4fc",
-      "depends_on": [
-        "STORY-002"
-      ]
-    },
-    {
-      "id": "STORY-004",
-      "title": "Wrap TraditionalMetricsEngine",
-      "description": "Restructure `evals/` into `judge/` with EvaluatorPlugin interface, pydantic-settings, and typed context passing between tiers.",
-      "acceptance": [
-        "TraditionalMetricsPlugin wrapping existing engine",
-        "LLMJudgePlugin with opt-in Tier 1 context enrichment",
-        "GraphEvaluatorPlugin wrapping existing engine",
-        "All existing engine tests pass unchanged",
-        "Per-plugin configurable timeouts"
-      ],
-      "files": [
-        "src/app/judge/plugins/traditional.py",
-        "src/app/judge/plugins/llm_judge.py",
-        "src/app/judge/plugins/graph_metrics.py"
-      ],
-      "passes": false,
-      "completed_at": null,
-      "content_hash": "846ca03829206b1d7c04e84d6f4f5ec2fdc013a7eb9257b8d506a66cc1dedaf1",
-      "depends_on": [
-        "STORY-003"
-      ]
-    },
-    {
-      "id": "STORY-005",
-      "title": "Wrap LLMJudgeEngine",
-      "description": "Restructure `evals/` into `judge/` with EvaluatorPlugin interface, pydantic-settings, and typed context passing between tiers.",
-      "acceptance": [
-        "TraditionalMetricsPlugin wrapping existing engine",
-        "LLMJudgePlugin with opt-in Tier 1 context enrichment",
-        "GraphEvaluatorPlugin wrapping existing engine",
-        "All existing engine tests pass unchanged",
-        "Per-plugin configurable timeouts"
-      ],
-      "files": [
-        "src/app/judge/plugins/traditional.py",
-        "src/app/judge/plugins/llm_judge.py",
-        "src/app/judge/plugins/graph_metrics.py"
-      ],
-      "passes": false,
-      "completed_at": null,
-      "content_hash": "f30fdb6782cc5d828e83266a1249798d12a569ee843e1755a5fbb770e2bcc4b2",
-      "depends_on": [
-        "STORY-003"
-      ]
-    },
-    {
-      "id": "STORY-006",
-      "title": "Wrap GraphAnalysisEngine",
-      "description": "Restructure `evals/` into `judge/` with EvaluatorPlugin interface, pydantic-settings, and typed context passing between tiers.",
-      "acceptance": [
-        "TraditionalMetricsPlugin wrapping existing engine",
-        "LLMJudgePlugin with opt-in Tier 1 context enrichment",
-        "GraphEvaluatorPlugin wrapping existing engine",
-        "All existing engine tests pass unchanged",
-        "Per-plugin configurable timeouts"
-      ],
-      "files": [
-        "src/app/judge/plugins/traditional.py",
-        "src/app/judge/plugins/llm_judge.py",
-        "src/app/judge/plugins/graph_metrics.py"
-      ],
-      "passes": false,
-      "completed_at": null,
-      "content_hash": "76554f6bfb4dc723e6567355b70f80ac8e47ff4b584171180008836dfc8b7125",
-      "depends_on": [
-        "STORY-003"
-      ]
-    },
-    {
-      "id": "STORY-007",
-      "title": "Refactor EvaluationPipeline to JudgeAgent",
-      "description": "Restructure `evals/` into `judge/` with EvaluatorPlugin interface, pydantic-settings, and typed context passing between tiers.",
-      "acceptance": [
-        "JudgeAgent replaces EvaluationPipeline using PluginRegistry",
-        "Explicit tier execution order in code",
-        "Context flows Tier 1 \u2192 Tier 2 \u2192 Tier 3",
-        "TraceStore with thread-safe storage",
-        "Graceful degradation preserved",
-        "Re-export shim for EvaluationPipeline"
-      ],
-      "files": [
-        "src/app/judge/agent.py",
-        "src/app/judge/trace_store.py",
-        "src/app/judge/composite_scorer.py",
-        "src/app/judge/performance_monitor.py"
-      ],
-      "passes": false,
-      "completed_at": null,
-      "content_hash": "a5d8d933ca2498b0fd6303da7ee357ad09a572c627c6641a58c89ce930997a08",
-      "depends_on": [
-        "STORY-004",
-        "STORY-005",
-        "STORY-006"
-      ]
-    },
-    {
-      "id": "STORY-008",
-      "title": "Remove shims and update imports",
-      "description": "Remove backward-compatibility shims, update all imports, delete deprecated JSON config.",
-      "acceptance": [
-        "All imports use `judge.`, `common.` paths",
-        "No re-export shims remain",
-        "`config/config_eval.json` removed",
-        "CHANGELOG.md updated",
-        "`make validate` passes, no dead code"
-      ],
-      "files": [],
-      "passes": false,
-      "completed_at": null,
-      "content_hash": "175fe68f37bd6b880f747e01465525a5a249fb1de7cfd709d637000983680075",
-      "depends_on": [
-        "STORY-007"
-      ]
-    },
-    {
-      "id": "STORY-009",
-      "title": "CC OTel observability plugin",
-      "description": "Standalone CC telemetry plugin using OTel \u2192 Opik pipeline. Enables CC session tracing alongside PydanticAI Opik instrumentation.",
-      "acceptance": [
-        "`src/app/cc_otel/` module with config + enable/disable API",
-        "`CCOtelConfig` with env var export",
-        "OTel Collector service added to `docker-compose.opik.yaml`",
-        "Separate from existing `opik_instrumentation.py`",
-        "Graceful degradation when OTel unavailable",
-        "`make validate` passes"
-      ],
-      "files": [
-        "src/app/cc_otel/__init__.py",
-        "src/app/cc_otel/config.py",
-        "docker-compose.opik.yaml"
-      ],
-      "passes": false,
-      "completed_at": null,
-      "content_hash": "fe9174f488be20052fcf284bcdc449c4f21e0f81d6ac6428b864fadbfd5a2a93",
-      "depends_on": [
-        "STORY-007"
-      ]
-    },
-    {
-      "id": "STORY-010",
-      "title": "CC-style evaluation baselines",
-      "description": "Single-Agent and Parallel-Agents baselines (CC orchestration patterns) implemented in PydanticAI for benchmarking against the MAS pipeline.",
-      "acceptance": [
-        "Single-Agent baseline (one agent, one pass, GeneratedReview output)",
-        "Parallel-Agents baseline (asyncio.gather researcher + analyst, then synthesizer)",
-        "Both scored through same evaluate_comprehensive() pipeline",
-        "Reuses existing GeneratedReview output type and AgentFactory",
-        "`make validate` passes"
-      ],
-      "files": [
-        "src/app/agents/baselines.py",
-        "tests/test_baselines.py"
-      ],
-      "passes": false,
-      "completed_at": null,
-      "content_hash": "4ee3081010072548f429ffa157cbd6302fa17729ec23c25dd3cfb54a0ca84de0",
-      "depends_on": [
-        "STORY-007"
-      ]
-    },
-    {
-      "id": "STORY-010b",
-      "title": "Wire evaluation after review generation",
-      "description": "Connect `run_manager()` output to `EvaluationPipeline.evaluate_comprehensive()` in the CLI flow. Currently generation and evaluation are disconnected -- `app.py` generates reviews but never scores them. Evaluation should run by default; `--skip-eval` flag to run generation only.",
-      "acceptance": [
-        "After `run_manager()` completes, `EvaluationPipeline` runs automatically comparing generated review against ground-truth PeerRead reviews",
-        "`--skip-eval` CLI flag disables evaluation (generation-only mode)",
-        "Evaluation results logged and persisted alongside generated review",
-        "Graceful skip when no ground-truth reviews available for the paper",
-        "`make validate` passes"
+        "After run_manager() completes, EvaluationPipeline runs automatically",
+        "--skip-eval CLI flag disables evaluation",
+        "Graceful skip when no ground-truth reviews available",
+        "make validate passes"
       ],
       "files": [
         "src/app/app.py",
@@ -252,36 +45,55 @@
       ],
       "passes": false,
       "completed_at": null,
-      "content_hash": "755c8d3f5fa00c6290997d1492d604bf95fb4ce8144fce3cfce20f1e95423211",
+      "content_hash": "",
       "depends_on": [
-        "STORY-007"
+        "STORY-001"
       ]
     },
     {
-      "id": "STORY-011",
-      "title": "E2E integration tests and multi-channel deployment",
-      "description": "End-to-end integration tests for full evaluation pipeline and multi-channel API access (FastAPI + MCP server) alongside existing Streamlit UI.",
+      "id": "STORY-003",
+      "title": "Capture GraphTraceData during MAS execution",
+      "description": "Wire TraceCollector into agent orchestration so GraphTraceData is populated from real agent runs.",
       "acceptance": [
-        "E2E integration test covering full pipeline (agent execution \u2192 evaluation \u2192 scoring)",
-        "FastAPI server with `/evaluate` REST endpoint",
-        "MCP server exposing evaluation as AI-accessible resource",
-        "OpenAPI spec generation for API documentation",
-        "Consistent results across CLI/API/MCP/UI channels",
-        "Rate limiting and basic auth for API endpoints",
-        "`make validate` passes including E2E tests"
+        "Agent-to-agent delegations logged via trace_collector.log_agent_interaction()",
+        "Tool calls logged via trace_collector.log_tool_call()",
+        "Timing data captured for each delegation step",
+        "GraphTraceData passed to evaluate_comprehensive() with real data",
+        "GraphTraceData constructed via model_validate() instead of manual .get() extraction",
+        "make validate passes"
       ],
       "files": [
-        "tests/integration/test_e2e_pipeline.py",
-        "src/app/api/server.py",
-        "src/app/api/routes.py",
-        "src/app/mcp_server/server.py",
-        "src/app/mcp_server/resources.py"
+        "src/app/agents/agent_system.py",
+        "src/app/agents/orchestration.py",
+        "src/app/app.py"
       ],
       "passes": false,
       "completed_at": null,
-      "content_hash": "852a57ae2c446b76419263df421dad9a20831b4665133fbd4150650accb659df",
+      "content_hash": "",
       "depends_on": [
-        "STORY-010b"
+        "STORY-002"
+      ]
+    },
+    {
+      "id": "STORY-004",
+      "title": "Add graph vs text metric comparison logging",
+      "description": "Log comparative summary showing Tier 1 (text) vs Tier 3 (graph) scores after evaluation completes.",
+      "acceptance": [
+        "Log shows Tier 1 overall score vs Tier 3 overall score",
+        "Individual graph metrics displayed (path_convergence, tool_selection_accuracy, etc.)",
+        "Individual text metrics displayed (cosine_score, jaccard_score, semantic_score)",
+        "Composite score shows per-tier contribution",
+        "make validate passes"
+      ],
+      "files": [
+        "src/app/app.py",
+        "src/app/evals/evaluation_pipeline.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "",
+      "depends_on": [
+        "STORY-003"
       ]
     }
   ]
