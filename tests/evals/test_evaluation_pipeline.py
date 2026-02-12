@@ -157,17 +157,8 @@ def sample_composite_result():
 class TestEvaluationPipelineInitialization:
     """Test pipeline initialization and configuration."""
 
-    def test_init_with_config_file(self, config_file):
-        """Test pipeline initialization with configuration file."""
-        pipeline = EvaluationPipeline(config_file)
-
-        assert pipeline.enabled_tiers == {1, 2, 3}
-        assert pipeline.performance_targets["total_max_seconds"] == 25.0
-        assert pipeline.fallback_strategy == "tier1_only"
-        assert pipeline.config_path == config_file
-
     def test_init_with_judge_settings(self):
-        """Test pipeline initialization with JudgeSettings (new path)."""
+        """Test pipeline initialization with JudgeSettings."""
         settings = JudgeSettings(
             tiers_enabled=[1, 2],
             tier1_max_seconds=2.0,
@@ -182,62 +173,25 @@ class TestEvaluationPipelineInitialization:
         assert pipeline.fallback_strategy == "tier2_only"
         assert pipeline.config_path is None  # No config file used
 
-    def test_init_settings_takes_precedence(self, config_file):
-        """Test that JudgeSettings takes precedence over config_path."""
-        settings = JudgeSettings(tiers_enabled=[3], fallback_strategy="tier3_only")
-        pipeline = EvaluationPipeline(config_path=config_file, settings=settings)
+    def test_init_with_default_settings(self):
+        """Test pipeline initialization with default JudgeSettings."""
+        pipeline = EvaluationPipeline()
 
-        # Settings should override config_file
-        assert pipeline.enabled_tiers == {3}
-        assert pipeline.fallback_strategy == "tier3_only"
+        # Should use default JudgeSettings
+        assert pipeline.settings is not None
+        assert isinstance(pipeline.settings, JudgeSettings)
+        assert pipeline.enabled_tiers == {1, 2, 3}  # default
+        assert pipeline.fallback_strategy == "tier1_only"  # default
         assert pipeline.config_path is None
-
-    def test_init_with_default_config(self):
-        """Test pipeline initialization with default config path."""
-        with patch("json.load") as mock_json_load:
-            mock_json_load.return_value = {
-                "evaluation_system": {"tiers_enabled": [1, 2]},
-                "composite_scoring": {
-                    "fallback_strategy": "tier1_only",
-                    "metrics_and_weights": {
-                        "time_taken": 0.167,
-                        "task_success": 0.167,
-                        "coordination_quality": 0.167,
-                        "tool_efficiency": 0.167,
-                        "planning_rationality": 0.167,
-                        "output_similarity": 0.167,
-                    },
-                },
-            }
-
-            pipeline = EvaluationPipeline()
-            assert pipeline.enabled_tiers == {1, 2}
-
-    def test_init_missing_config_file(self):
-        """Test pipeline initialization with missing config file."""
-        with pytest.raises(FileNotFoundError):
-            EvaluationPipeline("/nonexistent/config.json")
-
-    def test_init_invalid_json(self):
-        """Test pipeline initialization with invalid JSON."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            f.write("invalid json content")
-            invalid_config_path = Path(f.name)
-
-        try:
-            with pytest.raises(json.JSONDecodeError):
-                EvaluationPipeline(invalid_config_path)
-        finally:
-            invalid_config_path.unlink()
 
 
 class TestTierExecution:
     """Test individual tier execution methods."""
 
     @pytest.fixture
-    def pipeline(self, config_file):
+    def pipeline(self):
         """Pipeline instance for testing."""
-        return EvaluationPipeline(config_file)
+        return EvaluationPipeline()
 
     @pytest.mark.asyncio
     async def test_execute_tier1_success(self, pipeline, sample_tier1_result):
@@ -254,16 +208,18 @@ class TestTierExecution:
             mock_eval.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_execute_tier1_disabled(self, pipeline):
+    async def test_execute_tier1_disabled(self):
         """Test Tier 1 execution when disabled."""
-        # Mock the configuration to disable tier 1
-        with patch.object(pipeline.config_manager, "is_tier_enabled", return_value=False):
-            result, execution_time = await pipeline._execute_tier1(
-                "sample paper", "sample review", ["reference"]
-            )
+        # Create pipeline with tier 1 disabled
+        settings = JudgeSettings(tiers_enabled=[2, 3])  # Only 2 and 3 enabled
+        pipeline = EvaluationPipeline(settings=settings)
 
-            assert result is None
-            assert execution_time == 0.0
+        result, execution_time = await pipeline._execute_tier1(
+            "sample paper", "sample review", ["reference"]
+        )
+
+        assert result is None
+        assert execution_time == 0.0
 
     @pytest.mark.asyncio
     async def test_execute_tier1_timeout(self, pipeline):
@@ -344,9 +300,9 @@ class TestFallbackStrategy:
     """Test fallback strategy implementation."""
 
     @pytest.fixture
-    def pipeline(self, config_file):
+    def pipeline(self):
         """Pipeline instance for testing."""
-        return EvaluationPipeline(config_file)
+        return EvaluationPipeline()
 
     def test_fallback_tier1_only_success(self, pipeline, sample_tier1_result):
         """Test tier1_only fallback with successful Tier 1."""
@@ -384,9 +340,9 @@ class TestComprehensiveEvaluation:
     """Test end-to-end comprehensive evaluation."""
 
     @pytest.fixture
-    def pipeline(self, config_file):
+    def pipeline(self):
         """Pipeline instance for testing."""
-        return EvaluationPipeline(config_file)
+        return EvaluationPipeline()
 
     @pytest.mark.asyncio
     async def test_comprehensive_evaluation_success(
@@ -536,9 +492,9 @@ class TestPipelineUtilities:
     """Test pipeline utility methods."""
 
     @pytest.fixture
-    def pipeline(self, config_file):
+    def pipeline(self):
         """Pipeline instance for testing."""
-        return EvaluationPipeline(config_file)
+        return EvaluationPipeline()
 
     def test_get_execution_stats(self, pipeline):
         """Test execution statistics retrieval."""
@@ -579,35 +535,35 @@ class TestPipelineUtilities:
 class TestOpikIntegration:
     """Test Opik integration functionality."""
 
-    def test_opik_config_initialization(self, config_file):
+    def test_opik_config_initialization(self):
         """Test that Opik configuration is properly initialized."""
-        pipeline = EvaluationPipeline(config_file)
+        pipeline = EvaluationPipeline()
 
         # Should have opik_config attribute
         assert hasattr(pipeline, "opik_config")
         assert pipeline.opik_config is not None
 
-        # Should have default values
-        assert pipeline.opik_config.enabled is False  # Default disabled
+        # Should use JudgeSettings values
+        assert pipeline.opik_config.enabled is True  # Default from JudgeSettings
         assert pipeline.opik_config.api_url == "http://localhost:3003"
         assert pipeline.opik_config.workspace == "peerread-evaluation"
 
-    def test_opik_decorator_application(self, config_file):
+    def test_opik_decorator_application(self):
         """Test that Opik decorator is properly applied when available."""
-        pipeline = EvaluationPipeline(config_file)
+        pipeline = EvaluationPipeline()
 
         # Mock function to test decorator
         def mock_func():
             return "test"
 
-        # Should return function unchanged when Opik not enabled
+        # Should return function (decorated or not)
         decorated = pipeline._apply_opik_decorator(mock_func)
         assert callable(decorated)
         assert decorated() == "test"
 
-    def test_opik_metadata_recording(self, config_file):
+    def test_opik_metadata_recording(self):
         """Test that Opik metadata is recorded without errors."""
-        pipeline = EvaluationPipeline(config_file)
+        pipeline = EvaluationPipeline()
 
         # Should not raise errors when recording metadata
         pipeline._record_opik_metadata(1, 1.5, result="test_result")

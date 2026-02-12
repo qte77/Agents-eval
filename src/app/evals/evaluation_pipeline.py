@@ -19,7 +19,6 @@ from app.data_models.evaluation_models import (
     Tier3Result,
 )
 from app.evals.composite_scorer import CompositeScorer, EvaluationResults
-from app.evals.evaluation_config import EvaluationConfig
 from app.evals.graph_analysis import GraphAnalysisEngine
 from app.evals.llm_evaluation_managers import LLMJudgeEngine
 from app.evals.performance_monitor import PerformanceMonitor
@@ -58,76 +57,50 @@ class EvaluationPipeline:
 
     def __init__(
         self,
-        config_path: str | Path | None = None,
         settings: JudgeSettings | None = None,
     ):
         """Initialize evaluation pipeline with configuration.
 
         Args:
-            config_path: (Deprecated) Path to config_eval.json file. If None, uses default location.
-            settings: JudgeSettings instance. If provided, takes precedence over config_path.
+            settings: JudgeSettings instance. If None, uses default JudgeSettings().
 
         Raises:
-            FileNotFoundError: If configuration file not found (legacy mode)
             ValueError: If configuration is invalid
         """
-        # Prefer JudgeSettings over legacy config_path
-        if settings is not None:
-            self.settings = settings
-            self.config_manager = None  # No longer needed
-            self.performance_monitor = PerformanceMonitor(settings.get_performance_targets())
+        # Use provided settings or create default
+        if settings is None:
+            settings = JudgeSettings()
 
-            # Initialize Opik configuration from settings
-            # Reason: OpikConfig needs dict structure, convert from settings
-            config_dict = {
-                "observability": {
-                    "opik_enabled": settings.opik_enabled,
-                    "trace_collection": settings.trace_collection,
-                    "performance_logging": settings.performance_logging,
-                }
+        self.settings = settings
+        self.config_manager = None  # No longer used
+        self.performance_monitor = PerformanceMonitor(settings.get_performance_targets())
+
+        # Initialize Opik configuration from settings
+        # Reason: OpikConfig needs dict structure, convert from settings
+        config_dict = {
+            "observability": {
+                "opik_enabled": settings.opik_enabled,
+                "trace_collection": settings.trace_collection,
+                "performance_logging": settings.performance_logging,
             }
-            self.opik_config = OpikConfig.from_config(config_dict)
+        }
+        self.opik_config = OpikConfig.from_config(config_dict)
 
-            # Initialize engines with settings-based config
-            tier2_config = settings.get_tier2_config()
-            tier3_config = settings.get_tier3_config()
+        # Initialize engines with settings-based config
+        tier2_config = settings.get_tier2_config()
+        tier3_config = settings.get_tier3_config()
 
-            self.traditional_engine = TraditionalMetricsEngine()
-            self.llm_engine = LLMJudgeEngine(tier2_config)
-            self.graph_engine = GraphAnalysisEngine(tier3_config)
-            self.composite_scorer = CompositeScorer(settings=settings)
+        self.traditional_engine = TraditionalMetricsEngine()
+        self.llm_engine = LLMJudgeEngine(tier2_config)
+        self.graph_engine = GraphAnalysisEngine(tier3_config)
+        self.composite_scorer = CompositeScorer(settings=settings)
 
-            enabled_tiers = sorted(settings.get_enabled_tiers())
-            fallback_strategy = settings.fallback_strategy
-            logger.info(
-                f"EvaluationPipeline initialized with JudgeSettings: tiers={enabled_tiers}, "
-                f"fallback_strategy={fallback_strategy}"
-            )
-        else:
-            # Legacy path: use EvaluationConfig (deprecated)
-            self.settings = None
-            self.config_manager = EvaluationConfig(config_path)
-            self.performance_monitor = PerformanceMonitor(
-                self.config_manager.get_performance_targets()
-            )
-
-            # Initialize Opik configuration
-            config_dict = self.config_manager.get_full_config()
-            self.opik_config = OpikConfig.from_config(config_dict)
-
-            # Initialize engines with configuration
-            self.traditional_engine = TraditionalMetricsEngine()
-            self.llm_engine = LLMJudgeEngine(config_dict)
-            self.graph_engine = GraphAnalysisEngine(config_dict)
-            self.composite_scorer = CompositeScorer(self.config_manager.config_path)
-
-            enabled_tiers = sorted(self.config_manager.get_enabled_tiers())
-            fallback_strategy = self.fallback_strategy
-            logger.info(
-                f"EvaluationPipeline initialized with tiers: {enabled_tiers}, "
-                f"fallback_strategy: {fallback_strategy}, "
-                f"config: {self.config_manager.config_path}"
-            )
+        enabled_tiers = sorted(settings.get_enabled_tiers())
+        fallback_strategy = settings.fallback_strategy
+        logger.info(
+            f"EvaluationPipeline initialized with JudgeSettings: tiers={enabled_tiers}, "
+            f"fallback_strategy={fallback_strategy}"
+        )
 
         # Pre-configure Opik decorator for performance optimization
         self._opik_decorator_enabled = OPIK_AVAILABLE and self.opik_config.enabled
@@ -139,10 +112,7 @@ class EvaluationPipeline:
         Returns:
             Set of enabled tier numbers
         """
-        if self.settings is not None:
-            return self.settings.get_enabled_tiers()
-        assert self.config_manager is not None
-        return self.config_manager.get_enabled_tiers()
+        return self.settings.get_enabled_tiers()
 
     @property
     def performance_targets(self) -> dict[str, float]:
@@ -151,10 +121,7 @@ class EvaluationPipeline:
         Returns:
             Dictionary of performance targets
         """
-        if self.settings is not None:
-            return self.settings.get_performance_targets()
-        assert self.config_manager is not None
-        return self.config_manager.get_performance_targets()
+        return self.settings.get_performance_targets()
 
     @property
     def fallback_strategy(self) -> str:
@@ -163,22 +130,16 @@ class EvaluationPipeline:
         Returns:
             Fallback strategy name
         """
-        if self.settings is not None:
-            return self.settings.fallback_strategy
-        assert self.config_manager is not None
-        return self.config_manager.get_fallback_strategy()
+        return self.settings.fallback_strategy
 
     @property
     def config_path(self) -> Path | None:
         """Get configuration path (backward compatibility property).
 
         Returns:
-            Path to configuration file (None if using JudgeSettings)
+            Always None (settings-based configuration only)
         """
-        if self.settings is not None:
-            return None
-        assert self.config_manager is not None
-        return self.config_manager.config_path
+        return None
 
     @property
     def execution_stats(self) -> dict[str, Any]:
@@ -198,10 +159,7 @@ class EvaluationPipeline:
         Returns:
             True if tier is enabled
         """
-        if self.settings is not None:
-            return self.settings.is_tier_enabled(tier)
-        assert self.config_manager is not None
-        return self.config_manager.is_tier_enabled(tier)
+        return self.settings.is_tier_enabled(tier)
 
     def _get_tier_config(self, tier: int) -> dict[str, Any]:
         """Get tier-specific configuration (internal helper).
@@ -212,21 +170,12 @@ class EvaluationPipeline:
         Returns:
             Tier configuration dictionary
         """
-        if self.settings is not None:
-            if tier == 1:
-                return self.settings.get_tier1_config()
-            elif tier == 2:
-                return self.settings.get_tier2_config()
-            else:  # tier == 3
-                return self.settings.get_tier3_config()
-        else:
-            assert self.config_manager is not None
-            if tier == 1:
-                return self.config_manager.get_tier1_config()
-            elif tier == 2:
-                return self.config_manager.get_tier2_config()
-            else:  # tier == 3
-                return self.config_manager.get_tier3_config()
+        if tier == 1:
+            return self.settings.get_tier1_config()
+        elif tier == 2:
+            return self.settings.get_tier2_config()
+        else:  # tier == 3
+            return self.settings.get_tier3_config()
 
     async def _execute_tier1(
         self, paper: str, review: str, reference_reviews: list[str] | None = None
@@ -631,15 +580,12 @@ class EvaluationPipeline:
         Returns:
             Dictionary with pipeline configuration details
         """
-        if self.settings is not None:
-            return {
-                "config_path": None,
-                "enabled_tiers": sorted(self.settings.get_enabled_tiers()),
-                "fallback_strategy": self.settings.fallback_strategy,
-                "performance_targets": self.settings.get_performance_targets(),
-                "has_tier1_config": True,
-                "has_tier2_config": True,
-                "has_tier3_config": True,
-            }
-        assert self.config_manager is not None
-        return self.config_manager.get_config_summary()
+        return {
+            "config_path": None,
+            "enabled_tiers": sorted(self.settings.get_enabled_tiers()),
+            "fallback_strategy": self.settings.fallback_strategy,
+            "performance_targets": self.settings.get_performance_targets(),
+            "has_tier1_config": True,
+            "has_tier2_config": True,
+            "has_tier3_config": True,
+        }
