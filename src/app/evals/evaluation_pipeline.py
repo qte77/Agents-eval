@@ -107,7 +107,9 @@ class EvaluationPipeline:
             # Legacy path: use EvaluationConfig (deprecated)
             self.settings = None
             self.config_manager = EvaluationConfig(config_path)
-            self.performance_monitor = PerformanceMonitor(self.config_manager.get_performance_targets())
+            self.performance_monitor = PerformanceMonitor(
+                self.config_manager.get_performance_targets()
+            )
 
             # Initialize Opik configuration
             config_dict = self.config_manager.get_full_config()
@@ -120,7 +122,7 @@ class EvaluationPipeline:
             self.composite_scorer = CompositeScorer(self.config_manager.config_path)
 
             enabled_tiers = sorted(self.config_manager.get_enabled_tiers())
-            fallback_strategy = self.config_manager.get_fallback_strategy()
+            fallback_strategy = self.fallback_strategy
             logger.info(
                 f"EvaluationPipeline initialized with tiers: {enabled_tiers}, "
                 f"fallback_strategy: {fallback_strategy}, "
@@ -137,8 +139,9 @@ class EvaluationPipeline:
         Returns:
             Set of enabled tier numbers
         """
-        if self.settings:
+        if self.settings is not None:
             return self.settings.get_enabled_tiers()
+        assert self.config_manager is not None
         return self.config_manager.get_enabled_tiers()
 
     @property
@@ -148,8 +151,9 @@ class EvaluationPipeline:
         Returns:
             Dictionary of performance targets
         """
-        if self.settings:
+        if self.settings is not None:
             return self.settings.get_performance_targets()
+        assert self.config_manager is not None
         return self.config_manager.get_performance_targets()
 
     @property
@@ -159,8 +163,9 @@ class EvaluationPipeline:
         Returns:
             Fallback strategy name
         """
-        if self.settings:
+        if self.settings is not None:
             return self.settings.fallback_strategy
+        assert self.config_manager is not None
         return self.config_manager.get_fallback_strategy()
 
     @property
@@ -170,8 +175,9 @@ class EvaluationPipeline:
         Returns:
             Path to configuration file (None if using JudgeSettings)
         """
-        if self.settings:
+        if self.settings is not None:
             return None
+        assert self.config_manager is not None
         return self.config_manager.config_path
 
     @property
@@ -182,6 +188,45 @@ class EvaluationPipeline:
             Dictionary with execution statistics
         """
         return self.performance_monitor.get_execution_stats()
+
+    def _is_tier_enabled(self, tier: int) -> bool:
+        """Check if tier is enabled (internal helper).
+
+        Args:
+            tier: Tier number to check
+
+        Returns:
+            True if tier is enabled
+        """
+        if self.settings is not None:
+            return self.settings.is_tier_enabled(tier)
+        assert self.config_manager is not None
+        return self.config_manager.is_tier_enabled(tier)
+
+    def _get_tier_config(self, tier: int) -> dict[str, Any]:
+        """Get tier-specific configuration (internal helper).
+
+        Args:
+            tier: Tier number (1, 2, or 3)
+
+        Returns:
+            Tier configuration dictionary
+        """
+        if self.settings is not None:
+            if tier == 1:
+                return self.settings.get_tier1_config()
+            elif tier == 2:
+                return self.settings.get_tier2_config()
+            else:  # tier == 3
+                return self.settings.get_tier3_config()
+        else:
+            assert self.config_manager is not None
+            if tier == 1:
+                return self.config_manager.get_tier1_config()
+            elif tier == 2:
+                return self.config_manager.get_tier2_config()
+            else:  # tier == 3
+                return self.config_manager.get_tier3_config()
 
     async def _execute_tier1(
         self, paper: str, review: str, reference_reviews: list[str] | None = None
@@ -196,11 +241,11 @@ class EvaluationPipeline:
         Returns:
             Tuple of (Tier1Result or None, execution_time)
         """
-        if not self.config_manager.is_tier_enabled(1):
+        if not self._is_tier_enabled(1):
             logger.debug("Tier 1 disabled, skipping traditional metrics")
             return None, 0.0
 
-        performance_targets = self.config_manager.get_performance_targets()
+        performance_targets = self.performance_targets
         timeout = performance_targets.get("tier1_max_seconds", 1.0)
         start_time = time.time()
 
@@ -210,7 +255,7 @@ class EvaluationPipeline:
 
             # Use reference reviews or default to empty list for similarity comparison
             ref_reviews = reference_reviews or [""]  # Fallback for missing ground truth
-            tier1_config = self.config_manager.get_tier1_config()
+            tier1_config = self._get_tier_config(1)
 
             result = await asyncio.wait_for(
                 asyncio.create_task(
@@ -260,11 +305,11 @@ class EvaluationPipeline:
         Returns:
             Tuple of (Tier2Result or None, execution_time)
         """
-        if not self.config_manager.is_tier_enabled(2):
+        if not self._is_tier_enabled(2):
             logger.debug("Tier 2 disabled, skipping LLM judge")
             return None, 0.0
 
-        performance_targets = self.config_manager.get_performance_targets()
+        performance_targets = self.performance_targets
         timeout = performance_targets.get("tier2_max_seconds", 10.0)
         start_time = time.time()
 
@@ -320,11 +365,11 @@ class EvaluationPipeline:
         Returns:
             Tuple of (Tier3Result or None, execution_time)
         """
-        if not self.config_manager.is_tier_enabled(3):
+        if not self._is_tier_enabled(3):
             logger.debug("Tier 3 disabled, skipping graph analysis")
             return None, 0.0
 
-        performance_targets = self.config_manager.get_performance_targets()
+        performance_targets = self.performance_targets
         timeout = performance_targets.get("tier3_max_seconds", 15.0)
         start_time = time.time()
 
@@ -396,7 +441,7 @@ class EvaluationPipeline:
         Returns:
             EvaluationResults with fallback applied
         """
-        fallback_strategy = self.config_manager.get_fallback_strategy()
+        fallback_strategy = self.fallback_strategy
         fallback_applied = False
 
         if fallback_strategy == "tier1_only" and results.tier1:
@@ -466,7 +511,7 @@ class EvaluationPipeline:
             metadata: dict[str, Any] = {
                 f"tier{tier}_execution_time": float(execution_time),
                 f"tier{tier}_success": bool(error is None),
-                "enabled_tiers": list(self.config_manager.get_enabled_tiers()),
+                "enabled_tiers": list(self.enabled_tiers),
             }
             if error:
                 metadata[f"tier{tier}_error"] = str(error)
@@ -586,4 +631,15 @@ class EvaluationPipeline:
         Returns:
             Dictionary with pipeline configuration details
         """
+        if self.settings is not None:
+            return {
+                "config_path": None,
+                "enabled_tiers": sorted(self.settings.get_enabled_tiers()),
+                "fallback_strategy": self.settings.fallback_strategy,
+                "performance_targets": self.settings.get_performance_targets(),
+                "has_tier1_config": True,
+                "has_tier2_config": True,
+                "has_tier3_config": True,
+            }
+        assert self.config_manager is not None
         return self.config_manager.get_config_summary()

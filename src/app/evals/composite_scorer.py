@@ -132,9 +132,7 @@ class CompositeScorer:
             self.composite_config = self.config.get("composite_scoring", {})
             self.weights = self.composite_config.get("metrics_and_weights", {})
             self.thresholds = self.composite_config.get("recommendation_thresholds", {})
-            self.recommendation_weights = self.composite_config.get(
-                "recommendation_weights", {}
-            )
+            self.recommendation_weights = self.composite_config.get("recommendation_weights", {})
 
             # Validate configuration
             self._validate_config()
@@ -143,6 +141,7 @@ class CompositeScorer:
 
     def _load_config(self) -> dict[str, Any]:
         """Load evaluation configuration from JSON file."""
+        assert self.config_path is not None, "config_path must not be None"
         try:
             with open(self.config_path) as f:
                 config = json.load(f)
