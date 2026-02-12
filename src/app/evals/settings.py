@@ -71,9 +71,7 @@ class JudgeSettings(BaseSettings):
 
     # Tier 3: Graph Analysis
     tier3_min_nodes: int = Field(default=2, gt=0)
-    tier3_centrality_measures: list[str] = Field(
-        default=["betweenness", "closeness", "degree"]
-    )
+    tier3_centrality_measures: list[str] = Field(default=["betweenness", "closeness", "degree"])
     tier3_max_nodes: int = Field(default=1000, gt=0)
     tier3_max_edges: int = Field(default=5000, gt=0)
     tier3_operation_timeout: float = Field(default=10.0, gt=0, le=300)

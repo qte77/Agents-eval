@@ -117,9 +117,7 @@ class CompositeScorer:
             "recommendation_weights": self.recommendation_weights,
         }
 
-        logger.info(
-            f"CompositeScorer initialized with JudgeSettings ({len(self.weights)} metrics)"
-        )
+        logger.info(f"CompositeScorer initialized with JudgeSettings ({len(self.weights)} metrics)")
 
     def extract_metric_values(self, results: EvaluationResults) -> dict[str, float]:
         """Extract the six composite metrics from tier results.
