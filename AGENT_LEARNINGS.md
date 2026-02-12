@@ -78,3 +78,34 @@ Document when you discover novel solutions or common pitfalls that others might 
 - **Example**: Mock for unit tests, but validate real URLs/APIs early: `requests.head(url)` to verify accessibility before full implementation. Test actual download with small samples during development
 - **Validation**: Test actual network requests during development, not just after implementation. Explicitly validate download functionality works with real data
 - **References**: PeerRead integration - discovered incorrect URL assumptions that mocks didn't catch
+
+### Learned Pattern: Testing Agent Teams with Parallel Code Review
+
+- **Date**: 2026-02-11T23:57:00Z
+- **Context**: Testing Claude Code experimental agent teams feature (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`)
+- **Problem**: Need reusable pattern for testing parallel agent orchestration with real trace verification
+- **Solution**: Use parallel code review pattern with 3 independent reviewers (security, quality, coverage), shared task list with dependency blocking (3 reviews → 1 aggregation), and trace verification in `~/.claude/teams/` and `~/.claude/tasks/`
+- **Example**:
+  ```python
+  # Team structure
+  TeamCreate(team_name="parallel-code-review")
+
+  # Create 3 parallel review tasks + 1 blocked aggregation
+  TaskCreate(subject="Security review", ...)  # Task 1
+  TaskCreate(subject="Quality review", ...)   # Task 2
+  TaskCreate(subject="Coverage review", ...)  # Task 3
+  TaskCreate(subject="Aggregate findings", blockedBy=["1","2","3"])  # Task 4
+
+  # Spawn 3 teammates with specific prompts
+  Task(subagent_type="general-purpose", team_name="...", name="security-reviewer", ...)
+  Task(subagent_type="general-purpose", team_name="...", name="quality-reviewer", ...)
+  Task(subagent_type="general-purpose", team_name="...", name="coverage-reviewer", ...)
+
+  # Verify traces
+  # ~/.claude/teams/{team-name}/config.json - member roster
+  # ~/.claude/teams/{team-name}/inboxes/*.json - messages
+  # ~/.claude/tasks/{team-name}/*.json - task status
+  ```
+- **Validation**: All 3 reviews completed in parallel (~26s total), task dependencies worked (aggregation waited for all 3), full message content preserved in mailboxes, timestamps prove concurrency (quality:23:57:29, coverage:23:57:35, security:23:57:55)
+- **Key Finding**: Parallel execution reduces latency (3 sequential reviews ~60s vs parallel ~26s), but token cost scales linearly (3x teammates = 3x Claude instances)
+- **References**: `docs/reviews/evaluation-pipeline-parallel-review-2026-02-11.md`, `docs/analysis/CC-agent-teams-orchestration.md`
