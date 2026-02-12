@@ -7,7 +7,7 @@ Graph Analysis (Tier 3) into unified scoring system with recommendation mapping.
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
@@ -18,6 +18,9 @@ from app.data_models.evaluation_models import (
     Tier3Result,
 )
 from app.utils.log import logger
+
+if TYPE_CHECKING:
+    from app.evals.settings import JudgeSettings
 
 
 class AgentMetrics(BaseModel):
@@ -68,28 +71,75 @@ class CompositeScorer:
     Maps scores to recommendation categories with thresholds.
     """
 
-    def __init__(self, config_path: str | Path | None = None):
+    def __init__(
+        self,
+        config_path: str | Path | None = None,
+        settings: "JudgeSettings | None" = None,
+    ):
         """Initialize composite scorer with configuration.
 
         Args:
-            config_path: Path to config_eval.json file. If None, uses default location.
+            config_path: (Deprecated) Path to config_eval.json file. If None, uses default location.
+            settings: JudgeSettings instance. If provided, takes precedence over config_path.
         """
-        if config_path is None:
-            config_path = Path(__file__).parent.parent / "config" / "config_eval.json"
+        if settings is not None:
+            # Use JudgeSettings (new path)
+            self.settings = settings
+            self.config_path = None
+            self.config = None
 
-        self.config_path = Path(config_path)
-        self.config = self._load_config()
+            # Hardcoded defaults from config_eval.json (will be moved to JudgeSettings later)
+            # Reason: Keep settings minimal for now, hardcode composite config
+            self.weights = {
+                "time_taken": 0.167,
+                "task_success": 0.167,
+                "coordination_quality": 0.167,
+                "tool_efficiency": 0.167,
+                "planning_rationality": 0.167,
+                "output_similarity": 0.167,
+            }
+            self.thresholds = {
+                "accept": 0.8,
+                "weak_accept": 0.6,
+                "weak_reject": 0.4,
+                "reject": 0.0,
+            }
+            self.recommendation_weights = {
+                "accept": 1.0,
+                "weak_accept": 0.7,
+                "weak_reject": -0.7,
+                "reject": -1.0,
+            }
+            self.composite_config = {
+                "metrics_and_weights": self.weights,
+                "recommendation_thresholds": self.thresholds,
+                "recommendation_weights": self.recommendation_weights,
+            }
 
-        # Extract composite scoring configuration
-        self.composite_config = self.config.get("composite_scoring", {})
-        self.weights = self.composite_config.get("metrics_and_weights", {})
-        self.thresholds = self.composite_config.get("recommendation_thresholds", {})
-        self.recommendation_weights = self.composite_config.get("recommendation_weights", {})
+            logger.info(
+                f"CompositeScorer initialized with JudgeSettings ({len(self.weights)} metrics)"
+            )
+        else:
+            # Legacy path: load from JSON
+            if config_path is None:
+                config_path = Path(__file__).parent.parent / "config" / "config_eval.json"
 
-        # Validate configuration
-        self._validate_config()
+            self.settings = None
+            self.config_path = Path(config_path)
+            self.config = self._load_config()
 
-        logger.info(f"CompositeScorer initialized with {len(self.weights)} metrics")
+            # Extract composite scoring configuration
+            self.composite_config = self.config.get("composite_scoring", {})
+            self.weights = self.composite_config.get("metrics_and_weights", {})
+            self.thresholds = self.composite_config.get("recommendation_thresholds", {})
+            self.recommendation_weights = self.composite_config.get(
+                "recommendation_weights", {}
+            )
+
+            # Validate configuration
+            self._validate_config()
+
+            logger.info(f"CompositeScorer initialized with {len(self.weights)} metrics")
 
     def _load_config(self) -> dict[str, Any]:
         """Load evaluation configuration from JSON file."""

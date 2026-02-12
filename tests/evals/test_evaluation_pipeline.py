@@ -20,6 +20,7 @@ from app.data_models.evaluation_models import (
     Tier3Result,
 )
 from app.evals.evaluation_pipeline import EvaluationPipeline
+from app.evals.settings import JudgeSettings
 
 
 @pytest.fixture
@@ -164,6 +165,32 @@ class TestEvaluationPipelineInitialization:
         assert pipeline.performance_targets["total_max_seconds"] == 25.0
         assert pipeline.fallback_strategy == "tier1_only"
         assert pipeline.config_path == config_file
+
+    def test_init_with_judge_settings(self):
+        """Test pipeline initialization with JudgeSettings (new path)."""
+        settings = JudgeSettings(
+            tiers_enabled=[1, 2],
+            tier1_max_seconds=2.0,
+            tier2_max_seconds=15.0,
+            fallback_strategy="tier2_only",
+        )
+        pipeline = EvaluationPipeline(settings=settings)
+
+        assert pipeline.enabled_tiers == {1, 2}
+        assert pipeline.performance_targets["tier1_max_seconds"] == 2.0
+        assert pipeline.performance_targets["tier2_max_seconds"] == 15.0
+        assert pipeline.fallback_strategy == "tier2_only"
+        assert pipeline.config_path is None  # No config file used
+
+    def test_init_settings_takes_precedence(self, config_file):
+        """Test that JudgeSettings takes precedence over config_path."""
+        settings = JudgeSettings(tiers_enabled=[3], fallback_strategy="tier3_only")
+        pipeline = EvaluationPipeline(config_path=config_file, settings=settings)
+
+        # Settings should override config_file
+        assert pipeline.enabled_tiers == {3}
+        assert pipeline.fallback_strategy == "tier3_only"
+        assert pipeline.config_path is None
 
     def test_init_with_default_config(self):
         """Test pipeline initialization with default config path."""

@@ -23,6 +23,7 @@ from app.evals.evaluation_config import EvaluationConfig
 from app.evals.graph_analysis import GraphAnalysisEngine
 from app.evals.llm_evaluation_managers import LLMJudgeEngine
 from app.evals.performance_monitor import PerformanceMonitor
+from app.evals.settings import JudgeSettings
 from app.evals.traditional_metrics import TraditionalMetricsEngine
 from app.utils.load_configs import OpikConfig
 from app.utils.log import logger
@@ -55,40 +56,79 @@ class EvaluationPipeline:
     components for configuration management and performance monitoring.
     """
 
-    def __init__(self, config_path: str | Path | None = None):
+    def __init__(
+        self,
+        config_path: str | Path | None = None,
+        settings: JudgeSettings | None = None,
+    ):
         """Initialize evaluation pipeline with configuration.
 
         Args:
-            config_path: Path to config_eval.json file. If None, uses default location.
+            config_path: (Deprecated) Path to config_eval.json file. If None, uses default location.
+            settings: JudgeSettings instance. If provided, takes precedence over config_path.
 
         Raises:
-            FileNotFoundError: If configuration file not found
+            FileNotFoundError: If configuration file not found (legacy mode)
             ValueError: If configuration is invalid
         """
-        # Initialize modular components
-        self.config_manager = EvaluationConfig(config_path)
-        self.performance_monitor = PerformanceMonitor(self.config_manager.get_performance_targets())
+        # Prefer JudgeSettings over legacy config_path
+        if settings is not None:
+            self.settings = settings
+            self.config_manager = None  # No longer needed
+            self.performance_monitor = PerformanceMonitor(settings.get_performance_targets())
 
-        # Initialize Opik configuration
-        config_dict = self.config_manager.get_full_config()
-        self.opik_config = OpikConfig.from_config(config_dict)
+            # Initialize Opik configuration from settings
+            # Reason: OpikConfig needs dict structure, convert from settings
+            config_dict = {
+                "observability": {
+                    "opik_enabled": settings.opik_enabled,
+                    "trace_collection": settings.trace_collection,
+                    "performance_logging": settings.performance_logging,
+                }
+            }
+            self.opik_config = OpikConfig.from_config(config_dict)
+
+            # Initialize engines with settings-based config
+            tier2_config = settings.get_tier2_config()
+            tier3_config = settings.get_tier3_config()
+
+            self.traditional_engine = TraditionalMetricsEngine()
+            self.llm_engine = LLMJudgeEngine(tier2_config)
+            self.graph_engine = GraphAnalysisEngine(tier3_config)
+            self.composite_scorer = CompositeScorer(settings=settings)
+
+            enabled_tiers = sorted(settings.get_enabled_tiers())
+            fallback_strategy = settings.fallback_strategy
+            logger.info(
+                f"EvaluationPipeline initialized with JudgeSettings: tiers={enabled_tiers}, "
+                f"fallback_strategy={fallback_strategy}"
+            )
+        else:
+            # Legacy path: use EvaluationConfig (deprecated)
+            self.settings = None
+            self.config_manager = EvaluationConfig(config_path)
+            self.performance_monitor = PerformanceMonitor(self.config_manager.get_performance_targets())
+
+            # Initialize Opik configuration
+            config_dict = self.config_manager.get_full_config()
+            self.opik_config = OpikConfig.from_config(config_dict)
+
+            # Initialize engines with configuration
+            self.traditional_engine = TraditionalMetricsEngine()
+            self.llm_engine = LLMJudgeEngine(config_dict)
+            self.graph_engine = GraphAnalysisEngine(config_dict)
+            self.composite_scorer = CompositeScorer(self.config_manager.config_path)
+
+            enabled_tiers = sorted(self.config_manager.get_enabled_tiers())
+            fallback_strategy = self.config_manager.get_fallback_strategy()
+            logger.info(
+                f"EvaluationPipeline initialized with tiers: {enabled_tiers}, "
+                f"fallback_strategy: {fallback_strategy}, "
+                f"config: {self.config_manager.config_path}"
+            )
 
         # Pre-configure Opik decorator for performance optimization
         self._opik_decorator_enabled = OPIK_AVAILABLE and self.opik_config.enabled
-
-        # Initialize engines with configuration
-        self.traditional_engine = TraditionalMetricsEngine()
-        self.llm_engine = LLMJudgeEngine(config_dict)
-        self.graph_engine = GraphAnalysisEngine(config_dict)
-        self.composite_scorer = CompositeScorer(self.config_manager.config_path)
-
-        enabled_tiers = sorted(self.config_manager.get_enabled_tiers())
-        fallback_strategy = self.config_manager.get_fallback_strategy()
-        logger.info(
-            f"EvaluationPipeline initialized with tiers: {enabled_tiers}, "
-            f"fallback_strategy: {fallback_strategy}, "
-            f"config: {self.config_manager.config_path}"
-        )
 
     @property
     def enabled_tiers(self) -> set[int]:
@@ -97,6 +137,8 @@ class EvaluationPipeline:
         Returns:
             Set of enabled tier numbers
         """
+        if self.settings:
+            return self.settings.get_enabled_tiers()
         return self.config_manager.get_enabled_tiers()
 
     @property
@@ -106,6 +148,8 @@ class EvaluationPipeline:
         Returns:
             Dictionary of performance targets
         """
+        if self.settings:
+            return self.settings.get_performance_targets()
         return self.config_manager.get_performance_targets()
 
     @property
@@ -115,15 +159,19 @@ class EvaluationPipeline:
         Returns:
             Fallback strategy name
         """
+        if self.settings:
+            return self.settings.fallback_strategy
         return self.config_manager.get_fallback_strategy()
 
     @property
-    def config_path(self) -> Path:
+    def config_path(self) -> Path | None:
         """Get configuration path (backward compatibility property).
 
         Returns:
-            Path to configuration file
+            Path to configuration file (None if using JudgeSettings)
         """
+        if self.settings:
+            return None
         return self.config_manager.config_path
 
     @property
