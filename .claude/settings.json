@@ -14,7 +14,7 @@
   "spinnerTipsEnabled": true,
   "prefersReducedMotion": true,
   "sandbox": {
-    "enabled": false,
+    "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "allowUnsandboxedCommands": true,
     "enableWeakerNestedSandbox": false,
