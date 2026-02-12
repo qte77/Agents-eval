@@ -33,6 +33,7 @@
   },
   "permissions": {
     "allow": [
+      "AskUserQuestion",
       "Bash(date:*)",
       "Bash(git:add:*)",
       "Bash(git:diff:*)",
@@ -63,7 +64,8 @@
       "Read(.claude/skills/)",
       "Read(.claude/rules/)",
       "SlashCommand",
-      "Skill"
+      "Skill",
+      "TeamCreate"
     ],
     "deny": [
       "Bash(awk:*)",
