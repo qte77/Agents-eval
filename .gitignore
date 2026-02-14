@@ -22,6 +22,7 @@ dist/
 .complexipy_cache/
 .ruff_cache/
 .mypy_cache/
+complexipy-snapshot.json
 
 # Logs
 *.log

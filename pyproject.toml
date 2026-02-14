@@ -63,7 +63,7 @@ docs = [
 
 [tool.uv]
 # package = true
-exclude-newer = "2026-01-31T00:00:00Z"
+exclude-newer = "2026-02-15T00:00:00Z"
 
 
 # MARK: Logging configurations
@@ -87,6 +87,11 @@ reportMissingImports = true
 reportMissingTypeStubs = false
 reportUnknownMemberType = "none"
 reportUnknownVariableType = "none"
+
+[tool.complexipy]
+paths = ["src"]
+max-complexity-allowed = 10
+sort = "desc"
 
 [tool.ruff]
 target-version = "py313"

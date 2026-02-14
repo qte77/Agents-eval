@@ -81,6 +81,7 @@ setup_claude_code:  ## Setup claude code CLI
 	echo "Setting up Claude Code CLI ..."
 	cp -r .claude/.claude.json ~/.claude.json
 	curl -fsSL https://claude.ai/install.sh | bash
+	claude plugin marketplace add anthropics/claude-plugins-official
 	echo "Claude Code CLI version: $$(claude --version)"
 
 setup_sandbox:  ## Install sandbox deps (bubblewrap, socat) for Linux/WSL2

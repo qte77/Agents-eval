@@ -16,7 +16,7 @@
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
-    "allowUnsandboxedCommands": true,
+    "allowUnsandboxedCommands": false,
     "enableWeakerNestedSandbox": false,
     "network": {
       "allowLocalBinding": true,
