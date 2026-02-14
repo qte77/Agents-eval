@@ -72,55 +72,68 @@ class GraphAnalysisEngine:
         Raises:
             ValueError: If configuration parameters are invalid
         """
-        # Validate min_nodes_for_analysis
-        min_nodes = tier3_config.get("min_nodes_for_analysis", 2)
+        self._validate_min_nodes(tier3_config)
+        self._validate_centrality_measures(tier3_config)
+        self._validate_graph_weights(tier3_config)
+        self._validate_resource_limits(tier3_config)
+
+    def _validate_min_nodes(self, config: dict[str, Any]) -> None:
+        """Validate min_nodes_for_analysis parameter."""
+        min_nodes = config.get("min_nodes_for_analysis", 2)
         if not isinstance(min_nodes, int) or min_nodes < 1:
             raise ValueError("min_nodes_for_analysis must be positive integer")
 
-        # Validate centrality measures
-        centrality_measures = tier3_config.get(
+    def _validate_centrality_measures(self, config: dict[str, Any]) -> None:
+        """Validate centrality measures configuration."""
+        centrality_measures = config.get(
             "centrality_measures", ["betweenness", "closeness", "degree"]
         )
         valid_measures = {"betweenness", "closeness", "degree", "eigenvector"}
+
         if not isinstance(centrality_measures, list):
             raise ValueError("centrality_measures must be a list")
+
         for measure in centrality_measures:
             if measure not in valid_measures:
                 raise ValueError(f"Unknown centrality measure: {measure}")
 
-        # Validate graph weights
-        weights = tier3_config.get("graph_weights", {})
-        if weights:
-            # Check weights are non-negative and valid keys
-            valid_keys = {
-                "path_convergence",
-                "tool_accuracy",
-                "coordination_quality",
-                "task_balance",
-            }
-            for key, weight in weights.items():
-                if key not in valid_keys:
-                    raise ValueError(f"Unknown weight key: {key}. Valid keys: {valid_keys}")
-                if not isinstance(weight, int | float) or weight < 0:
-                    raise ValueError(f"Weight {key} must be non-negative number")
+    def _validate_graph_weights(self, config: dict[str, Any]) -> None:
+        """Validate graph weights configuration."""
+        weights = config.get("graph_weights", {})
+        if not weights:
+            return
 
-            # Warn if weights sum is unusual (allow partial specifications)
-            total_weight = sum(weights.values())
-            if total_weight > 1.5:  # Only warn if clearly excessive
-                logger.warning(
-                    f"Graph weights sum to {total_weight:.3f}, this may cause scoring issues"
-                )
+        valid_keys = {
+            "path_convergence",
+            "tool_accuracy",
+            "coordination_quality",
+            "task_balance",
+        }
 
-        # Validate resource limits if specified
-        max_nodes = tier3_config.get("max_nodes")
+        for key, weight in weights.items():
+            if key not in valid_keys:
+                raise ValueError(f"Unknown weight key: {key}. Valid keys: {valid_keys}")
+            if not isinstance(weight, int | float) or weight < 0:
+                raise ValueError(f"Weight {key} must be non-negative number")
+
+        # Warn if weights sum is unusual
+        total_weight = sum(weights.values())
+        if total_weight > 1.5:
+            logger.warning(
+                f"Graph weights sum to {total_weight:.3f}, this may cause scoring issues"
+            )
+
+    def _validate_resource_limits(self, config: dict[str, Any]) -> None:
+        """Validate resource limit parameters."""
+        max_nodes = config.get("max_nodes")
         if max_nodes is not None and (not isinstance(max_nodes, int) or max_nodes < 10):
             raise ValueError("max_nodes must be integer >= 10")
 
-        max_edges = tier3_config.get("max_edges")
+        max_edges = config.get("max_edges")
         if max_edges is not None and (not isinstance(max_edges, int) or max_edges < 10):
             raise ValueError("max_edges must be integer >= 10")
 
-        timeout = tier3_config.get("operation_timeout_seconds")
+        timeout = config.get("operation_timeout_seconds")
         if timeout is not None and (not isinstance(timeout, int | float) or timeout <= 0):
             raise ValueError("operation_timeout_seconds must be positive number")
 
@@ -136,21 +149,28 @@ class GraphAnalysisEngine:
         if not trace_data.execution_id:
             raise ValueError("execution_id is required in trace data")
 
-        # Validate agent interactions structure
-        for i, interaction in enumerate(trace_data.agent_interactions):
+        self._validate_agent_interactions(trace_data.agent_interactions)
+        self._validate_tool_calls(trace_data.tool_calls)
+        self._check_data_size_limits(trace_data)
+
+    def _validate_agent_interactions(self, interactions: list[dict[str, Any]]) -> None:
+        """Validate agent interactions structure."""
+        for i, interaction in enumerate(interactions):
             if "from" not in interaction or "to" not in interaction:
                 raise ValueError(f"Agent interaction {i} missing 'from' or 'to' field")
             if not interaction["from"] or not interaction["to"]:
                 raise ValueError(f"Agent interaction {i} has empty 'from' or 'to' field")
 
-        # Validate tool calls structure
-        for i, call in enumerate(trace_data.tool_calls):
+    def _validate_tool_calls(self, tool_calls: list[dict[str, Any]]) -> None:
+        """Validate tool calls structure."""
+        for i, call in enumerate(tool_calls):
             if "agent_id" not in call:
                 raise ValueError(f"Tool call {i} missing 'agent_id' field")
             if not call["agent_id"]:
                 raise ValueError(f"Tool call {i} has empty 'agent_id' field")
 
-        # Check data size limits
+    def _check_data_size_limits(self, trace_data: GraphTraceData) -> None:
+        """Check trace data against size limits."""
         total_interactions = len(trace_data.agent_interactions)
         total_calls = len(trace_data.tool_calls)
         total_events = total_interactions + total_calls
@@ -158,8 +178,7 @@ class GraphAnalysisEngine:
         if total_events > self.max_nodes:
             logger.warning(f"Trace has {total_events} events, exceeding max_nodes={self.max_nodes}")
 
-        # Estimate potential edges (interactions + tool usage patterns)
-        estimated_edges = total_interactions + (total_calls * 2)  # Conservative estimate
+        estimated_edges = total_interactions + (total_calls * 2)
         if estimated_edges > self.max_edges:
             logger.warning(
                 f"Trace may generate ~{estimated_edges} edges, exceeding max_edges={self.max_edges}"
@@ -269,49 +288,19 @@ class GraphAnalysisEngine:
         Returns:
             Dictionary with interaction analysis metrics
         """
-        # Validate trace data first
         self._validate_trace_data(trace_data)
 
         if not trace_data.agent_interactions:
             return {"communication_overhead": 1.0, "coordination_centrality": 0.0}
 
         try:
-            # Create agent interaction graph
-            interaction_graph = nx.DiGraph()
-
-            # Build interaction network
-            for interaction in trace_data.agent_interactions:
-                from_agent = interaction.get("from", "unknown")
-                to_agent = interaction.get("to", "unknown")
-                interaction_type = interaction.get("type", "communication")
-
-                # Weight different interaction types
-                weight = 1.0 if interaction_type in ["delegation", "coordination"] else 0.5
-
-                interaction_graph.add_edge(from_agent, to_agent, weight=weight)
+            interaction_graph = self._build_interaction_graph(trace_data.agent_interactions)
 
             if len(interaction_graph.nodes) < self.min_nodes_for_analysis:  # type: ignore[arg-type]
                 return {"communication_overhead": 0.8, "coordination_centrality": 0.5}
 
-            # Calculate communication efficiency (lower overhead = better)
-            total_edges = len(interaction_graph.edges)  # type: ignore[arg-type]
-            total_nodes = len(interaction_graph.nodes)  # type: ignore[arg-type]
-
-            # Ideal communication: O(n log n), actual vs ideal ratio
-            if total_nodes > 1:
-                ideal_communications = total_nodes * math.log2(total_nodes)
-                efficiency_ratio = min(1.0, ideal_communications / max(1, total_edges))
-            else:
-                efficiency_ratio = 1.0
-
-            # Calculate coordination centrality using betweenness centrality
-            if len(interaction_graph.nodes) > 2:  # type: ignore[arg-type]
-                centrality_scores = nx.betweenness_centrality(interaction_graph)  # type: ignore[arg-type]
-                max_centrality = (
-                    max(centrality_scores.values()) if centrality_scores else 0.0  # type: ignore[arg-type]
-                )
-            else:
-                max_centrality = 0.5
+            efficiency_ratio = self._calculate_communication_efficiency(interaction_graph)
+            max_centrality = self._calculate_coordination_centrality(interaction_graph)
 
             return {
                 "communication_overhead": efficiency_ratio,
@@ -322,6 +311,39 @@ class GraphAnalysisEngine:
             logger.warning(f"Agent interaction analysis failed: {e}")
             return {"communication_overhead": 0.5, "coordination_centrality": 0.0}
 
+    def _build_interaction_graph(self, interactions: list[dict[str, Any]]) -> Any:
+        """Build NetworkX graph from agent interactions."""
+        interaction_graph = nx.DiGraph()
+
+        for interaction in interactions:
+            from_agent = interaction.get("from", "unknown")
+            to_agent = interaction.get("to", "unknown")
+            interaction_type = interaction.get("type", "communication")
+
+            weight = 1.0 if interaction_type in ["delegation", "coordination"] else 0.5
+            interaction_graph.add_edge(from_agent, to_agent, weight=weight)
+
+        return interaction_graph
+
+    def _calculate_communication_efficiency(self, graph: Any) -> float:
+        """Calculate communication efficiency ratio."""
+        total_edges = len(graph.edges)  # type: ignore[arg-type]
+        total_nodes = len(graph.nodes)  # type: ignore[arg-type]
+
+        if total_nodes <= 1:
+            return 1.0
+
+        ideal_communications = total_nodes * math.log2(total_nodes)
+        return min(1.0, ideal_communications / max(1, total_edges))
+
+    def _calculate_coordination_centrality(self, graph: Any) -> float:
+        """Calculate coordination centrality from betweenness."""
+        if len(graph.nodes) <= 2:  # type: ignore[arg-type]
+            return 0.5
+
+        centrality_scores = nx.betweenness_centrality(graph)  # type: ignore[arg-type]
+        return max(centrality_scores.values()) if centrality_scores else 0.0  # type: ignore[arg-type]
+
     def analyze_task_distribution(self, trace_data: GraphTraceData) -> float:
         """Analyze task distribution balance across agents.
 
@@ -331,48 +353,50 @@ class GraphAnalysisEngine:
         Returns:
             Task distribution balance score (0.0-1.0)
         """
-        # Validate trace data first
         self._validate_trace_data(trace_data)
 
         try:
-            # Combine all agent activities
-            agent_activities: dict[str, int] = {}
-
-            # Count tool calls per agent
-            for call in trace_data.tool_calls:
-                agent_id = call.get("agent_id", "unknown")
-                agent_activities[agent_id] = agent_activities.get(agent_id, 0) + 1
-
-            # Count interactions per agent
-            for interaction in trace_data.agent_interactions:
-                from_agent = interaction.get("from", "unknown")
-                agent_activities[from_agent] = agent_activities.get(from_agent, 0) + 1
+            agent_activities = self._count_agent_activities(trace_data)
 
             if not agent_activities:
                 return 0.0
 
-            # Calculate load balance using coefficient of variation
-            activities: list[int] = list(agent_activities.values())
+            activities = list(agent_activities.values())
             if len(activities) <= 1:
-                return 1.0  # Perfect balance for single agent
+                return 1.0
 
-            mean_activity = sum(activities) / len(activities)
-            if mean_activity == 0:
-                return 0.0
-
-            variance = sum((x - mean_activity) ** 2 for x in activities) / len(activities)
-            std_dev = math.sqrt(variance)
-
-            # Coefficient of variation: lower = better balance
-            cv = std_dev / mean_activity
-
-            # Convert to score: perfect balance = 1.0, high imbalance = 0.0
-            balance_score = max(0.0, 1.0 - cv)
-            return min(1.0, balance_score)
+            return self._calculate_balance_score(activities)
 
         except Exception as e:
             logger.warning(f"Task distribution analysis failed: {e}")
             return 0.0
+
+    def _count_agent_activities(self, trace_data: GraphTraceData) -> dict[str, int]:
+        """Count activities per agent from trace data."""
+        agent_activities: dict[str, int] = {}
+
+        for call in trace_data.tool_calls:
+            agent_id = call.get("agent_id", "unknown")
+            agent_activities[agent_id] = agent_activities.get(agent_id, 0) + 1
+
+        for interaction in trace_data.agent_interactions:
+            from_agent = interaction.get("from", "unknown")
+            agent_activities[from_agent] = agent_activities.get(from_agent, 0) + 1
+
+        return agent_activities
+
+    def _calculate_balance_score(self, activities: list[int]) -> float:
+        """Calculate balance score from activity counts."""
+        mean_activity = sum(activities) / len(activities)
+        if mean_activity == 0:
+            return 0.0
+
+        variance = sum((x - mean_activity) ** 2 for x in activities) / len(activities)
+        std_dev = math.sqrt(variance)
+        cv = std_dev / mean_activity
+
+        balance_score = max(0.0, 1.0 - cv)
+        return min(1.0, balance_score)
 
     def _calculate_path_convergence(self, graph: Any) -> float:
         """Calculate path convergence efficiency in tool usage graph.
@@ -383,38 +407,38 @@ class GraphAnalysisEngine:
         Returns:
             Path convergence score (0.0-1.0)
         """
+        if len(graph.nodes) < 2:
+            return 0.5
+
         try:
-            if len(graph.nodes) < 2:
-                return 0.5
-
-            # Calculate average shortest path length with timeout protection
             undirected_graph = graph.to_undirected()
-            if nx.is_connected(undirected_graph):
-                try:
-                    avg_path_length = self._with_timeout(
-                        nx.average_shortest_path_length, undirected_graph
-                    )
-                    max_possible_length = len(graph.nodes) - 1
+            if not nx.is_connected(undirected_graph):
+                return 0.2  # Disconnected graph has poor convergence
 
-                    # Fix division by zero: ensure denominator is never zero
-                    denominator = max_possible_length - 1
-                    if denominator <= 0:
-                        # For graphs with 2 nodes, path length is optimal
-                        return 1.0 if len(graph.nodes) == 2 else 0.5
-
-                    # Normalize: shorter paths = better convergence
-                    convergence = 1.0 - (avg_path_length - 1) / denominator
-                    return max(0.0, min(1.0, convergence))
-                except (TimeoutError, nx.NetworkXError):
-                    logger.warning("Path length calculation failed or timed out")
-                    return 0.3  # Conservative fallback for connected graph
-            else:
-                # Graph is disconnected - poor convergence
-                return 0.2
-
+            return self._calculate_connected_graph_convergence(graph, undirected_graph)
         except Exception as e:
             logger.debug(f"Path convergence calculation failed: {e}")
             return 0.0
+
+    def _calculate_connected_graph_convergence(self, graph: Any, undirected_graph: Any) -> float:
+        """Calculate convergence for connected graph."""
+        try:
+            avg_path_length = self._with_timeout(nx.average_shortest_path_length, undirected_graph)
+            return self._normalize_path_length(len(graph.nodes), avg_path_length)
+        except (TimeoutError, nx.NetworkXError):
+            logger.warning("Path length calculation failed or timed out")
+            return 0.3
+
+    def _normalize_path_length(self, num_nodes: int, avg_path_length: float) -> float:
+        """Normalize average path length to convergence score."""
+        max_possible_length = num_nodes - 1
+        denominator = max_possible_length - 1
+
+        if denominator <= 0:
+            return 1.0 if num_nodes == 2 else 0.5
+
+        convergence = 1.0 - (avg_path_length - 1) / denominator
+        return max(0.0, min(1.0, convergence))
 
     def evaluate_graph_metrics(self, trace_data: GraphTraceData) -> Tier3Result:
         """Complete graph-based analysis evaluation.
@@ -477,7 +501,7 @@ class GraphAnalysisEngine:
                 graph_complexity=0,
             )
 
-    def export_trace_to_networkx(self, trace_data: GraphTraceData) -> nx.DiGraph | None:
+    def export_trace_to_networkx(self, trace_data: GraphTraceData) -> "nx.DiGraph[str] | None":
         """Export trace data to NetworkX graph for Opik integration.
 
         Args:
@@ -488,53 +512,11 @@ class GraphAnalysisEngine:
         """
         try:
             graph = nx.DiGraph()
-
-            # Add agent nodes from interactions
-            agent_nodes = set()
-            for interaction in trace_data.agent_interactions:
-                source = interaction.get("from", "unknown")
-                target = interaction.get("to", "unknown")
-                agent_nodes.add(source)
-                agent_nodes.add(target)
-
-                # Add nodes with agent type
-                if not graph.has_node(source):
-                    graph.add_node(source, type="agent", interaction_count=0)
-                if not graph.has_node(target):
-                    graph.add_node(target, type="agent", interaction_count=0)
-
-                # Add interaction edge
-                if not graph.has_edge(source, target):
-                    graph.add_edge(source, target, interaction_count=0)
-                graph.edges[source, target]["interaction_count"] += 1
-                graph.nodes[source]["interaction_count"] += 1
-                graph.nodes[target]["interaction_count"] += 1
-
-            # Add tool usage patterns
-            for tool_call in trace_data.tool_calls:
-                agent_id = tool_call.get("agent_id", "unknown")
-                tool_name = tool_call.get("tool_name", "unknown_tool")
-
-                # Add tool node
-                if not graph.has_node(tool_name):
-                    graph.add_node(tool_name, type="tool", usage_count=0)
-
-                # Add edge from agent to tool
-                if not graph.has_edge(agent_id, tool_name):
-                    graph.add_edge(agent_id, tool_name, usage_count=0)
-                graph.edges[agent_id, tool_name]["usage_count"] += 1
-                graph.nodes[tool_name]["usage_count"] += 1
-
-            # Add graph metadata for Opik
-            graph.graph.update(
-                {
-                    "execution_id": trace_data.execution_id,
-                    "total_agents": len(agent_nodes),
-                    "total_interactions": len(trace_data.agent_interactions),
-                    "total_tool_calls": len(trace_data.tool_calls),
-                    "timing_data": trace_data.timing_data,
-                }
+            agent_nodes = self._add_agent_interactions_to_graph(
+                graph, trace_data.agent_interactions
             )
+            self._add_tool_usage_to_graph(graph, trace_data.tool_calls)
+            self._add_graph_metadata(graph, trace_data, agent_nodes)
 
             logger.debug(
                 f"Exported NetworkX graph: {graph.number_of_nodes()} nodes, "
@@ -545,6 +527,74 @@ class GraphAnalysisEngine:
         except Exception as e:
             logger.error(f"Failed to export trace to NetworkX: {e}")
             return None
+
+    def _add_agent_interactions_to_graph(
+        self, graph: Any, interactions: list[dict[str, Any]]
+    ) -> set[str]:
+        """Add agent nodes and interactions to graph."""
+        agent_nodes: set[str] = set()
+
+        for interaction in interactions:
+            source = interaction.get("from", "unknown")
+            target = interaction.get("to", "unknown")
+            agent_nodes.add(source)
+            agent_nodes.add(target)
+
+            self._ensure_agent_node(graph, source)
+            self._ensure_agent_node(graph, target)
+            self._add_interaction_edge(graph, source, target)
+
+        return agent_nodes
+
+    def _ensure_agent_node(self, graph: Any, agent_id: str) -> None:
+        """Ensure agent node exists in graph."""
+        if not graph.has_node(agent_id):
+            graph.add_node(agent_id, type="agent", interaction_count=0)
+
+    def _add_interaction_edge(self, graph: Any, source: str, target: str) -> None:
+        """Add or update interaction edge between agents."""
+        if not graph.has_edge(source, target):
+            graph.add_edge(source, target, interaction_count=0)
+
+        graph.edges[source, target]["interaction_count"] += 1
+        graph.nodes[source]["interaction_count"] += 1
+        graph.nodes[target]["interaction_count"] += 1
+
+    def _add_tool_usage_to_graph(self, graph: Any, tool_calls: list[dict[str, Any]]) -> None:
+        """Add tool nodes and usage edges to graph."""
+        for tool_call in tool_calls:
+            agent_id = tool_call.get("agent_id", "unknown")
+            tool_name = tool_call.get("tool_name", "unknown_tool")
+
+            self._ensure_tool_node(graph, tool_name)
+            self._add_tool_usage_edge(graph, agent_id, tool_name)
+
+    def _ensure_tool_node(self, graph: Any, tool_name: str) -> None:
+        """Ensure tool node exists in graph."""
+        if not graph.has_node(tool_name):
+            graph.add_node(tool_name, type="tool", usage_count=0)
+
+    def _add_tool_usage_edge(self, graph: Any, agent_id: str, tool_name: str) -> None:
+        """Add or update tool usage edge."""
+        if not graph.has_edge(agent_id, tool_name):
+            graph.add_edge(agent_id, tool_name, usage_count=0)
+
+        graph.edges[agent_id, tool_name]["usage_count"] += 1
+        graph.nodes[tool_name]["usage_count"] += 1
+
+    def _add_graph_metadata(
+        self, graph: Any, trace_data: GraphTraceData, agent_nodes: set[str]
+    ) -> None:
+        """Add metadata to graph for Opik integration."""
+        graph.graph.update(
+            {
+                "execution_id": trace_data.execution_id,
+                "total_agents": len(agent_nodes),
+                "total_interactions": len(trace_data.agent_interactions),
+                "total_tool_calls": len(trace_data.tool_calls),
+                "timing_data": trace_data.timing_data,
+            }
+        )
 
 
 def evaluate_single_graph_analysis(

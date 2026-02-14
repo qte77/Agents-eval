@@ -8,20 +8,20 @@ from sys import exit
 from openai import APIConnectionError
 from pydantic_ai import Agent
 from pydantic_ai.agent import AgentRunResult
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 
 from .data_models import Config, ResearchSummary
 from .utils import create_model
 
 
 def _create_research_agent(
-    model: OpenAIModel, result_type: ResearchSummary, system_prompt: str
-) -> Agent:
+    model: OpenAIChatModel, result_type: type[ResearchSummary], system_prompt: str
+) -> Agent[None, ResearchSummary]:
     """
     Create a research agent with the specified model, result type, and system prompt.
     """
 
-    return Agent(model=model, result_type=result_type, system_prompt=system_prompt)
+    return Agent(model=model, result_type=result_type, system_prompt=system_prompt)  # type: ignore[call-overload, return-value]
 
 
 def get_research(

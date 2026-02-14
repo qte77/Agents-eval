@@ -146,6 +146,64 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         return read_paper_pdf(ctx, pdf_path)
 
 
+def _load_paper_content_with_fallback(
+    ctx: RunContext[None],
+    loader: PeerReadLoader,
+    paper_id: str,
+    paper_abstract: str,
+) -> str:
+    """Load paper content with PDF fallback strategy."""
+    paper_content = loader.load_parsed_pdf_content(paper_id)
+    if paper_content:
+        return paper_content
+
+    logger.warning(f"No parsed PDF content found for paper {paper_id}. Attempting to read raw PDF.")
+    raw_pdf_path = loader.get_raw_pdf_path(paper_id)
+
+    if not raw_pdf_path:
+        logger.warning(f"No raw PDF found for paper {paper_id}. Using abstract as fallback.")
+        return paper_abstract
+
+    try:
+        paper_content = read_paper_pdf(ctx, raw_pdf_path)
+        logger.info(f"Successfully read raw PDF for paper {paper_id}.")
+        return paper_content
+    except Exception as e:
+        logger.warning(
+            f"Failed to read raw PDF for paper {paper_id}: {e}. Using abstract as fallback."
+        )
+        return paper_abstract
+
+
+def _load_and_format_template(
+    paper_title: str,
+    paper_abstract: str,
+    paper_content: str,
+    tone: str,
+    review_focus: str,
+) -> str:
+    """Load review template and format with paper information."""
+    template_path = get_review_template_path()
+
+    try:
+        with open(template_path, encoding="utf-8") as f:
+            template_content = f.read()
+
+        return template_content.format(
+            paper_title=paper_title,
+            paper_abstract=paper_abstract,
+            paper_full_content=paper_content,
+            tone=tone,
+            review_focus=review_focus,
+        )
+    except FileNotFoundError:
+        logger.error(f"Review template file not found at {template_path}")
+        raise ValueError(f"Review template configuration file missing: {template_path}")
+    except Exception as e:
+        logger.error(f"Error loading review template: {e}")
+        raise ValueError(f"Failed to load review template: {str(e)}")
+
+
 def add_peerread_review_tools_to_manager(
     manager_agent: Agent[None, BaseModel], max_content_length: int = 15000
 ):
@@ -186,54 +244,11 @@ def add_peerread_review_tools_to_manager(
             if not paper:
                 raise ValueError(f"Paper {paper_id} not found in PeerRead dataset")
 
-            # Load paper content for the template
-            paper_content_for_template = loader.load_parsed_pdf_content(paper_id)
+            paper_content = _load_paper_content_with_fallback(ctx, loader, paper_id, paper.abstract)
 
-            if not paper_content_for_template:
-                logger.warning(
-                    f"No parsed PDF content found for paper {paper_id}. Attempting to read raw PDF."
-                )
-                raw_pdf_path = loader.get_raw_pdf_path(paper_id)
-                if raw_pdf_path:
-                    try:
-                        paper_content_for_template = read_paper_pdf(ctx, raw_pdf_path)
-                        logger.info(f"Successfully read raw PDF for paper {paper_id}.")
-                    except Exception as e:
-                        logger.warning(
-                            f"Failed to read raw PDF for paper {paper_id}: {e}. "
-                            "Using abstract as fallback."
-                        )
-                        paper_content_for_template = paper.abstract
-                else:
-                    logger.warning(
-                        f"No raw PDF found for paper {paper_id}. Using abstract as fallback."
-                    )
-                    paper_content_for_template = paper.abstract
-
-            # Use centralized path resolution for template
-            template_path = get_review_template_path()
-
-            try:
-                with open(template_path, encoding="utf-8") as f:
-                    template_content = f.read()
-                # TODO max content length handling for models
-                # full_input_contenxt_len > max_content_length
-
-                # Format the template with paper information including full content
-                review_template = template_content.format(
-                    paper_title=paper.title,
-                    paper_abstract=paper.abstract,
-                    paper_full_content=paper_content_for_template,
-                    tone=tone,
-                    review_focus=review_focus,
-                )
-
-            except FileNotFoundError:
-                logger.error(f"Review template file not found at {template_path}")
-                raise ValueError(f"Review template configuration file missing: {template_path}")
-            except Exception as e:
-                logger.error(f"Error loading review template: {e}")
-                raise ValueError(f"Failed to load review template: {str(e)}")
+            review_template = _load_and_format_template(
+                paper.title, paper.abstract, paper_content, tone, review_focus
+            )
 
             logger.info(f"Created review template for paper {paper_id} (NOT a real review)")
             return review_template

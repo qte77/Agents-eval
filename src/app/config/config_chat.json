@@ -65,6 +65,12 @@
             "base_url": "https://api.anthropic.com",
             "usage_limits": 25000,
             "max_content_length": 200000
+        },
+        "cerebras": {
+            "model_name": "gpt-oss-120b",
+            "base_url": "https://api.cerebras.ai/v1",
+            "usage_limits": 60000,
+            "max_content_length": 8192
         }
     },
     "inference": {

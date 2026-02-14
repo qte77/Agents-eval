@@ -27,7 +27,7 @@ def main():
     api_key = get_api_key(provider)
 
     result = get_research(topic, config.prompts, provider, config, api_key or "")
-    print_research_result(result.data, result.usage())
+    print_research_result(result.output, result.usage())
 
 
 if __name__ == "__main__":

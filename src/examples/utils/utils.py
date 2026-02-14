@@ -6,7 +6,7 @@ from sys import exit
 
 from dotenv import load_dotenv
 from pydantic import ValidationError
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.usage import RunUsage
 
@@ -71,14 +71,11 @@ def create_model(
     model_name: str,
     api_key: str | None = None,
     provider: str | None = None,
-) -> OpenAIModel:
-    """Create a model that uses base_url as inference API"""
-
-    if api_key is None and not provider.lower() == "ollama":
+) -> OpenAIChatModel:
+    """Create a model that uses base_url as inference API."""
+    if api_key is None and (provider is None or provider.lower() != "ollama"):
         raise ValueError("API key is required for model.")
-        exit()
-    else:
-        return OpenAIModel(model_name, provider=OpenAIProvider(base_url=base_url, api_key=api_key))
+    return OpenAIChatModel(model_name, provider=OpenAIProvider(base_url=base_url, api_key=api_key))
 
 
 def print_research_result(summary: ResearchSummary, usage: RunUsage) -> None:

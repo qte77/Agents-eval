@@ -151,9 +151,8 @@ class CompositeScorer:
         # Each metric maps to specific fields from evaluation tier results
         metrics = {
             # From Tier 1: Traditional metrics + execution performance
-            "time_taken": self._normalize_time_score(
-                results.tier1.time_score
-            ),  # normalized execution time
+            # Reason: time_score is already normalized [0,1] where higher = better (faster)
+            "time_taken": results.tier1.time_score,
             "task_success": results.tier1.task_success,  # binary completion flag
             "output_similarity": results.tier1.overall_score,  # weighted similarity
             # From Tier 2: LLM-as-Judge quality assessment - use specific metric
@@ -172,24 +171,6 @@ class CompositeScorer:
 
         logger.debug(f"Extracted metrics: {[(k, f'{v:.3f}') for k, v in metrics.items()]}")
         return metrics
-
-    def _normalize_time_score(self, time_score: float) -> float:
-        """Normalize time score using 1/(1+log(time)) formula.
-
-        Args:
-            time_score: Raw time score from Tier 1
-
-        Returns:
-            Normalized time score (0.0 to 1.0, higher is better)
-        """
-        import math
-
-        if time_score <= 0:
-            return 1.0  # Perfect score for zero time
-
-        # Apply logarithmic normalization - better performance = higher score
-        normalized = 1.0 / (1.0 + math.log(1.0 + time_score))
-        return max(0.0, min(1.0, normalized))
 
     def calculate_composite_score(self, results: EvaluationResults) -> float:
         """Calculate weighted composite score from all evaluation tiers.
@@ -308,6 +289,42 @@ class CompositeScorer:
             "recommendation_weights": self.recommendation_weights.copy(),
         }
 
+    def _calculate_tool_score(self, tools_used: list[str]) -> float:
+        """Calculate tool selection score based on usage count."""
+        tool_count = len(tools_used)
+        if tool_count == 0:
+            return 0.3
+        if tool_count > 5:
+            return max(0.4, 0.8 - (tool_count - 5) * 0.1)
+        return 0.8
+
+    def _calculate_coherence_score(
+        self, error_occurred: bool, output_length: int, execution_time: float
+    ) -> float:
+        """Calculate plan coherence score based on execution quality."""
+        score = 0.7
+        if error_occurred:
+            score -= 0.4
+        if output_length > 100:
+            score += 0.1
+        elif output_length < 20:
+            score -= 0.2
+        if execution_time > 30.0:
+            score -= 0.2
+        return max(0.0, min(1.0, score))
+
+    def _calculate_coordination_score(self, delegation_count: int, output_length: int) -> float:
+        """Calculate coordination score based on delegation and output quality."""
+        score = 0.7
+        if delegation_count > 0:
+            if delegation_count <= 3:
+                score += 0.2
+            else:
+                score -= (delegation_count - 3) * 0.1
+        if output_length > 50:
+            score += 0.1
+        return max(0.0, min(1.0, score))
+
     def assess_agent_performance(
         self,
         execution_time: float,
@@ -328,38 +345,11 @@ class CompositeScorer:
         Returns:
             AgentMetrics with evaluated scores
         """
-        # Tool Selection Score (0.0-1.0)
-        tool_score = 0.8  # Default good score
-        if len(tools_used) == 0:
-            tool_score = 0.3  # No tools used
-        elif len(tools_used) > 5:
-            tool_score = max(0.4, 0.8 - (len(tools_used) - 5) * 0.1)  # Over-tooling penalty
-
-        # Plan Coherence Score (0.0-1.0)
-        coherence_score = 0.7  # Default neutral
-        if error_occurred:
-            coherence_score -= 0.4  # Major penalty for errors
-        if output_length > 100:
-            coherence_score += 0.1  # Reward substantive output
-        elif output_length < 20:
-            coherence_score -= 0.2  # Penalize minimal output
-        if execution_time > 30.0:  # Very long execution
-            coherence_score -= 0.2  # Penalize slow execution
-
-        # Coordination Score (0.0-1.0)
-        coordination_score = 0.7  # Default neutral
-        if delegation_count > 0:  # Agent delegated tasks
-            if delegation_count <= 3:
-                coordination_score += 0.2  # Reward appropriate delegation
-            else:
-                coordination_score -= (delegation_count - 3) * 0.1  # Over-delegation penalty
-        if output_length > 50:  # Substantive response
-            coordination_score += 0.1
-
-        # Ensure all scores are within bounds
-        tool_score = max(0.0, min(1.0, tool_score))
-        coherence_score = max(0.0, min(1.0, coherence_score))
-        coordination_score = max(0.0, min(1.0, coordination_score))
+        tool_score = self._calculate_tool_score(tools_used)
+        coherence_score = self._calculate_coherence_score(
+            error_occurred, output_length, execution_time
+        )
+        coordination_score = self._calculate_coordination_score(delegation_count, output_length)
 
         agent_metrics = AgentMetrics(
             tool_selection_score=tool_score,

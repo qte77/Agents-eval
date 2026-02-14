@@ -9,6 +9,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
@@ -69,7 +70,7 @@ class OpikConfig:
     timeout_seconds: float = 30.0
 
     @classmethod
-    def from_config(cls, config: dict[str, any]) -> "OpikConfig":
+    def from_config(cls, config: dict[str, Any]) -> "OpikConfig":
         """Create OpikConfig from evaluation config dictionary."""
         observability = config.get("observability", {})
         return cls(

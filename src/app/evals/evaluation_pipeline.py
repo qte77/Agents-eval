@@ -303,6 +303,43 @@ class EvaluationPipeline:
             self._record_opik_metadata(2, execution_time, error=error_msg)
             return None, execution_time
 
+    def _create_trace_data(self, execution_trace: dict[str, Any] | None) -> GraphTraceData:
+        """Convert execution trace to GraphTraceData."""
+        if execution_trace:
+            return GraphTraceData(
+                execution_id=execution_trace.get("execution_id", "pipeline_exec"),
+                agent_interactions=execution_trace.get("agent_interactions", []),
+                tool_calls=execution_trace.get("tool_calls", []),
+                timing_data=execution_trace.get("timing_data", {}),
+                coordination_events=execution_trace.get("coordination_events", []),
+            )
+        return GraphTraceData(
+            execution_id="pipeline_minimal",
+            agent_interactions=[],
+            tool_calls=[],
+            timing_data={},
+            coordination_events=[],
+        )
+
+    def _handle_tier3_error(
+        self, e: Exception, execution_trace: dict[str, Any] | None, start_time: float
+    ) -> tuple[None, float]:
+        """Handle Tier 3 execution errors with specific guidance."""
+        execution_time = time.time() - start_time
+        error_type = type(e).__name__
+        trace_size = len(str(execution_trace)) if execution_trace else 0
+        error_msg = f"Tier 3 failed with {error_type}: {e}"
+        logger.error(f"{error_msg}. Trace data size: {trace_size} chars")
+
+        if "memory" in str(e).lower():
+            logger.error("Memory error - consider reducing trace data complexity")
+        elif "networkx" in str(e).lower():
+            logger.error("Graph construction error - check trace data format")
+
+        self.performance_monitor.record_tier_failure(3, "error", execution_time, str(e))
+        self._record_opik_metadata(3, execution_time, error=error_msg)
+        return None, execution_time
+
     async def _execute_tier3(
         self, execution_trace: dict[str, Any] | None = None
     ) -> tuple[Tier3Result | None, float]:
@@ -324,25 +361,7 @@ class EvaluationPipeline:
 
         try:
             logger.info("Executing Tier 3: Graph Analysis")
-
-            # Convert execution trace to GraphTraceData if available
-            if execution_trace:
-                trace_data = GraphTraceData(
-                    execution_id=execution_trace.get("execution_id", "pipeline_exec"),
-                    agent_interactions=execution_trace.get("agent_interactions", []),
-                    tool_calls=execution_trace.get("tool_calls", []),
-                    timing_data=execution_trace.get("timing_data", {}),
-                    coordination_events=execution_trace.get("coordination_events", []),
-                )
-            else:
-                # Create minimal trace data for basic analysis
-                trace_data = GraphTraceData(
-                    execution_id="pipeline_minimal",
-                    agent_interactions=[],
-                    tool_calls=[],
-                    timing_data={},
-                    coordination_events=[],
-                )
+            trace_data = self._create_trace_data(execution_trace)
 
             result = await asyncio.wait_for(
                 asyncio.create_task(
@@ -367,19 +386,7 @@ class EvaluationPipeline:
             self._record_opik_metadata(3, execution_time, error=error_msg)
             return None, execution_time
         except Exception as e:
-            execution_time = time.time() - start_time
-            error_type = type(e).__name__
-            trace_size = len(str(execution_trace)) if execution_trace else 0
-            error_msg = f"Tier 3 failed with {error_type}: {e}"
-            logger.error(f"{error_msg}. Trace data size: {trace_size} chars")
-            # Add specific guidance for common graph analysis issues
-            if "memory" in str(e).lower():
-                logger.error("Memory error - consider reducing trace data complexity")
-            elif "networkx" in str(e).lower():
-                logger.error("Graph construction error - check trace data format")
-            self.performance_monitor.record_tier_failure(3, "error", execution_time, str(e))
-            self._record_opik_metadata(3, execution_time, error=error_msg)
-            return None, execution_time
+            return self._handle_tier3_error(e, execution_trace, start_time)
 
     def _apply_fallback_strategy(self, results: EvaluationResults) -> EvaluationResults:
         """Apply fallback strategy when tiers fail.

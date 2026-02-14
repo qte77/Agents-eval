@@ -7,10 +7,7 @@ from pydantic_ai import RunContext
 
 def roll_die() -> str:
     """Tool to roll a die."""
-
-    async def _execute(self) -> str:
-        """Roll the die and return the result."""
-        return str(randint(1, 6))
+    return str(randint(1, 6))
 
 
 def get_player_name(ctx: RunContext[str]) -> str:

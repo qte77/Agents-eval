@@ -169,10 +169,8 @@ class TestPeerReadRealDatasetValidation:
         assert len(json_files) > 0, "Cache files missing after second download"
 
     @pytest.mark.integration
-    @pytest.mark.network
     async def test_peerread_error_handling(self, peerread_config, temp_cache_dir):
-        """Test error handling for network issues and invalid configurations."""
-        # Test with invalid venue
+        """Download should fail gracefully for invalid venue."""
         invalid_config = PeerReadConfig(
             venues=["invalid_venue_2099"],
             splits=["train"],
@@ -180,15 +178,14 @@ class TestPeerReadRealDatasetValidation:
             max_papers_per_query=1,
             raw_github_base_url=peerread_config.raw_github_base_url,
             github_api_base_url=peerread_config.github_api_base_url,
-            download_timeout=5.0,  # Short timeout for testing
-            max_retries=1,  # Single retry for testing
+            download_timeout=5.0,
+            max_retries=1,
             retry_delay_seconds=1.0,
         )
 
         downloader = PeerReadDownloader(invalid_config)
         result = downloader.download_venue_split("invalid_venue_2099", "train")
 
-        # Should fail gracefully
         assert not result.success, "Download should fail for invalid venue"
         assert result.error_message is not None, "Should provide error message"
         assert result.papers_downloaded == 0, "Should not download any papers"

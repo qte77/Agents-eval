@@ -26,6 +26,9 @@ Functions:
         settings, prompts, API key, and usage limits.
 """
 
+from collections.abc import Callable
+from typing import Any, TypeVar
+
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.common_tools.duckduckgo import (
@@ -79,12 +82,95 @@ def initialize_opik_instrumentation_from_config(config_path: str | None = None) 
         logger.warning(f"Failed to initialize Opik instrumentation: {e}")
 
 
-def get_opik_decorator(agent_name: str, agent_role: str, execution_phase: str):
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+
+def get_opik_decorator(
+    agent_name: str, agent_role: str, execution_phase: str
+) -> Callable[[_F], _F]:
     """Get Opik tracking decorator if available."""
     manager = get_instrumentation_manager()
     if manager and manager.config.enabled:
         return manager.track_agent_execution(agent_name, agent_role, execution_phase)
-    return lambda func: func  # No-op decorator if Opik not available
+    return lambda func: func  # type: ignore[return-value]  # No-op identity decorator
+
+
+def _validate_model_return(
+    result_output: str,
+    result_model: type[ResultBaseType],
+) -> ResultBaseType:
+    """Validates the output against the expected model."""
+    try:
+        return result_model.model_validate(result_output)
+    except ValidationError as e:
+        msg = invalid_data_model_format(str(e))
+        logger.error(msg)
+        raise e
+    except Exception as e:
+        msg = generic_exception(str(e))
+        logger.exception(msg)
+        raise Exception(msg)
+
+
+def _add_research_tool(
+    manager_agent: Agent[None, BaseModel],
+    research_agent: Agent[None, BaseModel],
+    result_type: type[ResearchResult | ResearchResultSimple | ReviewGenerationResult],
+):
+    """Add research delegation tool to manager agent."""
+    opik_decorator = get_opik_decorator("researcher", "research", "information_gathering")
+
+    @opik_decorator
+    @manager_agent.tool
+    async def delegate_research(  # type: ignore[reportUnusedFunction]
+        ctx: RunContext[None], query: str
+    ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
+        """Delegate research task to ResearchAgent."""
+        result = await research_agent.run(query, usage=ctx.usage)
+        if isinstance(
+            result.output,
+            ResearchResult | ResearchResultSimple | ReviewGenerationResult,
+        ):
+            return result.output
+        return _validate_model_return(str(result.output), result_type)
+
+
+def _add_analysis_tool(
+    manager_agent: Agent[None, BaseModel],
+    analysis_agent: Agent[None, BaseModel],
+):
+    """Add analysis delegation tool to manager agent."""
+    opik_decorator = get_opik_decorator("analyst", "analysis", "analytical_processing")
+
+    @opik_decorator
+    @manager_agent.tool
+    async def delegate_analysis(  # type: ignore[reportUnusedFunction]
+        ctx: RunContext[None], query: str
+    ) -> AnalysisResult:
+        """Delegate analysis task to AnalysisAgent."""
+        result = await analysis_agent.run(query, usage=ctx.usage)
+        if isinstance(result.output, AnalysisResult):
+            return result.output
+        return _validate_model_return(str(result.output), AnalysisResult)
+
+
+def _add_synthesis_tool(
+    manager_agent: Agent[None, BaseModel],
+    synthesis_agent: Agent[None, BaseModel],
+):
+    """Add synthesis delegation tool to manager agent."""
+    opik_decorator = get_opik_decorator("synthesizer", "synthesis", "integration_synthesis")
+
+    @opik_decorator
+    @manager_agent.tool
+    async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
+        ctx: RunContext[None], query: str
+    ) -> ResearchSummary:
+        """Delegate synthesis task to AnalysisAgent."""
+        result = await synthesis_agent.run(query, usage=ctx.usage)
+        if isinstance(result.output, ResearchSummary):
+            return result.output
+        return _validate_model_return(str(result.output), ResearchSummary)
 
 
 def _add_tools_to_manager_agent(
@@ -109,82 +195,14 @@ def _add_tools_to_manager_agent(
     Returns:
         None
     """
-
-    def _validate_model_return(
-        result_output: str,
-        result_model: type[ResultBaseType],
-    ) -> ResultBaseType:
-        """Validates the output against the expected model."""
-        try:
-            return result_model.model_validate(result_output)
-        except ValidationError as e:
-            msg = invalid_data_model_format(str(e))
-            logger.error(msg)
-            raise e
-        except Exception as e:
-            msg = generic_exception(str(e))
-            logger.exception(msg)
-            raise Exception(msg)
-
     if research_agent is not None:
-        # Apply Opik tracing decorator
-        opik_decorator = get_opik_decorator("researcher", "research", "information_gathering")
-
-        @opik_decorator
-        @manager_agent.tool
-        # TODO remove redundant tool creation
-        # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_research(  # type: ignore[reportUnusedFunction]
-            ctx: RunContext[None], query: str
-        ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
-            """Delegate research task to ResearchAgent."""
-            result = await research_agent.run(query, usage=ctx.usage)
-            # result.output is already a result object from the agent
-            if isinstance(
-                result.output,
-                ResearchResult | ResearchResultSimple | ReviewGenerationResult,
-            ):
-                return result.output
-            else:
-                return _validate_model_return(str(result.output), result_type)
+        _add_research_tool(manager_agent, research_agent, result_type)
 
     if analysis_agent is not None:
-        # Apply Opik tracing decorator
-        opik_decorator_analysis = get_opik_decorator("analyst", "analysis", "analytical_processing")
-
-        @opik_decorator_analysis
-        @manager_agent.tool
-        # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_analysis(  # type: ignore[reportUnusedFunction]
-            ctx: RunContext[None], query: str
-        ) -> AnalysisResult:
-            """Delegate analysis task to AnalysisAgent."""
-            result = await analysis_agent.run(query, usage=ctx.usage)
-            # result.output is already an AnalysisResult object from the agent
-            if isinstance(result.output, AnalysisResult):
-                return result.output
-            else:
-                return _validate_model_return(str(result.output), AnalysisResult)
+        _add_analysis_tool(manager_agent, analysis_agent)
 
     if synthesis_agent is not None:
-        # Apply Opik tracing decorator
-        opik_decorator_synthesis = get_opik_decorator(
-            "synthesizer", "synthesis", "integration_synthesis"
-        )
-
-        @opik_decorator_synthesis
-        @manager_agent.tool
-        # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
-            ctx: RunContext[None], query: str
-        ) -> ResearchSummary:
-            """Delegate synthesis task to AnalysisAgent."""
-            result = await synthesis_agent.run(query, usage=ctx.usage)
-            # result.output is already a ResearchSummary object from the agent
-            if isinstance(result.output, ResearchSummary):
-                return result.output
-            else:
-                return _validate_model_return(str(result.output), ResearchSummary)
+        _add_synthesis_tool(manager_agent, synthesis_agent)
 
 
 def _create_agent(agent_config: AgentConfig) -> Agent[None, BaseModel]:

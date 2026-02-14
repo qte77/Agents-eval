@@ -85,7 +85,7 @@ class JudgeSettings(BaseSettings):
     performance_logging: bool = Field(default=True)
 
     model_config = SettingsConfigDict(
-        env_prefix="JUDGE_", env_file=".env", env_file_encoding="utf-8"
+        env_prefix="JUDGE_", env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
     def get_enabled_tiers(self) -> set[int]:

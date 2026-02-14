@@ -8,7 +8,7 @@ that assesses multi-agent systems on PeerRead scientific paper review generation
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 from app.data_models.peerread_models import PeerReadReview
 
@@ -319,5 +319,7 @@ class AgentPerformanceAnalysis(BaseModel):
         default={}, description="Performance trend indicators"
     )
 
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
+    @field_serializer("generated_at")
+    def serialize_datetime(self, v: datetime) -> str | None:
+        """Serialize datetime to ISO format."""
+        return v.isoformat() if v else None

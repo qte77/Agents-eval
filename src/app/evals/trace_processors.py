@@ -356,6 +356,34 @@ class TraceCollector:
         except Exception as e:
             logger.error(f"Failed to store trace: {e}")
 
+    def _parse_trace_events(
+        self, events: list[tuple[float, str, str, str]]
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+        """Parse database events into categorized lists."""
+        agent_interactions: list[dict[str, Any]] = []
+        tool_calls: list[dict[str, Any]] = []
+        coordination_events: list[dict[str, Any]] = []
+
+        for timestamp, event_type, _agent_id, data_json in events:
+            data = json.loads(data_json)
+
+            if event_type == "agent_interaction":
+                agent_interactions.append({**data, "timestamp": timestamp})
+            elif event_type == "tool_call":
+                tool_calls.append({**data, "timestamp": timestamp})
+            elif event_type == "coordination":
+                coordination_events.append({**data, "timestamp": timestamp})
+
+        return agent_interactions, tool_calls, coordination_events
+
+    def _build_timing_data(self, execution: tuple[Any, ...]) -> dict[str, Any]:
+        """Build timing data from execution record."""
+        return {
+            "start_time": execution[1],
+            "end_time": execution[2],
+            "total_duration": execution[5],
+        }
+
     def load_trace(self, execution_id: str) -> GraphTraceData | None:
         """Load a stored trace by execution ID.
 
@@ -367,7 +395,6 @@ class TraceCollector:
         """
         try:
             with sqlite3.connect(self.db_path) as conn:
-                # Get execution metadata
                 execution = conn.execute(
                     "SELECT * FROM trace_executions WHERE execution_id = ?",
                     (execution_id,),
@@ -376,7 +403,6 @@ class TraceCollector:
                 if not execution:
                     return None
 
-                # Get events
                 events = conn.execute(
                     """
                     SELECT timestamp, event_type, agent_id, data
@@ -387,29 +413,11 @@ class TraceCollector:
                     (execution_id,),
                 ).fetchall()
 
-                # Parse events
-                agent_interactions: list[dict[str, Any]] = []
-                tool_calls: list[dict[str, Any]] = []
-                coordination_events: list[dict[str, Any]] = []
-                timing_data: dict[str, Any] = {}
+                agent_interactions, tool_calls, coordination_events = self._parse_trace_events(
+                    events
+                )
 
-                for timestamp, event_type, _agent_id, data_json in events:
-                    data = json.loads(data_json)
-
-                    if event_type == "agent_interaction":
-                        agent_interactions.append({**data, "timestamp": timestamp})
-                    elif event_type == "tool_call":
-                        tool_calls.append({**data, "timestamp": timestamp})
-                    elif event_type == "coordination":
-                        coordination_events.append({**data, "timestamp": timestamp})
-
-                # Build timing data
-                if events:
-                    timing_data = {
-                        "start_time": execution[1],  # start_time
-                        "end_time": execution[2],  # end_time
-                        "total_duration": execution[5],  # total_duration
-                    }
+                timing_data = self._build_timing_data(execution) if events else {}
 
                 return GraphTraceData(
                     execution_id=execution_id,

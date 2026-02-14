@@ -192,13 +192,54 @@ Provide scores and brief explanation."""
             # Simple fallback based on trace structure
             return self._fallback_planning_check(execution_trace)
 
+    def _handle_assessment_failures(
+        self,
+        technical_score: float | BaseException,
+        constructiveness_score: float | BaseException,
+        planning_score: float | BaseException,
+        paper: str,
+        review: str,
+        execution_trace: dict[str, Any],
+    ) -> tuple[float, float, float, bool]:
+        """Handle individual assessment failures with fallbacks."""
+        fallback_used = False
+
+        if isinstance(technical_score, BaseException):
+            logger.warning(f"Technical assessment failed: {technical_score}")
+            technical_score = float(self.fallback_engine.compute_semantic_similarity(paper, review))
+            fallback_used = True
+
+        if isinstance(constructiveness_score, BaseException):
+            logger.warning(f"Constructiveness assessment failed: {constructiveness_score}")
+            constructiveness_score = float(self._fallback_constructiveness_check(review))
+            fallback_used = True
+
+        if isinstance(planning_score, BaseException):
+            logger.warning(f"Planning assessment failed: {planning_score}")
+            planning_score = float(self._fallback_planning_check(execution_trace))
+            fallback_used = True
+
+        return (
+            float(technical_score),
+            float(constructiveness_score),
+            float(planning_score),
+            fallback_used,
+        )
+
+    def _calculate_overall_score(
+        self, technical_score: float, constructiveness_score: float, planning_score: float
+    ) -> float:
+        """Calculate weighted overall score from assessment scores."""
+        return (
+            technical_score * self.weights.get("technical_accuracy", 0.4)
+            + constructiveness_score * self.weights.get("constructiveness", 0.3)
+            + planning_score * self.weights.get("planning_rationality", 0.3)
+        )
+
     async def evaluate_comprehensive(
         self, paper: str, review: str, execution_trace: dict[str, Any]
     ) -> Tier2Result:
         """Run comprehensive LLM-based evaluation."""
-        fallback_used = False
-        api_cost = 0.0
-
         try:
             # Run assessments concurrently for efficiency
             technical_task = self.assess_technical_accuracy(paper, review)
@@ -216,50 +257,34 @@ Provide scores and brief explanation."""
                 return_exceptions=True,
             )
 
-            # Handle individual assessment failures with proper type casting
-            if isinstance(technical_score, Exception):
-                logger.warning(f"Technical assessment failed: {technical_score}")
-                technical_score = float(
-                    self.fallback_engine.compute_semantic_similarity(paper, review)
-                )
-                fallback_used = True
-
-            if isinstance(constructiveness_score, Exception):
-                logger.warning(f"Constructiveness assessment failed: {constructiveness_score}")
-                constructiveness_score = float(self._fallback_constructiveness_check(review))
-                fallback_used = True
-
-            if isinstance(planning_score, Exception):
-                logger.warning(f"Planning assessment failed: {planning_score}")
-                planning_score = float(self._fallback_planning_check(execution_trace))
-                fallback_used = True
+            # Handle individual assessment failures
+            (
+                technical_score_float,
+                constructiveness_score_float,
+                planning_score_float,
+                fallback_used,
+            ) = self._handle_assessment_failures(
+                technical_score,
+                constructiveness_score,
+                planning_score,
+                paper,
+                review,
+                execution_trace,
+            )
 
             # Estimate API cost (approximate)
-            total_tokens = len(paper) / 4 + len(review) / 4 + 500  # Rough estimate
-            api_cost = (total_tokens / 1000) * 0.0001  # $0.0001 per 1K tokens
+            total_tokens = len(paper) / 4 + len(review) / 4 + 500
+            api_cost = (total_tokens / 1000) * 0.0001
 
-            # Ensure all scores are float types before calculation
-            technical_score_float: float = (
-                technical_score if isinstance(technical_score, int | float) else 0.0
-            )
-            constructiveness_score_float: float = (
-                constructiveness_score if isinstance(constructiveness_score, int | float) else 0.0
-            )
-            planning_score_float: float = (
-                planning_score if isinstance(planning_score, int | float) else 0.0
-            )
-
-            # Calculate overall LLM judge score
-            overall_score = (
-                technical_score_float * self.weights.get("technical_accuracy", 0.4)
-                + constructiveness_score_float * self.weights.get("constructiveness", 0.3)
-                + planning_score_float * self.weights.get("planning_rationality", 0.3)
+            # Calculate overall score
+            overall_score = self._calculate_overall_score(
+                technical_score_float, constructiveness_score_float, planning_score_float
             )
 
             return Tier2Result(
                 technical_accuracy=technical_score_float,
                 constructiveness=constructiveness_score_float,
-                clarity=constructiveness_score_float,  # Use constructiveness as proxy
+                clarity=constructiveness_score_float,
                 planning_rationality=planning_score_float,
                 overall_score=overall_score,
                 model_used=f"{self.provider}/{self.model}",
@@ -269,7 +294,6 @@ Provide scores and brief explanation."""
 
         except Exception as e:
             logger.error(f"Complete LLM judge evaluation failed: {e}")
-            # Full fallback to traditional metrics
             return self._complete_fallback(paper, review, execution_trace)
 
     def _extract_planning_decisions(self, execution_trace: dict[str, Any]) -> str:

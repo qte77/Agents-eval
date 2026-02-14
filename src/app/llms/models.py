@@ -9,30 +9,39 @@ from pydantic_ai.models import Model
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
-from app.data_models.app_models import EndpointConfig, ModelDict
+from app.data_models.app_models import PROVIDER_REGISTRY, EndpointConfig, ModelDict
 from app.utils.log import logger
 
 
 def get_llm_model_name(provider: str, model_name: str) -> str:
-    """Convert provider and model name to required format."""
-    provider_mappings = {
-        "openai": "",  # OpenAI models don't need prefix
-        "anthropic": "anthropic/",
-        "gemini": "gemini/",
-        "github": "",  # GitHub models use OpenAI-compatible format
-        "grok": "grok/",
-        "huggingface": "huggingface/",
-        "openrouter": "openrouter/",
-        "perplexity": "perplexity/",
-        "together": "together_ai/",
-        "ollama": "ollama/",
-    }
+    """Convert provider and model name to required format.
 
-    prefix = provider_mappings.get(provider.lower(), f"{provider.lower()}/")
+    Args:
+        provider: Provider name (case-insensitive)
+        model_name: Model name to format
+
+    Returns:
+        Formatted model name with appropriate provider prefix
+    """
+    provider_lower = provider.lower()
+
+    # Get provider metadata from registry
+    provider_metadata = PROVIDER_REGISTRY.get(provider_lower)
+    if not provider_metadata:
+        # Fallback for unknown providers
+        logger.warning(f"Provider '{provider}' not in registry, using default prefix")
+        prefix = f"{provider_lower}/"
+    else:
+        prefix = provider_metadata.model_prefix
 
     # Handle special cases where model name already includes provider
-    if "/" in model_name and any(model_name.startswith(p) for p in provider_mappings.values() if p):
-        return model_name
+    if "/" in model_name:
+        # Check if it already has a valid provider prefix
+        for registered_provider in PROVIDER_REGISTRY.values():
+            if registered_provider.model_prefix and model_name.startswith(
+                registered_provider.model_prefix
+            ):
+                return model_name
 
     return f"{prefix}{model_name}"
 

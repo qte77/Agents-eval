@@ -28,5 +28,5 @@ class CommonSettings(BaseSettings):
     max_content_length: int = 15000
 
     model_config = SettingsConfigDict(
-        env_prefix="EVAL_", env_file=".env", env_file_encoding="utf-8"
+        env_prefix="EVAL_", env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )

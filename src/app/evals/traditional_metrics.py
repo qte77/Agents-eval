@@ -61,6 +61,19 @@ class TraditionalMetricsEngine:
         # BERTScore disabled due to sentencepiece build issues
         return None
 
+    def _compute_word_overlap_fallback(self, text1: str, text2: str) -> float:
+        """Fallback to simple word overlap when TF-IDF fails."""
+        words1 = set(re.findall(r"\w+", text1.lower()))
+        words2 = set(re.findall(r"\w+", text2.lower()))
+
+        if not words1 or not words2:
+            return 0.0
+
+        intersection = len(words1 & words2)
+        union = len(words1 | words2)
+
+        return intersection / union if union > 0 else 0.0
+
     def compute_cosine_similarity(self, text1: str, text2: str) -> float:
         """Compute TF-IDF cosine similarity with enhanced error handling.
 
@@ -75,40 +88,49 @@ class TraditionalMetricsEngine:
         """
         if not text1.strip() and not text2.strip():
             return 1.0
-
         if not text1.strip() or not text2.strip():
             return 0.0
 
         try:
-            # Use improved TF-IDF vectorizer configuration
             vectorizer = TfidfVectorizer(stop_words="english", lowercase=True, max_features=1000)
-
-            # Combine texts and vectorize
             texts = [text1, text2]
             tfidf_matrix = vectorizer.fit_transform(texts)
-
-            # Calculate cosine similarity
-            similarity_matrix = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])
-            # Explicitly convert numpy array element to Python float
-            return float(similarity_matrix[0][0])  # type: ignore[arg-type]
+            dense_matrix = tfidf_matrix.toarray()  # type: ignore[union-attr]
+            similarity_matrix = cosine_similarity(dense_matrix[0:1], dense_matrix[1:2])
+            score: float = similarity_matrix[0][0]  # type: ignore[assignment]
+            return score
 
         except Exception as e:
             logger.warning(f"TF-IDF cosine similarity failed: {e}")
-            # Fallback to simple word overlap if TF-IDF fails
             try:
-                words1 = set(re.findall(r"\w+", text1.lower()))
-                words2 = set(re.findall(r"\w+", text2.lower()))
-
-                if not words1 or not words2:
-                    return 0.0
-
-                intersection = len(words1 & words2)
-                union = len(words1 | words2)
-
-                return intersection / union if union > 0 else 0.0
+                return self._compute_word_overlap_fallback(text1, text2)
             except Exception:
                 logger.warning("Cosine similarity calculation failed completely")
                 return 0.0
+
+    def _compute_jaccard_basic(self, text1: str, text2: str) -> float:
+        """Basic word-based Jaccard implementation."""
+        words1 = set(text1.lower().split())
+        words2 = set(text2.lower().split())
+
+        if len(words1) == 0 and len(words2) == 0:
+            return 1.0
+
+        intersection = len(words1.intersection(words2))
+        union = len(words1.union(words2))
+        return intersection / union if union > 0 else 0.0
+
+    def _compute_jaccard_regex_fallback(self, text1: str, text2: str) -> float:
+        """Regex-based Jaccard fallback."""
+        words1 = set(re.findall(r"\w+", text1.lower()))
+        words2 = set(re.findall(r"\w+", text2.lower()))
+
+        if not words1 and not words2:
+            return 1.0
+
+        intersection = len(words1 & words2)
+        union = len(words1 | words2)
+        return intersection / union if union > 0 else 0.0
 
     def compute_jaccard_similarity(self, text1: str, text2: str, enhanced: bool = False) -> float:
         """Compute Jaccard similarity with optional textdistance enhancement.
@@ -125,50 +147,40 @@ class TraditionalMetricsEngine:
         """
         if not text1.strip() and not text2.strip():
             return 1.0
-
         if not text1.strip() or not text2.strip():
             return 0.0
 
         if enhanced:
             try:
-                # Use textdistance library for robust Jaccard similarity
                 return float(
                     textdistance.jaccard.normalized_similarity(text1.lower(), text2.lower())
                 )
             except Exception as e:
                 logger.warning(f"Enhanced Jaccard similarity failed: {e}")
-                # Fall through to basic implementation
 
         try:
-            # Basic word-based Jaccard implementation
-            words1 = set(text1.lower().split())
-            words2 = set(text2.lower().split())
-
-            if len(words1) == 0 and len(words2) == 0:
-                return 1.0
-
-            # Calculate Jaccard index
-            intersection = len(words1.intersection(words2))
-            union = len(words1.union(words2))
-
-            return intersection / union if union > 0 else 0.0
-
+            return self._compute_jaccard_basic(text1, text2)
         except Exception as e:
             logger.warning(f"Jaccard similarity calculation failed: {e}")
-            # Final fallback using regex tokenization
             try:
-                words1 = set(re.findall(r"\w+", text1.lower()))
-                words2 = set(re.findall(r"\w+", text2.lower()))
-
-                if not words1 and not words2:
-                    return 1.0
-
-                intersection = len(words1 & words2)
-                union = len(words1 | words2)
-
-                return intersection / union if union > 0 else 0.0
+                return self._compute_jaccard_regex_fallback(text1, text2)
             except Exception:
                 return 0.0
+
+    def _compute_char_overlap_fallback(self, text1: str, text2: str) -> float:
+        """Fallback to simple character overlap when Levenshtein fails."""
+        text1_clean = text1.lower().strip()
+        text2_clean = text2.lower().strip()
+
+        if text1_clean == text2_clean:
+            return 1.0
+
+        chars1 = set(text1_clean)
+        chars2 = set(text2_clean)
+        intersection = len(chars1 & chars2)
+        union = len(chars1 | chars2)
+
+        return intersection / union if union > 0 else 0.0
 
     def compute_levenshtein_similarity(self, text1: str, text2: str) -> float:
         """Compute Levenshtein (edit distance) similarity using textdistance.
@@ -184,32 +196,17 @@ class TraditionalMetricsEngine:
         """
         if not text1.strip() and not text2.strip():
             return 1.0
-
         if not text1.strip() or not text2.strip():
             return 0.0
 
         try:
-            # Use textdistance for character-level Levenshtein similarity
             return float(
                 textdistance.levenshtein.normalized_similarity(text1.lower(), text2.lower())
             )
         except Exception as e:
             logger.warning(f"Levenshtein similarity calculation failed: {e}")
-            # Fallback to simple character overlap ratio
             try:
-                text1_clean = text1.lower().strip()
-                text2_clean = text2.lower().strip()
-
-                if text1_clean == text2_clean:
-                    return 1.0
-
-                # Simple character overlap as fallback
-                chars1 = set(text1_clean)
-                chars2 = set(text2_clean)
-                intersection = len(chars1 & chars2)
-                union = len(chars1 | chars2)
-
-                return intersection / union if union > 0 else 0.0
+                return self._compute_char_overlap_fallback(text1, text2)
             except Exception:
                 return 0.0
 

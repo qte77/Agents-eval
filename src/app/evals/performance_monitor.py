@@ -106,19 +106,10 @@ class PerformanceMonitor:
         self.execution_stats["total_time"] = total_time
         self._analyze_performance(total_time)
 
-    def _analyze_performance(self, total_time: float) -> None:
-        """Analyze pipeline performance and detect bottlenecks.
-
-        Args:
-            total_time: Total pipeline execution time
-        """
-        tier_times = {
-            "tier1": self.execution_stats["tier1_time"],
-            "tier2": self.execution_stats["tier2_time"],
-            "tier3": self.execution_stats["tier3_time"],
-        }
-
-        # Identify bottlenecks (tiers taking >40% of total time)
+    def _detect_bottlenecks(
+        self, tier_times: dict[str, float], total_time: float
+    ) -> list[dict[str, Any]]:
+        """Detect performance bottlenecks in tier execution."""
         bottleneck_threshold = total_time * 0.4
         bottlenecks = []
 
@@ -133,7 +124,6 @@ class PerformanceMonitor:
                 )
 
         if bottlenecks:
-            self.execution_stats["bottlenecks_detected"] = bottlenecks
             for bottleneck in bottlenecks:
                 logger.warning(
                     f"Performance bottleneck detected: {bottleneck['tier']} took "
@@ -141,7 +131,10 @@ class PerformanceMonitor:
                     f"({bottleneck['percentage']:.1f}% of total time)"
                 )
 
-        # Check individual tier targets
+        return bottlenecks
+
+    def _check_tier_targets(self, tier_times: dict[str, float]) -> None:
+        """Check individual tier performance against targets."""
         for tier_num in range(1, 4):
             tier_key = f"tier{tier_num}"
             target_key = f"tier{tier_num}_max_seconds"
@@ -158,13 +151,33 @@ class PerformanceMonitor:
                         f"tier{tier_num}_time_exceeded", warning_msg, actual_time
                     )
 
-        # Check total time target
+    def _check_total_time_target(self, total_time: float) -> None:
+        """Check total pipeline time against target."""
         if "total_max_seconds" in self.performance_targets:
             total_target = self.performance_targets["total_max_seconds"]
             if total_time > total_target:
                 warning_msg = f"Pipeline exceeded time target: {total_time:.2f}s > {total_target}s"
                 self._record_performance_warning("total_time_exceeded", warning_msg, total_time)
                 logger.warning(warning_msg)
+
+    def _analyze_performance(self, total_time: float) -> None:
+        """Analyze pipeline performance and detect bottlenecks.
+
+        Args:
+            total_time: Total pipeline execution time
+        """
+        tier_times = {
+            "tier1": self.execution_stats["tier1_time"],
+            "tier2": self.execution_stats["tier2_time"],
+            "tier3": self.execution_stats["tier3_time"],
+        }
+
+        bottlenecks = self._detect_bottlenecks(tier_times, total_time)
+        if bottlenecks:
+            self.execution_stats["bottlenecks_detected"] = bottlenecks
+
+        self._check_tier_targets(tier_times)
+        self._check_total_time_target(total_time)
 
     def _record_performance_warning(self, warning_type: str, message: str, value: float) -> None:
         """Record performance warning for monitoring.

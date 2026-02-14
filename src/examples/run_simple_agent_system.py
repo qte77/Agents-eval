@@ -12,7 +12,7 @@ from os import path
 from openai import UnprocessableEntityError
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.exceptions import UnexpectedModelBehavior, UsageLimitExceeded
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.usage import UsageLimits
 
 from .utils.agent_simple_system import (
@@ -30,18 +30,20 @@ from .utils.utils import (
 CONFIG_FILE = "config.json"
 
 
-def get_models(model_config: dict) -> tuple[OpenAIModel]:
+def get_models(
+    model_config: dict[str, str | None],
+) -> tuple[OpenAIChatModel, OpenAIChatModel, OpenAIChatModel]:
     """Get the models for the system agents."""
-    model_researcher = create_model(**model_config)
-    model_analyst = create_model(**model_config)
-    model_manager = create_model(**model_config)
+    model_researcher = create_model(**model_config)  # type: ignore[arg-type]
+    model_analyst = create_model(**model_config)  # type: ignore[arg-type]
+    model_manager = create_model(**model_config)  # type: ignore[arg-type]
     return model_researcher, model_analyst, model_manager
 
 
 def get_manager(
-    model_manager: OpenAIModel,
-    model_researcher: OpenAIModel,
-    model_analyst: OpenAIModel,
+    model_manager: OpenAIChatModel,
+    model_researcher: OpenAIChatModel,
+    model_analyst: OpenAIChatModel,
     prompts: dict[str, str],
 ) -> SystemAgent:
     """Get the agents for the system."""
@@ -49,7 +51,7 @@ def get_manager(
         model_researcher,
         ResearchResult,
         prompts["system_prompt_researcher"],
-        [duckduckgo_search_tool()],
+        tools=[duckduckgo_search_tool()],  # type: ignore[reportArgumentType]
     )
     analyst = SystemAgent(model_analyst, AnalysisResult, prompts["system_prompt_analyst"])
     manager = SystemAgent(model_manager, ResearchResult, prompts["system_prompt_manager"])
@@ -87,8 +89,8 @@ async def main():
     except UsageLimitExceeded as e:
         print(f"Usage limit exceeded: {e}")
     else:
-        print("\nFindings:", {result.data.findings})
-        print(f"Sources: {result.data.sources}")
+        print("\nFindings:", {result.output.findings})  # type: ignore[reportUnknownMemberType]
+        print(f"Sources: {result.output.sources}")  # type: ignore[reportUnknownMemberType]
         print("\nUsage statistics:")
         print(result.usage())
 

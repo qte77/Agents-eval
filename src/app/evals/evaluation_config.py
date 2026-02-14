@@ -80,6 +80,28 @@ class EvaluationConfig:
             logger.error(f"Unexpected error loading configuration: {e}")
             raise
 
+    def _validate_required_sections(self, config: dict[str, Any]) -> None:
+        """Validate required configuration sections exist."""
+        required_sections = ["evaluation_system", "composite_scoring"]
+        for section in required_sections:
+            if section not in config:
+                raise ValueError(f"Missing required configuration section: {section}")
+
+    def _validate_tiers_enabled(self, tiers_enabled: Any) -> None:
+        """Validate tiers_enabled configuration."""
+        if not isinstance(tiers_enabled, list):
+            raise ValueError("'tiers_enabled' must be a list")
+        if not all(tier in [1, 2, 3] for tier in tiers_enabled):
+            raise ValueError("'tiers_enabled' must contain only values 1, 2, 3")
+
+    def _validate_performance_targets(self, targets: Any) -> None:
+        """Validate performance targets configuration."""
+        if not isinstance(targets, dict):
+            raise ValueError("'performance_targets' must be a dictionary")
+        for key, value in targets.items():
+            if not isinstance(value, int | float) or value <= 0:
+                raise ValueError(f"Performance target {key} must be a positive number")
+
     def _validate_config(self, config: dict[str, Any]) -> None:
         """Validate configuration structure and values.
 
@@ -89,36 +111,17 @@ class EvaluationConfig:
         Raises:
             ValueError: If configuration is invalid
         """
-        # Validate required sections
-        required_sections = ["evaluation_system", "composite_scoring"]
-        for section in required_sections:
-            if section not in config:
-                raise ValueError(f"Missing required configuration section: {section}")
+        self._validate_required_sections(config)
 
-        # Validate evaluation system settings
         eval_system = config["evaluation_system"]
         if "tiers_enabled" not in eval_system:
             raise ValueError("Missing 'tiers_enabled' in evaluation_system")
 
-        tiers_enabled = eval_system["tiers_enabled"]
-        if not isinstance(tiers_enabled, list):
-            raise ValueError("'tiers_enabled' must be a list")
+        self._validate_tiers_enabled(eval_system["tiers_enabled"])
 
-        if not all(tier in [1, 2, 3] for tier in tiers_enabled):
-            raise ValueError("'tiers_enabled' must contain only values 1, 2, 3")
-
-        # Validate performance targets if present
         if "performance_targets" in eval_system:
-            targets = eval_system["performance_targets"]
-            if not isinstance(targets, dict):
-                raise ValueError("'performance_targets' must be a dictionary")
+            self._validate_performance_targets(eval_system["performance_targets"])
 
-            # Check that performance targets are positive numbers
-            for key, value in targets.items():
-                if not isinstance(value, int | float) or value <= 0:
-                    raise ValueError(f"Performance target {key} must be a positive number")
-
-        # Validate composite scoring section
         composite = config["composite_scoring"]
         if "fallback_strategy" not in composite:
             raise ValueError("Missing 'fallback_strategy' in composite_scoring")

@@ -10,6 +10,7 @@ import asyncio
 # Import our evaluation components
 import sys
 from pathlib import Path
+from typing import Any
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -17,18 +18,8 @@ from app.evals.evaluation_pipeline import EvaluationPipeline
 from app.evals.trace_processors import get_trace_collector
 
 
-async def run_evaluation_example():
-    """
-    Example of running a complete evaluation on a sample paper review.
-
-    This demonstrates the complete Day 2 evaluation pipeline:
-    1. Traditional Metrics (Tier 1) - Text similarity and execution metrics
-    2. LLM-as-Judge (Tier 2) - Quality assessment using language models
-    3. Trace Collection - For future graph analysis (Day 3)
-    """
-    print("=== Three-Tiered Evaluation System Demo ===\n")
-
-    # Sample data for demonstration
+def _get_sample_data() -> tuple[str, str, list[str], dict[str, Any]]:
+    """Get sample data for evaluation demonstration."""
     sample_paper = """
     This paper presents a novel approach to transformer-based language models
     for scientific text generation. The methodology involves fine-tuning
@@ -62,146 +53,83 @@ async def run_evaluation_example():
         """,
     ]
 
-    # Simulated execution trace for demonstration
     execution_trace = {
         "agent_interactions": [
-            {
-                "from": "Manager",
-                "to": "Researcher",
-                "type": "task_request",
-                "timestamp": 1.0,
-            },
-            {
-                "from": "Researcher",
-                "to": "Analyst",
-                "type": "data_transfer",
-                "timestamp": 2.5,
-            },
-            {
-                "from": "Analyst",
-                "to": "Synthesizer",
-                "type": "result_delivery",
-                "timestamp": 4.0,
-            },
+            {"from": "Manager", "to": "Researcher", "type": "task_request", "timestamp": 1.0},
+            {"from": "Researcher", "to": "Analyst", "type": "data_transfer", "timestamp": 2.5},
+            {"from": "Analyst", "to": "Synthesizer", "type": "result_delivery", "timestamp": 4.0},
         ],
         "tool_calls": [
-            {
-                "tool_name": "paper_retrieval",
-                "timestamp": 1.5,
-                "success": True,
-                "duration": 0.3,
-            },
-            {
-                "tool_name": "duckduckgo_search",
-                "timestamp": 2.0,
-                "success": True,
-                "duration": 1.2,
-            },
-            {
-                "tool_name": "review_synthesis",
-                "timestamp": 3.5,
-                "success": True,
-                "duration": 0.8,
-            },
+            {"tool_name": "paper_retrieval", "timestamp": 1.5, "success": True, "duration": 0.3},
+            {"tool_name": "duckduckgo_search", "timestamp": 2.0, "success": True, "duration": 1.2},
+            {"tool_name": "review_synthesis", "timestamp": 3.5, "success": True, "duration": 0.8},
         ],
         "coordination_events": [
-            {
-                "coordination_type": "delegation",
-                "target_agents": ["Researcher"],
-                "timestamp": 1.0,
-            }
+            {"coordination_type": "delegation", "target_agents": ["Researcher"], "timestamp": 1.0}
         ],
     }
 
-    print("=== COMPREHENSIVE EVALUATION PIPELINE ===")
-    print("Running Three-Tier Evaluation (Traditional → LLM-Judge → Graph Analysis)")
-    print("-" * 70)
+    return sample_paper, agent_generated_review, reference_reviews, execution_trace
+
+
+def _run_pipeline_evaluation(
+    pipeline: EvaluationPipeline,
+    sample_paper: str,
+    agent_review: str,
+    execution_trace: dict[str, Any],
+    reference_reviews: list[str],
+) -> tuple[float, str | None]:
+    """Run pipeline evaluation and return composite score and recommendation."""
+    from app.evals.traditional_metrics import TraditionalMetricsEngine
 
     try:
-        # Create and run the evaluation pipeline
         print("Initializing evaluation pipeline...")
-        pipeline = EvaluationPipeline()
-
         print("Running comprehensive three-tier evaluation...")
-        result = await pipeline.evaluate_comprehensive(
-            paper=sample_paper,
-            review=agent_generated_review,
-            execution_trace=execution_trace,
-            reference_reviews=reference_reviews,
+
+        import asyncio
+
+        result = asyncio.run(
+            pipeline.evaluate_comprehensive(
+                paper=sample_paper,
+                review=agent_review,
+                execution_trace=execution_trace,
+                reference_reviews=reference_reviews,
+            )
         )
 
         print("\n" + "=" * 50)
         print("EVALUATION RESULTS")
         print("=" * 50)
+        print("\nTIER SCORES:")
+        print(f"  Tier 1 (Traditional Metrics): {result.tier1_score:.3f}")
+        print(f"  Tier 2 (LLM-as-Judge): {result.tier2_score:.3f}")
+        print(f"  Tier 3 (Graph Analysis): {result.tier3_score:.3f}")
 
-        # FIX: CompositeResult model doesn't have tier1_result attribute,
-        # needs result structure update
-        # Display tier results
-        if result.tier1_result:
-            print("\nTIER 1 (Traditional Metrics):")
-            print(f"  Cosine Similarity: {result.tier1_result.cosine_score:.3f}")
-            print(f"  Jaccard Similarity: {result.tier1_result.jaccard_score:.3f}")
-            print(f"  Semantic Similarity: {result.tier1_result.semantic_score:.3f}")
-            print(f"  Execution Time: {result.tier1_result.execution_time:.3f}s")
-            print(f"  Task Success: {result.tier1_result.task_success}")
-            print(f"  Overall Tier 1 Score: {result.tier1_result.overall_score:.3f}")
-
-        if result.tier2_result:
-            print("\nTIER 2 (LLM-as-Judge):")
-            print(f"  Technical Accuracy: {result.tier2_result.technical_accuracy:.3f}")
-            print(f"  Constructiveness: {result.tier2_result.constructiveness:.3f}")
-            print(f"  Clarity: {result.tier2_result.clarity:.3f}")
-            planning_rationality = result.tier2_result.planning_rationality
-            print(f"  Planning Rationality: {planning_rationality:.3f}")
-            print(f"  Model Used: {result.tier2_result.model_used}")
-            print(
-                f"  API Cost: ${result.tier2_result.api_cost:.4f}"
-                if result.tier2_result.api_cost
-                else "  API Cost: $0.0000"
-            )
-            print(f"  Fallback Used: {result.tier2_result.fallback_used}")
-            print(f"  Overall Tier 2 Score: {result.tier2_result.overall_score:.3f}")
-
-        if result.tier3_result:
-            print("\nTIER 3 (Graph Analysis):")
-            print(f"  Path Convergence: {result.tier3_result.path_convergence:.3f}")
-            tool_selection = result.tier3_result.tool_selection_accuracy
-            print(f"  Tool Selection Accuracy: {tool_selection:.3f}")
-            comm_overhead = result.tier3_result.communication_overhead
-            print(f"  Communication Overhead: {comm_overhead:.3f}")
-            coord_centrality = result.tier3_result.coordination_centrality
-            print(f"  Coordination Centrality: {coord_centrality:.3f}")
-            task_balance = result.tier3_result.task_distribution_balance
-            print(f"  Task Distribution Balance: {task_balance:.3f}")
-            print(f"  Graph Complexity: {result.tier3_result.graph_complexity}")
-            print(f"  Overall Tier 3 Score: {result.tier3_result.overall_score:.3f}")
+        if result.metric_scores:
+            print("\nINDIVIDUAL METRICS:")
+            for metric, score in result.metric_scores.items():
+                print(f"  {metric}: {score:.3f}")
 
         print("\nCOMPOSITE RESULT:")
         print(f"  Final Score: {result.composite_score:.3f}")
         print(f"  Recommendation: {result.recommendation}")
-        print(f"  Confidence: {result.confidence:.3f}")
+        print(f"  Recommendation Weight: {result.recommendation_weight:.3f}")
 
-        # Display execution statistics
         stats = pipeline.get_execution_stats()
         print("\nPERFORMANCE METRICS:")
         print(f"  Total Execution Time: {stats['total_time']:.3f}s")
         print(f"  Tiers Executed: {stats['tiers_executed']}")
         print(f"  Fallback Used: {stats['fallback_used']}")
 
-        tier1_result = result.tier1_result
-        tier2_result = result.tier2_result
+        return result.composite_score, result.recommendation
 
     except Exception as e:
         print(f"Pipeline evaluation failed (expected without API keys): {e}")
         print("Running fallback evaluation with Tier 1 only...")
 
-        # Fallback to traditional metrics only
-        from app.evals.traditional_metrics import TraditionalMetricsEngine
-
         traditional_engine = TraditionalMetricsEngine()
-
         tier1_result = traditional_engine.evaluate_traditional_metrics(
-            agent_output=agent_generated_review,
+            agent_output=agent_review,
             reference_texts=reference_reviews,
             start_time=0.0,
             end_time=1.0,
@@ -214,19 +142,18 @@ async def run_evaluation_example():
         print(f"  Semantic Similarity: {tier1_result.semantic_score:.3f}")
         print(f"  Overall Score: {tier1_result.overall_score:.3f}")
 
-        tier2_result = None
+        return tier1_result.overall_score, None
 
+
+def _demonstrate_trace_collection():
+    """Demonstrate trace collection for future graph analysis."""
     print("3. TRACE COLLECTION: Observability Infrastructure")
     print("-" * 50)
 
-    # Initialize trace collection for future graph analysis (Day 3)
     trace_collector = get_trace_collector(config={"observability": {"trace_collection": True}})
-
-    # Demonstrate trace collection
     execution_id = "demo_evaluation_001"
     trace_collector.start_execution(execution_id)
 
-    # Log sample interactions
     trace_collector.log_agent_interaction(
         from_agent="Manager",
         to_agent="Researcher",
@@ -249,7 +176,6 @@ async def run_evaluation_example():
         data={"priority": "high"},
     )
 
-    # End trace collection
     processed_trace = trace_collector.end_execution()
 
     if processed_trace:
@@ -261,38 +187,56 @@ async def run_evaluation_example():
     else:
         print("Trace collection completed (data stored in ./logs/traces/)")
 
+    return processed_trace
+
+
+def _derive_recommendation(composite_score: float) -> str:
+    """Derive recommendation from composite score."""
+    if composite_score >= 0.8:
+        return "Accept"
+    if composite_score >= 0.6:
+        return "Weak Accept"
+    if composite_score >= 0.4:
+        return "Weak Reject"
+    return "Reject"
+
+
+async def run_evaluation_example() -> dict[str, object]:
+    """
+    Example of running a complete evaluation on a sample paper review.
+
+    This demonstrates the complete Day 2 evaluation pipeline:
+    1. Traditional Metrics (Tier 1) - Text similarity and execution metrics
+    2. LLM-as-Judge (Tier 2) - Quality assessment using language models
+    3. Trace Collection - For future graph analysis (Day 3)
+    """
+    print("=== Three-Tiered Evaluation System Demo ===\n")
+
+    sample_paper, agent_review, reference_reviews, execution_trace = _get_sample_data()
+
+    print("=== COMPREHENSIVE EVALUATION PIPELINE ===")
+    print("Running Three-Tier Evaluation (Traditional → LLM-Judge → Graph Analysis)")
+    print("-" * 70)
+
+    pipeline = EvaluationPipeline()
+    composite_score, recommendation = _run_pipeline_evaluation(
+        pipeline, sample_paper, agent_review, execution_trace, reference_reviews
+    )
+
+    processed_trace = _demonstrate_trace_collection()
+
     print("\n" + "=" * 60)
     print("EVALUATION COMPLETE")
     print("=" * 60)
 
-    # Calculate composite score (simplified version)
-    if tier2_result:
-        composite_score = (
-            tier1_result.overall_score * 0.4
-            + tier2_result.overall_score * 0.4
-            + 0.8 * 0.2  # Placeholder for Tier 3 graph analysis
-        )
-    else:
-        composite_score = tier1_result.overall_score
+    if recommendation is None:
+        recommendation = _derive_recommendation(composite_score)
 
     print(f"Final Composite Score: {composite_score:.3f}")
-
-    # Determine recommendation
-    if composite_score >= 0.8:
-        recommendation = "Accept"
-    elif composite_score >= 0.6:
-        recommendation = "Weak Accept"
-    elif composite_score >= 0.4:
-        recommendation = "Weak Reject"
-    else:
-        recommendation = "Reject"
-
     print(f"Recommendation: {recommendation}")
     print(f"Confidence: {min(composite_score, 1.0):.3f}")
 
     return {
-        "tier1_result": tier1_result,
-        "tier2_result": tier2_result,
         "composite_score": composite_score,
         "recommendation": recommendation,
         "trace_collected": processed_trace is not None,

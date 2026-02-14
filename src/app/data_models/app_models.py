@@ -54,6 +54,20 @@ class ResearchSummary(BaseModel):
     sources: list[str]
 
 
+class ProviderMetadata(BaseModel):
+    """Metadata for an LLM provider.
+
+    This model defines the core configuration for each supported provider,
+    serving as a single source of truth for provider settings.
+    """
+
+    name: str
+    env_key: str | None  # None for providers without API keys (e.g., Ollama)
+    model_prefix: str  # Prefix for model names (empty string if not needed)
+    default_base_url: str | None = None  # Default API endpoint for OpenAI-compatible providers
+    default_model: str | None = None  # Default model ID for the provider
+
+
 class ProviderConfig(BaseModel):
     """Configuration for a model provider"""
 
@@ -123,6 +137,85 @@ class EvalConfig(BaseModel):
     metrics_and_weights: dict[str, float]
 
 
+# Registry of all supported LLM providers
+# This serves as the single source of truth for provider configuration
+PROVIDER_REGISTRY: dict[str, ProviderMetadata] = {
+    "openai": ProviderMetadata(
+        name="openai",
+        env_key="OPENAI_API_KEY",
+        model_prefix="",
+        default_base_url="https://api.openai.com/v1",
+    ),
+    "anthropic": ProviderMetadata(
+        name="anthropic",
+        env_key="ANTHROPIC_API_KEY",
+        model_prefix="anthropic/",
+        default_base_url="https://api.anthropic.com",
+    ),
+    "gemini": ProviderMetadata(
+        name="gemini",
+        env_key="GEMINI_API_KEY",
+        model_prefix="gemini/",
+        default_base_url="https://generativelanguage.googleapis.com/v1beta",
+    ),
+    "github": ProviderMetadata(
+        name="github",
+        env_key="GITHUB_API_KEY",
+        model_prefix="",
+        default_base_url="https://models.inference.ai.azure.com",
+    ),
+    "grok": ProviderMetadata(
+        name="grok",
+        env_key="GROK_API_KEY",
+        model_prefix="grok/",
+        default_base_url="https://api.x.ai/v1",
+    ),
+    "huggingface": ProviderMetadata(
+        name="huggingface",
+        env_key="HUGGINGFACE_API_KEY",
+        model_prefix="huggingface/",
+        default_base_url="https://router.huggingface.co/v1",
+    ),
+    "openrouter": ProviderMetadata(
+        name="openrouter",
+        env_key="OPENROUTER_API_KEY",
+        model_prefix="openrouter/",
+        default_base_url="https://openrouter.ai/api/v1",
+    ),
+    "perplexity": ProviderMetadata(
+        name="perplexity",
+        env_key="PERPLEXITY_API_KEY",
+        model_prefix="perplexity/",
+        default_base_url="https://api.perplexity.ai",
+    ),
+    "restack": ProviderMetadata(
+        name="restack",
+        env_key="RESTACK_API_KEY",
+        model_prefix="",
+        default_base_url="https://ai.restack.io",
+    ),
+    "together": ProviderMetadata(
+        name="together",
+        env_key="TOGETHER_API_KEY",
+        model_prefix="together_ai/",
+        default_base_url="https://api.together.xyz/v1",
+    ),
+    "cerebras": ProviderMetadata(
+        name="cerebras",
+        env_key="CEREBRAS_API_KEY",
+        model_prefix="",
+        default_base_url="https://api.cerebras.ai/v1",
+        default_model="gpt-oss-120b",
+    ),
+    "ollama": ProviderMetadata(
+        name="ollama",
+        env_key=None,
+        model_prefix="ollama/",
+        default_base_url="http://localhost:11434/v1",
+    ),
+}
+
+
 class AppEnv(BaseSettings):
     """
     Application environment settings loaded from environment variables or .env file.
@@ -134,6 +227,7 @@ class AppEnv(BaseSettings):
 
     # Inference endpoints
     ANTHROPIC_API_KEY: str = ""
+    CEREBRAS_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
     GITHUB_API_KEY: str = ""
     GROK_API_KEY: str = ""

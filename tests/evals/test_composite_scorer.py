@@ -5,9 +5,6 @@ Validates the CompositeScorer class integration of all three evaluation tiers,
 mathematical formulas, recommendation mapping, and configuration handling.
 """
 
-import json
-from pathlib import Path
-
 import pytest
 
 from app.data_models.evaluation_models import (
@@ -20,47 +17,9 @@ from app.evals.composite_scorer import CompositeScorer, EvaluationResults
 
 
 @pytest.fixture
-def sample_config():
-    """Sample configuration for testing."""
-    return {
-        "composite_scoring": {
-            "metrics_and_weights": {
-                "time_taken": 0.167,
-                "task_success": 0.167,
-                "coordination_quality": 0.167,
-                "tool_efficiency": 0.167,
-                "planning_rationality": 0.167,
-                "output_similarity": 0.167,
-            },
-            "recommendation_thresholds": {
-                "accept": 0.8,
-                "weak_accept": 0.6,
-                "weak_reject": 0.4,
-                "reject": 0.0,
-            },
-            "recommendation_weights": {
-                "accept": 1.0,
-                "weak_accept": 0.7,
-                "weak_reject": -0.7,
-                "reject": -1.0,
-            },
-        }
-    }
-
-
-@pytest.fixture
-def temp_config_file(tmp_path, sample_config):
-    """Create temporary configuration file."""
-    config_file = tmp_path / "config_eval.json"
-    with open(config_file, "w") as f:
-        json.dump(sample_config, f)
-    return config_file
-
-
-@pytest.fixture
-def scorer(temp_config_file):
-    """CompositeScorer instance with test configuration."""
-    return CompositeScorer(config_path=temp_config_file)
+def scorer():
+    """CompositeScorer instance with default JudgeSettings."""
+    return CompositeScorer()
 
 
 @pytest.fixture
@@ -108,65 +67,26 @@ class TestCompositeScorerInitialization:
     """Test CompositeScorer initialization and configuration."""
 
     def test_scorer_initialization_with_valid_config(self, scorer):
-        """CompositeScorer should initialize correctly with valid configuration."""
+        """CompositeScorer should initialize correctly with default JudgeSettings."""
         assert scorer is not None
         assert len(scorer.weights) == 6
         assert abs(sum(scorer.weights.values()) - 1.0) < 0.01
 
-    def test_scorer_initialization_with_default_path(self):
-        """CompositeScorer should use default config path when none provided."""
-        # This will fail if config doesn't exist, which is expected
-        with pytest.raises(FileNotFoundError):
-            CompositeScorer(config_path=Path("nonexistent/config.json"))
+    def test_scorer_initialization_with_default_settings(self):
+        """CompositeScorer should initialize with default JudgeSettings when none provided."""
+        scorer = CompositeScorer()
+        assert scorer is not None
+        assert scorer.settings is not None
+        assert len(scorer.weights) == 6
 
-    def test_config_validation_missing_metrics(self, tmp_path):
-        """CompositeScorer should raise error when required metrics are missing."""
-        incomplete_config = {
-            "composite_scoring": {
-                "metrics_and_weights": {
-                    "time_taken": 0.5,
-                    "task_success": 0.5,
-                    # Missing other required metrics
-                }
-            }
-        }
-        config_file = tmp_path / "incomplete_config.json"
-        with open(config_file, "w") as f:
-            json.dump(incomplete_config, f)
+    def test_scorer_initialization_with_custom_settings(self):
+        """CompositeScorer should accept custom JudgeSettings."""
+        from app.evals.settings import JudgeSettings
 
-        with pytest.raises(ValueError, match="Missing required metrics"):
-            CompositeScorer(config_path=config_file)
-
-    def test_config_validation_weight_sum_warning(self, tmp_path, caplog):
-        """CompositeScorer should warn when weights don't sum to 1.0."""
-        bad_weights_config = {
-            "composite_scoring": {
-                "metrics_and_weights": {
-                    "time_taken": 0.1,
-                    "task_success": 0.1,
-                    "coordination_quality": 0.1,
-                    "tool_efficiency": 0.1,
-                    "planning_rationality": 0.1,
-                    "output_similarity": 0.1,  # Sum = 0.6, not 1.0
-                },
-                "recommendation_thresholds": {
-                    "accept": 0.8,
-                    "weak_accept": 0.6,
-                    "weak_reject": 0.4,
-                    "reject": 0.0,
-                },
-            }
-        }
-        config_file = tmp_path / "bad_weights_config.json"
-        with open(config_file, "w") as f:
-            json.dump(bad_weights_config, f)
-
-        with caplog.at_level("WARNING"):
-            CompositeScorer(config_path=config_file)
-            # The warning threshold is now 0.01, so 0.6 vs 1.0 should trigger warning
-            # Note: caplog doesn't capture loguru logs, but we can see from stderr
-            # that warning was logged. Test passes if scorer created successfully.
-            pass  # Test passes if no exception is raised
+        settings = JudgeSettings()
+        scorer = CompositeScorer(settings=settings)
+        assert scorer is not None
+        assert scorer.settings is settings
 
 
 class TestCompositeScorerMetricExtraction:
@@ -324,19 +244,6 @@ class TestCompositeScorerIntegration:
         expected_weight = scorer.get_recommendation_weight(result.recommendation)
         assert result.recommendation_weight == expected_weight
 
-    def test_time_normalization_formula(self, scorer):
-        """Time score normalization should follow logarithmic formula."""
-        # Test normalization with different time values
-        assert scorer._normalize_time_score(0.0) == 1.0  # Perfect time
-
-        time_score_1 = scorer._normalize_time_score(1.0)
-        time_score_2 = scorer._normalize_time_score(10.0)
-
-        # Higher time should result in lower normalized score
-        assert time_score_1 > time_score_2
-        assert 0.0 <= time_score_1 <= 1.0
-        assert 0.0 <= time_score_2 <= 1.0
-
 
 class TestCompositeScorerUtils:
     """Test utility functions."""
@@ -365,29 +272,20 @@ class TestCompositeScorerUtils:
         assert partial_results.is_complete() is False
 
 
-# Integration test with actual config file
-class TestCompositeScorerRealConfig:
-    """Test with actual configuration file from the project."""
+# Integration test with default JudgeSettings
+class TestCompositeScorerDefaults:
+    """Test with default JudgeSettings configuration."""
 
-    def test_with_real_config_file(self):
-        """Should work with the actual config_eval.json from the project."""
-        real_config_path = (
-            Path(__file__).parent.parent.parent / "src" / "app" / "config" / "config_eval.json"
-        )
+    def test_with_default_settings(self):
+        """Should work with default JudgeSettings."""
+        scorer = CompositeScorer()
 
-        if real_config_path.exists():
-            scorer = CompositeScorer(config_path=real_config_path)
+        # Verify basic functionality
+        assert len(scorer.weights) == 6
+        assert abs(sum(scorer.weights.values()) - 1.0) < 0.01
 
-            # Verify basic functionality
-            assert len(scorer.weights) == 6
-            assert (
-                abs(sum(scorer.weights.values()) - 1.0) < 0.01
-            )  # Allow for floating point precision
-
-            summary = scorer.get_scoring_summary()
-            assert summary["metrics_count"] == 6
-        else:
-            pytest.skip("Real config file not found")
+        summary = scorer.get_scoring_summary()
+        assert summary["metrics_count"] == 6
 
 
 class TestAgentAssessment:
