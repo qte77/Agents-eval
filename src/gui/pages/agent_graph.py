@@ -6,6 +6,8 @@ Displays agent-to-agent delegations and tool usage patterns with visual distinct
 between agent nodes and tool nodes.
 """
 
+from __future__ import annotations
+
 import tempfile
 from pathlib import Path
 from typing import Any
