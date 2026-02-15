@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-007: `JudgeAgent` orchestrator replacing `EvaluationPipeline`
 - STORY-007: `TraceStore` for thread-safe trace storage
 - STORY-007: Plugin wrappers for all three evaluation tiers
+- STORY-009: `cc_otel` module for Claude Code OpenTelemetry instrumentation with Phoenix OTLP backend
 
 ### Added
 
@@ -45,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Cerebras provider 422 error from mixed `strict` tool definitions — added `OpenAIModelProfile` with strict disabled
-- Statusline `ctx(left)` accuracy — compute from raw token usage instead of pre-computed percentage
+- Statusline `ctx(left)` accuracy — compute true usable space by subtracting 16.5% autocompact buffer (33k tokens) from remaining percentage; added `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` environment variable support for configurable buffer threshold
 
 ### Removed
 

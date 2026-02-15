@@ -6,8 +6,6 @@ including initialization, graceful degradation, and Phoenix OTLP integration.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from app.cc_otel import disable_instrumentation, enable_instrumentation, is_enabled
 from app.cc_otel.config import CCOtelConfig
 
@@ -16,9 +14,11 @@ def test_enable_instrumentation_with_config():
     """Test that enable_instrumentation initializes OTel with config."""
     config = CCOtelConfig(enabled=True)
 
-    with patch("app.cc_otel.TracerProvider") as mock_tracer_provider, patch(
-        "app.cc_otel.OTLPSpanExporter"
-    ) as mock_exporter, patch("app.cc_otel.BatchSpanProcessor") as mock_processor:
+    with (
+        patch("app.cc_otel.TracerProvider") as mock_tracer_provider,
+        patch("app.cc_otel.OTLPSpanExporter") as mock_exporter,
+        patch("app.cc_otel.BatchSpanProcessor") as mock_processor,
+    ):
         enable_instrumentation(config)
 
         # Should create OTLP exporter with Phoenix endpoint
@@ -58,9 +58,11 @@ def test_disable_instrumentation():
     """Test that disable_instrumentation shuts down tracer provider."""
     config = CCOtelConfig(enabled=True)
 
-    with patch("app.cc_otel.TracerProvider") as mock_tracer_provider, patch(
-        "app.cc_otel.OTLPSpanExporter"
-    ), patch("app.cc_otel.BatchSpanProcessor"):
+    with (
+        patch("app.cc_otel.TracerProvider") as mock_tracer_provider,
+        patch("app.cc_otel.OTLPSpanExporter"),
+        patch("app.cc_otel.BatchSpanProcessor"),
+    ):
         enable_instrumentation(config)
 
         mock_provider_instance = mock_tracer_provider.return_value
@@ -78,8 +80,10 @@ def test_is_enabled_returns_state():
 
     config = CCOtelConfig(enabled=True)
 
-    with patch("app.cc_otel.TracerProvider"), patch("app.cc_otel.OTLPSpanExporter"), patch(
-        "app.cc_otel.BatchSpanProcessor"
+    with (
+        patch("app.cc_otel.TracerProvider"),
+        patch("app.cc_otel.OTLPSpanExporter"),
+        patch("app.cc_otel.BatchSpanProcessor"),
     ):
         enable_instrumentation(config)
         assert is_enabled() is True
@@ -92,9 +96,12 @@ def test_enable_instrumentation_sets_service_name():
     """Test that service name from config is set in tracer provider."""
     config = CCOtelConfig(enabled=True, service_name="test-cc-service")
 
-    with patch("app.cc_otel.TracerProvider") as mock_tracer_provider, patch(
-        "app.cc_otel.OTLPSpanExporter"
-    ), patch("app.cc_otel.BatchSpanProcessor"), patch("app.cc_otel.Resource") as mock_resource:
+    with (
+        patch("app.cc_otel.TracerProvider"),
+        patch("app.cc_otel.OTLPSpanExporter"),
+        patch("app.cc_otel.BatchSpanProcessor"),
+        patch("app.cc_otel.Resource") as mock_resource,
+    ):
         enable_instrumentation(config)
 
         # Should create resource with service name
@@ -108,8 +115,10 @@ def test_enable_instrumentation_idempotent():
     """Test that calling enable_instrumentation multiple times is safe."""
     config = CCOtelConfig(enabled=True)
 
-    with patch("app.cc_otel.TracerProvider"), patch("app.cc_otel.OTLPSpanExporter"), patch(
-        "app.cc_otel.BatchSpanProcessor"
+    with (
+        patch("app.cc_otel.TracerProvider"),
+        patch("app.cc_otel.OTLPSpanExporter"),
+        patch("app.cc_otel.BatchSpanProcessor"),
     ):
         enable_instrumentation(config)
         assert is_enabled() is True
@@ -123,9 +132,11 @@ def test_otlp_exporter_configuration():
     """Test that OTLP exporter receives correct Phoenix endpoint."""
     config = CCOtelConfig(enabled=True, phoenix_endpoint="http://custom-phoenix:9999")
 
-    with patch("app.cc_otel.TracerProvider"), patch(
-        "app.cc_otel.OTLPSpanExporter"
-    ) as mock_exporter, patch("app.cc_otel.BatchSpanProcessor"):
+    with (
+        patch("app.cc_otel.TracerProvider"),
+        patch("app.cc_otel.OTLPSpanExporter") as mock_exporter,
+        patch("app.cc_otel.BatchSpanProcessor"),
+    ):
         enable_instrumentation(config)
 
         # Should use computed OTLP endpoint
