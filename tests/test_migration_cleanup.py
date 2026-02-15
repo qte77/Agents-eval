@@ -23,14 +23,14 @@ def test_no_evals_imports_in_source():
                 tree = ast.parse(content, filename=str(py_file))
                 for node in ast.walk(tree):
                     if isinstance(node, ast.ImportFrom):
-                        if node.module and node.module.startswith("app.judge."):
+                        if node.module and node.module.startswith("app.evals."):
                             evals_imports.append(f"{py_file}:{node.lineno} - {node.module}")
             except SyntaxError:
                 # Skip unparseable files
                 pass
 
     assert not evals_imports, (
-        f"Found {len(evals_imports)} imports from app.judge.* that should use app.judge.*:\n"
+        f"Found {len(evals_imports)} imports from app.evals.* that should use app.judge.*:\n"
         + "\n".join(evals_imports[:10])
     )
 
@@ -47,14 +47,14 @@ def test_no_evals_imports_in_tests():
                 tree = ast.parse(content, filename=str(py_file))
                 for node in ast.walk(tree):
                     if isinstance(node, ast.ImportFrom):
-                        if node.module and node.module.startswith("app.judge."):
+                        if node.module and node.module.startswith("app.evals."):
                             evals_imports.append(f"{py_file}:{node.lineno} - {node.module}")
             except SyntaxError:
                 # Skip unparseable files
                 pass
 
     assert not evals_imports, (
-        f"Found {len(evals_imports)} imports from app.judge.* that should use app.judge.*:\n"
+        f"Found {len(evals_imports)} imports from app.evals.* that should use app.judge.*:\n"
         + "\n".join(evals_imports[:10])
     )
 

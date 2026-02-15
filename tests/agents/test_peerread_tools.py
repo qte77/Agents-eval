@@ -69,9 +69,9 @@ class TestPeerReadAgentTools:
 
         # Test the underlying save_paper_review logic by creating it manually
         with (
-            patch("app.agents.peerread_tools.load_peerread_config") as mock_config,
-            patch("app.agents.peerread_tools.PeerReadLoader") as mock_loader_class,
-            patch("app.agents.peerread_tools.ReviewPersistence") as mock_persistence_class,
+            patch("app.tools.peerread_tools.load_peerread_config") as mock_config,
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+            patch("app.tools.peerread_tools.ReviewPersistence") as mock_persistence_class,
         ):
             # Setup mocks
             mock_config.return_value = sample_config
