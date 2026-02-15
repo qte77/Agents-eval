@@ -6,8 +6,8 @@ operations without evaluation logic.
 """
 
 import httpx
-import pytest
 import hypothesis
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot

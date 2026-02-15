@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import hypothesis
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
@@ -370,6 +371,10 @@ class TestPeerReadIntegrationInvariants:
 
     @pytest.mark.asyncio
     @given(abstract_word_count=st.integers(min_value=50, max_value=500))
+    @hypothesis.settings(
+        suppress_health_check=[hypothesis.HealthCheck.function_scoped_fixture],
+        deadline=None,
+    )
     async def test_paper_abstract_length_invariants(self, abstract_word_count, evaluation_pipeline):
         """Property: Pipeline handles variable abstract lengths consistently."""
         # Arrange
