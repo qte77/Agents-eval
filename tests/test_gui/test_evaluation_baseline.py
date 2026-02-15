@@ -225,18 +225,29 @@ class TestGUIBaselineComparison:
         """Test that baseline section is integrated into evaluation results page."""
         from gui.pages.evaluation import render_evaluation
 
-        mock_composite_result = MagicMock(spec=CompositeResult)
-        mock_composite_result.evaluation_complete = True
-        mock_composite_result.composite_score = 0.85
+        mock_composite_result = CompositeResult(
+            composite_score=0.85,
+            recommendation="accept",
+            recommendation_weight=0.9,
+            metric_scores={"test": 0.85},
+            tier1_score=0.85,
+            tier2_score=0.85,
+            tier3_score=0.85,
+            evaluation_complete=True,
+        )
 
         with (
             patch("streamlit.header"),
             patch("streamlit.metric"),
             patch("streamlit.bar_chart"),
+            patch("streamlit.expander"),
+            patch("streamlit.text"),
             patch("gui.pages.evaluation.render_baseline_comparison") as mock_render_baseline,
         ):
             # Render with baseline comparisons in session state
-            with patch("streamlit.session_state", {"baseline_comparisons": [mock_baseline_comparison]}):
+            with patch(
+                "streamlit.session_state", {"baseline_comparisons": [mock_baseline_comparison]}
+            ):
                 render_evaluation(mock_composite_result)
 
                 # Should call render_baseline_comparison

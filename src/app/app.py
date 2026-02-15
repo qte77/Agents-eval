@@ -44,9 +44,12 @@ from app.config.config_app import (
     PROJECT_NAME,
 )
 from app.data_models.app_models import AppEnv, ChatConfig
+from app.data_models.evaluation_models import CompositeResult
 from app.data_utils.datasets_peerread import (
     download_peerread_dataset,
 )
+from app.judge.baseline_comparison import compare_all
+from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
 from app.judge.settings import JudgeSettings
 from app.utils.error_messages import generic_exception
@@ -59,18 +62,27 @@ CONFIG_FOLDER = "config"
 
 
 async def _run_evaluation_if_enabled(
-    skip_eval: bool, paper_number: str | None, execution_id: str | None
-) -> None:
+    skip_eval: bool,
+    paper_number: str | None,
+    execution_id: str | None,
+    cc_solo_dir: str | None = None,
+    cc_teams_dir: str | None = None,
+) -> CompositeResult | None:
     """Run evaluation pipeline after manager completes if enabled.
 
     Args:
         skip_eval: Whether to skip evaluation via CLI flag
         paper_number: Paper number for PeerRead review (indicates ground truth availability)
         execution_id: Execution ID for trace retrieval
+        cc_solo_dir: Path to CC solo artifacts directory for baseline comparison
+        cc_teams_dir: Path to CC teams artifacts directory for baseline comparison
+
+    Returns:
+        CompositeResult from PydanticAI evaluation or None if skipped
     """
     if skip_eval:
         logger.info("Evaluation skipped via --skip-eval flag")
-        return
+        return None
 
     logger.info("Running evaluation pipeline...")
     pipeline = EvaluationPipeline()
@@ -97,12 +109,76 @@ async def _run_evaluation_if_enabled(
 
     # TODO: Extract paper and review from run_manager result
     # For now, calling with minimal placeholder data to satisfy wiring requirement
-    await pipeline.evaluate_comprehensive(
+    pydantic_result = await pipeline.evaluate_comprehensive(
         paper="",  # Placeholder - will be extracted from manager result
         review="",  # Placeholder - will be extracted from manager result
         execution_trace=execution_trace,
         reference_reviews=None,
     )
+
+    # Run baseline comparisons if CC directories provided
+    await _run_baseline_comparisons(pipeline, pydantic_result, cc_solo_dir, cc_teams_dir)
+
+    return pydantic_result
+
+
+async def _run_baseline_comparisons(
+    pipeline: EvaluationPipeline,
+    pydantic_result: CompositeResult | None,
+    cc_solo_dir: str | None,
+    cc_teams_dir: str | None,
+) -> None:
+    """Run baseline comparisons against CC solo and teams if directories provided.
+
+    Args:
+        pipeline: Evaluation pipeline instance
+        pydantic_result: PydanticAI evaluation result
+        cc_solo_dir: Path to CC solo artifacts directory
+        cc_teams_dir: Path to CC teams artifacts directory
+    """
+    if not cc_solo_dir and not cc_teams_dir:
+        return
+
+    logger.info("Running baseline comparisons...")
+
+    # Evaluate CC solo baseline if directory provided
+    cc_solo_result: CompositeResult | None = None
+    if cc_solo_dir:
+        try:
+            logger.info(f"Evaluating CC solo baseline from {cc_solo_dir}")
+            adapter = CCTraceAdapter(Path(cc_solo_dir))
+            cc_solo_trace = adapter.parse()
+            cc_solo_result = await pipeline.evaluate_comprehensive(
+                paper="",
+                review="",
+                execution_trace=cc_solo_trace,
+                reference_reviews=None,
+            )
+            logger.info(f"CC solo baseline score: {cc_solo_result.composite_score:.2f}")
+        except Exception as e:
+            logger.warning(f"Failed to evaluate CC solo baseline: {e}")
+
+    # Evaluate CC teams baseline if directory provided
+    cc_teams_result: CompositeResult | None = None
+    if cc_teams_dir:
+        try:
+            logger.info(f"Evaluating CC teams baseline from {cc_teams_dir}")
+            adapter = CCTraceAdapter(Path(cc_teams_dir))
+            cc_teams_trace = adapter.parse()
+            cc_teams_result = await pipeline.evaluate_comprehensive(
+                paper="",
+                review="",
+                execution_trace=cc_teams_trace,
+                reference_reviews=None,
+            )
+            logger.info(f"CC teams baseline score: {cc_teams_result.composite_score:.2f}")
+        except Exception as e:
+            logger.warning(f"Failed to evaluate CC teams baseline: {e}")
+
+    # Generate and log comparisons
+    comparisons = compare_all(pydantic_result, cc_solo_result, cc_teams_result)
+    for comparison in comparisons:
+        logger.info(f"Baseline comparison: {comparison.summary}")
 
 
 def _handle_download_mode(
@@ -173,6 +249,8 @@ async def main(
     download_peerread_full_only: bool = False,
     download_peerread_samples_only: bool = False,
     peerread_max_papers_per_sample_download: int | None = 5,
+    cc_solo_dir: str | None = None,
+    cc_teams_dir: str | None = None,
     # chat_config_path: str | Path,
 ) -> None:
     """
@@ -234,7 +312,9 @@ async def main(
             )
 
             # Run evaluation after manager completes
-            await _run_evaluation_if_enabled(skip_eval, paper_number, execution_id)
+            await _run_evaluation_if_enabled(
+                skip_eval, paper_number, execution_id, cc_solo_dir, cc_teams_dir
+            )
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 

@@ -61,6 +61,8 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
         "--peerread-max-papers-per-sample-download": (
             "Specify max papers to download per split, overrides sample default"
         ),
+        "--cc-solo-dir": "Path to CC solo session export directory for baseline comparison",
+        "--cc-teams-dir": "Path to CC Agent Teams artifacts directory for baseline comparison",
     }
 
     # output help and exit

@@ -9,6 +9,7 @@ Provides comparative visualization of graph-based vs text-based metrics.
 import streamlit as st
 
 from app.data_models.evaluation_models import CompositeResult
+from app.judge.baseline_comparison import BaselineComparison
 
 
 def _extract_graph_metrics(metric_scores: dict[str, float]) -> dict[str, float]:
@@ -144,6 +145,76 @@ def _render_metrics_comparison(result: CompositeResult) -> None:
         st.info("Insufficient metric data for comparison visualization.")
 
 
+def render_baseline_comparison(comparisons: list[BaselineComparison] | None) -> None:
+    """Render baseline comparison section for CC solo and teams.
+
+    Args:
+        comparisons: List of BaselineComparison instances or None.
+    """
+    if not comparisons:
+        st.info("No baseline comparisons available. Provide CC artifact directories to compare.")
+        return
+
+    st.subheader("🔄 Baseline Comparisons")
+
+    # Display three-way comparison table if we have 3 comparisons
+    if len(comparisons) == 3:
+        st.markdown("**Three-Way Comparison Table**")
+        comparison_data = []
+        for comp in comparisons:
+            comparison_data.append(
+                {
+                    "Comparison": f"{comp.label_a} vs {comp.label_b}",
+                    "Tier 1 Δ": f"{comp.tier_deltas.get('tier1', 0):.3f}",
+                    "Tier 2 Δ": (
+                        f"{comp.tier_deltas.get('tier2', 0):.3f}"
+                        if comp.tier_deltas.get("tier2") is not None
+                        else "N/A"
+                    ),
+                    "Tier 3 Δ": f"{comp.tier_deltas.get('tier3', 0):.3f}",
+                }
+            )
+        st.dataframe(comparison_data, use_container_width=True)
+
+    # Display individual comparisons
+    for comp in comparisons:
+        with st.expander(f"📊 {comp.label_a} vs {comp.label_b}"):
+            # Summary
+            st.write(comp.summary)
+
+            # Tier deltas
+            st.markdown("**Tier-Level Differences**")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric(
+                    "Tier 1 Delta",
+                    f"{comp.tier_deltas.get('tier1', 0):.3f}",
+                    help=f"{comp.label_a} - {comp.label_b}",
+                )
+            with col2:
+                if comp.tier_deltas.get("tier2") is not None:
+                    st.metric(
+                        "Tier 2 Delta",
+                        f"{comp.tier_deltas.get('tier2', 0):.3f}",
+                        help=f"{comp.label_a} - {comp.label_b}",
+                    )
+                else:
+                    st.metric(
+                        "Tier 2 Delta", "N/A", help="Tier 2 not available in one or both systems"
+                    )
+            with col3:
+                st.metric(
+                    "Tier 3 Delta",
+                    f"{comp.tier_deltas.get('tier3', 0):.3f}",
+                    help=f"{comp.label_a} - {comp.label_b}",
+                )
+
+            # Metric deltas bar chart
+            if comp.metric_deltas:
+                st.markdown("**Metric-Level Differences**")
+                st.bar_chart(comp.metric_deltas)
+
+
 def render_evaluation(result: CompositeResult | None = None) -> None:
     """Render evaluation results page with tier scores and metric comparisons.
 
@@ -152,6 +223,7 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
     - Individual tier scores (Tier 1, 2, 3)
     - Bar chart comparing graph metrics vs text metrics
     - Detailed metric breakdowns
+    - Baseline comparisons (if available in session state)
 
     Args:
         result: CompositeResult containing evaluation data, or None for empty state.
@@ -160,11 +232,28 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
 
     if result is None:
         st.info("No evaluation results available. Run an evaluation to see results here.")
+
+        # Show baseline configuration inputs even when no result
+        st.subheader("🔧 Baseline Comparison Configuration")
+        st.text_input(
+            "CC Solo Directory",
+            key="cc_solo_dir_input",
+            help="Path to CC solo session export directory",
+        )
+        st.text_input(
+            "CC Teams Directory",
+            key="cc_teams_dir_input",
+            help="Path to CC Agent Teams artifacts directory",
+        )
         return
 
     _render_overall_results(result)
     _render_tier_scores(result)
     _render_metrics_comparison(result)
+
+    # Render baseline comparisons if available in session state
+    if "baseline_comparisons" in st.session_state:
+        render_baseline_comparison(st.session_state["baseline_comparisons"])
 
     # Evaluation metadata
     with st.expander("Evaluation Details"):

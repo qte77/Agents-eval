@@ -6,12 +6,9 @@ baseline comparisons are generated and displayed, and auto-detection
 of CC artifact modes works properly.
 """
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import CompositeResult
@@ -45,7 +42,18 @@ async def test_cli_accepts_cc_solo_dir_flag():
 
         # Mock pipeline and adapter
         mock_pipeline = MagicMock()
-        mock_pipeline.evaluate_comprehensive = AsyncMock()
+        mock_result = CompositeResult(
+            composite_score=0.8,
+            recommendation="accept",
+            recommendation_weight=0.8,
+            metric_scores={"test": 0.8},
+            tier1_score=0.8,
+            tier2_score=0.8,
+            tier3_score=0.8,
+            evaluation_complete=True,
+        )
+        # Mock multiple calls: 1st for PydanticAI, 2nd for CC solo
+        mock_pipeline.evaluate_comprehensive = AsyncMock(side_effect=[mock_result, mock_result])
         mock_pipeline_class.return_value = mock_pipeline
 
         mock_adapter_instance = MagicMock()
@@ -94,7 +102,18 @@ async def test_cli_accepts_cc_teams_dir_flag():
 
         # Mock pipeline and adapter
         mock_pipeline = MagicMock()
-        mock_pipeline.evaluate_comprehensive = AsyncMock()
+        mock_result = CompositeResult(
+            composite_score=0.8,
+            recommendation="accept",
+            recommendation_weight=0.8,
+            metric_scores={"test": 0.8},
+            tier1_score=0.8,
+            tier2_score=0.8,
+            tier3_score=0.8,
+            evaluation_complete=True,
+        )
+        # Mock multiple calls: 1st for PydanticAI, 2nd for CC teams
+        mock_pipeline.evaluate_comprehensive = AsyncMock(side_effect=[mock_result, mock_result])
         mock_pipeline_class.return_value = mock_pipeline
 
         mock_adapter_instance = MagicMock()
@@ -144,7 +163,16 @@ async def test_three_way_comparison_with_both_cc_baselines():
 
         # Mock pipeline to return CompositeResult for each evaluation
         mock_pipeline = MagicMock()
-        mock_result = MagicMock(spec=CompositeResult)
+        mock_result = CompositeResult(
+            composite_score=0.8,
+            recommendation="accept",
+            recommendation_weight=0.8,
+            metric_scores={"test": 0.8},
+            tier1_score=0.8,
+            tier2_score=0.8,
+            tier3_score=0.8,
+            evaluation_complete=True,
+        )
         mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
         mock_pipeline_class.return_value = mock_pipeline
 
@@ -155,11 +183,16 @@ async def test_three_way_comparison_with_both_cc_baselines():
         mock_load_config.return_value = MagicMock(prompts={})
 
         # Mock compare_all to return 3 comparisons
-        mock_compare_all.return_value = [
-            MagicMock(spec=BaselineComparison),
-            MagicMock(spec=BaselineComparison),
-            MagicMock(spec=BaselineComparison),
-        ]
+        mock_comparison = BaselineComparison(
+            label_a="A",
+            label_b="B",
+            result_a=mock_result,
+            result_b=mock_result,
+            metric_deltas={"test": 0.0},
+            tier_deltas={"tier1": 0.0, "tier2": 0.0, "tier3": 0.0},
+            summary="Test comparison",
+        )
+        mock_compare_all.return_value = [mock_comparison, mock_comparison, mock_comparison]
 
         from app.app import main
 
@@ -207,7 +240,16 @@ async def test_baseline_comparison_printed_to_console():
 
         # Mock pipeline
         mock_pipeline = MagicMock()
-        mock_result = MagicMock(spec=CompositeResult)
+        mock_result = CompositeResult(
+            composite_score=0.8,
+            recommendation="accept",
+            recommendation_weight=0.8,
+            metric_scores={"test": 0.8},
+            tier1_score=0.8,
+            tier2_score=0.8,
+            tier3_score=0.8,
+            evaluation_complete=True,
+        )
         mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
         mock_pipeline_class.return_value = mock_pipeline
 
@@ -218,8 +260,15 @@ async def test_baseline_comparison_printed_to_console():
         mock_load_config.return_value = MagicMock(prompts={})
 
         # Mock baseline comparison with summary
-        mock_comparison = MagicMock(spec=BaselineComparison)
-        mock_comparison.summary = "PydanticAI scored +0.12 higher vs CC-solo"
+        mock_comparison = BaselineComparison(
+            label_a="PydanticAI",
+            label_b="CC-solo",
+            result_a=mock_result,
+            result_b=mock_result,
+            metric_deltas={"test": 0.12},
+            tier_deltas={"tier1": 0.12, "tier2": 0.12, "tier3": 0.12},
+            summary="PydanticAI scored +0.12 higher vs CC-solo",
+        )
         mock_compare_all.return_value = [mock_comparison]
 
         from app.app import main
@@ -232,7 +281,9 @@ async def test_baseline_comparison_printed_to_console():
         )
 
         # Verify summary was logged
-        mock_logger.info.assert_any_call("Baseline comparison: PydanticAI scored +0.12 higher vs CC-solo")
+        mock_logger.info.assert_any_call(
+            "Baseline comparison: PydanticAI scored +0.12 higher vs CC-solo"
+        )
 
 
 @pytest.mark.asyncio
@@ -285,11 +336,21 @@ class TestCLIBaselineOutputSnapshots:
     def test_single_baseline_comparison_output(self):
         """Snapshot: CLI output format with single CC baseline."""
         # Arrange
+        mock_result = CompositeResult(
+            composite_score=0.8,
+            recommendation="accept",
+            recommendation_weight=0.8,
+            metric_scores={"test": 0.8},
+            tier1_score=0.8,
+            tier2_score=0.8,
+            tier3_score=0.8,
+            evaluation_complete=True,
+        )
         mock_comparison = BaselineComparison(
             label_a="PydanticAI",
             label_b="CC-solo",
-            result_a=MagicMock(spec=CompositeResult),
-            result_b=MagicMock(spec=CompositeResult),
+            result_a=mock_result,
+            result_b=mock_result,
             metric_deltas={
                 "cosine_score": 0.12,
                 "jaccard_score": 0.08,
@@ -322,12 +383,22 @@ class TestCLIBaselineOutputSnapshots:
     def test_three_way_comparison_output(self):
         """Snapshot: CLI output format with three-way comparison."""
         # Arrange
+        mock_result = CompositeResult(
+            composite_score=0.8,
+            recommendation="accept",
+            recommendation_weight=0.8,
+            metric_scores={"test": 0.8},
+            tier1_score=0.8,
+            tier2_score=0.8,
+            tier3_score=0.8,
+            evaluation_complete=True,
+        )
         comparisons = [
             BaselineComparison(
                 label_a="PydanticAI",
                 label_b="CC-solo",
-                result_a=MagicMock(spec=CompositeResult),
-                result_b=MagicMock(spec=CompositeResult),
+                result_a=mock_result,
+                result_b=mock_result,
                 metric_deltas={"cosine_score": 0.12},
                 tier_deltas={"tier1": 0.10, "tier2": 0.12, "tier3": 0.08},
                 summary="PydanticAI scored +0.10 higher on average vs CC-solo",
@@ -335,8 +406,8 @@ class TestCLIBaselineOutputSnapshots:
             BaselineComparison(
                 label_a="PydanticAI",
                 label_b="CC-teams",
-                result_a=MagicMock(spec=CompositeResult),
-                result_b=MagicMock(spec=CompositeResult),
+                result_a=mock_result,
+                result_b=mock_result,
                 metric_deltas={"cosine_score": 0.05},
                 tier_deltas={"tier1": 0.03, "tier2": 0.06, "tier3": 0.04},
                 summary="PydanticAI scored +0.05 higher on average vs CC-teams",
@@ -344,8 +415,8 @@ class TestCLIBaselineOutputSnapshots:
             BaselineComparison(
                 label_a="CC-solo",
                 label_b="CC-teams",
-                result_a=MagicMock(spec=CompositeResult),
-                result_b=MagicMock(spec=CompositeResult),
+                result_a=mock_result,
+                result_b=mock_result,
                 metric_deltas={"cosine_score": -0.07},
                 tier_deltas={"tier1": -0.07, "tier2": -0.06, "tier3": -0.04},
                 summary="CC-solo scored -0.07 lower on average vs CC-teams",
