@@ -6,5 +6,6 @@ typed Pydantic models at all boundaries.
 """
 
 from app.judge.plugins.base import EvaluatorPlugin, PluginRegistry
+from app.judge.plugins.traditional import TraditionalMetricsPlugin
 
-__all__ = ["EvaluatorPlugin", "PluginRegistry"]
+__all__ = ["EvaluatorPlugin", "PluginRegistry", "TraditionalMetricsPlugin"]
