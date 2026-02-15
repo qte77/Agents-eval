@@ -12,7 +12,7 @@ due to incomplete type hints in the NetworkX library itself.
 from __future__ import annotations
 
 import math
-import signal
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from typing import TYPE_CHECKING, Any
 
 import networkx as nx
@@ -107,7 +107,11 @@ class GraphAnalysisEngine:
             )
 
     def _with_timeout(self, func: Any, *args: Any, **kwargs: Any) -> Any:
-        """Execute function with timeout protection.
+        """Execute function with thread-safe timeout protection.
+
+        Uses ThreadPoolExecutor to enable timeout in both main and non-main threads
+        (e.g., Streamlit GUI context). Replaces signal-based timeout which only
+        works in the main thread.
 
         Args:
             func: Function to execute
@@ -115,36 +119,27 @@ class GraphAnalysisEngine:
             **kwargs: Function keyword arguments
 
         Returns:
-            Function result or None if timeout
+            Function result or raises TimeoutError
 
         Raises:
             TimeoutError: If operation exceeds timeout limit
+            NetworkXError: If NetworkX operation fails
         """
-
-        def timeout_handler(signum: int, frame: Any) -> None:
-            raise TimeoutError(f"Graph operation exceeded {self.operation_timeout}s timeout")
-
-        # Set up timeout signal
-        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(int(self.operation_timeout))
-
-        try:
-            result = func(*args, **kwargs)
-            return result
-        except TimeoutError:
-            logger.error(f"Graph operation timed out after {self.operation_timeout}s")
-            raise
-        except (
-            nx.NetworkXError,
-            nx.NetworkXPointlessConcept,
-            nx.NetworkXAlgorithmError,
-        ) as e:
-            logger.warning(f"NetworkX operation failed: {e}")
-            raise
-        finally:
-            # Always restore signal handler and cancel alarm
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, old_handler)
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(func, *args, **kwargs)
+            try:
+                result = future.result(timeout=self.operation_timeout)
+                return result
+            except FuturesTimeoutError:
+                logger.error(f"Graph operation timed out after {self.operation_timeout}s")
+                raise TimeoutError(f"Graph operation exceeded {self.operation_timeout}s timeout")
+            except (
+                nx.NetworkXError,
+                nx.NetworkXPointlessConcept,
+                nx.NetworkXAlgorithmError,
+            ) as e:
+                logger.warning(f"NetworkX operation failed: {e}")
+                raise
 
     def analyze_tool_usage_patterns(self, trace_data: GraphTraceData) -> dict[str, float]:
         """Analyze tool usage efficiency and selection patterns.
