@@ -18,6 +18,8 @@ Functions:
 from asyncio import run
 from pathlib import Path
 
+import streamlit as st
+
 from app.common.settings import CommonSettings
 from app.config.config_app import (
     CHAT_CONFIG_FILE,
@@ -49,7 +51,37 @@ provider = CHAT_DEFAULT_PROVIDER
 logger.info(f"Default provider in GUI: {CHAT_DEFAULT_PROVIDER}")
 
 
+def get_session_state_defaults() -> dict[str, str | bool]:
+    """
+    Get default values for session state.
+
+    Returns:
+        Dict with default provider and sub-agent configuration flags
+    """
+    return {
+        "chat_provider": CHAT_DEFAULT_PROVIDER,
+        "include_researcher": False,
+        "include_analyst": False,
+        "include_synthesiser": False,
+    }
+
+
+def initialize_session_state() -> None:
+    """
+    Initialize session state with default values if not already set.
+
+    Uses st.session_state to persist user selections across page navigation.
+    """
+    defaults = get_session_state_defaults()
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+
 async def main():
+    # Initialize session state before rendering any pages
+    initialize_session_state()
+
     add_custom_styling(PAGE_TITLE)
     selected_page = render_sidebar(PAGE_TITLE)
 
