@@ -30,13 +30,26 @@ remaining_pct=$(echo "$input" | jq -r '
     .context_window.remaining_percentage // 100
   end
 ')
-remaining=$(echo "$remaining_pct" | awk '{printf "%.2f", $1/100}' | sed 's/^0\./\./')
 
-# Color remaining based on threshold (warn when running LOW)
-if [ "$remaining_pct" -le 25 ]; then
-    ctx_color="\\033[93;41m"  # Bright yellow fg, red bg - VERY LOW
-elif [ "$remaining_pct" -le 50 ]; then
-    ctx_color="\\033[91;48;5;237m"  # Bright red fg, dark gray bg - LOW
+# Subtract autocompact buffer to get TRUE usable space
+# Priority: env var > observed default (16.5%)
+if [ -n "$CLAUDE_AUTOCOMPACT_PCT_OVERRIDE" ]; then
+    AUTOCOMPACT_BUFFER_PCT=$(awk "BEGIN {print 100 - $CLAUDE_AUTOCOMPACT_PCT_OVERRIDE}")
+else
+    # Observed default buffer in /context output (as of 2026-02)
+    AUTOCOMPACT_BUFFER_PCT=16.5
+fi
+
+true_free_pct=$(awk "BEGIN {print $remaining_pct - $AUTOCOMPACT_BUFFER_PCT}")
+remaining=$(echo "$true_free_pct" | awk '{printf "%.2f", $1/100}' | sed 's/^0\./\./')
+
+# Color remaining based on TRUE free space threshold (warn when running LOW)
+if [ $(awk "BEGIN {print ($true_free_pct <= 10)}") -eq 1 ]; then
+    ctx_color="\\033[93;41m"  # Bright yellow fg, red bg - CRITICAL (<10% usable)
+elif [ $(awk "BEGIN {print ($true_free_pct <= 20)}") -eq 1 ]; then
+    ctx_color="\\033[91;48;5;237m"  # Bright red fg, dark gray bg - WARNING (<20% usable)
+elif [ $(awk "BEGIN {print ($true_free_pct <= 35)}") -eq 1 ]; then
+    ctx_color="\\033[93m"  # Yellow fg - CAUTION (<35% usable)
 else
     ctx_color="\\033[0;32m"   # Normal green fg - OK
 fi
@@ -51,4 +64,4 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
     else branch=""
 fi
 
-printf "\\033[0;33mmodel:%s \\033[2mver:%s \\033[0;34mcost:%s \\033[0;36mdur:%s\\n\\033[0;32mlines:%s \\033[2mtokens(i/o):%s ${ctx_color}ctx(left):%s\\033[0m \\033[0;31m>200k:%s\\033[0m\\n\\033[2mdir:%s \\033[0;36mbranch:%s \\033[0;32muser:%s \\033[0;35mtime:%s\\033[0m" "$model" "$version" "$cost" "$duration" "$lines_changed" "$tokens" "$remaining" "$exc_context" "$(basename "$cwd")" "$branch" "$user" "$time"
+printf "\\033[0;33mmodel:%s \\033[2mver:%s \\033[0;34mcost:%s \\033[0;36mdur:%s\\n\\033[0;32mlines:%s \\033[2mtokens(i/o):%s ${ctx_color}ctx(free):%s\\033[0m \\033[0;31m>200k:%s\\033[0m\\n\\033[2mdir:%s \\033[0;36mbranch:%s \\033[0;32muser:%s \\033[0;35mtime:%s\\033[0m" "$model" "$version" "$cost" "$duration" "$lines_changed" "$tokens" "$remaining" "$exc_context" "$(basename "$cwd")" "$branch" "$user" "$time"
