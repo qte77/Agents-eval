@@ -7,6 +7,7 @@ operations without evaluation logic.
 
 import httpx
 import pytest
+import hypothesis
 from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
@@ -338,6 +339,7 @@ class TestPeerReadDataInvariants:
         assert review.recommendation in ["1", "2", "3", "4", "5"]
 
     @given(st.lists(st.text(min_size=1, max_size=100), min_size=1, max_size=10))
+    @hypothesis.settings(deadline=None)
     def test_url_construction_invariants(self, paper_ids):
         """Property: URL construction always produces valid URLs."""
         from app.data_utils.datasets_peerread import PeerReadDownloader
@@ -392,7 +394,30 @@ class TestPeerReadDataSnapshots:
         dumped = paper.model_dump()
 
         # Assert with snapshot
-        assert dumped == snapshot()
+        assert dumped == snapshot(
+            {
+                "paper_id": "test_001",
+                "title": "Test Paper Title",
+                "abstract": "Test paper abstract with sufficient content.",
+                "reviews": [
+                    {
+                        "impact": "4",
+                        "substance": "3",
+                        "appropriateness": "4",
+                        "meaningful_comparison": "3",
+                        "presentation_format": "Oral",
+                        "comments": "Well-structured paper with good methodology.",
+                        "soundness_correctness": "4",
+                        "originality": "3",
+                        "recommendation": "3",
+                        "clarity": "4",
+                        "reviewer_confidence": "4",
+                        "is_meta_review": None,
+                    }
+                ],
+                "review_histories": ["Submitted", "Under Review"],
+            }
+        )
 
     def test_peerread_config_model_dump_structure(self):
         """Snapshot: PeerReadConfig default model_dump output structure."""
@@ -403,7 +428,21 @@ class TestPeerReadDataSnapshots:
         dumped = config.model_dump()
 
         # Assert with snapshot
-        assert dumped == snapshot()
+        assert dumped == snapshot(
+            {
+                "base_url": "https://github.com/allenai/PeerRead/tree/master/data",
+                "github_api_base_url": "https://api.github.com/repos/allenai/PeerRead/contents/data",
+                "raw_github_base_url": "https://raw.githubusercontent.com/allenai/PeerRead/master/data",
+                "cache_directory": "datasets/peerread",
+                "venues": ["acl_2017", "conll_2016", "iclr_2017"],
+                "splits": ["train", "test", "dev"],
+                "max_papers_per_query": 100,
+                "download_timeout": 30,
+                "max_retries": 5,
+                "retry_delay_seconds": 5,
+                "similarity_metrics": {"cosine_weight": 0.6, "jaccard_weight": 0.4},
+            }
+        )
 
     def test_url_construction_output_format(self):
         """Snapshot: URL construction output format."""
@@ -421,4 +460,10 @@ class TestPeerReadDataSnapshots:
         }
 
         # Assert with snapshot
-        assert urls == snapshot()
+        assert urls == snapshot(
+            {
+                "acl_2017_train": "https://raw.githubusercontent.com/allenai/PeerRead/master/data/acl_2017/train/reviews/104.json",
+                "conll_2016_dev": "https://raw.githubusercontent.com/allenai/PeerRead/master/data/conll_2016/dev/reviews/205.json",
+                "iclr_2017_test": "https://raw.githubusercontent.com/allenai/PeerRead/master/data/iclr_2017/test/reviews/306.json",
+            }
+        )

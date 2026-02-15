@@ -240,4 +240,22 @@ class TestEvaluationWiringSnapshots:
         dumped = result.model_dump()
 
         # Assert with snapshot
-        assert dumped == snapshot()
+        assert dumped == snapshot(
+            {
+                "composite_score": 0.8,
+                "recommendation": "accept",
+                "recommendation_weight": 1.0,
+                "metric_scores": {"cosine_score": 0.8},
+                "tier1_score": 0.82,
+                "tier2_score": 0.0,
+                "tier3_score": 0.0,
+                "evaluation_complete": True,
+                "timestamp": "",
+                "config_version": "1.0.0",
+                "weights_used": None,
+                "tiers_enabled": None,
+                "opik_trace_id": None,
+                "agent_assessment_scores": None,
+                "opik_metadata": None,
+            }
+        )

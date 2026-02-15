@@ -849,7 +849,126 @@ class TestBenchmarkOutputSnapshots:
         trace = data_gen.create_simple_trace(10)
 
         # Assert with snapshot
-        assert trace == snapshot()
+        assert trace == snapshot(
+            {
+                "execution_id": "simple_trace_10",
+                "agent_interactions": [
+                    {
+                        "from": "Agent_0",
+                        "to": "Agent_1",
+                        "type": "task_request",
+                        "timestamp": 0.0,
+                        "data_size": 100,
+                    },
+                    {
+                        "from": "Agent_1",
+                        "to": "Agent_2",
+                        "type": "result_delivery",
+                        "timestamp": 0.5,
+                        "data_size": 150,
+                    },
+                    {
+                        "from": "Agent_2",
+                        "to": "Agent_0",
+                        "type": "task_request",
+                        "timestamp": 1.0,
+                        "data_size": 200,
+                    },
+                    {
+                        "from": "Agent_0",
+                        "to": "Agent_1",
+                        "type": "result_delivery",
+                        "timestamp": 1.5,
+                        "data_size": 250,
+                    },
+                    {
+                        "from": "Agent_1",
+                        "to": "Agent_2",
+                        "type": "task_request",
+                        "timestamp": 2.0,
+                        "data_size": 300,
+                    },
+                    {
+                        "from": "Agent_2",
+                        "to": "Agent_0",
+                        "type": "result_delivery",
+                        "timestamp": 2.5,
+                        "data_size": 350,
+                    },
+                    {
+                        "from": "Agent_0",
+                        "to": "Agent_1",
+                        "type": "task_request",
+                        "timestamp": 3.0,
+                        "data_size": 400,
+                    },
+                    {
+                        "from": "Agent_1",
+                        "to": "Agent_2",
+                        "type": "result_delivery",
+                        "timestamp": 3.5,
+                        "data_size": 450,
+                    },
+                    {
+                        "from": "Agent_2",
+                        "to": "Agent_0",
+                        "type": "task_request",
+                        "timestamp": 4.0,
+                        "data_size": 500,
+                    },
+                    {
+                        "from": "Agent_0",
+                        "to": "Agent_1",
+                        "type": "result_delivery",
+                        "timestamp": 4.5,
+                        "data_size": 550,
+                    },
+                ],
+                "tool_calls": [
+                    {
+                        "agent_id": "Agent_0",
+                        "tool_name": "tool_0",
+                        "success": True,
+                        "duration": 0.1,
+                        "timestamp": 0.2,
+                        "context": "Processing task 0",
+                    },
+                    {
+                        "agent_id": "Agent_0",
+                        "tool_name": "tool_3",
+                        "success": True,
+                        "duration": 0.4,
+                        "timestamp": 1.7,
+                        "context": "Processing task 3",
+                    },
+                    {
+                        "agent_id": "Agent_0",
+                        "tool_name": "tool_1",
+                        "success": True,
+                        "duration": 0.2,
+                        "timestamp": 3.2,
+                        "context": "Processing task 6",
+                    },
+                    {
+                        "agent_id": "Agent_0",
+                        "tool_name": "tool_4",
+                        "success": True,
+                        "duration": 0.5,
+                        "timestamp": 4.7,
+                        "context": "Processing task 9",
+                    },
+                ],
+                "coordination_events": [
+                    {
+                        "coordination_type": "task_delegation",
+                        "manager_agent": "Agent_0",
+                        "target_agents": ["Agent_1", "Agent_2"],
+                        "timestamp": 0.0,
+                        "task": "benchmark_task_10",
+                    }
+                ],
+            }
+        )
 
     def test_performance_baseline_data_structure(self):
         """Snapshot: Performance baseline data structure."""
@@ -865,4 +984,14 @@ class TestBenchmarkOutputSnapshots:
         }
 
         # Assert with snapshot
-        assert perf_data == snapshot()
+        assert perf_data == snapshot(
+            {
+                "word_count": 300,
+                "mean_time": 0.523,
+                "median_time": 0.498,
+                "stddev_time": 0.042,
+                "percentile_95": 0.587,
+                "max_time": 0.612,
+                "min_time": 0.461,
+            }
+        )

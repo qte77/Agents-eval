@@ -7,11 +7,6 @@ Tests verify that the sidebar includes Phoenix status link.
 
 from unittest.mock import patch
 
-import pytest
-from hypothesis import given
-from hypothesis import strategies as st
-from inline_snapshot import snapshot
-
 
 class TestSidebarPhoenixLink:
     """Test suite for sidebar Phoenix status link."""

@@ -268,7 +268,32 @@ class TestEvaluationPageRenderingSnapshots:
         dumped = mock_composite_result.model_dump()
 
         # Assert with snapshot
-        assert dumped == snapshot()
+        assert dumped == snapshot(
+            {
+                "composite_score": 0.85,
+                "recommendation": "accept",
+                "recommendation_weight": 0.9,
+                "metric_scores": {
+                    "cosine_score": 0.8,
+                    "jaccard_score": 0.7,
+                    "semantic_score": 0.9,
+                    "path_convergence": 0.85,
+                    "tool_selection_accuracy": 0.9,
+                    "communication_overhead": 0.75,
+                },
+                "tier1_score": 0.8,
+                "tier2_score": 0.88,
+                "tier3_score": 0.83,
+                "evaluation_complete": True,
+                "timestamp": "2026-02-15T10:00:00Z",
+                "config_version": "1.0.0",
+                "weights_used": {"tier1": 0.3, "tier2": 0.4, "tier3": 0.3},
+                "tiers_enabled": None,
+                "opik_trace_id": None,
+                "agent_assessment_scores": None,
+                "opik_metadata": None,
+            }
+        )
 
     def test_mock_tier_results_structure(self, mock_tier_results):
         """Snapshot: Mock tier results structure for GUI testing."""
@@ -283,4 +308,35 @@ class TestEvaluationPageRenderingSnapshots:
         }
 
         # Assert with snapshot
-        assert tier_data == snapshot()
+        assert tier_data == snapshot(
+            {
+                "tier1": {
+                    "cosine_score": 0.8,
+                    "jaccard_score": 0.7,
+                    "semantic_score": 0.9,
+                    "execution_time": 5.2,
+                    "time_score": 0.85,
+                    "task_success": 1.0,
+                    "overall_score": 0.8,
+                },
+                "tier2": {
+                    "technical_accuracy": 0.88,
+                    "constructiveness": 0.85,
+                    "clarity": 0.9,
+                    "planning_rationality": 0.87,
+                    "overall_score": 0.88,
+                    "model_used": "gpt-4",
+                    "api_cost": 0.05,
+                    "fallback_used": False,
+                },
+                "tier3": {
+                    "path_convergence": 0.85,
+                    "tool_selection_accuracy": 0.9,
+                    "communication_overhead": 0.75,
+                    "coordination_centrality": 0.88,
+                    "task_distribution_balance": 0.8,
+                    "overall_score": 0.83,
+                    "graph_complexity": 12,
+                },
+            }
+        )

@@ -5,7 +5,6 @@ This module verifies that the traditional metrics engine correctly computes
 similarity scores between agent outputs and reference texts.
 """
 
-import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
@@ -74,4 +73,14 @@ def test_similarity_result_structure():
     dumped = result.model_dump()
 
     # Assert with snapshot
-    assert dumped == snapshot()
+    assert dumped == snapshot(
+        {
+            "cosine_score": 0.7765145304745156,
+            "jaccard_score": 0.8,
+            "semantic_score": 0.7765145304745156,
+            "execution_time": 0.1,
+            "time_score": 0.9048374180359595,
+            "task_success": 0.0,
+            "overall_score": 0.794043913135757,
+        }
+    )
