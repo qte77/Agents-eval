@@ -44,10 +44,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added (Sprint 4)
 
 - Sprint 4 PRD v2 with Features 1-7 (standalone numbering, operational resilience + CC baseline comparison)
-- Feature 1: Graceful Logfire trace export failure handling (suppress connection error stack traces for both span and metrics exports, affects CLI and GUI)
-- Feature 2: Thread-safe graph analysis timeout handling (replace signal-based timeouts, fixes "signal only works in main thread" error in GUI)
+- Feature 1 (STORY-001): Graceful Logfire trace export failure handling (suppress connection error stack traces for both span and metrics exports, affects CLI and GUI)
 - Feature 3: Tier 2 judge provider fallback validation (end-to-end testing & troubleshooting docs for OpenAI auth failures)
 - Feature 4: Complete test suite alignment (hypothesis property tests + inline-snapshot regression tests for remaining 12 test files)
+
+### Fixed (Sprint 4)
+
+- Feature 2 (STORY-002): Thread-safe graph analysis timeout handling
+  - Replace signal-based timeout with `concurrent.futures.ThreadPoolExecutor`
+  - Fix "signal only works in main thread" error in Streamlit GUI
+  - `path_convergence` calculation now works in non-main threads
+  - Graceful fallback to 0.3 when timeout occurs (maintains existing behavior)
+  - Added 5 comprehensive tests for thread-safe timeout behavior
 
 ### Fixed (Sprint 4)
 
