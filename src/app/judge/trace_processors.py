@@ -79,7 +79,8 @@ class TraceCollector:
     def _init_database(self):
         """Initialize SQLite database schema for trace storage."""
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            conn = sqlite3.connect(self.db_path)
+            try:
                 conn.execute("""
                     CREATE TABLE IF NOT EXISTS trace_executions (
                         execution_id TEXT PRIMARY KEY,
@@ -107,6 +108,8 @@ class TraceCollector:
 
                 conn.commit()
                 logger.debug("Trace database initialized successfully")
+            finally:
+                conn.close()
 
         except Exception as e:
             logger.error(f"Failed to initialize trace database: {e}")
@@ -313,7 +316,8 @@ class TraceCollector:
                 f.write("\n")
 
             # Store in SQLite database
-            with sqlite3.connect(self.db_path) as conn:
+            conn = sqlite3.connect(self.db_path)
+            try:
                 conn.execute(
                     """
                     INSERT OR REPLACE INTO trace_executions
@@ -350,6 +354,8 @@ class TraceCollector:
                     )
 
                 conn.commit()
+            finally:
+                conn.close()
 
             if self.performance_logging:
                 logger.info(
@@ -401,7 +407,8 @@ class TraceCollector:
             GraphTraceData object or None if not found
         """
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            conn = sqlite3.connect(self.db_path)
+            try:
                 execution = conn.execute(
                     "SELECT * FROM trace_executions WHERE execution_id = ?",
                     (execution_id,),
@@ -433,6 +440,8 @@ class TraceCollector:
                     timing_data=timing_data,
                     coordination_events=coordination_events,
                 )
+            finally:
+                conn.close()
 
         except Exception as e:
             logger.error(f"Failed to load trace {execution_id}: {e}")
@@ -448,7 +457,8 @@ class TraceCollector:
             List of execution metadata dictionaries
         """
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            conn = sqlite3.connect(self.db_path)
+            try:
                 executions = conn.execute(
                     """
                     SELECT execution_id, start_time, end_time, agent_count,
@@ -472,6 +482,8 @@ class TraceCollector:
                     }
                     for row in executions
                 ]
+            finally:
+                conn.close()
 
         except Exception as e:
             logger.error(f"Failed to list executions: {e}")
