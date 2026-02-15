@@ -48,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feature 2: Thread-safe graph analysis timeout handling (replace signal-based timeouts, fixes "signal only works in main thread" error in GUI)
 - Feature 3: Tier 2 judge provider fallback validation (end-to-end testing & troubleshooting docs for OpenAI auth failures)
 - Feature 4: Complete test suite alignment (hypothesis property tests + inline-snapshot regression tests for remaining 12 test files)
+
+### Fixed (Sprint 4)
+
+- STORY-001: Noisy ConnectionRefusedError stack traces when Logfire/OTLP endpoint unreachable (both CLI and GUI)
 - Feature 5: CC trace adapter -- parse CC artifacts into `GraphTraceData` in two modes: solo (single CC instance, no orchestration) and teams (CC Agent Teams with delegation), both with full tool/plugin/MCP access
 - Feature 6: Baseline comparison engine -- `BaselineComparison` Pydantic model + `compare()`/`compare_all()` for three-way `CompositeResult` diffing (PydanticAI vs CC-solo vs CC-teams)
 - Feature 7: CLI & GUI baseline integration -- `--cc-solo-dir` and `--cc-teams-dir` CLI flags, three-way comparison in GUI
