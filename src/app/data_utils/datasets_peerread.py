@@ -691,23 +691,43 @@ class PeerReadLoader:
         for paper_data in papers_data:
             try:
                 # Convert from PeerRead format to our model format
-                reviews = [
-                    PeerReadReview(
-                        impact=r["IMPACT"],
-                        substance=r["SUBSTANCE"],
-                        appropriateness=r["APPROPRIATENESS"],
-                        meaningful_comparison=r["MEANINGFUL_COMPARISON"],
-                        presentation_format=r["PRESENTATION_FORMAT"],
-                        comments=r["comments"],
-                        soundness_correctness=r["SOUNDNESS_CORRECTNESS"],
-                        originality=r["ORIGINALITY"],
-                        recommendation=r["RECOMMENDATION"],
-                        clarity=r["CLARITY"],
-                        reviewer_confidence=r["REVIEWER_CONFIDENCE"],
+                reviews = []
+                for r in paper_data.get("reviews", []):
+                    # Optional fields use .get() with "UNKNOWN" default
+                    # Reason: Papers 304-308, 330 lack IMPACT field
+                    optional_fields = [
+                        "IMPACT",
+                        "SUBSTANCE",
+                        "APPROPRIATENESS",
+                        "MEANINGFUL_COMPARISON",
+                        "SOUNDNESS_CORRECTNESS",
+                        "ORIGINALITY",
+                        "CLARITY",
+                    ]
+
+                    # Log debug message when optional field is missing
+                    for field in optional_fields:
+                        if field not in r:
+                            logger.debug(
+                                f"Paper {paper_data.get('id', 'unknown')}: "
+                                f"Optional field {field} missing, using UNKNOWN"
+                            )
+
+                    review = PeerReadReview(
+                        impact=r.get("IMPACT", "UNKNOWN"),
+                        substance=r.get("SUBSTANCE", "UNKNOWN"),
+                        appropriateness=r.get("APPROPRIATENESS", "UNKNOWN"),
+                        meaningful_comparison=r.get("MEANINGFUL_COMPARISON", "UNKNOWN"),
+                        presentation_format=r.get("PRESENTATION_FORMAT", "Poster"),
+                        comments=r.get("comments", ""),
+                        soundness_correctness=r.get("SOUNDNESS_CORRECTNESS", "UNKNOWN"),
+                        originality=r.get("ORIGINALITY", "UNKNOWN"),
+                        recommendation=r.get("RECOMMENDATION", "UNKNOWN"),
+                        clarity=r.get("CLARITY", "UNKNOWN"),
+                        reviewer_confidence=r.get("REVIEWER_CONFIDENCE", "UNKNOWN"),
                         is_meta_review=r.get("is_meta_review"),
                     )
-                    for r in paper_data.get("reviews", [])
-                ]
+                    reviews.append(review)
 
                 paper = PeerReadPaper(
                     paper_id=str(paper_data["id"]),
