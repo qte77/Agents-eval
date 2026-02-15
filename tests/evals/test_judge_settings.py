@@ -65,7 +65,10 @@ class TestJudgeSettingsDefaults:
         """Observability config defaults."""
         settings = JudgeSettings()
         assert settings.trace_collection is True
-        assert settings.opik_enabled is True
+        assert settings.logfire_enabled is True
+        assert settings.phoenix_endpoint == "http://localhost:6006"
+        assert settings.logfire_service_name == "peerread-evaluation"
+        assert settings.logfire_send_to_cloud is False
         assert settings.performance_logging is True
 
 

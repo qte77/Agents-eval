@@ -16,20 +16,20 @@ def test_common_settings_defaults():
     settings = CommonSettings()
 
     assert settings.log_level == "INFO"
-    assert settings.enable_opik is False
+    assert settings.enable_logfire is False
     assert settings.max_content_length == 15000
 
 
 def test_common_settings_env_prefix(monkeypatch: pytest.MonkeyPatch):
     """Test that CommonSettings loads from EVAL_ prefixed environment variables."""
     monkeypatch.setenv("EVAL_LOG_LEVEL", "DEBUG")
-    monkeypatch.setenv("EVAL_ENABLE_OPIK", "true")
+    monkeypatch.setenv("EVAL_ENABLE_LOGFIRE", "true")
     monkeypatch.setenv("EVAL_MAX_CONTENT_LENGTH", "20000")
 
     settings = CommonSettings()
 
     assert settings.log_level == "DEBUG"
-    assert settings.enable_opik is True
+    assert settings.enable_logfire is True
     assert settings.max_content_length == 20000
 
 
@@ -37,7 +37,7 @@ def test_common_settings_env_file_loading(tmp_path: Path, monkeypatch: pytest.Mo
     """Test that CommonSettings loads from .env file."""
     env_file = tmp_path / ".env"
     env_file.write_text(
-        "EVAL_LOG_LEVEL=WARNING\nEVAL_ENABLE_OPIK=true\nEVAL_MAX_CONTENT_LENGTH=25000\n"
+        "EVAL_LOG_LEVEL=WARNING\nEVAL_ENABLE_LOGFIRE=true\nEVAL_MAX_CONTENT_LENGTH=25000\n"
     )
 
     # Change to temp directory so .env is found
@@ -46,16 +46,16 @@ def test_common_settings_env_file_loading(tmp_path: Path, monkeypatch: pytest.Mo
     settings = CommonSettings()
 
     assert settings.log_level == "WARNING"
-    assert settings.enable_opik is True
+    assert settings.enable_logfire is True
     assert settings.max_content_length == 25000
 
 
 def test_common_settings_type_validation():
     """Test that CommonSettings validates types correctly."""
-    settings = CommonSettings(log_level="ERROR", enable_opik=True, max_content_length=30000)
+    settings = CommonSettings(log_level="ERROR", enable_logfire=True, max_content_length=30000)
 
     assert settings.log_level == "ERROR"
-    assert settings.enable_opik is True
+    assert settings.enable_logfire is True
     assert settings.max_content_length == 30000
 
 
@@ -67,5 +67,5 @@ def test_common_settings_env_override_defaults(monkeypatch: pytest.MonkeyPatch):
 
     assert settings.log_level == "CRITICAL"
     # Other defaults unchanged
-    assert settings.enable_opik is False
+    assert settings.enable_logfire is False
     assert settings.max_content_length == 15000
