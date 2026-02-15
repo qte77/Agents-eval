@@ -41,6 +41,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-014: Run App page reads configuration from session state and displays current settings
 - STORY-014: Session state persistence across page navigation for provider and agent selection
 
+### Added (Sprint 4)
+
+- Sprint 4 PRD v2 with Features 1-7 (standalone numbering, operational resilience + CC baseline comparison)
+- Feature 1: Graceful Logfire trace export failure handling (suppress connection error stack traces for both span and metrics exports, affects CLI and GUI)
+- Feature 2: Thread-safe graph analysis timeout handling (replace signal-based timeouts, fixes "signal only works in main thread" error in GUI)
+- Feature 3: Tier 2 judge provider fallback validation (end-to-end testing & troubleshooting docs for OpenAI auth failures)
+- Feature 4: Complete test suite alignment (hypothesis property tests + inline-snapshot regression tests for remaining 12 test files)
+- Feature 5: CC trace adapter -- parse CC artifacts into `GraphTraceData` in two modes: solo (single CC instance, no orchestration) and teams (CC Agent Teams with delegation), both with full tool/plugin/MCP access
+- Feature 6: Baseline comparison engine -- `BaselineComparison` Pydantic model + `compare()`/`compare_all()` for three-way `CompositeResult` diffing (PydanticAI vs CC-solo vs CC-teams)
+- Feature 7: CLI & GUI baseline integration -- `--cc-solo-dir` and `--cc-teams-dir` CLI flags, three-way comparison in GUI
+
 ### Added
 
 - `inline-snapshot` as supplementary testing tool
