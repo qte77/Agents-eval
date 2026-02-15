@@ -1,6 +1,6 @@
 {
   "project": "Agents-eval",
-  "description": "Settings migration, eval wiring, trace capture, graph-vs-text comparison",
+  "description": "Settings migration, eval wiring, trace capture, graph-vs-text comparison, Logfire+Phoenix tracing, Streamlit dashboard",
   "source": "docs/PRD-Sprint2.md",
   "generated": "2026-02-11T00:00:00Z",
   "stories": [
@@ -94,6 +94,71 @@
       "content_hash": "",
       "depends_on": [
         "STORY-003"
+      ]
+    },
+    {
+      "id": "STORY-005",
+      "title": "Migrate Opik to Logfire + Phoenix local tracing",
+      "description": "Replace Opik tracing (11 Docker containers) with Logfire SDK + Arize Phoenix. Auto-instrument PydanticAI agents via logfire.instrument_pydantic_ai(), use Phoenix as local trace viewer via pip install. Remove OpikInstrumentationManager, @track decorators, and get_opik_decorator() wrappers.",
+      "acceptance": [
+        "pyproject.toml replaces opik with arize-phoenix and openinference-instrumentation-pydantic-ai",
+        "JudgeSettings replaces opik_* fields with logfire_enabled, logfire_send_to_cloud, phoenix_endpoint, logfire_service_name",
+        "LogfireConfig replaces OpikConfig in load_configs.py",
+        "logfire_instrumentation.py replaces opik_instrumentation.py with auto-instrumentation",
+        "agent_system.py removes manual @opik_decorator wrappers from delegation tools",
+        "evaluation_pipeline.py removes Opik import block and _apply_opik_decorator/_record_opik_metadata methods",
+        "CommonSettings.enable_opik renamed to enable_logfire",
+        "Makefile adds start_phoenix, stop_phoenix, status_phoenix targets",
+        "make validate passes"
+      ],
+      "files": [
+        "pyproject.toml",
+        "src/app/evals/settings.py",
+        "src/app/utils/load_configs.py",
+        "src/app/agents/opik_instrumentation.py",
+        "src/app/agents/logfire_instrumentation.py",
+        "src/app/agents/agent_system.py",
+        "src/app/evals/evaluation_pipeline.py",
+        "src/app/common/settings.py",
+        ".env.example",
+        "Makefile",
+        "tests/evals/test_judge_settings.py",
+        "tests/common/test_common_settings.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "",
+      "depends_on": [
+        "STORY-001"
+      ]
+    },
+    {
+      "id": "STORY-006",
+      "title": "Streamlit evaluation dashboard and agent graph visualization",
+      "description": "Add Evaluation Results page (Tier 1/2/3 scores, graph vs text comparison) and Agent Graph page (Pyvis NetworkX visualization) to Streamlit GUI. Cross-link Phoenix for deep trace inspection.",
+      "acceptance": [
+        "Evaluation Results page displays Tier 1/2/3 scores from CompositeResult",
+        "Bar chart compares graph metrics vs text metrics",
+        "Agent Graph page renders export_trace_to_networkx() output as interactive Pyvis graph",
+        "Agent and tool nodes visually distinguished",
+        "Sidebar includes Phoenix status link",
+        "Pages render gracefully with empty data",
+        "pyvis added to gui dependency group",
+        "make validate passes"
+      ],
+      "files": [
+        "src/gui/pages/evaluation.py",
+        "src/gui/pages/agent_graph.py",
+        "src/gui/config/config.py",
+        "src/gui/components/sidebar.py",
+        "src/run_gui.py",
+        "pyproject.toml"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "",
+      "depends_on": [
+        "STORY-005"
       ]
     }
   ]

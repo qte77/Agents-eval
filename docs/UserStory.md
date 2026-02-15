@@ -19,6 +19,9 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 - As a researcher, I want to see graph metrics alongside text metrics so I can compare evaluation approaches.
 - As a researcher, I want to skip evaluation with `--skip-eval` when I only need generation.
 - As a researcher, I want evaluation settings configurable via environment variables so I can tune tier weights, timeouts, and model selection without editing code or JSON files.
+- As a researcher, I want local tracing via `pip install` (Logfire + Phoenix) instead of 11 Docker containers so I can inspect agent traces without complex infrastructure setup.
+- As a researcher, I want a Streamlit dashboard showing Tier 1/2/3 evaluation scores so I can visually compare graph-based and text-based metrics without parsing log output.
+- As a researcher, I want an interactive agent graph visualization so I can see how agents delegated tasks and coordinated during review generation.
 
 ## Success Criteria
 
@@ -27,6 +30,9 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 3. Logs show Tier 1 (text) vs Tier 3 (graph) scores side by side with individual metric breakdowns.
 4. `--skip-eval` flag skips evaluation when only generation is needed.
 5. `make validate` passes with all existing and new tests.
+6. `phoenix serve` starts a local trace viewer at localhost:6006; agent traces appear via Logfire auto-instrumentation without manual decorators.
+7. Streamlit "Evaluation Results" page displays tier scores and graph-vs-text comparison charts.
+8. Streamlit "Agent Graph" page renders the NetworkX delegation graph interactively via Pyvis.
 
 ## Constraints
 
@@ -34,6 +40,8 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 - Must use existing `EvaluationPipeline` API (no restructure to plugin architecture in Sprint 2).
 - Must use existing `TraceCollector` API for graph data capture.
 - Settings via pydantic-settings (`JudgeSettings` with `JUDGE_` prefix), consistent with `CommonSettings` (`EVAL_` prefix). No JSON config files at runtime.
+- Tracing via Logfire SDK + Arize Phoenix (zero Docker containers). `logfire.instrument_pydantic_ai()` auto-instruments all PydanticAI agents.
+- Streamlit + Phoenix are complementary (separate services on different ports), not embedded. Phoenix for trace inspection, Streamlit for custom evaluation dashboards.
 
 ## Out of Scope
 
