@@ -14,6 +14,8 @@ def _convert_value(key: str, value: str | bool) -> str | bool | int:
     """Convert parsed argument value to appropriate type."""
     if key == "peerread_max_papers_per_sample_download" and isinstance(value, str):
         return int(value)
+    if key == "token_limit" and isinstance(value, str):
+        return int(value)
     return value
 
 
@@ -52,6 +54,7 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
         "--enable-review-tools": "Enable PeerRead review generation tools",
         "--paper-number": "Specify paper number for PeerRead review generation",
         "--skip-eval": "Skip evaluation after run_manager completes",
+        "--token-limit": "Override agent token limit (1000-1000000, default from config)",
         "--download-peerread-full-only": (
             "Download all of the PeerRead dataset and exit (setup mode)"
         ),

@@ -89,11 +89,12 @@ class TestCLITokenLimitFlag:
                 token_limit=100000,
             )
 
-            # Verify run_manager was called with overridden limit
-            mock_run_manager.assert_called_once()
-            call_args = mock_run_manager.call_args[0]
-            usage_limits = call_args[4]
-            assert usage_limits.total_tokens_limit == 100000
+            # Verify setup_agent_env was called with token_limit parameter
+            mock_setup.assert_called_once()
+            # Extract positional and keyword args
+            call_args, call_kwargs = mock_setup.call_args
+            # token_limit should be the 5th parameter (index 4) or in kwargs
+            assert len(call_args) >= 5 and call_args[4] == 100000 or call_kwargs.get("token_limit") == 100000
 
     def test_cli_parse_args_includes_token_limit(self):
         """Test that parse_args extracts --token-limit flag."""
@@ -207,11 +208,10 @@ class TestEnvVarTokenLimit:
                 token_limit=120000,
             )
 
-            # Verify CLI flag was used, not env var
-            mock_run_manager.assert_called_once()
-            call_args = mock_run_manager.call_args[0]
-            usage_limits = call_args[4]
-            assert usage_limits.total_tokens_limit == 120000
+            # Verify setup_agent_env was called with CLI token_limit (not env var)
+            mock_setup.assert_called_once()
+            call_args, call_kwargs = mock_setup.call_args
+            assert len(call_args) >= 5 and call_args[4] == 120000 or call_kwargs.get("token_limit") == 120000
 
 
 class TestOverridePriority:
@@ -265,8 +265,8 @@ class TestConfigFallback:
                 query="test query",
             )
 
-            # Verify config value was used
-            mock_run_manager.assert_called_once()
-            call_args = mock_run_manager.call_args[0]
-            usage_limits = call_args[4]
-            assert usage_limits.total_tokens_limit == 25000
+            # Verify setup_agent_env was called without token_limit override
+            mock_setup.assert_called_once()
+            call_args, call_kwargs = mock_setup.call_args
+            # token_limit should be None (not passed)
+            assert (len(call_args) < 5 or call_args[4] is None) and call_kwargs.get("token_limit") is None

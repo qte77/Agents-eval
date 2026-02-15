@@ -560,6 +560,7 @@ def setup_agent_env(
     query: UserPromptType,
     chat_config: ChatConfig | BaseModel,
     chat_env_config: AppEnv,
+    token_limit: int | None = None,
 ) -> EndpointConfig:
     """
     Sets up the environment for an agent by configuring provider settings, prompts,
@@ -572,6 +573,8 @@ def setup_agent_env(
             provider and prompt settings.
         chat_env_config (AppEnv): The application environment configuration
             containing API keys.
+        token_limit (int | None): Optional token limit override (CLI/GUI param).
+            Priority: CLI/GUI > env var > config. Valid range: 1000-1000000.
 
     Returns:
         EndpointConfig: The configuration object for the agent.
@@ -630,12 +633,34 @@ def setup_agent_env(
     #         logger.error(msg)
     #         raise TypeError(msg)
 
-    # Load usage limits from config instead of hardcoding
+    # Determine token limit with priority: CLI/GUI > env var > config
+    # Reason: Allow runtime override of config defaults via CLI, GUI, or environment
+    effective_limit = None
+    if token_limit is not None:
+        # CLI/GUI override has highest priority
+        effective_limit = token_limit
+    elif chat_env_config.AGENT_TOKEN_LIMIT is not None:
+        # Environment variable has second priority
+        effective_limit = chat_env_config.AGENT_TOKEN_LIMIT
+    elif provider_config.usage_limits is not None:
+        # Config file has lowest priority (fallback)
+        effective_limit = provider_config.usage_limits
+
+    # Validate token limit bounds (1000-1000000)
+    if effective_limit is not None:
+        if effective_limit < 1000:
+            msg = f"Token limit {effective_limit} below minimum 1000"
+            logger.error(msg)
+            raise ValueError(msg)
+        if effective_limit > 1000000:
+            msg = f"Token limit {effective_limit} above maximum 1000000"
+            logger.error(msg)
+            raise ValueError(msg)
+
+    # Create UsageLimits object if token limit is set
     usage_limits = None
-    if provider_config.usage_limits is not None:
-        usage_limits = UsageLimits(
-            request_limit=10, total_tokens_limit=provider_config.usage_limits
-        )
+    if effective_limit is not None:
+        usage_limits = UsageLimits(request_limit=10, total_tokens_limit=effective_limit)
 
     return EndpointConfig.model_validate(
         {

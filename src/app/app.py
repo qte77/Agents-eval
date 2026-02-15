@@ -253,6 +253,7 @@ async def main(
     peerread_max_papers_per_sample_download: int | None = 5,
     cc_solo_dir: str | None = None,
     cc_teams_dir: str | None = None,
+    token_limit: int | None = None,
     # chat_config_path: str | Path,
 ) -> None:
     """
@@ -290,7 +291,9 @@ async def main(
             enable_review_tools = enable_review_tools or review_tools_enabled
 
             chat_env_config = AppEnv()
-            agent_env = setup_agent_env(chat_provider, query, chat_config, chat_env_config)
+            agent_env = setup_agent_env(
+                chat_provider, query, chat_config, chat_env_config, token_limit
+            )
 
             login(PROJECT_NAME, chat_env_config)
             _initialize_instrumentation()

@@ -246,4 +246,7 @@ class AppEnv(BaseSettings):
     LOGFIRE_API_KEY: str = ""
     WANDB_API_KEY: str = ""
 
+    # Agent Configuration
+    AGENT_TOKEN_LIMIT: int | None = None
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
