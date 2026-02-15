@@ -595,7 +595,6 @@ class TestStory001AcceptanceCriteria:
         from app.judge.evaluation_pipeline import EvaluationPipeline
 
         settings = JudgeSettings(tier2_provider="openai")
-        env_config = AppEnv(OPENAI_API_KEY="")
 
         pipeline = EvaluationPipeline(settings=settings)
         pipeline.llm_engine.tier2_available = False

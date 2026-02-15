@@ -270,6 +270,40 @@ class EvaluationPipeline:
             coordination_events=[],
         )
 
+    def _should_apply_fallback(self, results: EvaluationResults) -> bool:
+        """Check if fallback strategy should be applied.
+
+        Args:
+            results: Partial evaluation results
+
+        Returns:
+            True if fallback should be applied, False otherwise
+        """
+        # Don't apply fallback if Tier 2 is missing due to provider unavailability
+        tier2_provider_unavailable = results.tier2 is None and not self.llm_engine.tier2_available
+        return not tier2_provider_unavailable
+
+    def _generate_composite_score(self, results: EvaluationResults) -> CompositeResult:
+        """Generate composite score using appropriate scorer method.
+
+        Args:
+            results: Evaluation results from all tiers
+
+        Returns:
+            CompositeResult with appropriate weight handling
+
+        Raises:
+            ValueError: If insufficient tier results for scoring
+        """
+        if results.tier2 is None:
+            # Tier 2 skipped - use weight redistribution
+            return self.composite_scorer.evaluate_composite_with_optional_tier2(results)
+        elif results.is_complete():
+            # All tiers available
+            return self.composite_scorer.evaluate_composite(results)
+        else:
+            raise ValueError("Cannot generate composite score: insufficient tier results")
+
     def _handle_tier3_error(
         self, e: Exception, execution_trace: dict[str, Any] | None, start_time: float
     ) -> tuple[None, float]:
@@ -496,26 +530,11 @@ class EvaluationPipeline:
             )
 
             # Apply fallback strategy if needed (but NOT for Tier 2 when provider unavailable)
-            if not results.is_complete():
-                # Check if Tier 2 is missing due to provider unavailability (STORY-001)
-                tier2_provider_unavailable = (
-                    results.tier2 is None and not self.llm_engine.tier2_available
-                )
-                if not tier2_provider_unavailable:
-                    # Apply fallback for other cases (timeouts, errors, etc.)
-                    results = self._apply_fallback_strategy(results)
+            if not results.is_complete() and self._should_apply_fallback(results):
+                results = self._apply_fallback_strategy(results)
 
-            # Generate composite score - use optional Tier 2 scorer when Tier 2 might be None
-            if results.tier2 is None:
-                # Tier 2 skipped - use weight redistribution
-                composite_result = self.composite_scorer.evaluate_composite_with_optional_tier2(
-                    results
-                )
-            elif results.is_complete():
-                # All tiers available
-                composite_result = self.composite_scorer.evaluate_composite(results)
-            else:
-                raise ValueError("Cannot generate composite score: insufficient tier results")
+            # Generate composite score with appropriate weight handling
+            composite_result = self._generate_composite_score(results)
 
             # Finalize performance monitoring
             total_time = time.time() - pipeline_start
