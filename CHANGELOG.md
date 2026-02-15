@@ -48,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feature 2 (STORY-002): Thread-safe timeout handling in graph analysis using ThreadPoolExecutor (replaces signal-based timeouts)
 - Feature 3 (STORY-003): Tier 2 judge provider fallback integration tests and troubleshooting documentation
 - Feature 3 (STORY-003): Auth failure detection in all Tier 2 assessments (technical_accuracy, constructiveness, planning_rationality) with neutral fallback scores (0.5)
+- Feature 7 (STORY-007): CLI `--cc-solo-dir` and `--cc-teams-dir` flags for baseline comparison against Claude Code artifacts
+- Feature 7 (STORY-007): `_run_baseline_comparisons()` function in app.py for evaluating CC solo and teams baselines
+- Feature 7 (STORY-007): `render_baseline_comparison()` GUI section for side-by-side metrics display and three-way comparison tables
+- Feature 7 (STORY-007): CLI baseline comparison logging with summary output for each pairwise comparison
 - Feature 4 (STORY-004): Complete test suite alignment with hypothesis and inline-snapshot (no BDD/Gherkin)
 - Feature 5 (STORY-005): CC trace adapter for solo and teams modes parsing Claude Code artifacts into GraphTraceData format
 - Feature 4 (STORY-004): Hypothesis property-based tests for data validation invariants, score bounds, URL construction, execution traces, and metrics output
