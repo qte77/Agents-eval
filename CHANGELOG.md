@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-007: `TraceStore` for thread-safe trace storage
 - STORY-007: Plugin wrappers for all three evaluation tiers
 - STORY-009: `cc_otel` module for Claude Code OpenTelemetry instrumentation with Phoenix OTLP backend
+- STORY-010: GUI settings page displays actual values from `CommonSettings` and `JudgeSettings` pydantic-settings classes
+- STORY-010: GUI prompts page loads directly from `ChatConfig.prompts` without hardcoded fallback
 
 ### Added
 
@@ -38,10 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - STORY-008: Consolidated all evaluation code from `app.evals.*` to `app.judge.*`
+- STORY-010: GUI settings page refactored from provider selection to read-only settings display with Streamlit expanders
+- STORY-010: GUI prompts page updated to load prompts from `ChatConfig` without `PROMPTS_DEFAULT` fallback
 - Makefile: DRY refactor of `quick_start`/`dataset_get_smallest` via `_find_smallest_papers` helper; removed redundant `\` from `.ONESHELL` blocks
 - Pandoc: configurable LoF/LoT generation and unnumbered title support
 - Ralph PRD parser rewritten with typed models and safe updates
 - All dependencies updated to latest 2026 versions
+
+### Removed
+
+- STORY-010: `PROMPTS_DEFAULT` hardcoded constant from `gui/config/config.py` (DRY principle - single source of truth in `config_chat.json`)
 
 ### Fixed
 
