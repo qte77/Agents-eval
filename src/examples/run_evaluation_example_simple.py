@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from app.evals.evaluation_pipeline import EvaluationPipeline
+from app.judge.evaluation_pipeline import EvaluationPipeline
 
 
 async def run_simple_evaluation():

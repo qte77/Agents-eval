@@ -18,12 +18,12 @@ from app.data_models.evaluation_models import (
     Tier2Result,
     Tier3Result,
 )
-from app.evals.composite_scorer import CompositeScorer, EvaluationResults
-from app.evals.graph_analysis import GraphAnalysisEngine
-from app.evals.llm_evaluation_managers import LLMJudgeEngine
-from app.evals.performance_monitor import PerformanceMonitor
-from app.evals.settings import JudgeSettings
-from app.evals.traditional_metrics import TraditionalMetricsEngine
+from app.judge.composite_scorer import CompositeScorer, EvaluationResults
+from app.judge.graph_analysis import GraphAnalysisEngine
+from app.judge.llm_evaluation_managers import LLMJudgeEngine
+from app.judge.performance_monitor import PerformanceMonitor
+from app.judge.settings import JudgeSettings
+from app.judge.traditional_metrics import TraditionalMetricsEngine
 from app.utils.log import logger
 
 

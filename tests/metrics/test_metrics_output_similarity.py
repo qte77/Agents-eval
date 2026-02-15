@@ -5,7 +5,7 @@ This module verifies that the traditional metrics engine correctly computes
 similarity scores between agent outputs and reference texts.
 """
 
-from app.evals.traditional_metrics import TraditionalMetricsEngine
+from app.judge.traditional_metrics import TraditionalMetricsEngine
 
 
 def test_traditional_metrics_similarity():

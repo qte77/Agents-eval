@@ -14,8 +14,8 @@ from typing import Any
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from app.evals.evaluation_pipeline import EvaluationPipeline
-from app.evals.trace_processors import get_trace_collector
+from app.judge.evaluation_pipeline import EvaluationPipeline
+from app.judge.trace_processors import get_trace_collector
 
 
 def _get_sample_data() -> tuple[str, str, list[str], dict[str, Any]]:
@@ -80,7 +80,7 @@ def _run_pipeline_evaluation(
     reference_reviews: list[str],
 ) -> tuple[float, str | None]:
     """Run pipeline evaluation and return composite score and recommendation."""
-    from app.evals.traditional_metrics import TraditionalMetricsEngine
+    from app.judge.traditional_metrics import TraditionalMetricsEngine
 
     try:
         print("Initializing evaluation pipeline...")
@@ -255,7 +255,7 @@ def run_traditional_metrics_only_example():
     reference_reviews = ["The work demonstrates solid approach and findings."]
 
     # Use the traditional metrics engine directly
-    from app.evals.traditional_metrics import TraditionalMetricsEngine
+    from app.judge.traditional_metrics import TraditionalMetricsEngine
 
     engine = TraditionalMetricsEngine()
 

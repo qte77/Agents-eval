@@ -21,7 +21,7 @@ from app.data_models.evaluation_models import GraphTraceData, Tier3Result
 from app.utils.log import logger
 
 if TYPE_CHECKING:
-    from app.evals.settings import JudgeSettings
+    from app.judge.settings import JudgeSettings
 
 
 class GraphAnalysisEngine:
@@ -532,14 +532,14 @@ def evaluate_single_graph_analysis(
         Tier3Result with graph analysis metrics
 
     Example:
-        >>> from app.evals.trace_processors import get_trace_collector
+        >>> from app.judge.trace_processors import get_trace_collector
         >>> collector = get_trace_collector()
         >>> trace_data = collector.load_trace("execution_001")
         >>> result = evaluate_single_graph_analysis(trace_data)
         >>> print(f"Overall score: {result.overall_score:.3f}")
     """
     if settings is None:
-        from app.evals.settings import JudgeSettings
+        from app.judge.settings import JudgeSettings
 
         settings = JudgeSettings()
     engine = GraphAnalysisEngine(settings)

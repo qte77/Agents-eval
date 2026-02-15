@@ -10,11 +10,11 @@ from unittest.mock import patch
 import pytest
 
 from app.data_models.evaluation_models import GraphTraceData, Tier3Result
-from app.evals.graph_analysis import (
+from app.judge.graph_analysis import (
     GraphAnalysisEngine,
     evaluate_single_graph_analysis,
 )
-from app.evals.settings import JudgeSettings
+from app.judge.settings import JudgeSettings
 
 
 class TestGraphAnalysisEngine:

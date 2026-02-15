@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from app.data_models.evaluation_models import Tier1Result
-from app.evals.traditional_metrics import (
+from app.judge.traditional_metrics import (
     TraditionalMetricsEngine,
     evaluate_single_enhanced,
     evaluate_single_traditional,
@@ -127,7 +127,7 @@ class TestTraditionalMetricsEngine:
     # Task success assessment tests
     def test_task_success_above_threshold(self, engine):
         """Given similarity scores above threshold, task should succeed."""
-        from app.evals.traditional_metrics import SimilarityScores
+        from app.judge.traditional_metrics import SimilarityScores
 
         scores = SimilarityScores(cosine=0.85, jaccard=0.80, semantic=0.90)
         success = engine.assess_task_success(scores, threshold=0.8)
@@ -136,7 +136,7 @@ class TestTraditionalMetricsEngine:
 
     def test_task_success_below_threshold(self, engine):
         """Given similarity scores below threshold, task should fail."""
-        from app.evals.traditional_metrics import SimilarityScores
+        from app.judge.traditional_metrics import SimilarityScores
 
         scores = SimilarityScores(cosine=0.5, jaccard=0.4, semantic=0.6)
         success = engine.assess_task_success(scores, threshold=0.8)
@@ -145,7 +145,7 @@ class TestTraditionalMetricsEngine:
 
     def test_task_success_weighted_average(self, engine):
         """Task success should use weighted average of similarity metrics."""
-        from app.evals.traditional_metrics import SimilarityScores
+        from app.judge.traditional_metrics import SimilarityScores
 
         # High semantic (weight 0.5), low others
         scores = SimilarityScores(cosine=0.1, jaccard=0.1, semantic=0.9)
@@ -198,12 +198,12 @@ class TestTraditionalMetricsEngine:
         time.sleep(0.01)  # Small delay to measure
         end_time = time.perf_counter()
 
-        from app.evals.settings import JudgeSettings
+        from app.judge.settings import JudgeSettings
 
         settings = JudgeSettings(tier1_confidence_threshold=0.7)
 
         with patch.object(engine, "find_best_match") as mock_best_match:
-            from app.evals.traditional_metrics import SimilarityScores
+            from app.judge.traditional_metrics import SimilarityScores
 
             mock_best_match.return_value = SimilarityScores(cosine=0.8, jaccard=0.7, semantic=0.85)
 
@@ -459,7 +459,7 @@ class TestPeerReadEvaluation:
 
     def test_evaluate_review_similarity(self):
         """Test similarity evaluation between agent and ground truth reviews."""
-        from app.evals.traditional_metrics import evaluate_review_similarity
+        from app.judge.traditional_metrics import evaluate_review_similarity
 
         # Arrange
         agent_review = "This paper presents solid methodology and good results."
@@ -476,7 +476,7 @@ class TestPeerReadEvaluation:
         """Test creation of comprehensive evaluation result."""
         from app.data_models.evaluation_models import PeerReadEvalResult
         from app.data_models.peerread_models import PeerReadReview
-        from app.evals.traditional_metrics import create_evaluation_result
+        from app.judge.traditional_metrics import create_evaluation_result
 
         # Arrange
         paper_id = "test_001"
@@ -526,7 +526,7 @@ class TestPeerReadEvaluation:
     def test_evaluation_result_with_empty_reviews(self):
         """Test evaluation result creation with empty ground truth reviews."""
         from app.data_models.evaluation_models import PeerReadEvalResult
-        from app.evals.traditional_metrics import create_evaluation_result
+        from app.judge.traditional_metrics import create_evaluation_result
 
         # Arrange
         paper_id = "test_002"
@@ -544,7 +544,7 @@ class TestPeerReadEvaluation:
     def test_recommendation_matching_positive(self):
         """Test recommendation matching for positive agent sentiment."""
         from app.data_models.peerread_models import PeerReadReview
-        from app.evals.traditional_metrics import create_evaluation_result
+        from app.judge.traditional_metrics import create_evaluation_result
 
         # Arrange
         paper_id = "test_003"
@@ -574,7 +574,7 @@ class TestPeerReadEvaluation:
     def test_recommendation_matching_negative(self):
         """Test recommendation matching for negative agent sentiment."""
         from app.data_models.peerread_models import PeerReadReview
-        from app.evals.traditional_metrics import create_evaluation_result
+        from app.judge.traditional_metrics import create_evaluation_result
 
         # Arrange
         paper_id = "test_004"

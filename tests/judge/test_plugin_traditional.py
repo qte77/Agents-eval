@@ -180,7 +180,7 @@ class TestTraditionalMetricsPlugin:
         The actual tests are in tests/evals/test_traditional_metrics.py.
         """
         # This test passes if we can import the module without breaking existing functionality
-        from app.evals.traditional_metrics import TraditionalMetricsEngine
+        from app.judge.traditional_metrics import TraditionalMetricsEngine
 
         engine = TraditionalMetricsEngine()
         assert engine is not None

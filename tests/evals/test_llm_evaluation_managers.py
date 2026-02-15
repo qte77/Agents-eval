@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from app.data_models.evaluation_models import Tier2Result
-from app.evals.llm_evaluation_managers import LLMJudgeEngine
-from app.evals.settings import JudgeSettings
+from app.judge.llm_evaluation_managers import LLMJudgeEngine
+from app.judge.settings import JudgeSettings
 
 
 @pytest.fixture
@@ -322,7 +322,7 @@ class TestLLMJudgeEngine:
 @pytest.mark.asyncio
 async def test_evaluate_single_llm_judge_via_pipeline():
     """Test LLM judge evaluation through the evaluation pipeline."""
-    from app.evals.evaluation_pipeline import EvaluationPipeline
+    from app.judge.evaluation_pipeline import EvaluationPipeline
 
     paper = "Test paper content"
     review = "Test review content"

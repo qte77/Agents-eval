@@ -24,7 +24,7 @@ from app.data_models.app_models import AppEnv, ChatConfig
 from app.data_utils.datasets_peerread import (
     download_peerread_dataset,
 )
-from app.evals.evaluation_pipeline import EvaluationPipeline
+from app.judge.evaluation_pipeline import EvaluationPipeline
 from app.utils.error_messages import generic_exception
 from app.utils.load_configs import load_config
 from app.utils.log import logger
@@ -58,7 +58,7 @@ async def _run_evaluation_if_enabled(
     # Retrieve GraphTraceData from trace collector
     execution_trace = None
     if execution_id:
-        from app.evals.trace_processors import get_trace_collector
+        from app.judge.trace_processors import get_trace_collector
 
         trace_collector = get_trace_collector()
         execution_trace = trace_collector.load_trace(execution_id)

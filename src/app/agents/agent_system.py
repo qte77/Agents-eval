@@ -52,8 +52,8 @@ from app.data_models.app_models import (
     UserPromptType,
 )
 from app.data_models.peerread_models import ReviewGenerationResult
-from app.evals.settings import JudgeSettings
-from app.evals.trace_processors import get_trace_collector
+from app.judge.settings import JudgeSettings
+from app.judge.trace_processors import get_trace_collector
 from app.llms.models import create_agent_models
 from app.llms.providers import (
     get_api_key,

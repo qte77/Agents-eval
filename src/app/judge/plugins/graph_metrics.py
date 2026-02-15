@@ -12,8 +12,8 @@ from typing import Any
 from pydantic import BaseModel
 
 from app.data_models.evaluation_models import Tier3Result
-from app.evals.graph_analysis import GraphAnalysisEngine
-from app.evals.settings import JudgeSettings
+from app.judge.graph_analysis import GraphAnalysisEngine
+from app.judge.settings import JudgeSettings
 from app.judge.plugins.base import EvaluatorPlugin
 from app.utils.log import logger
 

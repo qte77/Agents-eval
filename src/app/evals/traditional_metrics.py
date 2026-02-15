@@ -17,7 +17,7 @@ import textdistance
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 if TYPE_CHECKING:
-    from app.evals.settings import JudgeSettings
+    from app.judge.settings import JudgeSettings
 from sklearn.metrics.pairwise import cosine_similarity
 
 from app.data_models.evaluation_models import PeerReadEvalResult, Tier1Result
@@ -479,7 +479,7 @@ def evaluate_single_traditional(
         >>> print(f"Overall score: {result.overall_score:.3f}")
     """
     if settings is None:
-        from app.evals.settings import JudgeSettings
+        from app.judge.settings import JudgeSettings
 
         settings = JudgeSettings()
     engine = TraditionalMetricsEngine()

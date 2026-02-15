@@ -12,9 +12,9 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from app.data_models.app_models import AppEnv
-from app.evals.composite_scorer import CompositeScorer, EvaluationResults
-from app.evals.llm_evaluation_managers import LLMJudgeEngine
-from app.evals.settings import JudgeSettings
+from app.judge.composite_scorer import CompositeScorer, EvaluationResults
+from app.judge.llm_evaluation_managers import LLMJudgeEngine
+from app.judge.settings import JudgeSettings
 
 
 class TestProviderAPIKeyValidation:

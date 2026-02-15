@@ -18,7 +18,7 @@ from app.data_models.evaluation_models import (
 from app.utils.log import logger
 
 if TYPE_CHECKING:
-    from app.evals.settings import JudgeSettings
+    from app.judge.settings import JudgeSettings
 
 
 class AgentMetrics(BaseModel):
@@ -80,7 +80,7 @@ class CompositeScorer:
         """
         # Import here to avoid circular dependency
         if settings is None:
-            from app.evals.settings import JudgeSettings
+            from app.judge.settings import JudgeSettings
 
             settings = JudgeSettings()
 

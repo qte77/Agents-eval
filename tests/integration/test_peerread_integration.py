@@ -17,7 +17,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from app.data_models.peerread_models import PeerReadPaper, PeerReadReview
-from app.evals.evaluation_pipeline import EvaluationPipeline
+from app.judge.evaluation_pipeline import EvaluationPipeline
 
 
 class PeerReadTestData:

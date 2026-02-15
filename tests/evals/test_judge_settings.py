@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from app.evals.settings import JudgeSettings
+from app.judge.settings import JudgeSettings
 
 
 class TestJudgeSettingsDefaults:

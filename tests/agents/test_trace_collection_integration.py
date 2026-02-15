@@ -268,8 +268,8 @@ async def test_graph_trace_data_constructed_via_model_validate():
         graph_trace = GraphTraceData.model_validate(trace_dict)
         mock_load_trace.return_value = graph_trace
 
-        from app.evals.settings import JudgeSettings
-        from app.evals.trace_processors import TraceCollector
+        from app.judge.settings import JudgeSettings
+        from app.judge.trace_processors import TraceCollector
 
         collector = TraceCollector(JudgeSettings())
         result = collector.load_trace("test_123")

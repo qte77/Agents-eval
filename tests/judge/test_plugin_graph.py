@@ -185,8 +185,8 @@ class TestGraphEvaluatorPlugin:
         The actual tests are in tests/evals/test_graph_analysis.py.
         """
         # This test passes if we can import the module without breaking existing functionality
-        from app.evals.graph_analysis import GraphAnalysisEngine
-        from app.evals.settings import JudgeSettings
+        from app.judge.graph_analysis import GraphAnalysisEngine
+        from app.judge.settings import JudgeSettings
 
         settings = JudgeSettings()
         engine = GraphAnalysisEngine(settings)

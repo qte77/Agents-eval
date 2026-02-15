@@ -19,7 +19,7 @@ from app.data_models.evaluation_models import GraphTraceData
 from app.utils.log import logger
 
 if TYPE_CHECKING:
-    from app.evals.settings import JudgeSettings
+    from app.judge.settings import JudgeSettings
 
 
 @dataclass
@@ -525,7 +525,7 @@ def get_trace_collector(settings: JudgeSettings | None = None) -> TraceCollector
 
     if _global_collector is None:
         if settings is None:
-            from app.evals.settings import JudgeSettings
+            from app.judge.settings import JudgeSettings
 
             settings = JudgeSettings()
         _global_collector = TraceCollector(settings)

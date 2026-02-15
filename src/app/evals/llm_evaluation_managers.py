@@ -21,12 +21,12 @@ from app.data_models.evaluation_models import (
     TechnicalAccuracyAssessment,
     Tier2Result,
 )
-from app.evals.traditional_metrics import TraditionalMetricsEngine
+from app.judge.traditional_metrics import TraditionalMetricsEngine
 from app.llms.providers import get_api_key
 from app.utils.log import logger
 
 if TYPE_CHECKING:
-    from app.evals.settings import JudgeSettings
+    from app.judge.settings import JudgeSettings
 
 
 class LLMJudgeEngine:

@@ -16,8 +16,8 @@ from app.data_models.evaluation_models import CompositeResult, Tier1Result, Tier
 @pytest.mark.asyncio
 async def test_log_metric_comparison_called_after_evaluation():
     """Test that metric comparison logging is called after evaluate_comprehensive completes."""
-    from app.evals.evaluation_pipeline import EvaluationPipeline
-    from app.evals.settings import JudgeSettings
+    from app.judge.evaluation_pipeline import EvaluationPipeline
+    from app.judge.settings import JudgeSettings
 
     # Create pipeline with mocked engines
     settings = JudgeSettings(enable_tier2=False)  # Disable tier2 for focused test
@@ -110,8 +110,8 @@ async def test_individual_graph_metrics_displayed():
     with (
         patch("app.evals.evaluation_pipeline.logger") as mock_logger,
     ):
-        from app.evals.evaluation_pipeline import EvaluationPipeline
-        from app.evals.settings import JudgeSettings
+        from app.judge.evaluation_pipeline import EvaluationPipeline
+        from app.judge.settings import JudgeSettings
 
         settings = JudgeSettings(enable_tier2=False)
         pipeline = EvaluationPipeline(settings=settings)
@@ -198,8 +198,8 @@ async def test_individual_text_metrics_displayed():
     with (
         patch("app.evals.evaluation_pipeline.logger") as mock_logger,
     ):
-        from app.evals.evaluation_pipeline import EvaluationPipeline
-        from app.evals.settings import JudgeSettings
+        from app.judge.evaluation_pipeline import EvaluationPipeline
+        from app.judge.settings import JudgeSettings
 
         settings = JudgeSettings(enable_tier2=False)
         pipeline = EvaluationPipeline(settings=settings)
@@ -276,8 +276,8 @@ async def test_composite_score_tier_contribution_displayed():
     with (
         patch("app.evals.evaluation_pipeline.logger") as mock_logger,
     ):
-        from app.evals.evaluation_pipeline import EvaluationPipeline
-        from app.evals.settings import JudgeSettings
+        from app.judge.evaluation_pipeline import EvaluationPipeline
+        from app.judge.settings import JudgeSettings
 
         settings = JudgeSettings(enable_tier2=False)
         pipeline = EvaluationPipeline(settings=settings)

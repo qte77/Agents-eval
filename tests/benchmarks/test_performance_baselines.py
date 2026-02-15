@@ -22,10 +22,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 from app.data_models.evaluation_models import (
     GraphTraceData,
 )
-from app.evals.evaluation_pipeline import EvaluationPipeline
-from app.evals.graph_analysis import GraphAnalysisEngine
-from app.evals.llm_evaluation_managers import LLMJudgeEngine
-from app.evals.traditional_metrics import TraditionalMetricsEngine
+from app.judge.evaluation_pipeline import EvaluationPipeline
+from app.judge.graph_analysis import GraphAnalysisEngine
+from app.judge.llm_evaluation_managers import LLMJudgeEngine
+from app.judge.traditional_metrics import TraditionalMetricsEngine
 
 
 class PerformanceBenchmarkData:
@@ -225,14 +225,14 @@ class TestPerformanceBaselines:
     @pytest.fixture
     def llm_engine(self):
         """Fixture providing LLM judge engine."""
-        from app.evals.settings import JudgeSettings
+        from app.judge.settings import JudgeSettings
 
         return LLMJudgeEngine(JudgeSettings())
 
     @pytest.fixture
     def graph_engine(self):
         """Fixture providing graph analysis engine."""
-        from app.evals.settings import JudgeSettings
+        from app.judge.settings import JudgeSettings
 
         return GraphAnalysisEngine(JudgeSettings())
 

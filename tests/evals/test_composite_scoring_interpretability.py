@@ -13,7 +13,7 @@ from app.data_models.evaluation_models import (
     Tier2Result,
     Tier3Result,
 )
-from app.evals.composite_scorer import CompositeScorer, EvaluationResults
+from app.judge.composite_scorer import CompositeScorer, EvaluationResults
 
 
 def _make_evaluation(scale: float = 1.0) -> EvaluationResults:

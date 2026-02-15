@@ -33,7 +33,7 @@ class TestJudgeAgent:
     def test_judge_agent_initializes_with_settings(self):
         """JudgeAgent initializes with JudgeSettings."""
         # This will fail until JudgeAgent is implemented
-        from app.evals.settings import JudgeSettings
+        from app.judge.settings import JudgeSettings
 
         settings = JudgeSettings()
         agent = JudgeAgent(settings=settings)
@@ -173,7 +173,7 @@ class TestJudgeAgentBackwardCompatibility:
     def test_evaluation_pipeline_re_export_works(self):
         """EvaluationPipeline re-export from evals module works."""
         # This will fail until re-export shim is implemented
-        from app.evals.evaluation_pipeline import EvaluationPipeline
+        from app.judge.evaluation_pipeline import EvaluationPipeline
 
         # Should be able to import and use EvaluationPipeline
         pipeline = EvaluationPipeline()

@@ -11,7 +11,7 @@ import json
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.evals.settings import JudgeSettings
+    from app.judge.settings import JudgeSettings
 
 from pathlib import Path
 

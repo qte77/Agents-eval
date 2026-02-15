@@ -241,10 +241,10 @@ class TestLLMJudgePlugin:
         The actual tests are in tests/evals/test_llm_evaluation_managers.py.
         """
         # This test passes if we can import the module without breaking existing functionality
-        from app.evals.llm_evaluation_managers import LLMJudgeEngine
+        from app.judge.llm_evaluation_managers import LLMJudgeEngine
 
         # Basic instantiation test
-        from app.evals.settings import JudgeSettings
+        from app.judge.settings import JudgeSettings
 
         settings = JudgeSettings()
         engine = LLMJudgeEngine(settings)

@@ -31,7 +31,7 @@ def test_no_evals_imports_in_source():
                 pass
 
     assert not evals_imports, (
-        f"Found {len(evals_imports)} imports from app.evals.* that should use app.judge.*:\n"
+        f"Found {len(evals_imports)} imports from app.judge.* that should use app.judge.*:\n"
         + "\n".join(evals_imports[:10])
     )
 
@@ -55,7 +55,7 @@ def test_no_evals_imports_in_tests():
                 pass
 
     assert not evals_imports, (
-        f"Found {len(evals_imports)} imports from app.evals.* that should use app.judge.*:\n"
+        f"Found {len(evals_imports)} imports from app.judge.* that should use app.judge.*:\n"
         + "\n".join(evals_imports[:10])
     )
 
