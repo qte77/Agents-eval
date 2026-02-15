@@ -150,6 +150,10 @@ class CompositeResult(BaseModel):
 
     # Evaluation metadata
     evaluation_complete: bool = Field(description="Whether all required tiers completed")
+    single_agent_mode: bool = Field(
+        default=False,
+        description="Whether single-agent mode weight redistribution was applied",
+    )
     timestamp: str = Field(description="ISO 8601 evaluation timestamp", default="")
     config_version: str = Field(description="Configuration version used", default="1.0.0")
     weights_used: dict[str, float] | None = Field(

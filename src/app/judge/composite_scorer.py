@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from app.data_models.evaluation_models import (
     CompositeResult,
+    GraphTraceData,
     Tier1Result,
     Tier2Result,
     Tier3Result,
@@ -220,6 +221,30 @@ class CompositeScorer:
         """
         return self.recommendation_weights.get(recommendation, 0.0)
 
+    def _detect_single_agent_mode(self, trace_data: GraphTraceData) -> bool:
+        """Detect if execution was single-agent (no multi-agent delegation).
+
+        Single-agent mode is detected when:
+        - coordination_events is empty (no delegation), OR
+        - 0 or 1 unique agent IDs in tool_calls
+
+        Args:
+            trace_data: Graph trace data from agent execution
+
+        Returns:
+            True if single-agent mode, False if multi-agent coordination occurred
+        """
+        # Check coordination events first (most reliable signal)
+        if trace_data.coordination_events:
+            return False
+
+        # Check unique agent IDs in tool_calls
+        agent_ids = {call.get("agent_id") for call in trace_data.tool_calls if "agent_id" in call}
+        unique_agent_count = len(agent_ids)
+
+        # 0 or 1 unique agent = single-agent mode
+        return unique_agent_count <= 1
+
     def evaluate_composite(self, results: EvaluationResults) -> CompositeResult:
         """Complete composite evaluation with score and recommendation.
 
@@ -363,6 +388,103 @@ class CompositeScorer:
             f"coordination={coordination_score:.3f}"
         )
         return agent_metrics
+
+    def evaluate_composite_with_trace(
+        self, results: EvaluationResults, trace_data: GraphTraceData
+    ) -> CompositeResult:
+        """Evaluate composite score with single-agent mode detection and weight redistribution.
+
+        Detects single-agent runs from trace data and redistributes coordination_quality
+        weight to remaining metrics. Also handles Tier 2 skip for compound redistribution.
+
+        Args:
+            results: Container with tier1, tier2, tier3 evaluation results
+            trace_data: Graph trace data for single-agent detection
+
+        Returns:
+            CompositeResult with adjusted weights for single-agent mode
+        """
+        # Detect single-agent mode from trace data
+        single_agent_mode = self._detect_single_agent_mode(trace_data)
+
+        # Determine which metrics to exclude
+        excluded_metrics = []
+        if single_agent_mode:
+            excluded_metrics.append("coordination_quality")
+            logger.info(
+                "Single-agent mode detected - redistributing coordination_quality weight "
+                "to remaining metrics"
+            )
+
+        if results.tier2 is None:
+            excluded_metrics.append("planning_rationality")
+            logger.warning(
+                "Tier 2 (LLM-as-Judge) skipped - redistributing planning_rationality weight"
+            )
+
+        # If no exclusions, use standard evaluation
+        if not excluded_metrics:
+            result = self.evaluate_composite(results)
+            result.single_agent_mode = single_agent_mode
+            return result
+
+        # Build adjusted weights by excluding metrics and redistributing
+        base_weight = 0.167
+        remaining_metrics = {k: v for k, v in self.weights.items() if k not in excluded_metrics}
+        excluded_weight = len(excluded_metrics) * base_weight
+        weight_per_remaining = (1.0 / len(remaining_metrics)) if remaining_metrics else 0.0
+
+        adjusted_weights = {metric: weight_per_remaining for metric in remaining_metrics}
+
+        # Extract metrics (only those not excluded)
+        metrics = {}
+        if results.tier1:
+            if "time_taken" in remaining_metrics:
+                metrics["time_taken"] = results.tier1.time_score
+            if "task_success" in remaining_metrics:
+                metrics["task_success"] = results.tier1.task_success
+            if "output_similarity" in remaining_metrics:
+                metrics["output_similarity"] = results.tier1.overall_score
+
+        if results.tier2 and "planning_rationality" in remaining_metrics:
+            metrics["planning_rationality"] = results.tier2.planning_rationality
+
+        if results.tier3:
+            if "coordination_quality" in remaining_metrics:
+                metrics["coordination_quality"] = results.tier3.coordination_centrality
+            if "tool_efficiency" in remaining_metrics:
+                metrics["tool_efficiency"] = results.tier3.tool_selection_accuracy
+
+        # Validate all required metrics are present
+        missing_metrics = set(remaining_metrics.keys()) - set(metrics.keys())
+        if missing_metrics:
+            raise ValueError(f"Missing required metrics after exclusion: {missing_metrics}")
+
+        # Calculate composite score with adjusted weights
+        composite_score = sum(metrics[metric] * weight for metric, weight in adjusted_weights.items())
+        composite_score = max(0.0, min(1.0, composite_score))
+
+        recommendation = self.map_to_recommendation(composite_score)
+        recommendation_weight = self.get_recommendation_weight(recommendation)
+
+        logger.info(
+            f"Composite score with redistributed weights: {composite_score:.3f} "
+            f"(excluded: {excluded_metrics})"
+        )
+
+        return CompositeResult(
+            composite_score=composite_score,
+            recommendation=recommendation,
+            recommendation_weight=recommendation_weight,
+            metric_scores=metrics,
+            tier1_score=results.tier1.overall_score if results.tier1 else 0.0,
+            tier2_score=results.tier2.overall_score if results.tier2 else None,
+            tier3_score=results.tier3.overall_score if results.tier3 else 0.0,
+            evaluation_complete=results.is_complete(),
+            single_agent_mode=single_agent_mode,
+            weights_used=adjusted_weights,
+            tiers_enabled=sorted(self.settings.get_enabled_tiers()),
+        )
 
     def evaluate_composite_with_optional_tier2(self, results: EvaluationResults) -> CompositeResult:
         """Evaluate composite score with optional Tier 2 (handles missing Tier 2).
