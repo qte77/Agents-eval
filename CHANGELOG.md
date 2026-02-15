@@ -37,6 +37,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-004: Debug logging when optional review fields are missing
 - STORY-004: Hypothesis property tests for arbitrary combinations of missing optional fields
 - STORY-004: Inline-snapshot tests for validated paper structure with missing fields
+- STORY-006: Background query execution with session state persistence in Streamlit GUI
+- STORY-006: Session state management for execution lifecycle (idle → running → completed/error)
+- STORY-006: Progress indicator (spinner) during query execution with navigation resilience
+- STORY-006: `_execute_query_background()` function for async execution with state transitions
+- STORY-006: `_initialize_execution_state()` and `_get_execution_state()` helper functions
+- STORY-006: `_display_configuration()` and `_display_execution_result()` UI helper functions
+- STORY-006: Comprehensive pytest tests for session state transitions and navigation resilience
 
 ### Fixed (Sprint 5)
 
