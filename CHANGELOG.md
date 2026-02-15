@@ -32,6 +32,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-003: `evaluate_composite_with_trace()` method in `CompositeScorer` for trace-based evaluation
 - STORY-003: Hypothesis property tests for weight sum invariants across single-agent and multi-agent modes
 - STORY-003: Comprehensive test coverage with 8 tests including compound redistribution scenarios
+- STORY-004: Optional field handling with "UNKNOWN" defaults for missing PeerRead review fields (IMPACT, SUBSTANCE, etc.)
+- STORY-004: `_create_review_from_dict()` helper method for cleaner review validation
+- STORY-004: Debug logging when optional review fields are missing
+- STORY-004: Hypothesis property tests for arbitrary combinations of missing optional fields
+- STORY-004: Inline-snapshot tests for validated paper structure with missing fields
+
+### Fixed (Sprint 5)
+
+- STORY-004: PeerRead papers 304-308, 330 failing validation with `KeyError: 'IMPACT'`
+  - Replace direct dict access with `.get()` for optional review score fields
+  - Default to "UNKNOWN" for missing IMPACT, SUBSTANCE, APPROPRIATENESS, MEANINGFUL_COMPARISON, SOUNDNESS_CORRECTNESS, ORIGINALITY, CLARITY
+  - Papers with missing optional fields now validate successfully instead of being silently skipped
+  - Improves dataset coverage by including previously excluded papers
 
 ### Added (Sprint 2)
 
