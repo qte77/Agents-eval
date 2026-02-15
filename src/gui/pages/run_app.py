@@ -30,6 +30,7 @@ from gui.config.text import (
     RUN_APP_QUERY_RUN_INFO,
     RUN_APP_QUERY_WARNING,
 )
+from gui.utils.log_capture import LogCapture
 
 
 def _get_session_config(provider: str | None) -> tuple[str, bool, bool, bool]:
@@ -88,6 +89,42 @@ def _get_execution_state() -> str:
     return getattr(st.session_state, "execution_state", "idle")
 
 
+def _capture_execution_logs(capture: LogCapture) -> None:
+    """Capture logs during execution and store in session state.
+
+    Args:
+        capture: LogCapture instance to retrieve logs from
+    """
+    logs = capture.get_logs()
+    st.session_state.debug_logs = logs
+
+
+def _render_debug_log_panel() -> None:
+    """Render the debug log panel with captured logs.
+
+    Displays an expandable panel at the bottom of the App tab showing
+    log entries captured during execution. Logs are color-coded by level.
+    """
+    logs = getattr(st.session_state, "debug_logs", [])
+
+    with st.expander("Debug Log", expanded=False):
+        if not logs:
+            st.info("No logs captured yet. Run a query to see execution logs.")
+        else:
+            # Render logs as HTML with color coding
+            capture = LogCapture()
+            # Populate capture with session state logs
+            for log_entry in logs:
+                capture.add_log_entry(
+                    timestamp=log_entry["timestamp"],
+                    level=log_entry["level"],
+                    module=log_entry["module"],
+                    message=log_entry["message"],
+                )
+            html = capture.format_html()
+            st.markdown(html, unsafe_allow_html=True)
+
+
 async def _execute_query_background(
     query: str,
     provider: str,
@@ -115,6 +152,10 @@ async def _execute_query_background(
     st.session_state.execution_state = "running"
     st.session_state.execution_query = query
     st.session_state.execution_provider = provider
+
+    # Setup log capture
+    capture = LogCapture()
+    handler_id = capture.attach_to_logger()
 
     try:
         # Execute query
@@ -146,6 +187,11 @@ async def _execute_query_background(
             delattr(st.session_state, "execution_result")
 
         logger.exception(e)
+
+    finally:
+        # Capture and store logs
+        _capture_execution_logs(capture)
+        capture.detach_from_logger(handler_id)
 
 
 def _display_configuration(provider: str, token_limit: int | None, agents_text: str) -> None:
@@ -242,3 +288,6 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     # Display execution status based on state
     execution_state = _get_execution_state()
     _display_execution_result(execution_state)
+
+    # Render debug log panel
+    _render_debug_log_panel()
