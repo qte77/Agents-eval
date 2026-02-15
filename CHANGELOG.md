@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-011: Property-based tests using Hypothesis for score bounds, input validation, and math invariants
 - STORY-011: Snapshot tests using inline-snapshot for Pydantic model dumps and structure regression
 - STORY-012: Optional weave dependency group in `pyproject.toml` (only loaded when `WANDB_API_KEY` is set)
+- STORY-013: Trace logging to all 6 PeerRead manager tools (get_peerread_paper, query_peerread_papers, read_paper_pdf_tool, generate_paper_review_content_from_template, save_paper_review, save_structured_review) with time.perf_counter() timing
+- STORY-013: Property-based tests for trace event schema invariants (agent_id always present in tool_call dicts)
+- STORY-013: Snapshot tests for GraphTraceData transformation output structure
 
 ### Added
 
@@ -42,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- STORY-013: Logfire instrumentation now initialized at app startup (app.py:207-209) when `JudgeSettings.logfire_enabled=True`
+- STORY-013: `_store_trace()` logging enhanced to include full storage path for JSONL + SQLite (trace_processors.py:357)
 - STORY-012: `login.py` conditionally imports weave only when `WANDB_API_KEY` is configured
 - STORY-012: `app.py` provides no-op `@op()` decorator fallback when weave unavailable
 - STORY-008: Consolidated all evaluation code from `app.evals.*` to `app.judge.*`
@@ -58,6 +63,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- STORY-013: `agent_id` now included in tool_call dicts during trace processing (_process_events at trace_processors.py:269, _parse_trace_events at trace_processors.py:377)
+- STORY-013: GraphTraceData transformation succeeds with researcher traces (no "missing agent_id" error)
+- STORY-013: Manager-only runs now produce non-empty trace data (tools log trace events)
 - Cerebras provider 422 error from mixed `strict` tool definitions — added `OpenAIModelProfile` with strict disabled
 - Statusline `ctx(left)` accuracy — compute true usable space by subtracting 16.5% autocompact buffer (33k tokens) from remaining percentage; added `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` environment variable support for configurable buffer threshold
 
