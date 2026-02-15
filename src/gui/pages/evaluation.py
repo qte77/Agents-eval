@@ -84,7 +84,7 @@ def _render_tier_scores(result: CompositeResult) -> None:
         )
 
     with col2:
-        if result.tier2_score > 0:
+        if result.tier2_score is not None and result.tier2_score > 0:
             st.metric(
                 "Tier 2: LLM-as-Judge",
                 f"{result.tier2_score:.2f}",
