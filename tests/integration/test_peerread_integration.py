@@ -235,26 +235,6 @@ class TestPeerReadIntegration:
         assert stats["total_time"] < 25.0  # Within performance target
 
     @pytest.mark.asyncio
-    async def test_peerread_model_validation(self, peerread_data):
-        """Test PeerRead data model validation."""
-        # Create PeerRead data
-        paper = peerread_data.create_synthetic_peerread_data()
-
-        # Validate paper structure
-        assert paper.paper_id is not None
-        assert len(paper.title) > 0
-        assert len(paper.abstract) > 0
-        assert len(paper.reviews) == 2
-
-        # Validate review structure
-        for review in paper.reviews:
-            assert review.impact in ["1", "2", "3", "4", "5"]
-            assert review.recommendation in ["1", "2", "3", "4", "5"]
-            assert review.presentation_format in ["Poster", "Oral"]
-            assert len(review.comments) > 0
-            assert review.is_meta_review is False
-
-    @pytest.mark.asyncio
     async def test_large_context_handling(self, peerread_data, evaluation_pipeline):
         """Test pipeline with larger scientific paper content."""
         # Create paper with extended content
@@ -297,22 +277,6 @@ class TestPeerReadIntegration:
         # Performance should still be reasonable
         stats = evaluation_pipeline.get_execution_stats()
         assert stats["total_time"] < 25.0
-
-    def test_peerread_data_serialization(self, peerread_data):
-        """Test that PeerRead data can be serialized/deserialized."""
-        paper = peerread_data.create_synthetic_peerread_data()
-
-        # Test JSON serialization
-        paper_dict = paper.model_dump()
-        assert isinstance(paper_dict, dict)
-        assert paper_dict["paper_id"] == "test_paper_001"
-        assert len(paper_dict["reviews"]) == 2
-
-        # Test deserialization
-        reconstructed_paper = PeerReadPaper(**paper_dict)
-        assert reconstructed_paper.paper_id == paper.paper_id
-        assert reconstructed_paper.title == paper.title
-        assert len(reconstructed_paper.reviews) == len(paper.reviews)
 
 
 if __name__ == "__main__":

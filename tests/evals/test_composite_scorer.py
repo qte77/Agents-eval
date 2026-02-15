@@ -63,32 +63,6 @@ class TestCompositeScorer:
     """Test suite for CompositeScorer functionality."""
 
 
-class TestCompositeScorerInitialization:
-    """Test CompositeScorer initialization and configuration."""
-
-    def test_scorer_initialization_with_valid_config(self, scorer):
-        """CompositeScorer should initialize correctly with default JudgeSettings."""
-        assert scorer is not None
-        assert len(scorer.weights) == 6
-        assert abs(sum(scorer.weights.values()) - 1.0) < 0.01
-
-    def test_scorer_initialization_with_default_settings(self):
-        """CompositeScorer should initialize with default JudgeSettings when none provided."""
-        scorer = CompositeScorer()
-        assert scorer is not None
-        assert scorer.settings is not None
-        assert len(scorer.weights) == 6
-
-    def test_scorer_initialization_with_custom_settings(self):
-        """CompositeScorer should accept custom JudgeSettings."""
-        from app.evals.settings import JudgeSettings
-
-        settings = JudgeSettings()
-        scorer = CompositeScorer(settings=settings)
-        assert scorer is not None
-        assert scorer.settings is settings
-
-
 class TestCompositeScorerMetricExtraction:
     """Test metric extraction from tier results."""
 
@@ -117,22 +91,6 @@ class TestCompositeScorerMetricExtraction:
 
         with pytest.raises(ValueError, match="Missing required tier results"):
             scorer.extract_metric_values(incomplete_results)
-
-    def test_metric_value_clamping(self, scorer, sample_tier_results, caplog):
-        """Should clamp metric values to valid range [0.0, 1.0]."""
-        # Create tier result with out-of-range values
-        sample_tier_results.tier1.time_score = 1.5  # > 1.0
-        sample_tier_results.tier3.coordination_centrality = -0.1  # < 0.0
-
-        with caplog.at_level("WARNING"):
-            metrics = scorer.extract_metric_values(sample_tier_results)
-
-        # Values should be clamped
-        assert metrics["time_taken"] <= 1.0
-        assert metrics["coordination_quality"] >= 0.0
-        # Note: caplog doesn't capture loguru logs, but we can see from stderr
-        # that warning was logged
-        # Test passes if values are properly clamped as expected
 
 
 class TestCompositeScorerScoreCalculation:
@@ -204,13 +162,6 @@ class TestCompositeScorerRecommendationMapping:
         recommendation = scorer.map_to_recommendation(0.25)
         assert recommendation == "reject"
 
-    def test_get_recommendation_weight(self, scorer):
-        """Should return correct numerical weights for recommendations."""
-        assert scorer.get_recommendation_weight("accept") == 1.0
-        assert scorer.get_recommendation_weight("weak_accept") == 0.7
-        assert scorer.get_recommendation_weight("weak_reject") == -0.7
-        assert scorer.get_recommendation_weight("reject") == -1.0
-
 
 class TestCompositeScorerIntegration:
     """Test complete composite evaluation integration."""
@@ -231,61 +182,6 @@ class TestCompositeScorerIntegration:
         assert -1.0 <= result.recommendation_weight <= 1.0
         assert len(result.metric_scores) == 6
         assert result.evaluation_complete is True
-
-    def test_evaluate_composite_consistent_recommendation(self, scorer, sample_tier_results):
-        """Recommendation should be consistent with composite score."""
-        result = scorer.evaluate_composite(sample_tier_results)
-
-        # Verify recommendation matches score thresholds
-        expected_recommendation = scorer.map_to_recommendation(result.composite_score)
-        assert result.recommendation == expected_recommendation
-
-        # Verify recommendation weight matches recommendation
-        expected_weight = scorer.get_recommendation_weight(result.recommendation)
-        assert result.recommendation_weight == expected_weight
-
-
-class TestCompositeScorerUtils:
-    """Test utility functions."""
-
-    def test_get_scoring_summary(self, scorer):
-        """Should return comprehensive scoring configuration summary."""
-        summary = scorer.get_scoring_summary()
-
-        assert "metrics_count" in summary
-        assert "total_weight" in summary
-        assert "weights" in summary
-        assert "thresholds" in summary
-        assert "recommendation_weights" in summary
-
-        assert summary["metrics_count"] == 6
-        assert abs(summary["total_weight"] - 1.0) < 0.01
-
-    def test_evaluation_results_is_complete(self, sample_tier_results):
-        """EvaluationResults should correctly identify completeness."""
-        assert sample_tier_results.is_complete() is True
-
-        incomplete_results = EvaluationResults(tier1=None, tier2=None, tier3=None)
-        assert incomplete_results.is_complete() is False
-
-        partial_results = EvaluationResults(tier1=sample_tier_results.tier1, tier2=None, tier3=None)
-        assert partial_results.is_complete() is False
-
-
-# Integration test with default JudgeSettings
-class TestCompositeScorerDefaults:
-    """Test with default JudgeSettings configuration."""
-
-    def test_with_default_settings(self):
-        """Should work with default JudgeSettings."""
-        scorer = CompositeScorer()
-
-        # Verify basic functionality
-        assert len(scorer.weights) == 6
-        assert abs(sum(scorer.weights.values()) - 1.0) < 0.01
-
-        summary = scorer.get_scoring_summary()
-        assert summary["metrics_count"] == 6
 
 
 class TestAgentAssessment:

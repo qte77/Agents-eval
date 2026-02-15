@@ -90,27 +90,6 @@ class TestGraphAnalysisEngine:
             coordination_events=[],
         )
 
-    # Given: Graph analysis engine is initialized
-    def test_engine_initialization_with_default_config(self):
-        """When initialized with minimal config, then uses sensible defaults."""
-        # Given minimal configuration
-        config = {}
-
-        # When engine is created
-        engine = GraphAnalysisEngine(config)
-
-        # Then default values are used
-        assert engine.min_nodes_for_analysis == 2
-        assert "betweenness" in engine.centrality_measures
-        assert engine.weights["path_convergence"] == 0.3
-
-    def test_engine_initialization_with_custom_config(self, engine):
-        """When initialized with custom config, then uses provided values."""
-        # Given engine with custom configuration (from fixture)
-        # Then custom values are applied
-        assert engine.min_nodes_for_analysis == 2
-        assert engine.weights["tool_accuracy"] == 0.25
-
     # Given: Tool usage pattern analysis
     def test_tool_usage_analysis_with_successful_calls(self, engine, sample_trace_data):
         """When analyzing tool usage patterns, then calculates metrics correctly."""

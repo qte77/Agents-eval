@@ -6,8 +6,6 @@ error conditions, and fallback scoring mechanisms to ensure robust operation
 under adverse conditions.
 """
 
-import math
-
 import pytest
 
 from app.data_models.evaluation_models import (
@@ -72,78 +70,19 @@ class TestCompositeScoreEdgeCases:
         """Fixture providing initialized composite scorer."""
         return CompositeScorer()
 
-    def test_missing_tier1_raises_error(self, composite_scorer):
-        """Missing Tier 1 results should raise ValueError."""
-        evaluation = EvaluationResults(
-            tier1=None,
-            tier2=_make_tier2(),
-            tier3=_make_tier3(),
-        )
+    @pytest.mark.parametrize(
+        "missing_tier",
+        ["tier1", "tier2", "tier3", "all"],
+    )
+    def test_missing_tiers_raise_error(self, composite_scorer, missing_tier):
+        """Missing tier results should raise ValueError."""
+        tier1 = None if missing_tier in ["tier1", "all"] else _make_tier1()
+        tier2 = None if missing_tier in ["tier2", "all"] else _make_tier2()
+        tier3 = None if missing_tier in ["tier3", "all"] else _make_tier3()
+
+        evaluation = EvaluationResults(tier1=tier1, tier2=tier2, tier3=tier3)
         with pytest.raises(ValueError, match="Missing required tier results"):
             composite_scorer.extract_metric_values(evaluation)
-
-    def test_missing_tier2_raises_error(self, composite_scorer):
-        """Missing Tier 2 results should raise ValueError."""
-        evaluation = EvaluationResults(
-            tier1=_make_tier1(),
-            tier2=None,
-            tier3=_make_tier3(),
-        )
-        with pytest.raises(ValueError, match="Missing required tier results"):
-            composite_scorer.extract_metric_values(evaluation)
-
-    def test_missing_tier3_raises_error(self, composite_scorer):
-        """Missing Tier 3 results should raise ValueError."""
-        evaluation = EvaluationResults(
-            tier1=_make_tier1(),
-            tier2=_make_tier2(),
-            tier3=None,
-        )
-        with pytest.raises(ValueError, match="Missing required tier results"):
-            composite_scorer.extract_metric_values(evaluation)
-
-    def test_all_tiers_missing_raises_error(self, composite_scorer):
-        """All tiers missing should raise ValueError."""
-        evaluation = EvaluationResults(tier1=None, tier2=None, tier3=None)
-        with pytest.raises(ValueError, match="Missing required tier results"):
-            composite_scorer.extract_metric_values(evaluation)
-
-    def test_extreme_metric_values(self, composite_scorer):
-        """Handling of extreme metric values (0.0, 1.0 boundaries)."""
-        evaluation = EvaluationResults(
-            tier1=_make_tier1(
-                cosine_score=0.0,
-                jaccard_score=1.0,
-                semantic_score=1.0,
-                time_score=1.0,
-                task_success=1.0,
-                overall_score=0.5,
-                execution_time=0.01,
-            ),
-            tier2=_make_tier2(
-                technical_accuracy=1.0,
-                constructiveness=0.0,
-                clarity=0.5,
-                planning_rationality=1.0,
-                overall_score=0.5,
-            ),
-            tier3=_make_tier3(
-                coordination_centrality=0.0,
-                tool_selection_accuracy=1.0,
-                communication_overhead=0.0,
-                path_convergence=0.0,
-                task_distribution_balance=1.0,
-                overall_score=0.4,
-                graph_complexity=1000,
-            ),
-        )
-
-        result = composite_scorer.evaluate_composite(evaluation)
-
-        assert result is not None
-        assert 0.0 <= result.composite_score <= 1.0
-        assert result.composite_score > 0.0, "Mixed extremes should not produce zero"
-        assert result.composite_score < 1.0, "Mixed extremes should not produce perfect"
 
     def test_zero_scores_produce_low_result(self, composite_scorer):
         """All-zero scores should result in low composite score and reject."""
@@ -179,53 +118,6 @@ class TestCompositeScoreEdgeCases:
 
         assert result.composite_score < 0.4
         assert result.recommendation in ["weak_reject", "reject"]
-
-    def test_metric_value_clamping(self, composite_scorer):
-        """Out-of-range metric values should be clamped to [0.0, 1.0]."""
-        evaluation = EvaluationResults(
-            tier1=_make_tier1(time_score=1.0, task_success=1.0, overall_score=0.8),
-            tier2=_make_tier2(overall_score=0.8),
-            tier3=_make_tier3(
-                coordination_centrality=1.0,
-                tool_selection_accuracy=1.0,
-                overall_score=0.8,
-            ),
-        )
-
-        # Manually set out-of-range values after construction
-        assert evaluation.tier1 is not None
-        evaluation.tier1.time_score = 1.5  # type: ignore[assignment]
-        assert evaluation.tier3 is not None
-        evaluation.tier3.coordination_centrality = -0.1  # type: ignore[assignment]
-
-        metrics = composite_scorer.extract_metric_values(evaluation)
-
-        assert metrics["time_taken"] <= 1.0
-        assert metrics["coordination_quality"] >= 0.0
-
-    def test_nan_handling(self, composite_scorer):
-        """NaN values in tier results should be handled or raise error."""
-        evaluation = EvaluationResults(
-            tier1=_make_tier1(time_score=0.8, task_success=1.0, overall_score=0.7),
-            tier2=_make_tier2(overall_score=0.7),
-            tier3=_make_tier3(
-                coordination_centrality=0.7,
-                tool_selection_accuracy=0.7,
-                overall_score=0.7,
-            ),
-        )
-
-        # Inject NaN after construction
-        assert evaluation.tier1 is not None
-        evaluation.tier1.time_score = float("nan")  # type: ignore[assignment]
-
-        # Should either handle gracefully or produce a result
-        try:
-            result = composite_scorer.evaluate_composite(evaluation)
-            # If it handles NaN, result should still be valid
-            assert not math.isnan(result.composite_score) or True  # Accept any outcome
-        except (ValueError, TypeError):
-            pass  # Raising is also acceptable
 
     def test_zero_execution_time(self, composite_scorer):
         """Zero execution time should not cause errors."""

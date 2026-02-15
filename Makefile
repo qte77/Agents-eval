@@ -272,6 +272,7 @@ test_all:  ## Run all tests
 test_quick:  ## Quick test - rerun only failed tests (use during fix iterations)
 	uv run pytest --lf -x
 
+
 test_coverage:  ## Run tests with coverage threshold (configured in pyproject.toml)
 	echo "Running tests with coverage gate (fail_under% defined in pyproject.toml)..."
 	uv run pytest --cov

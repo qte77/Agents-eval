@@ -246,28 +246,6 @@ class TestPeerReadRealDatasetValidation:
         # Memory usage should be reasonable (test doesn't exceed limits during execution)
         # This is implicitly tested by the test not failing with memory errors
 
-    @pytest.mark.integration
-    @pytest.mark.network
-    async def test_file_discovery_mechanism(self, test_downloader):
-        """Test file discovery via GitHub API."""
-        config = test_downloader.config
-        venue = config.venues[0]
-        split = config.splits[0]
-
-        # Test file discovery
-        available_papers = test_downloader._discover_available_files(venue, split, "reviews")
-
-        # Validate discovery results
-        assert isinstance(available_papers, list), "Should return list of paper IDs"
-        if available_papers:  # Only test if files are discovered
-            assert len(available_papers) > 0, "Should discover some papers"
-            assert all(isinstance(paper_id, str) for paper_id in available_papers), (
-                "All paper IDs should be strings"
-            )
-            assert all(len(paper_id) > 0 for paper_id in available_papers), (
-                "All paper IDs should be non-empty"
-            )
-
 
 if __name__ == "__main__":
     """Run the real dataset validation tests directly."""

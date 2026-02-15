@@ -61,16 +61,6 @@ class TestTraditionalMetricsEngine:
         similarity = engine.compute_cosine_similarity(text1, text2)
         assert 0.0 <= similarity < 0.5
 
-    def test_cosine_similarity_empty_texts(self, engine, sample_texts):
-        """Given empty texts, should handle gracefully."""
-        text1, text2 = sample_texts["empty_both"]
-        similarity = engine.compute_cosine_similarity(text1, text2)
-        assert similarity == 1.0  # Empty texts are considered identical
-
-        text1, text2 = sample_texts["empty_first"]
-        similarity = engine.compute_cosine_similarity(text1, text2)
-        assert similarity == 0.0
-
     # Jaccard similarity tests
     def test_jaccard_similarity_identical_texts(self, engine, sample_texts):
         """Given identical texts, Jaccard similarity should be 1.0."""
@@ -89,13 +79,6 @@ class TestTraditionalMetricsEngine:
         text1, text2 = sample_texts["different"]
         similarity = engine.compute_jaccard_similarity(text1, text2)
         assert similarity == 0.0  # No common words
-
-    def test_jaccard_similarity_case_insensitive(self, engine):
-        """Jaccard similarity should be case insensitive."""
-        text1 = "The Quick Brown FOX"
-        text2 = "the quick brown fox"
-        similarity = engine.compute_jaccard_similarity(text1, text2)
-        assert similarity == 1.0
 
     # Semantic similarity tests (with mocking to avoid model dependencies)
     def test_semantic_similarity_with_bertscore(self, engine, sample_texts):

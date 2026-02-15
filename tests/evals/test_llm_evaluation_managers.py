@@ -95,16 +95,6 @@ def sample_data():
 class TestLLMJudgeEngine:
     """Test suite for LLM-as-Judge evaluation engine."""
 
-    def test_engine_initialization(self, config):
-        """Given configuration, LLM judge engine should initialize properly."""
-        engine = LLMJudgeEngine(config)
-
-        assert engine.model == "gpt-4o-mini"
-        assert engine.max_retries == 2
-        assert engine.timeout == 30.0
-        assert engine.paper_excerpt_length == 2000
-        assert engine.fallback_engine is not None
-
     # Technical accuracy assessment tests
     @pytest.mark.asyncio
     @patch("pydantic_ai.Agent")

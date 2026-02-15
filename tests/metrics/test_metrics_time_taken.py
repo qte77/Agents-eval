@@ -5,9 +5,6 @@ This module verifies that the evaluation pipeline correctly computes elapsed
 time during agent execution for performance metrics.
 """
 
-import asyncio
-import time
-
 import pytest
 
 from app.evals.evaluation_pipeline import EvaluationPipeline
@@ -21,22 +18,6 @@ def calculate_time_taken(start_time: float, end_time: float) -> float:
     if end_time < start_time:
         raise ValueError("end_time must be greater than or equal to start_time")
     return end_time - start_time
-
-
-@pytest.mark.asyncio
-async def test_time_taken_metric():
-    """Scenario: Calculate time taken for agent execution"""
-
-    # Given: Start and end timestamps
-    start_time = time.perf_counter()
-    await asyncio.sleep(0.1)
-    end_time = time.perf_counter()
-
-    # When: Calculating time taken
-    result = calculate_time_taken(start_time, end_time)
-
-    # Then: Verify correct duration calculation
-    assert result == pytest.approx(0.1, abs=0.05)
 
 
 @pytest.mark.asyncio

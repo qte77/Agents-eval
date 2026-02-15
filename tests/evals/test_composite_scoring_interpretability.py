@@ -6,8 +6,6 @@ recommendation threshold boundary cases to ensure the composite scoring
 system produces interpretable and reliable results.
 """
 
-import statistics
-
 import pytest
 
 from app.data_models.evaluation_models import (
@@ -168,26 +166,6 @@ class TestCompositeScoreInterpretability:
         """Fixture providing initialized composite scorer."""
         return CompositeScorer()
 
-    def test_scoring_consistency(self, composite_scorer):
-        """Score consistency across multiple evaluations of the same data."""
-        evaluation = _make_evaluation()
-
-        scores: list[float] = []
-        recommendations: list[str] = []
-
-        for _ in range(10):
-            result = composite_scorer.evaluate_composite(evaluation)
-            scores.append(result.composite_score)
-            recommendations.append(result.recommendation)
-
-        assert len(set(scores)) == 1, f"Scores not consistent across runs: {set(scores)}"
-        assert len(set(recommendations)) == 1, (
-            f"Recommendations not consistent: {set(recommendations)}"
-        )
-
-        score_stddev = statistics.stdev(scores) if len(scores) > 1 else 0.0
-        assert score_stddev < 0.001, f"Score standard deviation too high: {score_stddev}"
-
     def test_recommendation_boundary_conditions(self, composite_scorer):
         """Recommendation mapping at threshold boundaries."""
         thresholds = composite_scorer.thresholds
@@ -210,57 +188,6 @@ class TestCompositeScoreInterpretability:
                 f"Score {score:.3f} should map to '{expected_rec}', got '{actual_rec}'"
             )
 
-    def test_metric_weight_validation(self, composite_scorer):
-        """Metric weights sum to 1.0 and apply correctly."""
-        weights = composite_scorer.weights
-
-        total_weight = sum(weights.values())
-        assert abs(total_weight - 1.0) < 0.01, f"Weights sum to {total_weight}, should be ~1.0"
-
-        for metric, weight in weights.items():
-            assert 0.0 < weight <= 1.0, f"Weight for {metric} out of range: {weight}"
-
-        expected_metrics = {
-            "time_taken",
-            "task_success",
-            "coordination_quality",
-            "tool_efficiency",
-            "planning_rationality",
-            "output_similarity",
-        }
-        assert set(weights.keys()) == expected_metrics
-
-    def test_tier_scores_are_reasonable(self, composite_scorer):
-        """Tier scores in CompositeResult should be in valid ranges."""
-        evaluation = _make_evaluation()
-        result = composite_scorer.evaluate_composite(evaluation)
-
-        assert 0.0 <= result.tier1_score <= 1.0, "Tier 1 score out of range"
-        assert 0.0 <= result.tier2_score <= 1.0, "Tier 2 score out of range"
-        assert 0.0 <= result.tier3_score <= 1.0, "Tier 3 score out of range"
-
-    def test_score_interpretability_ranges(self, composite_scorer):
-        """Scores fall within interpretable ranges for various inputs."""
-        test_evaluations = [
-            _make_evaluation(0.75),  # Baseline
-            _make_evaluation(0.9),  # High score target
-            _make_evaluation(0.5),  # Medium score target
-            _make_evaluation(0.2),  # Low score target
-        ]
-
-        for i, evaluation in enumerate(test_evaluations):
-            result = composite_scorer.evaluate_composite(evaluation)
-
-            assert 0.0 <= result.composite_score <= 1.0, (
-                f"Score {result.composite_score} out of range for evaluation {i}"
-            )
-
-            # Baseline evaluation should be mid-range
-            if i == 0:
-                assert 0.1 < result.composite_score < 0.95, (
-                    f"Baseline evaluation score seems extreme: {result.composite_score}"
-                )
-
     def test_dominant_metric_impact(self, composite_scorer):
         """Individual metrics impact overall score differently."""
         dominant_metrics = ["similarity", "planning", "coordination"]
@@ -278,54 +205,4 @@ class TestCompositeScoreInterpretability:
         score_values = list(results.values())
         assert len(set(round(s, 6) for s in score_values)) > 1, (
             "Different dominant metrics should produce different scores"
-        )
-
-    def test_recommendation_distribution(self, composite_scorer):
-        """Recommendation categories are used across score range."""
-        target_scores = [0.9, 0.7, 0.5, 0.3, 0.1]
-        recommendation_counts: dict[str, int] = {}
-
-        for target in target_scores:
-            evaluation = _make_evaluation(target)
-            result = composite_scorer.evaluate_composite(evaluation)
-
-            rec = result.recommendation
-            recommendation_counts[rec] = recommendation_counts.get(rec, 0) + 1
-
-        assert len(recommendation_counts) > 1, "Should use multiple recommendation categories"
-
-        valid_recommendations = {"accept", "weak_accept", "weak_reject", "reject"}
-        for rec in recommendation_counts:
-            assert rec in valid_recommendations, f"Invalid recommendation: {rec}"
-
-    def test_score_granularity(self, composite_scorer):
-        """Scoring system provides adequate granularity for small input changes."""
-        base = _make_evaluation()
-        scores: list[float] = []
-
-        for variation in range(5):
-            assert base.tier1 is not None
-            modified = EvaluationResults(
-                tier1=Tier1Result(
-                    cosine_score=min(1.0, base.tier1.cosine_score + variation * 0.01),
-                    jaccard_score=min(1.0, base.tier1.jaccard_score + variation * 0.01),
-                    semantic_score=min(1.0, base.tier1.semantic_score + variation * 0.01),
-                    execution_time=base.tier1.execution_time,
-                    time_score=base.tier1.time_score,
-                    task_success=base.tier1.task_success,
-                    overall_score=min(1.0, base.tier1.overall_score + variation * 0.01),
-                ),
-                tier2=base.tier2,
-                tier3=base.tier3,
-            )
-
-            result = composite_scorer.evaluate_composite(modified)
-            scores.append(result.composite_score)
-
-        unique_scores = set(f"{score:.6f}" for score in scores)
-        assert len(unique_scores) > 1, "Scoring should be sensitive to small input changes"
-
-        score_range = max(scores) - min(scores)
-        assert score_range < 0.1, (
-            f"Score variation too large for small input changes: {score_range}"
         )

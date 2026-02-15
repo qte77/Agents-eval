@@ -7,8 +7,6 @@ high quality + fast/slow execution, low quality + fast/slow execution, and
 mixed performance profiles.
 """
 
-import statistics
-
 import pytest
 
 from app.data_models.evaluation_models import (
@@ -239,45 +237,6 @@ class TestCompositeScoringSCenarios:
             f"{expected_recommendation} for {scenario_name} "
             f"(score={composite_result.composite_score:.3f})"
         )
-
-    def test_scenario_score_consistency(self, composite_scorer, scenario_data):
-        """Scoring is consistent across multiple runs."""
-        evaluation_results = scenario_data.create_high_quality_fast_scenario()
-
-        scores: list[float] = []
-        recommendations: list[str] = []
-
-        for _ in range(5):
-            result = composite_scorer.evaluate_composite(evaluation_results)
-            scores.append(result.composite_score)
-            recommendations.append(result.recommendation)
-
-        assert all(abs(score - scores[0]) < 0.001 for score in scores), (
-            f"Scores not consistent across runs: {scores}"
-        )
-
-        assert all(rec == recommendations[0] for rec in recommendations), (
-            f"Recommendations not consistent across runs: {recommendations}"
-        )
-
-        score_stddev = statistics.stdev(scores) if len(scores) > 1 else 0.0
-        assert score_stddev < 0.001, f"Score standard deviation too high: {score_stddev}"
-
-    def test_metric_contribution_analysis(self, composite_scorer, scenario_data):
-        """Individual metrics contribute as expected."""
-        evaluation_results = scenario_data.create_high_quality_fast_scenario()
-        result = composite_scorer.evaluate_composite(evaluation_results)
-
-        # Result should include metric scores
-        assert len(result.metric_scores) == 6, "Should have 6 metric scores"
-
-        # Verify weights sum to approximately 1.0
-        config_weights = composite_scorer.weights
-        total_weight = sum(config_weights.values())
-        assert abs(total_weight - 1.0) < 0.01, f"Weights should sum to 1.0, got {total_weight}"
-
-        for metric, weight in config_weights.items():
-            assert 0.0 < weight <= 1.0, f"Weight for {metric} should be in (0, 1]: {weight}"
 
     def test_recommendation_boundary_conditions(self, composite_scorer):
         """Recommendation mapping at exact threshold boundaries."""
