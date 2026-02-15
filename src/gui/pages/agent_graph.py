@@ -53,7 +53,7 @@ def render_agent_graph(graph: nx.DiGraph[str] | None = None) -> None:
         directed=True,
         notebook=False,
         bgcolor="#ffffff",
-        font_color="#000000",
+        font_color=False,  # type: ignore[arg-type]
     )
 
     # Configure physics for better layout

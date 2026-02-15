@@ -11,25 +11,44 @@ import streamlit as st
 from app.data_models.evaluation_models import CompositeResult
 
 
-def render_evaluation(result: CompositeResult | None = None) -> None:
-    """Render evaluation results page with tier scores and metric comparisons.
-
-    Displays:
-    - Overall composite score and recommendation
-    - Individual tier scores (Tier 1, 2, 3)
-    - Bar chart comparing graph metrics vs text metrics
-    - Detailed metric breakdowns
+def _extract_graph_metrics(metric_scores: dict[str, float]) -> dict[str, float]:
+    """Extract graph-specific metrics from metric scores.
 
     Args:
-        result: CompositeResult containing evaluation data, or None for empty state.
+        metric_scores: Dictionary of all metric scores.
+
+    Returns:
+        Dictionary containing only graph metrics (Tier 3).
     """
-    st.header("📊 Evaluation Results")
+    graph_metric_names = [
+        "path_convergence",
+        "tool_selection_accuracy",
+        "communication_overhead",
+        "coordination_centrality",
+        "task_distribution_balance",
+    ]
+    return {k: v for k, v in metric_scores.items() if k in graph_metric_names}
 
-    if result is None:
-        st.info("No evaluation results available. Run an evaluation to see results here.")
-        return
 
-    # Display overall results
+def _extract_text_metrics(metric_scores: dict[str, float]) -> dict[str, float]:
+    """Extract text-specific metrics from metric scores.
+
+    Args:
+        metric_scores: Dictionary of all metric scores.
+
+    Returns:
+        Dictionary containing only text metrics (Tier 1).
+    """
+    text_metric_names = ["cosine_score", "jaccard_score", "semantic_score"]
+    return {k: v for k, v in metric_scores.items() if k in text_metric_names}
+
+
+def _render_overall_results(result: CompositeResult) -> None:
+    """Render overall results section with composite score and recommendation.
+
+    Args:
+        result: CompositeResult containing evaluation data.
+    """
     st.subheader("Overall Results")
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -47,7 +66,13 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
             help="Confidence in recommendation based on score magnitude",
         )
 
-    # Display tier scores
+
+def _render_tier_scores(result: CompositeResult) -> None:
+    """Render individual tier scores section.
+
+    Args:
+        result: CompositeResult containing tier scores.
+    """
     st.subheader("Tier Scores")
     col1, col2, col3 = st.columns(3)
 
@@ -78,39 +103,25 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
         else:
             st.metric("Tier 3: Graph Analysis", "N/A", help="Not evaluated")
 
-    # Warn about incomplete evaluation
     if not result.evaluation_complete:
         st.warning(
             "⚠️ Evaluation incomplete: Some tiers were not executed. "
             "Results may not reflect full system performance."
         )
 
-    # Graph vs Text Comparison
+
+def _render_metrics_comparison(result: CompositeResult) -> None:
+    """Render graph vs text metrics comparison section.
+
+    Args:
+        result: CompositeResult containing metric scores.
+    """
     st.subheader("Graph Metrics vs Text Metrics Comparison")
 
-    # Extract graph metrics (Tier 3)
-    graph_metrics = {
-        k: v
-        for k, v in result.metric_scores.items()
-        if k
-        in [
-            "path_convergence",
-            "tool_selection_accuracy",
-            "communication_overhead",
-            "coordination_centrality",
-            "task_distribution_balance",
-        ]
-    }
-
-    # Extract text metrics (Tier 1)
-    text_metrics = {
-        k: v
-        for k, v in result.metric_scores.items()
-        if k in ["cosine_score", "jaccard_score", "semantic_score"]
-    }
+    graph_metrics = _extract_graph_metrics(result.metric_scores)
+    text_metrics = _extract_text_metrics(result.metric_scores)
 
     if graph_metrics and text_metrics:
-        # Create comparison data
         comparison_data = {
             "Graph Metrics": [graph_metrics.get(k, 0.0) for k in sorted(graph_metrics)],
             "Text Metrics": [text_metrics.get(k, 0.0) for k in sorted(text_metrics)],
@@ -118,7 +129,6 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
 
         st.bar_chart(comparison_data)
 
-        # Display detailed metrics
         col1, col2 = st.columns(2)
 
         with col1:
@@ -132,6 +142,29 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
                 st.text(f"{metric}: {value:.3f}")
     else:
         st.info("Insufficient metric data for comparison visualization.")
+
+
+def render_evaluation(result: CompositeResult | None = None) -> None:
+    """Render evaluation results page with tier scores and metric comparisons.
+
+    Displays:
+    - Overall composite score and recommendation
+    - Individual tier scores (Tier 1, 2, 3)
+    - Bar chart comparing graph metrics vs text metrics
+    - Detailed metric breakdowns
+
+    Args:
+        result: CompositeResult containing evaluation data, or None for empty state.
+    """
+    st.header("📊 Evaluation Results")
+
+    if result is None:
+        st.info("No evaluation results available. Run an evaluation to see results here.")
+        return
+
+    _render_overall_results(result)
+    _render_tier_scores(result)
+    _render_metrics_comparison(result)
 
     # Evaluation metadata
     with st.expander("Evaluation Details"):
