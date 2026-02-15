@@ -18,6 +18,14 @@ from app.data_models.peerread_models import (
     PeerReadReview,
 )
 
+# Extract optional field names from PeerReadReview model for testing
+# Reason: Single source of truth - derive from model defaults instead of hardcoding
+OPTIONAL_REVIEW_FIELDS = [
+    field_name.upper()
+    for field_name, field_info in PeerReadReview.model_fields.items()
+    if field_info.default == "UNKNOWN"  # Only fields that default to "UNKNOWN"
+]
+
 
 class TestPeerReadDownloader:
     """Test PeerRead dataset downloading functionality."""
@@ -661,19 +669,9 @@ class TestOptionalFieldHandling:
     @given(
         # Generate arbitrary subsets of optional fields to test any combination
         missing_fields=st.lists(
-            st.sampled_from(
-                [
-                    "IMPACT",
-                    "SUBSTANCE",
-                    "APPROPRIATENESS",
-                    "MEANINGFUL_COMPARISON",
-                    "SOUNDNESS_CORRECTNESS",
-                    "ORIGINALITY",
-                    "CLARITY",
-                ]
-            ),
+            st.sampled_from(OPTIONAL_REVIEW_FIELDS),
             min_size=0,
-            max_size=7,
+            max_size=len(OPTIONAL_REVIEW_FIELDS),
             unique=True,
         )
     )

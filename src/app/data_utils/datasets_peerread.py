@@ -686,37 +686,11 @@ class PeerReadLoader:
         Returns:
             Validated PeerReadReview model.
         """
-        # Optional fields use .get() with "UNKNOWN" default
-        # Reason: Papers 304-308, 330 lack IMPACT field
-        optional_fields = [
-            "IMPACT",
-            "SUBSTANCE",
-            "APPROPRIATENESS",
-            "MEANINGFUL_COMPARISON",
-            "SOUNDNESS_CORRECTNESS",
-            "ORIGINALITY",
-            "CLARITY",
-        ]
+        # Add paper_id to data for logging context in model_validator
+        review_data_with_context = {**review_data, "_paper_id": paper_id}
 
-        # Log debug message when optional field is missing
-        for field in optional_fields:
-            if field not in review_data:
-                logger.debug(f"Paper {paper_id}: Optional field {field} missing, using UNKNOWN")
-
-        return PeerReadReview(
-            impact=review_data.get("IMPACT", "UNKNOWN"),
-            substance=review_data.get("SUBSTANCE", "UNKNOWN"),
-            appropriateness=review_data.get("APPROPRIATENESS", "UNKNOWN"),
-            meaningful_comparison=review_data.get("MEANINGFUL_COMPARISON", "UNKNOWN"),
-            presentation_format=review_data.get("PRESENTATION_FORMAT", "Poster"),
-            comments=review_data.get("comments", ""),
-            soundness_correctness=review_data.get("SOUNDNESS_CORRECTNESS", "UNKNOWN"),
-            originality=review_data.get("ORIGINALITY", "UNKNOWN"),
-            recommendation=review_data.get("RECOMMENDATION", "UNKNOWN"),
-            clarity=review_data.get("CLARITY", "UNKNOWN"),
-            reviewer_confidence=review_data.get("REVIEWER_CONFIDENCE", "UNKNOWN"),
-            is_meta_review=review_data.get("is_meta_review"),
-        )
+        # Pydantic model handles defaults and validation
+        return PeerReadReview.model_validate(review_data_with_context)
 
     def _validate_papers(
         self,
