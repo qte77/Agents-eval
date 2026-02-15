@@ -36,7 +36,10 @@ class BaselineComparison(BaseModel):
     )
 
     summary: str = Field(
-        description="Human-readable comparison summary (e.g., 'PydanticAI scored +0.12 higher on technical_accuracy vs CC-solo')"
+        description=(
+            "Human-readable comparison summary "
+            "(e.g., 'PydanticAI scored +0.12 higher on technical_accuracy vs CC-solo')"
+        )
     )
 
 
@@ -62,7 +65,7 @@ def compare(
         Positive delta means result_a scored higher.
     """
     # Calculate per-metric deltas for all 6 composite metrics
-    metric_deltas = {}
+    metric_deltas: dict[str, float] = {}
     for metric in result_a.metric_scores.keys():
         score_a = result_a.metric_scores[metric]
         score_b = result_b.metric_scores.get(metric, 0.0)
@@ -81,12 +84,12 @@ def compare(
 
     # Generate human-readable summary
     # Calculate average delta across all metrics
-    avg_delta = sum(metric_deltas.values()) / len(metric_deltas)
+    avg_delta: float = sum(metric_deltas.values()) / len(metric_deltas)
 
     # Find metric with largest absolute delta
-    max_metric = max(metric_deltas.items(), key=lambda x: abs(x[1]))
-    max_metric_name = max_metric[0]
-    max_metric_delta = max_metric[1]
+    max_metric: tuple[str, float] = max(metric_deltas.items(), key=lambda x: abs(x[1]))
+    max_metric_name: str = max_metric[0]
+    max_metric_delta: float = max_metric[1]
 
     if avg_delta > 0:
         summary = (
