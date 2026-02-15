@@ -118,8 +118,9 @@ class TestDebugLogPanel:
 
     def test_debug_log_panel_renders_with_logs(self):
         """Test that debug log panel displays captured logs."""
-        from gui.pages.run_app import _render_debug_log_panel
         from types import SimpleNamespace
+
+        from gui.pages.run_app import _render_debug_log_panel
 
         # Given a session state with captured logs
         mock_state = SimpleNamespace()
@@ -150,8 +151,9 @@ class TestDebugLogPanel:
 
     def test_debug_log_panel_empty_state(self):
         """Test that debug log panel shows message when no logs."""
-        from gui.pages.run_app import _render_debug_log_panel
         from types import SimpleNamespace
+
+        from gui.pages.run_app import _render_debug_log_panel
 
         # Given a session state with no logs
         mock_state = SimpleNamespace()
