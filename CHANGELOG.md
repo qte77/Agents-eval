@@ -48,6 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feature 2 (STORY-002): Thread-safe timeout handling in graph analysis using ThreadPoolExecutor (replaces signal-based timeouts)
 - Feature 3 (STORY-003): Tier 2 judge provider fallback integration tests and troubleshooting documentation
 - Feature 3 (STORY-003): Auth failure detection in all Tier 2 assessments (technical_accuracy, constructiveness, planning_rationality) with neutral fallback scores (0.5)
+- Feature 4 (STORY-004): Hypothesis property-based tests for data validation invariants, score bounds, URL construction, execution traces, and metrics output
+- Feature 4 (STORY-004): Inline-snapshot regression tests for Pydantic model dumps, configuration outputs, benchmark results, and GUI state structures
+- Feature 4 (STORY-004): Test coverage for integration tests (PeerRead dataset compatibility), benchmarks (performance baselines), GUI pages (evaluation/graph/sidebar), and data utilities (datasets_peerread)
 - Feature 3 (STORY-003): `docs/best-practices/troubleshooting.md` with provider fallback chain guidance
 - Feature 4: Complete test suite alignment (hypothesis property tests + inline-snapshot regression tests for remaining 12 test files)
 
