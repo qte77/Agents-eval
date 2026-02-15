@@ -36,7 +36,9 @@ remaining_pct=$(echo "$input" | jq -r '
 if [ -n "$CLAUDE_AUTOCOMPACT_PCT_OVERRIDE" ]; then
     AUTOCOMPACT_BUFFER_PCT=$(awk "BEGIN {print 100 - $CLAUDE_AUTOCOMPACT_PCT_OVERRIDE}")
 else
-    # Observed default buffer in /context output (as of 2026-02)
+    # FIXME: Docs claim CLAUDE_AUTOCOMPACT_PCT_OVERRIDE default is 95% (5% buffer),
+    # but /context shows 16.5% buffer and compaction triggers at ~78-85% (issues #18264, #18241).
+    # Using observed 16.5% until Claude Code fixes the discrepancy.
     AUTOCOMPACT_BUFFER_PCT=16.5
 fi
 
