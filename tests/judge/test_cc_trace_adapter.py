@@ -11,11 +11,10 @@ import json
 import tempfile
 from pathlib import Path
 
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
-
-import pytest
 
 from app.data_models.evaluation_models import GraphTraceData
 from app.judge.cc_trace_adapter import CCTraceAdapter
@@ -123,9 +122,7 @@ def cc_solo_artifacts(tmp_path: Path) -> Path:
             "agent_id": "solo-agent",
         },
     ]
-    (session_dir / "tool_calls.jsonl").write_text(
-        "\n".join(json.dumps(tc) for tc in tool_calls)
-    )
+    (session_dir / "tool_calls.jsonl").write_text("\n".join(json.dumps(tc) for tc in tool_calls))
 
     return session_dir
 
@@ -209,9 +206,20 @@ class TestCCTraceAdapterTeamsMode:
                         "timestamp": 1708000100.0,
                     },
                 ],
-                "tool_calls": snapshot(),
-                "timing_data": snapshot(),
-                "coordination_events": snapshot(),
+                "tool_calls": snapshot(
+                    [
+                        {
+                            "tool_name": "task_task-001",
+                            "agent_id": "worker",
+                            "timestamp": 1708000095.0,
+                            "duration": 85.0,
+                            "success": True,
+                            "context": "Process data",
+                        }
+                    ]
+                ),
+                "timing_data": snapshot({"start_time": 1708000000.0, "end_time": 1708000100.0}),
+                "coordination_events": snapshot([]),
             }
         )
 
@@ -314,10 +322,11 @@ class TestCCTraceAdapterErrorHandling:
             adapter.parse()
 
     def test_malformed_config_json(self, tmp_path: Path):
-        """Graceful error when config.json is malformed."""
+        """Graceful error when config.json is malformed in teams mode."""
         bad_dir = tmp_path / "bad"
         bad_dir.mkdir()
-        (bad_dir / "config.json").write_text("not valid json")
+        # Create malformed config that looks like teams mode but is invalid JSON
+        (bad_dir / "config.json").write_text('{"team_name": "test", "members": [not valid json')
 
         with pytest.raises(ValueError, match="Failed to parse"):
             adapter = CCTraceAdapter(bad_dir)
