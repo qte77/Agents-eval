@@ -249,6 +249,14 @@ class CompositeScorer:
             assert results.tier2 is not None
             assert results.tier3 is not None
 
+            # Calculate tier weights from enabled tiers
+            enabled_tiers = self.settings.get_enabled_tiers()
+            tier_weights = {
+                "tier1": self.settings.tier1_weight,
+                "tier2": self.settings.tier2_weight,
+                "tier3": self.settings.tier3_weight,
+            }
+
             result = CompositeResult(
                 composite_score=composite_score,
                 recommendation=recommendation,
@@ -258,6 +266,8 @@ class CompositeScorer:
                 tier2_score=results.tier2.overall_score,
                 tier3_score=results.tier3.overall_score,
                 evaluation_complete=results.is_complete(),
+                weights_used=tier_weights,
+                tiers_enabled=sorted(enabled_tiers),
             )
 
             logger.info(f"Composite evaluation complete: {composite_score:.3f} → {recommendation}")

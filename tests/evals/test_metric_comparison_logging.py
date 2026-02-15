@@ -16,14 +16,15 @@ from app.data_models.evaluation_models import CompositeResult, Tier1Result, Tier
 @pytest.mark.asyncio
 async def test_log_metric_comparison_called_after_evaluation():
     """Test that metric comparison logging is called after evaluate_comprehensive completes."""
+    from app.evals.evaluation_pipeline import EvaluationPipeline
+    from app.evals.settings import JudgeSettings
+
+    # Create pipeline with mocked engines
+    settings = JudgeSettings(enable_tier2=False)  # Disable tier2 for focused test
+
     with (
         patch("app.evals.evaluation_pipeline.logger") as mock_logger,
     ):
-        from app.evals.evaluation_pipeline import EvaluationPipeline
-        from app.evals.settings import JudgeSettings
-
-        # Create pipeline with mocked engines
-        settings = JudgeSettings(enable_tier2=False)  # Disable tier2 for focused test
         pipeline = EvaluationPipeline(settings=settings)
 
         # Mock tier results
@@ -82,17 +83,18 @@ async def test_log_metric_comparison_called_after_evaluation():
             )
 
             # Verify logger.info was called with metric comparison
-            # Check for tier score comparison
-            tier_comparison_logged = False
+            # Check for tier score comparison (they are in separate log calls)
+            tier1_logged = False
+            tier3_logged = False
             for call in mock_logger.info.call_args_list:
                 call_msg = str(call[0][0])
-                if "Tier 1" in call_msg and "Tier 3" in call_msg and "overall score" in call_msg:
-                    tier_comparison_logged = True
-                    break
+                if "Tier 1" in call_msg and "overall score" in call_msg:
+                    tier1_logged = True
+                if "Tier 3" in call_msg and "overall score" in call_msg:
+                    tier3_logged = True
 
-            assert tier_comparison_logged, (
-                "Logger should log Tier 1 vs Tier 3 overall score comparison"
-            )
+            assert tier1_logged, "Logger should log Tier 1 overall score"
+            assert tier3_logged, "Logger should log Tier 3 overall score"
 
 
 @pytest.mark.asyncio

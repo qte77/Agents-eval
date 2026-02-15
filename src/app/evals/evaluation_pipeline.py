@@ -416,6 +416,63 @@ class EvaluationPipeline:
 
         return results
 
+    def _log_metric_comparison(
+        self, results: EvaluationResults, composite_result: CompositeResult
+    ) -> None:
+        """Log comparative summary of Tier 1 (text) vs Tier 3 (graph) metrics.
+
+        Args:
+            results: EvaluationResults containing tier1 and tier3 results
+            composite_result: CompositeResult with composite scoring information
+        """
+        logger.info("=" * 60)
+        logger.info("Evaluation Metrics Comparison Summary")
+        logger.info("=" * 60)
+
+        # Log overall tier scores comparison
+        tier1_score = composite_result.tier1_score
+        tier3_score = composite_result.tier3_score
+        logger.info(f"Tier 1 (Text Metrics) overall score: {tier1_score:.3f}")
+        logger.info(f"Tier 3 (Graph Analysis) overall score: {tier3_score:.3f}")
+        logger.info("")
+
+        # Log individual text metrics from Tier 1
+        if results.tier1:
+            logger.info("Text Metrics (Tier 1):")
+            logger.info(f"  cosine_score: {results.tier1.cosine_score:.3f}")
+            logger.info(f"  jaccard_score: {results.tier1.jaccard_score:.3f}")
+            logger.info(f"  semantic_score: {results.tier1.semantic_score:.3f}")
+            logger.info("")
+
+        # Log individual graph metrics from Tier 3
+        if results.tier3:
+            logger.info("Graph Metrics (Tier 3):")
+            logger.info(f"  path_convergence: {results.tier3.path_convergence:.3f}")
+            logger.info(
+                f"  tool_selection_accuracy: {results.tier3.tool_selection_accuracy:.3f}"
+            )
+            logger.info(f"  communication_overhead: {results.tier3.communication_overhead:.3f}")
+            logger.info(
+                f"  coordination_centrality: {results.tier3.coordination_centrality:.3f}"
+            )
+            logger.info(
+                f"  task_distribution_balance: {results.tier3.task_distribution_balance:.3f}"
+            )
+            logger.info("")
+
+        # Log composite score with tier contributions
+        logger.info("Composite Score Summary:")
+        logger.info(f"  Final composite score: {composite_result.composite_score:.3f}")
+        logger.info(f"  Recommendation: {composite_result.recommendation}")
+
+        # Show tier weights used in composite calculation
+        if hasattr(composite_result, "weights_used") and composite_result.weights_used:
+            logger.info("  Tier contributions:")
+            for tier, weight in composite_result.weights_used.items():
+                logger.info(f"    {tier}: {weight:.3f}")
+
+        logger.info("=" * 60)
+
     def _apply_opik_decorator(self, func: Any) -> Any:
         """Apply Opik tracking decorator if available and enabled."""
         if self._opik_decorator_enabled:
@@ -535,6 +592,9 @@ class EvaluationPipeline:
                 f"composite score: {composite_result.composite_score:.3f}, "
                 f"performance: {performance_summary}"
             )
+
+            # Log metric comparison summary
+            self._log_metric_comparison(results, composite_result)
 
             return composite_result
 

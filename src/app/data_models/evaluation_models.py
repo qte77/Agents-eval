@@ -150,6 +150,10 @@ class CompositeResult(BaseModel):
     evaluation_complete: bool = Field(description="Whether all required tiers completed")
     timestamp: str = Field(description="ISO 8601 evaluation timestamp", default="")
     config_version: str = Field(description="Configuration version used", default="1.0.0")
+    weights_used: dict[str, float] | None = Field(
+        description="Tier weights used in composite calculation", default=None
+    )
+    tiers_enabled: list[int] | None = Field(description="List of enabled tier numbers", default=None)
 
     # Optional Opik integration fields
     opik_trace_id: str | None = Field(description="Opik trace identifier", default=None)
