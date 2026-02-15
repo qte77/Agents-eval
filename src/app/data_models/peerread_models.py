@@ -12,12 +12,11 @@ This module also includes structured data models for LLM-generated reviews,
 ensuring consistency and validation against the PeerRead format.
 """
 
-from typing import Any, Literal
+from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.config.config_app import DATASETS_PEERREAD_PATH
-from app.utils.log import logger
 
 
 class PeerReadReview(BaseModel):
@@ -25,82 +24,57 @@ class PeerReadReview(BaseModel):
 
     Note: Some PeerRead papers (e.g., 304-308, 330) lack optional fields.
     Defaults to "UNKNOWN" for missing review criteria fields.
+
+    Accepts both PeerRead uppercase keys (IMPACT) and model lowercase keys
+    (impact) via populate_by_name with aliases.
     """
 
-    impact: str = Field(default="UNKNOWN", description="Impact score (1-5)")
-    substance: str = Field(default="UNKNOWN", description="Substance score (1-5)")
-    appropriateness: str = Field(default="UNKNOWN", description="Appropriateness score (1-5)")
+    model_config = ConfigDict(populate_by_name=True)
+
+    impact: str = Field(
+        default="UNKNOWN", validation_alias="IMPACT", description="Impact score (1-5)"
+    )
+    substance: str = Field(
+        default="UNKNOWN", validation_alias="SUBSTANCE", description="Substance score (1-5)"
+    )
+    appropriateness: str = Field(
+        default="UNKNOWN",
+        validation_alias="APPROPRIATENESS",
+        description="Appropriateness score (1-5)",
+    )
     meaningful_comparison: str = Field(
-        default="UNKNOWN", description="Meaningful comparison score (1-5)"
+        default="UNKNOWN",
+        validation_alias="MEANINGFUL_COMPARISON",
+        description="Meaningful comparison score (1-5)",
     )
     presentation_format: str = Field(
-        default="Poster", description="Presentation format (Poster/Oral)"
+        default="Poster",
+        validation_alias="PRESENTATION_FORMAT",
+        description="Presentation format (Poster/Oral)",
     )
     comments: str = Field(default="", description="Detailed review comments")
     soundness_correctness: str = Field(
-        default="UNKNOWN", description="Soundness/correctness score (1-5)"
+        default="UNKNOWN",
+        validation_alias="SOUNDNESS_CORRECTNESS",
+        description="Soundness/correctness score (1-5)",
     )
-    originality: str = Field(default="UNKNOWN", description="Originality score (1-5)")
-    recommendation: str = Field(default="UNKNOWN", description="Overall recommendation score (1-5)")
-    clarity: str = Field(default="UNKNOWN", description="Clarity score (1-5)")
+    originality: str = Field(
+        default="UNKNOWN", validation_alias="ORIGINALITY", description="Originality score (1-5)"
+    )
+    recommendation: str = Field(
+        default="UNKNOWN",
+        validation_alias="RECOMMENDATION",
+        description="Overall recommendation score (1-5)",
+    )
+    clarity: str = Field(
+        default="UNKNOWN", validation_alias="CLARITY", description="Clarity score (1-5)"
+    )
     reviewer_confidence: str = Field(
-        default="UNKNOWN", description="Reviewer confidence score (1-5)"
+        default="UNKNOWN",
+        validation_alias="REVIEWER_CONFIDENCE",
+        description="Reviewer confidence score (1-5)",
     )
     is_meta_review: bool | None = Field(default=None, description="Whether this is a meta review")
-
-    @model_validator(mode="before")
-    @classmethod
-    def log_missing_optional_fields(cls, data: dict[str, Any]) -> dict[str, Any]:
-        """Log debug message when optional fields are missing from PeerRead data.
-
-        Args:
-            data: Raw review data from PeerRead dataset (uppercase field names).
-
-        Returns:
-            Data with lowercase field names for Pydantic validation.
-        """
-        # Reason: Papers 304-308, 330 lack IMPACT and other fields
-        optional_fields = [
-            "IMPACT",
-            "SUBSTANCE",
-            "APPROPRIATENESS",
-            "MEANINGFUL_COMPARISON",
-            "SOUNDNESS_CORRECTNESS",
-            "ORIGINALITY",
-            "CLARITY",
-        ]
-
-        # Extract paper_id from context if available (for better logging)
-        paper_id = data.pop("_paper_id", "unknown")
-
-        # Log missing optional fields
-        for field in optional_fields:
-            if field not in data:
-                logger.debug(f"Paper {paper_id}: Optional field {field} missing, using UNKNOWN")
-
-        # Map PeerRead uppercase field names to model lowercase field names
-        field_mapping = {
-            "IMPACT": "impact",
-            "SUBSTANCE": "substance",
-            "APPROPRIATENESS": "appropriateness",
-            "MEANINGFUL_COMPARISON": "meaningful_comparison",
-            "PRESENTATION_FORMAT": "presentation_format",
-            "SOUNDNESS_CORRECTNESS": "soundness_correctness",
-            "ORIGINALITY": "originality",
-            "RECOMMENDATION": "recommendation",
-            "CLARITY": "clarity",
-            "REVIEWER_CONFIDENCE": "reviewer_confidence",
-        }
-
-        # Transform data to use lowercase field names
-        transformed_data = {}
-        for key, value in data.items():
-            if key in field_mapping:
-                transformed_data[field_mapping[key]] = value
-            else:
-                transformed_data[key] = value
-
-        return transformed_data
 
 
 class PeerReadPaper(BaseModel):
