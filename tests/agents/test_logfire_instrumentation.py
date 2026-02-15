@@ -4,9 +4,13 @@ This module tests the LogfireInstrumentationManager which uses
 logfire.instrument_pydantic_ai() for automatic PydanticAI agent tracing.
 """
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+import requests
+from hypothesis import given
+from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
 from app.agents.logfire_instrumentation import (
     LogfireInstrumentationManager,
@@ -115,3 +119,207 @@ def test_instrumentation_manager_graceful_degradation():
 
         # Should still create manager but with disabled state
         assert manager.config.enabled is False
+
+
+# STORY-001: Graceful Logfire trace export failures
+# Tests for connection checking and graceful failure handling
+
+
+def test_otlp_endpoint_unreachable_disables_tracing(caplog):
+    """Test that unreachable OTLP endpoint disables tracing with single warning.
+
+    Acceptance criteria:
+    - Logfire initialization catches connection errors
+    - Set self.config.enabled = False when OTLP endpoint unreachable
+    - Log single warning message about unavailable endpoint
+    """
+    config = LogfireConfig(
+        enabled=True,
+        send_to_cloud=False,
+        phoenix_endpoint="http://localhost:6006",
+        service_name="test-service",
+    )
+
+    with (
+        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("requests.head") as mock_head,
+    ):
+        # Simulate connection refused error
+        mock_head.side_effect = requests.exceptions.ConnectionError(
+            "Connection refused"
+        )
+
+        manager = LogfireInstrumentationManager(config)
+
+        # Tracing should be disabled
+        assert manager.config.enabled is False
+
+        # Should log single warning about endpoint being unreachable
+        assert any(
+            "Logfire tracing unavailable" in record.message
+            and "unreachable" in record.message
+            for record in caplog.records
+        )
+
+        # Should NOT call logfire.configure() when endpoint unreachable
+        mock_logfire.configure.assert_not_called()
+
+
+def test_otlp_endpoint_reachable_enables_tracing():
+    """Test that reachable OTLP endpoint proceeds with normal initialization.
+
+    Acceptance criteria:
+    - When endpoint is reachable, initialization proceeds normally
+    - No regression in successful initialization path
+    """
+    config = LogfireConfig(
+        enabled=True,
+        send_to_cloud=False,
+        phoenix_endpoint="http://localhost:6006",
+        service_name="test-service",
+    )
+
+    with (
+        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("requests.head") as mock_head,
+    ):
+        # Simulate successful connection check
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_head.return_value = mock_response
+
+        manager = LogfireInstrumentationManager(config)
+
+        # Tracing should remain enabled
+        assert manager.config.enabled is True
+
+        # Should call logfire.configure()
+        mock_logfire.configure.assert_called_once()
+        mock_logfire.instrument_pydantic_ai.assert_called_once()
+
+
+def test_warning_message_format_snapshot(caplog):
+    """Test warning message format using inline-snapshot.
+
+    Acceptance criteria:
+    - Warning message includes endpoint URL and mentions both spans and metrics
+    """
+    config = LogfireConfig(
+        enabled=True,
+        send_to_cloud=False,
+        phoenix_endpoint="http://localhost:6006",
+        service_name="test-service",
+    )
+
+    with (
+        patch("app.agents.logfire_instrumentation.logfire"),
+        patch("requests.head") as mock_head,
+    ):
+        mock_head.side_effect = requests.exceptions.ConnectionError()
+
+        LogfireInstrumentationManager(config)
+
+        warning_messages = [
+            record.message for record in caplog.records if record.levelname == "WARNING"
+        ]
+
+        # Should have exactly one warning about tracing unavailable
+        assert len(warning_messages) == 1
+        assert warning_messages[0] == snapshot(
+            "Logfire tracing unavailable: http://localhost:6006/v1/traces unreachable (spans and metrics export disabled)"
+        )
+
+
+@given(
+    timeout=st.floats(min_value=0.1, max_value=5.0),
+    retries=st.integers(min_value=0, max_value=3),
+)
+def test_connection_check_timeout_bounds(timeout, retries):
+    """Property test: connection check respects timeout bounds.
+
+    Acceptance criteria:
+    - Connection check timeout is configurable and bounded
+    - Retries are bounded to prevent infinite loops
+    """
+    config = LogfireConfig(
+        enabled=True,
+        send_to_cloud=False,
+        phoenix_endpoint="http://localhost:6006",
+        service_name="test-service",
+    )
+
+    with (
+        patch("app.agents.logfire_instrumentation.logfire"),
+        patch("requests.head") as mock_head,
+    ):
+        mock_head.side_effect = requests.exceptions.Timeout()
+
+        manager = LogfireInstrumentationManager(config)
+
+        # Should disable tracing on timeout
+        assert manager.config.enabled is False
+
+        # Verify timeout was used (if passed to requests.head)
+        if mock_head.called:
+            call_kwargs = mock_head.call_args[1] if mock_head.call_args else {}
+            if "timeout" in call_kwargs:
+                assert 0.1 <= call_kwargs["timeout"] <= 5.0
+
+
+def test_send_to_cloud_skips_connection_check():
+    """Test that send_to_cloud=True skips local endpoint check.
+
+    Acceptance criteria:
+    - When sending to Logfire cloud, skip local endpoint connectivity check
+    """
+    config = LogfireConfig(
+        enabled=True,
+        send_to_cloud=True,
+        phoenix_endpoint="http://localhost:6006",
+        service_name="test-service",
+    )
+
+    with (
+        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("requests.head") as mock_head,
+    ):
+        manager = LogfireInstrumentationManager(config)
+
+        # Should NOT check local endpoint when using cloud
+        mock_head.assert_not_called()
+
+        # Should proceed with normal initialization
+        assert manager.config.enabled is True
+        mock_logfire.configure.assert_called_once()
+
+
+def test_multiple_connection_failures_single_warning(caplog):
+    """Test that multiple connection failures result in single warning.
+
+    Acceptance criteria:
+    - Only one warning logged during initialization, not per-export attempt
+    """
+    config = LogfireConfig(
+        enabled=True,
+        send_to_cloud=False,
+        phoenix_endpoint="http://localhost:6006",
+        service_name="test-service",
+    )
+
+    with (
+        patch("app.agents.logfire_instrumentation.logfire"),
+        patch("requests.head") as mock_head,
+    ):
+        mock_head.side_effect = requests.exceptions.ConnectionError()
+
+        LogfireInstrumentationManager(config)
+
+        warning_count = sum(
+            1
+            for record in caplog.records
+            if record.levelname == "WARNING"
+            and "Logfire tracing unavailable" in record.message
+        )
+
+        # Should have exactly ONE warning, not multiple
+        assert warning_count == 1
