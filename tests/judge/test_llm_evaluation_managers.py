@@ -446,8 +446,9 @@ async def test_evaluate_single_llm_judge_via_pipeline():
     # Create pipeline instance
     pipeline = EvaluationPipeline()
 
-    # Mock only the LLM engine
+    # Mock LLM engine to be available and return a result
     mock_result = Mock(spec=Tier2Result)
+    pipeline.llm_engine.tier2_available = True  # Mark as available (STORY-001)
     pipeline.llm_engine.evaluate_comprehensive = AsyncMock(return_value=mock_result)
 
     # Test Tier 2 execution directly
@@ -475,30 +476,38 @@ class TestPipelineIntegration:
         """EvaluationPipeline should pass chat_provider to LLMJudgeEngine (STORY-001)."""
         from app.judge.evaluation_pipeline import EvaluationPipeline
 
-        env_config = AppEnv(GITHUB_API_KEY="ghp-test")
         settings = JudgeSettings(tier2_provider="auto")
+        env_config = AppEnv(GITHUB_API_KEY="ghp-test")
 
-        with patch("app.judge.evaluation_pipeline.AppEnv", return_value=env_config):
+        # Patch LLMJudgeEngine to pass env_config
+        with patch(
+            "app.judge.evaluation_pipeline.LLMJudgeEngine"
+        ) as mock_engine_class:
+            mock_engine = Mock()
+            mock_engine.tier2_available = True
+            mock_engine_class.return_value = mock_engine
+
             pipeline = EvaluationPipeline(settings=settings, chat_provider="github")
 
-            # LLM engine should have inherited github provider
-            assert pipeline.llm_engine.provider == "github"
+            # Verify LLMJudgeEngine was called with chat_provider
+            mock_engine_class.assert_called_once_with(settings, chat_provider="github")
+            assert pipeline.chat_provider == "github"
 
     @pytest.mark.asyncio
     async def test_pipeline_skips_tier2_when_no_providers_available(self):
         """Pipeline should skip Tier 2 when no providers available (STORY-001)."""
         from app.judge.evaluation_pipeline import EvaluationPipeline
 
-        env_config = AppEnv(OPENAI_API_KEY="")
         settings = JudgeSettings(tier2_provider="openai")
 
-        with patch("app.judge.evaluation_pipeline.AppEnv", return_value=env_config):
-            pipeline = EvaluationPipeline(settings=settings)
+        # Create pipeline with mock engine that has tier2_available=False
+        pipeline = EvaluationPipeline(settings=settings)
+        pipeline.llm_engine.tier2_available = False
 
-            # Execute tier2 should return None when skipped
-            result, _ = await pipeline._execute_tier2("paper", "review", {})
+        # Execute tier2 should return None when skipped
+        result, _ = await pipeline._execute_tier2("paper", "review", {})
 
-            assert result is None
+        assert result is None
 
 
 # Performance and cost tests

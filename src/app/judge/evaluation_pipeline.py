@@ -39,11 +39,14 @@ class EvaluationPipeline:
     def __init__(
         self,
         settings: JudgeSettings | None = None,
+        chat_provider: str | None = None,
     ):
         """Initialize evaluation pipeline with configuration.
 
         Args:
             settings: JudgeSettings instance. If None, uses default JudgeSettings().
+            chat_provider: Active chat provider from agent system. Passed to LLMJudgeEngine
+                          for tier2_provider=auto mode.
 
         Raises:
             ValueError: If configuration is invalid
@@ -53,11 +56,12 @@ class EvaluationPipeline:
             settings = JudgeSettings()
 
         self.settings = settings
+        self.chat_provider = chat_provider
         self.performance_monitor = PerformanceMonitor(settings.get_performance_targets())
 
         # Initialize engines with settings
         self.traditional_engine = TraditionalMetricsEngine()
-        self.llm_engine = LLMJudgeEngine(settings)
+        self.llm_engine = LLMJudgeEngine(settings, chat_provider=chat_provider)
         self.graph_engine = GraphAnalysisEngine(settings)
         self.composite_scorer = CompositeScorer(settings=settings)
 
@@ -65,7 +69,7 @@ class EvaluationPipeline:
         fallback_strategy = settings.fallback_strategy
         logger.info(
             f"EvaluationPipeline initialized with JudgeSettings: tiers={enabled_tiers}, "
-            f"fallback_strategy={fallback_strategy}"
+            f"fallback_strategy={fallback_strategy}, chat_provider={chat_provider}"
         )
 
     @property
@@ -199,6 +203,11 @@ class EvaluationPipeline:
         """
         if not self._is_tier_enabled(2):
             logger.debug("Tier 2 disabled, skipping LLM judge")
+            return None, 0.0
+
+        # Check if Tier 2 providers are available (STORY-001)
+        if not self.llm_engine.tier2_available:
+            logger.warning("Tier 2 skipped: no valid LLM providers available")
             return None, 0.0
 
         performance_targets = self.performance_targets

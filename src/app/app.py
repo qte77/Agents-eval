@@ -67,6 +67,7 @@ async def _run_evaluation_if_enabled(
     execution_id: str | None,
     cc_solo_dir: str | None = None,
     cc_teams_dir: str | None = None,
+    chat_provider: str | None = None,
 ) -> CompositeResult | None:
     """Run evaluation pipeline after manager completes if enabled.
 
@@ -76,6 +77,7 @@ async def _run_evaluation_if_enabled(
         execution_id: Execution ID for trace retrieval
         cc_solo_dir: Path to Claude Code solo artifacts directory for baseline comparison
         cc_teams_dir: Path to Claude Code teams artifacts directory for baseline comparison
+        chat_provider: Active chat provider from agent system (STORY-001)
 
     Returns:
         CompositeResult from PydanticAI evaluation or None if skipped
@@ -85,7 +87,7 @@ async def _run_evaluation_if_enabled(
         return None
 
     logger.info("Running evaluation pipeline...")
-    pipeline = EvaluationPipeline()
+    pipeline = EvaluationPipeline(chat_provider=chat_provider)
 
     # Gracefully handle when no ground-truth reviews available
     if not paper_number:
@@ -313,7 +315,7 @@ async def main(
 
             # Run evaluation after manager completes
             await _run_evaluation_if_enabled(
-                skip_eval, paper_number, execution_id, cc_solo_dir, cc_teams_dir
+                skip_eval, paper_number, execution_id, cc_solo_dir, cc_teams_dir, chat_provider
             )
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")

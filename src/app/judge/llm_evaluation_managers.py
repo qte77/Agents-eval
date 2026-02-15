@@ -32,20 +32,50 @@ if TYPE_CHECKING:
 class LLMJudgeEngine:
     """Manager for LLM-based evaluation with provider flexibility and fallbacks."""
 
-    def __init__(self, settings: JudgeSettings) -> None:
+    def __init__(
+        self,
+        settings: JudgeSettings,
+        env_config: AppEnv | None = None,
+        chat_provider: str | None = None,
+    ) -> None:
         """Initialize evaluation LLM manager with settings.
 
         Args:
             settings: JudgeSettings instance with tier2 configuration.
+            env_config: Application environment configuration. If None, creates default AppEnv().
+            chat_provider: Active chat provider from agent system. Used when tier2_provider='auto'.
         """
         self.settings = settings
         self.fallback_engine = TraditionalMetricsEngine()
 
-        # Provider and model settings
-        self.provider = settings.tier2_provider
+        # Get environment configuration
+        if env_config is None:
+            env_config = AppEnv()
+        self.env_config = env_config
+
+        # Resolve provider using auto mode if configured
+        resolved_provider = settings.tier2_provider
+        if resolved_provider == "auto" and chat_provider:
+            logger.info(
+                f"tier2_provider=auto: inheriting chat_provider '{chat_provider}' from agent system"
+            )
+            resolved_provider = chat_provider
+
+        # Provider and model settings (before selection)
+        self.provider = resolved_provider
         self.model = settings.tier2_model
         self.fallback_provider = settings.tier2_fallback_provider
         self.fallback_model = settings.tier2_fallback_model
+
+        # Call select_available_provider to validate and fallback if needed
+        selected = self.select_available_provider(env_config)
+        if selected:
+            self.provider, self.model = selected
+            self.tier2_available = True
+        else:
+            # No providers available - mark Tier 2 as unavailable
+            self.tier2_available = False
+            logger.warning("Tier 2 evaluation will be skipped (no valid providers)")
 
         # Performance settings
         self.timeout = settings.tier2_timeout_seconds
