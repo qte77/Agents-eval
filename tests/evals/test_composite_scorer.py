@@ -6,6 +6,9 @@ mathematical formulas, recommendation mapping, and configuration handling.
 """
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import (
     CompositeResult,
@@ -251,3 +254,194 @@ class TestAgentAssessment:
 
         # Over-tooling should result in lower tool selection score
         assert over_tooled_metrics.tool_selection_score < normal_metrics.tool_selection_score
+
+
+# MARK: Property-based tests using Hypothesis
+
+
+class TestCompositeScoreProperties:
+    """Property-based tests for score bounds and invariants."""
+
+    @given(
+        time_score=st.floats(min_value=0.0, max_value=1.0),
+        task_success=st.floats(min_value=0.0, max_value=1.0),
+        tier1_overall=st.floats(min_value=0.0, max_value=1.0),
+        tier2_overall=st.floats(min_value=0.0, max_value=1.0),
+        coordination=st.floats(min_value=0.0, max_value=1.0),
+        tool_accuracy=st.floats(min_value=0.0, max_value=1.0),
+    )
+    def test_composite_score_always_in_valid_range(
+        self, time_score, task_success, tier1_overall, tier2_overall, coordination, tool_accuracy
+    ):
+        """Property: Composite score must always be in [0.0, 1.0] for all valid inputs."""
+        scorer = CompositeScorer()
+
+        # Create tier results with random valid scores
+        tier1 = Tier1Result(
+            cosine_score=0.5,
+            jaccard_score=0.5,
+            semantic_score=0.5,
+            execution_time=1.0,
+            time_score=time_score,
+            task_success=task_success,
+            overall_score=tier1_overall,
+        )
+        tier2 = Tier2Result(
+            technical_accuracy=0.5,
+            constructiveness=0.5,
+            clarity=0.5,
+            planning_rationality=0.5,
+            overall_score=tier2_overall,
+            model_used="test",
+            api_cost=0.0,
+            fallback_used=False,
+        )
+        tier3 = Tier3Result(
+            coordination_centrality=coordination,
+            tool_selection_accuracy=tool_accuracy,
+            path_convergence=0.5,
+            task_distribution_balance=0.5,
+            communication_overhead=0.5,
+            overall_score=0.5,
+            graph_complexity=10,
+        )
+
+        results = EvaluationResults(tier1=tier1, tier2=tier2, tier3=tier3)
+        composite_score = scorer.calculate_composite_score(results)
+
+        # PROPERTY: Score must be in valid range
+        assert (
+            0.0 <= composite_score <= 1.0
+        ), f"Composite score {composite_score} outside [0.0, 1.0]"
+
+    @given(
+        scores=st.lists(
+            st.floats(min_value=0.0, max_value=1.0),
+            min_size=6,
+            max_size=6,
+        )
+    )
+    def test_composite_score_weight_normalization(self, scores):
+        """Property: Weighted sum should preserve bounds when weights sum to 1.0."""
+        scorer = CompositeScorer()
+
+        # Verify weights sum to 1.0 (or very close)
+        weight_sum = sum(scorer.weights.values())
+        assert abs(weight_sum - 1.0) < 0.001, f"Weights sum to {weight_sum}, not 1.0"
+
+        # Calculate weighted sum manually
+        metric_names = list(scorer.weights.keys())
+        weighted_sum = sum(scores[i] * scorer.weights[metric_names[i]] for i in range(6))
+
+        # PROPERTY: Weighted sum must be in [0.0, 1.0]
+        assert 0.0 <= weighted_sum <= 1.0, f"Weighted sum {weighted_sum} outside [0.0, 1.0]"
+
+    @given(score=st.floats(min_value=0.0, max_value=1.0))
+    def test_recommendation_mapping_completeness(self, score):
+        """Property: Every valid score maps to exactly one recommendation."""
+        scorer = CompositeScorer()
+        recommendation = scorer.map_to_recommendation(score)
+
+        # PROPERTY: Must return one of the four valid recommendations
+        valid_recommendations = {"accept", "weak_accept", "weak_reject", "reject"}
+        assert (
+            recommendation in valid_recommendations
+        ), f"Invalid recommendation: {recommendation}"
+
+    @given(
+        tier1_score=st.floats(min_value=0.0, max_value=1.0),
+        tier2_score=st.floats(min_value=0.0, max_value=1.0),
+        tier3_score=st.floats(min_value=0.0, max_value=1.0),
+    )
+    def test_metric_extraction_preserves_bounds(self, tier1_score, tier2_score, tier3_score):
+        """Property: Extracted metrics maintain [0.0, 1.0] bounds."""
+        scorer = CompositeScorer()
+
+        tier1 = Tier1Result(
+            cosine_score=0.5,
+            jaccard_score=0.5,
+            semantic_score=0.5,
+            execution_time=1.0,
+            time_score=tier1_score,
+            task_success=tier1_score,
+            overall_score=tier1_score,
+        )
+        tier2 = Tier2Result(
+            technical_accuracy=tier2_score,
+            constructiveness=tier2_score,
+            clarity=tier2_score,
+            planning_rationality=tier2_score,
+            overall_score=tier2_score,
+            model_used="test",
+            api_cost=0.0,
+            fallback_used=False,
+        )
+        tier3 = Tier3Result(
+            coordination_centrality=tier3_score,
+            tool_selection_accuracy=tier3_score,
+            path_convergence=tier3_score,
+            task_distribution_balance=tier3_score,
+            communication_overhead=tier3_score,
+            overall_score=tier3_score,
+            graph_complexity=10,
+        )
+
+        results = EvaluationResults(tier1=tier1, tier2=tier2, tier3=tier3)
+        metrics = scorer.extract_metric_values(results)
+
+        # PROPERTY: All extracted metrics in valid range
+        for metric_name, value in metrics.items():
+            assert (
+                0.0 <= value <= 1.0
+            ), f"Metric {metric_name}={value} outside [0.0, 1.0]"
+
+
+# MARK: Snapshot tests using inline-snapshot
+
+
+class TestCompositeResultStructure:
+    """Snapshot tests for CompositeResult structure regression."""
+
+    def test_composite_result_structure_snapshot(self, scorer, sample_tier_results):
+        """Snapshot: CompositeResult structure should remain stable."""
+        result = scorer.evaluate_composite(sample_tier_results)
+
+        # SNAPSHOT: Capture the complete structure
+        assert result.model_dump() == snapshot()
+
+    def test_composite_result_with_perfect_scores_snapshot(self, scorer):
+        """Snapshot: Perfect score structure."""
+        tier1 = Tier1Result(
+            cosine_score=1.0,
+            jaccard_score=1.0,
+            semantic_score=1.0,
+            execution_time=0.1,
+            time_score=1.0,
+            task_success=1.0,
+            overall_score=1.0,
+        )
+        tier2 = Tier2Result(
+            technical_accuracy=1.0,
+            constructiveness=1.0,
+            clarity=1.0,
+            planning_rationality=1.0,
+            overall_score=1.0,
+            model_used="test-model",
+            api_cost=0.001,
+            fallback_used=False,
+        )
+        tier3 = Tier3Result(
+            coordination_centrality=1.0,
+            tool_selection_accuracy=1.0,
+            path_convergence=1.0,
+            task_distribution_balance=1.0,
+            communication_overhead=1.0,
+            overall_score=1.0,
+            graph_complexity=5,
+        )
+
+        results = EvaluationResults(tier1=tier1, tier2=tier2, tier3=tier3)
+        result = scorer.evaluate_composite(results)
+
+        # SNAPSHOT: Structure with all perfect scores
+        assert result.model_dump() == snapshot()

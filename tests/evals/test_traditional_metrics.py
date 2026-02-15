@@ -9,6 +9,9 @@ import time
 from unittest.mock import Mock, patch
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import Tier1Result
 from app.judge.traditional_metrics import (
@@ -623,3 +626,125 @@ class TestPeerReadEvaluation:
         assert result.overall_similarity == 0.68
         assert result.recommendation_match is True
         assert result.similarity_scores["cosine"] == 0.75
+
+
+# MARK: Property-based tests using Hypothesis
+
+
+class TestSimilarityScoreProperties:
+    """Property-based tests for similarity score bounds and invariants."""
+
+    @given(text1=st.text(min_size=0, max_size=500), text2=st.text(min_size=0, max_size=500))
+    def test_cosine_similarity_always_in_valid_range(self, text1, text2):
+        """Property: Cosine similarity must always be in [0.0, 1.0] for any text inputs."""
+        engine = TraditionalMetricsEngine()
+        similarity = engine.compute_cosine_similarity(text1, text2)
+
+        # PROPERTY: Similarity must be in valid range
+        assert 0.0 <= similarity <= 1.0, f"Cosine similarity {similarity} outside [0.0, 1.0]"
+
+    @given(text1=st.text(min_size=0, max_size=500), text2=st.text(min_size=0, max_size=500))
+    def test_jaccard_similarity_always_in_valid_range(self, text1, text2):
+        """Property: Jaccard similarity must always be in [0.0, 1.0] for any text inputs."""
+        engine = TraditionalMetricsEngine()
+        similarity = engine.compute_jaccard_similarity(text1, text2)
+
+        # PROPERTY: Similarity must be in valid range
+        assert 0.0 <= similarity <= 1.0, f"Jaccard similarity {similarity} outside [0.0, 1.0]"
+
+    @given(text=st.text(min_size=0, max_size=500))
+    def test_similarity_with_self_is_one(self, text):
+        """Property: Similarity of text with itself should be 1.0 (or very close)."""
+        if not text.strip():  # Skip empty/whitespace-only text
+            return
+
+        engine = TraditionalMetricsEngine()
+
+        cosine_sim = engine.compute_cosine_similarity(text, text)
+        jaccard_sim = engine.compute_jaccard_similarity(text, text)
+
+        # PROPERTY: Self-similarity should be 1.0
+        assert abs(cosine_sim - 1.0) < 1e-6, f"Self cosine similarity {cosine_sim} != 1.0"
+        assert abs(jaccard_sim - 1.0) < 1e-6, f"Self Jaccard similarity {jaccard_sim} != 1.0"
+
+    @given(
+        start_time=st.floats(min_value=1000.0, max_value=10000.0),
+        duration=st.floats(min_value=0.001, max_value=300.0),
+    )
+    def test_execution_time_score_always_in_valid_range(self, start_time, duration):
+        """Property: Time score must always be in (0.0, 1.0] for any valid duration."""
+        engine = TraditionalMetricsEngine()
+        end_time = start_time + duration
+
+        time_score = engine.measure_execution_time(start_time, end_time)
+
+        # PROPERTY: Time score must be in valid range (>0 due to minimum enforcement)
+        assert 0.0 < time_score <= 1.0, f"Time score {time_score} outside (0.0, 1.0]"
+
+    @given(
+        cosine=st.floats(min_value=0.0, max_value=1.0),
+        jaccard=st.floats(min_value=0.0, max_value=1.0),
+        semantic=st.floats(min_value=0.0, max_value=1.0),
+        threshold=st.floats(min_value=0.0, max_value=1.0),
+    )
+    def test_task_success_returns_binary(self, cosine, jaccard, semantic, threshold):
+        """Property: Task success must return exactly 0.0 or 1.0."""
+        from app.judge.traditional_metrics import SimilarityScores
+
+        engine = TraditionalMetricsEngine()
+        scores = SimilarityScores(cosine=cosine, jaccard=jaccard, semantic=semantic)
+
+        success = engine.assess_task_success(scores, threshold=threshold)
+
+        # PROPERTY: Must be binary (0.0 or 1.0)
+        assert success in [0.0, 1.0], f"Task success {success} not binary"
+
+    @given(
+        agent_output=st.text(min_size=10, max_size=200),
+        reference_texts=st.lists(st.text(min_size=10, max_size=200), min_size=1, max_size=5),
+    )
+    def test_tier1_result_scores_always_valid(self, agent_output, reference_texts):
+        """Property: Tier1Result scores must all be in valid ranges."""
+        engine = TraditionalMetricsEngine()
+        start_time = time.perf_counter()
+        time.sleep(0.001)
+        end_time = time.perf_counter()
+
+        result = engine.evaluate_traditional_metrics(
+            agent_output, reference_texts, start_time, end_time
+        )
+
+        # PROPERTY: All scores in valid range
+        assert 0.0 <= result.cosine_score <= 1.0
+        assert 0.0 <= result.jaccard_score <= 1.0
+        assert 0.0 <= result.semantic_score <= 1.0
+        assert result.execution_time > 0.0
+        assert 0.0 < result.time_score <= 1.0
+        assert result.task_success in [0.0, 1.0]
+        assert 0.0 <= result.overall_score <= 1.0
+
+
+# MARK: Snapshot tests using inline-snapshot
+
+
+class TestTier1ResultStructure:
+    """Snapshot tests for Tier1Result structure regression."""
+
+    def test_tier1_result_structure_snapshot(self):
+        """Snapshot: Tier1Result structure should remain stable."""
+        engine = TraditionalMetricsEngine()
+        agent_output = "This paper demonstrates solid methodology and clear results."
+        reference_texts = ["Strong methodology with excellent results."]
+
+        start_time = time.perf_counter()
+        time.sleep(0.001)
+        end_time = time.perf_counter()
+
+        result = engine.evaluate_traditional_metrics(
+            agent_output, reference_texts, start_time, end_time
+        )
+
+        # SNAPSHOT: Capture the complete structure (excluding dynamic execution_time)
+        dumped = result.model_dump()
+        dumped.pop("execution_time")  # Remove dynamic field
+        assert dumped == snapshot()
