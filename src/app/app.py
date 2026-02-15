@@ -7,8 +7,9 @@ asynchronous execution. It integrates logging, tracing, and authentication,
 and supports both CLI and programmatic execution.
 """
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import cast
+from typing import TypeVar, cast
 
 from logfire import span
 
@@ -17,13 +18,18 @@ try:
     from weave import op
 except ImportError:
     # Fallback: no-op decorator when weave not installed
-    def op():  # type: ignore[reportRedeclaration]
+    from typing import Any
+
+    _T = TypeVar("_T", bound=Callable[..., Any])
+
+    def op() -> Callable[[_T], _T]:  # type: ignore[reportRedeclaration]
         """No-op decorator fallback when weave is unavailable."""
 
-        def decorator(func):
+        def decorator(func: _T) -> _T:
             return func
 
         return decorator
+
 
 from app.__init__ import __version__
 from app.agents.agent_system import get_manager, run_manager, setup_agent_env

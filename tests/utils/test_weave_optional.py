@@ -9,7 +9,6 @@ Uses TDD approach with hypothesis for property-based testing.
 import sys
 from unittest.mock import MagicMock, patch
 
-import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -29,8 +28,8 @@ def test_weave_import_guard_when_api_key_present():
             (True, "test_wandb_key"),  # WANDB_API_KEY present
         ]
 
-        from app.utils.login import login
         from app.data_models.app_models import AppEnv
+        from app.utils.login import login
 
         env = AppEnv()
         login("test_project", env)
@@ -58,8 +57,8 @@ def test_weave_not_imported_when_api_key_absent():
         if "weave" in sys.modules:
             del sys.modules["weave"]
 
-        from app.utils.login import login
         from app.data_models.app_models import AppEnv
+        from app.utils.login import login
 
         env = AppEnv()
         login("test_project", env)
@@ -111,13 +110,15 @@ def test_app_op_decorator_without_weave():
     # Verify the actual app.py has this fallback in try/except ImportError block
     # by reading the source
     import inspect
+
     from app import app
 
     source = inspect.getsource(app)
     assert "try:" in source
     assert "from weave import op" in source
     assert "except ImportError:" in source
-    assert "def op():" in source  # Fallback definition
+    # Check for the typed fallback definition
+    assert "def op() ->" in source  # Fallback definition with return type
 
 
 @given(st.text(min_size=1, max_size=50))
@@ -135,8 +136,8 @@ def test_weave_optional_with_arbitrary_project_names(project_name: str):
             (True, "test_key"),  # WANDB_API_KEY
         ]
 
-        from app.utils.login import login
         from app.data_models.app_models import AppEnv
+        from app.utils.login import login
 
         env = AppEnv()
         login(project_name, env)
@@ -159,8 +160,8 @@ def test_weave_import_guard_property(has_api_key: bool):
             (has_api_key, "test_key" if has_api_key else ""),  # WANDB_API_KEY
         ]
 
-        from app.utils.login import login
         from app.data_models.app_models import AppEnv
+        from app.utils.login import login
 
         env = AppEnv()
         login("test_project", env)

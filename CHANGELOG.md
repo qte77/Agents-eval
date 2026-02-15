@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-010: GUI prompts page loads directly from `ChatConfig.prompts` without hardcoded fallback
 - STORY-011: Property-based tests using Hypothesis for score bounds, input validation, and math invariants
 - STORY-011: Snapshot tests using inline-snapshot for Pydantic model dumps and structure regression
+- STORY-012: Optional weave dependency group in `pyproject.toml` (only loaded when `WANDB_API_KEY` is set)
 
 ### Added
 
@@ -41,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- STORY-012: `login.py` conditionally imports weave only when `WANDB_API_KEY` is configured
+- STORY-012: `app.py` provides no-op `@op()` decorator fallback when weave unavailable
 - STORY-008: Consolidated all evaluation code from `app.evals.*` to `app.judge.*`
 - STORY-010: GUI settings page refactored from provider selection to read-only settings display with Streamlit expanders
 - STORY-010: GUI prompts page updated to load prompts from `ChatConfig` without `PROMPTS_DEFAULT` fallback
