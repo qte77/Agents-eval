@@ -85,8 +85,8 @@
         "tests/evals/test_llm_evaluation_managers_integration.py",
         "docs/best-practices/troubleshooting.md"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-15T16:29:56Z",
       "content_hash": "3a316c61479b0aa99b1b0a042584bd937c373d451c023966e8fc67c4605ad1d8",
       "depends_on": []
     },
