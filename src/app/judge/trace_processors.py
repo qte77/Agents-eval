@@ -266,7 +266,7 @@ class TraceCollector:
             if event.event_type == "agent_interaction":
                 agent_interactions.append(event.data)
             elif event.event_type == "tool_call":
-                tool_calls.append({**event.data, "timestamp": event.timestamp})
+                tool_calls.append({**event.data, "timestamp": event.timestamp, "agent_id": event.agent_id})
             elif event.event_type == "coordination":
                 coordination_events.append(event.data)
 
@@ -354,7 +354,8 @@ class TraceCollector:
                     f"Stored trace {trace.execution_id}: "
                     f"{trace.performance_metrics['total_duration']:.3f}s, "
                     f"{len(trace.agent_interactions)} interactions, "
-                    f"{len(trace.tool_calls)} tool calls"
+                    f"{len(trace.tool_calls)} tool calls "
+                    f"(storage: {self.storage_path})"
                 )
 
         except Exception as e:
@@ -368,13 +369,13 @@ class TraceCollector:
         tool_calls: list[dict[str, Any]] = []
         coordination_events: list[dict[str, Any]] = []
 
-        for timestamp, event_type, _agent_id, data_json in events:
+        for timestamp, event_type, agent_id, data_json in events:
             data = json.loads(data_json)
 
             if event_type == "agent_interaction":
                 agent_interactions.append({**data, "timestamp": timestamp})
             elif event_type == "tool_call":
-                tool_calls.append({**data, "timestamp": timestamp})
+                tool_calls.append({**data, "timestamp": timestamp, "agent_id": agent_id})
             elif event_type == "coordination":
                 coordination_events.append({**data, "timestamp": timestamp})
 

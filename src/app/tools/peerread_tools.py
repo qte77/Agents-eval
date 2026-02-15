@@ -5,6 +5,7 @@ This module provides agent tools that enable the manager agent to interact
 with the PeerRead dataset for paper retrieval, querying, and review evaluation.
 """
 
+import time
 from json import dump
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from app.data_models.peerread_models import (
 )
 from app.data_utils.datasets_peerread import PeerReadLoader, load_peerread_config
 from app.data_utils.review_persistence import ReviewPersistence
+from app.judge.trace_processors import get_trace_collector
 from app.utils.log import logger
 from app.utils.paths import get_review_template_path
 
@@ -81,6 +83,10 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         Returns:
             PeerReadPaper with title, abstract, and reviews.
         """
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
         try:
             config = load_peerread_config()
             loader = PeerReadLoader(config)
@@ -90,11 +96,21 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
                 raise ValueError(f"Paper {paper_id} not found in PeerRead dataset")
 
             logger.info(f"Retrieved paper {paper_id}: {paper.title[:50]}...")
+            success = True
             return paper
 
         except Exception as e:
             logger.error(f"Error retrieving paper: {e}")
             raise ValueError(f"Failed to retrieve paper: {str(e)}")
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id="manager",
+                tool_name="get_peerread_paper",
+                success=success,
+                duration=duration,
+                context=f"paper_id={paper_id}",
+            )
 
     @manager_agent.tool
     async def query_peerread_papers(  # type: ignore[reportUnusedFunction]
@@ -109,6 +125,10 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         Returns:
             List of PeerReadPaper objects matching the criteria.
         """
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
         try:
             config = load_peerread_config()
             loader = PeerReadLoader(config)
@@ -121,11 +141,21 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
             )
 
             logger.info(f"Found {len(papers)} papers matching criteria")
+            success = True
             return papers
 
         except Exception as e:
             logger.error(f"Error querying papers: {e}")
             raise ValueError(f"Failed to query papers: {str(e)}")
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id="manager",
+                tool_name="query_peerread_papers",
+                success=success,
+                duration=duration,
+                context=f"venue={venue},min_reviews={min_reviews}",
+            )
 
     @manager_agent.tool
     async def read_paper_pdf_tool(  # type: ignore[reportUnusedFunction]
@@ -143,7 +173,23 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         Returns:
             str: Extracted text content from the entire PDF in Markdown format.
         """
-        return read_paper_pdf(ctx, pdf_path)
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
+        try:
+            result = read_paper_pdf(ctx, pdf_path)
+            success = True
+            return result
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id="manager",
+                tool_name="read_paper_pdf_tool",
+                success=success,
+                duration=duration,
+                context=f"pdf_path={pdf_path}",
+            )
 
 
 def _truncate_paper_content(abstract: str, body: str, max_length: int) -> str:
@@ -292,6 +338,10 @@ def add_peerread_review_tools_to_manager(
             str: Review template with paper information and placeholder sections
                  that need to be manually completed.
         """
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
         try:
             config = load_peerread_config()
             loader = PeerReadLoader(config)
@@ -307,11 +357,21 @@ def add_peerread_review_tools_to_manager(
             )
 
             logger.info(f"Created review template for paper {paper_id} (NOT a real review)")
+            success = True
             return review_template
 
         except Exception as e:
             logger.error(f"Error creating review template: {e}")
             raise ValueError(f"Failed to create review template: {str(e)}")
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id="manager",
+                tool_name="generate_paper_review_content_from_template",
+                success=success,
+                duration=duration,
+                context=f"paper_id={paper_id},focus={review_focus}",
+            )
 
     @manager_agent.tool
     async def save_paper_review(  # type: ignore[reportUnusedFunction]
@@ -332,6 +392,10 @@ def add_peerread_review_tools_to_manager(
         Returns:
             str: Path to the saved review file.
         """
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
         try:
             # Create PeerReadReview object
             review = PeerReadReview(
@@ -353,11 +417,21 @@ def add_peerread_review_tools_to_manager(
             filepath = persistence.save_review(paper_id, review)
 
             logger.info(f"Saved review for paper {paper_id} to {filepath}")
+            success = True
             return filepath
 
         except Exception as e:
             logger.error(f"Error saving paper review: {e}")
             raise ValueError(f"Failed to save review: {str(e)}")
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id="manager",
+                tool_name="save_paper_review",
+                success=success,
+                duration=duration,
+                context=f"paper_id={paper_id}",
+            )
 
     @manager_agent.tool
     async def save_structured_review(  # type: ignore[reportUnusedFunction]
@@ -374,6 +448,10 @@ def add_peerread_review_tools_to_manager(
         Returns:
             str: Path to the saved review file.
         """
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
         try:
             from datetime import UTC, datetime
 
@@ -414,8 +492,18 @@ def add_peerread_review_tools_to_manager(
                 dump(result.model_dump(), f, indent=2, ensure_ascii=False)
 
             logger.info(f"Saved structured review for paper {paper_id} to {filepath}")
+            success = True
             return filepath
 
         except Exception as e:
             logger.error(f"Error saving structured review: {e}")
             raise ValueError(f"Failed to save structured review: {str(e)}")
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id="manager",
+                tool_name="save_structured_review",
+                success=success,
+                duration=duration,
+                context=f"paper_id={paper_id}",
+            )

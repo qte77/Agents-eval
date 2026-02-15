@@ -32,7 +32,12 @@ except ImportError:
 
 
 from app.__init__ import __version__
-from app.agents.agent_system import get_manager, run_manager, setup_agent_env
+from app.agents.agent_system import (
+    get_manager,
+    initialize_logfire_instrumentation_from_settings,
+    run_manager,
+    setup_agent_env,
+)
 from app.config.config_app import (
     CHAT_CONFIG_FILE,
     CHAT_DEFAULT_PROVIDER,
@@ -43,6 +48,7 @@ from app.data_utils.datasets_peerread import (
     download_peerread_dataset,
 )
 from app.judge.evaluation_pipeline import EvaluationPipeline
+from app.judge.settings import JudgeSettings
 from app.utils.error_messages import generic_exception
 from app.utils.load_configs import load_config
 from app.utils.log import logger
@@ -200,6 +206,11 @@ async def main(
             agent_env = setup_agent_env(chat_provider, query, chat_config, chat_env_config)
 
             login(PROJECT_NAME, chat_env_config)
+
+            # Initialize Logfire instrumentation if enabled
+            judge_settings = JudgeSettings()
+            if judge_settings.logfire_enabled:
+                initialize_logfire_instrumentation_from_settings(judge_settings)
 
             manager = get_manager(
                 agent_env.provider,
