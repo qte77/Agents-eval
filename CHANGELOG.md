@@ -44,6 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-006: `_initialize_execution_state()` and `_get_execution_state()` helper functions
 - STORY-006: `_display_configuration()` and `_display_execution_result()` UI helper functions
 - STORY-006: Comprehensive pytest tests for session state transitions and navigation resilience
+- STORY-007: Debug log panel in App tab with expandable/collapsible interface
+- STORY-007: `LogCapture` utility class for filtering and storing app.* module logs
+- STORY-007: Log capture sink integration with loguru logger for real-time capture
+- STORY-007: HTML formatting for log entries with color-coded levels (INFO/WARNING/ERROR)
+- STORY-007: Log persistence to session state during background execution
+- STORY-007: `_render_debug_log_panel()` and `_capture_execution_logs()` helper functions
+- STORY-007: Static `format_logs_as_html()` method for efficient HTML rendering
+- STORY-007: Comprehensive pytest tests for log filtering, capture, and HTML formatting
 
 ### Fixed (Sprint 5)
 

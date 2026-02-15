@@ -112,16 +112,7 @@ def _render_debug_log_panel() -> None:
             st.info("No logs captured yet. Run a query to see execution logs.")
         else:
             # Render logs as HTML with color coding
-            capture = LogCapture()
-            # Populate capture with session state logs
-            for log_entry in logs:
-                capture.add_log_entry(
-                    timestamp=log_entry["timestamp"],
-                    level=log_entry["level"],
-                    module=log_entry["module"],
-                    message=log_entry["message"],
-                )
-            html = capture.format_html()
+            html = LogCapture.format_logs_as_html(logs)
             st.markdown(html, unsafe_allow_html=True)
 
 

@@ -65,7 +65,19 @@ class LogCapture:
         Returns:
             HTML string with styled log entries
         """
-        if not self._buffer:
+        return self.format_logs_as_html(self._buffer)
+
+    @staticmethod
+    def format_logs_as_html(logs: list[dict[str, str]]) -> str:
+        """Format a list of log entries as HTML with color-coded levels.
+
+        Args:
+            logs: List of log entry dictionaries
+
+        Returns:
+            HTML string with styled log entries
+        """
+        if not logs:
             return "<p>No logs captured.</p>"
 
         html_parts = []
@@ -77,7 +89,7 @@ class LogCapture:
             "CRITICAL": "#9C27B0",  # Purple
         }
 
-        for entry in self._buffer:
+        for entry in logs:
             level = entry["level"]
             color = level_colors.get(level, "#666666")
             html_parts.append(
