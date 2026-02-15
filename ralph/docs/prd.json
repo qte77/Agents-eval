@@ -262,8 +262,8 @@
         "src/gui/pages/prompts.py",
         "src/gui/config/config.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-15T12:54:30Z",
       "content_hash": "8e65dd983dcf9badf21cc2a3f56ddfe772797324058734e4e63b5ee20e5d7163",
       "depends_on": [
         "STORY-008"
