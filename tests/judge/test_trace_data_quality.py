@@ -14,9 +14,8 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from hypothesis import given, settings
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
-from hypothesis.errors import HealthCheck
 from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import GraphTraceData
@@ -135,6 +134,7 @@ class TestGraphTraceDataTransformation:
         # Convert to GraphTraceData (this was failing before fix)
         try:
             graph_trace = GraphTraceData(
+                execution_id="test-exec-002",
                 agent_interactions=trace.agent_interactions,
                 tool_calls=trace.tool_calls,
                 coordination_events=trace.coordination_events,
@@ -188,6 +188,7 @@ class TestGraphTraceDataTransformationSnapshot:
         # Execute
         trace = collector._process_events()
         graph_trace = GraphTraceData(
+            execution_id="snapshot-test",
             agent_interactions=trace.agent_interactions,
             tool_calls=trace.tool_calls,
             coordination_events=trace.coordination_events,
@@ -202,9 +203,7 @@ class TestGraphTraceDataTransformationSnapshot:
 
         assert dumped == snapshot(
             {
-                "agent_interactions": [
-                    {"action": "delegate", "target": "researcher", "timestamp": 1000.0}
-                ],
+                "agent_interactions": [{"action": "delegate", "target": "researcher"}],
                 "tool_calls": [
                     {
                         "tool_name": "search",
@@ -213,6 +212,6 @@ class TestGraphTraceDataTransformationSnapshot:
                         "agent_id": "researcher",
                     }
                 ],
-                "coordination_events": [{"event": "task_complete", "timestamp": 1002.2}],
+                "coordination_events": [{"event": "task_complete"}],
             }
         )

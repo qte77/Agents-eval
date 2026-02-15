@@ -17,39 +17,38 @@ import pytest
 class TestLogfireInitialization:
     """Test Logfire instrumentation initialization at startup."""
 
-    @patch("app.app.initialize_logfire_instrumentation_from_settings")
-    def test_logfire_initialized_when_enabled(self, mock_init_logfire: MagicMock):
+    def test_logfire_initialized_when_enabled(self):
         """Logfire MUST be initialized at startup when logfire_enabled=True."""
-        # This test will FAIL until initialization is added to app.py
-        with patch("app.app.JudgeSettings") as mock_settings_class:
+        # Test that _initialize_instrumentation() calls the right function
+        with (
+            patch("app.app.JudgeSettings") as mock_settings_class,
+            patch("app.app.initialize_logfire_instrumentation_from_settings") as mock_init_logfire,
+        ):
             mock_settings = MagicMock()
             mock_settings.logfire_enabled = True
             mock_settings_class.return_value = mock_settings
 
-            # Import app module (triggers initialization)
-            import importlib
+            # Import and call _initialize_instrumentation
+            from app.app import _initialize_instrumentation
 
-            import app.app
-
-            importlib.reload(app.app)
+            _initialize_instrumentation()
 
             # Verify: initialize_logfire_instrumentation_from_settings was called
-            # This will FAIL until implementation
-            mock_init_logfire.assert_called_once()
+            mock_init_logfire.assert_called_once_with(mock_settings)
 
-    @patch("app.app.initialize_logfire_instrumentation_from_settings")
-    def test_logfire_not_initialized_when_disabled(self, mock_init_logfire: MagicMock):
+    def test_logfire_not_initialized_when_disabled(self):
         """Logfire MUST NOT be initialized when logfire_enabled=False."""
-        with patch("app.app.JudgeSettings") as mock_settings_class:
+        with (
+            patch("app.app.JudgeSettings") as mock_settings_class,
+            patch("app.app.initialize_logfire_instrumentation_from_settings") as mock_init_logfire,
+        ):
             mock_settings = MagicMock()
             mock_settings.logfire_enabled = False
             mock_settings_class.return_value = mock_settings
 
-            import importlib
+            from app.app import _initialize_instrumentation
 
-            import app.app
-
-            importlib.reload(app.app)
+            _initialize_instrumentation()
 
             # Verify: initialize_logfire_instrumentation_from_settings was NOT called
             mock_init_logfire.assert_not_called()
@@ -69,15 +68,14 @@ class TestLogfireInitialization:
 class TestLogfireGracefulDegradation:
     """Test graceful degradation when Logfire is unavailable."""
 
-    @patch("app.instrumentation.logfire_instrumentation.logfire", None)
+    @patch("app.agents.logfire_instrumentation.logfire", None)
     def test_app_runs_when_logfire_unavailable(self):
         """App MUST run successfully even when Logfire is unavailable."""
         # This ensures no hard dependency on Logfire
         try:
-            from app.instrumentation.logfire_instrumentation import (
+            from app.agents.logfire_instrumentation import (
                 initialize_logfire_instrumentation_from_settings,
             )
-
             from app.judge.settings import JudgeSettings
 
             settings = JudgeSettings(logfire_enabled=True)
