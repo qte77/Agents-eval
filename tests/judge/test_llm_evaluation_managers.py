@@ -822,11 +822,20 @@ class TestLLMJudgePerformance:
     @pytest.mark.asyncio
     async def test_timeout_handling(self, engine, sample_data):
         """Should handle LLM request timeouts gracefully."""
-        with patch("asyncio.wait_for", side_effect=TimeoutError("Request timed out")):
-            with patch.object(
-                engine.fallback_engine, "compute_semantic_similarity", return_value=0.5
-            ):
-                score = await engine.assess_technical_accuracy(
-                    sample_data["paper"], sample_data["review"]
-                )
-                assert score == 0.5  # Should use fallback
+        mock_agent = Mock()
+        mock_agent.run = AsyncMock(return_value=Mock())
+
+        async def timeout_wait_for(coro, **kwargs):
+            """Close coroutine to avoid 'never awaited' warning, then raise."""
+            coro.close()
+            raise TimeoutError("Request timed out")
+
+        with patch.object(engine, "create_judge_agent", return_value=mock_agent):
+            with patch("asyncio.wait_for", side_effect=timeout_wait_for):
+                with patch.object(
+                    engine.fallback_engine, "compute_semantic_similarity", return_value=0.5
+                ):
+                    score = await engine.assess_technical_accuracy(
+                        sample_data["paper"], sample_data["review"]
+                    )
+                    assert score == 0.5  # Should use fallback
