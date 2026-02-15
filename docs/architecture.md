@@ -183,7 +183,7 @@ The evaluation framework is built around large context window models capable of 
 
 **Formula**: `Agent Score = Weighted Sum of Six Core Metrics`
 
-**Configuration-Based Metrics** (from `config_eval.json`):
+**Configuration-Based Metrics** (from `JudgeSettings` via pydantic-settings):
 
 - `time_taken`: 0.167 (16.7% - execution time efficiency)
 - `task_success`: 0.167 (16.7% - review completion and accuracy)
@@ -234,7 +234,7 @@ The three-tiered evaluation framework is fully operational with the following co
 
 - Six-metric weighted formula implementation
 - Recommendation mapping (accept/weak_accept/weak_reject/reject)
-- Configuration-driven weights from `config_eval.json`
+- Configuration-driven weights from `JudgeSettings`
 
 **✅ Evaluation Pipeline** (`src/app/judge/agent.py` - Sprint 2 migration from `src/app/evals/evaluation_pipeline.py`):
 
