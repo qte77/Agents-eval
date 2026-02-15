@@ -534,6 +534,114 @@ class TestStory001AcceptanceCriteria:
         # When tier2_available is False, evaluate_comprehensive should not be called
         # This will be tested at pipeline level
 
+    @pytest.mark.asyncio
+    async def test_tier2_skip_redistributes_weights_to_other_metrics(self):
+        """When Tier 2 skipped, its 3 metrics excluded and weights redistributed (STORY-001)."""
+        from app.data_models.evaluation_models import Tier1Result, Tier3Result
+        from app.judge.composite_scorer import EvaluationResults
+        from app.judge.evaluation_pipeline import EvaluationPipeline
+
+        settings = JudgeSettings(tier2_provider="openai")
+        env_config = AppEnv(OPENAI_API_KEY="")
+
+        # Create pipeline with no Tier 2 providers
+        pipeline = EvaluationPipeline(settings=settings)
+        pipeline.llm_engine = LLMJudgeEngine(settings, env_config=env_config)
+
+        # Create results with Tier 1 and Tier 3, but NO Tier 2
+        results = EvaluationResults(
+            tier1=Tier1Result(
+                cosine_score=0.8,
+                jaccard_score=0.7,
+                semantic_score=0.85,
+                execution_time=2.5,
+                time_score=0.9,
+                task_success=1.0,
+                overall_score=0.8,
+            ),
+            tier2=None,  # Tier 2 skipped
+            tier3=Tier3Result(
+                path_convergence=0.75,
+                tool_selection_accuracy=0.8,
+                communication_overhead=0.3,
+                coordination_centrality=0.6,
+                task_distribution_balance=0.7,
+                overall_score=0.7,
+                graph_complexity=5,
+            ),
+        )
+
+        # Use evaluate_composite_with_optional_tier2
+        composite_result = pipeline.composite_scorer.evaluate_composite_with_optional_tier2(results)
+
+        # Verify Tier 2 is None in result
+        assert composite_result.tier2_score is None
+
+        # Verify weights were redistributed (5 metrics instead of 6)
+        assert len(composite_result.weights_used) == 5
+        # Each metric should have 0.2 weight (redistributed from 0.167)
+        for weight in composite_result.weights_used.values():
+            assert abs(weight - 0.2) < 0.01
+
+        # Verify planning_rationality is NOT in the weights
+        assert "planning_rationality" not in composite_result.weights_used
+
+        # Verify evaluation_complete is False when Tier 2 is missing
+        assert composite_result.evaluation_complete is False
+
+    @pytest.mark.asyncio
+    async def test_pipeline_uses_optional_tier2_composite_scorer(self):
+        """Pipeline should use evaluate_composite_with_optional_tier2 (STORY-001)."""
+        from app.judge.evaluation_pipeline import EvaluationPipeline
+
+        settings = JudgeSettings(tier2_provider="openai")
+        env_config = AppEnv(OPENAI_API_KEY="")
+
+        pipeline = EvaluationPipeline(settings=settings)
+        pipeline.llm_engine.tier2_available = False
+
+        # Execute pipeline - should handle missing Tier 2 gracefully
+        with patch.object(pipeline, "_execute_tier1") as mock_tier1:
+            with patch.object(pipeline, "_execute_tier2") as mock_tier2:
+                with patch.object(pipeline, "_execute_tier3") as mock_tier3:
+                    from app.data_models.evaluation_models import Tier1Result, Tier3Result
+
+                    mock_tier1.return_value = (
+                        Tier1Result(
+                            cosine_score=0.8,
+                            jaccard_score=0.7,
+                            semantic_score=0.85,
+                            execution_time=2.5,
+                            time_score=0.9,
+                            task_success=1.0,
+                            overall_score=0.8,
+                        ),
+                        1.0,
+                    )
+                    mock_tier2.return_value = (None, 0.0)  # Tier 2 skipped
+                    mock_tier3.return_value = (
+                        Tier3Result(
+                            path_convergence=0.75,
+                            tool_selection_accuracy=0.8,
+                            communication_overhead=0.3,
+                            coordination_centrality=0.6,
+                            task_distribution_balance=0.7,
+                            overall_score=0.7,
+                            graph_complexity=5,
+                        ),
+                        1.0,
+                    )
+
+                    result = await pipeline.evaluate_comprehensive(
+                        paper="test paper", review="test review", execution_trace={}
+                    )
+
+                    # Should have composite result with Tier 2 skipped
+                    assert result.tier2_score is None
+                    assert result.evaluation_complete is False
+                    # Weights should be redistributed
+                    assert len(result.weights_used) == 5
+
     def test_tier2_provider_env_var_override_still_works(self):
         """JUDGE_TIER2_PROVIDER env var should still override settings."""
         # This would be tested with actual env var setting in integration tests
