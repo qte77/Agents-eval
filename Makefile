@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_opik setup_opik_env start_opik stop_opik clean_opik status_opik ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_status ralph_clean ralph_reorganize help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_opik setup_opik_env start_opik stop_opik clean_opik status_opik setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_status ralph_clean ralph_reorganize help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -23,6 +23,10 @@ PANDOC_SCRIPT := scripts/run-pandoc.sh
 PDF_CONVERTER_SCRIPT := scripts/setup-pdf-converter.sh
 PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex
 PANDOC_TITLE_FILE := 01_titel_abstrakt.md
+PHOENIX_CONTAINER_NAME := phoenix-tracing
+PHOENIX_PORT := 6006
+PHOENIX_IMAGE := arizephoenix/phoenix:latest
+# write-up
 BIBLIOGRAPHY :=
 CSL :=
 LIST_OF_FIGURES :=
@@ -304,6 +308,7 @@ output_unset_app_env_sh:  ## Unset app environment variables
 # MARK: opik
 
 setup_opik:  ## Complete Opik setup (start services + configure environment)
+	# FIXME: Remove once Phoenix/Logfire are fully functional
 	echo "Setting up Opik tracing stack..."
 	$(MAKE) start_opik
 	echo "Waiting for services to be healthy..."
@@ -312,6 +317,7 @@ setup_opik:  ## Complete Opik setup (start services + configure environment)
 	echo "Opik setup complete!"
 
 setup_opik_env:  ## Setup Opik environment variables for local development
+	# FIXME: Remove once Phoenix/Logfire are fully functional
 	echo "Setting up Opik environment variables ..."
 	echo "export OPIK_URL_OVERRIDE=http://localhost:8080" >> ~/.bashrc  # do not send to comet.com/api
 	echo "export OPIK_WORKSPACE=peerread-evaluation" >> ~/.bashrc
@@ -320,6 +326,7 @@ setup_opik_env:  ## Setup Opik environment variables for local development
 	echo "Run: source ~/.bashrc"
 
 start_opik:  ## Start local Opik tracing with ClickHouse database
+	# FIXME: Remove once Phoenix/Logfire are fully functional
 	# https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml
 	# https://www.comet.com/docs/opik/self-host/local_deployment/
 	echo "Starting Opik stack with ClickHouse ..."
@@ -329,16 +336,19 @@ start_opik:  ## Start local Opik tracing with ClickHouse database
 	echo "ClickHouse: http://localhost:8123"
 
 stop_opik:  ## Stop local Opik tracing stack
+	# FIXME: Remove once Phoenix/Logfire are fully functional
 	echo "Stopping Opik stack ..."
 	docker-compose -f docker-compose.opik.yaml down
 
 clean_opik:  ## Stop Opik and remove all trace data (WARNING: destructive)
+	# FIXME: Remove once Phoenix/Logfire are fully functional
 	echo "WARNING: This will remove all Opik trace data!"
 	echo "Press Ctrl+C to cancel, Enter to continue..."
 	read
 	docker-compose -f docker-compose.opik.yaml down -v
 
 status_opik:  ## Check Opik services health status
+	# FIXME: Remove once Phoenix/Logfire are fully functional
 	echo "Checking Opik services status ..."
 	docker-compose -f docker-compose.opik.yaml ps
 	echo "API Health:"
@@ -347,6 +357,31 @@ status_opik:  ## Check Opik services health status
 	echo "ClickHouse:"
 	curl -s http://localhost:8123/ping 2>/dev/null &&
 		echo "ClickHouse healthy" || echo "ClickHouse not responding"
+
+
+# MARK: phoenix
+
+
+setup_phoenix:  ## Pull Phoenix Docker image (pre-download without starting)
+	echo "Pulling Arize Phoenix image ..."
+	docker pull $(PHOENIX_IMAGE)
+	echo "Phoenix image ready: $(PHOENIX_IMAGE)"
+
+start_phoenix:  ## Start local Arize Phoenix trace viewer (OTLP endpoint on port 6006)
+	echo "Starting Arize Phoenix ..."
+	docker run -d --name $(PHOENIX_CONTAINER_NAME) -p $(PHOENIX_PORT):$(PHOENIX_PORT) $(PHOENIX_IMAGE)
+	echo "Phoenix UI: http://localhost:$(PHOENIX_PORT)"
+	echo "OTLP endpoint: http://localhost:$(PHOENIX_PORT)/v1/traces"
+
+stop_phoenix:  ## Stop Phoenix trace viewer
+	echo "Stopping Phoenix ..."
+	docker stop $(PHOENIX_CONTAINER_NAME) && docker rm $(PHOENIX_CONTAINER_NAME)
+
+status_phoenix:  ## Check Phoenix health status
+	echo "Checking Phoenix status ..."
+	docker ps --filter name=$(PHOENIX_CONTAINER_NAME) --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+	curl -sf http://localhost:$(PHOENIX_PORT) > /dev/null 2>&1 && \
+		echo "Phoenix UI: healthy (http://localhost:$(PHOENIX_PORT))" || echo "Phoenix UI: not responding"
 
 
 # MARK: ralph
