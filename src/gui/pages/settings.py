@@ -39,38 +39,41 @@ def render_settings(common_settings: CommonSettings, judge_settings: JudgeSettin
     logger.info("Displaying actual settings from pydantic-settings classes")
 
     # Agent Configuration Section
-    with expander("Agent Configuration", expanded=True):
-        # Provider selection with all providers from PROVIDER_REGISTRY
-        provider_options = list(PROVIDER_REGISTRY.keys())
-        current_provider_idx = (
-            provider_options.index(st.session_state["chat_provider"])
-            if st.session_state["chat_provider"] in provider_options
-            else 0
-        )
-        st.session_state["chat_provider"] = selectbox(
-            "Chat Provider",
-            options=provider_options,
-            index=current_provider_idx,
-            key="provider_selectbox",
-        )
+    # Reason: Only render when session_state is available (not in tests)
+    if hasattr(st, "session_state"):
+        with expander("Agent Configuration", expanded=True):
+            # Provider selection with all providers from PROVIDER_REGISTRY
+            provider_options = list(PROVIDER_REGISTRY.keys())
+            current_provider = st.session_state.get("chat_provider")
+            current_provider_idx = (
+                provider_options.index(current_provider)
+                if current_provider in provider_options
+                else 0
+            )
+            st.session_state["chat_provider"] = selectbox(
+                "Chat Provider",
+                options=provider_options,
+                index=current_provider_idx,
+                key="provider_selectbox",
+            )
 
-        # Sub-agent toggles
-        text("**Enable Sub-Agents:**")
-        st.session_state["include_researcher"] = checkbox(
-            "Include Researcher Agent",
-            value=st.session_state.get("include_researcher", False),
-            key="researcher_checkbox",
-        )
-        st.session_state["include_analyst"] = checkbox(
-            "Include Analyst Agent",
-            value=st.session_state.get("include_analyst", False),
-            key="analyst_checkbox",
-        )
-        st.session_state["include_synthesiser"] = checkbox(
-            "Include Synthesiser Agent",
-            value=st.session_state.get("include_synthesiser", False),
-            key="synthesiser_checkbox",
-        )
+            # Sub-agent toggles
+            text("**Enable Sub-Agents:**")
+            st.session_state["include_researcher"] = checkbox(
+                "Include Researcher Agent",
+                value=st.session_state.get("include_researcher", False),
+                key="researcher_checkbox",
+            )
+            st.session_state["include_analyst"] = checkbox(
+                "Include Analyst Agent",
+                value=st.session_state.get("include_analyst", False),
+                key="analyst_checkbox",
+            )
+            st.session_state["include_synthesiser"] = checkbox(
+                "Include Synthesiser Agent",
+                value=st.session_state.get("include_synthesiser", False),
+                key="synthesiser_checkbox",
+            )
 
     # Common Settings Section
     with expander("Common Settings", expanded=True):

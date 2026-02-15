@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-013: Trace logging to all 6 PeerRead manager tools (get_peerread_paper, query_peerread_papers, read_paper_pdf_tool, generate_paper_review_content_from_template, save_paper_review, save_structured_review) with time.perf_counter() timing
 - STORY-013: Property-based tests for trace event schema invariants (agent_id always present in tool_call dicts)
 - STORY-013: Snapshot tests for GraphTraceData transformation output structure
+- STORY-014: Session state initialization for provider and sub-agent configuration in run_gui.py
+- STORY-014: Provider selectbox with all PROVIDER_REGISTRY options on Settings page
+- STORY-014: Checkboxes for include_researcher/analyst/synthesiser on Settings page
+- STORY-014: Run App page reads configuration from session state and displays current settings
+- STORY-014: Session state persistence across page navigation for provider and agent selection
 
 ### Added
 
