@@ -420,6 +420,7 @@ class TestCompositeResultStructure:
                 "tier2_score": 0.83,
                 "tier3_score": 0.78,
                 "evaluation_complete": True,
+                "single_agent_mode": False,
                 "timestamp": "",
                 "config_version": "1.0.0",
                 "weights_used": {
@@ -489,6 +490,7 @@ class TestCompositeResultStructure:
                 "tier2_score": 1.0,
                 "tier3_score": 1.0,
                 "evaluation_complete": True,
+                "single_agent_mode": False,
                 "timestamp": "",
                 "config_version": "1.0.0",
                 "weights_used": {

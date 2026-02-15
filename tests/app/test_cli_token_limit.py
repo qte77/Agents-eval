@@ -12,7 +12,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from inline_snapshot import snapshot
 from pydantic_ai.usage import UsageLimits
 
 from app.app import main
@@ -94,7 +93,11 @@ class TestCLITokenLimitFlag:
             # Extract positional and keyword args
             call_args, call_kwargs = mock_setup.call_args
             # token_limit should be the 5th parameter (index 4) or in kwargs
-            assert len(call_args) >= 5 and call_args[4] == 100000 or call_kwargs.get("token_limit") == 100000
+            assert (
+                len(call_args) >= 5
+                and call_args[4] == 100000
+                or call_kwargs.get("token_limit") == 100000
+            )
 
     def test_cli_parse_args_includes_token_limit(self):
         """Test that parse_args extracts --token-limit flag."""
@@ -211,7 +214,11 @@ class TestEnvVarTokenLimit:
             # Verify setup_agent_env was called with CLI token_limit (not env var)
             mock_setup.assert_called_once()
             call_args, call_kwargs = mock_setup.call_args
-            assert len(call_args) >= 5 and call_args[4] == 120000 or call_kwargs.get("token_limit") == 120000
+            assert (
+                len(call_args) >= 5
+                and call_args[4] == 120000
+                or call_kwargs.get("token_limit") == 120000
+            )
 
 
 class TestOverridePriority:
@@ -269,4 +276,6 @@ class TestConfigFallback:
             mock_setup.assert_called_once()
             call_args, call_kwargs = mock_setup.call_args
             # token_limit should be None (not passed)
-            assert (len(call_args) < 5 or call_args[4] is None) and call_kwargs.get("token_limit") is None
+            assert (len(call_args) < 5 or call_args[4] is None) and call_kwargs.get(
+                "token_limit"
+            ) is None

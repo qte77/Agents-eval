@@ -25,6 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-002: Token limit priority order: CLI/GUI > env var > config_chat.json
 - STORY-002: Validation bounds (1000-1000000) enforced in `setup_agent_env`
 - STORY-002: Comprehensive test coverage with Hypothesis property tests for bounds and priority
+- STORY-003: `single_agent_mode` flag in `CompositeResult` for transparency in evaluation results
+- STORY-003: Single-agent mode detection from `GraphTraceData` (empty `coordination_events` or 0-1 unique agent IDs)
+- STORY-003: Weight redistribution logic to exclude `coordination_quality` metric in single-agent runs
+- STORY-003: Compound redistribution support for both Tier 2 skip AND single-agent mode (4 metrics × 0.25 each)
+- STORY-003: `evaluate_composite_with_trace()` method in `CompositeScorer` for trace-based evaluation
+- STORY-003: Hypothesis property tests for weight sum invariants across single-agent and multi-agent modes
+- STORY-003: Comprehensive test coverage with 8 tests including compound redistribution scenarios
 
 ### Added (Sprint 2)
 

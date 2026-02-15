@@ -13,7 +13,6 @@ from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import (
-    CompositeResult,
     GraphTraceData,
     Tier1Result,
     Tier2Result,
@@ -107,9 +106,7 @@ def multi_agent_trace():
             {"tool_name": "duckduckgo_search", "agent_id": "researcher", "success": True},
         ],
         timing_data={"start": 0.0, "end": 8.0},
-        coordination_events=[
-            {"coordination_type": "delegation", "target_agents": ["researcher"]}
-        ],
+        coordination_events=[{"coordination_type": "delegation", "target_agents": ["researcher"]}],
     )
 
 

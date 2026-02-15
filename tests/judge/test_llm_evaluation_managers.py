@@ -89,11 +89,7 @@ class TestLLMJudgeEngine:
 
     # Technical accuracy assessment tests
     @pytest.mark.asyncio
-    @patch("pydantic_ai.Agent")
-    @patch("asyncio.wait_for")
-    async def test_assess_technical_accuracy_success(
-        self, mock_wait_for, mock_agent_class, engine, sample_data
-    ):
+    async def test_assess_technical_accuracy_success(self, engine, sample_data):
         """Should return normalized technical accuracy score when succeeds."""
         # Mock LLM response - create mock result with output attribute
         mock_assessment_output = Mock()
@@ -106,10 +102,11 @@ class TestLLMJudgeEngine:
 
         mock_agent = Mock()
         mock_agent.run = AsyncMock(return_value=mock_result)
-        mock_agent_class.return_value = mock_agent
-        mock_wait_for.return_value = mock_result
 
-        score = await engine.assess_technical_accuracy(sample_data["paper"], sample_data["review"])
+        with patch.object(engine, "create_judge_agent", return_value=mock_agent):
+            score = await engine.assess_technical_accuracy(
+                sample_data["paper"], sample_data["review"]
+            )
 
         # Expected score: (4.0*0.5 + 4.5*0.3 + 3.5*0.2) / 5.0 = 0.82
         expected_score = (4.0 * 0.5 + 4.5 * 0.3 + 3.5 * 0.2) / 5.0
@@ -117,32 +114,33 @@ class TestLLMJudgeEngine:
         assert 0.0 <= score <= 1.0
 
     @pytest.mark.asyncio
-    @patch("pydantic_ai.Agent")
-    @patch("asyncio.wait_for")
-    async def test_assess_technical_accuracy_timeout(
-        self, mock_wait_for, mock_agent_class, engine, sample_data
-    ):
+    async def test_assess_technical_accuracy_timeout(self, engine, sample_data):
         """Given LLM timeout, should fallback to semantic similarity."""
-        mock_agent_class.return_value = Mock()
-        mock_wait_for.side_effect = TimeoutError("LLM request timed out")
+        mock_agent = Mock()
+        mock_agent.run = AsyncMock(return_value=Mock())
 
-        with patch.object(
-            engine.fallback_engine, "compute_semantic_similarity", return_value=0.75
-        ) as mock_fallback:
-            score = await engine.assess_technical_accuracy(
-                sample_data["paper"], sample_data["review"]
-            )
+        async def timeout_wait_for(coro, **kwargs):
+            """Close coroutine to avoid 'never awaited' warning, then raise."""
+            coro.close()
+            raise TimeoutError("LLM request timed out")
 
-            assert score == 0.75
-            mock_fallback.assert_called_once_with(sample_data["paper"], sample_data["review"])
+        with patch.object(engine, "create_judge_agent", return_value=mock_agent):
+            with patch("asyncio.wait_for", side_effect=timeout_wait_for):
+                with patch.object(
+                    engine.fallback_engine, "compute_semantic_similarity", return_value=0.75
+                ) as mock_fallback:
+                    score = await engine.assess_technical_accuracy(
+                        sample_data["paper"], sample_data["review"]
+                    )
+
+                    assert score == 0.75
+                    mock_fallback.assert_called_once_with(
+                        sample_data["paper"], sample_data["review"]
+                    )
 
     # Constructiveness assessment tests
     @pytest.mark.asyncio
-    @patch("pydantic_ai.Agent")
-    @patch("asyncio.wait_for")
-    async def test_assess_constructiveness_success(
-        self, mock_wait_for, mock_agent_class, engine, sample_data
-    ):
+    async def test_assess_constructiveness_success(self, engine, sample_data):
         """Should return normalized constructiveness score when assessment succeeds."""
         # Mock LLM response - create mock result with output attribute
         mock_assessment_output = Mock()
@@ -155,10 +153,9 @@ class TestLLMJudgeEngine:
 
         mock_agent = Mock()
         mock_agent.run = AsyncMock(return_value=mock_result)
-        mock_agent_class.return_value = mock_agent
-        mock_wait_for.return_value = mock_result
 
-        score = await engine.assess_constructiveness(sample_data["review"])
+        with patch.object(engine, "create_judge_agent", return_value=mock_agent):
+            score = await engine.assess_constructiveness(sample_data["review"])
 
         # Expected score: (4.0 + 3.5 + 4.5) / 15.0 = 0.8
         expected_score = (4.0 + 3.5 + 4.5) / 15.0
@@ -197,11 +194,7 @@ class TestLLMJudgeEngine:
 
     # Planning rationality assessment tests
     @pytest.mark.asyncio
-    @patch("pydantic_ai.Agent")
-    @patch("asyncio.wait_for")
-    async def test_assess_planning_rationality_success(
-        self, mock_wait_for, mock_agent_class, engine, sample_data
-    ):
+    async def test_assess_planning_rationality_success(self, engine, sample_data):
         """Given successful LLM assessment, should return normalized planning score."""
         # Mock LLM response - create mock result with output attribute
         mock_assessment_output = Mock()
@@ -214,10 +207,9 @@ class TestLLMJudgeEngine:
 
         mock_agent = Mock()
         mock_agent.run = AsyncMock(return_value=mock_result)
-        mock_agent_class.return_value = mock_agent
-        mock_wait_for.return_value = mock_result
 
-        score = await engine.assess_planning_rationality(sample_data["execution_trace"])
+        with patch.object(engine, "create_judge_agent", return_value=mock_agent):
+            score = await engine.assess_planning_rationality(sample_data["execution_trace"])
 
         # Expected score: (4.0*0.3 + 4.5*0.5 + 3.0*0.2) / 5.0 = 0.84
         expected_score = (4.0 * 0.3 + 4.5 * 0.5 + 3.0 * 0.2) / 5.0
@@ -791,19 +783,18 @@ class TestLLMJudgePerformance:
         long_paper = "This is a very long paper. " * 50  # Much longer than 100 chars
         review = "Test review"
 
-        with patch("pydantic_ai.Agent") as mock_agent_class:
-            mock_assessment_output = Mock()
-            mock_assessment_output.factual_correctness = 4
-            mock_assessment_output.methodology_understanding = 4
-            mock_assessment_output.domain_knowledge = 4
+        mock_assessment_output = Mock()
+        mock_assessment_output.factual_correctness = 4
+        mock_assessment_output.methodology_understanding = 4
+        mock_assessment_output.domain_knowledge = 4
 
-            mock_result = Mock()
-            mock_result.output = mock_assessment_output
+        mock_result = Mock()
+        mock_result.output = mock_assessment_output
 
-            mock_agent = Mock()
-            mock_agent.run = AsyncMock(return_value=mock_result)
-            mock_agent_class.return_value = mock_agent
+        mock_agent = Mock()
+        mock_agent.run = AsyncMock(return_value=mock_result)
 
+        with patch.object(engine, "create_judge_agent", return_value=mock_agent):
             await engine.assess_technical_accuracy(long_paper, review)
 
             # Check that the agent was called (it will use fallback but still validates

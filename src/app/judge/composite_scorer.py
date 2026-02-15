@@ -389,6 +389,86 @@ class CompositeScorer:
         )
         return agent_metrics
 
+    def _determine_excluded_metrics(
+        self, single_agent_mode: bool, tier2_available: bool
+    ) -> list[str]:
+        """Determine which metrics to exclude based on execution mode.
+
+        Args:
+            single_agent_mode: Whether single-agent mode detected
+            tier2_available: Whether Tier 2 results are available
+
+        Returns:
+            List of metric names to exclude from composite scoring
+        """
+        excluded_metrics: list[str] = []
+        if single_agent_mode:
+            excluded_metrics.append("coordination_quality")
+            logger.info(
+                "Single-agent mode detected - redistributing coordination_quality weight "
+                "to remaining metrics"
+            )
+
+        if not tier2_available:
+            excluded_metrics.append("planning_rationality")
+            logger.warning(
+                "Tier 2 (LLM-as-Judge) skipped - redistributing planning_rationality weight"
+            )
+
+        return excluded_metrics
+
+    def _extract_tier1_metrics(
+        self, tier1: Tier1Result, remaining_metrics: dict[str, float]
+    ) -> dict[str, float]:
+        """Extract Tier 1 metrics if they are not excluded."""
+        metrics: dict[str, float] = {}
+        if "time_taken" in remaining_metrics:
+            metrics["time_taken"] = tier1.time_score
+        if "task_success" in remaining_metrics:
+            metrics["task_success"] = tier1.task_success
+        if "output_similarity" in remaining_metrics:
+            metrics["output_similarity"] = tier1.overall_score
+        return metrics
+
+    def _extract_tier3_metrics(
+        self, tier3: Tier3Result, remaining_metrics: dict[str, float]
+    ) -> dict[str, float]:
+        """Extract Tier 3 metrics if they are not excluded."""
+        metrics: dict[str, float] = {}
+        if "coordination_quality" in remaining_metrics:
+            metrics["coordination_quality"] = tier3.coordination_centrality
+        if "tool_efficiency" in remaining_metrics:
+            metrics["tool_efficiency"] = tier3.tool_selection_accuracy
+        return metrics
+
+    def _extract_metrics_with_exclusions(
+        self, results: EvaluationResults, remaining_metrics: dict[str, float]
+    ) -> dict[str, float]:
+        """Extract metric values from tier results, excluding specified metrics.
+
+        Args:
+            results: Container with tier results
+            remaining_metrics: Dictionary of metrics to include (not excluded)
+
+        Returns:
+            Dictionary mapping metric names to values
+        """
+        metrics: dict[str, float] = {}
+
+        # Extract Tier 1 metrics
+        if results.tier1:
+            metrics.update(self._extract_tier1_metrics(results.tier1, remaining_metrics))
+
+        # Extract Tier 2 metrics
+        if results.tier2 and "planning_rationality" in remaining_metrics:
+            metrics["planning_rationality"] = results.tier2.planning_rationality
+
+        # Extract Tier 3 metrics
+        if results.tier3:
+            metrics.update(self._extract_tier3_metrics(results.tier3, remaining_metrics))
+
+        return metrics
+
     def evaluate_composite_with_trace(
         self, results: EvaluationResults, trace_data: GraphTraceData
     ) -> CompositeResult:
@@ -408,19 +488,9 @@ class CompositeScorer:
         single_agent_mode = self._detect_single_agent_mode(trace_data)
 
         # Determine which metrics to exclude
-        excluded_metrics = []
-        if single_agent_mode:
-            excluded_metrics.append("coordination_quality")
-            logger.info(
-                "Single-agent mode detected - redistributing coordination_quality weight "
-                "to remaining metrics"
-            )
-
-        if results.tier2 is None:
-            excluded_metrics.append("planning_rationality")
-            logger.warning(
-                "Tier 2 (LLM-as-Judge) skipped - redistributing planning_rationality weight"
-            )
+        excluded_metrics = self._determine_excluded_metrics(
+            single_agent_mode, tier2_available=results.tier2 is not None
+        )
 
         # If no exclusions, use standard evaluation
         if not excluded_metrics:
@@ -428,32 +498,13 @@ class CompositeScorer:
             result.single_agent_mode = single_agent_mode
             return result
 
-        # Build adjusted weights by excluding metrics and redistributing
-        base_weight = 0.167
+        # Build adjusted weights by redistributing to remaining metrics
         remaining_metrics = {k: v for k, v in self.weights.items() if k not in excluded_metrics}
-        excluded_weight = len(excluded_metrics) * base_weight
         weight_per_remaining = (1.0 / len(remaining_metrics)) if remaining_metrics else 0.0
-
         adjusted_weights = {metric: weight_per_remaining for metric in remaining_metrics}
 
         # Extract metrics (only those not excluded)
-        metrics = {}
-        if results.tier1:
-            if "time_taken" in remaining_metrics:
-                metrics["time_taken"] = results.tier1.time_score
-            if "task_success" in remaining_metrics:
-                metrics["task_success"] = results.tier1.task_success
-            if "output_similarity" in remaining_metrics:
-                metrics["output_similarity"] = results.tier1.overall_score
-
-        if results.tier2 and "planning_rationality" in remaining_metrics:
-            metrics["planning_rationality"] = results.tier2.planning_rationality
-
-        if results.tier3:
-            if "coordination_quality" in remaining_metrics:
-                metrics["coordination_quality"] = results.tier3.coordination_centrality
-            if "tool_efficiency" in remaining_metrics:
-                metrics["tool_efficiency"] = results.tier3.tool_selection_accuracy
+        metrics = self._extract_metrics_with_exclusions(results, remaining_metrics)
 
         # Validate all required metrics are present
         missing_metrics = set(remaining_metrics.keys()) - set(metrics.keys())
@@ -461,7 +512,9 @@ class CompositeScorer:
             raise ValueError(f"Missing required metrics after exclusion: {missing_metrics}")
 
         # Calculate composite score with adjusted weights
-        composite_score = sum(metrics[metric] * weight for metric, weight in adjusted_weights.items())
+        composite_score = sum(
+            metrics[metric] * weight for metric, weight in adjusted_weights.items()
+        )
         composite_score = max(0.0, min(1.0, composite_score))
 
         recommendation = self.map_to_recommendation(composite_score)

@@ -250,6 +250,7 @@ class TestEvaluationWiringSnapshots:
                 "tier2_score": 0.0,
                 "tier3_score": 0.0,
                 "evaluation_complete": True,
+                "single_agent_mode": False,
                 "timestamp": "",
                 "config_version": "1.0.0",
                 "weights_used": None,

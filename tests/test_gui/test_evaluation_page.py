@@ -285,6 +285,7 @@ class TestEvaluationPageRenderingSnapshots:
                 "tier2_score": 0.88,
                 "tier3_score": 0.83,
                 "evaluation_complete": True,
+                "single_agent_mode": False,
                 "timestamp": "2026-02-15T10:00:00Z",
                 "config_version": "1.0.0",
                 "weights_used": {"tier1": 0.3, "tier2": 0.4, "tier3": 0.3},
