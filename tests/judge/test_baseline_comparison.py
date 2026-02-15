@@ -5,10 +5,11 @@ Tests the BaselineComparison model and comparison functions that diff
 CompositeResult instances across PydanticAI MAS, CC solo, and CC teams.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import CompositeResult
@@ -58,7 +59,7 @@ def composite_result_strategy(draw):
         tier2_score=tier2_score,
         tier3_score=tier3_score,
         evaluation_complete=tier2_score is not None,
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         config_version="1.0.0",
         weights_used={
             "time_taken": 0.167,
