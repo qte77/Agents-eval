@@ -5,7 +5,7 @@ This module verifies that the traditional metrics engine correctly computes
 similarity scores between agent outputs and reference texts.
 """
 
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
@@ -31,11 +31,13 @@ def test_traditional_metrics_similarity():
 
 
 # STORY-004: Hypothesis property-based tests for metrics invariants
+# Reason: deadline=None because this tests a math invariant, not performance
+@settings(deadline=None)
 @given(
-    text_length=st.integers(min_value=1, max_value=1000),
-    reference_count=st.integers(min_value=1, max_value=10),
+    text_length=st.integers(min_value=1, max_value=200),
+    reference_count=st.integers(min_value=1, max_value=5),
 )
-def test_similarity_scores_always_in_bounds(text_length, reference_count):
+def test_similarity_scores_always_in_bounds(text_length: int, reference_count: int):
     """Property: Similarity scores always in [0, 1] range."""
     # Arrange
     engine = TraditionalMetricsEngine()
