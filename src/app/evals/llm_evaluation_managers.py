@@ -75,9 +75,7 @@ class LLMJudgeEngine:
             logger.debug(f"API key validation failed for {provider}: {message}")
         return is_valid
 
-    def select_available_provider(
-        self, env_config: AppEnv
-    ) -> tuple[str, str] | None:
+    def select_available_provider(self, env_config: AppEnv) -> tuple[str, str] | None:
         """Select available provider with fallback chain.
 
         Args:

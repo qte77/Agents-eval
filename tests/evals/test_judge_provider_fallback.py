@@ -5,7 +5,7 @@ Tests API key validation, provider fallback chain, and graceful degradation
 when Tier 2 LLM-as-Judge is unavailable.
 """
 
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from hypothesis import given
@@ -33,7 +33,8 @@ class TestProviderAPIKeyValidation:
     def test_validate_primary_provider_api_key_missing(self):
         """Should return False when primary provider API key is missing."""
         settings = JudgeSettings(tier2_provider="openai", tier2_model="gpt-4o-mini")
-        env_config = AppEnv()  # No API keys
+        # Explicitly clear key to override env vars (AppEnv is BaseSettings)
+        env_config = AppEnv(OPENAI_API_KEY="")
 
         engine = LLMJudgeEngine(settings)
         is_valid = engine.validate_provider_api_key(settings.tier2_provider, env_config)
@@ -88,7 +89,8 @@ class TestProviderFallbackChain:
             tier2_provider="openai",
             tier2_fallback_provider="github",
         )
-        env_config = AppEnv()  # No API keys
+        # Explicitly clear keys to override env vars (AppEnv is BaseSettings)
+        env_config = AppEnv(OPENAI_API_KEY="", GITHUB_API_KEY="")
 
         engine = LLMJudgeEngine(settings)
         selected_provider = engine.select_available_provider(env_config)
