@@ -27,7 +27,6 @@ dependencies = [
     # "rapidfuzz>=3.14.3", 
     "networkx>=3.6.1",  # Graph analysis
     "scalene>=2.1.3",  # High-performance CPU, GPU, and memory profiler
-    "weave>=0.52.28",
     "arize-phoenix>=13.0.0",  # Local trace viewer via pip (replaces Docker-based Opik)
     "openinference-instrumentation-pydantic-ai>=0.1.12",  # PydanticAI auto-instrumentation, arizeai
 ]
@@ -39,6 +38,9 @@ Documentation = "https://qte77.github.io/Agents-eval/"
 gui = [
     "streamlit>=1.54.0",
     "pyvis>=0.3.2",
+]
+wandb = [
+    "weave>=0.52.28",
 ]
 dev = [
     "complexipy>=5.2.0",

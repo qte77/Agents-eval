@@ -7,7 +7,6 @@ login state, perform a one-time login, and check if the user is logged in.
 # from agentops import init as agentops_init  # type: ignore[reportUnknownVariableType]
 from logfire import configure as logfire_conf
 from wandb import login as wandb_login
-from weave import init as weave_init
 
 from app.data_models.app_models import AppEnv
 from app.llms.providers import get_api_key
@@ -41,6 +40,9 @@ def login(project_name: str, chat_env_config: AppEnv):
             logfire_conf(token=api_key_msg)
         is_api_key, api_key_msg = get_api_key("WANDB", chat_env_config)
         if is_api_key:
+            # Only import weave when WANDB_API_KEY is configured
+            from weave import init as weave_init
+
             wandb_login(key=api_key_msg)
             weave_init(project_name)
     except Exception as e:

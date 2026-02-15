@@ -11,7 +11,19 @@ from pathlib import Path
 from typing import cast
 
 from logfire import span
-from weave import op
+
+# Reason: weave is optional - only import if available (requires WANDB_API_KEY)
+try:
+    from weave import op
+except ImportError:
+    # Fallback: no-op decorator when weave not installed
+    def op():  # type: ignore[reportRedeclaration]
+        """No-op decorator fallback when weave is unavailable."""
+
+        def decorator(func):
+            return func
+
+        return decorator
 
 from app.__init__ import __version__
 from app.agents.agent_system import get_manager, run_manager, setup_agent_env
