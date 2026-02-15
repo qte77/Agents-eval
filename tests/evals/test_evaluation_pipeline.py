@@ -211,6 +211,7 @@ class TestTierExecution:
     @pytest.mark.asyncio
     async def test_execute_tier2_success(self, pipeline, sample_tier2_result):
         """Test successful Tier 2 execution."""
+        pipeline.llm_engine.tier2_available = True  # Mark as available (STORY-001)
         pipeline.llm_engine.evaluate_comprehensive = AsyncMock(return_value=sample_tier2_result)
 
         result, execution_time = await pipeline._execute_tier2(
@@ -226,6 +227,7 @@ class TestTierExecution:
     @pytest.mark.asyncio
     async def test_execute_tier2_no_trace(self, pipeline, sample_tier2_result):
         """Test Tier 2 execution without execution trace."""
+        pipeline.llm_engine.tier2_available = True  # Mark as available (STORY-001)
         pipeline.llm_engine.evaluate_comprehensive = AsyncMock(return_value=sample_tier2_result)
 
         result, execution_time = await pipeline._execute_tier2("sample paper", "sample review")
