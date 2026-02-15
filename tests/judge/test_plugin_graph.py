@@ -131,8 +131,8 @@ class TestGraphEvaluatorPlugin:
 
     def test_default_timeout(self, plugin):
         """Given no timeout specified, should use default from JudgeSettings."""
-        # Default should come from JudgeSettings.tier3_max_seconds (10.0)
-        assert plugin.timeout_seconds == 10.0
+        # Default should come from JudgeSettings.tier3_max_seconds (15.0)
+        assert plugin.timeout_seconds == 15.0
 
     def test_get_context_for_next_tier_returns_dict(self, plugin, sample_input):
         """Given Tier3Result, should extract context (empty for final tier)."""
