@@ -196,3 +196,79 @@ class TestPaperPDFReading:
         # Attempt to read non-PDF file
         with pytest.raises(ValueError, match="Not a PDF file"):
             read_paper_pdf(None, str(invalid_file))
+
+
+class TestContentTruncation:
+    """Test content truncation functionality for model-aware limits."""
+
+    def test_truncate_content_preserves_abstract(self):
+        """Test that truncation preserves the abstract section."""
+        from app.tools.peerread_tools import _truncate_paper_content
+
+        abstract = "This is the abstract section."
+        body = "A" * 20000  # Large body content
+        max_length = 1000
+
+        result = _truncate_paper_content(abstract, body, max_length)
+
+        # Abstract should be preserved
+        assert abstract in result
+        # Should contain truncation marker
+        assert "[TRUNCATED]" in result
+        # Result should be within limit
+        assert len(result) <= max_length
+
+    def test_truncate_content_adds_marker(self):
+        """Test that truncation adds [TRUNCATED] marker."""
+        from app.tools.peerread_tools import _truncate_paper_content
+
+        abstract = "Abstract text."
+        body = "B" * 10000
+        max_length = 500
+
+        result = _truncate_paper_content(abstract, body, max_length)
+
+        assert "[TRUNCATED]" in result
+
+    def test_truncate_content_no_truncation_when_under_limit(self):
+        """Test that content under limit is not truncated."""
+        from app.tools.peerread_tools import _truncate_paper_content
+
+        abstract = "Short abstract."
+        body = "Short body content."
+        max_length = 10000
+
+        result = _truncate_paper_content(abstract, body, max_length)
+
+        # Should not contain truncation marker
+        assert "[TRUNCATED]" not in result
+        # Should contain full content
+        assert abstract in result
+        assert body in result
+
+    def test_truncate_content_logs_warning(self, caplog):
+        """Test that truncation logs a warning."""
+        import logging
+
+        from app.tools.peerread_tools import _truncate_paper_content
+
+        caplog.set_level(logging.WARNING)
+
+        abstract = "Abstract."
+        body = "C" * 15000
+        max_length = 1000
+        original_length = len(abstract) + len(body)
+
+        result = _truncate_paper_content(abstract, body, max_length)
+
+        # Should log warning with size information
+        assert any("truncat" in record.message.lower() for record in caplog.records)
+        # Log should mention original and truncated size
+        warning_messages = [r.message for r in caplog.records if r.levelno >= logging.WARNING]
+        assert len(warning_messages) > 0
+
+    def test_generate_review_template_with_truncation(self):
+        """Test that generate_paper_review_content_from_template truncates long content."""
+        # This test will validate the integration with the actual tool
+        # Will be implemented after _truncate_paper_content is added
+        pass
