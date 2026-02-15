@@ -219,7 +219,11 @@ Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the ev
 - Delete deprecated `config/config_eval.json`
 - Resolve `error_handling_context()` FIXMEs: either implement as a context manager or delete the comments (current try/except at line 520 is adequate)
 
-**Files**: All source and test files (import updates), `CHANGELOG.md`, `src/app/agents/agent_system.py`
+**Files**:
+
+- All source and test files (import updates)
+- `CHANGELOG.md`
+- `src/app/agents/agent_system.py`
 
 ---
 
@@ -413,8 +417,6 @@ Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the ev
 #### Feature 18: GUI Agent & Provider Configuration
 
 **Description**: Expose provider selection and sub-agent toggles in the Streamlit GUI with session state persistence. Currently CLI-only (`--chat-provider`, `--include-researcher/analyst/synthesiser`).
-
-**Depends**: STORY-010
 
 **Acceptance Criteria**:
 
