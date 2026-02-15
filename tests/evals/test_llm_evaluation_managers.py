@@ -162,8 +162,11 @@ class TestLLMJudgeEngine:
 
     @pytest.mark.asyncio
     async def test_assess_constructiveness_fallback(self, engine, sample_data):
-        """Given LLM failure, should use fallback constructiveness check."""
-        with patch("pydantic_ai.Agent", side_effect=Exception("Model error")):
+        """Given LLM failure (non-auth), should use fallback constructiveness check."""
+        # Use timeout error (not 401) to test heuristic fallback path
+        with patch.object(
+            engine, "create_judge_agent", side_effect=TimeoutError("Request timed out")
+        ):
             with patch.object(
                 engine, "_fallback_constructiveness_check", return_value=0.6
             ) as mock_fallback:

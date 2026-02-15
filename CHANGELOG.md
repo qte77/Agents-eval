@@ -45,7 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Sprint 4 PRD v2 with Features 1-7 (standalone numbering, operational resilience + CC baseline comparison)
 - Feature 1 (STORY-001): Graceful Logfire trace export failure handling (suppress connection error stack traces for both span and metrics exports, affects CLI and GUI)
-- Feature 3: Tier 2 judge provider fallback validation (end-to-end testing & troubleshooting docs for OpenAI auth failures)
+- Feature 2 (STORY-002): Thread-safe timeout handling in graph analysis using ThreadPoolExecutor (replaces signal-based timeouts)
+- Feature 3 (STORY-003): Tier 2 judge provider fallback integration tests and troubleshooting documentation
+- Feature 3 (STORY-003): Auth failure detection in all Tier 2 assessments (technical_accuracy, constructiveness, planning_rationality) with neutral fallback scores (0.5)
+- Feature 3 (STORY-003): `docs/best-practices/troubleshooting.md` with provider fallback chain guidance
 - Feature 4: Complete test suite alignment (hypothesis property tests + inline-snapshot regression tests for remaining 12 test files)
 
 ### Fixed (Sprint 4)
