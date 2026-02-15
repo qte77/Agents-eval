@@ -14,21 +14,22 @@
 
 - [ ] The `agent_system.py` module has a `NotImplementedError` for streaming with Pydantic model outputs. Please clarify the intended approach for streaming structured data.
   - Human: `# TODO` but not of priority as of now. Remind me once a week.
-- [ ] The `llm_model_funs.py` module has `NotImplementedError` for the Gemini and HuggingFace providers. Please provide the correct implementation or remove them if they are not supported.
+  - Tracked in: PRD-Sprint3.md Out of Scope
+- [ ] The `agent_system.py:610` has a `FIXME` for Gemini provider compatibility (`ModelRequest not iterable`, `MALFORMED_FUNCTION_CALL` literal error). The original `llm_model_funs.py` file no longer exists (refactored to `llms/models.py` + `llms/providers.py`). HuggingFace falls through to generic OpenAI-compatible path.
   - Human: `# TODO` but not of priority as of now. Remind me once a week.
-- [ ] The `agent_system.py` module contains a `FIXME` note regarding the use of a try-catch context manager. Please review and implement the intended error handling.
+  - Tracked in: PRD-Sprint3.md Out of Scope
+- [ ] The `agent_system.py` module contains 3 `FIXME` notes (lines 443, 514, 583) for commented-out `error_handling_context()` context manager. Current try/except at line 520 handles errors adequately.
   - Human: `# TODO` but not of priority as of now. Remind me once a week.
-- [ ] Add TypeScript testing guidelines (if a TypeScript frontend is planned for the future).
-  - Human: `# TODO` but not of priority as of now. Remind me once a week.
-- [ ] [HIGH] Token limit exceeded with gpt-4.1 model during PeerRead evaluation
-  **Context**: Running evaluation pipeline with PeerRead dataset papers
-  **Problem**: gpt-4.1 model has 8000 token limit, but papers exceed this limit
-  **Error**: `status_code: 413, model_name: gpt-4.1, body: {'code': 'tokens_limit_reached', 'message': 'Request body too large for gpt-4.1 model. Max size: 8000 tokens.'}`
-  **Files**: Evaluation pipeline or agent system where model is called
-  **Alternatives**:
+  - Tracked in: PRD-Sprint3.md Feature 12 (Migration Cleanup)
+- [ ] [MEDIUM] Tier 2 evaluation judge hardcoded to OpenAI provider
+  **Context**: Running `make run_cli` with non-OpenAI chat providers (e.g., Cerebras)
+  **Problem**: `LLMJudgeEngine` uses `tier2_provider="openai"` and `tier2_model="gpt-4o-mini"` by default. When no `OPENAI_API_KEY` is set, all Tier 2 metrics (technical_accuracy, constructiveness, planning_rationality) fail with 401 and score 0.0, deflating the composite score.
+  **Files**: `src/app/evals/settings.py:74-75`, `src/app/evals/llm_evaluation_managers.py:43-44`
+  - Tracked in: PRD-Sprint3.md Feature 6 (Judge Provider Fallback)
 
-- Switch to higher-capacity model (gpt-4-turbo: 128k tokens, claude-3-sonnet: 200k tokens)
-- Implement document chunking strategy for large papers
-- Use smaller papers for testing (find smallest with shell command)
-  
-  **Impact**: Blocks evaluation pipeline for papers exceeding 8k tokens
+## Closed Requests
+
+- [x] Add TypeScript testing guidelines (if a TypeScript frontend is planned for the future).
+  - **Closed**: No TypeScript frontend exists. GUI is Streamlit (Python). Reopen if TS frontend is planned.
+- [x] [HIGH] Token limit exceeded with gpt-4.1 model during PeerRead evaluation
+  - **Closed**: Stale. `gpt-4.1` with 8k limit doesn't match any known model. Likely a misconfigured provider. Root cause (large papers exceeding provider limits) is addressed by Feature 5 (Model-Aware Content Truncation) in PRD-Sprint3.

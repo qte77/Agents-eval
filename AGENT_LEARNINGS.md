@@ -86,6 +86,7 @@ Document when you discover novel solutions or common pitfalls that others might 
 - **Problem**: Need reusable pattern for testing parallel agent orchestration with real trace verification
 - **Solution**: Use parallel code review pattern with 3 independent reviewers (security, quality, coverage), shared task list with dependency blocking (3 reviews → 1 aggregation), and trace verification in `~/.claude/teams/` and `~/.claude/tasks/`
 - **Example**:
+
   ```python
   # Team structure
   TeamCreate(team_name="parallel-code-review")
@@ -106,6 +107,7 @@ Document when you discover novel solutions or common pitfalls that others might 
   # ~/.claude/teams/{team-name}/inboxes/*.json - messages
   # ~/.claude/tasks/{team-name}/*.json - task status
   ```
+
 - **Validation**: All 3 reviews completed in parallel (~26s total), task dependencies worked (aggregation waited for all 3), full message content preserved in mailboxes, timestamps prove concurrency (quality:23:57:29, coverage:23:57:35, security:23:57:55)
 - **Key Finding**: Parallel execution reduces latency (3 sequential reviews ~60s vs parallel ~26s), but token cost scales linearly (3x teammates = 3x Claude instances)
 - **References**: `docs/reviews/evaluation-pipeline-parallel-review-2026-02-11.md`, `docs/analysis/CC-agent-teams-orchestration.md`
