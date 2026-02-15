@@ -10,7 +10,6 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from inline_snapshot import snapshot
 
 from app.data_models.app_models import AppEnv
 from app.data_models.evaluation_models import Tier2Result
@@ -557,11 +556,11 @@ class TestStory001AcceptanceCriteria:
         settings = JudgeSettings(tier2_provider="auto")
         env_config = AppEnv(OPENAI_API_KEY="sk-test")
 
-        # When chat_provider is None, should fall back to tier2_provider default
-        engine = LLMJudgeEngine(settings, env_config=env_config, chat_provider=None)
+        # When chat_provider is None, auto mode tries to validate "auto" as provider name
+        # which fails, then falls back to fallback_provider
+        LLMJudgeEngine(settings, env_config=env_config, chat_provider=None)
 
-        # Should use "auto" as-is (which will fail validation, triggering fallback)
-        # Or should use a sensible default - let's check the implementation
+        # Test verifies initialization doesn't crash when auto mode has no chat_provider
 
 
 # STORY-001: Hypothesis property tests for provider selection invariants

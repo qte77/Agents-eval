@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-001: `tier2_provider=auto` mode to inherit agent system's active `chat_provider`
 - STORY-001: `chat_provider` parameter in `EvaluationPipeline` and `app.py` for provider inheritance
 - STORY-001: `tier2_available` flag to skip Tier 2 when no valid providers are available (prevents 401 errors and neutral fallback scores)
+- STORY-001: Hypothesis property tests for provider selection invariants (fallback only when primary unavailable)
+- STORY-001: Comprehensive test coverage for auto mode inheritance and provider skipping behavior
 
 ### Added (Sprint 2)
 
