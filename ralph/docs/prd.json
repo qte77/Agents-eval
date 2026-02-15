@@ -97,8 +97,8 @@
       "files": [
         "src/app/judge/plugins/traditional.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-15T12:01:00Z",
       "content_hash": "a4e59d4c60e1882c65f0ffd8a943dcc83681e048645bef48781ccb31c1479529",
       "depends_on": [
         "STORY-003"
