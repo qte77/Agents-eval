@@ -299,8 +299,8 @@
         "tests/evals/test_llm_evaluation_managers.py",
         "tests/evals/test_graph_analysis.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-15T13:09:48Z",
       "content_hash": "965fc72f64e54e2b5f301dac4b476dfb5eb430a6fe85112a21dc78ebaf240bd4",
       "depends_on": [
         "STORY-008"
