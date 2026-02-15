@@ -170,9 +170,7 @@ def test_otlp_endpoint_unreachable_disables_tracing():
         patch("app.agents.logfire_instrumentation.logger") as mock_logger,
     ):
         # Simulate connection refused error
-        mock_head.side_effect = requests.exceptions.ConnectionError(
-            "Connection refused"
-        )
+        mock_head.side_effect = requests.exceptions.ConnectionError("Connection refused")
 
         manager = LogfireInstrumentationManager(config)
 

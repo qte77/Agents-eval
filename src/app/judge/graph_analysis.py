@@ -12,7 +12,8 @@ due to incomplete type hints in the NetworkX library itself.
 from __future__ import annotations
 
 import math
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from typing import TYPE_CHECKING, Any
 
 import networkx as nx

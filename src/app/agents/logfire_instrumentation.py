@@ -66,7 +66,7 @@ class LogfireInstrumentationManager:
                 except (
                     requests.exceptions.ConnectionError,
                     requests.exceptions.Timeout,
-                ) as conn_error:
+                ):
                     logger.warning(
                         f"Logfire tracing unavailable: {phoenix_otlp} unreachable "
                         f"(spans and metrics export disabled)"
