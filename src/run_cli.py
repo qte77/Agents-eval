@@ -7,9 +7,17 @@ when actual processing is needed.
 """
 
 from sys import argv, exit
+from typing import Any
 
 
-def parse_args(argv: list[str]) -> dict[str, str | bool]:
+def _convert_value(key: str, value: str | bool) -> str | bool | int:
+    """Convert parsed argument value to appropriate type."""
+    if key == "peerread_max_papers_per_sample_download" and isinstance(value, str):
+        return int(value)
+    return value
+
+
+def parse_args(argv: list[str]) -> dict[str, Any]:
     """
     Parse command line arguments into a dictionary.
 
@@ -21,10 +29,10 @@ def parse_args(argv: list[str]) -> dict[str, str | bool]:
     descriptions is printed, and an empty dictionary is returned.
 
     Returns:
-        `dict[str, str | bool]`: A dictionary mapping argument names
+        `dict[str, Any]`: A dictionary mapping argument names
         (with leading '--' removed and hyphens replaced by underscores)
-        to their values (`str` for key-value pairs, `bool` for flags).
-        Returns an empty dict if `--help` is specified.
+        to their values (`str` for key-value pairs, `bool` for flags, `int`
+        for numeric arguments). Returns an empty dict if `--help` is specified.
 
     Example:
         >>> `parse_args(['--chat-provider=ollama', '--include-researcher'])`
@@ -39,8 +47,9 @@ def parse_args(argv: list[str]) -> dict[str, str | bool]:
         "--include-researcher": "Include the researcher agent",
         "--include-analyst": "Include the analyst agent",
         "--include-synthesiser": "Include the synthesiser agent",
-        "--no-stream": "Disable streaming output",
+        "--pydantic-ai-stream": "Enable streaming output",
         "--chat-config-file": "Specify the path to the chat configuration file",
+        "--enable-review-tools": "Enable PeerRead review generation tools",
         "--paper-number": "Specify paper number for PeerRead review generation",
         "--skip-eval": "Skip evaluation after run_manager completes",
         "--download-peerread-full-only": (
@@ -61,14 +70,14 @@ def parse_args(argv: list[str]) -> dict[str, str | bool]:
             print(f"{cmd}: {desc}")
         exit(0)
 
-    parsed_args: dict[str, str | bool] = {}
+    parsed_args: dict[str, Any] = {}
 
     # parse arguments for key-value pairs and flags
     for arg in argv:
         if arg.split("=", 1)[0] in commands.keys():
             key, value = arg.split("=", 1) if "=" in arg else (arg, True)
             key = key.lstrip("--").replace("-", "_")
-            parsed_args[key] = value
+            parsed_args[key] = _convert_value(key, value)
 
     return parsed_args
 
