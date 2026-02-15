@@ -11,6 +11,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Sprint 2)
+
+- STORY-001: `JudgeSettings` pydantic-settings class replacing `config_eval.json`
+- STORY-002: Post-run evaluation wiring with `--skip-eval` CLI flag
+- STORY-003: `TraceCollector` integration into agent orchestration with `GraphTraceData` support
+- STORY-004: Graph vs text metric comparison logging in evaluation pipeline
+- STORY-005: Logfire + Phoenix tracing infrastructure (replacing Opik)
+- STORY-006: Streamlit evaluation dashboard with agent graph visualization
+
+### Added
+
+- `inline-snapshot` as supplementary testing tool
+- `common` module with shared utilities extracted from scattered helpers
+- MAS design principles, security, and plugin design skills
+- Sprint 3 PRD with Features 5-15 (plugin architecture, judge fallback, GUI wiring, test alignment)
+
+### Changed
+
+- Makefile: DRY refactor of `quick_start`/`dataset_get_smallest` via `_find_smallest_papers` helper; removed redundant `\` from `.ONESHELL` blocks
+- Pandoc: configurable LoF/LoT generation and unnumbered title support
+- Ralph PRD parser rewritten with typed models and safe updates
+- All dependencies updated to latest 2026 versions
+
+### Fixed
+
+- Cerebras provider 422 error from mixed `strict` tool definitions — added `OpenAIModelProfile` with strict disabled
+- Statusline `ctx(left)` accuracy — compute from raw token usage instead of pre-computed percentage
+
+### Removed
+
+- Deprecated `config/config_eval.json` (superseded by `JudgeSettings` pydantic-settings)
+- Opik tracing from evaluation pipeline (replaced by Logfire + Phoenix)
+- Unused `pytest-bdd` and `agentops` dependencies
+
 ## [3.3.0] - 2026-02-09
 
 ### Added
