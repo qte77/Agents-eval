@@ -127,8 +127,8 @@
         "tests/test_gui/test_evaluation_page.py",
         "tests/test_gui/test_sidebar_phoenix.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-15T16:46:17Z",
       "content_hash": "cce2614587548f2f0f0f9a4078b76a43519dfde14c7b9f4f47e7bef465aad92d",
       "depends_on": []
     },
