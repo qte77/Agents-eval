@@ -46,10 +46,7 @@ def composite_result_strategy(draw):
         rec_weight = -1.0
 
     tier1_score = draw(st.floats(min_value=0.0, max_value=1.0))
-    tier2_score = draw(st.one_of(
-        st.none(),
-        st.floats(min_value=0.0, max_value=1.0)
-    ))
+    tier2_score = draw(st.one_of(st.none(), st.floats(min_value=0.0, max_value=1.0)))
     tier3_score = draw(st.floats(min_value=0.0, max_value=1.0))
 
     return CompositeResult(
@@ -310,15 +307,74 @@ class TestCompareFunction:
         # Model dump should have expected structure
         dump = comparison.model_dump()
 
-        assert dump == snapshot({
-            "label_a": "PydanticAI",
-            "label_b": "CC-solo",
-            "result_a": dict,  # Full CompositeResult
-            "result_b": dict,  # Full CompositeResult
-            "metric_deltas": dict,  # 6 metrics
-            "tier_deltas": dict,  # 3 tiers
-            "summary": str,
-        })
+        assert dump == snapshot(
+            {
+                "label_a": "PydanticAI",
+                "label_b": "CC-solo",
+                "result_a": {
+                    "composite_score": 0.75,
+                    "recommendation": "weak_accept",
+                    "recommendation_weight": 0.7,
+                    "metric_scores": {
+                        "time_taken": 0.8,
+                        "task_success": 1.0,
+                        "coordination_quality": 0.7,
+                        "tool_efficiency": 0.6,
+                        "planning_rationality": 0.75,
+                        "output_similarity": 0.65,
+                    },
+                    "tier1_score": 0.8,
+                    "tier2_score": 0.75,
+                    "tier3_score": 0.65,
+                    "evaluation_complete": True,
+                    "timestamp": "",
+                    "config_version": "1.0.0",
+                    "weights_used": None,
+                    "tiers_enabled": None,
+                    "opik_trace_id": None,
+                    "agent_assessment_scores": None,
+                    "opik_metadata": None,
+                },  # Full CompositeResult
+                "result_b": {
+                    "composite_score": 0.65,
+                    "recommendation": "weak_accept",
+                    "recommendation_weight": 0.7,
+                    "metric_scores": {
+                        "time_taken": 0.7,
+                        "task_success": 1.0,
+                        "coordination_quality": 0.6,
+                        "tool_efficiency": 0.5,
+                        "planning_rationality": 0.65,
+                        "output_similarity": 0.55,
+                    },
+                    "tier1_score": 0.7,
+                    "tier2_score": 0.65,
+                    "tier3_score": 0.6,
+                    "evaluation_complete": True,
+                    "timestamp": "",
+                    "config_version": "1.0.0",
+                    "weights_used": None,
+                    "tiers_enabled": None,
+                    "opik_trace_id": None,
+                    "agent_assessment_scores": None,
+                    "opik_metadata": None,
+                },  # Full CompositeResult
+                "metric_deltas": {
+                    "time_taken": 0.10000000000000009,
+                    "task_success": 0.0,
+                    "coordination_quality": 0.09999999999999998,
+                    "tool_efficiency": 0.09999999999999998,
+                    "planning_rationality": 0.09999999999999998,
+                    "output_similarity": 0.09999999999999998,
+                },  # 6 metrics
+                "tier_deltas": {
+                    "tier1": 0.10000000000000009,
+                    "tier2": 0.09999999999999998,
+                    "tier3": 0.050000000000000044,
+                },  # 3 tiers
+                "summary": "PydanticAI scored +0.08 higher on average vs CC-solo (largest diff: time_taken +0.10)",
+            }
+        )
 
 
 class TestCompareAllFunction:
