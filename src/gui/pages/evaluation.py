@@ -145,6 +145,65 @@ def _render_metrics_comparison(result: CompositeResult) -> None:
         st.info("Insufficient metric data for comparison visualization.")
 
 
+def _render_three_way_table(comparisons: list[BaselineComparison]) -> None:
+    """Render three-way comparison summary table."""
+    st.markdown("**Three-Way Comparison Table**")
+    comparison_data = []
+    for comp in comparisons:
+        comparison_data.append(
+            {
+                "Comparison": f"{comp.label_a} vs {comp.label_b}",
+                "Tier 1 Δ": f"{comp.tier_deltas.get('tier1', 0):.3f}",
+                "Tier 2 Δ": (
+                    f"{comp.tier_deltas.get('tier2', 0):.3f}"
+                    if comp.tier_deltas.get("tier2") is not None
+                    else "N/A"
+                ),
+                "Tier 3 Δ": f"{comp.tier_deltas.get('tier3', 0):.3f}",
+            }
+        )
+    st.dataframe(comparison_data, use_container_width=True)
+
+
+def _render_tier_deltas(comp: BaselineComparison) -> None:
+    """Render tier-level delta metrics."""
+    st.markdown("**Tier-Level Differences**")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(
+            "Tier 1 Delta",
+            f"{comp.tier_deltas.get('tier1', 0):.3f}",
+            help=f"{comp.label_a} - {comp.label_b}",
+        )
+    with col2:
+        if comp.tier_deltas.get("tier2") is not None:
+            st.metric(
+                "Tier 2 Delta",
+                f"{comp.tier_deltas.get('tier2', 0):.3f}",
+                help=f"{comp.label_a} - {comp.label_b}",
+            )
+        else:
+            st.metric("Tier 2 Delta", "N/A", help="Tier 2 not available in one or both systems")
+    with col3:
+        st.metric(
+            "Tier 3 Delta",
+            f"{comp.tier_deltas.get('tier3', 0):.3f}",
+            help=f"{comp.label_a} - {comp.label_b}",
+        )
+
+
+def _render_single_comparison(comp: BaselineComparison) -> None:
+    """Render individual comparison details."""
+    with st.expander(f"📊 {comp.label_a} vs {comp.label_b}"):
+        st.write(comp.summary)
+        _render_tier_deltas(comp)
+
+        # Metric deltas bar chart
+        if comp.metric_deltas:
+            st.markdown("**Metric-Level Differences**")
+            st.bar_chart(comp.metric_deltas)
+
+
 def render_baseline_comparison(comparisons: list[BaselineComparison] | None) -> None:
     """Render baseline comparison section for CC solo and teams.
 
@@ -159,60 +218,11 @@ def render_baseline_comparison(comparisons: list[BaselineComparison] | None) -> 
 
     # Display three-way comparison table if we have 3 comparisons
     if len(comparisons) == 3:
-        st.markdown("**Three-Way Comparison Table**")
-        comparison_data = []
-        for comp in comparisons:
-            comparison_data.append(
-                {
-                    "Comparison": f"{comp.label_a} vs {comp.label_b}",
-                    "Tier 1 Δ": f"{comp.tier_deltas.get('tier1', 0):.3f}",
-                    "Tier 2 Δ": (
-                        f"{comp.tier_deltas.get('tier2', 0):.3f}"
-                        if comp.tier_deltas.get("tier2") is not None
-                        else "N/A"
-                    ),
-                    "Tier 3 Δ": f"{comp.tier_deltas.get('tier3', 0):.3f}",
-                }
-            )
-        st.dataframe(comparison_data, use_container_width=True)
+        _render_three_way_table(comparisons)
 
     # Display individual comparisons
     for comp in comparisons:
-        with st.expander(f"📊 {comp.label_a} vs {comp.label_b}"):
-            # Summary
-            st.write(comp.summary)
-
-            # Tier deltas
-            st.markdown("**Tier-Level Differences**")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric(
-                    "Tier 1 Delta",
-                    f"{comp.tier_deltas.get('tier1', 0):.3f}",
-                    help=f"{comp.label_a} - {comp.label_b}",
-                )
-            with col2:
-                if comp.tier_deltas.get("tier2") is not None:
-                    st.metric(
-                        "Tier 2 Delta",
-                        f"{comp.tier_deltas.get('tier2', 0):.3f}",
-                        help=f"{comp.label_a} - {comp.label_b}",
-                    )
-                else:
-                    st.metric(
-                        "Tier 2 Delta", "N/A", help="Tier 2 not available in one or both systems"
-                    )
-            with col3:
-                st.metric(
-                    "Tier 3 Delta",
-                    f"{comp.tier_deltas.get('tier3', 0):.3f}",
-                    help=f"{comp.label_a} - {comp.label_b}",
-                )
-
-            # Metric deltas bar chart
-            if comp.metric_deltas:
-                st.markdown("**Metric-Level Differences**")
-                st.bar_chart(comp.metric_deltas)
+        _render_single_comparison(comp)
 
 
 def render_evaluation(result: CompositeResult | None = None) -> None:
