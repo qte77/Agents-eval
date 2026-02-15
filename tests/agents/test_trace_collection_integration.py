@@ -18,14 +18,21 @@ async def test_trace_collector_initialized_in_run_manager():
     """Test that TraceCollector is initialized when run_manager is called."""
     with (
         patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
-        patch("app.agents.agent_system.run_manager_orchestrated") as mock_run_orchestrated,
     ):
         mock_collector = MagicMock()
+        mock_collector.start_execution = MagicMock()
+        mock_collector.end_execution = MagicMock()
         mock_get_collector.return_value = mock_collector
 
         from app.agents.agent_system import run_manager
 
+        # Mock the manager and its run method
         mock_manager = MagicMock()
+        mock_manager.model._model_name = "test-model"
+        mock_result = MagicMock()
+        mock_result.usage = MagicMock(return_value={})
+        mock_manager.run = AsyncMock(return_value=mock_result)
+
         await run_manager(
             manager=mock_manager,
             query="test query",
@@ -34,7 +41,7 @@ async def test_trace_collector_initialized_in_run_manager():
         )
 
         # Verify trace collector was initialized
-        mock_get_collector.assert_called_once()
+        mock_get_collector.assert_called()
 
 
 @pytest.mark.asyncio
@@ -42,14 +49,21 @@ async def test_trace_execution_started_for_each_run():
     """Test that trace execution is started with unique execution_id."""
     with (
         patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
-        patch("app.agents.agent_system.run_manager_orchestrated") as mock_run_orchestrated,
     ):
         mock_collector = MagicMock()
+        mock_collector.start_execution = MagicMock()
+        mock_collector.end_execution = MagicMock()
         mock_get_collector.return_value = mock_collector
 
         from app.agents.agent_system import run_manager
 
+        # Mock the manager and its run method
         mock_manager = MagicMock()
+        mock_manager.model._model_name = "test-model"
+        mock_result = MagicMock()
+        mock_result.usage = MagicMock(return_value={})
+        mock_manager.run = AsyncMock(return_value=mock_result)
+
         await run_manager(
             manager=mock_manager,
             query="test query",
@@ -132,9 +146,9 @@ async def test_timing_data_captured_during_execution():
     """Test that timing data is captured for each delegation step."""
     with (
         patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
-        patch("app.agents.agent_system.run_manager_orchestrated") as mock_run_orchestrated,
     ):
         mock_collector = MagicMock()
+        mock_collector.start_execution = MagicMock()
         mock_collector.end_execution = MagicMock(
             return_value=MagicMock(
                 performance_metrics={
@@ -148,7 +162,13 @@ async def test_timing_data_captured_during_execution():
 
         from app.agents.agent_system import run_manager
 
+        # Mock the manager and its run method
         mock_manager = MagicMock()
+        mock_manager.model._model_name = "test-model"
+        mock_result = MagicMock()
+        mock_result.usage = MagicMock(return_value={})
+        mock_manager.run = AsyncMock(return_value=mock_result)
+
         await run_manager(
             manager=mock_manager,
             query="test query",

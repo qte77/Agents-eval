@@ -26,6 +26,8 @@ Functions:
         settings, prompts, API key, and usage limits.
 """
 
+import time
+import uuid
 from collections.abc import Callable
 from typing import Any, TypeVar
 
@@ -56,6 +58,7 @@ from app.data_models.app_models import (
 )
 from app.data_models.peerread_models import ReviewGenerationResult
 from app.evals.settings import JudgeSettings
+from app.evals.trace_processors import get_trace_collector
 from app.llms.models import create_agent_models
 from app.llms.providers import (
     get_api_key,
@@ -133,7 +136,31 @@ def _add_research_tool(
         ctx: RunContext[None], query: str
     ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
         """Delegate research task to ResearchAgent."""
+        # Capture trace data for delegation
+        trace_collector = get_trace_collector()
+        start_time = time.perf_counter()
+
+        # Log agent-to-agent interaction
+        trace_collector.log_agent_interaction(
+            from_agent="manager",
+            to_agent="researcher",
+            interaction_type="delegation",
+            data={"query": query, "task_type": "research"},
+        )
+
+        # Execute delegation
         result = await research_agent.run(query, usage=ctx.usage)
+
+        # Log tool call with timing
+        duration = time.perf_counter() - start_time
+        trace_collector.log_tool_call(
+            agent_id="manager",
+            tool_name="delegate_research",
+            success=True,
+            duration=duration,
+            context="research_delegation",
+        )
+
         if isinstance(
             result.output,
             ResearchResult | ResearchResultSimple | ReviewGenerationResult,
@@ -155,7 +182,31 @@ def _add_analysis_tool(
         ctx: RunContext[None], query: str
     ) -> AnalysisResult:
         """Delegate analysis task to AnalysisAgent."""
+        # Capture trace data for delegation
+        trace_collector = get_trace_collector()
+        start_time = time.perf_counter()
+
+        # Log agent-to-agent interaction
+        trace_collector.log_agent_interaction(
+            from_agent="manager",
+            to_agent="analyst",
+            interaction_type="delegation",
+            data={"query": query, "task_type": "analysis"},
+        )
+
+        # Execute delegation
         result = await analysis_agent.run(query, usage=ctx.usage)
+
+        # Log tool call with timing
+        duration = time.perf_counter() - start_time
+        trace_collector.log_tool_call(
+            agent_id="manager",
+            tool_name="delegate_analysis",
+            success=True,
+            duration=duration,
+            context="analysis_delegation",
+        )
+
         if isinstance(result.output, AnalysisResult):
             return result.output
         return _validate_model_return(str(result.output), AnalysisResult)
@@ -174,7 +225,31 @@ def _add_synthesis_tool(
         ctx: RunContext[None], query: str
     ) -> ResearchSummary:
         """Delegate synthesis task to AnalysisAgent."""
+        # Capture trace data for delegation
+        trace_collector = get_trace_collector()
+        start_time = time.perf_counter()
+
+        # Log agent-to-agent interaction
+        trace_collector.log_agent_interaction(
+            from_agent="manager",
+            to_agent="synthesizer",
+            interaction_type="delegation",
+            data={"query": query, "task_type": "synthesis"},
+        )
+
+        # Execute delegation
         result = await synthesis_agent.run(query, usage=ctx.usage)
+
+        # Log tool call with timing
+        duration = time.perf_counter() - start_time
+        trace_collector.log_tool_call(
+            agent_id="manager",
+            tool_name="delegate_synthesis",
+            success=True,
+            duration=duration,
+            context="synthesis_delegation",
+        )
+
         if isinstance(result.output, ResearchSummary):
             return result.output
         return _validate_model_return(str(result.output), ResearchSummary)
@@ -427,7 +502,7 @@ async def run_manager(
     provider: str,
     usage_limits: UsageLimits | None,
     pydantic_ai_stream: bool = False,
-) -> None:
+) -> str:
     """
     Asynchronously runs the manager with the given query and provider, handling errors
         and printing results.
@@ -440,8 +515,12 @@ async def run_manager(
         pydantic_ai_stream (bool, optional): Flag to enable or disable Pydantic AI
             stream. Defaults to False.
     Returns:
-        None
+        str: Execution ID for trace retrieval
     """
+    # Initialize trace collection
+    trace_collector = get_trace_collector()
+    execution_id = f"exec_{uuid.uuid4().hex[:12]}"
+    trace_collector.start_execution(execution_id)
 
     # FIXME context manager try-catch
     # with out ? error_handling_context("run_manager()"):
@@ -473,7 +552,16 @@ async def run_manager(
         logger.info(f"Result: {result}")
         # FIXME  # type: ignore
         logger.info(f"Usage statistics: {result.usage()}")  # type: ignore
+
+        # Finalize trace collection
+        trace_collector.end_execution()
+        logger.info(f"Trace collection completed for execution: {execution_id}")
+
+        return execution_id
+
     except Exception as e:
+        # End trace collection even on error
+        trace_collector.end_execution()
         logger.error(f"Error in run_manager: {e}")
         raise
 

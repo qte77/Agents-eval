@@ -34,12 +34,15 @@ from app.utils.paths import resolve_config_path
 CONFIG_FOLDER = "config"
 
 
-async def _run_evaluation_if_enabled(skip_eval: bool, paper_number: str | None) -> None:
+async def _run_evaluation_if_enabled(
+    skip_eval: bool, paper_number: str | None, execution_id: str | None
+) -> None:
     """Run evaluation pipeline after manager completes if enabled.
 
     Args:
         skip_eval: Whether to skip evaluation via CLI flag
         paper_number: Paper number for PeerRead review (indicates ground truth availability)
+        execution_id: Execution ID for trace retrieval
     """
     if skip_eval:
         logger.info("Evaluation skipped via --skip-eval flag")
@@ -52,13 +55,28 @@ async def _run_evaluation_if_enabled(skip_eval: bool, paper_number: str | None) 
     if not paper_number:
         logger.info("Skipping evaluation: no ground-truth reviews available")
 
-    # TODO: Extract paper, review, and trace data from run_manager result
+    # Retrieve GraphTraceData from trace collector
+    execution_trace = None
+    if execution_id:
+        from app.evals.trace_processors import get_trace_collector
+
+        trace_collector = get_trace_collector()
+        execution_trace = trace_collector.load_trace(execution_id)
+
+        if execution_trace:
+            logger.info(
+                f"Loaded trace data: {len(execution_trace.agent_interactions)} interactions, "
+                f"{len(execution_trace.tool_calls)} tool calls"
+            )
+        else:
+            logger.warning(f"No trace data found for execution: {execution_id}")
+
+    # TODO: Extract paper and review from run_manager result
     # For now, calling with minimal placeholder data to satisfy wiring requirement
-    # Full implementation requires STORY-003 for trace collection
     await pipeline.evaluate_comprehensive(
         paper="",  # Placeholder - will be extracted from manager result
         review="",  # Placeholder - will be extracted from manager result
-        execution_trace=None,
+        execution_trace=execution_trace,
         reference_reviews=None,
     )
 
@@ -175,7 +193,7 @@ async def main(
                 include_synthesiser,
                 enable_review_tools,
             )
-            await run_manager(
+            execution_id = await run_manager(
                 manager,
                 agent_env.query,
                 agent_env.provider,
@@ -184,7 +202,7 @@ async def main(
             )
 
             # Run evaluation after manager completes
-            await _run_evaluation_if_enabled(skip_eval, paper_number)
+            await _run_evaluation_if_enabled(skip_eval, paper_number, execution_id)
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 
