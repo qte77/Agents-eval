@@ -141,7 +141,7 @@ class PluginRegistry:
             logger.debug(f"Executing plugin: {plugin.name} (Tier {plugin.tier})")
 
             # Execute plugin with accumulated context
-            result = plugin.evaluate(input_data, context=context if context else None)
+            result = plugin.evaluate(input_data, context=context or None)
             results.append(result)
 
             # Extract context for next tier
