@@ -18,7 +18,7 @@ async def test_evaluation_runs_after_manager_by_default():
     """Test that evaluation runs automatically after run_manager completes."""
     with (
         patch("app.app.setup_agent_env") as mock_setup,
-        patch("app.app.login") as mock_login,
+        patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
         patch("app.app.EvaluationPipeline") as mock_pipeline_class,
@@ -82,7 +82,7 @@ async def test_skip_eval_flag_prevents_evaluation():
     """Test that --skip-eval flag prevents evaluation from running."""
     with (
         patch("app.app.setup_agent_env") as mock_setup,
-        patch("app.app.login") as mock_login,
+        patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
         patch("app.app.EvaluationPipeline") as mock_pipeline_class,
@@ -125,7 +125,7 @@ async def test_graceful_skip_without_ground_truth():
     """Test graceful handling when no ground-truth reviews are available."""
     with (
         patch("app.app.setup_agent_env") as mock_setup,
-        patch("app.app.login") as mock_login,
+        patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
         patch("app.app.EvaluationPipeline") as mock_pipeline_class,
@@ -160,9 +160,7 @@ async def test_graceful_skip_without_ground_truth():
         )
 
         # Should log info about skipping evaluation
-        mock_logger.info.assert_any_call(
-            "Skipping evaluation: no ground-truth reviews available"
-        )
+        mock_logger.info.assert_any_call("Skipping evaluation: no ground-truth reviews available")
 
 
 def test_skip_eval_cli_argument_parsing():

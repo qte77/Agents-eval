@@ -34,6 +34,35 @@ from app.utils.paths import resolve_config_path
 CONFIG_FOLDER = "config"
 
 
+async def _run_evaluation_if_enabled(skip_eval: bool, paper_number: str | None) -> None:
+    """Run evaluation pipeline after manager completes if enabled.
+
+    Args:
+        skip_eval: Whether to skip evaluation via CLI flag
+        paper_number: Paper number for PeerRead review (indicates ground truth availability)
+    """
+    if skip_eval:
+        logger.info("Evaluation skipped via --skip-eval flag")
+        return
+
+    logger.info("Running evaluation pipeline...")
+    pipeline = EvaluationPipeline()
+
+    # Gracefully handle when no ground-truth reviews available
+    if not paper_number:
+        logger.info("Skipping evaluation: no ground-truth reviews available")
+
+    # TODO: Extract paper, review, and trace data from run_manager result
+    # For now, calling with minimal placeholder data to satisfy wiring requirement
+    # Full implementation requires STORY-003 for trace collection
+    await pipeline.evaluate_comprehensive(
+        paper="",  # Placeholder - will be extracted from manager result
+        review="",  # Placeholder - will be extracted from manager result
+        execution_trace=None,
+        reference_reviews=None,
+    )
+
+
 def _handle_download_mode(
     download_full: bool, download_samples: bool, max_samples: int | None
 ) -> bool:
@@ -155,25 +184,7 @@ async def main(
             )
 
             # Run evaluation after manager completes
-            if not skip_eval:
-                logger.info("Running evaluation pipeline...")
-                pipeline = EvaluationPipeline()
-
-                # Gracefully handle when no ground-truth reviews available
-                if not paper_number:
-                    logger.info("Skipping evaluation: no ground-truth reviews available")
-
-                # TODO: Extract paper, review, and trace data from run_manager result
-                # For now, calling with minimal placeholder data to satisfy wiring requirement
-                # Full implementation requires STORY-003 for trace collection
-                await pipeline.evaluate_comprehensive(
-                    paper="",  # Placeholder - will be extracted from manager result
-                    review="",  # Placeholder - will be extracted from manager result
-                    execution_trace=None,
-                    reference_reviews=None,
-                )
-            else:
-                logger.info("Evaluation skipped via --skip-eval flag")
+            await _run_evaluation_if_enabled(skip_eval, paper_number)
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 
