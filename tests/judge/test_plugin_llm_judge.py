@@ -5,7 +5,6 @@ Verifies the adapter pattern wrapping LLMJudgeEngine
 as an EvaluatorPlugin with opt-in Tier 1 context enrichment.
 """
 
-import time
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -73,8 +72,7 @@ class TestLLMJudgePlugin:
         """Given LLMJudgePlugin, tier should be 2."""
         assert plugin.tier == 2
 
-    @pytest.mark.asyncio
-    async def test_evaluate_returns_tier2_result(self, plugin, sample_input):
+    def test_evaluate_returns_tier2_result(self, plugin, sample_input):
         """Given valid input, evaluate should return Tier2Result."""
         with patch("app.judge.plugins.llm_judge.LLMJudgeEngine") as mock_engine_class:
             mock_engine = Mock()
@@ -98,8 +96,7 @@ class TestLLMJudgePlugin:
             assert isinstance(result, Tier2Result)
             assert isinstance(result, BaseModel)
 
-    @pytest.mark.asyncio
-    async def test_evaluate_delegates_to_engine(self, plugin, sample_input):
+    def test_evaluate_delegates_to_engine(self, plugin, sample_input):
         """Given evaluation request, should delegate to LLMJudgeEngine."""
         with patch("app.judge.plugins.llm_judge.LLMJudgeEngine") as mock_engine_class:
             mock_engine = Mock()
@@ -129,11 +126,10 @@ class TestLLMJudgePlugin:
 
     def test_default_timeout(self, plugin):
         """Given no timeout specified, should use default from JudgeSettings."""
-        # Default should come from JudgeSettings.tier2_timeout_seconds (10.0)
-        assert plugin.timeout_seconds == 10.0
+        # Default should come from JudgeSettings.tier2_timeout_seconds (30.0)
+        assert plugin.timeout_seconds == 30.0
 
-    @pytest.mark.asyncio
-    async def test_evaluate_with_tier1_context(self, plugin, sample_input, tier1_context):
+    def test_evaluate_with_tier1_context(self, plugin, sample_input, tier1_context):
         """Given Tier 1 context, evaluation should use it for enrichment."""
         with patch("app.judge.plugins.llm_judge.LLMJudgeEngine") as mock_engine_class:
             mock_engine = Mock()
@@ -157,8 +153,7 @@ class TestLLMJudgePlugin:
             # Verify context was available during evaluation
             assert isinstance(result, Tier2Result)
 
-    @pytest.mark.asyncio
-    async def test_evaluate_without_context(self, plugin, sample_input):
+    def test_evaluate_without_context(self, plugin, sample_input):
         """Given no context, evaluation should still work."""
         with patch("app.judge.plugins.llm_judge.LLMJudgeEngine") as mock_engine_class:
             mock_engine = Mock()
