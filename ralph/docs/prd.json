@@ -228,8 +228,8 @@
         "tests/app/test_cli_baseline.py",
         "tests/test_gui/test_evaluation_baseline.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-15T17:16:27Z",
       "content_hash": "3be5f246ad56b49128c6a64c83d7179befecaf7ca29f0275b20a9c0777f1e289",
       "depends_on": [
         "STORY-002",
