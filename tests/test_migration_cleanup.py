@@ -23,7 +23,7 @@ def test_no_evals_imports_in_source():
                 tree = ast.parse(content, filename=str(py_file))
                 for node in ast.walk(tree):
                     if isinstance(node, ast.ImportFrom):
-                        if node.module and node.module.startswith("app.evals."):
+                        if node.module and node.module.startswith("app.judge."):
                             evals_imports.append(f"{py_file}:{node.lineno} - {node.module}")
             except SyntaxError:
                 # Skip unparseable files
@@ -47,7 +47,7 @@ def test_no_evals_imports_in_tests():
                 tree = ast.parse(content, filename=str(py_file))
                 for node in ast.walk(tree):
                     if isinstance(node, ast.ImportFrom):
-                        if node.module and node.module.startswith("app.evals."):
+                        if node.module and node.module.startswith("app.judge."):
                             evals_imports.append(f"{py_file}:{node.lineno} - {node.module}")
             except SyntaxError:
                 # Skip unparseable files

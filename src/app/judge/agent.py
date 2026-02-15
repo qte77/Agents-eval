@@ -12,7 +12,6 @@ import time
 from typing import Any
 
 from app.data_models.evaluation_models import CompositeResult, GraphTraceData
-from app.judge.settings import JudgeSettings
 from app.judge.composite_scorer import CompositeScorer, EvaluationResults
 from app.judge.performance_monitor import PerformanceMonitor
 from app.judge.plugins import (
@@ -21,6 +20,7 @@ from app.judge.plugins import (
     PluginRegistry,
     TraditionalMetricsPlugin,
 )
+from app.judge.settings import JudgeSettings
 from app.judge.trace_store import TraceStore
 from app.utils.log import logger
 

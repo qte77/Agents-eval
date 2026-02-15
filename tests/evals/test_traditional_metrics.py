@@ -91,7 +91,7 @@ class TestTraditionalMetricsEngine:
             assert similarity == 0.85
             mock_cosine.assert_called_once_with(text1, text2)
 
-    @patch("app.evals.traditional_metrics.TraditionalMetricsEngine._get_bertscore_model")
+    @patch("app.judge.traditional_metrics.TraditionalMetricsEngine._get_bertscore_model")
     def test_semantic_similarity_fallback_on_error(self, mock_bertscore, engine, sample_texts):
         """Given BERTScore failure, should fallback to cosine similarity."""
         # Mock BERTScore to raise exception
@@ -227,7 +227,7 @@ def test_evaluate_single_traditional():
     agent_output = "This is a test review with good methodology."
     reference_texts = ["Test review with solid approach."]
 
-    with patch("app.evals.traditional_metrics.TraditionalMetricsEngine") as mock_engine_class:
+    with patch("app.judge.traditional_metrics.TraditionalMetricsEngine") as mock_engine_class:
         mock_engine = Mock()
         mock_engine_class.return_value = mock_engine
 

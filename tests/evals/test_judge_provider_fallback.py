@@ -197,7 +197,7 @@ class TestCompositeScorerMissingTier2:
 
         scorer = CompositeScorer()
 
-        with patch("app.evals.composite_scorer.logger") as mock_logger:
+        with patch("app.judge.composite_scorer.logger") as mock_logger:
             scorer.evaluate_composite_with_optional_tier2(results)
 
             # Should warn about skipping Tier 2

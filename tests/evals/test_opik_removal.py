@@ -13,7 +13,7 @@ from pathlib import Path
 
 def test_evaluation_pipeline_has_no_opik_imports():
     """Test that evaluation_pipeline.py has no Opik imports."""
-    pipeline_path = Path("src/app/evals/evaluation_pipeline.py")
+    pipeline_path = Path("src/app/judge/evaluation_pipeline.py")
     assert pipeline_path.exists(), "evaluation_pipeline.py should exist"
 
     content = pipeline_path.read_text()
@@ -28,7 +28,7 @@ def test_evaluation_pipeline_has_no_opik_imports():
 
 def test_evaluation_pipeline_has_no_opik_decorator():
     """Test that evaluation_pipeline.py has no @track decorators."""
-    pipeline_path = Path("src/app/evals/evaluation_pipeline.py")
+    pipeline_path = Path("src/app/judge/evaluation_pipeline.py")
     content = pipeline_path.read_text()
 
     # Parse AST to check for @track decorator usage
@@ -49,7 +49,7 @@ def test_evaluation_pipeline_has_no_opik_decorator():
 
 def test_evaluation_pipeline_has_no_opik_config_usage():
     """Test that evaluation_pipeline.py has no OpikConfig references."""
-    pipeline_path = Path("src/app/evals/evaluation_pipeline.py")
+    pipeline_path = Path("src/app/judge/evaluation_pipeline.py")
     content = pipeline_path.read_text()
 
     # Check for OpikConfig usage
@@ -75,7 +75,7 @@ def test_opik_instrumentation_file_deleted():
 
 def test_opik_available_variable_removed():
     """Test that OPIK_AVAILABLE variable is removed from evaluation_pipeline.py."""
-    pipeline_path = Path("src/app/evals/evaluation_pipeline.py")
+    pipeline_path = Path("src/app/judge/evaluation_pipeline.py")
     content = pipeline_path.read_text()
 
     assert "OPIK_AVAILABLE" not in content, "Should not have OPIK_AVAILABLE variable"
@@ -83,7 +83,7 @@ def test_opik_available_variable_removed():
 
 def test_track_fallback_decorator_removed():
     """Test that track fallback decorator is removed from evaluation_pipeline.py."""
-    pipeline_path = Path("src/app/evals/evaluation_pipeline.py")
+    pipeline_path = Path("src/app/judge/evaluation_pipeline.py")
     content = pipeline_path.read_text()
 
     # Check for track fallback implementation

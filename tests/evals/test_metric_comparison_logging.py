@@ -23,7 +23,7 @@ async def test_log_metric_comparison_called_after_evaluation():
     settings = JudgeSettings(enable_tier2=False)  # Disable tier2 for focused test
 
     with (
-        patch("app.evals.evaluation_pipeline.logger") as mock_logger,
+        patch("app.judge.evaluation_pipeline.logger") as mock_logger,
     ):
         pipeline = EvaluationPipeline(settings=settings)
 
@@ -108,7 +108,7 @@ async def test_log_metric_comparison_called_after_evaluation():
 async def test_individual_graph_metrics_displayed():
     """Test that individual graph metrics are displayed in the comparison log."""
     with (
-        patch("app.evals.evaluation_pipeline.logger") as mock_logger,
+        patch("app.judge.evaluation_pipeline.logger") as mock_logger,
     ):
         from app.judge.evaluation_pipeline import EvaluationPipeline
         from app.judge.settings import JudgeSettings
@@ -196,7 +196,7 @@ async def test_individual_graph_metrics_displayed():
 async def test_individual_text_metrics_displayed():
     """Test that individual text metrics are displayed in the comparison log."""
     with (
-        patch("app.evals.evaluation_pipeline.logger") as mock_logger,
+        patch("app.judge.evaluation_pipeline.logger") as mock_logger,
     ):
         from app.judge.evaluation_pipeline import EvaluationPipeline
         from app.judge.settings import JudgeSettings
@@ -274,7 +274,7 @@ async def test_individual_text_metrics_displayed():
 async def test_composite_score_tier_contribution_displayed():
     """Test that composite score shows per-tier contribution."""
     with (
-        patch("app.evals.evaluation_pipeline.logger") as mock_logger,
+        patch("app.judge.evaluation_pipeline.logger") as mock_logger,
     ):
         from app.judge.evaluation_pipeline import EvaluationPipeline
         from app.judge.settings import JudgeSettings

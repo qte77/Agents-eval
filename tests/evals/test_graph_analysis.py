@@ -249,7 +249,7 @@ class TestGraphAnalysisEngine:
         # Then overall score is a valid weighted score
         assert 0.0 <= result.overall_score <= 1.0
 
-    @patch("app.evals.graph_analysis.logger")
+    @patch("app.judge.graph_analysis.logger")
     def test_complete_evaluation_with_exception_handling(
         self, mock_logger, engine, sample_trace_data
     ):
@@ -385,7 +385,7 @@ class TestGraphAnalysisEngine:
             engine.analyze_agent_interactions(trace_data)
 
     # Given: Resource limits and timeout tests
-    @patch("app.evals.graph_analysis.logger")
+    @patch("app.judge.graph_analysis.logger")
     def test_resource_limits_warning_for_large_trace(self, mock_logger, engine):
         """When trace exceeds resource limits, then logs warning."""
         # Given large trace data exceeding max_nodes (default 1000)

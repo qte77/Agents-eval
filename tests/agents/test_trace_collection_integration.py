@@ -253,7 +253,7 @@ async def test_graph_trace_data_passed_to_evaluation():
 async def test_graph_trace_data_constructed_via_model_validate():
     """Test that GraphTraceData uses model_validate instead of manual dict extraction."""
     with (
-        patch("app.evals.trace_processors.TraceCollector.load_trace") as mock_load_trace,
+        patch("app.judge.trace_processors.TraceCollector.load_trace") as mock_load_trace,
     ):
         # Mock load_trace to return GraphTraceData via model_validate
         trace_dict = {

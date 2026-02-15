@@ -12,9 +12,9 @@ from typing import Any
 from pydantic import BaseModel
 
 from app.data_models.evaluation_models import Tier1Result
+from app.judge.plugins.base import EvaluatorPlugin
 from app.judge.settings import JudgeSettings
 from app.judge.traditional_metrics import TraditionalMetricsEngine
-from app.judge.plugins.base import EvaluatorPlugin
 
 
 class TraditionalMetricsPlugin(EvaluatorPlugin):

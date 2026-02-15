@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-005: Logfire + Phoenix tracing infrastructure (replacing Opik)
 - STORY-006: Streamlit evaluation dashboard with agent graph visualization
 
+### Added (Sprint 3)
+
+- STORY-007: Plugin architecture with `EvaluatorPlugin` base class and `PluginRegistry`
+- STORY-007: `JudgeAgent` orchestrator replacing `EvaluationPipeline`
+- STORY-007: `TraceStore` for thread-safe trace storage
+- STORY-007: Plugin wrappers for all three evaluation tiers
+
 ### Added
 
 - `inline-snapshot` as supplementary testing tool
@@ -29,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- STORY-008: Consolidated all evaluation code from `app.evals.*` to `app.judge.*`
 - Makefile: DRY refactor of `quick_start`/`dataset_get_smallest` via `_find_smallest_papers` helper; removed redundant `\` from `.ONESHELL` blocks
 - Pandoc: configurable LoF/LoT generation and unnumbered title support
 - Ralph PRD parser rewritten with typed models and safe updates
@@ -41,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- STORY-008: Entire `app.evals` module (migrated to `app.judge`)
+- STORY-008: Duplicate `src/app/agents/peerread_tools.py` (canonical at `src/app/tools/`)
 - Deprecated `config/config_eval.json` (superseded by `JudgeSettings` pydantic-settings)
 - Opik tracing from evaluation pipeline (replaced by Logfire + Phoenix)
 - Unused `pytest-bdd` and `agentops` dependencies
