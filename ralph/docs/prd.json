@@ -389,8 +389,8 @@
         "src/gui/pages/run_app.py",
         "src/run_gui.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-15T14:26:43Z",
       "content_hash": "84d2aebdaa8decc127fee86e43f83d72c511f7fc328b6e0f1e2adeeaf64c17c5",
       "depends_on": [
         "STORY-010"
