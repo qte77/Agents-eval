@@ -221,7 +221,6 @@ Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the ev
 
 **Files**:
 
-- All source and test files (import updates)
 - `CHANGELOG.md`
 - `src/app/agents/agent_system.py`
 

@@ -1,0 +1,400 @@
+{
+  "project": "Product Requirements Document: Agents-eval Sprint 3",
+  "description": "",
+  "source": "PRD.md",
+  "generated": "2026-02-15 11:26:06",
+  "stories": [
+    {
+      "id": "STORY-001",
+      "title": "Model-aware content truncation",
+      "description": "Implement token-limit-aware content truncation to prevent 413 errors when paper content exceeds provider rate limits (e.g., GitHub Models free tier enforces 8,000 token request limit for `gpt-4.1`, despite the model supporting 1M tokens natively).",
+      "acceptance": [
+        "`CommonSettings` includes per-provider `max_content_length` defaults",
+        "`generate_paper_review_content_from_template` truncates `paper_content_for_template` to `max_content_length` before formatting into template",
+        "Truncation preserves abstract (always included) and truncates body with `[TRUNCATED]` marker",
+        "Warning logged when truncation occurs with original vs truncated size",
+        "`make validate` passes",
+        "Add per-provider max_content_length to `CommonSettings`",
+        "Truncation logic in `generate_paper_review_content_from_template`",
+        "Preserve abstract section, truncate body content"
+      ],
+      "files": [
+        "src/app/agents/peerread_tools.py",
+        "src/app/common/settings.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "c62d43fc6d46b0c800ba2f2681cea975c0c0ab4944e63e5392a9f012b181c224",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-002",
+      "title": "Judge provider fallback for Tier 2",
+      "description": "Make the Tier 2 LLM-as-Judge evaluation provider configurable and resilient. Currently hardcoded to `openai/gpt-4o-mini`, causing 401 errors when no `OPENAI_API_KEY` is set. The judge should validate API key availability at startup and fall back to an available provider or skip Tier 2 gracefully.",
+      "acceptance": [
+        "Judge provider validates API key availability before attempting evaluation",
+        "When configured provider's API key is missing, falls back to `tier2_fallback_provider`/`tier2_fallback_model`",
+        "When no valid judge provider is available, Tier 2 is skipped with a warning (not scored 0.0)",
+        "Composite score adjusts weights when Tier 2 is skipped (redistribute to Tier 1 + Tier 3)",
+        "`JudgeSettings.tier2_provider` and `tier2_model` overridable via `JUDGE_TIER2_PROVIDER` / `JUDGE_TIER2_MODEL` env vars (already exists, ensure it works end-to-end)",
+        "Fallback heuristic scores capped at 0.5 (neutral) when LLM assessment fails due to auth/provider errors",
+        "Tier2Result includes metadata flag indicating whether fallback was used",
+        "CompositeScorer logs warning when using fallback-derived scores",
+        "Tests: Hypothesis property tests for fallback score bounds (0.0 \u2264 fallback \u2264 0.5)",
+        "Tests: inline-snapshot for Tier2Result structure with fallback metadata",
+        "`make validate` passes",
+        "Add API key availability check in `LLMJudgeEngine` initialization",
+        "Implement provider fallback chain: configured \u2192 fallback \u2192 skip",
+        "Update `CompositeScorer` to handle missing Tier 2 (weight redistribution)",
+        "Log clear warning when Tier 2 is skipped due to missing provider",
+        "Fix `_fallback_planning_check()` in `llm_evaluation_managers.py:356-357` \u2014 cap fallback scores at 0.5 instead of 1.0 for \"optimal range\"",
+        "Distinguish auth failures (401) from timeouts in fallback scoring"
+      ],
+      "files": [
+        "src/app/evals/llm_evaluation_managers.py",
+        "src/app/evals/composite_scorer.py",
+        "src/app/evals/settings.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "d969f66b76b060d6605acc8c80cd3f110d963fcc2a70be7f26d8e1a413a79cbe",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-003",
+      "title": "EvaluatorPlugin base and registry",
+      "description": "Create `EvaluatorPlugin` ABC and `PluginRegistry` for typed, tier-ordered plugin execution.",
+      "acceptance": [
+        "`EvaluatorPlugin` ABC with name/tier/evaluate/get_context_for_next_tier",
+        "`PluginRegistry` for registration and tier-ordered execution",
+        "Typed Pydantic models at all plugin boundaries",
+        "Structured error results from plugins",
+        "ABC defines plugin interface: `name`, `tier`, `evaluate()`, `get_context_for_next_tier()`",
+        "Registry manages plugin lifecycle and tier-ordered execution",
+        "All data contracts use Pydantic models"
+      ],
+      "files": [
+        "src/app/judge/plugins/base.py",
+        "src/app/judge/plugins/__init__.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "66c390c132af82db29d04365b7670f4ed9eb73d62df619a4be197bae3fb72b3f",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-004",
+      "title": "TraditionalMetricsPlugin wrapper",
+      "description": "Wrap existing `TraditionalMetricsEngine` as an `EvaluatorPlugin`.",
+      "acceptance": [
+        "TraditionalMetricsPlugin wrapping existing engine",
+        "All existing Tier 1 engine tests pass unchanged",
+        "Per-plugin configurable timeout",
+        "Adapter pattern: delegate to existing `TraditionalMetricsEngine`",
+        "Expose via `EvaluatorPlugin` interface",
+        "Configurable timeout from `JudgeSettings`"
+      ],
+      "files": [
+        "src/app/judge/plugins/traditional.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "a4e59d4c60e1882c65f0ffd8a943dcc83681e048645bef48781ccb31c1479529",
+      "depends_on": [
+        "STORY-003"
+      ]
+    },
+    {
+      "id": "STORY-005",
+      "title": "LLMJudgePlugin wrapper",
+      "description": "Wrap existing `LLMJudgeEngine` as an `EvaluatorPlugin` with opt-in Tier 1 context enrichment.",
+      "acceptance": [
+        "LLMJudgePlugin with opt-in Tier 1 context enrichment",
+        "All existing Tier 2 engine tests pass unchanged",
+        "Per-plugin configurable timeout",
+        "Adapter pattern: delegate to existing `LLMJudgeEngine`",
+        "Accept optional Tier 1 context via `get_context_for_next_tier()`",
+        "Configurable timeout from `JudgeSettings`"
+      ],
+      "files": [
+        "src/app/judge/plugins/llm_judge.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "935d07cbbd1d05587a0cc12b57746d437638ce355a5cc9e500649014ed689e28",
+      "depends_on": [
+        "STORY-003"
+      ]
+    },
+    {
+      "id": "STORY-006",
+      "title": "GraphEvaluatorPlugin wrapper",
+      "description": "Wrap existing `GraphAnalysisEngine` as an `EvaluatorPlugin`.",
+      "acceptance": [
+        "GraphEvaluatorPlugin wrapping existing engine",
+        "All existing Tier 3 engine tests pass unchanged",
+        "Per-plugin configurable timeout",
+        "Adapter pattern: delegate to existing `GraphAnalysisEngine`",
+        "Expose via `EvaluatorPlugin` interface",
+        "Configurable timeout from `JudgeSettings`"
+      ],
+      "files": [
+        "src/app/judge/plugins/graph_metrics.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "0fe21ed52726acc391d8a60776e9aa32c7bc333e87df39c3460e3ee16e58f723",
+      "depends_on": [
+        "STORY-003"
+      ]
+    },
+    {
+      "id": "STORY-007",
+      "title": "JudgeAgent replaces EvaluationPipeline",
+      "description": "Replace `EvaluationPipeline` with `JudgeAgent` using `PluginRegistry` for tier-ordered plugin execution.",
+      "acceptance": [
+        "JudgeAgent replaces EvaluationPipeline using PluginRegistry",
+        "Explicit tier execution order in code",
+        "Context flows Tier 1 \u2192 Tier 2 \u2192 Tier 3",
+        "TraceStore with thread-safe storage",
+        "Graceful degradation preserved",
+        "Re-export shim for EvaluationPipeline",
+        "`JudgeAgent` orchestrates plugins via `PluginRegistry`",
+        "Tier context passed forward via `get_context_for_next_tier()`",
+        "`TraceStore` provides thread-safe trace storage",
+        "Backward-compatible `EvaluationPipeline` re-export shim"
+      ],
+      "files": [
+        "src/app/judge/agent.py",
+        "src/app/judge/trace_store.py",
+        "src/app/judge/composite_scorer.py",
+        "src/app/judge/performance_monitor.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "a77b4a29c4a8b72518fae09d4e582b595f71892677dd228684ac94f53b0e7831",
+      "depends_on": [
+        "STORY-004",
+        "STORY-005",
+        "STORY-006"
+      ]
+    },
+    {
+      "id": "STORY-008",
+      "title": "Remove shims and update imports",
+      "description": "Remove backward-compatibility shims, update all imports, delete deprecated JSON config.",
+      "acceptance": [
+        "All imports use `judge.`, `common.` paths",
+        "No re-export shims remain",
+        "`config/config_eval.json` removed",
+        "Remove or implement commented-out `error_handling_context()` FIXME notes in `agent_system.py` (lines 443, 514, 583)",
+        "Delete duplicate `src/app/agents/peerread_tools.py` (canonical: `src/app/tools/peerread_tools.py`, imported at `agent_system.py:63`)",
+        "CHANGELOG.md updated",
+        "`make validate` passes, no dead code",
+        "Update all source and test imports from `evals.` to `judge.` paths",
+        "Remove re-export shim from Feature 11",
+        "Delete deprecated `config/config_eval.json`",
+        "Resolve `error_handling_context()` FIXMEs: either implement as a context manager or delete the comments (current try/except at line 520 is adequate)"
+      ],
+      "files": [
+        "CHANGELOG.md",
+        "src/app/agents/agent_system.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "6ae2f403536f75ef005fca9014214fbed88b174fbd84246b1291e8a63bdf37f4",
+      "depends_on": [
+        "STORY-007"
+      ]
+    },
+    {
+      "id": "STORY-009",
+      "title": "CC OTel observability plugin",
+      "description": "Standalone CC telemetry plugin using OTel \u2192 Logfire + Phoenix pipeline. Enables CC session tracing alongside PydanticAI Logfire auto-instrumentation.",
+      "acceptance": [
+        "`src/app/cc_otel/` module with config + enable/disable API",
+        "`CCOtelConfig` with env var export",
+        "OTel traces routed to Phoenix via OTLP endpoint",
+        "Separate from existing `logfire_instrumentation.py`",
+        "Graceful degradation when OTel unavailable",
+        "`make validate` passes",
+        "Standalone module at `src/app/cc_otel/`",
+        "`CCOtelConfig` using pydantic-settings pattern",
+        "OTLP exporter sends to Phoenix endpoint",
+        "Independent from `logfire_instrumentation.py` (no coupling)"
+      ],
+      "files": [
+        "src/app/cc_otel/__init__.py",
+        "src/app/cc_otel/config.py",
+        "Makefile"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "e96c2d43e706bc7f71e4eb3fdaa451eeefad2dcb7b57d63dde00e5444b63c389",
+      "depends_on": [
+        "STORY-007"
+      ]
+    },
+    {
+      "id": "STORY-010",
+      "title": "Wire GUI to actual settings",
+      "description": "Connect Streamlit GUI to load and display actual default values from `CommonSettings` and `JudgeSettings` pydantic-settings classes. Remove hardcoded `PROMPTS_DEFAULT` fallback and load prompts directly from `ChatConfig`. Follows DRY principle (single source of truth) and KISS principle (simple display, no persistence).",
+      "acceptance": [
+        "Settings page displays `CommonSettings` fields (log_level, enable_logfire, max_content_length)",
+        "Settings page displays key `JudgeSettings` fields (tier timeouts, composite thresholds, enabled tiers)",
+        "Prompts page loads from `ChatConfig.prompts` without hardcoded fallback",
+        "GUI instantiates `CommonSettings()` and `JudgeSettings()` on startup",
+        "Displayed values match actual pydantic-settings defaults",
+        "Remove hardcoded `PROMPTS_DEFAULT` from `gui/config/config.py`",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Instantiate `CommonSettings()` and `JudgeSettings()` in `src/run_gui.py`",
+        "Pass settings instances to `render_settings()`",
+        "Update `render_settings()` to display CommonSettings and key JudgeSettings fields",
+        "Update `render_prompts()` to use `ChatConfig.prompts` directly (remove fallback)",
+        "Delete `PROMPTS_DEFAULT` constant from `gui/config/config.py`",
+        "Read-only display (no save functionality per YAGNI principle)",
+        "Use Streamlit expanders to organize settings by category"
+      ],
+      "files": [
+        "src/run_gui.py",
+        "src/gui/pages/settings.py",
+        "src/gui/pages/prompts.py",
+        "src/gui/config/config.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "8e65dd983dcf9badf21cc2a3f56ddfe772797324058734e4e63b5ee20e5d7163",
+      "depends_on": [
+        "STORY-008"
+      ]
+    },
+    {
+      "id": "STORY-011",
+      "title": "Test infrastructure alignment",
+      "description": "Refactor existing tests to use hypothesis (property-based testing) and inline-snapshot (regression testing), aligning test suite with documented testing-strategy.md practices. No production code changes. Explicitly excludes BDD/Gherkin (pytest-bdd).",
+      "acceptance": [
+        "Property-based tests using `@given` for math formulas (score bounds, composite calculations)",
+        "Property-based tests for input validation (arbitrary text handling)",
+        "Property-based tests for serialization (model dumps always valid)",
+        "Snapshot tests using `snapshot()` for Pydantic `.model_dump()` outputs",
+        "Snapshot tests for complex nested result structures",
+        "Snapshot tests for GraphTraceData transformations",
+        "Remove low-value tests (trivial assertions, field existence checks per testing-strategy.md)",
+        "All existing test coverage maintained or improved",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Add `from hypothesis import given, strategies as st` imports",
+        "Add `from inline_snapshot import snapshot` imports",
+        "Convert score calculation tests to property tests with invariants (0.0 \u2264 score \u2264 1.0)",
+        "Convert model serialization tests to snapshot tests",
+        "Document usage patterns in test files for future reference",
+        "NO pytest-bdd, NO Gherkin, NO BDD methodology (use TDD with hypothesis for properties)"
+      ],
+      "files": [
+        "tests/evals/test_composite_scorer.py",
+        "tests/evals/test_traditional_metrics.py",
+        "tests/data_models/test_peerread_models_serialization.py",
+        "tests/evals/test_evaluation_pipeline.py",
+        "tests/evals/test_llm_evaluation_managers.py",
+        "tests/evals/test_graph_analysis.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "965fc72f64e54e2b5f301dac4b476dfb5eb430a6fe85112a21dc78ebaf240bd4",
+      "depends_on": [
+        "STORY-008"
+      ]
+    },
+    {
+      "id": "STORY-012",
+      "title": "Make weave dependency optional",
+      "description": "Make weave dependency optional. Only import/init when `WANDB_API_KEY` is configured. Eliminates warning noise for users who don't use Weights & Biases.",
+      "acceptance": [
+        "`weave` moved from required to optional dependency group in `pyproject.toml`",
+        "`login.py` conditionally imports weave only when `WANDB_API_KEY` is present",
+        "`app.py` provides no-op `@op()` decorator fallback when weave unavailable",
+        "No warning messages emitted when `WANDB_API_KEY` not set",
+        "Existing weave tracing works unchanged when `WANDB_API_KEY` IS set",
+        "Tests use Hypothesis for import guard property tests (weave present vs absent)",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Move `weave>=0.52.28` to optional group in `pyproject.toml`",
+        "`try/except ImportError` guard in `app.py`: `op = lambda: lambda f: f`",
+        "Conditional import in `login.py` \u2014 only import weave inside the `if is_api_key:` block"
+      ],
+      "files": [
+        "pyproject.toml",
+        "src/app/utils/login.py",
+        "src/app/app.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "69986b18a87646da9b434155e399b6963c5ace05a8e59cda5240c8a129373310",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-013",
+      "title": "Trace data quality fixes + manager tool tracing",
+      "description": "Fix trace data transformation bugs, add trace logging to PeerRead tools, initialize Logfire instrumentation, and improve trace storage logging.",
+      "acceptance": [
+        "Fix: `_process_events()` includes `agent_id` in tool_call dicts (`trace_processors.py:268-269`)",
+        "Fix: `_parse_trace_events()` includes `agent_id` in tool_call dicts (`trace_processors.py:376-377`)",
+        "Tier 3 graph analysis succeeds with `--include-researcher` traces (no \"missing agent_id\" error)",
+        "PeerRead tools log trace events via `trace_collector.log_tool_call()` (all 6 tools)",
+        "`initialize_logfire_instrumentation_from_settings()` called at startup when `logfire_enabled=True`",
+        "`_store_trace()` logs full storage path (JSONL + SQLite) at least once per execution",
+        "Manager-only runs produce non-empty trace data",
+        "Tests: Hypothesis property tests for trace event schema invariants (agent_id always present)",
+        "Tests: inline-snapshot for GraphTraceData transformation output structure",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "In `_process_events()` line 269: add `\"agent_id\": event.agent_id` to tool_call dict",
+        "In `_parse_trace_events()` line 377: add `\"agent_id\": agent_id` to tool_call dict",
+        "Add `trace_collector.log_tool_call()` to 6 PeerRead tools in `src/app/tools/peerread_tools.py` following delegation tool pattern (`time.perf_counter()` timing, success/failure)",
+        "Call `initialize_logfire_instrumentation_from_settings()` in `src/app/app.py` after settings load",
+        "Extend log message at `trace_processors.py:352-358` to include `self.storage_path`",
+        "Use `JudgeSettings.logfire_enabled` as authoritative setting for Logfire initialization (not `CommonSettings.enable_logfire`)"
+      ],
+      "files": [
+        "src/app/evals/trace_processors.py",
+        "src/app/tools/peerread_tools.py",
+        "src/app/app.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "851a974279c792a22dbbf04697aa159a7564fe922a656a698077da9ab0574274",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-014",
+      "title": "GUI agent & provider configuration",
+      "description": "Expose provider selection and sub-agent toggles in the Streamlit GUI with session state persistence. Currently CLI-only (`--chat-provider`, `--include-researcher/analyst/synthesiser`).",
+      "acceptance": [
+        "Settings page displays provider selectbox with all providers from `PROVIDER_REGISTRY`",
+        "Settings page displays checkboxes for include_researcher, include_analyst, include_synthesiser",
+        "Selections persist across page navigation via `st.session_state`",
+        "Run App page passes all flags to `main()` from session state",
+        "Default provider matches `CHAT_DEFAULT_PROVIDER`",
+        "Tests: inline-snapshot for session state defaults structure",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Settings page: provider selectbox keyed to `st.session_state`, agent checkboxes",
+        "Run App page: read from session state, pass to `main(chat_provider=..., include_researcher=..., ...)`",
+        "`run_gui.py`: initialize session state defaults on startup",
+        "Import `PROVIDER_REGISTRY` from `app.data_models.app_models` for provider list"
+      ],
+      "files": [
+        "src/gui/pages/settings.py",
+        "src/gui/pages/run_app.py",
+        "src/run_gui.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "84d2aebdaa8decc127fee86e43f83d72c511f7fc328b6e0f1e2adeeaf64c17c5",
+      "depends_on": [
+        "STORY-010"
+      ]
+    }
+  ]
+}
