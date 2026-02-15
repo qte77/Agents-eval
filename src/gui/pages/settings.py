@@ -1,70 +1,70 @@
 """
-Streamlit settings UI for provider and agent configuration.
+Streamlit settings UI for displaying application settings.
 
-This module provides a function to render and edit agent system settings,
-including provider selection and related options, within the Streamlit GUI.
-It validates the input configuration and ensures correct typing before rendering.
+This module provides a function to display actual settings from pydantic-settings
+classes (CommonSettings and JudgeSettings). Read-only display following YAGNI
+principle - no save functionality as settings come from environment variables.
 """
 
-from streamlit import error, header, selectbox
+from streamlit import expander, header, text
 
-from app.data_models.app_models import BaseModel, ChatConfig
-from app.utils.error_messages import invalid_type
+from app.common.settings import CommonSettings
+from app.judge.settings import JudgeSettings
 from app.utils.log import logger
-from gui.config.text import SETTINGS_HEADER, SETTINGS_PROVIDER_LABEL
+from gui.config.text import SETTINGS_HEADER
 
 
-def render_settings(chat_config: ChatConfig | BaseModel) -> str:
+def render_settings(common_settings: CommonSettings, judge_settings: JudgeSettings) -> None:
     """
-    Render and edit agent system settings in the Streamlit UI.
+    Render application settings in the Streamlit UI.
 
-    Displays a header and a selectbox for choosing the inference provider.
-    Validates that the input is a ChatConfig instance and displays an error if not.
+    Displays actual default values from CommonSettings and JudgeSettings
+    pydantic-settings classes. Read-only display using Streamlit expanders
+    to organize settings by category.
+
+    Args:
+        common_settings: CommonSettings instance with application-level configuration
+        judge_settings: JudgeSettings instance with evaluation pipeline configuration
     """
     header(SETTINGS_HEADER)
 
-    # updated = False
-    # updated_config = config.copy()
+    logger.info("Displaying actual settings from pydantic-settings classes")
 
-    if not isinstance(chat_config, ChatConfig):
-        msg = invalid_type("ChatConfig", type(chat_config).__name__)
-        logger.error(msg)
-        error(msg)
-        return msg
+    # Common Settings Section
+    with expander("Common Settings", expanded=True):
+        text(f"Log Level: {common_settings.log_level}")
+        text(f"Enable Logfire: {common_settings.enable_logfire}")
+        text(f"Max Content Length: {common_settings.max_content_length}")
 
-    provider = selectbox(
-        label=SETTINGS_PROVIDER_LABEL,
-        options=chat_config.providers.keys(),
-    )
+    # Judge Settings - Tier Configuration
+    with expander("Judge Settings - Tier Configuration"):
+        text(f"Enabled Tiers: {judge_settings.tiers_enabled}")
+        text(f"Tier 1 Max Seconds: {judge_settings.tier1_max_seconds}")
+        text(f"Tier 2 Max Seconds: {judge_settings.tier2_max_seconds}")
+        text(f"Tier 3 Max Seconds: {judge_settings.tier3_max_seconds}")
+        text(f"Total Max Seconds: {judge_settings.total_max_seconds}")
 
-    # Run options
-    # col1, col2 = st.columns(2)
-    # with col1:
-    #     streamed_output = st.checkbox(
-    #         "Stream Output", value=config.get("streamed_output", False)
-    #     )
-    # with col2:
-    #     st.checkbox("Include Sources", value=True)  # include_sources
+    # Judge Settings - Composite Scoring
+    with expander("Judge Settings - Composite Scoring"):
+        text(f"Accept Threshold: {judge_settings.composite_accept_threshold}")
+        text(f"Weak Accept Threshold: {judge_settings.composite_weak_accept_threshold}")
+        text(f"Weak Reject Threshold: {judge_settings.composite_weak_reject_threshold}")
+        text(f"Fallback Strategy: {judge_settings.fallback_strategy}")
 
-    # Allow adding new providers
-    # new_provider = st.text_input("Add New Provider")
-    # api_key = st.text_input(f"{provider} API Key", type="password")
-    # if st.button("Add Provider") and new_provider and new_provider not in providers:
-    #     providers.append(new_provider)
-    #     updated_config["providers"] = providers
-    #     updated_config["api_key"] = api_key
-    #     updated = True
-    #     st.success(f"Added provider: {new_provider}")
+    # Judge Settings - Tier 2 LLM Judge
+    with expander("Judge Settings - Tier 2 LLM Judge"):
+        text(f"Provider: {judge_settings.tier2_provider}")
+        text(f"Model: {judge_settings.tier2_model}")
+        text(f"Fallback Provider: {judge_settings.tier2_fallback_provider}")
+        text(f"Fallback Model: {judge_settings.tier2_fallback_model}")
+        text(f"Max Retries: {judge_settings.tier2_max_retries}")
+        text(f"Timeout Seconds: {judge_settings.tier2_timeout_seconds}")
 
-    # # Update config if changed
-    # if (
-    #     include_a != config.get("include_a", False)
-    #     or include_b != config.get("include_b", False)
-    #     or streamed_output != config.get("streamed_output", False)
-    # ):
-    #     updated_config["include_a"] = include_a
-    #     updated_config["include_b"] = include_b
-    #     updated_config["streamed_output"] = streamed_output
-    #     updated = True
-
-    return provider
+    # Judge Settings - Observability
+    with expander("Judge Settings - Observability"):
+        text(f"Trace Collection: {judge_settings.trace_collection}")
+        text(f"Trace Storage Path: {judge_settings.trace_storage_path}")
+        text(f"Logfire Enabled: {judge_settings.logfire_enabled}")
+        text(f"Logfire Send to Cloud: {judge_settings.logfire_send_to_cloud}")
+        text(f"Phoenix Endpoint: {judge_settings.phoenix_endpoint}")
+        text(f"Performance Logging: {judge_settings.performance_logging}")

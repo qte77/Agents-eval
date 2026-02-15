@@ -20,15 +20,13 @@ class TestSettingsIntegration:
         common_settings = CommonSettings()
         judge_settings = JudgeSettings()
 
-        # This will fail until we update render_settings signature
         from gui.pages.settings import render_settings
 
         # Act & Assert - should accept settings instances without error
-        # The current signature only accepts chat_config, this should fail
+        # Function returns None, we just verify it doesn't raise
         try:
-            result = render_settings(common_settings, judge_settings)
-            # If we get here, implementation is done
-            assert result is not None
+            render_settings(common_settings, judge_settings)
+            # If we get here without TypeError, implementation is done
         except TypeError:
             # Expected - render_settings doesn't accept these args yet
             pytest.fail("render_settings should accept common_settings and judge_settings")

@@ -23,11 +23,13 @@ from sys import path
 project_root = Path(__file__).parent.parent
 path.insert(0, str(project_root))
 
+from app.common.settings import CommonSettings  # noqa: E402
 from app.config.config_app import (  # noqa: E402
     CHAT_CONFIG_FILE,
     CHAT_DEFAULT_PROVIDER,
 )
 from app.data_models.app_models import ChatConfig  # noqa: E402
+from app.judge.settings import JudgeSettings  # noqa: E402
 from app.utils.load_configs import load_config  # noqa: E402
 from app.utils.log import logger  # noqa: E402
 from gui.components.sidebar import render_sidebar  # noqa: E402
@@ -46,6 +48,8 @@ from gui.pages.settings import render_settings  # noqa: E402
 
 chat_config_file = Path(__file__).parent / APP_CONFIG_PATH / CHAT_CONFIG_FILE
 chat_config = load_config(chat_config_file, ChatConfig)
+common_settings = CommonSettings()
+judge_settings = JudgeSettings()
 provider = CHAT_DEFAULT_PROVIDER
 logger.info(f"Default provider in GUI: {CHAT_DEFAULT_PROVIDER}")
 
@@ -57,9 +61,8 @@ async def main():
     if selected_page == "Home":
         render_home()
     elif selected_page == "Settings":
-        # TODO temp save settings to be used in gui
-        provider = render_settings(chat_config)
-        logger.info(f"Page 'Settings' provider: {provider}")
+        # Display actual settings from pydantic-settings classes
+        render_settings(common_settings, judge_settings)
     elif selected_page == "Prompts":
         render_prompts(chat_config)
     elif selected_page == "App":
