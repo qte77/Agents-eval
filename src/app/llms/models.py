@@ -7,6 +7,7 @@ Handles model instantiation for different providers in a unified way.
 
 from pydantic_ai.models import Model
 from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.profiles.openai import OpenAIModelProfile
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from app.data_models.app_models import PROVIDER_REGISTRY, EndpointConfig, ModelDict
@@ -84,6 +85,20 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
             provider=OpenAIProvider(
                 base_url=base_url,
                 api_key=api_key or "not-required",
+            ),
+        )
+    elif provider == "cerebras":
+        # Reason: Cerebras rejects requests with mixed strict values on tools.
+        # Disabling strict tool definitions prevents PydanticAI from adding
+        # the 'strict' field to some tools but not others.
+        return OpenAIChatModel(
+            model_name=model_name,
+            provider=OpenAIProvider(
+                base_url=base_url,
+                api_key=api_key or "not-required",
+            ),
+            profile=OpenAIModelProfile(
+                openai_supports_strict_tool_definition=False,
             ),
         )
     elif provider == "gemini":
