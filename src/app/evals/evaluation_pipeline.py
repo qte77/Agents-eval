@@ -72,27 +72,15 @@ class EvaluationPipeline:
             settings = JudgeSettings()
 
         self.settings = settings
-        self.config_manager = None  # No longer used
         self.performance_monitor = PerformanceMonitor(settings.get_performance_targets())
 
         # Initialize Opik configuration from settings
-        # Reason: OpikConfig needs dict structure, convert from settings
-        config_dict = {
-            "observability": {
-                "opik_enabled": settings.opik_enabled,
-                "trace_collection": settings.trace_collection,
-                "performance_logging": settings.performance_logging,
-            }
-        }
-        self.opik_config = OpikConfig.from_config(config_dict)
+        self.opik_config = OpikConfig.from_settings(settings)
 
-        # Initialize engines with settings-based config
-        tier2_config = settings.get_tier2_config()
-        tier3_config = settings.get_tier3_config()
-
+        # Initialize engines with settings
         self.traditional_engine = TraditionalMetricsEngine()
-        self.llm_engine = LLMJudgeEngine(tier2_config)
-        self.graph_engine = GraphAnalysisEngine(tier3_config)
+        self.llm_engine = LLMJudgeEngine(settings)
+        self.graph_engine = GraphAnalysisEngine(settings)
         self.composite_scorer = CompositeScorer(settings=settings)
 
         enabled_tiers = sorted(settings.get_enabled_tiers())
@@ -161,22 +149,6 @@ class EvaluationPipeline:
         """
         return self.settings.is_tier_enabled(tier)
 
-    def _get_tier_config(self, tier: int) -> dict[str, Any]:
-        """Get tier-specific configuration (internal helper).
-
-        Args:
-            tier: Tier number (1, 2, or 3)
-
-        Returns:
-            Tier configuration dictionary
-        """
-        if tier == 1:
-            return self.settings.get_tier1_config()
-        elif tier == 2:
-            return self.settings.get_tier2_config()
-        else:  # tier == 3
-            return self.settings.get_tier3_config()
-
     async def _execute_tier1(
         self, paper: str, review: str, reference_reviews: list[str] | None = None
     ) -> tuple[Tier1Result | None, float]:
@@ -204,7 +176,6 @@ class EvaluationPipeline:
 
             # Use reference reviews or default to empty list for similarity comparison
             ref_reviews = reference_reviews or [""]  # Fallback for missing ground truth
-            tier1_config = self._get_tier_config(1)
 
             result = await asyncio.wait_for(
                 asyncio.create_task(
@@ -214,7 +185,7 @@ class EvaluationPipeline:
                         ref_reviews,  # reference_texts
                         start_evaluation,  # start_time
                         time.time(),  # end_time (will be updated in method)
-                        tier1_config,  # config
+                        self.settings,  # settings
                     )
                 ),
                 timeout=timeout,

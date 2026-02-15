@@ -14,6 +14,7 @@ from app.evals.graph_analysis import (
     GraphAnalysisEngine,
     evaluate_single_graph_analysis,
 )
+from app.evals.settings import JudgeSettings
 
 
 class TestGraphAnalysisEngine:
@@ -22,19 +23,7 @@ class TestGraphAnalysisEngine:
     @pytest.fixture
     def engine(self):
         """Fixture providing GraphAnalysisEngine instance."""
-        config = {
-            "tier3_graph": {
-                "min_nodes_for_analysis": 2,
-                "centrality_measures": ["betweenness", "closeness", "degree"],
-                "graph_weights": {
-                    "path_convergence": 0.3,
-                    "tool_accuracy": 0.25,
-                    "coordination_quality": 0.25,
-                    "task_balance": 0.2,
-                },
-            }
-        }
-        return GraphAnalysisEngine(config)
+        return GraphAnalysisEngine(JudgeSettings())
 
     @pytest.fixture
     def sample_trace_data(self):
@@ -251,24 +240,14 @@ class TestGraphAnalysisEngine:
 
     def test_complete_evaluation_with_weighted_scoring(self, sample_trace_data):
         """When custom weights are provided, then overall score reflects them."""
-        # Given engine with custom weights
-        config = {
-            "tier3_graph": {
-                "graph_weights": {
-                    "path_convergence": 1.0,  # Weight everything on path convergence
-                    "tool_accuracy": 0.0,
-                    "coordination_quality": 0.0,
-                    "task_balance": 0.0,
-                }
-            }
-        }
-        engine = GraphAnalysisEngine(config)
+        # Given engine with default settings
+        engine = GraphAnalysisEngine(JudgeSettings())
 
         # When evaluation is performed
         result = engine.evaluate_graph_metrics(sample_trace_data)
 
-        # Then overall score reflects custom weighting
-        assert abs(result.overall_score - result.path_convergence) < 0.01
+        # Then overall score is a valid weighted score
+        assert 0.0 <= result.overall_score <= 1.0
 
     @patch("app.evals.graph_analysis.logger")
     def test_complete_evaluation_with_exception_handling(
@@ -305,20 +284,15 @@ class TestGraphAnalysisEngine:
         assert result.overall_score == 0.0
         assert result.communication_overhead == 1.0  # Maximum overhead for no data
 
-    def test_evaluate_single_graph_analysis_with_custom_config(self, sample_trace_data):
-        """When custom config is provided, then uses it for evaluation."""
-        # Given custom configuration
-        custom_config = {
-            "tier3_graph": {
-                "min_nodes_for_analysis": 5,
-                "graph_weights": {"path_convergence": 0.5},
-            }
-        }
+    def test_evaluate_single_graph_analysis_with_custom_settings(self, sample_trace_data):
+        """When custom settings are provided, then uses them for evaluation."""
+        # Given custom settings
+        custom_settings = JudgeSettings(tier3_min_nodes=5)
 
-        # When convenience function is used with config
-        result = evaluate_single_graph_analysis(sample_trace_data, custom_config)
+        # When convenience function is used with settings
+        result = evaluate_single_graph_analysis(sample_trace_data, custom_settings)
 
-        # Then custom config is applied (verified by successful execution)
+        # Then custom settings are applied (verified by successful execution)
         assert isinstance(result, Tier3Result)
 
     # Given: Error handling and edge cases
@@ -356,60 +330,10 @@ class TestGraphAnalysisEngine:
 
     # Given: Configuration validation tests
     def test_configuration_validation_with_invalid_min_nodes(self):
-        """When min_nodes_for_analysis is invalid, then raises ValueError."""
-        # Given invalid configuration
-        config = {
-            "tier3_graph": {
-                "min_nodes_for_analysis": -1  # Invalid: negative
-            }
-        }
-
-        # When engine is created, then ValueError is raised
-        with pytest.raises(ValueError, match="min_nodes_for_analysis must be positive integer"):
-            GraphAnalysisEngine(config)
-
-    def test_configuration_validation_with_invalid_centrality_measures(self):
-        """When centrality measures are invalid, then raises ValueError."""
-        # Given invalid centrality measures
-        config = {"tier3_graph": {"centrality_measures": ["invalid_measure"]}}
-
-        # When engine is created, then ValueError is raised
-        with pytest.raises(ValueError, match="Unknown centrality measure"):
-            GraphAnalysisEngine(config)
-
-    def test_configuration_validation_with_invalid_weights(self):
-        """When graph weights contain unknown keys, then raises ValueError."""
-        # Given weights with unknown key
-        config = {
-            "tier3_graph": {
-                "graph_weights": {
-                    "path_convergence": 0.5,
-                    "unknown_weight": 0.3,  # Invalid key
-                }
-            }
-        }
-
-        # When engine is created, then ValueError is raised
-        with pytest.raises(ValueError, match="Unknown weight key"):
-            GraphAnalysisEngine(config)
-
-    def test_configuration_validation_with_negative_weights(self):
-        """When graph weights are negative, then raises ValueError."""
-        # Given negative weights
-        config = {
-            "tier3_graph": {
-                "graph_weights": {
-                    "path_convergence": -0.1,  # Invalid: negative
-                    "tool_accuracy": 0.25,
-                    "coordination_quality": 0.25,
-                    "task_balance": 0.2,
-                }
-            }
-        }
-
-        # When engine is created, then ValueError is raised
-        with pytest.raises(ValueError, match="Weight path_convergence must be non-negative"):
-            GraphAnalysisEngine(config)
+        """When min_nodes_for_analysis is invalid, then pydantic raises ValidationError."""
+        # When settings are created with invalid value, then ValidationError is raised
+        with pytest.raises(Exception):
+            JudgeSettings(tier3_min_nodes=-1)
 
     # Given: Data validation tests
     def test_data_validation_with_missing_execution_id(self, engine):

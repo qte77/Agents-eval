@@ -6,8 +6,10 @@ handling provider selection, fallback mechanisms, and cost optimization
 for evaluation tasks.
 """
 
+from __future__ import annotations
+
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic_ai import Agent
 
@@ -21,39 +23,40 @@ from app.data_models.evaluation_models import (
 from app.evals.traditional_metrics import TraditionalMetricsEngine
 from app.utils.log import logger
 
+if TYPE_CHECKING:
+    from app.evals.settings import JudgeSettings
+
 
 class LLMJudgeEngine:
     """Manager for LLM-based evaluation with provider flexibility and fallbacks."""
 
-    def __init__(self, config: dict[str, Any]):
-        """Initialize evaluation LLM manager with configuration."""
-        self.config = config
+    def __init__(self, settings: JudgeSettings) -> None:
+        """Initialize evaluation LLM manager with settings.
+
+        Args:
+            settings: JudgeSettings instance with tier2 configuration.
+        """
+        self.settings = settings
         self.fallback_engine = TraditionalMetricsEngine()
 
-        # Extract LLM configuration
-        llm_config = config.get("tier2_llm_judge", {})
-
         # Provider and model settings
-        self.provider = llm_config.get("provider", "openai")
-        self.model = llm_config.get("model", "gpt-4o-mini")
-        self.fallback_provider = llm_config.get("fallback_provider", "github")
-        self.fallback_model = llm_config.get("fallback_model", "gpt-4o-mini")
+        self.provider = settings.tier2_provider
+        self.model = settings.tier2_model
+        self.fallback_provider = settings.tier2_fallback_provider
+        self.fallback_model = settings.tier2_fallback_model
 
         # Performance settings
-        self.timeout = llm_config.get("timeout_seconds", 30.0)
-        self.max_retries = llm_config.get("max_retries", 2)
-        self.paper_excerpt_length = llm_config.get("paper_excerpt_length", 2000)
-        self.cost_budget = llm_config.get("cost_budget_usd", 0.05)
+        self.timeout = settings.tier2_timeout_seconds
+        self.max_retries = settings.tier2_max_retries
+        self.paper_excerpt_length = settings.tier2_paper_excerpt_length
+        self.cost_budget = settings.tier2_cost_budget_usd
 
         # Evaluation weights
-        self.weights = llm_config.get(
-            "weights",
-            {
-                "technical_accuracy": 0.4,
-                "constructiveness": 0.3,
-                "planning_rationality": 0.3,
-            },
-        )
+        self.weights = {
+            "technical_accuracy": 0.4,
+            "constructiveness": 0.3,
+            "planning_rationality": 0.3,
+        }
 
     async def create_judge_agent(self, assessment_type: str, use_fallback: bool = False) -> Agent:
         """

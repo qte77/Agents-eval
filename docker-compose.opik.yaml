@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Opik - Open-source LLM evaluation and tracing platform by Comet ML
 # Official Repository: https://github.com/comet-ml/opik
 # Official Docker Compose: https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml
@@ -7,6 +5,7 @@ version: '3.8'
 # Local Deployment Guide: https://www.comet.com/docs/opik/self-host/local_deployment/
 
 services:
+  # State database: stores projects, experiments, datasets, and user metadata
   mysql:
     image: mysql:8.4.2
     hostname: mysql
@@ -17,14 +16,17 @@ services:
       MYSQL_DATABASE: opik
       MYSQL_USER: opik
       MYSQL_PASSWORD: opik
+      MYSQL_INITDB_SKIP_TZINFO: 1
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent" ]
       timeout: 1s
       interval: 1s
       retries: 300
+      start_period: 30s
     volumes:
       - mysql:/var/lib/mysql
 
+  # Cache and pub/sub: session state, rate limiting, real-time notifications
   redis:
     image: redis:7.2.4-alpine3.19
     hostname: redis
@@ -38,6 +40,7 @@ services:
       retries: 20
       start_period: 30s
 
+  # One-shot init: copies ClickHouse config files and sets permissions
   clickhouse-init:
     image: alpine:latest
     volumes:
@@ -49,6 +52,7 @@ services:
         chown -R 1000:1000 /config
       "
 
+  # Analytics database: stores traces, spans, and evaluation metrics (columnar, high-throughput)
   clickhouse:
     image: clickhouse/clickhouse-server:24.3.6.48-alpine
     hostname: clickhouse
@@ -83,6 +87,7 @@ services:
       clickhouse-init:
         condition: service_completed_successfully
 
+  # Coordination service: required by ClickHouse for distributed consensus
   zookeeper:
     image: docker.io/bitnamilegacy/zookeeper:3.9.3-debian-12-r16
     hostname: zookeeper
@@ -98,6 +103,7 @@ services:
     volumes:
       - zookeeper:/bitnami/zookeeper
 
+  # Object storage: S3-compatible store for attachments and artifacts
   minio:
     image: minio/minio:RELEASE.2025-03-12T18-04-18Z
     environment:
@@ -111,6 +117,7 @@ services:
       retries: 30
       start_period: 5s
 
+  # MinIO client: one-shot setup to create the default "public" bucket
   mc:
     image: minio/mc:RELEASE.2025-03-12T17-29-24Z
     depends_on:
@@ -123,6 +130,7 @@ services:
       /usr/bin/mc anonymous set download s3/public/;       
       "
 
+  # Java API server: REST API, runs DB migrations on startup, serves all CRUD and trace ingestion
   backend:
     image: ghcr.io/comet-ml/opik/opik-backend:${OPIK_VERSION:-latest}
     hostname: backend
@@ -165,10 +173,10 @@ services:
       TOGGLE_GUARDRAILS_ENABLED: ${TOGGLE_GUARDRAILS_ENABLED:-"false"}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health-check" ]
-      interval: 1s
-      timeout: 600s
-      retries: 600
-      start_period: 1s
+      interval: 2s
+      timeout: 10s
+      retries: 120
+      start_period: 30s
     depends_on:
       mysql:
         condition: service_healthy
@@ -179,6 +187,7 @@ services:
       redis:
         condition: service_healthy
 
+  # Python evaluator: executes LLM-as-Judge scoring and custom evaluation code
   python-backend:
     image: ghcr.io/comet-ml/opik/opik-python-backend:${OPIK_VERSION:-latest}
     hostname: python-backend
@@ -198,6 +207,7 @@ services:
       retries: 30
       start_period: 2s
 
+  # One-shot seed: populates sample projects, traces, and experiments for demo/testing
   demo-data-generator:
     image: ghcr.io/comet-ml/opik/opik-python-backend:${OPIK_VERSION:-latest}
     hostname: demo-data-generator
@@ -211,6 +221,7 @@ services:
       python-backend:
         condition: service_healthy
 
+  # Web UI: Nginx-served React app, proxies API calls to backend
   frontend:
     image: ghcr.io/comet-ml/opik/opik-frontend:${OPIK_VERSION:-latest}
     hostname: frontend

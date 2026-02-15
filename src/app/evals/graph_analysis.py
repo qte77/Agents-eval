@@ -9,14 +9,19 @@ Note: This module contains type: ignore comments for NetworkX operations
 due to incomplete type hints in the NetworkX library itself.
 """
 
+from __future__ import annotations
+
 import math
 import signal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import networkx as nx
 
 from app.data_models.evaluation_models import GraphTraceData, Tier3Result
 from app.utils.log import logger
+
+if TYPE_CHECKING:
+    from app.evals.settings import JudgeSettings
 
 
 class GraphAnalysisEngine:
@@ -27,115 +32,32 @@ class GraphAnalysisEngine:
     quality using lightweight NetworkX operations.
     """
 
-    def __init__(self, config: dict[str, Any]):
-        """Initialize graph analysis engine with configuration.
+    def __init__(self, settings: JudgeSettings) -> None:
+        """Initialize graph analysis engine with settings.
 
         Args:
-            config: Configuration from config_eval.json
+            settings: JudgeSettings instance with tier3 configuration.
 
         Raises:
             ValueError: If configuration is invalid
         """
-        self.config = config
-        tier3_config = config.get("tier3_graph", {})
+        self.settings = settings
 
-        # Validate configuration first
-        self._validate_config(tier3_config)
-
-        self.min_nodes_for_analysis = tier3_config.get("min_nodes_for_analysis", 2)
-        self.centrality_measures = tier3_config.get(
-            "centrality_measures", ["betweenness", "closeness", "degree"]
-        )
+        self.min_nodes_for_analysis = settings.tier3_min_nodes
+        self.centrality_measures = list(settings.tier3_centrality_measures)
 
         # Weights for composite scoring
-        self.weights = tier3_config.get(
-            "graph_weights",
-            {
-                "path_convergence": 0.3,
-                "tool_accuracy": 0.25,
-                "coordination_quality": 0.25,
-                "task_balance": 0.2,
-            },
-        )
-
-        # Resource limits for production safety
-        self.max_nodes = tier3_config.get("max_nodes", 1000)
-        self.max_edges = tier3_config.get("max_edges", 5000)
-        self.operation_timeout = tier3_config.get("operation_timeout_seconds", 10.0)
-
-    def _validate_config(self, tier3_config: dict[str, Any]) -> None:
-        """Validate tier3_graph configuration parameters.
-
-        Args:
-            tier3_config: Configuration dictionary for tier 3 analysis
-
-        Raises:
-            ValueError: If configuration parameters are invalid
-        """
-        self._validate_min_nodes(tier3_config)
-        self._validate_centrality_measures(tier3_config)
-        self._validate_graph_weights(tier3_config)
-        self._validate_resource_limits(tier3_config)
-
-    def _validate_min_nodes(self, config: dict[str, Any]) -> None:
-        """Validate min_nodes_for_analysis parameter."""
-        min_nodes = config.get("min_nodes_for_analysis", 2)
-        if not isinstance(min_nodes, int) or min_nodes < 1:
-            raise ValueError("min_nodes_for_analysis must be positive integer")
-
-    def _validate_centrality_measures(self, config: dict[str, Any]) -> None:
-        """Validate centrality measures configuration."""
-        centrality_measures = config.get(
-            "centrality_measures", ["betweenness", "closeness", "degree"]
-        )
-        valid_measures = {"betweenness", "closeness", "degree", "eigenvector"}
-
-        if not isinstance(centrality_measures, list):
-            raise ValueError("centrality_measures must be a list")
-
-        for measure in centrality_measures:
-            if measure not in valid_measures:
-                raise ValueError(f"Unknown centrality measure: {measure}")
-
-    def _validate_graph_weights(self, config: dict[str, Any]) -> None:
-        """Validate graph weights configuration."""
-        weights = config.get("graph_weights", {})
-        if not weights:
-            return
-
-        valid_keys = {
-            "path_convergence",
-            "tool_accuracy",
-            "coordination_quality",
-            "task_balance",
+        self.weights = {
+            "path_convergence": 0.3,
+            "tool_accuracy": 0.25,
+            "coordination_quality": 0.25,
+            "task_balance": 0.2,
         }
 
-        for key, weight in weights.items():
-            if key not in valid_keys:
-                raise ValueError(f"Unknown weight key: {key}. Valid keys: {valid_keys}")
-            if not isinstance(weight, int | float) or weight < 0:
-                raise ValueError(f"Weight {key} must be non-negative number")
-
-        # Warn if weights sum is unusual
-        total_weight = sum(weights.values())
-        if total_weight > 1.5:
-            logger.warning(
-                f"Graph weights sum to {total_weight:.3f}, this may cause scoring issues"
-            )
-
-    def _validate_resource_limits(self, config: dict[str, Any]) -> None:
-        """Validate resource limit parameters."""
-        max_nodes = config.get("max_nodes")
-        if max_nodes is not None and (not isinstance(max_nodes, int) or max_nodes < 10):
-            raise ValueError("max_nodes must be integer >= 10")
-
-        max_edges = config.get("max_edges")
-        if max_edges is not None and (not isinstance(max_edges, int) or max_edges < 10):
-            raise ValueError("max_edges must be integer >= 10")
-
-        timeout = config.get("operation_timeout_seconds")
-        if timeout is not None and (not isinstance(timeout, int | float) or timeout <= 0):
-            raise ValueError("operation_timeout_seconds must be positive number")
+        # Resource limits for production safety
+        self.max_nodes = settings.tier3_max_nodes
+        self.max_edges = settings.tier3_max_edges
+        self.operation_timeout = settings.tier3_operation_timeout
 
     def _validate_trace_data(self, trace_data: GraphTraceData) -> None:
         """Validate GraphTraceData structure and content before analysis.
@@ -501,7 +423,7 @@ class GraphAnalysisEngine:
                 graph_complexity=0,
             )
 
-    def export_trace_to_networkx(self, trace_data: GraphTraceData) -> "nx.DiGraph[str] | None":
+    def export_trace_to_networkx(self, trace_data: GraphTraceData) -> nx.DiGraph[str] | None:
         """Export trace data to NetworkX graph for Opik integration.
 
         Args:
@@ -598,13 +520,13 @@ class GraphAnalysisEngine:
 
 
 def evaluate_single_graph_analysis(
-    trace_data: GraphTraceData | None, config: dict[str, Any] | None = None
+    trace_data: GraphTraceData | None, settings: JudgeSettings | None = None
 ) -> Tier3Result:
     """Convenience function for single graph analysis evaluation.
 
     Args:
         trace_data: Execution trace data for analysis
-        config: Optional configuration override
+        settings: Optional JudgeSettings override. If None, uses defaults.
 
     Returns:
         Tier3Result with graph analysis metrics
@@ -616,8 +538,11 @@ def evaluate_single_graph_analysis(
         >>> result = evaluate_single_graph_analysis(trace_data)
         >>> print(f"Overall score: {result.overall_score:.3f}")
     """
-    config = config or {}
-    engine = GraphAnalysisEngine(config)
+    if settings is None:
+        from app.evals.settings import JudgeSettings
+
+        settings = JudgeSettings()
+    engine = GraphAnalysisEngine(settings)
 
     if trace_data is None:
         # Return zero scores for missing trace data

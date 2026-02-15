@@ -55,7 +55,7 @@ from app.data_models.app_models import (
     UserPromptType,
 )
 from app.data_models.peerread_models import ReviewGenerationResult
-from app.evals.evaluation_config import EvaluationConfig
+from app.evals.settings import JudgeSettings
 from app.llms.models import create_agent_models
 from app.llms.providers import (
     get_api_key,
@@ -71,11 +71,18 @@ from app.utils.load_configs import OpikConfig
 from app.utils.log import logger
 
 
-def initialize_opik_instrumentation_from_config(config_path: str | None = None) -> None:
-    """Initialize Opik instrumentation from evaluation config."""
+def initialize_opik_instrumentation_from_settings(
+    settings: JudgeSettings | None = None,
+) -> None:
+    """Initialize Opik instrumentation from JudgeSettings.
+
+    Args:
+        settings: JudgeSettings instance. If None, uses default JudgeSettings().
+    """
     try:
-        eval_config = EvaluationConfig(config_path)
-        opik_config = OpikConfig.from_config(eval_config.config)
+        if settings is None:
+            settings = JudgeSettings()
+        opik_config = OpikConfig.from_settings(settings)
         initialize_opik_instrumentation(opik_config)
         logger.info(f"Opik instrumentation initialized: enabled={opik_config.enabled}")
     except Exception as e:

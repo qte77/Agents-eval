@@ -12,15 +12,11 @@ def test_traditional_metrics_similarity():
     """Test similarity calculation through the traditional metrics engine."""
     engine = TraditionalMetricsEngine()
 
-    # Create temporary config for testing
-    config = {"similarity_metrics": ["cosine", "jaccard", "semantic"]}
-
     result = engine.evaluate_traditional_metrics(
         agent_output="The quick brown fox",
         reference_texts=["The quick brown fox jumps"],
         start_time=0.0,
         end_time=0.1,
-        config=config,
     )
 
     # Verify similarity scores are calculated

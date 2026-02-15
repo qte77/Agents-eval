@@ -198,15 +198,9 @@ class TestTraditionalMetricsEngine:
         time.sleep(0.01)  # Small delay to measure
         end_time = time.perf_counter()
 
-        config = {
-            "confidence_threshold": 0.7,
-            "tier1_weights": {
-                "semantic": 0.4,
-                "cosine": 0.3,
-                "jaccard": 0.2,
-                "time_taken": 0.1,
-            },
-        }
+        from app.evals.settings import JudgeSettings
+
+        settings = JudgeSettings(tier1_confidence_threshold=0.7)
 
         with patch.object(engine, "find_best_match") as mock_best_match:
             from app.evals.traditional_metrics import SimilarityScores
@@ -214,7 +208,7 @@ class TestTraditionalMetricsEngine:
             mock_best_match.return_value = SimilarityScores(cosine=0.8, jaccard=0.7, semantic=0.85)
 
             result = engine.evaluate_traditional_metrics(
-                agent_output, reference_texts, start_time, end_time, config
+                agent_output, reference_texts, start_time, end_time, settings
             )
 
             assert isinstance(result, Tier1Result)
@@ -268,9 +262,8 @@ class TestTraditionalMetricsPerformance:
         start_time = time.perf_counter()
 
         # Use actual implementation for performance test
-        config = {"confidence_threshold": 0.8}
         result = engine.evaluate_traditional_metrics(
-            agent_output, reference_texts, start_time, start_time + 0.1, config
+            agent_output, reference_texts, start_time, start_time + 0.1
         )
 
         end_time = time.perf_counter()

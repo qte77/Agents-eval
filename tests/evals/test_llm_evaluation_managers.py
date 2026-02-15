@@ -11,31 +11,19 @@ import pytest
 
 from app.data_models.evaluation_models import Tier2Result
 from app.evals.llm_evaluation_managers import LLMJudgeEngine
+from app.evals.settings import JudgeSettings
 
 
 @pytest.fixture
-def config():
-    """Fixture providing LLM judge configuration."""
-    return {
-        "tier2_llm_judge": {
-            "model": "gpt-4o-mini",
-            "max_retries": 2,
-            "timeout_seconds": 30.0,
-            "paper_excerpt_length": 2000,
-            "cost_budget_usd": 0.05,
-            "weights": {
-                "technical_accuracy": 0.4,
-                "constructiveness": 0.3,
-                "planning_rationality": 0.3,
-            },
-        }
-    }
+def settings():
+    """Fixture providing JudgeSettings for LLM judge."""
+    return JudgeSettings()
 
 
 @pytest.fixture
-def engine(config):
+def engine(settings):
     """Fixture providing LLMJudgeEngine instance."""
-    return LLMJudgeEngine(config)
+    return LLMJudgeEngine(settings)
 
 
 @pytest.fixture
@@ -360,10 +348,10 @@ class TestLLMJudgePerformance:
     """Performance and cost optimization tests."""
 
     @pytest.mark.asyncio
-    async def test_paper_excerpt_truncation(self, config):
+    async def test_paper_excerpt_truncation(self):
         """Long papers should be truncated for cost efficiency."""
-        config["tier2_llm_judge"]["paper_excerpt_length"] = 100
-        engine = LLMJudgeEngine(config)
+        settings = JudgeSettings(tier2_paper_excerpt_length=100)
+        engine = LLMJudgeEngine(settings)
 
         long_paper = "This is a very long paper. " * 50  # Much longer than 100 chars
         review = "Test review"

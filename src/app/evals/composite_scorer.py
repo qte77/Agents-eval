@@ -58,7 +58,7 @@ class CompositeScorer:
     """
     Composite scoring system that integrates all three evaluation tiers.
 
-    Implements the six-metric weighted formula from config_eval.json:
+    Implements the six-metric equal-weight formula:
     - time_taken (0.167)
     - task_success (0.167)
     - coordination_quality (0.167)
@@ -86,11 +86,8 @@ class CompositeScorer:
 
         # Use JudgeSettings
         self.settings = settings
-        self.config_path = None
-        self.config = None
 
-        # Hardcoded defaults from config_eval.json (will be moved to JudgeSettings later)
-        # Reason: Keep settings minimal for now, hardcode composite config
+        # Equal-weight scoring across six composite metrics
         self.weights = {
             "time_taken": 0.167,
             "task_success": 0.167,
@@ -100,9 +97,9 @@ class CompositeScorer:
             "output_similarity": 0.167,
         }
         self.thresholds = {
-            "accept": 0.8,
-            "weak_accept": 0.6,
-            "weak_reject": 0.4,
+            "accept": settings.composite_accept_threshold,
+            "weak_accept": settings.composite_weak_accept_threshold,
+            "weak_reject": settings.composite_weak_reject_threshold,
             "reject": 0.0,
         }
         self.recommendation_weights = {
@@ -110,11 +107,6 @@ class CompositeScorer:
             "weak_accept": 0.7,
             "weak_reject": -0.7,
             "reject": -1.0,
-        }
-        self.composite_config = {
-            "metrics_and_weights": self.weights,
-            "recommendation_thresholds": self.thresholds,
-            "recommendation_weights": self.recommendation_weights,
         }
 
         logger.info(f"CompositeScorer initialized with JudgeSettings ({len(self.weights)} metrics)")

@@ -15,7 +15,7 @@ from app.evals.settings import JudgeSettings
 
 
 class TestJudgeSettingsDefaults:
-    """Test default values match config_eval.json."""
+    """Test default values for JudgeSettings."""
 
     def test_tiers_enabled_defaults(self):
         """Tiers enabled should default to [1, 2, 3]."""
@@ -126,7 +126,7 @@ class TestJudgeSettingsValidation:
 
 
 class TestJudgeSettingsCompatibility:
-    """Test backward compatibility helpers."""
+    """Test convenience helper methods (get_enabled_tiers, is_tier_enabled, get_performance_targets)."""
 
     def test_get_enabled_tiers_set(self):
         """Should return tiers as a set for backward compatibility."""
@@ -148,25 +148,3 @@ class TestJudgeSettingsCompatibility:
         assert targets["tier2_max_seconds"] == 10.0
         assert targets["tier3_max_seconds"] == 15.0
         assert targets["total_max_seconds"] == 25.0
-
-    def test_get_tier1_config(self):
-        """Should return tier1 config dict for engines."""
-        settings = JudgeSettings()
-        config = settings.get_tier1_config()
-        assert config["similarity_metrics"] == ["cosine", "jaccard", "semantic"]
-        assert config["confidence_threshold"] == 0.8
-
-    def test_get_tier2_config(self):
-        """Should return tier2 config dict for engines."""
-        settings = JudgeSettings()
-        config = settings.get_tier2_config()
-        assert config["model"] == "gpt-4o-mini"
-        assert config["max_retries"] == 2
-        assert config["timeout_seconds"] == 30.0
-
-    def test_get_tier3_config(self):
-        """Should return tier3 config dict for engines."""
-        settings = JudgeSettings()
-        config = settings.get_tier3_config()
-        assert config["min_nodes_for_analysis"] == 2
-        assert config["centrality_measures"] == ["betweenness", "closeness", "degree"]

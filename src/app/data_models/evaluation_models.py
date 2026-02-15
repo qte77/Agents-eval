@@ -5,10 +5,9 @@ This module provides Pydantic models for the comprehensive evaluation framework
 that assesses multi-agent systems on PeerRead scientific paper review generation.
 """
 
-from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field
 
 from app.data_models.peerread_models import PeerReadReview
 
@@ -182,99 +181,6 @@ class GraphTraceData(BaseModel):
     )
 
 
-class EvaluationConfig(BaseModel):
-    """Configuration model for evaluation system.
-
-    Defines performance targets, weights, thresholds, and behavioral
-    parameters for the three-tiered evaluation framework.
-    """
-
-    version: str = Field(description="Configuration version")
-
-    # Performance targets
-    tier1_max_seconds: float = Field(default=1.0, description="Tier 1 performance target")
-    tier2_max_seconds: float = Field(default=10.0, description="Tier 2 performance target")
-    tier3_max_seconds: float = Field(default=15.0, description="Tier 3 performance target")
-    total_max_seconds: float = Field(default=25.0, description="Total pipeline target")
-
-    # Traditional metrics configuration
-    similarity_metrics: list[str] = Field(
-        default=["cosine", "jaccard", "semantic"],
-        description="Enabled similarity metrics",
-    )
-    confidence_threshold: float = Field(default=0.8, description="Task success threshold")
-    bertscore_model: str = Field(
-        default="distilbert-base-uncased", description="BERTScore model name"
-    )
-
-    # LLM judge configuration
-    llm_model: str = Field(default="gpt-4o-mini", description="LLM judge model")
-    llm_timeout: float = Field(default=30.0, description="LLM request timeout")
-    llm_max_retries: int = Field(default=2, description="Maximum retry attempts")
-
-    # Composite scoring weights
-    composite_weights: dict[str, float] = Field(
-        default={
-            "time_taken": 0.167,
-            "task_success": 0.167,
-            "coordination_quality": 0.167,
-            "tool_efficiency": 0.167,
-            "planning_rationality": 0.167,
-            "output_similarity": 0.167,
-        },
-        description="Composite scoring weights",
-    )
-
-    # Recommendation thresholds
-    recommendation_thresholds: dict[str, float] = Field(
-        default={"accept": 0.8, "weak_accept": 0.6, "weak_reject": 0.4, "reject": 0.0},
-        description="Score thresholds for recommendations",
-    )
-
-
-class EvaluationRequest(BaseModel):
-    """Request structure for evaluation pipeline.
-
-    Encapsulates all required data for running a complete
-    three-tiered evaluation on a single paper.
-    """
-
-    paper_id: str = Field(description="Unique paper identifier")
-    paper_content: str = Field(description="Full paper text content")
-    agent_review: str = Field(description="Agent-generated review")
-    reference_reviews: list[str] = Field(description="Ground truth reviews")
-    execution_trace: GraphTraceData | None = None
-    tiers_enabled: list[int] = Field(default=[1, 2, 3], description="Which tiers to run")
-    config_override: dict[str, Any] | None = None
-
-
-class BatchEvaluationResult(BaseModel):
-    """Result structure for batch evaluation operations.
-
-    Contains aggregated results from multiple paper evaluations
-    with performance statistics and summary metrics.
-    """
-
-    results: list[CompositeEvaluationResult] = Field(description="Individual evaluation results")
-    batch_id: str = Field(description="Batch execution identifier")
-    total_papers: int = Field(description="Number of papers evaluated")
-    successful_evaluations: int = Field(description="Number of successful evaluations")
-    failed_evaluations: int = Field(description="Number of failed evaluations")
-
-    # Performance statistics
-    average_duration: float = Field(description="Average evaluation time per paper")
-    total_duration: float = Field(description="Total batch processing time")
-    average_composite_score: float = Field(description="Average composite score across batch")
-
-    # Summary statistics
-    recommendation_distribution: dict[str, int] = Field(
-        description="Count of each recommendation type", default_factory=dict
-    )
-
-    timestamp: str = Field(description="Batch completion timestamp")
-    config_version: str = Field(description="Configuration version used")
-
-
 class PeerReadEvalResult(BaseModel):
     """Result of evaluating agent review against PeerRead ground truth."""
 
@@ -290,36 +196,3 @@ class PeerReadEvalResult(BaseModel):
     recommendation_match: bool = Field(
         description="Whether agent recommendation matches ground truth"
     )
-
-
-class AgentPerformanceAnalysis(BaseModel):
-    """Comprehensive agent performance analysis from ClickHouse trace data."""
-
-    analysis_period_hours: int = Field(description="Time period covered by analysis")
-    agent_metrics: list[dict[str, Any]] = Field(description="Agent action performance metrics")
-    pipeline_performance: list[dict[str, Any]] = Field(
-        description="Three-tier evaluation performance"
-    )
-    coordination_patterns: list[dict[str, Any]] = Field(
-        description="Agent coordination and delegation data"
-    )
-    bottleneck_analysis: list[dict[str, Any]] = Field(
-        description="Performance bottleneck identification"
-    )
-    generated_at: datetime = Field(description="Analysis generation timestamp")
-
-    # Derived insights
-    total_executions: int = Field(default=0, description="Total agent executions analyzed")
-    average_execution_time: float = Field(
-        default=0.0, description="Mean execution time across all agents"
-    )
-    error_rate: float = Field(default=0.0, description="Overall error rate percentage")
-    most_used_tools: list[str] = Field(default=[], description="Most frequently used agent tools")
-    performance_trends: dict[str, float] = Field(
-        default={}, description="Performance trend indicators"
-    )
-
-    @field_serializer("generated_at")
-    def serialize_datetime(self, v: datetime) -> str | None:
-        """Serialize datetime to ISO format."""
-        return v.isoformat() if v else None

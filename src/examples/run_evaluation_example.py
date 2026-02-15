@@ -133,7 +133,6 @@ def _run_pipeline_evaluation(
             reference_texts=reference_reviews,
             start_time=0.0,
             end_time=1.0,
-            config={"confidence_threshold": 0.8},
         )
 
         print("\nFALLBACK RESULTS (Tier 1 Only):")
@@ -150,7 +149,7 @@ def _demonstrate_trace_collection():
     print("3. TRACE COLLECTION: Observability Infrastructure")
     print("-" * 50)
 
-    trace_collector = get_trace_collector(config={"observability": {"trace_collection": True}})
+    trace_collector = get_trace_collector()
     execution_id = "demo_evaluation_001"
     trace_collector.start_execution(execution_id)
 
@@ -265,7 +264,6 @@ def run_traditional_metrics_only_example():
         reference_texts=reference_reviews,
         start_time=0.0,
         end_time=1.0,
-        config={"similarity_metrics": ["cosine", "jaccard", "semantic"]},
     )
 
     print(f"Cosine Similarity: {result.cosine_score:.3f}")

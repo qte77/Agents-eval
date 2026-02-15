@@ -7,8 +7,6 @@ This module implements evaluation configuration following 12-Factor #3 (Config) 
 - .env file support for local development
 """
 
-from typing import Any
-
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -19,7 +17,7 @@ class JudgeSettings(BaseSettings):
 
     Configuration follows 12-Factor #3 principles with typed defaults in code
     and environment variable overrides using the JUDGE_ prefix.
-    Replaces JSON-based EvaluationConfig with pydantic-settings.
+    Uses pydantic-settings for typed, environment-driven configuration.
 
     Attributes:
         tiers_enabled: List of enabled evaluation tiers (1=Traditional, 2=LLM, 3=Graph)
@@ -31,7 +29,10 @@ class JudgeSettings(BaseSettings):
         tier1_confidence_threshold: Confidence threshold for Tier 1
         tier1_bertscore_model: BERTScore model name
         tier1_tfidf_max_features: Max features for TF-IDF
+        tier2_provider: LLM provider for Tier 2 evaluation
         tier2_model: LLM model for Tier 2 evaluation
+        tier2_fallback_provider: Fallback LLM provider
+        tier2_fallback_model: Fallback LLM model
         tier2_max_retries: Max retry attempts for LLM calls
         tier2_timeout_seconds: Request timeout for LLM calls
         tier2_cost_budget_usd: Cost budget for LLM evaluation
@@ -42,8 +43,19 @@ class JudgeSettings(BaseSettings):
         tier3_max_edges: Maximum edges for graph analysis
         tier3_operation_timeout: Operation timeout for graph operations
         fallback_strategy: Fallback strategy when tiers fail
+        composite_accept_threshold: Score threshold for "accept" recommendation
+        composite_weak_accept_threshold: Score threshold for "weak_accept"
+        composite_weak_reject_threshold: Score threshold for "weak_reject"
         trace_collection: Enable trace collection
+        trace_storage_path: Directory for trace file storage
         opik_enabled: Enable Opik tracing
+        opik_url: Opik backend API URL. Defaults to local (http://localhost:8080).
+            For Comet cloud, set JUDGE_OPIK_URL=https://cloud.comet.com
+        opik_workspace: Opik workspace name
+        opik_project: Opik project name
+        opik_log_start_trace_span: Log trace/span start events
+        opik_batch_size: Trace batch size for SDK flush
+        opik_timeout_seconds: SDK request timeout
         performance_logging: Enable performance logging
     """
 
@@ -63,7 +75,10 @@ class JudgeSettings(BaseSettings):
     tier1_tfidf_max_features: int = Field(default=5000)
 
     # Tier 2: LLM-as-Judge
+    tier2_provider: str = Field(default="openai")
     tier2_model: str = Field(default="gpt-4o-mini")
+    tier2_fallback_provider: str = Field(default="github")
+    tier2_fallback_model: str = Field(default="gpt-4o-mini")
     tier2_max_retries: int = Field(default=2)
     tier2_timeout_seconds: float = Field(default=30.0, gt=0, le=300)
     tier2_cost_budget_usd: float = Field(default=0.05)
@@ -78,10 +93,20 @@ class JudgeSettings(BaseSettings):
 
     # Composite scoring
     fallback_strategy: str = Field(default="tier1_only")
+    composite_accept_threshold: float = Field(default=0.8, ge=0, le=1)
+    composite_weak_accept_threshold: float = Field(default=0.6, ge=0, le=1)
+    composite_weak_reject_threshold: float = Field(default=0.4, ge=0, le=1)
 
     # Observability
     trace_collection: bool = Field(default=True)
+    trace_storage_path: str = Field(default="./logs/traces/")
     opik_enabled: bool = Field(default=True)
+    opik_url: str = Field(default="http://localhost:8080")
+    opik_workspace: str = Field(default="peerread-evaluation")
+    opik_project: str = Field(default="peerread-evaluation")
+    opik_log_start_trace_span: bool = Field(default=True)
+    opik_batch_size: int = Field(default=100)
+    opik_timeout_seconds: float = Field(default=30.0, gt=0, le=300)
     performance_logging: bool = Field(default=True)
 
     model_config = SettingsConfigDict(
@@ -121,48 +146,4 @@ class JudgeSettings(BaseSettings):
             "tier2_max_seconds": self.tier2_max_seconds,
             "tier3_max_seconds": self.tier3_max_seconds,
             "total_max_seconds": self.total_max_seconds,
-        }
-
-    def get_tier1_config(self) -> dict[str, Any]:
-        """
-        Get Tier 1 configuration as dictionary.
-
-        Returns:
-            Tier 1 configuration for engine initialization
-        """
-        return {
-            "similarity_metrics": self.tier1_similarity_metrics,
-            "confidence_threshold": self.tier1_confidence_threshold,
-            "bertscore_model": self.tier1_bertscore_model,
-            "tfidf_max_features": self.tier1_tfidf_max_features,
-        }
-
-    def get_tier2_config(self) -> dict[str, Any]:
-        """
-        Get Tier 2 configuration as dictionary.
-
-        Returns:
-            Tier 2 configuration for engine initialization
-        """
-        return {
-            "model": self.tier2_model,
-            "max_retries": self.tier2_max_retries,
-            "timeout_seconds": self.tier2_timeout_seconds,
-            "cost_budget_usd": self.tier2_cost_budget_usd,
-            "paper_excerpt_length": self.tier2_paper_excerpt_length,
-        }
-
-    def get_tier3_config(self) -> dict[str, Any]:
-        """
-        Get Tier 3 configuration as dictionary.
-
-        Returns:
-            Tier 3 configuration for engine initialization
-        """
-        return {
-            "min_nodes_for_analysis": self.tier3_min_nodes,
-            "centrality_measures": self.tier3_centrality_measures,
-            "max_nodes": self.tier3_max_nodes,
-            "max_edges": self.tier3_max_edges,
-            "operation_timeout_seconds": self.tier3_operation_timeout,
         }

@@ -5,14 +5,19 @@ Provides fast, lightweight text similarity and execution metrics
 using minimal dependencies with <1s performance target.
 """
 
+from __future__ import annotations
+
 import math
 import re
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING
 
 import textdistance
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+if TYPE_CHECKING:
+    from app.evals.settings import JudgeSettings
 from sklearn.metrics.pairwise import cosine_similarity
 
 from app.data_models.evaluation_models import PeerReadEvalResult, Tier1Result
@@ -347,7 +352,7 @@ class TraditionalMetricsEngine:
         reference_texts: list[str],
         start_time: float,
         end_time: float,
-        config: dict[str, Any],
+        settings: JudgeSettings | None = None,
     ) -> Tier1Result:
         """Complete traditional metrics evaluation.
 
@@ -356,7 +361,7 @@ class TraditionalMetricsEngine:
             reference_texts: List of ground truth reviews
             start_time: Execution start timestamp
             end_time: Execution end timestamp
-            config: Configuration from config_eval.json
+            settings: JudgeSettings instance. If None, uses defaults.
 
         Returns:
             Tier1Result with all traditional metrics
@@ -365,22 +370,16 @@ class TraditionalMetricsEngine:
         best_scores = self.find_best_match(agent_output, reference_texts)
 
         # Calculate execution metrics
+        confidence_threshold = settings.tier1_confidence_threshold if settings else 0.8
         time_score = self.measure_execution_time(start_time, end_time)
-        task_success = self.assess_task_success(
-            best_scores, config.get("confidence_threshold", 0.8)
-        )
+        task_success = self.assess_task_success(best_scores, confidence_threshold)
 
         # Calculate weighted overall score
-        weights = config.get(
-            "tier1_weights",
-            {"semantic": 0.4, "cosine": 0.3, "jaccard": 0.2, "time_taken": 0.1},
-        )
-
         overall_score = (
-            best_scores.semantic * weights.get("semantic", 0.4)
-            + best_scores.cosine * weights.get("cosine", 0.3)
-            + best_scores.jaccard * weights.get("jaccard", 0.2)
-            + time_score * weights.get("time_taken", 0.1)
+            best_scores.semantic * 0.4
+            + best_scores.cosine * 0.3
+            + best_scores.jaccard * 0.2
+            + time_score * 0.1
         )
 
         return Tier1Result(
@@ -460,14 +459,14 @@ class TraditionalMetricsEngine:
 def evaluate_single_traditional(
     agent_output: str,
     reference_texts: list[str],
-    config: dict[str, Any] | None = None,
+    settings: JudgeSettings | None = None,
 ) -> Tier1Result:
     """Convenience function for single traditional evaluation.
 
     Args:
         agent_output: Generated review text
         reference_texts: List of ground truth reviews
-        config: Optional configuration override
+        settings: Optional JudgeSettings override. If None, uses defaults.
 
     Returns:
         Tier1Result with traditional metrics
@@ -479,7 +478,10 @@ def evaluate_single_traditional(
         ... )
         >>> print(f"Overall score: {result.overall_score:.3f}")
     """
-    config = config or {}
+    if settings is None:
+        from app.evals.settings import JudgeSettings
+
+        settings = JudgeSettings()
     engine = TraditionalMetricsEngine()
 
     start_time = time.perf_counter()
@@ -492,7 +494,7 @@ def evaluate_single_traditional(
         reference_texts=reference_texts,
         start_time=start_time,
         end_time=end_time,
-        config=config,
+        settings=settings,
     )
 
 

@@ -225,19 +225,16 @@ class TestPerformanceBaselines:
     @pytest.fixture
     def llm_engine(self):
         """Fixture providing LLM judge engine."""
-        # Load default configuration
-        from app.utils.load_configs import load_eval_config
+        from app.evals.settings import JudgeSettings
 
-        config = load_eval_config()
-        return LLMJudgeEngine(config)
+        return LLMJudgeEngine(JudgeSettings())
 
     @pytest.fixture
     def graph_engine(self):
         """Fixture providing graph analysis engine."""
-        from app.utils.load_configs import load_eval_config
+        from app.evals.settings import JudgeSettings
 
-        config = load_eval_config()
-        return GraphAnalysisEngine(config)
+        return GraphAnalysisEngine(JudgeSettings())
 
     @pytest.fixture
     def evaluation_pipeline(self):
@@ -682,10 +679,6 @@ if __name__ == "__main__":
             benchmark_data = PerformanceBenchmarkData()
             traditional_engine = TraditionalMetricsEngine()
             pipeline = EvaluationPipeline()
-
-            from app.utils.load_configs import load_eval_config
-
-            load_eval_config()
 
             print("✅ Components initialized")
             print("Performance targets: T1≤1.0s, T2≤10.0s, T3≤15.0s, Total≤25.0s")

@@ -5,16 +5,21 @@ Provides JSON/JSONL trace storage and processing capabilities
 for graph-based analysis and agent coordination evaluation.
 """
 
+from __future__ import annotations
+
 import json
 import sqlite3
 import time
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from app.data_models.evaluation_models import GraphTraceData
 from app.utils.log import logger
+
+if TYPE_CHECKING:
+    from app.evals.settings import JudgeSettings
 
 
 @dataclass
@@ -48,18 +53,17 @@ class TraceCollector:
     and SQLite database for structured queries.
     """
 
-    def __init__(self, config: dict[str, Any]):
-        """Initialize trace collector with configuration.
+    def __init__(self, settings: JudgeSettings) -> None:
+        """Initialize trace collector with settings.
 
         Args:
-            config: Configuration from config_eval.json
+            settings: JudgeSettings instance with observability configuration.
         """
-        self.config = config
-        observability_config = config.get("observability", {})
+        self.settings = settings
 
-        self.trace_enabled = observability_config.get("trace_collection", True)
-        self.storage_path = Path(observability_config.get("trace_storage_path", "./logs/traces/"))
-        self.performance_logging = observability_config.get("performance_logging", True)
+        self.trace_enabled = settings.trace_collection
+        self.storage_path = Path(settings.trace_storage_path)
+        self.performance_logging = settings.performance_logging
 
         # Ensure storage directory exists
         self.storage_path.mkdir(parents=True, exist_ok=True)
@@ -508,11 +512,11 @@ class TraceProcessor:
 _global_collector: TraceCollector | None = None
 
 
-def get_trace_collector(config: dict[str, Any] | None = None) -> TraceCollector:
+def get_trace_collector(settings: JudgeSettings | None = None) -> TraceCollector:
     """Get or create the global trace collector instance.
 
     Args:
-        config: Configuration dictionary
+        settings: JudgeSettings instance. If None, uses defaults.
 
     Returns:
         TraceCollector instance
@@ -520,8 +524,11 @@ def get_trace_collector(config: dict[str, Any] | None = None) -> TraceCollector:
     global _global_collector
 
     if _global_collector is None:
-        config = config or {}
-        _global_collector = TraceCollector(config)
+        if settings is None:
+            from app.evals.settings import JudgeSettings
+
+            settings = JudgeSettings()
+        _global_collector = TraceCollector(settings)
 
     return _global_collector
 
