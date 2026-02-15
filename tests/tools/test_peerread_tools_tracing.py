@@ -10,7 +10,7 @@ Tests ensure:
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from hypothesis import given
@@ -26,9 +26,7 @@ class TestPeerReadToolsTracing:
     @pytest.fixture
     def mock_trace_collector(self, tmp_path: Path) -> TraceCollector:
         """Create a mock trace collector for testing."""
-        settings = JudgeSettings(
-            trace_collection=True, trace_storage_path=str(tmp_path / "traces")
-        )
+        settings = JudgeSettings(trace_collection=True, trace_storage_path=str(tmp_path / "traces"))
         return TraceCollector(settings)
 
     @given(paper_id=st.text(min_size=1, max_size=50))
@@ -43,8 +41,9 @@ class TestPeerReadToolsTracing:
             return_value=mock_trace_collector,
         ):
             # Import here to apply patch
-            from app.tools.peerread_tools import add_peerread_tools_to_manager
             from pydantic_ai import Agent
+
+            from app.tools.peerread_tools import add_peerread_tools_to_manager
 
             manager = Agent("test", deps_type=None)
             add_peerread_tools_to_manager(manager)
@@ -55,7 +54,9 @@ class TestPeerReadToolsTracing:
             # Attempt to call tool (will fail due to missing dataset, but should still trace)
             with pytest.raises(Exception):
                 # This will fail, but trace event should be logged
-                tools = [t for t in manager._function_tools.values() if t.name == "get_peerread_paper"]
+                tools = [
+                    t for t in manager._function_tools.values() if t.name == "get_peerread_paper"
+                ]
                 assert len(tools) == 1
 
             # Verify: trace event was logged (will fail until implementation)
@@ -72,8 +73,9 @@ class TestPeerReadToolsTracing:
             "app.tools.peerread_tools.get_trace_collector",
             return_value=mock_trace_collector,
         ):
-            from app.tools.peerread_tools import add_peerread_tools_to_manager
             from pydantic_ai import Agent
+
+            from app.tools.peerread_tools import add_peerread_tools_to_manager
 
             manager = Agent("test", deps_type=None)
             add_peerread_tools_to_manager(manager)
@@ -113,9 +115,7 @@ class TestManagerOnlyTraceData:
     def test_manager_only_run_produces_trace_data(self, tmp_path: Path):
         """Manager-only execution MUST produce non-empty trace data."""
         # This test will FAIL until tools log trace events
-        settings = JudgeSettings(
-            trace_collection=True, trace_storage_path=str(tmp_path / "traces")
-        )
+        settings = JudgeSettings(trace_collection=True, trace_storage_path=str(tmp_path / "traces"))
         collector = TraceCollector(settings)
 
         # Simulate manager-only run with tool calls

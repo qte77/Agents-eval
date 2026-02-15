@@ -266,7 +266,9 @@ class TraceCollector:
             if event.event_type == "agent_interaction":
                 agent_interactions.append(event.data)
             elif event.event_type == "tool_call":
-                tool_calls.append({**event.data, "timestamp": event.timestamp, "agent_id": event.agent_id})
+                tool_calls.append(
+                    {**event.data, "timestamp": event.timestamp, "agent_id": event.agent_id}
+                )
             elif event.event_type == "coordination":
                 coordination_events.append(event.data)
 
