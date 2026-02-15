@@ -467,3 +467,265 @@ class TestPeerReadDataSnapshots:
                 "iclr_2017_test": "https://raw.githubusercontent.com/allenai/PeerRead/master/data/iclr_2017/test/reviews/306.json",
             }
         )
+
+
+# STORY-004: Tests for optional field handling in PeerRead dataset validation
+class TestOptionalFieldHandling:
+    """Tests for resilient validation of papers with missing optional fields."""
+
+    def test_paper_with_missing_impact_field(self):
+        """Test that papers with missing IMPACT field are validated successfully."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        # Paper data with review missing IMPACT field (like papers 304-308, 330)
+        test_papers = [
+            {
+                "id": "test_missing_impact",
+                "title": "Test Paper Without Impact",
+                "abstract": "Test abstract for paper with missing IMPACT field.",
+                "reviews": [
+                    {
+                        # Missing: "IMPACT"
+                        "SUBSTANCE": "4",
+                        "APPROPRIATENESS": "5",
+                        "MEANINGFUL_COMPARISON": "2",
+                        "PRESENTATION_FORMAT": "Poster",
+                        "comments": "Test review comment without IMPACT field.",
+                        "SOUNDNESS_CORRECTNESS": "4",
+                        "ORIGINALITY": "3",
+                        "RECOMMENDATION": "3",
+                        "CLARITY": "3",
+                        "REVIEWER_CONFIDENCE": "3",
+                    }
+                ],
+                "histories": [],
+            }
+        ]
+
+        # Act
+        validated_papers = loader._validate_papers(test_papers)
+
+        # Assert: Paper should be validated successfully with IMPACT defaulting to "UNKNOWN"
+        assert len(validated_papers) == 1
+        assert validated_papers[0].paper_id == "test_missing_impact"
+        assert len(validated_papers[0].reviews) == 1
+        assert validated_papers[0].reviews[0].impact == "UNKNOWN"
+
+    def test_paper_with_multiple_missing_optional_fields(self):
+        """Test that papers with multiple missing optional fields are handled gracefully."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        # Paper data with review missing multiple optional fields
+        test_papers = [
+            {
+                "id": "test_multiple_missing",
+                "title": "Test Paper Multiple Missing",
+                "abstract": "Test abstract.",
+                "reviews": [
+                    {
+                        # Missing: "IMPACT", "SUBSTANCE"
+                        "APPROPRIATENESS": "5",
+                        "MEANINGFUL_COMPARISON": "2",
+                        "PRESENTATION_FORMAT": "Poster",
+                        "comments": "Test review comment.",
+                        "SOUNDNESS_CORRECTNESS": "4",
+                        "ORIGINALITY": "3",
+                        "RECOMMENDATION": "3",
+                        "CLARITY": "3",
+                        "REVIEWER_CONFIDENCE": "3",
+                    }
+                ],
+                # Missing: "histories"
+            }
+        ]
+
+        # Act
+        validated_papers = loader._validate_papers(test_papers)
+
+        # Assert: Paper should be validated successfully with defaults
+        assert len(validated_papers) == 1
+        assert validated_papers[0].reviews[0].impact == "UNKNOWN"
+        assert validated_papers[0].reviews[0].substance == "UNKNOWN"
+        assert validated_papers[0].review_histories == []
+
+    def test_paper_with_valid_impact_field_unchanged(self):
+        """Test that papers with valid IMPACT field are not affected (no regression)."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        # Paper data with valid IMPACT field
+        test_papers = [
+            {
+                "id": "test_valid_impact",
+                "title": "Test Paper Valid Impact",
+                "abstract": "Test abstract.",
+                "reviews": [
+                    {
+                        "IMPACT": "4",
+                        "SUBSTANCE": "4",
+                        "APPROPRIATENESS": "5",
+                        "MEANINGFUL_COMPARISON": "2",
+                        "PRESENTATION_FORMAT": "Poster",
+                        "comments": "Test review comment with valid IMPACT.",
+                        "SOUNDNESS_CORRECTNESS": "4",
+                        "ORIGINALITY": "3",
+                        "RECOMMENDATION": "3",
+                        "CLARITY": "3",
+                        "REVIEWER_CONFIDENCE": "3",
+                    }
+                ],
+                "histories": [],
+            }
+        ]
+
+        # Act
+        validated_papers = loader._validate_papers(test_papers)
+
+        # Assert: Paper should preserve the original IMPACT value
+        assert len(validated_papers) == 1
+        assert validated_papers[0].reviews[0].impact == "4"
+
+    def test_validated_paper_with_missing_impact_snapshot(self):
+        """Snapshot: Validated paper structure with missing IMPACT field."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        test_papers = [
+            {
+                "id": "snapshot_test",
+                "title": "Snapshot Test Paper",
+                "abstract": "Abstract for snapshot test.",
+                "reviews": [
+                    {
+                        # Missing: "IMPACT"
+                        "SUBSTANCE": "3",
+                        "APPROPRIATENESS": "4",
+                        "MEANINGFUL_COMPARISON": "2",
+                        "PRESENTATION_FORMAT": "Oral",
+                        "comments": "Snapshot review comment.",
+                        "SOUNDNESS_CORRECTNESS": "3",
+                        "ORIGINALITY": "4",
+                        "RECOMMENDATION": "4",
+                        "CLARITY": "3",
+                        "REVIEWER_CONFIDENCE": "4",
+                    }
+                ],
+                "histories": [],
+            }
+        ]
+
+        # Act
+        validated_papers = loader._validate_papers(test_papers)
+
+        # Assert
+        dumped = validated_papers[0].model_dump()
+        assert dumped == snapshot(
+            {
+                "paper_id": "snapshot_test",
+                "title": "Snapshot Test Paper",
+                "abstract": "Abstract for snapshot test.",
+                "reviews": [
+                    {
+                        "impact": "UNKNOWN",
+                        "substance": "3",
+                        "appropriateness": "4",
+                        "meaningful_comparison": "2",
+                        "presentation_format": "Oral",
+                        "comments": "Snapshot review comment.",
+                        "soundness_correctness": "3",
+                        "originality": "4",
+                        "recommendation": "4",
+                        "clarity": "3",
+                        "reviewer_confidence": "4",
+                        "is_meta_review": None,
+                    }
+                ],
+                "review_histories": [],
+            }
+        )
+
+    @given(
+        # Generate arbitrary subsets of optional fields to test any combination
+        missing_fields=st.lists(
+            st.sampled_from([
+                "IMPACT",
+                "SUBSTANCE",
+                "APPROPRIATENESS",
+                "MEANINGFUL_COMPARISON",
+                "SOUNDNESS_CORRECTNESS",
+                "ORIGINALITY",
+                "CLARITY",
+            ]),
+            min_size=0,
+            max_size=7,
+            unique=True,
+        )
+    )
+    @hypothesis.settings(deadline=None)
+    def test_arbitrary_missing_fields_handled_gracefully(self, missing_fields):
+        """Property: Papers with arbitrary missing optional fields should validate successfully."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        # Build review dict with all required fields, then remove specified ones
+        review_data = {
+            "IMPACT": "3",
+            "SUBSTANCE": "4",
+            "APPROPRIATENESS": "5",
+            "MEANINGFUL_COMPARISON": "2",
+            "PRESENTATION_FORMAT": "Poster",
+            "comments": "Test comment",
+            "SOUNDNESS_CORRECTNESS": "4",
+            "ORIGINALITY": "3",
+            "RECOMMENDATION": "3",
+            "CLARITY": "3",
+            "REVIEWER_CONFIDENCE": "3",
+        }
+
+        # Remove the fields that should be missing
+        for field in missing_fields:
+            review_data.pop(field, None)
+
+        test_papers = [
+            {
+                "id": "test_hypothesis",
+                "title": "Hypothesis Test Paper",
+                "abstract": "Test abstract",
+                "reviews": [review_data],
+                "histories": [],
+            }
+        ]
+
+        # Act
+        validated_papers = loader._validate_papers(test_papers)
+
+        # Assert: Paper should always validate successfully
+        # Invariant: Should always return exactly 1 paper
+        assert len(validated_papers) == 1
+        assert validated_papers[0].paper_id == "test_hypothesis"
+        # Invariant: Should always have exactly 1 review
+        assert len(validated_papers[0].reviews) == 1
+
+        # Invariant: Missing fields should have "UNKNOWN" default
+        review = validated_papers[0].reviews[0]
+        for field in missing_fields:
+            field_name = field.lower()
+            if hasattr(review, field_name):
+                assert getattr(review, field_name) == "UNKNOWN"
