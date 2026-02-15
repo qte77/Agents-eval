@@ -44,7 +44,15 @@ def logfire_config_disabled():
 
 def test_instrumentation_manager_initialization_enabled(logfire_config_enabled):
     """Test LogfireInstrumentationManager initializes when enabled."""
-    with patch("app.agents.logfire_instrumentation.logfire") as mock_logfire:
+    with (
+        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("requests.head") as mock_head,
+    ):
+        # Mock successful connection check
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_head.return_value = mock_response
+
         manager = LogfireInstrumentationManager(logfire_config_enabled)
 
         assert manager.config.enabled is True
@@ -71,7 +79,15 @@ def test_instrumentation_manager_auto_instrument_pydantic_ai():
         service_name="test-service",
     )
 
-    with patch("app.agents.logfire_instrumentation.logfire") as mock_logfire:
+    with (
+        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("requests.head") as mock_head,
+    ):
+        # Mock successful connection check
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_head.return_value = mock_response
+
         LogfireInstrumentationManager(config)
 
         # instrument_pydantic_ai() should be called for auto-instrumentation
@@ -87,7 +103,15 @@ def test_initialize_logfire_instrumentation():
         service_name="test-service",
     )
 
-    with patch("app.agents.logfire_instrumentation.logfire"):
+    with (
+        patch("app.agents.logfire_instrumentation.logfire"),
+        patch("requests.head") as mock_head,
+    ):
+        # Mock successful connection check
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_head.return_value = mock_response
+
         initialize_logfire_instrumentation(config)
         manager = get_instrumentation_manager()
 
@@ -125,7 +149,7 @@ def test_instrumentation_manager_graceful_degradation():
 # Tests for connection checking and graceful failure handling
 
 
-def test_otlp_endpoint_unreachable_disables_tracing(caplog):
+def test_otlp_endpoint_unreachable_disables_tracing():
     """Test that unreachable OTLP endpoint disables tracing with single warning.
 
     Acceptance criteria:
@@ -143,6 +167,7 @@ def test_otlp_endpoint_unreachable_disables_tracing(caplog):
     with (
         patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
         patch("requests.head") as mock_head,
+        patch("app.agents.logfire_instrumentation.logger") as mock_logger,
     ):
         # Simulate connection refused error
         mock_head.side_effect = requests.exceptions.ConnectionError(
@@ -155,11 +180,11 @@ def test_otlp_endpoint_unreachable_disables_tracing(caplog):
         assert manager.config.enabled is False
 
         # Should log single warning about endpoint being unreachable
-        assert any(
-            "Logfire tracing unavailable" in record.message
-            and "unreachable" in record.message
-            for record in caplog.records
-        )
+        mock_logger.warning.assert_called_once()
+        warning_call = mock_logger.warning.call_args[0][0]
+        assert "Logfire tracing unavailable" in warning_call
+        assert "unreachable" in warning_call
+        assert "spans and metrics export disabled" in warning_call
 
         # Should NOT call logfire.configure() when endpoint unreachable
         mock_logfire.configure.assert_not_called()
@@ -198,7 +223,7 @@ def test_otlp_endpoint_reachable_enables_tracing():
         mock_logfire.instrument_pydantic_ai.assert_called_once()
 
 
-def test_warning_message_format_snapshot(caplog):
+def test_warning_message_format_snapshot():
     """Test warning message format using inline-snapshot.
 
     Acceptance criteria:
@@ -214,18 +239,17 @@ def test_warning_message_format_snapshot(caplog):
     with (
         patch("app.agents.logfire_instrumentation.logfire"),
         patch("requests.head") as mock_head,
+        patch("app.agents.logfire_instrumentation.logger") as mock_logger,
     ):
         mock_head.side_effect = requests.exceptions.ConnectionError()
 
         LogfireInstrumentationManager(config)
 
-        warning_messages = [
-            record.message for record in caplog.records if record.levelname == "WARNING"
-        ]
+        # Should have exactly one warning call
+        assert mock_logger.warning.call_count == 1
+        warning_message = mock_logger.warning.call_args[0][0]
 
-        # Should have exactly one warning about tracing unavailable
-        assert len(warning_messages) == 1
-        assert warning_messages[0] == snapshot(
+        assert warning_message == snapshot(
             "Logfire tracing unavailable: http://localhost:6006/v1/traces unreachable (spans and metrics export disabled)"
         )
 
@@ -293,7 +317,7 @@ def test_send_to_cloud_skips_connection_check():
         mock_logfire.configure.assert_called_once()
 
 
-def test_multiple_connection_failures_single_warning(caplog):
+def test_multiple_connection_failures_single_warning():
     """Test that multiple connection failures result in single warning.
 
     Acceptance criteria:
@@ -309,17 +333,11 @@ def test_multiple_connection_failures_single_warning(caplog):
     with (
         patch("app.agents.logfire_instrumentation.logfire"),
         patch("requests.head") as mock_head,
+        patch("app.agents.logfire_instrumentation.logger") as mock_logger,
     ):
         mock_head.side_effect = requests.exceptions.ConnectionError()
 
         LogfireInstrumentationManager(config)
 
-        warning_count = sum(
-            1
-            for record in caplog.records
-            if record.levelname == "WARNING"
-            and "Logfire tracing unavailable" in record.message
-        )
-
-        # Should have exactly ONE warning, not multiple
-        assert warning_count == 1
+        # Should have exactly ONE warning call
+        assert mock_logger.warning.call_count == 1

@@ -5,6 +5,8 @@ PydanticAI auto-instrumentation via logfire.instrument_pydantic_ai().
 No manual decorators or wrappers needed.
 """
 
+import requests
+
 from app.utils.load_configs import LogfireConfig
 from app.utils.log import logger
 
@@ -33,7 +35,12 @@ class LogfireInstrumentationManager:
         self._initialize_logfire()
 
     def _initialize_logfire(self) -> None:
-        """Initialize Logfire with Phoenix OTLP endpoint."""
+        """Initialize Logfire with Phoenix OTLP endpoint.
+
+        Checks OTLP endpoint connectivity before initialization to prevent
+        noisy stack traces when endpoint is unreachable (e.g., Opik service
+        not running). Logs single warning and disables tracing gracefully.
+        """
         if not self.config.enabled:
             logger.info("Logfire tracing disabled")
             return
@@ -51,6 +58,21 @@ class LogfireInstrumentationManager:
             if not self.config.send_to_cloud:
                 phoenix_otlp = f"{self.config.phoenix_endpoint}/v1/traces"
                 os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = phoenix_otlp
+
+                # Check endpoint connectivity before configuring exporters
+                # Reason: Prevents ConnectionRefusedError stack traces during span/metrics export
+                try:
+                    requests.head(phoenix_otlp, timeout=2.0)
+                except (
+                    requests.exceptions.ConnectionError,
+                    requests.exceptions.Timeout,
+                ) as conn_error:
+                    logger.warning(
+                        f"Logfire tracing unavailable: {phoenix_otlp} unreachable "
+                        f"(spans and metrics export disabled)"
+                    )
+                    self.config.enabled = False
+                    return
 
             logfire.configure(  # type: ignore
                 service_name=self.config.service_name,
