@@ -113,6 +113,88 @@ class TestBackgroundExecutionAPI:
             assert mock_state.execution_state == snapshot("idle")
 
 
+class TestDebugLogPanel:
+    """Test debug log panel rendering and log capture."""
+
+    def test_debug_log_panel_renders_with_logs(self):
+        """Test that debug log panel displays captured logs."""
+        from gui.pages.run_app import _render_debug_log_panel
+        from types import SimpleNamespace
+
+        # Given a session state with captured logs
+        mock_state = SimpleNamespace()
+        mock_state.debug_logs = [
+            {
+                "timestamp": "2026-02-15 10:00:00",
+                "level": "INFO",
+                "module": "app.app",
+                "message": "Execution started",
+            },
+            {
+                "timestamp": "2026-02-15 10:00:05",
+                "level": "ERROR",
+                "module": "app.judge.llm_evaluation_managers",
+                "message": "Provider unavailable",
+            },
+        ]
+
+        # When rendering debug log panel
+        with patch("gui.pages.run_app.st") as mock_st:
+            mock_st.session_state = mock_state
+            _render_debug_log_panel()
+
+            # Then expander should be created
+            mock_st.expander.assert_called_once()
+            # And logs should be rendered
+            assert mock_st.expander.called
+
+    def test_debug_log_panel_empty_state(self):
+        """Test that debug log panel shows message when no logs."""
+        from gui.pages.run_app import _render_debug_log_panel
+        from types import SimpleNamespace
+
+        # Given a session state with no logs
+        mock_state = SimpleNamespace()
+        mock_state.debug_logs = []
+
+        # When rendering debug log panel
+        with patch("gui.pages.run_app.st") as mock_st:
+            mock_st.session_state = mock_state
+            _render_debug_log_panel()
+
+            # Then should show empty state message
+            mock_st.expander.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_debug_logs_captured_during_execution(self):
+        """Test that logs are captured during query execution."""
+        from types import SimpleNamespace
+
+        mock_state = SimpleNamespace()
+
+        # When execution captures logs
+        with (
+            patch("gui.pages.run_app.st.session_state", mock_state),
+            patch("gui.pages.run_app.main", new_callable=AsyncMock) as mock_main,
+            patch("gui.pages.run_app._capture_execution_logs") as mock_capture,
+        ):
+            mock_main.return_value = "Test result"
+
+            # Execute query
+            await _execute_query_background(
+                query="Test query",
+                provider="cerebras",
+                include_researcher=False,
+                include_analyst=False,
+                include_synthesiser=False,
+                chat_config_file=None,
+                token_limit=None,
+            )
+
+            # Then logs should be captured
+            mock_capture.assert_called_once()
+
+
 class TestSessionStateStructure:
     """Test session state structure after execution."""
 
