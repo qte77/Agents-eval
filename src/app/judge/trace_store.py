@@ -45,8 +45,6 @@ class TraceStore:
         """
         if not key:
             raise ValueError("Trace key cannot be empty")
-        if not isinstance(trace_data, dict):
-            raise ValueError("Trace data must be a dictionary")
 
         with self._lock:
             # Add timestamp if not present

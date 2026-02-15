@@ -163,7 +163,9 @@ class JudgeAgent:
         except Exception as e:
             total_time = time.time() - pipeline_start
             error_type = type(e).__name__
-            logger.error(f"JudgeAgent evaluation failed after {total_time:.2f}s with {error_type}: {e}")
+            logger.error(
+                f"JudgeAgent evaluation failed after {total_time:.2f}s with {error_type}: {e}"
+            )
 
             # Record failure
             self.performance_monitor.record_tier_failure(0, "critical_error", total_time, str(e))

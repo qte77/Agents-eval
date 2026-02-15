@@ -10,8 +10,6 @@ from __future__ import annotations
 import threading
 from typing import Any
 
-import pytest
-
 from app.judge.trace_store import TraceStore
 
 
@@ -92,9 +90,7 @@ class TestTraceStoreThreadSafety:
 
         def add_traces(thread_id: int):
             for i in range(num_traces_per_thread):
-                store.add_trace(
-                    f"trace_{thread_id}_{i}", {"thread": thread_id, "index": i}
-                )
+                store.add_trace(f"trace_{thread_id}_{i}", {"thread": thread_id, "index": i})
 
         threads = []
         for thread_id in range(num_threads):
@@ -151,7 +147,7 @@ class TestTraceStoreThreadSafety:
 
         def reader():
             for _ in range(50):
-                traces = store.get_all_traces()
+                _traces = store.get_all_traces()
                 read_count[0] += 1
 
         # Mix of writers and readers
