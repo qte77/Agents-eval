@@ -16,8 +16,21 @@ lines_changed="+${lines_added}/-${lines_removed}"
 tokens_in=$(echo "$input" | jq -r '((.context_window.total_input_tokens // 0) / 1000 | floor | tostring) + "k"')
 tokens_out=$(echo "$input" | jq -r '((.context_window.total_output_tokens // 0) / 1000 | floor | tostring) + "k"')
 tokens="${tokens_in}/${tokens_out}"
-remaining_pct=$(echo "$input" | jq -r '.context_window.remaining_percentage // 100')
-remaining=$(echo "$input" | jq -r '(.context_window.remaining_percentage // 100) / 100' | sed 's/^0\./\./')
+# Compute remaining from current_usage tokens vs context_window_size
+# Fallback to Claude-reported remaining_percentage if current_usage unavailable
+remaining_pct=$(echo "$input" | jq -r '
+  if .context_window.current_usage.input_tokens then
+    (.context_window.context_window_size // 200000) as $win |
+    (.context_window.current_usage.input_tokens // 0) as $in |
+    (.context_window.current_usage.cache_creation_input_tokens // 0) as $cc |
+    (.context_window.current_usage.cache_read_input_tokens // 0) as $cr |
+    (($in + $cc + $cr) / $win * 100) as $used |
+    (100 - $used) | round
+  else
+    .context_window.remaining_percentage // 100
+  end
+')
+remaining=$(echo "$remaining_pct" | awk '{printf "%.2f", $1/100}' | sed 's/^0\./\./')
 
 # Color remaining based on threshold (warn when running LOW)
 if [ "$remaining_pct" -le 25 ]; then
