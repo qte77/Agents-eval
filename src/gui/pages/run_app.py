@@ -7,12 +7,15 @@ Results and errors are displayed in real time, supporting asynchronous execution
 
 Provider and sub-agent configuration are read from session state, allowing users
 to configure these settings on the Settings page before running queries.
+
+Background execution support allows queries to continue running even when users
+navigate to other tabs, with results persisted in session state.
 """
 
 from pathlib import Path
 
 import streamlit as st
-from streamlit import button, exception, header, info, subheader, text, text_input, warning
+from streamlit import button, exception, header, info, spinner, subheader, text, text_input, warning
 
 from app.app import main
 from app.config.config_app import CHAT_DEFAULT_PROVIDER
@@ -70,7 +73,22 @@ def _format_enabled_agents(
     return ", ".join(enabled_agents) if enabled_agents else "None (Manager only)"
 
 
-async def _execute_query(
+def _initialize_execution_state() -> None:
+    """Initialize execution state in session state if not already set."""
+    if not hasattr(st.session_state, "execution_state"):
+        st.session_state.execution_state = "idle"
+
+
+def _get_execution_state() -> str:
+    """Get current execution state from session state.
+
+    Returns:
+        Current execution state: 'idle', 'running', 'completed', or 'error'
+    """
+    return getattr(st.session_state, "execution_state", "idle")
+
+
+async def _execute_query_background(
     query: str,
     provider: str,
     include_researcher: bool,
@@ -79,7 +97,10 @@ async def _execute_query(
     chat_config_file: str | Path | None,
     token_limit: int | None = None,
 ) -> None:
-    """Execute agent query with error handling.
+    """Execute agent query in background with session state persistence.
+
+    Sets execution_state to 'running', executes query, then transitions to
+    'completed' or 'error' based on outcome. Result/error stored in session state.
 
     Args:
         query: User query string
@@ -90,8 +111,13 @@ async def _execute_query(
         chat_config_file: Path to chat configuration file
         token_limit: Optional token limit override from GUI
     """
-    info(f"{RUN_APP_QUERY_RUN_INFO} {query}")
+    # Set running state
+    st.session_state.execution_state = "running"
+    st.session_state.execution_query = query
+    st.session_state.execution_provider = provider
+
     try:
+        # Execute query
         result = await main(
             chat_provider=provider,
             query=query,
@@ -101,11 +127,66 @@ async def _execute_query(
             chat_config_file=chat_config_file,
             token_limit=token_limit,
         )
-        render_output(result)
+
+        # Store result and transition to completed
+        st.session_state.execution_state = "completed"
+        st.session_state.execution_result = result
+
+        # Clear error if previously set
+        if hasattr(st.session_state, "execution_error"):
+            delattr(st.session_state, "execution_error")
+
     except Exception as e:
-        render_output(None)
-        exception(e)
+        # Store error and transition to error state
+        st.session_state.execution_state = "error"
+        st.session_state.execution_error = str(e)
+
+        # Clear result if previously set
+        if hasattr(st.session_state, "execution_result"):
+            delattr(st.session_state, "execution_result")
+
         logger.exception(e)
+
+
+def _display_configuration(provider: str, token_limit: int | None, agents_text: str) -> None:
+    """Display current provider and agent configuration.
+
+    Args:
+        provider: Active LLM provider
+        token_limit: Optional token limit
+        agents_text: Formatted string of enabled agents
+    """
+    text(f"**Provider:** {provider}")
+    text(f"**Enabled Sub-Agents:** {agents_text}")
+    if token_limit is not None:
+        text(f"**Token Limit:** {token_limit}")
+
+
+def _display_execution_result(execution_state: str) -> None:
+    """Display execution result based on current state.
+
+    Args:
+        execution_state: Current execution state (running/completed/error/idle)
+    """
+    if execution_state == "running":
+        with spinner("Query execution in progress..."):
+            info(
+                "Execution is running. You can navigate to other tabs and return to see the result."
+            )
+
+    elif execution_state == "completed":
+        result = getattr(st.session_state, "execution_result", None)
+        if result:
+            render_output(result)
+        else:
+            info("Execution completed but no result was returned.")
+
+    elif execution_state == "error":
+        error_msg = getattr(st.session_state, "execution_error", "Unknown error")
+        exception(Exception(error_msg))
+
+    else:  # idle
+        render_output(RUN_APP_OUTPUT_PLACEHOLDER)
 
 
 async def render_app(provider: str | None = None, chat_config_file: str | Path | None = None):
@@ -117,9 +198,13 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     main agent workflow and logs any exceptions.
 
     Provider and sub-agent configuration are read from session state (configured
-    on the Settings page).
+    on the Settings page). Execution runs in background with results persisted
+    to session state, allowing navigation across tabs without losing progress.
     """
     header(RUN_APP_HEADER)
+
+    # Initialize execution state
+    _initialize_execution_state()
 
     # Read configuration from session state
     provider_from_state, include_researcher, include_analyst, include_synthesiser = (
@@ -128,18 +213,19 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     token_limit: int | None = st.session_state.get("token_limit")
 
     # Display current configuration
-    text(f"**Provider:** {provider_from_state}")
     agents_text = _format_enabled_agents(include_researcher, include_analyst, include_synthesiser)
-    text(f"**Enabled Sub-Agents:** {agents_text}")
-    if token_limit is not None:
-        text(f"**Token Limit:** {token_limit}")
+    _display_configuration(provider_from_state, token_limit, agents_text)
 
     query = text_input(RUN_APP_QUERY_PLACEHOLDER)
 
     subheader(OUTPUT_SUBHEADER)
+
+    # Handle button click - start new execution
     if button(RUN_APP_BUTTON):
         if query:
-            await _execute_query(
+            # Start background execution
+            info(f"{RUN_APP_QUERY_RUN_INFO} {query}")
+            await _execute_query_background(
                 query,
                 provider_from_state,
                 include_researcher,
@@ -148,7 +234,11 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
                 chat_config_file,
                 token_limit,
             )
+            # Force rerun to show updated state
+            st.rerun()
         else:
             warning(RUN_APP_QUERY_WARNING)
-    else:
-        render_output(RUN_APP_OUTPUT_PLACEHOLDER)
+
+    # Display execution status based on state
+    execution_state = _get_execution_state()
+    _display_execution_result(execution_state)
