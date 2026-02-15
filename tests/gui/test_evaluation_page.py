@@ -191,3 +191,34 @@ class TestEvaluationPage:
             call_args = mock_chart.call_args
             # Should contain text metrics like cosine_score, jaccard_score
             assert call_args is not None
+
+    def test_extract_graph_metrics_helper(self, mock_composite_result):
+        """Test helper function for extracting graph metrics."""
+        from gui.pages.evaluation import _extract_graph_metrics
+
+        metrics = _extract_graph_metrics(mock_composite_result.metric_scores)
+
+        # Should contain graph-specific metrics
+        assert "path_convergence" in metrics
+        assert "tool_selection_accuracy" in metrics
+        assert metrics["path_convergence"] == 0.85
+
+        # Should NOT contain text metrics
+        assert "cosine_score" not in metrics
+        assert "jaccard_score" not in metrics
+
+    def test_extract_text_metrics_helper(self, mock_composite_result):
+        """Test helper function for extracting text metrics."""
+        from gui.pages.evaluation import _extract_text_metrics
+
+        metrics = _extract_text_metrics(mock_composite_result.metric_scores)
+
+        # Should contain text-specific metrics
+        assert "cosine_score" in metrics
+        assert "jaccard_score" in metrics
+        assert "semantic_score" in metrics
+        assert metrics["cosine_score"] == 0.8
+
+        # Should NOT contain graph metrics
+        assert "path_convergence" not in metrics
+        assert "tool_selection_accuracy" not in metrics
