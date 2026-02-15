@@ -93,13 +93,13 @@ setup_sandbox:  ## Install sandbox deps (bubblewrap, socat) for Linux/WSL2
 	# https://code.claude.com/docs/en/settings#sandbox-settings
 	# https://code.claude.com/docs/en/security
 	echo "Installing sandbox dependencies ..."
-	if command -v apt-get > /dev/null; then \
-		sudo apt-get update -qq && sudo apt-get install -y bubblewrap socat; \
-	elif command -v dnf > /dev/null; then \
-		sudo dnf install -y bubblewrap socat; \
-	else \
-		echo "Unsupported package manager. Install bubblewrap and socat manually."; \
-		exit 1; \
+	if command -v apt-get > /dev/null; then
+		sudo apt-get update -qq && sudo apt-get install -y bubblewrap socat
+	elif command -v dnf > /dev/null; then
+		sudo dnf install -y bubblewrap socat
+	else
+		echo "Unsupported package manager. Install bubblewrap and socat manually."
+		exit 1
 	fi
 	echo "Sandbox dependencies installed."
 
@@ -157,12 +157,13 @@ setup_dataset_full:  ## Download full PeerRead dataset
 	$(MAKE) -s run_cli ARGS=--download-peerread-full-only
 	$(MAKE) -s dataset_get_smallest
 
-dataset_get_smallest:
-	SMALLEST_N=10
-	DATASETS_PATH='datasets/peerread'
-	echo "Finding smallest $${SMALLEST_N} parsed PDFs in $${DATASETS_PATH}..."
-	find $$DATASETS_PATH -path "*/parsed_pdfs/*.json" \
-		-type f -printf '%s %p\n' 2>/dev/null | sort -n | head -$$SMALLEST_N
+_find_smallest_papers:  ## Internal: Find N smallest papers. Usage: make _find_smallest_papers N=10
+	@find datasets/peerread -path "*/parsed_pdfs/*.json" \
+		-type f -printf '%s %p\n' 2>/dev/null | sort -n | head -$(or $(N),10)
+
+dataset_get_smallest:  ## Show 10 smallest papers by file size
+	echo "Finding smallest 10 parsed PDFs in datasets/peerread..."
+	$(MAKE) -s _find_smallest_papers N=10
 
 
 # MARK: run ollama
@@ -221,18 +222,16 @@ run_markdownlint:  ## Lint markdown files. Usage from root dir: make run_markdow
 
 quick_start:  ## Download sample data and run evaluation on smallest paper
 	echo "=== Quick Start: Download samples + evaluate smallest paper ==="
-	if [ ! -d datasets/peerread ]; then \
-		echo "Downloading PeerRead samples ..."; \
-		$(MAKE) -s run_cli ARGS=--download-peerread-samples-only; \
-	else \
-		echo "PeerRead dataset already present, skipping download."; \
+	if [ ! -d datasets/peerread ]; then
+		$(MAKE) -s setup_dataset_sample
+	else
+		echo "PeerRead dataset already present, skipping download."
 	fi
-	PAPER_ID=$$(find datasets/peerread -path "*/parsed_pdfs/*.json" \
-		-type f -printf '%s %p\n' 2>/dev/null | sort -n | head -1 \
-		| sed 's|.*/parsed_pdfs/||;s|\.pdf\.json||')
-	if [ -z "$$PAPER_ID" ]; then \
-		echo "ERROR: No papers found. Run 'make setup_dataset_sample' first."; \
-		exit 1; \
+	PAPER_ID=$$($(MAKE) -s _find_smallest_papers N=1 \
+		| awk '{print $$2}' | sed 's|.*/parsed_pdfs/||;s|\.pdf\.json||')
+	if [ -z "$$PAPER_ID" ]; then
+		echo "ERROR: No papers found. Run 'make setup_dataset_sample' first."
+		exit 1
 	fi
 	echo "Selected smallest paper: $$PAPER_ID"
 	$(MAKE) -s run_cli ARGS="--paper-number=$$PAPER_ID"
@@ -343,10 +342,10 @@ status_opik:  ## Check Opik services health status
 	echo "Checking Opik services status ..."
 	docker-compose -f docker-compose.opik.yaml ps
 	echo "API Health:"
-	curl -f http://localhost:8080/health-check 2>/dev/null && \
+	curl -f http://localhost:8080/health-check 2>/dev/null &&
 		echo "Opik API healthy" || echo "Opik API not responding"
 	echo "ClickHouse:"
-	curl -s http://localhost:8123/ping 2>/dev/null && \
+	curl -s http://localhost:8123/ping 2>/dev/null &&
 		echo "ClickHouse healthy" || echo "ClickHouse not responding"
 
 
