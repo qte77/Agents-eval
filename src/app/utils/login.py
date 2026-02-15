@@ -43,8 +43,8 @@ def login(project_name: str, chat_env_config: AppEnv):
         if is_api_key:
             try:
                 os.environ.setdefault("WANDB_ERROR_REPORTING", "false")
-                from wandb import login as wandb_login
-                from weave import init as weave_init
+                from wandb import login as wandb_login  # type: ignore[reportMissingImports]
+                from weave import init as weave_init  # type: ignore[reportMissingImports]
 
                 wandb_login(key=api_key_msg)
                 weave_init(project_name)

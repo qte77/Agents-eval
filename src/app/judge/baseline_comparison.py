@@ -3,8 +3,8 @@ Baseline comparison engine for CompositeResult diffing.
 
 Provides pairwise comparison of CompositeResult instances across three systems:
 - PydanticAI MAS (multi-agent system)
-- CC solo (Claude Code without orchestration)
-- CC teams (Claude Code with Agent Teams orchestration)
+- Claude Code solo (Claude Code without orchestration)
+- Claude Code teams (Claude Code with Agent Teams orchestration)
 
 Reuses existing CompositeResult model and CompositeScorer.extract_metric_values().
 """
@@ -22,7 +22,7 @@ class BaselineComparison(BaseModel):
     """
 
     label_a: str = Field(description="Label for first result (e.g., 'PydanticAI')")
-    label_b: str = Field(description="Label for second result (e.g., 'CC-solo')")
+    label_b: str = Field(description="Label for second result (e.g., 'Claude Code solo')")
 
     result_a: CompositeResult = Field(description="First CompositeResult instance")
     result_b: CompositeResult = Field(description="Second CompositeResult instance")
@@ -38,7 +38,7 @@ class BaselineComparison(BaseModel):
     summary: str = Field(
         description=(
             "Human-readable comparison summary "
-            "(e.g., 'PydanticAI scored +0.12 higher on technical_accuracy vs CC-solo')"
+            "(e.g., 'PydanticAI scored +0.12 higher on technical_accuracy vs Claude Code solo')"
         )
     )
 
@@ -55,7 +55,7 @@ def compare(
         result_a: First CompositeResult instance
         result_b: Second CompositeResult instance
         label_a: Label for first result (e.g., "PydanticAI")
-        label_b: Label for second result (e.g., "CC-solo")
+        label_b: Label for second result (e.g., "Claude Code solo")
 
     Returns:
         BaselineComparison with metric deltas, tier deltas, and summary
@@ -124,8 +124,8 @@ def compare_all(
 
     Args:
         pydantic_result: PydanticAI MAS evaluation result (or None)
-        cc_solo_result: CC solo evaluation result (or None)
-        cc_teams_result: CC teams evaluation result (or None)
+        cc_solo_result: Claude Code solo evaluation result (or None)
+        cc_teams_result: Claude Code teams evaluation result (or None)
 
     Returns:
         List of BaselineComparison instances for all valid pairwise comparisons.
@@ -133,7 +133,8 @@ def compare_all(
 
     Note:
         Skips comparisons involving None results.
-        Order: (PydanticAI vs CC-solo, PydanticAI vs CC-teams, CC-solo vs CC-teams)
+        Order: (PydanticAI vs Claude Code solo, PydanticAI vs Claude Code teams,
+                Claude Code solo vs Claude Code teams)
     """
     comparisons = []
 

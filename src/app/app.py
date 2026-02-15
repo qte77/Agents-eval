@@ -15,7 +15,7 @@ from logfire import span
 
 # Reason: weave is optional - only import if available (requires WANDB_API_KEY)
 try:
-    from weave import op
+    from weave import op  # type: ignore[reportMissingImports]
 except ImportError:
     # Fallback: no-op decorator when weave not installed
     from typing import Any
@@ -74,8 +74,8 @@ async def _run_evaluation_if_enabled(
         skip_eval: Whether to skip evaluation via CLI flag
         paper_number: Paper number for PeerRead review (indicates ground truth availability)
         execution_id: Execution ID for trace retrieval
-        cc_solo_dir: Path to CC solo artifacts directory for baseline comparison
-        cc_teams_dir: Path to CC teams artifacts directory for baseline comparison
+        cc_solo_dir: Path to Claude Code solo artifacts directory for baseline comparison
+        cc_teams_dir: Path to Claude Code teams artifacts directory for baseline comparison
 
     Returns:
         CompositeResult from PydanticAI evaluation or None if skipped
@@ -116,7 +116,7 @@ async def _run_evaluation_if_enabled(
         reference_reviews=None,
     )
 
-    # Run baseline comparisons if CC directories provided
+    # Run baseline comparisons if Claude Code directories provided
     await _run_baseline_comparisons(pipeline, pydantic_result, cc_solo_dir, cc_teams_dir)
 
     return pydantic_result
@@ -128,24 +128,24 @@ async def _run_baseline_comparisons(
     cc_solo_dir: str | None,
     cc_teams_dir: str | None,
 ) -> None:
-    """Run baseline comparisons against CC solo and teams if directories provided.
+    """Run baseline comparisons against Claude Code solo and teams if directories provided.
 
     Args:
         pipeline: Evaluation pipeline instance
         pydantic_result: PydanticAI evaluation result
-        cc_solo_dir: Path to CC solo artifacts directory
-        cc_teams_dir: Path to CC teams artifacts directory
+        cc_solo_dir: Path to Claude Code solo artifacts directory
+        cc_teams_dir: Path to Claude Code teams artifacts directory
     """
     if not cc_solo_dir and not cc_teams_dir:
         return
 
     logger.info("Running baseline comparisons...")
 
-    # Evaluate CC solo baseline if directory provided
+    # Evaluate Claude Code solo baseline if directory provided
     cc_solo_result: CompositeResult | None = None
     if cc_solo_dir:
         try:
-            logger.info(f"Evaluating CC solo baseline from {cc_solo_dir}")
+            logger.info(f"Evaluating Claude Code solo baseline from {cc_solo_dir}")
             adapter = CCTraceAdapter(Path(cc_solo_dir))
             cc_solo_trace = adapter.parse()
             cc_solo_result = await pipeline.evaluate_comprehensive(
@@ -154,15 +154,15 @@ async def _run_baseline_comparisons(
                 execution_trace=cc_solo_trace,
                 reference_reviews=None,
             )
-            logger.info(f"CC solo baseline score: {cc_solo_result.composite_score:.2f}")
+            logger.info(f"Claude Code solo baseline score: {cc_solo_result.composite_score:.2f}")
         except Exception as e:
-            logger.warning(f"Failed to evaluate CC solo baseline: {e}")
+            logger.warning(f"Failed to evaluate Claude Code solo baseline: {e}")
 
-    # Evaluate CC teams baseline if directory provided
+    # Evaluate Claude Code teams baseline if directory provided
     cc_teams_result: CompositeResult | None = None
     if cc_teams_dir:
         try:
-            logger.info(f"Evaluating CC teams baseline from {cc_teams_dir}")
+            logger.info(f"Evaluating Claude Code teams baseline from {cc_teams_dir}")
             adapter = CCTraceAdapter(Path(cc_teams_dir))
             cc_teams_trace = adapter.parse()
             cc_teams_result = await pipeline.evaluate_comprehensive(
@@ -171,9 +171,9 @@ async def _run_baseline_comparisons(
                 execution_trace=cc_teams_trace,
                 reference_reviews=None,
             )
-            logger.info(f"CC teams baseline score: {cc_teams_result.composite_score:.2f}")
+            logger.info(f"Claude Code teams baseline score: {cc_teams_result.composite_score:.2f}")
         except Exception as e:
-            logger.warning(f"Failed to evaluate CC teams baseline: {e}")
+            logger.warning(f"Failed to evaluate Claude Code teams baseline: {e}")
 
     # Generate and log comparisons
     comparisons = compare_all(pydantic_result, cc_solo_result, cc_teams_result)
@@ -234,7 +234,7 @@ def _prepare_query(
     return query, False
 
 
-@op()
+@op()  # type: ignore[reportUntypedFunctionDecorator]
 async def main(
     chat_provider: str = CHAT_DEFAULT_PROVIDER,
     query: str = "",

@@ -205,13 +205,16 @@ def _render_single_comparison(comp: BaselineComparison) -> None:
 
 
 def render_baseline_comparison(comparisons: list[BaselineComparison] | None) -> None:
-    """Render baseline comparison section for CC solo and teams.
+    """Render baseline comparison section for Claude Code solo and teams.
 
     Args:
         comparisons: List of BaselineComparison instances or None.
     """
     if not comparisons:
-        st.info("No baseline comparisons available. Provide CC artifact directories to compare.")
+        st.info(
+            "No baseline comparisons available. "
+            "Provide Claude Code artifact directories to compare."
+        )
         return
 
     st.subheader("🔄 Baseline Comparisons")
@@ -246,14 +249,14 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
         # Show baseline configuration inputs even when no result
         st.subheader("🔧 Baseline Comparison Configuration")
         st.text_input(
-            "CC Solo Directory",
+            "Claude Code Solo Directory",
             key="cc_solo_dir_input",
-            help="Path to CC solo session export directory",
+            help="Path to Claude Code solo session export directory",
         )
         st.text_input(
-            "CC Teams Directory",
+            "Claude Code Teams Directory",
             key="cc_teams_dir_input",
-            help="Path to CC Agent Teams artifacts directory",
+            help="Path to Claude Code Agent Teams artifacts directory",
         )
         return
 
