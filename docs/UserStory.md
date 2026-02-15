@@ -22,6 +22,7 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 - As a researcher, I want local tracing via `pip install` (Logfire + Phoenix) instead of 11 Docker containers so I can inspect agent traces without complex infrastructure setup.
 - As a researcher, I want a Streamlit dashboard showing Tier 1/2/3 evaluation scores so I can visually compare graph-based and text-based metrics without parsing log output.
 - As a researcher, I want an interactive agent graph visualization so I can see how agents delegated tasks and coordinated during review generation.
+- As a researcher, I want to compare PydanticAI MAS evaluation results against Claude Code baselines (solo and teams) so I can quantify the coordination quality difference between orchestration approaches.
 
 ## Success Criteria
 
@@ -45,12 +46,12 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 
 ## Out of Scope
 
-- Plugin architecture — restructuring `evals/` to `judge/` with `EvaluatorPlugin` interface (Sprint 3).
-- CC OTel tracing — standalone CC telemetry plugin (Sprint 3).
-- Evaluation baselines — Single-Agent and Parallel-Agents comparison benchmarks (Sprint 3).
-- Multi-channel deployment — FastAPI REST and MCP server endpoints (Sprint 3).
-- Model-aware content truncation — token-limit-aware truncation for provider rate limits (Sprint 3).
-- Migration cleanup — removing backward-compatibility shims (Sprint 3).
+- ~~Plugin architecture — restructuring `evals/` to `judge/` with `EvaluatorPlugin` interface.~~ (delivered Sprint 3)
+- ~~CC OTel tracing — standalone CC telemetry plugin.~~ (delivered Sprint 3)
+- ~~Evaluation baselines — CC solo and teams comparison.~~ (Sprint 4, Features 5-7)
+- Multi-channel deployment — FastAPI REST and MCP server endpoints.
+- Model-aware content truncation — token-limit-aware truncation for provider rate limits.
+- Migration cleanup — removing backward-compatibility shims.
 - A2A protocol migration (PydanticAI stays).
 - Streamlit UI redesign (existing UI stays as-is).
 - pytest-bdd / Gherkin scenarios (use pytest + hypothesis instead).

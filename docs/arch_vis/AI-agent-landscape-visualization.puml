@@ -19,12 +19,12 @@ rectangle "Development Infrastructure" as dev_infra #C8A2C8 {
 }
 
 rectangle "Observability & Monitoring" as obs #DDA0DD {
-  rectangle "Multi-Agent Observability:\nAgentNeo (decorator-based tracing)\nRagaAI-Catalyst (enterprise dashboards)\n\nLLM Application Observability:\nComet Opik (evaluation focus) • Langfuse (OpenTelemetry)\nArize Phoenix (path convergence) • Helicone (proxy-based)\nPydantic Logfire • LangSmith\n\nEnterprise/Commercial:\nNeptune.ai (foundation models) • Weights & Biases (Weave)\nEvidently AI (100+ metrics) • Dynatrace (AI-powered)\n\nSecurity & Compliance:\nVijil.ai (1.5M+ tests) • Coval (Waymo-scale testing)\nCekura.ai (YC-backed) • Cequence.ai (API protection)" as obs_tools
+  rectangle "Multi-Agent Observability:\nAgentNeo (decorator-based tracing)\nRagaAI-Catalyst (enterprise dashboards)\n\nLLM Application Observability:\nPydantic Logfire (auto-instrumentation) • Langfuse (OpenTelemetry)\nArize Phoenix (path convergence) • Helicone (proxy-based)\nComet CometLLM • LangSmith\n\nEnterprise/Commercial:\nNeptune.ai (foundation models) • Weights & Biases (Weave)\nEvidently AI (100+ metrics) • Dynatrace (AI-powered)\n\nSecurity & Compliance:\nVijil.ai (1.5M+ tests) • Coval (Waymo-scale testing)\nCekura.ai (YC-backed) • Cequence.ai (API protection)" as obs_tools
 }
 
 ' Middle row
 rectangle "Analysis & Metrics" as analysis #FFB6C1 {
-  rectangle "Graph Analysis:\nNetworkX (comprehensive) • NetworKit (10-2000x faster)\nPyTorch Geometric (GNNs) • Graphology (TypeScript)\n\nVisualization:\nPlotly (interactive) • Graphviz (static) • Streamlit\n\nTraditional Metrics:\nscikit-learn (industry standard) • TorchMetrics (GPU-optimized)\nHugging Face Evaluate (100+ metrics)\n\nText Evaluation:\nBERTScore (semantic) • ROUGE (summarization)\nBLEU (translation) • spaCy Similarity\n\nPost-Execution Graph Construction:\nspaCy + NetworkX • Neo4j GraphRAG\nUnstructured.io • LlamaIndex PropertyGraphIndex\nGoogle LangExtract • Relik Framework" as analysis_tools
+  rectangle "Graph Analysis:\nNetworkX (comprehensive) • NetworKit (10-2000x faster)\nPyTorch Geometric (GNNs) • Graphology (TypeScript)\n\nVisualization:\nPlotly (interactive) • Graphviz (static) • Streamlit\n\nTraditional Metrics:\nscikit-learn (industry standard) • TorchMetrics (GPU-optimized)\nHugging Face Evaluate (100+ metrics)\n\nText Evaluation:\nBERTScore (semantic) • ROUGE (summarization)\nBLEU (translation)\n\nPost-Execution Graph Construction:\nNetworkX (from execution traces) • Neo4j GraphRAG\nUnstructured.io • LlamaIndex PropertyGraphIndex\nRelik Framework" as analysis_tools
 }
 
 rectangle "Agent Frameworks" as frameworks #87CEEB {

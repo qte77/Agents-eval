@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-02-09
+updated: 2026-02-15
 category: architecture
-version: 3.3.0
+version: 3.4.0
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -40,7 +40,7 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 | ------ | ------ | ------- |
 | Tier 1 (Traditional) | VALIDATOR | Fast, objective text similarity baseline |
 | Tier 2 (LLM-Judge) | VALIDATOR | Semantic quality assessment |
-| Tier 3 (Graph) | PRIMARY | Coordination patterns from Opik traces |
+| Tier 3 (Graph) | PRIMARY | Coordination patterns from execution traces |
 
 **Validation Logic:**
 
@@ -50,7 +50,7 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 
 **Design Goals:**
 
-- **Graph (Tier 3)**: Rich analysis from Opik traces - PRIMARY innovation
+- **Graph (Tier 3)**: Rich analysis from execution traces - PRIMARY innovation
 - **Traditional (Tier 1)**: Keep SIMPLE - lightweight metrics only
 - **LLM-Judge (Tier 2)**: Keep SIMPLE - single LLM call, structured output
 
@@ -106,7 +106,7 @@ The evaluation framework is built around large context window models capable of 
 
 #### Traditional Evaluation Metrics
 
-**Location**: `src/app/judge/plugins/traditional.py` (Sprint 2 migration from `src/app/evals/traditional_metrics.py`)
+**Location**: `src/app/judge/plugins/traditional.py`
 
 - **Output Similarity Assessment** (config: `output_similarity`):
   - Cosine similarity (primary metric from config)
@@ -123,7 +123,7 @@ The evaluation framework is built around large context window models capable of 
 
 #### LLM-as-a-Judge Framework
 
-**Location**: `src/app/judge/plugins/llm_judge.py` (Sprint 2 migration from `src/app/evals/llm_evaluation_managers.py`)
+**Location**: `src/app/judge/plugins/llm_judge.py`
 
 - **Planning Rationality Assessment** (config: `planning_rationality`):
   - Decision-making process quality evaluation
@@ -140,16 +140,16 @@ The evaluation framework is built around large context window models capable of 
 
 #### Graph-Based Complexity Analysis
 
-**Location**: `src/app/judge/plugins/graph_metrics.py` (Sprint 2 migration from `src/app/evals/graph_analysis.py`)
+**Location**: `src/app/judge/plugins/graph_metrics.py`
 
 **Approach**: Post-execution behavioral analysis where agents autonomously decide tool use during execution, then observability logs are processed to construct behavioral graphs for retrospective evaluation.
 
 ##### Integration Workflow
 
 1. **Agent Execution** → PydanticAI agents (Manager/Researcher/Analyst/Synthesizer) autonomously decide tool use and coordination strategies during PeerRead paper processing
-2. **Observability Logging** → Opik captures comprehensive execution traces, tool usage patterns, and agent interactions in real-time
-3. **Graph Construction** → spaCy + NetworkX and Google LangExtract process trace logs to build behavioral graphs showing coordination patterns and decision flows
-4. **Analysis** → NetworkX and NetworKit analyze coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
+2. **Observability Logging** → Logfire auto-instrumentation captures comprehensive execution traces, tool usage patterns, and agent interactions (viewable via Arize Phoenix)
+3. **Graph Construction** → NetworkX processes trace data to build behavioral graphs showing coordination patterns and decision flows
+4. **Analysis** → NetworkX analyzes coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
 
 **Tool Selection**: See [Graph Analysis & Network Tools](landscape-evaluation-data-resources.md#6-graph-analysis--network-tools), [Post-Execution Graph Construction Tools](landscape-evaluation-data-resources.md#8-post-execution-graph-construction-tools), [Observability & Monitoring Platforms](landscape-agent-frameworks-infrastructure.md#4-observability--monitoring), and [Technical Analysis: Tracing Methods](landscape/trace_observe_methods.md) for detailed feasibility assessments and integration approaches.
 
@@ -179,7 +179,7 @@ The evaluation framework is built around large context window models capable of 
 
 #### Composite Scoring System
 
-**Location**: `src/app/judge/composite_scorer.py` (Sprint 2 migration from `src/app/evals/composite_scorer.py`)
+**Location**: `src/app/judge/composite_scorer.py`
 
 **Formula**: `Agent Score = Weighted Sum of Six Core Metrics`
 
@@ -203,11 +203,11 @@ The evaluation framework is built around large context window models capable of 
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 1 Complete)
+### Current Implementation (Sprint 3 Complete, Sprint 4 Active)
 
-The three-tiered evaluation framework is fully operational with the following components:
+The three-tiered evaluation framework is fully operational with plugin architecture:
 
-**✅ Tier 1 - Traditional Metrics** (`src/app/evals/traditional_metrics.py`):
+**✅ Tier 1 - Traditional Metrics** (`src/app/judge/plugins/traditional.py`):
 
 - Cosine similarity using TF-IDF vectorization
 - Jaccard similarity with enhanced textdistance support
@@ -215,34 +215,34 @@ The three-tiered evaluation framework is fully operational with the following co
 - Execution time measurement and normalization
 - Task success assessment with configurable thresholds
 
-**✅ Tier 2 - LLM-as-a-Judge** (`src/app/evals/llm_evaluation_managers.py`):
+**✅ Tier 2 - LLM-as-a-Judge** (`src/app/judge/plugins/llm_judge.py`):
 
 - Quality assessment using gpt-4o-mini model
 - Planning rationality evaluation
 - Technical accuracy scoring
 - Cost-budgeted evaluation with retry mechanisms
 
-**✅ Tier 3 - Graph Analysis (PRIMARY)** (`src/app/evals/graph_analysis.py`):
+**✅ Tier 3 - Graph Analysis (PRIMARY)** (`src/app/judge/plugins/graph_metrics.py`):
 
-- NetworkX-based behavioral pattern analysis **from Opik traces**
+- NetworkX-based behavioral pattern analysis **from execution traces**
 - Agent coordination quality measurement
 - Tool usage effectiveness evaluation
 - Performance bottleneck detection
 - **Primary differentiator** - all other tiers validate this
 
-**✅ Composite Scoring** (`src/app/evals/composite_scorer.py`):
+**✅ Composite Scoring** (`src/app/judge/composite_scorer.py`):
 
 - Six-metric weighted formula implementation
 - Recommendation mapping (accept/weak_accept/weak_reject/reject)
 - Configuration-driven weights from `JudgeSettings`
 
-**✅ Evaluation Pipeline** (`src/app/judge/agent.py` - Sprint 2 migration from `src/app/evals/evaluation_pipeline.py`):
+**✅ Evaluation Pipeline** (`src/app/judge/agent.py`):
 
 - End-to-end evaluation orchestration
 - Performance monitoring and error handling
 - Fallback strategies and timeout management
 
-### Plugin Architecture (Sprint 2 - Planned)
+### Plugin Architecture (Sprint 3 - Delivered)
 
 **Design Principles**: See [best-practices/mas-design-principles.md](best-practices/mas-design-principles.md) for 12-Factor Agents, Anthropic Harnesses, and PydanticAI integration patterns.
 
@@ -296,11 +296,12 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 
 ### Development Timeline
 
-**Foundation Phase**: Sprint 1 (Three-tiered Evaluation) - ✅ Complete (Aug 23-28, 2025)
-**Refactoring Phase**: Sprint 2 (SoC/SRP Refactoring) - 📋 Not Started (Next Priority)
-**Advanced Features Phase**: Sprint 3 - 📋 Blocked (awaiting Sprint 2 completion)
+- **Sprint 1**: Three-tiered evaluation framework -- Delivered
+- **Sprint 2**: Eval wiring, trace capture, Logfire+Phoenix, Streamlit dashboard -- Delivered
+- **Sprint 3**: Plugin architecture, GUI wiring, test alignment, optional weave, trace quality -- Delivered
+- **Sprint 4**: Operational resilience, CC baseline comparison (solo + teams) -- Active
 
-For detailed sprint information, implementation status, and development dependencies, see [roadmap.md](roadmap.md).
+For sprint details, see [roadmap.md](roadmap.md).
 
 ### New Metrics for Implementation
 
@@ -369,7 +370,7 @@ The system relies on several key technology categories for implementation and ev
   - Maintains the original facts, conclusions, and sources.
 - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
 
-### Critic Agent (Planned - Sprint 3)
+### Critic Agent (Proposed - Unscheduled)
 
 - **Description**: Dedicated skeptical reviewer that participates in all agent interactions to reduce hallucinations and compounding errors. Based on Stanford Virtual Lab research showing critic agents significantly improve output quality.
 - **Responsibilities**:
@@ -390,21 +391,21 @@ Based on Stanford's Agents4Science conference (300+ AI-generated papers analyzed
 - **Metric**: `reference_accuracy_score`
 - **Finding**: 56% of AI-generated papers contained ≥1 hallucinated reference
 - **Implementation**: Automated web search verification of cited sources
-- **Location**: Planned for `src/app/evals/citation_validator.py`
+- **Location**: Planned for `src/app/judge/citation_validator.py`
 
 ### Priority 2: Reviewer Calibration
 
 - **Metric**: `reviewer_calibration_score`, `reviewer_consistency_score`
 - **Finding**: Claude most balanced (closest to human experts), GPT most conservative, Gemini most sycophantic
 - **Implementation**: Tune LLM-as-Judge using PeerRead accepted/rejected baseline
-- **Location**: Enhancement to `src/app/evals/llm_evaluation_managers.py`
+- **Location**: Enhancement to `src/app/judge/plugins/llm_judge.py`
 
 ### Priority 3: Social Dynamics Tracking
 
 - **Metrics**: `agent_dominance_score`, `coordination_balance`
 - **Finding**: Agent speaking order affects outcome quality
-- **Implementation**: Extract from Opik traces - agent invocation order, message frequency/length
-- **Location**: Enhancement to `src/app/evals/graph_analysis.py`
+- **Implementation**: Extract from execution traces - agent invocation order, message frequency/length
+- **Location**: Enhancement to `src/app/judge/plugins/graph_metrics.py`
 
 ## Tools Available
 
@@ -499,10 +500,10 @@ Each architectural decision includes:
   - 12-Factor #6 compliance (execute as stateless processes)
   - Parallel evaluation via multiple judge replicas per tier
 - **Implementation**:
-  - Phase 1 (Sprint 2): Document pattern only, no implementation
-  - Phase 2 (Sprint 3+): Docker images, compose files, deployment docs
-  - Prerequisite: FastAPI API stability (Feature 10 dependency)
-- **Status**: Proposed (deferred to Sprint 3+)
+  - Phase 1: Document pattern only, no implementation
+  - Phase 2: Docker images, compose files, deployment docs
+  - Prerequisite: FastAPI API stability
+- **Status**: Proposed (deferred, unscheduled)
 
 ## Agentic System Architecture
 
