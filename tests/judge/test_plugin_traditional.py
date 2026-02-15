@@ -70,9 +70,7 @@ class TestTraditionalMetricsPlugin:
 
     def test_evaluate_delegates_to_engine(self, plugin, sample_input):
         """Given evaluation request, should delegate to TraditionalMetricsEngine."""
-        with patch(
-            "app.judge.plugins.traditional.TraditionalMetricsEngine"
-        ) as mock_engine_class:
+        with patch("app.judge.plugins.traditional.TraditionalMetricsEngine") as mock_engine_class:
             mock_engine = Mock()
             mock_engine_class.return_value = mock_engine
             mock_engine.evaluate_traditional_metrics.return_value = Tier1Result(
@@ -107,9 +105,7 @@ class TestTraditionalMetricsPlugin:
             end_time=0.1,
         )
 
-        with patch(
-            "app.judge.plugins.traditional.TraditionalMetricsEngine"
-        ) as mock_engine_class:
+        with patch("app.judge.plugins.traditional.TraditionalMetricsEngine") as mock_engine_class:
             mock_engine = Mock()
             mock_engine_class.return_value = mock_engine
             mock_engine.evaluate_traditional_metrics.return_value = Tier1Result(

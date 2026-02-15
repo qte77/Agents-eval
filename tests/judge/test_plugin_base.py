@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 from pydantic import BaseModel
 
-from app.data_models.evaluation_models import GraphTraceData, Tier1Result, Tier2Result, Tier3Result
+from app.data_models.evaluation_models import Tier1Result, Tier2Result, Tier3Result
 from app.judge.plugins.base import EvaluatorPlugin, PluginRegistry
 
 
@@ -237,7 +237,9 @@ class TestPluginRegistry:
 
         # Create a special Tier 2 plugin that validates context
         class ContextValidatingTier2Plugin(MockTier2Plugin):
-            def evaluate(self, input_data: MockPluginInput, context: dict | None = None) -> Tier2Result:
+            def evaluate(
+                self, input_data: MockPluginInput, context: dict | None = None
+            ) -> Tier2Result:
                 # Verify Tier 1 context is present
                 assert context is not None
                 assert "tier1_scores" in context
@@ -262,7 +264,9 @@ class TestPluginRegistry:
             def tier(self) -> int:
                 return 1
 
-            def evaluate(self, input_data: MockPluginInput, context: dict | None = None) -> Tier1Result:
+            def evaluate(
+                self, input_data: MockPluginInput, context: dict | None = None
+            ) -> Tier1Result:
                 raise ValueError("Simulated plugin failure")
 
             def get_context_for_next_tier(self, result: Tier1Result) -> dict:

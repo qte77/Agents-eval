@@ -186,7 +186,6 @@ class TestGraphEvaluatorPlugin:
         """
         # This test passes if we can import the module without breaking existing functionality
         from app.evals.graph_analysis import GraphAnalysisEngine
-
         from app.evals.settings import JudgeSettings
 
         settings = JudgeSettings()

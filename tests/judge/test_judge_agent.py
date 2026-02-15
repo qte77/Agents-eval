@@ -51,7 +51,7 @@ class TestJudgeAgent:
         assert any(isinstance(p, LLMJudgePlugin) for p in plugins)
         assert any(isinstance(p, GraphEvaluatorPlugin) for p in plugins)
 
-    def test_judge_agent_executes_tiers_in_order(self):
+    async def test_judge_agent_executes_tiers_in_order(self):
         """JudgeAgent executes plugins in tier order 1→2→3."""
         # This will fail until JudgeAgent is implemented
         agent = JudgeAgent()
@@ -60,7 +60,7 @@ class TestJudgeAgent:
         )
 
         # Should execute in tier order
-        result = agent.evaluate_comprehensive(
+        result = await agent.evaluate_comprehensive(
             paper=input_data.paper,
             review=input_data.review,
             execution_trace=input_data.execution_trace,
@@ -71,20 +71,20 @@ class TestJudgeAgent:
         assert result.composite_score >= 0.0
         assert result.composite_score <= 1.0
 
-    def test_judge_agent_passes_context_between_tiers(self):
+    async def test_judge_agent_passes_context_between_tiers(self):
         """JudgeAgent passes context from Tier 1 → Tier 2 → Tier 3."""
         # This will fail until JudgeAgent is implemented
         agent = JudgeAgent()
 
         # Execute evaluation
-        result = agent.evaluate_comprehensive(
+        result = await agent.evaluate_comprehensive(
             paper="Sample paper", review="Sample review"
         )
 
         # Verify context passing occurred (check trace store)
         assert result.evaluation_complete
 
-    def test_judge_agent_handles_graceful_degradation(self):
+    async def test_judge_agent_handles_graceful_degradation(self):
         """JudgeAgent handles tier failures with graceful degradation."""
         # This will fail until JudgeAgent is implemented
         from app.evals.settings import JudgeSettings
@@ -93,30 +93,30 @@ class TestJudgeAgent:
         settings = JudgeSettings(tier2_enabled=False)
         agent = JudgeAgent(settings=settings)
 
-        result = agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
+        result = await agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
 
         # Should still complete with Tier 1 and Tier 3
         assert result.composite_score >= 0.0
         assert result.tier2_score is None  # Tier 2 skipped
 
-    def test_judge_agent_stores_traces(self):
+    async def test_judge_agent_stores_traces(self):
         """JudgeAgent stores execution traces in TraceStore."""
         # This will fail until JudgeAgent and TraceStore are implemented
         agent = JudgeAgent()
 
-        result = agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
+        await agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
 
         # Verify traces were stored
         assert agent.trace_store is not None
         traces = agent.trace_store.get_all_traces()
         assert len(traces) > 0
 
-    def test_judge_agent_returns_composite_result(self):
+    async def test_judge_agent_returns_composite_result(self):
         """JudgeAgent returns CompositeResult from composite scorer."""
         # This will fail until JudgeAgent is implemented
         agent = JudgeAgent()
 
-        result = agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
+        result = await agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
 
         assert isinstance(result, CompositeResult)
         assert hasattr(result, "composite_score")
@@ -125,7 +125,7 @@ class TestJudgeAgent:
         assert hasattr(result, "tier2_score")
         assert hasattr(result, "tier3_score")
 
-    def test_judge_agent_respects_enabled_tiers(self):
+    async def test_judge_agent_respects_enabled_tiers(self):
         """JudgeAgent only executes enabled tiers."""
         # This will fail until JudgeAgent is implemented
         from app.evals.settings import JudgeSettings
@@ -134,7 +134,7 @@ class TestJudgeAgent:
         settings = JudgeSettings(tier1_enabled=True, tier2_enabled=False, tier3_enabled=False)
         agent = JudgeAgent(settings=settings)
 
-        result = agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
+        result = await agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
 
         # Only Tier 1 should have results
         assert result.tier1_score is not None
@@ -145,12 +145,12 @@ class TestJudgeAgent:
 class TestJudgeAgentPerformanceMonitoring:
     """Test JudgeAgent performance monitoring integration."""
 
-    def test_judge_agent_records_execution_time(self):
+    async def test_judge_agent_records_execution_time(self):
         """JudgeAgent records execution time for each tier."""
         # This will fail until JudgeAgent is implemented
         agent = JudgeAgent()
 
-        agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
+        await agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
 
         stats = agent.get_execution_stats()
         assert "tier1_time" in stats
@@ -158,12 +158,12 @@ class TestJudgeAgentPerformanceMonitoring:
         assert "tier3_time" in stats
         assert "total_time" in stats
 
-    def test_judge_agent_detects_bottlenecks(self):
+    async def test_judge_agent_detects_bottlenecks(self):
         """JudgeAgent detects performance bottlenecks."""
         # This will fail until JudgeAgent is implemented
         agent = JudgeAgent()
 
-        agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
+        await agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
 
         stats = agent.get_execution_stats()
         assert "bottlenecks_detected" in stats
