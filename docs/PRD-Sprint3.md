@@ -1,6 +1,6 @@
 ---
 title: Product Requirements Document: Agents-eval Sprint 3
-version: 3.4.0
+version: 3.8.0
 created: 2026-02-15
 updated: 2026-02-15
 ---
@@ -9,7 +9,7 @@ updated: 2026-02-15
 
 **Agents-eval** evaluates multi-agent AI systems using the PeerRead dataset for scientific paper review assessment. The system generates reviews via a 4-agent delegation pipeline (Manager → Researcher → Analyst → Synthesizer) and evaluates them through a three-tier engine: Tier 1 (traditional text metrics), Tier 2 (LLM-as-Judge), and Tier 3 (graph analysis).
 
-Sprint 3 restructures the evaluation pipeline into a plugin architecture (`EvaluatorPlugin` + `PluginRegistry` → `JudgeAgent`), adds model-aware content truncation for provider rate limits, and introduces a standalone CC OTel observability plugin. All Sprint 2 features (settings migration, eval wiring, trace capture, graph-vs-text comparison, Logfire+Phoenix tracing, Streamlit dashboard) are prerequisites.
+Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the evaluation pipeline into a plugin architecture (`EvaluatorPlugin` + `PluginRegistry` → `JudgeAgent`), adds model-aware content truncation for provider rate limits, introduces a standalone CC OTel observability plugin, aligns the test suite with documented testing strategy (hypothesis for property-based tests, inline-snapshot for regression tests), and wires the Streamlit GUI to display actual pydantic-settings defaults. All Sprint 2 features (settings migration, eval wiring, trace capture, graph-vs-text comparison, Logfire+Phoenix tracing, Streamlit dashboard) are prerequisites.
 
 ---
 
@@ -44,7 +44,35 @@ Sprint 3 restructures the evaluation pipeline into a plugin architecture (`Evalu
 
 ---
 
-#### Feature 6: EvaluatorPlugin Base and Registry
+#### Feature 6: Judge Provider Fallback
+
+**Description**: Make the Tier 2 LLM-as-Judge evaluation provider configurable and resilient. Currently hardcoded to `openai/gpt-4o-mini`, causing 401 errors when no `OPENAI_API_KEY` is set. The judge should validate API key availability at startup and fall back to an available provider or skip Tier 2 gracefully.
+
+**Acceptance Criteria**:
+
+- [ ] Judge provider validates API key availability before attempting evaluation
+- [ ] When configured provider's API key is missing, falls back to `tier2_fallback_provider`/`tier2_fallback_model`
+- [ ] When no valid judge provider is available, Tier 2 is skipped with a warning (not scored 0.0)
+- [ ] Composite score adjusts weights when Tier 2 is skipped (redistribute to Tier 1 + Tier 3)
+- [ ] `JudgeSettings.tier2_provider` and `tier2_model` overridable via `JUDGE_TIER2_PROVIDER` / `JUDGE_TIER2_MODEL` env vars (already exists, ensure it works end-to-end)
+- [ ] `make validate` passes
+
+**Technical Requirements**:
+
+- Add API key availability check in `LLMJudgeEngine` initialization
+- Implement provider fallback chain: configured → fallback → skip
+- Update `CompositeScorer` to handle missing Tier 2 (weight redistribution)
+- Log clear warning when Tier 2 is skipped due to missing provider
+
+**Files**:
+
+- `src/app/evals/llm_evaluation_managers.py` (provider validation + fallback)
+- `src/app/evals/composite_scorer.py` (weight redistribution when tier skipped)
+- `src/app/evals/settings.py` (ensure fallback settings work)
+
+---
+
+#### Feature 7: EvaluatorPlugin Base and Registry
 
 **Description**: Create `EvaluatorPlugin` ABC and `PluginRegistry` for typed, tier-ordered plugin execution.
 
@@ -68,7 +96,7 @@ Sprint 3 restructures the evaluation pipeline into a plugin architecture (`Evalu
 
 ---
 
-#### Feature 7: TraditionalMetricsPlugin Wrapper
+#### Feature 8: TraditionalMetricsPlugin Wrapper
 
 **Description**: Wrap existing `TraditionalMetricsEngine` as an `EvaluatorPlugin`.
 
@@ -90,7 +118,7 @@ Sprint 3 restructures the evaluation pipeline into a plugin architecture (`Evalu
 
 ---
 
-#### Feature 8: LLMJudgePlugin Wrapper
+#### Feature 9: LLMJudgePlugin Wrapper
 
 **Description**: Wrap existing `LLMJudgeEngine` as an `EvaluatorPlugin` with opt-in Tier 1 context enrichment.
 
@@ -112,7 +140,7 @@ Sprint 3 restructures the evaluation pipeline into a plugin architecture (`Evalu
 
 ---
 
-#### Feature 9: GraphEvaluatorPlugin Wrapper
+#### Feature 10: GraphEvaluatorPlugin Wrapper
 
 **Description**: Wrap existing `GraphAnalysisEngine` as an `EvaluatorPlugin`.
 
@@ -134,7 +162,7 @@ Sprint 3 restructures the evaluation pipeline into a plugin architecture (`Evalu
 
 ---
 
-#### Feature 10: Plugin-Driven Pipeline
+#### Feature 11: Plugin-Driven Pipeline
 
 **Description**: Replace `EvaluationPipeline` with `JudgeAgent` using `PluginRegistry` for tier-ordered plugin execution.
 
@@ -163,7 +191,7 @@ Sprint 3 restructures the evaluation pipeline into a plugin architecture (`Evalu
 
 ---
 
-#### Feature 11: Migration Cleanup
+#### Feature 12: Migration Cleanup
 
 **Description**: Remove backward-compatibility shims, update all imports, delete deprecated JSON config.
 
@@ -172,20 +200,22 @@ Sprint 3 restructures the evaluation pipeline into a plugin architecture (`Evalu
 - [ ] All imports use `judge.`, `common.` paths
 - [ ] No re-export shims remain
 - [ ] `config/config_eval.json` removed
+- [ ] Remove or implement commented-out `error_handling_context()` FIXME notes in `agent_system.py` (lines 443, 514, 583)
 - [ ] CHANGELOG.md updated
 - [ ] `make validate` passes, no dead code
 
 **Technical Requirements**:
 
 - Update all source and test imports from `evals.` to `judge.` paths
-- Remove re-export shim from Feature 10
+- Remove re-export shim from Feature 11
 - Delete deprecated `config/config_eval.json`
+- Resolve `error_handling_context()` FIXMEs: either implement as a context manager or delete the comments (current try/except at line 520 is adequate)
 
-**Files**: All source and test files (import updates), `CHANGELOG.md`
+**Files**: All source and test files (import updates), `CHANGELOG.md`, `src/app/agents/agent_system.py`
 
 ---
 
-#### Feature 12: CC OTel Observability Plugin
+#### Feature 13: CC OTel Observability Plugin
 
 **Description**: Standalone CC telemetry plugin using OTel → Logfire + Phoenix pipeline. Enables CC session tracing alongside PydanticAI Logfire auto-instrumentation.
 
@@ -213,6 +243,99 @@ Sprint 3 restructures the evaluation pipeline into a plugin architecture (`Evalu
 
 ---
 
+#### Feature 14: Wire GUI to Actual Settings
+
+**Description**: Connect Streamlit GUI to load and display actual default values from `CommonSettings` and `JudgeSettings` pydantic-settings classes. Remove hardcoded `PROMPTS_DEFAULT` fallback and load prompts directly from `ChatConfig`. Follows DRY principle (single source of truth) and KISS principle (simple display, no persistence).
+
+**Acceptance Criteria**:
+
+- [ ] Settings page displays `CommonSettings` fields (log_level, enable_logfire, max_content_length)
+- [ ] Settings page displays key `JudgeSettings` fields (tier timeouts, composite thresholds, enabled tiers)
+- [ ] Prompts page loads from `ChatConfig.prompts` without hardcoded fallback
+- [ ] GUI instantiates `CommonSettings()` and `JudgeSettings()` on startup
+- [ ] Displayed values match actual pydantic-settings defaults
+- [ ] Remove hardcoded `PROMPTS_DEFAULT` from `gui/config/config.py`
+- [ ] `make validate` passes
+- [ ] CHANGELOG.md updated
+
+**Technical Requirements**:
+
+- Instantiate `CommonSettings()` and `JudgeSettings()` in `src/run_gui.py`
+- Pass settings instances to `render_settings()`
+- Update `render_settings()` to display CommonSettings and key JudgeSettings fields
+- Update `render_prompts()` to use `ChatConfig.prompts` directly (remove fallback)
+- Delete `PROMPTS_DEFAULT` constant from `gui/config/config.py`
+- Read-only display (no save functionality per YAGNI principle)
+- Use Streamlit expanders to organize settings by category
+
+**Key Settings to Display** (JudgeSettings):
+
+- Tiers: `tiers_enabled`, `tier1_max_seconds`, `tier2_max_seconds`, `tier3_max_seconds`
+- Composite: `composite_accept_threshold`, `composite_weak_accept_threshold`
+- Tier 2: `tier2_provider`, `tier2_model`, `tier2_cost_budget_usd`
+- Observability: `trace_collection`, `logfire_enabled`, `phoenix_endpoint`
+
+**Out of Scope** (per YAGNI):
+
+- Saving edited settings back to .env file (read-only display only)
+- Full CRUD for all 50+ JudgeSettings fields (show key 12-15 fields only)
+- Settings validation/editing (display actual values only)
+
+**Files**:
+
+- `src/run_gui.py` (instantiate CommonSettings, JudgeSettings)
+- `src/gui/pages/settings.py` (render CommonSettings, key JudgeSettings)
+- `src/gui/pages/prompts.py` (remove hardcoded fallback)
+- `src/gui/config/config.py` (delete PROMPTS_DEFAULT)
+
+---
+
+#### Feature 15: Test Infrastructure Alignment
+
+**Description**: Refactor existing tests to use hypothesis (property-based testing) and inline-snapshot (regression testing), aligning test suite with documented testing-strategy.md practices. No production code changes. Explicitly excludes BDD/Gherkin (pytest-bdd).
+
+**Acceptance Criteria**:
+
+- [ ] Property-based tests using `@given` for math formulas (score bounds, composite calculations)
+- [ ] Property-based tests for input validation (arbitrary text handling)
+- [ ] Property-based tests for serialization (model dumps always valid)
+- [ ] Snapshot tests using `snapshot()` for Pydantic `.model_dump()` outputs
+- [ ] Snapshot tests for complex nested result structures
+- [ ] Snapshot tests for GraphTraceData transformations
+- [ ] Remove low-value tests (trivial assertions, field existence checks per testing-strategy.md)
+- [ ] All existing test coverage maintained or improved
+- [ ] `make validate` passes
+- [ ] CHANGELOG.md updated
+
+**Technical Requirements**:
+
+- Add `from hypothesis import given, strategies as st` imports
+- Add `from inline_snapshot import snapshot` imports
+- Convert score calculation tests to property tests with invariants (0.0 ≤ score ≤ 1.0)
+- Convert model serialization tests to snapshot tests
+- Document usage patterns in test files for future reference
+- NO pytest-bdd, NO Gherkin, NO BDD methodology (use TDD with hypothesis for properties)
+
+**Priority Test Areas** (from testing-strategy.md):
+
+- **CRITICAL**: Math formulas (composite scoring, normalization bounds)
+- **CRITICAL**: Loop termination (evaluation pipeline timeouts)
+- **HIGH**: Input validation (arbitrary paper/review text)
+- **HIGH**: Serialization (Tier1/2/3 result model dumps)
+- **MEDIUM**: Invariants (tier weight sums, score aggregation)
+
+**Files**:
+
+- `tests/evals/test_composite_scorer.py` (score bounds properties)
+- `tests/evals/test_traditional_metrics.py` (similarity score properties)
+- `tests/data_models/test_peerread_models_serialization.py` (snapshot tests)
+- `tests/evals/test_evaluation_pipeline.py` (result structure snapshots)
+- `tests/evals/test_llm_evaluation_managers.py` (fallback property tests)
+- `tests/evals/test_graph_analysis.py` (graph metric properties)
+- Other test files as needed (~10-15 files total)
+
+---
+
 ## Non-Functional Requirements
 
 - **Maintainability:**
@@ -229,6 +352,9 @@ Sprint 3 restructures the evaluation pipeline into a plugin architecture (`Evalu
 
 - A2A protocol migration (PydanticAI stays)
 - Agent system restructuring (`src/app/agents/` unchanged except trace instrumentation)
+- Streaming with Pydantic model outputs (`agent_system.py:522` `NotImplementedError` — PydanticAI supports `stream_struct()`/`agent.iter()` but integration deferred)
+- Gemini provider compatibility (`agent_system.py:610` FIXME — `ModelRequest` iteration and `MALFORMED_FUNCTION_CALL` literal errors)
+- HuggingFace provider implementation (falls through to generic OpenAI-compatible path, no dedicated handling needed yet)
 - pytest-bdd / Gherkin scenarios (use pytest + hypothesis instead)
 - HuggingFace `datasets` library (use GitHub API downloader instead)
 - Google Gemini SDK (`google-genai`) — use OpenAI-spec compatible providers only
@@ -243,13 +369,16 @@ Sprint 3 restructures the evaluation pipeline into a plugin architecture (`Evalu
 
 <!-- PARSER REQUIREMENT: Include story count in parentheses -->
 <!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
-Story Breakdown - Sprint 3 (8 stories total):
+Story Breakdown - Sprint 3 (11 stories total):
 
 - **Feature 5 (Content Truncation)** → STORY-007: Model-aware content truncation
-- **Feature 6 (Plugin Base)** → STORY-008: EvaluatorPlugin base and registry (depends: STORY-004)
-- **Feature 7 (Traditional Adapter)** → STORY-009: TraditionalMetricsPlugin wrapper (depends: STORY-008)
-- **Feature 8 (LLM Judge Adapter)** → STORY-010: LLMJudgePlugin wrapper (depends: STORY-008)
-- **Feature 9 (Graph Adapter)** → STORY-011: GraphEvaluatorPlugin wrapper (depends: STORY-008)
-- **Feature 10 (Plugin Pipeline)** → STORY-012: JudgeAgent replaces EvaluationPipeline (depends: STORY-009, STORY-010, STORY-011)
-- **Feature 11 (Migration Cleanup)** → STORY-013: Remove shims and update imports (depends: STORY-012)
-- **Feature 12 (CC OTel)** → STORY-014: CC OTel observability plugin (depends: STORY-012)
+- **Feature 6 (Judge Fallback)** → STORY-008: Judge provider fallback for Tier 2
+- **Feature 7 (Plugin Base)** → STORY-009: EvaluatorPlugin base and registry (depends: STORY-004)
+- **Feature 8 (Traditional Adapter)** → STORY-010: TraditionalMetricsPlugin wrapper (depends: STORY-009)
+- **Feature 9 (LLM Judge Adapter)** → STORY-011: LLMJudgePlugin wrapper (depends: STORY-009)
+- **Feature 10 (Graph Adapter)** → STORY-012: GraphEvaluatorPlugin wrapper (depends: STORY-009)
+- **Feature 11 (Plugin Pipeline)** → STORY-013: JudgeAgent replaces EvaluationPipeline (depends: STORY-010, STORY-011, STORY-012)
+- **Feature 12 (Migration Cleanup)** → STORY-014: Remove shims and update imports (depends: STORY-013)
+- **Feature 13 (CC OTel)** → STORY-015: CC OTel observability plugin (depends: STORY-013)
+- **Feature 14 (GUI Settings Wiring)** → STORY-016: Wire GUI to actual settings (depends: STORY-014)
+- **Feature 15 (Test Refactoring)** → STORY-017: Test infrastructure alignment (depends: STORY-014)
