@@ -203,7 +203,9 @@ The evaluation framework is built around large context window models capable of 
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 3 Complete, Sprint 4 Active)
+**Note**: Sprint 5 architectural changes (provider fallback, weight redistribution, graph analysis fixes) will be documented here upon completion of STORY-005 (Documentation Updates).
+
+### Current Implementation (Sprint 4 Complete, Sprint 5 Active)
 
 The three-tiered evaluation framework is fully operational with plugin architecture:
 
@@ -299,7 +301,8 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 1**: Three-tiered evaluation framework -- Delivered
 - **Sprint 2**: Eval wiring, trace capture, Logfire+Phoenix, Streamlit dashboard -- Delivered
 - **Sprint 3**: Plugin architecture, GUI wiring, test alignment, optional weave, trace quality -- Delivered
-- **Sprint 4**: Operational resilience, CC baseline comparison (solo + teams) -- Active
+- **Sprint 4**: Operational resilience, Claude Code baseline comparison (solo + teams) -- Delivered
+- **Sprint 5**: Runtime fixes, GUI enhancements, architecture improvements, code quality review -- Active
 
 For sprint details, see [roadmap.md](roadmap.md).
 

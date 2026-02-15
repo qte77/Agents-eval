@@ -44,11 +44,17 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 - Tracing via Logfire SDK + Arize Phoenix (zero Docker containers). `logfire.instrument_pydantic_ai()` auto-instruments all PydanticAI agents.
 - Streamlit + Phoenix are complementary (separate services on different ports), not embedded. Phoenix for trace inspection, Streamlit for custom evaluation dashboards.
 
+## Current Sprint Status
+
+**Sprint 2-4 Success Criteria**: ✅ All delivered (automatic evaluation, real traces, graph metrics, Logfire+Phoenix, Streamlit dashboard, Claude Code baseline comparison)
+
+**Sprint 5 Active**: Runtime fixes (judge provider fallback, token limits, score fairness, dataset validation), GUI enhancements (background execution, debug logs, editable settings), architecture improvements (OTLP endpoint, graph analysis accuracy, tool delegation), code quality review, and test suite audit. See [PRD-Sprint5-Ralph.md](PRD-Sprint5-Ralph.md) for detailed scope.
+
 ## Out of Scope
 
 - ~~Plugin architecture — restructuring `evals/` to `judge/` with `EvaluatorPlugin` interface.~~ (delivered Sprint 3)
-- ~~CC OTel tracing — standalone CC telemetry plugin.~~ (delivered Sprint 3)
-- ~~Evaluation baselines — CC solo and teams comparison.~~ (Sprint 4, Features 5-7)
+- ~~Claude Code OTel tracing — standalone Claude Code telemetry plugin.~~ (delivered Sprint 3)
+- ~~Evaluation baselines — Claude Code solo and teams comparison.~~ (delivered Sprint 4)
 - Multi-channel deployment — FastAPI REST and MCP server endpoints.
 - Model-aware content truncation — token-limit-aware truncation for provider rate limits.
 - Migration cleanup — removing backward-compatibility shims.

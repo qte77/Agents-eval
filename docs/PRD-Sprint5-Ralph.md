@@ -9,7 +9,7 @@ updated: 2026-02-15
 
 **Agents-eval** evaluates multi-agent AI systems using the PeerRead dataset for scientific paper review assessment. The system generates reviews via a 4-agent delegation pipeline (Manager -> Researcher -> Analyst -> Synthesizer) and evaluates them through a three-tier engine: Tier 1 (traditional text metrics), Tier 2 (LLM-as-Judge), and Tier 3 (graph analysis).
 
-Sprint 4 delivered operational resilience (Logfire, graph timeouts, test alignment) and CC baseline comparison infrastructure.
+Sprint 4 delivered operational resilience (Logfire, graph timeouts, test alignment) and Claude Code baseline comparison infrastructure.
 
 Sprint 5 addresses runtime bugs, GUI enhancements, architectural improvements, code quality review, and technical debt cleanup across 17 stories:
 
