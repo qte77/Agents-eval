@@ -178,8 +178,7 @@ def _truncate_paper_content(abstract: str, body: str, max_length: int) -> str:
     result = abstract_section + truncated_body + "\n[TRUNCATED]"
 
     logger.warning(
-        f"Content truncated: {len(full_content)} chars -> {len(result)} chars "
-        f"(limit: {max_length})"
+        f"Content truncated: {len(full_content)} chars -> {len(result)} chars (limit: {max_length})"
     )
 
     return result
@@ -242,7 +241,9 @@ def _load_and_format_template(
             template_content = f.read()
 
         # Truncate paper content before formatting into template
-        truncated_content = _truncate_paper_content(paper_abstract, paper_content, max_content_length)
+        truncated_content = _truncate_paper_content(
+            paper_abstract, paper_content, max_content_length
+        )
 
         return template_content.format(
             paper_title=paper_title,

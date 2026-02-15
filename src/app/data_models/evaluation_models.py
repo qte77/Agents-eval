@@ -143,7 +143,9 @@ class CompositeResult(BaseModel):
 
     # Tier-level scores
     tier1_score: float = Field(ge=0.0, le=1.0, description="Traditional metrics overall score")
-    tier2_score: float = Field(ge=0.0, le=1.0, description="LLM-as-Judge overall score")
+    tier2_score: float | None = Field(
+        default=None, ge=0.0, le=1.0, description="LLM-as-Judge overall score (None if skipped)"
+    )
     tier3_score: float = Field(ge=0.0, le=1.0, description="Graph analysis overall score")
 
     # Evaluation metadata

@@ -226,14 +226,14 @@ class TestLLMJudgeEngine:
 
     def test_fallback_planning_check(self, engine, sample_data):
         """Fallback planning check should analyze activity patterns."""
-        # Test optimal activity level
+        # Test optimal activity level - capped at 0.5 per STORY-002
         score = engine._fallback_planning_check(sample_data["execution_trace"])
-        assert 0.5 < score <= 1.0  # Should be in good range
+        assert 0.0 <= score <= 0.5  # Should be capped at neutral
 
         # Test low activity
         low_activity_trace = {"agent_interactions": [], "tool_calls": []}
         score = engine._fallback_planning_check(low_activity_trace)
-        assert score < 0.5
+        assert score <= 0.5  # Also capped at 0.5
 
         # Test excessive activity
         high_activity_trace = {
@@ -241,7 +241,7 @@ class TestLLMJudgeEngine:
             "tool_calls": [{"name": "test"}] * 10,
         }
         score = engine._fallback_planning_check(high_activity_trace)
-        assert score < 1.0  # Should penalize excessive activity
+        assert score <= 0.5  # Capped at neutral per STORY-002
 
     # Complete evaluation tests
     @pytest.mark.asyncio

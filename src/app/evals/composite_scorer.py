@@ -363,3 +363,67 @@ class CompositeScorer:
             f"coordination={coordination_score:.3f}"
         )
         return agent_metrics
+
+    def evaluate_composite_with_optional_tier2(self, results: EvaluationResults) -> CompositeResult:
+        """Evaluate composite score with optional Tier 2 (handles missing Tier 2).
+
+        When Tier 2 is None, redistributes weights to Tier 1 and Tier 3.
+
+        Args:
+            results: Container with tier1, tier3, and optional tier2 results
+
+        Returns:
+            CompositeResult with adjusted weights when Tier 2 is missing
+        """
+        if results.tier2 is None:
+            logger.warning(
+                "Tier 2 (LLM-as-Judge) skipped - no valid provider available. "
+                "Redistributing weights to Tier 1 + Tier 3."
+            )
+            # Redistribute Tier 2 metrics (planning_rationality: 0.167) to other metrics
+            # Split evenly across remaining 5 metrics
+            # FIXME redundant weights, should only be in config
+            adjusted_weights = {
+                "time_taken": 0.2,  # 0.167 + 0.033
+                "task_success": 0.2,  # 0.167 + 0.033
+                "coordination_quality": 0.2,  # 0.167 + 0.033
+                "tool_efficiency": 0.2,  # 0.167 + 0.033
+                "output_similarity": 0.2,  # 0.167 + 0.033
+            }
+
+            # Extract metrics from Tier 1 and Tier 3 only
+            if not results.tier1 or not results.tier3:
+                raise ValueError("Tier 1 and Tier 3 are required when Tier 2 is missing")
+
+            metrics = {
+                "time_taken": results.tier1.time_score,
+                "task_success": results.tier1.task_success,
+                "output_similarity": results.tier1.overall_score,
+                "coordination_quality": results.tier3.coordination_centrality,
+                "tool_efficiency": results.tier3.tool_selection_accuracy,
+            }
+
+            # Calculate composite score with adjusted weights
+            composite_score = sum(
+                metrics[metric] * weight for metric, weight in adjusted_weights.items()
+            )
+            composite_score = max(0.0, min(1.0, composite_score))
+
+            recommendation = self.map_to_recommendation(composite_score)
+            recommendation_weight = self.get_recommendation_weight(recommendation)
+
+            return CompositeResult(
+                composite_score=composite_score,
+                recommendation=recommendation,
+                recommendation_weight=recommendation_weight,
+                metric_scores=metrics,
+                tier1_score=results.tier1.overall_score,
+                tier2_score=None,  # Tier 2 skipped
+                tier3_score=results.tier3.overall_score,
+                evaluation_complete=False,  # Not complete without Tier 2
+                weights_used=adjusted_weights,
+                tiers_enabled=sorted(self.settings.get_enabled_tiers()),
+            )
+        else:
+            # All tiers available, use standard evaluation
+            return self.evaluate_composite(results)

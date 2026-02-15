@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic_ai import Agent
 
 from app.agents.agent_factories import create_evaluation_agent
+from app.data_models.app_models import AppEnv
 from app.data_models.evaluation_models import (
     ConstructivenessAssessment,
     PlanningRationalityAssessment,
@@ -21,6 +22,7 @@ from app.data_models.evaluation_models import (
     Tier2Result,
 )
 from app.evals.traditional_metrics import TraditionalMetricsEngine
+from app.llms.providers import get_api_key
 from app.utils.log import logger
 
 if TYPE_CHECKING:
@@ -57,6 +59,52 @@ class LLMJudgeEngine:
             "constructiveness": 0.3,
             "planning_rationality": 0.3,
         }
+
+    def validate_provider_api_key(self, provider: str, env_config: AppEnv) -> bool:
+        """Validate API key availability for a provider.
+
+        Args:
+            provider: Provider name to validate
+            env_config: Application environment configuration
+
+        Returns:
+            True if API key is available and valid, False otherwise
+        """
+        is_valid, message = get_api_key(provider, env_config)
+        if not is_valid:
+            logger.debug(f"API key validation failed for {provider}: {message}")
+        return is_valid
+
+    def select_available_provider(
+        self, env_config: AppEnv
+    ) -> tuple[str, str] | None:
+        """Select available provider with fallback chain.
+
+        Args:
+            env_config: Application environment configuration
+
+        Returns:
+            Tuple of (provider, model) if available, None if no providers available
+        """
+        # Try primary provider first
+        if self.validate_provider_api_key(self.provider, env_config):
+            logger.info(f"Using primary provider: {self.provider}/{self.model}")
+            return (self.provider, self.model)
+
+        # Try fallback provider
+        if self.validate_provider_api_key(self.fallback_provider, env_config):
+            logger.info(
+                f"Primary provider unavailable, using fallback: "
+                f"{self.fallback_provider}/{self.fallback_model}"
+            )
+            return (self.fallback_provider, self.fallback_model)
+
+        # No providers available
+        logger.warning(
+            f"Neither primary ({self.provider}) nor fallback ({self.fallback_provider}) "
+            f"providers have valid API keys. Tier 2 will be skipped."
+        )
+        return None
 
     async def create_judge_agent(self, assessment_type: str, use_fallback: bool = False) -> Agent:
         """
@@ -121,8 +169,17 @@ Provide scores and brief explanation."""
 
         except Exception as e:
             logger.warning(f"Technical accuracy assessment failed: {e}")
-            # Fallback to semantic similarity
-            return self.fallback_engine.compute_semantic_similarity(paper, review)
+            # Distinguish auth failures (401) from timeouts per STORY-002
+            error_msg = str(e).lower()
+            is_auth_failure = "401" in error_msg or "unauthorized" in error_msg
+
+            if is_auth_failure:
+                # Auth failures get neutral score (0.5) - provider unavailable
+                logger.warning("Auth failure detected - using neutral fallback score")
+                return 0.5
+            else:
+                # Timeouts and other errors use semantic similarity fallback
+                return self.fallback_engine.compute_semantic_similarity(paper, review)
 
     async def assess_constructiveness(self, review: str) -> float:
         """Assess constructiveness and helpfulness of review."""
@@ -319,7 +376,11 @@ Provide scores and brief explanation."""
             return "Limited trace data available"
 
     def _fallback_constructiveness_check(self, review: str) -> float:
-        """Simple fallback for constructiveness assessment."""
+        """Simple fallback for constructiveness assessment.
+
+        Returns:
+            Fallback score capped at 0.5 (neutral) per STORY-002 acceptance criteria
+        """
         constructive_phrases = [
             "suggest",
             "recommend",
@@ -340,10 +401,16 @@ Provide scores and brief explanation."""
         review_lower = review.lower()
         matches = sum(1 for phrase in constructive_phrases if phrase in review_lower)
 
-        return min(1.0, matches / len(constructive_phrases))
+        # Cap fallback scores at 0.5 (neutral) per STORY-002
+        raw_score = matches / len(constructive_phrases)
+        return min(0.5, raw_score)
 
     def _fallback_planning_check(self, execution_trace: dict[str, Any]) -> float:
-        """Simple fallback for planning rationality."""
+        """Simple fallback for planning rationality.
+
+        Returns:
+            Fallback score capped at 0.5 (neutral) per STORY-002 acceptance criteria
+        """
         try:
             interactions = len(execution_trace.get("agent_interactions", []))
             tool_calls = len(execution_trace.get("tool_calls", []))
@@ -352,13 +419,14 @@ Provide scores and brief explanation."""
             total_activity = interactions + tool_calls
 
             if total_activity <= 2:
-                activity_score = total_activity / 2.0
+                activity_score = total_activity / 4.0  # Cap at 0.5 for 2 activities
             elif total_activity <= 10:
-                activity_score = 1.0  # Optimal range
+                activity_score = 0.5  # Optimal range capped at neutral
             else:
-                activity_score = max(0.5, 1.0 - (total_activity - 10) * 0.05)
+                activity_score = max(0.0, 0.5 - (total_activity - 10) * 0.05)
 
-            return min(1.0, max(0.0, activity_score))
+            # Cap fallback scores at 0.5 (neutral) per STORY-002
+            return min(0.5, max(0.0, activity_score))
 
         except Exception:
             return 0.5  # Neutral score when trace unavailable

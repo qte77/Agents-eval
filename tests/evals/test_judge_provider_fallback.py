@@ -23,7 +23,7 @@ class TestProviderAPIKeyValidation:
     def test_validate_primary_provider_api_key_available(self):
         """Should return True when primary provider API key is available."""
         settings = JudgeSettings(tier2_provider="openai", tier2_model="gpt-4o-mini")
-        env_config = AppEnv(openai_api_key="test-key-123")
+        env_config = AppEnv(OPENAI_API_KEY="test-key-123")
 
         engine = LLMJudgeEngine(settings)
         is_valid = engine.validate_provider_api_key(settings.tier2_provider, env_config)
@@ -47,7 +47,7 @@ class TestProviderAPIKeyValidation:
             tier2_fallback_provider="github",
             tier2_fallback_model="gpt-4o-mini",
         )
-        env_config = AppEnv(github_api_key="github-test-key")
+        env_config = AppEnv(GITHUB_API_KEY="github-test-key")
 
         engine = LLMJudgeEngine(settings)
         is_valid = engine.validate_provider_api_key(settings.tier2_fallback_provider, env_config)
@@ -61,7 +61,7 @@ class TestProviderFallbackChain:
     def test_should_use_primary_when_available(self):
         """Should use primary provider when API key is available."""
         settings = JudgeSettings(tier2_provider="openai")
-        env_config = AppEnv(openai_api_key="test-key")
+        env_config = AppEnv(OPENAI_API_KEY="test-key")
 
         engine = LLMJudgeEngine(settings)
         selected_provider = engine.select_available_provider(env_config)
@@ -75,7 +75,7 @@ class TestProviderFallbackChain:
             tier2_fallback_provider="github",
             tier2_fallback_model="gpt-4o-mini",
         )
-        env_config = AppEnv(github_api_key="github-key")  # No openai_api_key
+        env_config = AppEnv(GITHUB_API_KEY="github-key")  # No OPENAI_API_KEY
 
         engine = LLMJudgeEngine(settings)
         selected_provider = engine.select_available_provider(env_config)
