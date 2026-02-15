@@ -59,8 +59,8 @@
         "src/gui/pages/run_app.py",
         "tests/app/test_cli_token_limit.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-15T22:13:22Z",
       "content_hash": "2efb79696a2af308b336daf4235ac9299933e30b0669f0eb7532cb3e70f98ab1",
       "depends_on": []
     },
@@ -170,7 +170,7 @@
         "If execution is in progress when returning to App tab, spinner is displayed",
         "Execution result (`CompositeResult`, agent output) stored in `st.session_state`",
         "Error state stored in session state and displayed when user returns",
-        "Tests: pytest unit tests for session state transitions (idle \u2192 running \u2192 completed/error)",
+        "Tests: pytest unit tests for session state transitions (idle → running → completed/error)",
         "Tests: inline-snapshot for session state keys after execution",
         "`make validate` passes",
         "CHANGELOG.md updated"
