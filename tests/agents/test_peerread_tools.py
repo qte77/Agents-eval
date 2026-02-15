@@ -260,13 +260,14 @@ class TestContentTruncation:
 
         # Capture logs via Loguru sink
         import io
+
         from loguru import logger
 
         log_capture = io.StringIO()
         handler_id = logger.add(log_capture, level="WARNING")
 
         try:
-            result = _truncate_paper_content(abstract, body, max_length)
+            _truncate_paper_content(abstract, body, max_length)
             log_output = log_capture.getvalue()
 
             # Should log warning with size information
