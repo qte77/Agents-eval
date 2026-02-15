@@ -397,19 +397,11 @@ def add_peerread_review_tools_to_manager(
         success = False
 
         try:
-            # Create PeerReadReview object
+            # Create PeerReadReview — only set fields we have, model defaults apply
             review = PeerReadReview(
-                impact="N/A",
-                substance="N/A",
-                appropriateness="N/A",
-                meaningful_comparison="N/A",
-                presentation_format="N/A",
                 comments=review_text,
-                soundness_correctness="N/A",
-                originality="N/A",
-                recommendation=recommendation or "N/A",
-                clarity="N/A",
-                reviewer_confidence=str(confidence) if confidence > 0 else "N/A",
+                recommendation=recommendation if recommendation else "UNKNOWN",
+                reviewer_confidence=str(confidence) if confidence > 0 else "UNKNOWN",
             )
 
             # Save to persistent storage
@@ -457,21 +449,8 @@ def add_peerread_review_tools_to_manager(
 
             # Convert structured review to PeerReadReview format for persistence
             peerread_format = structured_review.to_peerread_format()
-            # Create PeerReadReview with proper type conversion
-            review = PeerReadReview(
-                impact=peerread_format["IMPACT"] or "N/A",
-                substance=peerread_format["SUBSTANCE"] or "N/A",
-                appropriateness=peerread_format["APPROPRIATENESS"] or "N/A",
-                meaningful_comparison=peerread_format["MEANINGFUL_COMPARISON"] or "N/A",
-                presentation_format=peerread_format["PRESENTATION_FORMAT"] or "Poster",
-                comments=peerread_format["comments"] or "No comments provided",
-                soundness_correctness=peerread_format["SOUNDNESS_CORRECTNESS"] or "N/A",
-                originality=peerread_format["ORIGINALITY"] or "N/A",
-                recommendation=peerread_format["RECOMMENDATION"] or "N/A",
-                clarity="N/A",
-                reviewer_confidence=peerread_format["REVIEWER_CONFIDENCE"] or "N/A",
-                is_meta_review=None,
-            )
+            # Pydantic handles uppercase→lowercase via validation_alias and defaults
+            review = PeerReadReview.model_validate(peerread_format)
 
             # Save to persistent storage
             persistence = ReviewPersistence()
