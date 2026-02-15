@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-009: `cc_otel` module for Claude Code OpenTelemetry instrumentation with Phoenix OTLP backend
 - STORY-010: GUI settings page displays actual values from `CommonSettings` and `JudgeSettings` pydantic-settings classes
 - STORY-010: GUI prompts page loads directly from `ChatConfig.prompts` without hardcoded fallback
+- STORY-011: Property-based tests using Hypothesis for score bounds, input validation, and math invariants
+- STORY-011: Snapshot tests using inline-snapshot for Pydantic model dumps and structure regression
 
 ### Added
 
