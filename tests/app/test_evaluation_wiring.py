@@ -9,6 +9,9 @@ ground-truth reviews.
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import CompositeResult, Tier1Result
 
@@ -175,3 +178,66 @@ def test_skip_eval_cli_argument_parsing():
     # Test without --skip-eval flag
     args = parse_args(["--query=test"])
     assert "skip_eval" not in args
+
+
+# STORY-004: Hypothesis property-based tests for wiring invariants
+class TestEvaluationWiringInvariants:
+    """Property-based tests for evaluation wiring invariants."""
+
+    @given(
+        composite_score=st.floats(min_value=0.0, max_value=1.0, allow_nan=False),
+        tier1_score=st.floats(min_value=0.0, max_value=1.0, allow_nan=False),
+    )
+    def test_composite_result_score_bounds(self, composite_score, tier1_score):
+        """Property: CompositeResult scores always in valid bounds."""
+        # Arrange & Act
+        result = CompositeResult(
+            composite_score=composite_score,
+            recommendation="accept",
+            recommendation_weight=0.8,
+            metric_scores={"test": 0.5},
+            tier1_score=tier1_score,
+            tier2_score=0.0,
+            tier3_score=0.0,
+            evaluation_complete=True,
+        )
+
+        # Assert invariants
+        assert 0.0 <= result.composite_score <= 1.0
+        assert 0.0 <= result.tier1_score <= 1.0
+        assert result.recommendation in ["accept", "weak_accept", "weak_reject", "reject"]
+
+
+# STORY-004: Inline-snapshot regression tests for wiring outputs
+class TestEvaluationWiringSnapshots:
+    """Snapshot tests for evaluation wiring output structures."""
+
+    def test_composite_result_structure(self):
+        """Snapshot: CompositeResult model dump structure."""
+        # Arrange
+        result = CompositeResult(
+            tier1=Tier1Result(
+                cosine_score=0.8,
+                jaccard_score=0.75,
+                semantic_score=0.85,
+                execution_time=0.5,
+                time_score=0.9,
+                task_success=1.0,
+                overall_score=0.82,
+            ),
+            composite_score=0.8,
+            total_execution_time=1.0,
+            recommendation="accept",
+            recommendation_weight=1.0,
+            metric_scores={"cosine_score": 0.8},
+            tier1_score=0.82,
+            tier2_score=0.0,
+            tier3_score=0.0,
+            evaluation_complete=True,
+        )
+
+        # Act
+        dumped = result.model_dump()
+
+        # Assert with snapshot
+        assert dumped == snapshot()

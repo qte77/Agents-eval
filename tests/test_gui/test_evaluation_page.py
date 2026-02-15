@@ -8,6 +8,9 @@ Tests verify that the page renders Tier 1/2/3 scores and graph vs text compariso
 from unittest.mock import patch
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import (
     CompositeResult,
@@ -222,3 +225,62 @@ class TestEvaluationPage:
         # Should NOT contain graph metrics
         assert "path_convergence" not in metrics
         assert "tool_selection_accuracy" not in metrics
+
+
+# STORY-004: Hypothesis property-based tests for GUI state management
+class TestEvaluationPageStateInvariants:
+    """Property-based tests for GUI state management invariants."""
+
+    @given(
+        composite_score=st.floats(min_value=0.0, max_value=1.0, allow_nan=False),
+        tier_scores=st.lists(
+            st.floats(min_value=0.0, max_value=1.0, allow_nan=False), min_size=3, max_size=3
+        ),
+    )
+    def test_composite_result_rendering_invariants(self, composite_score, tier_scores):
+        """Property: CompositeResult always renders without errors."""
+        # Arrange
+        result = CompositeResult(
+            composite_score=composite_score,
+            recommendation="accept",
+            recommendation_weight=0.8,
+            metric_scores={"test_metric": 0.5},
+            tier1_score=tier_scores[0],
+            tier2_score=tier_scores[1],
+            tier3_score=tier_scores[2],
+            evaluation_complete=True,
+        )
+
+        # Act & Assert - should not raise
+        from gui.pages.evaluation import render_evaluation
+
+        with patch("streamlit.header"), patch("streamlit.metric"), patch("streamlit.bar_chart"):
+            render_evaluation(result)
+
+
+# STORY-004: Inline-snapshot regression tests for GUI page rendering
+class TestEvaluationPageRenderingSnapshots:
+    """Snapshot tests for GUI page rendering output structures."""
+
+    def test_mock_composite_result_structure(self, mock_composite_result):
+        """Snapshot: Mock CompositeResult structure for GUI testing."""
+        # Act
+        dumped = mock_composite_result.model_dump()
+
+        # Assert with snapshot
+        assert dumped == snapshot()
+
+    def test_mock_tier_results_structure(self, mock_tier_results):
+        """Snapshot: Mock tier results structure for GUI testing."""
+        # Arrange
+        tier1, tier2, tier3 = mock_tier_results
+
+        # Act
+        tier_data = {
+            "tier1": tier1.model_dump(),
+            "tier2": tier2.model_dump(),
+            "tier3": tier3.model_dump(),
+        }
+
+        # Assert with snapshot
+        assert tier_data == snapshot()

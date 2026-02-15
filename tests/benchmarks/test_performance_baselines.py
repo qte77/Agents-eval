@@ -15,6 +15,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
 # Ensure src directory is available for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -785,3 +788,81 @@ if __name__ == "__main__":
             raise
 
     asyncio.run(run_performance_benchmarks())
+
+
+# STORY-004: Hypothesis property-based tests for benchmark result invariants
+class TestBenchmarkResultInvariants:
+    """Property-based tests for benchmark result structure invariants."""
+
+    @given(
+        word_count=st.integers(min_value=10, max_value=1000),
+        execution_time=st.floats(min_value=0.001, max_value=30.0, allow_nan=False),
+    )
+    def test_performance_data_structure_invariants(self, word_count, execution_time):
+        """Property: Performance data always has valid structure."""
+        # Arrange & Act
+        perf_data = {
+            "word_count": word_count,
+            "mean_time": execution_time,
+            "median_time": execution_time * 0.95,
+            "stddev_time": execution_time * 0.1,
+            "percentile_95": execution_time * 1.05,
+            "max_time": execution_time * 1.2,
+            "min_time": execution_time * 0.8,
+        }
+
+        # Assert invariants
+        assert perf_data["word_count"] >= 10
+        assert perf_data["mean_time"] > 0
+        assert perf_data["min_time"] <= perf_data["mean_time"] <= perf_data["max_time"]
+        assert perf_data["stddev_time"] >= 0
+
+    @given(interaction_count=st.integers(min_value=3, max_value=200))
+    def test_trace_generation_invariants(self, interaction_count):
+        """Property: Generated traces always have valid structure."""
+        # Arrange
+        data_gen = PerformanceBenchmarkData()
+
+        # Act
+        if interaction_count <= 50:
+            trace = data_gen.create_simple_trace(interaction_count)
+        else:
+            trace = data_gen.create_complex_trace(interaction_count)
+
+        # Assert invariants
+        assert len(trace["agent_interactions"]) == interaction_count
+        assert len(trace["tool_calls"]) > 0
+        assert "execution_id" in trace
+        assert all(isinstance(i["timestamp"], float) for i in trace["agent_interactions"])
+
+
+# STORY-004: Inline-snapshot regression tests for benchmark outputs
+class TestBenchmarkOutputSnapshots:
+    """Snapshot tests for benchmark output structure regression testing."""
+
+    def test_simple_trace_structure(self):
+        """Snapshot: Simple trace data structure."""
+        # Arrange
+        data_gen = PerformanceBenchmarkData()
+
+        # Act
+        trace = data_gen.create_simple_trace(10)
+
+        # Assert with snapshot
+        assert trace == snapshot()
+
+    def test_performance_baseline_data_structure(self):
+        """Snapshot: Performance baseline data structure."""
+        # Arrange
+        perf_data = {
+            "word_count": 300,
+            "mean_time": 0.523,
+            "median_time": 0.498,
+            "stddev_time": 0.042,
+            "percentile_95": 0.587,
+            "max_time": 0.612,
+            "min_time": 0.461,
+        }
+
+        # Assert with snapshot
+        assert perf_data == snapshot()

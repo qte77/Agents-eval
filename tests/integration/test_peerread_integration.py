@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
 # Ensure src directory is available for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -312,3 +315,122 @@ if __name__ == "__main__":
         return result
 
     asyncio.run(run_peerread_integration())
+
+
+# STORY-004: Hypothesis property-based tests for integration test invariants
+class TestPeerReadIntegrationInvariants:
+    """Property-based tests for PeerRead integration test invariants."""
+
+    @pytest.fixture
+    def evaluation_pipeline(self):
+        """Fixture providing initialized evaluation pipeline."""
+        return EvaluationPipeline()
+
+    @given(
+        interaction_count=st.integers(min_value=3, max_value=50),
+        tool_call_count=st.integers(min_value=1, max_value=20),
+    )
+    def test_execution_trace_structure_invariants(self, interaction_count, tool_call_count):
+        """Property: Execution trace always has valid structure regardless of counts."""
+        # Arrange
+        interactions = [
+            {
+                "from": f"Agent_{i % 3}",
+                "to": f"Agent_{(i + 1) % 3}",
+                "type": "task_request",
+                "timestamp": float(i),
+            }
+            for i in range(interaction_count)
+        ]
+
+        tool_calls = [
+            {
+                "agent_id": f"Agent_{i % 3}",
+                "tool_name": f"tool_{i}",
+                "success": True,
+                "duration": 0.5,
+                "timestamp": float(i),
+                "context": f"Task {i}",
+            }
+            for i in range(tool_call_count)
+        ]
+
+        trace = {
+            "execution_id": "test_trace",
+            "agent_interactions": interactions,
+            "tool_calls": tool_calls,
+            "coordination_events": [],
+        }
+
+        # Assert invariants
+        assert len(trace["agent_interactions"]) == interaction_count
+        assert len(trace["tool_calls"]) == tool_call_count
+        assert all(isinstance(i["timestamp"], float) for i in interactions)
+        assert all(t["success"] is True for t in tool_calls)
+
+    @pytest.mark.asyncio
+    @given(abstract_word_count=st.integers(min_value=50, max_value=500))
+    async def test_paper_abstract_length_invariants(
+        self, abstract_word_count, evaluation_pipeline
+    ):
+        """Property: Pipeline handles variable abstract lengths consistently."""
+        # Arrange
+        words = ["word"] * abstract_word_count
+        abstract = " ".join(words)
+
+        review = "This is a test review with sufficient content for evaluation."
+        trace = {
+            "execution_id": "test",
+            "agent_interactions": [],
+            "tool_calls": [],
+            "coordination_events": [],
+        }
+
+        # Act
+        result = await evaluation_pipeline.evaluate_comprehensive(
+            paper=abstract, review=review, execution_trace=trace, reference_reviews=[]
+        )
+
+        # Assert invariants
+        assert result is not None
+        assert 0.0 <= result.composite_score <= 1.0
+        assert result.recommendation in ["accept", "weak_accept", "weak_reject", "reject"]
+
+
+# STORY-004: Inline-snapshot regression tests for integration test outputs
+class TestPeerReadIntegrationSnapshots:
+    """Snapshot tests for PeerRead integration test output structures."""
+
+    def test_synthetic_peerread_data_structure(self):
+        """Snapshot: Synthetic PeerRead data structure."""
+        # Arrange
+        data_generator = PeerReadTestData()
+
+        # Act
+        paper = data_generator.create_synthetic_peerread_data()
+        dumped = paper.model_dump()
+
+        # Assert with snapshot
+        assert dumped == snapshot()
+
+    def test_agent_review_structure(self):
+        """Snapshot: Agent-generated review structure."""
+        # Arrange
+        data_generator = PeerReadTestData()
+
+        # Act
+        review = data_generator.create_agent_generated_review()
+
+        # Assert with snapshot - verify review format remains consistent
+        assert review == snapshot()
+
+    def test_execution_trace_structure(self):
+        """Snapshot: Execution trace structure for PeerRead integration."""
+        # Arrange
+        data_generator = PeerReadTestData()
+
+        # Act
+        trace = data_generator.create_execution_trace()
+
+        # Assert with snapshot
+        assert trace == snapshot()

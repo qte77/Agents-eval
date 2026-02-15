@@ -7,6 +7,9 @@ operations without evaluation logic.
 
 import httpx
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
 from app.data_models.peerread_models import (
     PeerReadConfig,
@@ -278,3 +281,144 @@ class TestRealExternalDependencies:
         except Exception as e:
             # Document failure for implementation adjustment
             pytest.skip(f"Real data validation failed: {e}. Update models.")
+
+
+# STORY-004: Hypothesis property-based tests for data validation invariants
+class TestPeerReadDataInvariants:
+    """Property-based tests for PeerRead data validation invariants."""
+
+    @given(
+        paper_id=st.text(min_size=1, max_size=100),
+        title=st.text(min_size=1, max_size=500),
+        abstract=st.text(min_size=1, max_size=5000),
+    )
+    def test_peerread_paper_validation_invariants(self, paper_id, title, abstract):
+        """Property: PeerReadPaper model always validates with valid text inputs."""
+        # Arrange & Act
+        paper = PeerReadPaper(
+            paper_id=paper_id,
+            title=title,
+            abstract=abstract,
+            reviews=[],
+            review_histories=[],
+        )
+
+        # Assert invariants
+        assert paper.paper_id == paper_id
+        assert paper.title == title
+        assert paper.abstract == abstract
+        assert isinstance(paper.reviews, list)
+        assert len(paper.reviews) == 0
+
+    @given(
+        impact=st.sampled_from(["1", "2", "3", "4", "5"]),
+        substance=st.sampled_from(["1", "2", "3", "4", "5"]),
+        recommendation=st.sampled_from(["1", "2", "3", "4", "5"]),
+    )
+    def test_peerread_review_rating_invariants(self, impact, substance, recommendation):
+        """Property: PeerReadReview ratings always within valid range."""
+        # Arrange & Act
+        review = PeerReadReview(
+            impact=impact,
+            substance=substance,
+            appropriateness="3",
+            meaningful_comparison="3",
+            presentation_format="Poster",
+            comments="Test comment",
+            soundness_correctness="3",
+            originality="3",
+            recommendation=recommendation,
+            clarity="3",
+            reviewer_confidence="3",
+        )
+
+        # Assert invariants
+        assert review.impact in ["1", "2", "3", "4", "5"]
+        assert review.substance in ["1", "2", "3", "4", "5"]
+        assert review.recommendation in ["1", "2", "3", "4", "5"]
+
+    @given(st.lists(st.text(min_size=1, max_size=100), min_size=1, max_size=10))
+    def test_url_construction_invariants(self, paper_ids):
+        """Property: URL construction always produces valid URLs."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Act & Assert invariants
+        for paper_id in paper_ids:
+            url = downloader._construct_url("acl_2017", "train", "reviews", paper_id)
+            # Invariant: URL always starts with base URL
+            assert url.startswith("https://raw.githubusercontent.com/allenai/PeerRead/master/data/")
+            # Invariant: URL always ends with paper_id.json
+            assert url.endswith(f"{paper_id}.json")
+            # Invariant: URL contains venue, split, and type
+            assert "acl_2017" in url
+            assert "train" in url
+            assert "reviews" in url
+
+
+# STORY-004: Inline-snapshot regression tests for data structures
+class TestPeerReadDataSnapshots:
+    """Snapshot tests for PeerRead data structure regression testing."""
+
+    def test_peerread_paper_model_dump_structure(self):
+        """Snapshot: PeerReadPaper model_dump output structure."""
+        # Arrange
+        paper = PeerReadPaper(
+            paper_id="test_001",
+            title="Test Paper Title",
+            abstract="Test paper abstract with sufficient content.",
+            reviews=[
+                PeerReadReview(
+                    impact="4",
+                    substance="3",
+                    appropriateness="4",
+                    meaningful_comparison="3",
+                    presentation_format="Oral",
+                    comments="Well-structured paper with good methodology.",
+                    soundness_correctness="4",
+                    originality="3",
+                    recommendation="3",
+                    clarity="4",
+                    reviewer_confidence="4",
+                )
+            ],
+            review_histories=["Submitted", "Under Review"],
+        )
+
+        # Act
+        dumped = paper.model_dump()
+
+        # Assert with snapshot
+        assert dumped == snapshot()
+
+    def test_peerread_config_model_dump_structure(self):
+        """Snapshot: PeerReadConfig default model_dump output structure."""
+        # Arrange
+        config = PeerReadConfig()
+
+        # Act
+        dumped = config.model_dump()
+
+        # Assert with snapshot
+        assert dumped == snapshot()
+
+    def test_url_construction_output_format(self):
+        """Snapshot: URL construction output format."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Act
+        urls = {
+            "acl_2017_train": downloader._construct_url("acl_2017", "train", "reviews", "104"),
+            "conll_2016_dev": downloader._construct_url("conll_2016", "dev", "reviews", "205"),
+            "iclr_2017_test": downloader._construct_url("iclr_2017", "test", "reviews", "306"),
+        }
+
+        # Assert with snapshot
+        assert urls == snapshot()
