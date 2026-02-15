@@ -4,7 +4,7 @@ This module tests the LogfireInstrumentationManager which uses
 logfire.instrument_pydantic_ai() for automatic PydanticAI agent tracing.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -110,7 +110,7 @@ def test_instrumentation_manager_graceful_degradation():
         service_name="test-service",
     )
 
-    with patch("app.agents.logfire_instrumentation.LOGFIRE_AVAILABLE", False):
+    with patch("app.agents.logfire_instrumentation._logfire_available", False):
         manager = LogfireInstrumentationManager(config)
 
         # Should still create manager but with disabled state

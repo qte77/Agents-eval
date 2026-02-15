@@ -28,8 +28,6 @@ Functions:
 
 import time
 import uuid
-from collections.abc import Callable
-from typing import Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
@@ -38,10 +36,7 @@ from pydantic_ai.common_tools.duckduckgo import (
 )
 from pydantic_ai.usage import UsageLimits
 
-from app.agents.opik_instrumentation import (
-    get_instrumentation_manager,
-    initialize_opik_instrumentation,
-)
+from app.agents.logfire_instrumentation import initialize_logfire_instrumentation
 from app.data_models.app_models import (
     AgentConfig,
     AnalysisResult,
@@ -70,14 +65,17 @@ from app.tools.peerread_tools import (
     add_peerread_tools_to_manager,
 )
 from app.utils.error_messages import generic_exception, invalid_data_model_format
-from app.utils.load_configs import OpikConfig
+from app.utils.load_configs import LogfireConfig
 from app.utils.log import logger
 
 
-def initialize_opik_instrumentation_from_settings(
+def initialize_logfire_instrumentation_from_settings(
     settings: JudgeSettings | None = None,
 ) -> None:
-    """Initialize Opik instrumentation from JudgeSettings.
+    """Initialize Logfire instrumentation from JudgeSettings.
+
+    Uses logfire.instrument_pydantic_ai() for automatic tracing.
+    No manual decorators needed - all PydanticAI agents auto-instrumented.
 
     Args:
         settings: JudgeSettings instance. If None, uses default JudgeSettings().
@@ -85,24 +83,11 @@ def initialize_opik_instrumentation_from_settings(
     try:
         if settings is None:
             settings = JudgeSettings()
-        opik_config = OpikConfig.from_settings(settings)
-        initialize_opik_instrumentation(opik_config)
-        logger.info(f"Opik instrumentation initialized: enabled={opik_config.enabled}")
+        logfire_config = LogfireConfig.from_settings(settings)
+        initialize_logfire_instrumentation(logfire_config)
+        logger.info(f"Logfire instrumentation initialized: enabled={logfire_config.enabled}")
     except Exception as e:
-        logger.warning(f"Failed to initialize Opik instrumentation: {e}")
-
-
-_F = TypeVar("_F", bound=Callable[..., Any])
-
-
-def get_opik_decorator(
-    agent_name: str, agent_role: str, execution_phase: str
-) -> Callable[[_F], _F]:
-    """Get Opik tracking decorator if available."""
-    manager = get_instrumentation_manager()
-    if manager and manager.config.enabled:
-        return manager.track_agent_execution(agent_name, agent_role, execution_phase)
-    return lambda func: func  # type: ignore[return-value]  # No-op identity decorator
+        logger.warning(f"Failed to initialize Logfire instrumentation: {e}")
 
 
 def _validate_model_return(
@@ -127,10 +112,11 @@ def _add_research_tool(
     research_agent: Agent[None, BaseModel],
     result_type: type[ResearchResult | ResearchResultSimple | ReviewGenerationResult],
 ):
-    """Add research delegation tool to manager agent."""
-    opik_decorator = get_opik_decorator("researcher", "research", "information_gathering")
+    """Add research delegation tool to manager agent.
 
-    @opik_decorator
+    Auto-instrumented by logfire.instrument_pydantic_ai() - no manual decorators needed.
+    """
+
     @manager_agent.tool
     async def delegate_research(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], query: str
@@ -173,10 +159,11 @@ def _add_analysis_tool(
     manager_agent: Agent[None, BaseModel],
     analysis_agent: Agent[None, BaseModel],
 ):
-    """Add analysis delegation tool to manager agent."""
-    opik_decorator = get_opik_decorator("analyst", "analysis", "analytical_processing")
+    """Add analysis delegation tool to manager agent.
 
-    @opik_decorator
+    Auto-instrumented by logfire.instrument_pydantic_ai() - no manual decorators needed.
+    """
+
     @manager_agent.tool
     async def delegate_analysis(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], query: str
@@ -216,10 +203,11 @@ def _add_synthesis_tool(
     manager_agent: Agent[None, BaseModel],
     synthesis_agent: Agent[None, BaseModel],
 ):
-    """Add synthesis delegation tool to manager agent."""
-    opik_decorator = get_opik_decorator("synthesizer", "synthesis", "integration_synthesis")
+    """Add synthesis delegation tool to manager agent.
 
-    @opik_decorator
+    Auto-instrumented by logfire.instrument_pydantic_ai() - no manual decorators needed.
+    """
+
     @manager_agent.tool
     async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], query: str
@@ -494,8 +482,6 @@ def get_manager(
     )
 
 
-# Apply Opik tracing decorator to run_manager
-@get_opik_decorator("manager", "orchestrator", "coordination")
 async def run_manager(
     manager: Agent[None, BaseModel],
     query: UserPromptType,
@@ -506,6 +492,9 @@ async def run_manager(
     """
     Asynchronously runs the manager with the given query and provider, handling errors
         and printing results.
+
+    Auto-instrumented by logfire.instrument_pydantic_ai() - no manual decorators needed.
+
     Args:
         manager (Agent): The system agent responsible for running the query.
         query (str): The query to be processed by the manager.

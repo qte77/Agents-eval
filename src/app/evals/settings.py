@@ -48,14 +48,10 @@ class JudgeSettings(BaseSettings):
         composite_weak_reject_threshold: Score threshold for "weak_reject"
         trace_collection: Enable trace collection
         trace_storage_path: Directory for trace file storage
-        opik_enabled: Enable Opik tracing
-        opik_url: Opik backend API URL. Defaults to local (http://localhost:8080).
-            For Comet cloud, set JUDGE_OPIK_URL=https://cloud.comet.com
-        opik_workspace: Opik workspace name
-        opik_project: Opik project name
-        opik_log_start_trace_span: Log trace/span start events
-        opik_batch_size: Trace batch size for SDK flush
-        opik_timeout_seconds: SDK request timeout
+        logfire_enabled: Enable Logfire tracing
+        logfire_send_to_cloud: Send traces to Logfire cloud (requires LOGFIRE_TOKEN)
+        phoenix_endpoint: Phoenix local trace viewer endpoint
+        logfire_service_name: Service name for tracing
         performance_logging: Enable performance logging
     """
 
@@ -100,13 +96,10 @@ class JudgeSettings(BaseSettings):
     # Observability
     trace_collection: bool = Field(default=True)
     trace_storage_path: str = Field(default="./logs/traces/")
-    opik_enabled: bool = Field(default=True)
-    opik_url: str = Field(default="http://localhost:8080")
-    opik_workspace: str = Field(default="peerread-evaluation")
-    opik_project: str = Field(default="peerread-evaluation")
-    opik_log_start_trace_span: bool = Field(default=True)
-    opik_batch_size: int = Field(default=100)
-    opik_timeout_seconds: float = Field(default=30.0, gt=0, le=300)
+    logfire_enabled: bool = Field(default=True)
+    logfire_send_to_cloud: bool = Field(default=False)
+    phoenix_endpoint: str = Field(default="http://localhost:6006")
+    logfire_service_name: str = Field(default="peerread-evaluation")
     performance_logging: bool = Field(default=True)
 
     model_config = SettingsConfigDict(

@@ -24,7 +24,8 @@ dependencies = [
     "networkx>=3.5",  # Graph analysis (May 29, 2025 maintained)
     "scalene>=1.5.54",  # High-performance CPU, GPU, and memory profiler
     "weave>=0.51.49",
-    "opik>=1.8.0",  # Tracing
+    "arize-phoenix>=5.6.3",  # Local trace viewer via pip (replaces Docker-based Opik)
+    "openinference-instrumentation-pydantic-ai>=0.1.4",  # PydanticAI auto-instrumentation
 ]
 
 [project.urls]

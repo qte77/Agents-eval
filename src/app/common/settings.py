@@ -19,12 +19,12 @@ class CommonSettings(BaseSettings):
 
     Attributes:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        enable_opik: Enable Opik tracing integration
+        enable_logfire: Enable Logfire tracing integration
         max_content_length: Maximum content length for paper content (characters)
     """
 
     log_level: str = "INFO"
-    enable_opik: bool = False
+    enable_logfire: bool = False
     max_content_length: int = 15000
 
     model_config = SettingsConfigDict(
