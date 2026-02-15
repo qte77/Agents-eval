@@ -24,26 +24,7 @@ from app.evals.llm_evaluation_managers import LLMJudgeEngine
 from app.evals.performance_monitor import PerformanceMonitor
 from app.evals.settings import JudgeSettings
 from app.evals.traditional_metrics import TraditionalMetricsEngine
-from app.utils.load_configs import OpikConfig
 from app.utils.log import logger
-
-# Set up Opik imports with fallback
-OPIK_AVAILABLE: bool = False
-track = None  # type: ignore
-
-try:
-    from opik import track  # type: ignore
-
-    OPIK_AVAILABLE = True  # type: ignore
-except ImportError:
-    # Fallback when opik is not available
-    def track(**kwargs: Any) -> Any:  # type: ignore
-        """No-op decorator fallback."""
-
-        def decorator(func: Any) -> Any:
-            return func
-
-        return decorator
 
 
 class EvaluationPipeline:
@@ -74,9 +55,6 @@ class EvaluationPipeline:
         self.settings = settings
         self.performance_monitor = PerformanceMonitor(settings.get_performance_targets())
 
-        # Initialize Opik configuration from settings
-        self.opik_config = OpikConfig.from_settings(settings)
-
         # Initialize engines with settings
         self.traditional_engine = TraditionalMetricsEngine()
         self.llm_engine = LLMJudgeEngine(settings)
@@ -89,9 +67,6 @@ class EvaluationPipeline:
             f"EvaluationPipeline initialized with JudgeSettings: tiers={enabled_tiers}, "
             f"fallback_strategy={fallback_strategy}"
         )
-
-        # Pre-configure Opik decorator for performance optimization
-        self._opik_decorator_enabled = OPIK_AVAILABLE and self.opik_config.enabled
 
     @property
     def enabled_tiers(self) -> set[int]:
@@ -193,7 +168,6 @@ class EvaluationPipeline:
 
             execution_time = time.time() - start_time
             self.performance_monitor.record_tier_execution(1, execution_time)
-            self._record_opik_metadata(1, execution_time, result)
             logger.info(f"Tier 1 completed in {execution_time:.2f}s")
             return result, execution_time
 
@@ -202,14 +176,12 @@ class EvaluationPipeline:
             error_msg = f"Tier 1 timeout after {timeout}s (traditional metrics evaluation)"
             logger.error(f"{error_msg}. Consider increasing tier1_max_seconds in config.")
             self.performance_monitor.record_tier_failure(1, "timeout", execution_time, error_msg)
-            self._record_opik_metadata(1, execution_time, error=error_msg)
             return None, execution_time
         except Exception as e:
             execution_time = time.time() - start_time
             error_msg = f"Tier 1 failed with {type(e).__name__}: {e}"
             logger.error(f"{error_msg}. Paper length: {len(paper)}, Review length: {len(review)}")
             self.performance_monitor.record_tier_failure(1, "error", execution_time, str(e))
-            self._record_opik_metadata(1, execution_time, error=error_msg)
             return None, execution_time
 
     async def _execute_tier2(
@@ -242,7 +214,6 @@ class EvaluationPipeline:
 
             execution_time = time.time() - start_time
             self.performance_monitor.record_tier_execution(2, execution_time)
-            self._record_opik_metadata(2, execution_time, result)
             logger.info(f"Tier 2 completed in {execution_time:.2f}s")
             return result, execution_time
 
@@ -254,7 +225,6 @@ class EvaluationPipeline:
                 "LLM service availability."
             )
             self.performance_monitor.record_tier_failure(2, "timeout", execution_time, error_msg)
-            self._record_opik_metadata(2, execution_time, error=error_msg)
             return None, execution_time
         except Exception as e:
             execution_time = time.time() - start_time
@@ -271,7 +241,6 @@ class EvaluationPipeline:
                     "Connection failed - check network connectivity and service availability"
                 )
             self.performance_monitor.record_tier_failure(2, "error", execution_time, str(e))
-            self._record_opik_metadata(2, execution_time, error=error_msg)
             return None, execution_time
 
     def _create_trace_data(self, execution_trace: dict[str, Any] | None) -> GraphTraceData:
@@ -308,7 +277,6 @@ class EvaluationPipeline:
             logger.error("Graph construction error - check trace data format")
 
         self.performance_monitor.record_tier_failure(3, "error", execution_time, str(e))
-        self._record_opik_metadata(3, execution_time, error=error_msg)
         return None, execution_time
 
     async def _execute_tier3(
@@ -343,7 +311,6 @@ class EvaluationPipeline:
 
             execution_time = time.time() - start_time
             self.performance_monitor.record_tier_execution(3, execution_time)
-            self._record_opik_metadata(3, execution_time, result)
             logger.info(f"Tier 3 completed in {execution_time:.2f}s")
             return result, execution_time
 
@@ -354,7 +321,6 @@ class EvaluationPipeline:
                 f"{error_msg}. Consider increasing tier3_max_seconds or simplifying trace data."
             )
             self.performance_monitor.record_tier_failure(3, "timeout", execution_time, error_msg)
-            self._record_opik_metadata(3, execution_time, error=error_msg)
             return None, execution_time
         except Exception as e:
             return self._handle_tier3_error(e, execution_trace, start_time)
@@ -469,39 +435,6 @@ class EvaluationPipeline:
 
         logger.info("=" * 60)
 
-    def _apply_opik_decorator(self, func: Any) -> Any:
-        """Apply Opik tracking decorator if available and enabled."""
-        if self._opik_decorator_enabled:
-            return track(
-                name="evaluation_pipeline_comprehensive",
-                tags=["evaluation", "three-tier", "pipeline"],
-            )(func)
-        return func
-
-    def _record_opik_metadata(
-        self, tier: int, execution_time: float, result: Any = None, error: str | None = None
-    ):
-        """Record tier execution metadata for Opik tracing."""
-        if not self._opik_decorator_enabled:
-            return
-
-        # Reason: Opik metadata recording is handled by the @track decorator
-        # This method serves as a placeholder for future enhanced metadata collection
-        try:
-            metadata: dict[str, Any] = {
-                f"tier{tier}_execution_time": float(execution_time),
-                f"tier{tier}_success": bool(error is None),
-                "enabled_tiers": list(self.enabled_tiers),
-            }
-            if error:
-                metadata[f"tier{tier}_error"] = str(error)
-            if result:
-                metadata[f"tier{tier}_result_type"] = str(type(result).__name__)
-
-            logger.debug(f"Opik metadata for tier {tier}: {metadata}")
-        except Exception as e:
-            logger.debug(f"Failed to record Opik metadata: {e}")
-
     async def evaluate_comprehensive(
         self,
         paper: str,
@@ -531,18 +464,7 @@ class EvaluationPipeline:
             else:
                 trace_dict = execution_trace
 
-        # Apply Opik decorator dynamically
-        decorated_func = self._apply_opik_decorator(self._evaluate_comprehensive_impl)
-        return await decorated_func(paper, review, trace_dict, reference_reviews)
-
-    async def _evaluate_comprehensive_impl(
-        self,
-        paper: str,
-        review: str,
-        execution_trace: dict[str, Any] | None = None,
-        reference_reviews: list[str] | None = None,
-    ) -> CompositeResult:
-        """Implementation of comprehensive evaluation pipeline."""
+        # Execute comprehensive evaluation pipeline
         pipeline_start = time.time()
         logger.info("Starting comprehensive three-tier evaluation pipeline")
 
@@ -552,8 +474,8 @@ class EvaluationPipeline:
         try:
             # Execute all enabled tiers
             tier1_result, _ = await self._execute_tier1(paper, review, reference_reviews)
-            tier2_result, _ = await self._execute_tier2(paper, review, execution_trace)
-            tier3_result, _ = await self._execute_tier3(execution_trace)
+            tier2_result, _ = await self._execute_tier2(paper, review, trace_dict)
+            tier3_result, _ = await self._execute_tier3(trace_dict)
 
             # Execution times are already tracked by performance_monitor in tier methods
 
