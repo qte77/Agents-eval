@@ -68,8 +68,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed (Sprint 4)
 
 - STORY-001: Noisy ConnectionRefusedError stack traces when Logfire/OTLP endpoint unreachable (both CLI and GUI)
-- Feature 5: CC trace adapter -- parse CC artifacts into `GraphTraceData` in two modes: solo (single CC instance, no orchestration) and teams (CC Agent Teams with delegation), both with full tool/plugin/MCP access
-- Feature 6: Baseline comparison engine -- `BaselineComparison` Pydantic model + `compare()`/`compare_all()` for three-way `CompositeResult` diffing (PydanticAI vs CC-solo vs CC-teams)
+- Feature 5 (STORY-005): CC trace adapter -- parse CC artifacts into `GraphTraceData` in two modes: solo (single CC instance, no orchestration) and teams (CC Agent Teams with delegation), both with full tool/plugin/MCP access
+- Feature 6 (STORY-006): Baseline comparison engine -- `BaselineComparison` Pydantic model + `compare()`/`compare_all()` for three-way `CompositeResult` diffing (PydanticAI vs CC-solo vs CC-teams)
+  - `compare()` function for pairwise diffing of any two `CompositeResult` instances
+  - `compare_all()` convenience function for all three pairwise comparisons
+  - Metric-level deltas for all 6 composite metrics (time_taken, task_success, coordination_quality, tool_efficiency, planning_rationality, output_similarity)
+  - Tier-level deltas (Tier 1, Tier 2, Tier 3) with graceful handling of missing Tier 2
+  - Human-readable comparison summaries with average delta and largest metric difference
+  - Property-based tests for delta symmetry (swap inputs → negated deltas)
+  - Snapshot tests for model structure and comparison output validation
 - Feature 7: CLI & GUI baseline integration -- `--cc-solo-dir` and `--cc-teams-dir` CLI flags, three-way comparison in GUI
 
 ### Added
