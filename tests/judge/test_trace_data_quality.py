@@ -43,14 +43,14 @@ class TestTraceEventAgentIdInvariant:
             settings = JudgeSettings(trace_storage_path=str(tmp_path / "traces"))
             collector = TraceCollector(settings)
 
-        # Create tool_call event
-        event = TraceEvent(
-            timestamp=1000.0,
-            event_type="tool_call",
-            agent_id=agent_id,
-            data={"tool_name": tool_name, "duration": duration},
-            execution_id="test-exec-001",
-        )
+            # Create tool_call event
+            event = TraceEvent(
+                timestamp=1000.0,
+                event_type="tool_call",
+                agent_id=agent_id,
+                data={"tool_name": tool_name, "duration": duration},
+                execution_id="test-exec-001",
+            )
 
             collector.current_execution_id = "test-exec-001"
             collector.current_events = [event]

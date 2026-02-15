@@ -132,6 +132,13 @@ def _handle_download_mode(
     return False
 
 
+def _initialize_instrumentation() -> None:
+    """Initialize Logfire instrumentation if enabled in settings."""
+    judge_settings = JudgeSettings()
+    if judge_settings.logfire_enabled:
+        initialize_logfire_instrumentation_from_settings(judge_settings)
+
+
 def _prepare_query(
     paper_number: str | None, query: str, prompts: dict[str, str]
 ) -> tuple[str, bool]:
@@ -206,11 +213,7 @@ async def main(
             agent_env = setup_agent_env(chat_provider, query, chat_config, chat_env_config)
 
             login(PROJECT_NAME, chat_env_config)
-
-            # Initialize Logfire instrumentation if enabled
-            judge_settings = JudgeSettings()
-            if judge_settings.logfire_enabled:
-                initialize_logfire_instrumentation_from_settings(judge_settings)
+            _initialize_instrumentation()
 
             manager = get_manager(
                 agent_env.provider,

@@ -10,12 +10,9 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from unittest.mock import patch
-
-import pytest
 
 from app.judge.settings import JudgeSettings
-from app.judge.trace_processors import TraceCollector, TraceEvent
+from app.judge.trace_processors import TraceCollector
 
 
 class TestTraceStorageLogging:
@@ -43,17 +40,15 @@ class TestTraceStorageLogging:
 
         # Capture logs
         with caplog.at_level(logging.INFO):
-            trace = collector.end_execution()
+            _ = collector.end_execution()
 
         # Verify: log message includes storage path
         # This will FAIL until implementation
         log_messages = [record.message for record in caplog.records]
-        storage_path_mentioned = any(
-            str(collector.storage_path) in msg for msg in log_messages
+        storage_path_mentioned = any(str(collector.storage_path) in msg for msg in log_messages)
+        assert storage_path_mentioned, (
+            f"Storage path {collector.storage_path} not mentioned in logs: {log_messages}"
         )
-        assert (
-            storage_path_mentioned
-        ), f"Storage path {collector.storage_path} not mentioned in logs: {log_messages}"
 
     def test_store_trace_logs_jsonl_and_sqlite_paths(self, tmp_path: Path, caplog):
         """_store_trace() MUST log both JSONL and SQLite database paths."""
@@ -75,7 +70,7 @@ class TestTraceStorageLogging:
         )
 
         with caplog.at_level(logging.INFO):
-            trace = collector.end_execution()
+            _ = collector.end_execution()
 
         # Verify: log mentions both storage formats
         log_text = " ".join(record.message for record in caplog.records)
@@ -104,7 +99,7 @@ class TestTraceStorageLogging:
         )
 
         with caplog.at_level(logging.INFO):
-            trace = collector.end_execution()
+            _ = collector.end_execution()
 
         # Verify: at least one log mentions storage
         storage_logs = [
