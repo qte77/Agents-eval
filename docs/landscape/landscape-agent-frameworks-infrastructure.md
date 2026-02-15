@@ -3,8 +3,8 @@ title: AI Agent Frameworks & Infrastructure Landscape
 description: Comprehensive overview of agent frameworks, LLM orchestration, observability tools, and development infrastructure for AI agent systems
 category: landscape
 created: 2025-09-01
-updated: 2026-01-13
-version: 1.1.0
+updated: 2026-02-15
+version: 1.2.0
 ---
 
 This document provides a comprehensive overview of AI agent frameworks, LLM orchestration platforms, observability tools, and development infrastructure relevant to building and deploying AI agent systems. It includes technical details, feasibility assessments, integration scenarios, and project-specific guidance for the PeerRead evaluation use case.
@@ -267,17 +267,26 @@ For enterprise infrastructure, AI governance, security & compliance solutions, s
 
 - [Langtrace](https://docs.langtrace.ai/) - Open-source observability tool dedicated to large language model monitoring with detailed telemetry and customizable evaluations for comprehensive LLM application tracking. **Core Features**: **Detailed Telemetry** - Token usage tracking across all LLM calls, performance metrics with latency and throughput analysis, quality indicators for output assessment; **Customizable Evaluations** - Flexible evaluation framework for custom metrics, integration with evaluation libraries, real-time quality monitoring; **Developer-Focused** - Simple SDK integration with minimal code changes, support for major LLM frameworks and providers, comprehensive debugging capabilities. **Tracing Method**: OpenTelemetry-based instrumentation with automatic trace collection, SDK integration for Python and TypeScript, spans and traces for LLM interactions with detailed metadata capture. **High feasibility** with open-source availability, straightforward integration, and active development community. **Integration:** Implement detailed token usage tracking for PeerRead agent cost optimization, monitor performance metrics across Manager/Researcher/Analyst/Synthesizer coordination for latency analysis, establish customizable evaluation framework for academic review quality assessment with real-time monitoring and alerting capabilities. **Sources:** [Langtrace Documentation](https://docs.langtrace.ai/)
 
+**Native Framework Integration:**
+
+- [Pydantic Logfire](https://logfire.pydantic.dev/) - First-party OpenTelemetry-based observability platform for PydanticAI agents. **Tracing Method**: `logfire.configure()` + `logfire.instrument_pydantic_ai()` for zero-config instrumentation of agent runs, tool calls, structured outputs, and system prompts. Three instrumentation paths: (1) Logfire cloud with free tier, (2) raw OpenTelemetry via `Agent.instrument_all()` with custom `TracerProvider`, (3) hybrid routing to alternative backends (e.g., Phoenix, otel-tui). Follows OpenTelemetry GenAI Semantic Conventions. **High feasibility** as the first-party solution for PydanticAI (this project's agent framework) with zero-infrastructure cloud option and flexible local routing. **Integration:** Instrument PeerRead PydanticAI agents with `logfire.instrument_pydantic_ai()`, route traces to local Phoenix or otel-tui for development, use Logfire cloud for production monitoring. **Sources:** [Logfire Docs](https://logfire.pydantic.dev/), [PydanticAI Integration](https://ai.pydantic.dev/logfire/), [Self-Hosting](https://logfire.pydantic.dev/docs/reference/self-hosted/overview/)
+
+**Lightweight Development Tools:**
+
+- [otel-tui](https://github.com/ymtdzzz/otel-tui) - Terminal-based OpenTelemetry trace viewer. Single binary accepting OTLP traces on ports 4317 (gRPC) and 4318 (HTTP). Renders trace waterfall diagrams and span details in the terminal. Zero containers, no browser needed. **High feasibility** for quick local debugging during development. Referenced in PydanticAI documentation as alternative local backend. **Sources:** [GitHub](https://github.com/ymtdzzz/otel-tui), [PydanticAI OTel Backends](https://ai.pydantic.dev/logfire/#using-opentelemetry)
+
 **OpenTelemetry AI Agent Standards (Emerging):**
 
 The AI agent ecosystem is converging on standardized observability practices through OpenTelemetry:
 
 - **AI Agent Semantic Conventions**: Draft semantic convention for AI agent applications finalized in 2025, based on Google's AI agent white paper, provides foundational framework for defining observability standards across multi-agent systems
+- **Agentic Systems Proposal**: [Semantic Conventions for GenAI Agentic Systems](https://github.com/open-telemetry/semantic-conventions/issues/2664) defines attributes for tracing tasks, actions, agents, teams, artifacts, and memory across complex AI workflows
 - **Core Components**: Standardized metrics, traces, logs, evaluations, and governance for comprehensive AI agent visibility
-- **Framework Support**: Growing adoption across observability platforms (Arize Phoenix, Langtrace, Langfuse) with OpenTelemetry-compatible tracing
+- **Framework Support**: Growing adoption across observability platforms (Arize Phoenix, Langtrace, Langfuse, Pydantic Logfire) with OpenTelemetry-compatible tracing
 - **Production Benefits**: Enables vendor-neutral observability, consistent instrumentation across frameworks, interoperable monitoring and evaluation tools
 - **Integration Impact**: PeerRead evaluation agents can leverage OpenTelemetry standards for framework-agnostic observability, portable trace data across tools, and industry-standard instrumentation patterns
 
-**Sources:** [OpenTelemetry AI Agent Blog](https://opentelemetry.io/blog/2025/ai-agent-observability/)
+**Sources:** [OpenTelemetry AI Agent Blog](https://opentelemetry.io/blog/2025/ai-agent-observability/), [Agentic Systems Proposal](https://github.com/open-telemetry/semantic-conventions/issues/2664)
 
 For additional observability platforms including LangWatch, MLflow, Uptrace, Traceloop, and limited local support options, see [Evaluation & Data Resources Landscape](landscape-evaluation-data-resources.md#llm-application-observability) which covers the full spectrum of observability solutions.
 
