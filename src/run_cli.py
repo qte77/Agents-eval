@@ -42,6 +42,7 @@ def parse_args(argv: list[str]) -> dict[str, str | bool]:
         "--no-stream": "Disable streaming output",
         "--chat-config-file": "Specify the path to the chat configuration file",
         "--paper-number": "Specify paper number for PeerRead review generation",
+        "--skip-eval": "Skip evaluation after run_manager completes",
         "--download-peerread-full-only": (
             "Download all of the PeerRead dataset and exit (setup mode)"
         ),
@@ -69,9 +70,6 @@ def parse_args(argv: list[str]) -> dict[str, str | bool]:
             key = key.lstrip("--").replace("-", "_")
             parsed_args[key] = value
 
-    if parsed_args:
-        logger.info(f"Used arguments: {parsed_args}")
-
     return parsed_args
 
 
@@ -89,4 +87,6 @@ if __name__ == "__main__":
     from app.utils.log import logger
 
     args = parse_args(argv[1:])
+    if args:
+        logger.info(f"Used arguments: {args}")
     run(main(**args))

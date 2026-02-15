@@ -20,7 +20,7 @@ async def test_evaluation_runs_after_manager_by_default():
         patch("app.app.setup_agent_env") as mock_setup,
         patch("app.app.login") as mock_login,
         patch("app.app.get_manager") as mock_get_manager,
-        patch("app.app.run_manager") as mock_run_manager,
+        patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
         patch("app.app.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
     ):
@@ -47,9 +47,18 @@ async def test_evaluation_runs_after_manager_by_default():
                     semantic_score=0.85,
                     execution_time=0.5,
                     time_score=0.9,
+                    task_success=1.0,
+                    overall_score=0.82,
                 ),
                 composite_score=0.8,
                 total_execution_time=1.0,
+                recommendation="accept",
+                recommendation_weight=1.0,
+                metric_scores={"cosine_score": 0.8},
+                tier1_score=0.82,
+                tier2_score=0.0,
+                tier3_score=0.0,
+                evaluation_complete=True,
             )
         )
         mock_pipeline_class.return_value = mock_pipeline
@@ -75,7 +84,7 @@ async def test_skip_eval_flag_prevents_evaluation():
         patch("app.app.setup_agent_env") as mock_setup,
         patch("app.app.login") as mock_login,
         patch("app.app.get_manager") as mock_get_manager,
-        patch("app.app.run_manager") as mock_run_manager,
+        patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
         patch("app.app.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
     ):
@@ -118,7 +127,7 @@ async def test_graceful_skip_without_ground_truth():
         patch("app.app.setup_agent_env") as mock_setup,
         patch("app.app.login") as mock_login,
         patch("app.app.get_manager") as mock_get_manager,
-        patch("app.app.run_manager") as mock_run_manager,
+        patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
         patch("app.app.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
         patch("app.app.logger") as mock_logger,
@@ -137,6 +146,7 @@ async def test_graceful_skip_without_ground_truth():
         mock_run_manager.return_value = None
 
         mock_pipeline = MagicMock()
+        mock_pipeline.evaluate_comprehensive = AsyncMock()
         mock_pipeline_class.return_value = mock_pipeline
 
         mock_load_config.return_value = MagicMock(prompts={})

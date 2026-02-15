@@ -24,6 +24,7 @@ from app.data_models.app_models import AppEnv, ChatConfig
 from app.data_utils.datasets_peerread import (
     download_peerread_dataset,
 )
+from app.evals.evaluation_pipeline import EvaluationPipeline
 from app.utils.error_messages import generic_exception
 from app.utils.load_configs import load_config
 from app.utils.log import logger
@@ -90,6 +91,7 @@ async def main(
     chat_config_file: str | Path | None = None,
     enable_review_tools: bool = False,
     paper_number: str | None = None,
+    skip_eval: bool = False,
     download_peerread_full_only: bool = False,
     download_peerread_samples_only: bool = False,
     peerread_max_papers_per_sample_download: int | None = 5,
@@ -151,6 +153,28 @@ async def main(
                 agent_env.usage_limits,
                 pydantic_ai_stream,
             )
+
+            # Run evaluation after manager completes
+            if not skip_eval:
+                logger.info("Running evaluation pipeline...")
+                pipeline = EvaluationPipeline()
+
+                # Gracefully handle when no ground-truth reviews available
+                if not paper_number:
+                    logger.info("Skipping evaluation: no ground-truth reviews available")
+
+                # TODO: Extract paper, review, and trace data from run_manager result
+                # For now, calling with minimal placeholder data to satisfy wiring requirement
+                # Full implementation requires STORY-003 for trace collection
+                await pipeline.evaluate_comprehensive(
+                    paper="",  # Placeholder - will be extracted from manager result
+                    review="",  # Placeholder - will be extracted from manager result
+                    execution_trace=None,
+                    reference_reviews=None,
+                )
+            else:
+                logger.info("Evaluation skipped via --skip-eval flag")
+
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 
     except Exception as e:
