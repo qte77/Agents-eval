@@ -10,12 +10,14 @@ with session state persistence.
 """
 
 import streamlit as st
-from streamlit import checkbox, expander, header, selectbox, text
+from streamlit import checkbox, expander, header, number_input, selectbox, text
 
 from app.common.settings import CommonSettings
 from app.data_models.app_models import PROVIDER_REGISTRY
 from app.judge.settings import JudgeSettings
+from app.utils.load_configs import load_config
 from app.utils.log import logger
+from app.utils.paths import resolve_config_path
 from gui.config.text import SETTINGS_HEADER
 
 
@@ -73,6 +75,28 @@ def render_settings(common_settings: CommonSettings, judge_settings: JudgeSettin
                 "Include Synthesiser Agent",
                 value=st.session_state.get("include_synthesiser", False),
                 key="synthesiser_checkbox",
+            )
+
+            # Token limit configuration
+            # Reason: Load default from config_chat.json for selected provider
+            from app.config.config_app import CHAT_CONFIG_FILE  # type: ignore[reportUnusedImport]
+            from app.data_models.app_models import ChatConfig  # type: ignore[reportUnusedImport]
+
+            config_path = resolve_config_path(CHAT_CONFIG_FILE)
+            chat_config = load_config(config_path, ChatConfig)
+            current_provider_val = st.session_state.get("chat_provider", "ollama")
+            provider_config = chat_config.providers.get(current_provider_val, {})  # type: ignore[reportAttributeAccessIssue]
+            default_limit = provider_config.get("usage_limits", 25000) if provider_config else 25000  # type: ignore[reportAttributeAccessIssue]
+
+            text("**Token Limit:**")
+            st.session_state["token_limit"] = number_input(
+                "Agent Token Limit",
+                min_value=1000,
+                max_value=1000000,
+                value=st.session_state.get("token_limit", default_limit),
+                step=1000,
+                help="Override token limit (1000-1000000). Default from config_chat.json.",
+                key="token_limit_input",
             )
 
     # Common Settings Section

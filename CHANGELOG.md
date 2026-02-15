@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-001: `tier2_available` flag to skip Tier 2 when no valid providers are available (prevents 401 errors and neutral fallback scores)
 - STORY-001: Hypothesis property tests for provider selection invariants (fallback only when primary unavailable)
 - STORY-001: Comprehensive test coverage for auto mode inheritance and provider skipping behavior
+- STORY-002: CLI `--token-limit` flag to override agent token limits (1000-1000000) from command line
+- STORY-002: GUI token limit input field in settings sidebar with min/max validation
+- STORY-002: `AGENT_TOKEN_LIMIT` environment variable support for config-free token limit override
+- STORY-002: Token limit priority order: CLI/GUI > env var > config_chat.json
+- STORY-002: Validation bounds (1000-1000000) enforced in `setup_agent_env`
+- STORY-002: Comprehensive test coverage with Hypothesis property tests for bounds and priority
 
 ### Added (Sprint 2)
 

@@ -77,6 +77,7 @@ async def _execute_query(
     include_analyst: bool,
     include_synthesiser: bool,
     chat_config_file: str | Path | None,
+    token_limit: int | None = None,
 ) -> None:
     """Execute agent query with error handling.
 
@@ -87,6 +88,7 @@ async def _execute_query(
         include_analyst: Whether to include analyst agent
         include_synthesiser: Whether to include synthesiser agent
         chat_config_file: Path to chat configuration file
+        token_limit: Optional token limit override from GUI
     """
     info(f"{RUN_APP_QUERY_RUN_INFO} {query}")
     try:
@@ -97,6 +99,7 @@ async def _execute_query(
             include_analyst=include_analyst,
             include_synthesiser=include_synthesiser,
             chat_config_file=chat_config_file,
+            token_limit=token_limit,
         )
         render_output(result)
     except Exception as e:
@@ -122,11 +125,14 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     provider_from_state, include_researcher, include_analyst, include_synthesiser = (
         _get_session_config(provider)
     )
+    token_limit: int | None = st.session_state.get("token_limit")
 
     # Display current configuration
     text(f"**Provider:** {provider_from_state}")
     agents_text = _format_enabled_agents(include_researcher, include_analyst, include_synthesiser)
     text(f"**Enabled Sub-Agents:** {agents_text}")
+    if token_limit is not None:
+        text(f"**Token Limit:** {token_limit}")
 
     query = text_input(RUN_APP_QUERY_PLACEHOLDER)
 
@@ -140,6 +146,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
                 include_analyst,
                 include_synthesiser,
                 chat_config_file,
+                token_limit,
             )
         else:
             warning(RUN_APP_QUERY_WARNING)
