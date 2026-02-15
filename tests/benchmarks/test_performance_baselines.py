@@ -626,6 +626,7 @@ class TestPerformanceBaselines:
 
         return performance_data
 
+    @pytest.mark.benchmark
     async def test_performance_regression_detection(self, evaluation_pipeline, benchmark_data):
         """Test for performance regression detection."""
         print("\n=== Performance Regression Detection ===")

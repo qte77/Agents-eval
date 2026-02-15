@@ -191,6 +191,7 @@ class TestPeerReadRealDatasetValidation:
         assert result.papers_downloaded == 0, "Should not download any papers"
 
     @pytest.mark.integration
+    @pytest.mark.network
     async def test_real_data_loader_integration(self, test_downloader):
         """Test integration between downloader and loader with real data."""
         config = test_downloader.config
@@ -226,6 +227,7 @@ class TestPeerReadRealDatasetValidation:
                 assert len(review.comments) > 0, "Review should have comments"
 
     @pytest.mark.integration
+    @pytest.mark.network
     async def test_download_performance_targets(self, test_downloader):
         """Test that download performance meets targets."""
         config = test_downloader.config

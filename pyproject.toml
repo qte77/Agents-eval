@@ -113,7 +113,7 @@ docstring-code-format = true
 convention = "google"
 
 [tool.pytest.ini_options]
-addopts = "--strict-markers"  # addopts = "-v --tb=short"
+addopts = "--strict-markers -m 'not network and not benchmark'"
 asyncio_mode = "auto"
 # "function", "class", "module", "package", "session"
 asyncio_default_fixture_loop_scope = "function"
