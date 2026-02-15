@@ -43,17 +43,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added (Sprint 4)
 
-- Sprint 4 PRD v2 with Features 1-7 (standalone numbering, operational resilience + CC baseline comparison)
+- Sprint 4 PRD v2 with Features 1-7 (standalone numbering, operational resilience + Claude Code baseline comparison)
 - Feature 1 (STORY-001): Graceful Logfire trace export failure handling (suppress connection error stack traces for both span and metrics exports, affects CLI and GUI)
 - Feature 2 (STORY-002): Thread-safe timeout handling in graph analysis using ThreadPoolExecutor (replaces signal-based timeouts)
 - Feature 3 (STORY-003): Tier 2 judge provider fallback integration tests and troubleshooting documentation
 - Feature 3 (STORY-003): Auth failure detection in all Tier 2 assessments (technical_accuracy, constructiveness, planning_rationality) with neutral fallback scores (0.5)
 - Feature 7 (STORY-007): CLI `--cc-solo-dir` and `--cc-teams-dir` flags for baseline comparison against Claude Code artifacts
-- Feature 7 (STORY-007): `_run_baseline_comparisons()` function in app.py for evaluating CC solo and teams baselines
+- Feature 7 (STORY-007): `_run_baseline_comparisons()` function in app.py for evaluating Claude Code solo and teams baselines
 - Feature 7 (STORY-007): `render_baseline_comparison()` GUI section for side-by-side metrics display and three-way comparison tables
 - Feature 7 (STORY-007): CLI baseline comparison logging with summary output for each pairwise comparison
 - Feature 4 (STORY-004): Complete test suite alignment with hypothesis and inline-snapshot (no BDD/Gherkin)
-- Feature 5 (STORY-005): CC trace adapter for solo and teams modes parsing Claude Code artifacts into GraphTraceData format
+- Feature 5 (STORY-005): Claude Code trace adapter for solo and teams modes parsing Claude Code artifacts into GraphTraceData format
 - Feature 4 (STORY-004): Hypothesis property-based tests for data validation invariants, score bounds, URL construction, execution traces, and metrics output
 - Feature 4 (STORY-004): Inline-snapshot regression tests for Pydantic model dumps, configuration outputs, benchmark results, and GUI state structures
 - Feature 4 (STORY-004): Test coverage for integration tests (PeerRead dataset compatibility), benchmarks (performance baselines), GUI pages (evaluation/graph/sidebar), and data utilities (datasets_peerread)
@@ -72,8 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed (Sprint 4)
 
 - STORY-001: Noisy ConnectionRefusedError stack traces when Logfire/OTLP endpoint unreachable (both CLI and GUI)
-- Feature 5 (STORY-005): CC trace adapter -- parse CC artifacts into `GraphTraceData` in two modes: solo (single CC instance, no orchestration) and teams (CC Agent Teams with delegation), both with full tool/plugin/MCP access
-- Feature 6 (STORY-006): Baseline comparison engine -- `BaselineComparison` Pydantic model + `compare()`/`compare_all()` for three-way `CompositeResult` diffing (PydanticAI vs CC-solo vs CC-teams)
+- Feature 5 (STORY-005): Claude Code trace adapter -- parse Claude Code artifacts into `GraphTraceData` in two modes: solo (single Claude Code instance, no orchestration) and teams (Claude Code Agent Teams with delegation), both with full tool/plugin/MCP access
+- Feature 6 (STORY-006): Baseline comparison engine -- `BaselineComparison` Pydantic model + `compare()`/`compare_all()` for three-way `CompositeResult` diffing (PydanticAI vs Claude Code solo vs Claude Code teams)
   - `compare()` function for pairwise diffing of any two `CompositeResult` instances
   - `compare_all()` convenience function for all three pairwise comparisons
   - Metric-level deltas for all 6 composite metrics (time_taken, task_success, coordination_quality, tool_efficiency, planning_rationality, output_similarity)
