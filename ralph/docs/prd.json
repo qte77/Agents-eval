@@ -125,8 +125,8 @@
         "tests/evals/test_judge_settings.py",
         "tests/common/test_common_settings.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-15T09:19:43Z",
       "content_hash": "",
       "depends_on": [
         "STORY-001"
