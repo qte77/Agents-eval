@@ -23,9 +23,7 @@ class LogCapture:
         self._buffer: list[dict[str, str]] = []
         self._handler_id: int | None = None
 
-    def add_log_entry(
-        self, timestamp: str, level: str, module: str, message: str
-    ) -> None:
+    def add_log_entry(self, timestamp: str, level: str, module: str, message: str) -> None:
         """Add a log entry to the buffer if it's from an app.* module.
 
         Args:
@@ -80,7 +78,7 @@ class LogCapture:
         if not logs:
             return "<p>No logs captured.</p>"
 
-        html_parts = []
+        html_parts: list[str] = []
         level_colors = {
             "INFO": "#4CAF50",  # Green
             "WARNING": "#FF9800",  # Orange
@@ -97,7 +95,7 @@ class LogCapture:
                 f'<span style="color: #666;">{entry["timestamp"]}</span> '
                 f'<span style="color: {color}; font-weight: bold;">[{level}]</span> '
                 f'<span style="color: #999;">{entry["module"]}</span> '
-                f'<span>{entry["message"]}</span>'
+                f"<span>{entry['message']}</span>"
                 f"</div>"
             )
 

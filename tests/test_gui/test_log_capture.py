@@ -7,9 +7,6 @@ This module tests the log capture sink that:
 - Provides formatted output for the Streamlit debug panel
 """
 
-from unittest.mock import patch
-
-import pytest
 from inline_snapshot import snapshot
 from loguru import logger
 
@@ -26,22 +23,21 @@ class TestLogCaptureSink:
         capture = LogCapture()
 
         # When logs from different modules are emitted
-        with patch("gui.utils.log_capture.logger") as mock_logger:
-            # Simulate app module log
-            capture.add_log_entry(
-                timestamp="2026-02-15 10:00:00",
-                level="INFO",
-                module="app.agents.agent_system",
-                message="Agent initialized",
-            )
+        # Simulate app module log
+        capture.add_log_entry(
+            timestamp="2026-02-15 10:00:00",
+            level="INFO",
+            module="app.agents.agent_system",
+            message="Agent initialized",
+        )
 
-            # Simulate non-app module log
-            capture.add_log_entry(
-                timestamp="2026-02-15 10:00:01",
-                level="DEBUG",
-                module="gui.pages.run_app",
-                message="GUI render",
-            )
+        # Simulate non-app module log
+        capture.add_log_entry(
+            timestamp="2026-02-15 10:00:01",
+            level="DEBUG",
+            module="gui.pages.run_app",
+            message="GUI render",
+        )
 
         # Then only app.* logs should be in the buffer
         logs = capture.get_logs()
@@ -129,8 +125,8 @@ class TestLogCaptureIntegration:
 
     def test_log_capture_sink_integration(self):
         """Test that log capture integrates with loguru as a sink."""
+
         from gui.utils.log_capture import LogCapture
-        from unittest.mock import patch
 
         # Given a log capture configured as a sink
         capture = LogCapture()
