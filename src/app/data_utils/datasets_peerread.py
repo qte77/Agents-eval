@@ -674,6 +674,50 @@ class PeerReadLoader:
                     return str(pdf_path)
         return None
 
+    def _create_review_from_dict(
+        self, review_data: dict[str, Any], paper_id: str
+    ) -> PeerReadReview:
+        """Create PeerReadReview from dictionary with optional field handling.
+
+        Args:
+            review_data: Review dictionary from PeerRead dataset.
+            paper_id: Paper identifier for logging.
+
+        Returns:
+            Validated PeerReadReview model.
+        """
+        # Optional fields use .get() with "UNKNOWN" default
+        # Reason: Papers 304-308, 330 lack IMPACT field
+        optional_fields = [
+            "IMPACT",
+            "SUBSTANCE",
+            "APPROPRIATENESS",
+            "MEANINGFUL_COMPARISON",
+            "SOUNDNESS_CORRECTNESS",
+            "ORIGINALITY",
+            "CLARITY",
+        ]
+
+        # Log debug message when optional field is missing
+        for field in optional_fields:
+            if field not in review_data:
+                logger.debug(f"Paper {paper_id}: Optional field {field} missing, using UNKNOWN")
+
+        return PeerReadReview(
+            impact=review_data.get("IMPACT", "UNKNOWN"),
+            substance=review_data.get("SUBSTANCE", "UNKNOWN"),
+            appropriateness=review_data.get("APPROPRIATENESS", "UNKNOWN"),
+            meaningful_comparison=review_data.get("MEANINGFUL_COMPARISON", "UNKNOWN"),
+            presentation_format=review_data.get("PRESENTATION_FORMAT", "Poster"),
+            comments=review_data.get("comments", ""),
+            soundness_correctness=review_data.get("SOUNDNESS_CORRECTNESS", "UNKNOWN"),
+            originality=review_data.get("ORIGINALITY", "UNKNOWN"),
+            recommendation=review_data.get("RECOMMENDATION", "UNKNOWN"),
+            clarity=review_data.get("CLARITY", "UNKNOWN"),
+            reviewer_confidence=review_data.get("REVIEWER_CONFIDENCE", "UNKNOWN"),
+            is_meta_review=review_data.get("is_meta_review"),
+        )
+
     def _validate_papers(
         self,
         papers_data: list[dict[str, Any]],
@@ -691,46 +735,14 @@ class PeerReadLoader:
         for paper_data in papers_data:
             try:
                 # Convert from PeerRead format to our model format
-                reviews = []
-                for r in paper_data.get("reviews", []):
-                    # Optional fields use .get() with "UNKNOWN" default
-                    # Reason: Papers 304-308, 330 lack IMPACT field
-                    optional_fields = [
-                        "IMPACT",
-                        "SUBSTANCE",
-                        "APPROPRIATENESS",
-                        "MEANINGFUL_COMPARISON",
-                        "SOUNDNESS_CORRECTNESS",
-                        "ORIGINALITY",
-                        "CLARITY",
-                    ]
-
-                    # Log debug message when optional field is missing
-                    for field in optional_fields:
-                        if field not in r:
-                            logger.debug(
-                                f"Paper {paper_data.get('id', 'unknown')}: "
-                                f"Optional field {field} missing, using UNKNOWN"
-                            )
-
-                    review = PeerReadReview(
-                        impact=r.get("IMPACT", "UNKNOWN"),
-                        substance=r.get("SUBSTANCE", "UNKNOWN"),
-                        appropriateness=r.get("APPROPRIATENESS", "UNKNOWN"),
-                        meaningful_comparison=r.get("MEANINGFUL_COMPARISON", "UNKNOWN"),
-                        presentation_format=r.get("PRESENTATION_FORMAT", "Poster"),
-                        comments=r.get("comments", ""),
-                        soundness_correctness=r.get("SOUNDNESS_CORRECTNESS", "UNKNOWN"),
-                        originality=r.get("ORIGINALITY", "UNKNOWN"),
-                        recommendation=r.get("RECOMMENDATION", "UNKNOWN"),
-                        clarity=r.get("CLARITY", "UNKNOWN"),
-                        reviewer_confidence=r.get("REVIEWER_CONFIDENCE", "UNKNOWN"),
-                        is_meta_review=r.get("is_meta_review"),
-                    )
-                    reviews.append(review)
+                paper_id = str(paper_data.get("id", "unknown"))
+                reviews: list[PeerReadReview] = [
+                    self._create_review_from_dict(r, paper_id)
+                    for r in paper_data.get("reviews", [])
+                ]
 
                 paper = PeerReadPaper(
-                    paper_id=str(paper_data["id"]),
+                    paper_id=paper_id,
                     title=paper_data["title"],
                     abstract=paper_data["abstract"],
                     reviews=reviews,
