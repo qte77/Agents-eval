@@ -453,7 +453,7 @@ class EvaluationPipeline:
         self,
         paper: str,
         review: str,
-        execution_trace: dict[str, Any] | None = None,
+        execution_trace: GraphTraceData | dict[str, Any] | None = None,
         reference_reviews: list[str] | None = None,
     ) -> CompositeResult:
         """Execute comprehensive three-tier evaluation pipeline.
@@ -461,7 +461,7 @@ class EvaluationPipeline:
         Args:
             paper: Paper content text for evaluation
             review: Generated review text to assess
-            execution_trace: Optional execution trace for graph analysis
+            execution_trace: Optional execution trace (GraphTraceData or dict) for graph analysis
             reference_reviews: Optional list of ground truth reviews for similarity
 
         Returns:
@@ -470,9 +470,17 @@ class EvaluationPipeline:
         Raises:
             ValueError: If critical evaluation components fail
         """
+        # Convert GraphTraceData to dict if needed
+        trace_dict: dict[str, Any] | None = None
+        if execution_trace is not None:
+            if isinstance(execution_trace, GraphTraceData):
+                trace_dict = execution_trace.model_dump()
+            else:
+                trace_dict = execution_trace
+
         # Apply Opik decorator dynamically
         decorated_func = self._apply_opik_decorator(self._evaluate_comprehensive_impl)
-        return await decorated_func(paper, review, execution_trace, reference_reviews)
+        return await decorated_func(paper, review, trace_dict, reference_reviews)
 
     async def _evaluate_comprehensive_impl(
         self,
