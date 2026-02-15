@@ -153,7 +153,9 @@ class CompositeResult(BaseModel):
     weights_used: dict[str, float] | None = Field(
         description="Tier weights used in composite calculation", default=None
     )
-    tiers_enabled: list[int] | None = Field(description="List of enabled tier numbers", default=None)
+    tiers_enabled: list[int] | None = Field(
+        description="List of enabled tier numbers", default=None
+    )
 
     # Optional Opik integration fields
     opik_trace_id: str | None = Field(description="Opik trace identifier", default=None)

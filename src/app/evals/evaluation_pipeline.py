@@ -448,13 +448,9 @@ class EvaluationPipeline:
         if results.tier3:
             logger.info("Graph Metrics (Tier 3):")
             logger.info(f"  path_convergence: {results.tier3.path_convergence:.3f}")
-            logger.info(
-                f"  tool_selection_accuracy: {results.tier3.tool_selection_accuracy:.3f}"
-            )
+            logger.info(f"  tool_selection_accuracy: {results.tier3.tool_selection_accuracy:.3f}")
             logger.info(f"  communication_overhead: {results.tier3.communication_overhead:.3f}")
-            logger.info(
-                f"  coordination_centrality: {results.tier3.coordination_centrality:.3f}"
-            )
+            logger.info(f"  coordination_centrality: {results.tier3.coordination_centrality:.3f}")
             logger.info(
                 f"  task_distribution_balance: {results.tier3.task_distribution_balance:.3f}"
             )
@@ -465,11 +461,11 @@ class EvaluationPipeline:
         logger.info(f"  Final composite score: {composite_result.composite_score:.3f}")
         logger.info(f"  Recommendation: {composite_result.recommendation}")
 
-        # Show tier weights used in composite calculation
+        # Show metric weights used in composite calculation
         if hasattr(composite_result, "weights_used") and composite_result.weights_used:
-            logger.info("  Tier contributions:")
-            for tier, weight in composite_result.weights_used.items():
-                logger.info(f"    {tier}: {weight:.3f}")
+            logger.info("  Metric weights used:")
+            for metric, weight in composite_result.weights_used.items():
+                logger.info(f"    {metric}: {weight:.3f}")
 
         logger.info("=" * 60)
 

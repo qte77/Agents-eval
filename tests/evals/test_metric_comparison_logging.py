@@ -6,7 +6,7 @@ summary showing Tier 1 (text) vs Tier 3 (graph) scores with individual
 metric breakdowns and composite score contribution.
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -72,7 +72,14 @@ async def test_log_metric_comparison_called_after_evaluation():
                 tier2_score=0.0,
                 tier3_score=0.83,
                 evaluation_complete=True,
-                weights_used={"tier1": 0.4, "tier2": 0.0, "tier3": 0.6},
+                weights_used={
+                    "time_taken": 0.167,
+                    "task_success": 0.167,
+                    "coordination_quality": 0.167,
+                    "tool_efficiency": 0.167,
+                    "planning_rationality": 0.167,
+                    "output_similarity": 0.167,
+                },
                 tiers_enabled=[1, 3],
             )
             mock_composite.return_value = composite_result
@@ -147,7 +154,14 @@ async def test_individual_graph_metrics_displayed():
                 tier2_score=0.0,
                 tier3_score=0.83,
                 evaluation_complete=True,
-                weights_used={"tier1": 0.4, "tier2": 0.0, "tier3": 0.6},
+                weights_used={
+                    "time_taken": 0.167,
+                    "task_success": 0.167,
+                    "coordination_quality": 0.167,
+                    "tool_efficiency": 0.167,
+                    "planning_rationality": 0.167,
+                    "output_similarity": 0.167,
+                },
                 tiers_enabled=[1, 3],
             )
             mock_composite.return_value = composite_result
@@ -157,7 +171,9 @@ async def test_individual_graph_metrics_displayed():
             )
 
             # Verify individual graph metrics are logged
-            logged_messages = " ".join([str(call[0][0]) for call in mock_logger.info.call_args_list])
+            logged_messages = " ".join(
+                [str(call[0][0]) for call in mock_logger.info.call_args_list]
+            )
 
             assert "path_convergence" in logged_messages, (
                 "Graph metric path_convergence should be logged"
@@ -226,7 +242,14 @@ async def test_individual_text_metrics_displayed():
                 tier2_score=0.0,
                 tier3_score=0.83,
                 evaluation_complete=True,
-                weights_used={"tier1": 0.4, "tier2": 0.0, "tier3": 0.6},
+                weights_used={
+                    "time_taken": 0.167,
+                    "task_success": 0.167,
+                    "coordination_quality": 0.167,
+                    "tool_efficiency": 0.167,
+                    "planning_rationality": 0.167,
+                    "output_similarity": 0.167,
+                },
                 tiers_enabled=[1, 3],
             )
             mock_composite.return_value = composite_result
@@ -236,7 +259,9 @@ async def test_individual_text_metrics_displayed():
             )
 
             # Verify individual text metrics are logged
-            logged_messages = " ".join([str(call[0][0]) for call in mock_logger.info.call_args_list])
+            logged_messages = " ".join(
+                [str(call[0][0]) for call in mock_logger.info.call_args_list]
+            )
 
             assert "cosine_score" in logged_messages, "Text metric cosine_score should be logged"
             assert "jaccard_score" in logged_messages, "Text metric jaccard_score should be logged"
@@ -295,7 +320,14 @@ async def test_composite_score_tier_contribution_displayed():
                 tier2_score=0.0,
                 tier3_score=0.83,
                 evaluation_complete=True,
-                weights_used={"tier1": 0.4, "tier2": 0.0, "tier3": 0.6},
+                weights_used={
+                    "time_taken": 0.167,
+                    "task_success": 0.167,
+                    "coordination_quality": 0.167,
+                    "tool_efficiency": 0.167,
+                    "planning_rationality": 0.167,
+                    "output_similarity": 0.167,
+                },
                 tiers_enabled=[1, 3],
             )
             mock_composite.return_value = composite_result
@@ -305,7 +337,9 @@ async def test_composite_score_tier_contribution_displayed():
             )
 
             # Verify tier weights/contributions are logged
-            logged_messages = " ".join([str(call[0][0]) for call in mock_logger.info.call_args_list])
+            logged_messages = " ".join(
+                [str(call[0][0]) for call in mock_logger.info.call_args_list]
+            )
 
             # Should show tier weights or contributions
             assert "tier1" in logged_messages.lower() or "Tier 1" in logged_messages, (

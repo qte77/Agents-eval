@@ -88,8 +88,9 @@ async def test_agent_interaction_logged_on_delegation():
         mock_collector = MagicMock()
         mock_get_collector.return_value = mock_collector
 
-        from app.agents.agent_system import _add_research_tool
         from pydantic_ai import Agent
+
+        from app.agents.agent_system import _add_research_tool
 
         # Create mock agents
         manager_agent = Agent(model="test", output_type=str)
@@ -107,9 +108,9 @@ async def test_agent_interaction_logged_on_delegation():
 
         # Verify log_agent_interaction would be called during delegation
         # This assertion will fail until implementation is complete
-        assert hasattr(
-            mock_collector, "log_agent_interaction"
-        ), "TraceCollector should have log_agent_interaction method"
+        assert hasattr(mock_collector, "log_agent_interaction"), (
+            "TraceCollector should have log_agent_interaction method"
+        )
 
 
 @pytest.mark.asyncio
@@ -121,8 +122,9 @@ async def test_tool_call_logging_during_delegation():
         mock_collector = MagicMock()
         mock_get_collector.return_value = mock_collector
 
-        from app.agents.agent_system import _add_research_tool
         from pydantic_ai import Agent
+
+        from app.agents.agent_system import _add_research_tool
 
         # Create mock agents
         manager_agent = Agent(model="test", output_type=str)
@@ -136,9 +138,9 @@ async def test_tool_call_logging_during_delegation():
 
         # Verify log_tool_call method exists on collector
         # This assertion will fail until implementation is complete
-        assert hasattr(
-            mock_collector, "log_tool_call"
-        ), "TraceCollector should have log_tool_call method"
+        assert hasattr(mock_collector, "log_tool_call"), (
+            "TraceCollector should have log_tool_call method"
+        )
 
 
 @pytest.mark.asyncio
@@ -208,9 +210,7 @@ async def test_graph_trace_data_passed_to_evaluation():
         mock_collector = MagicMock()
         mock_trace_data = GraphTraceData(
             execution_id="test_exec_123",
-            agent_interactions=[
-                {"from": "manager", "to": "researcher", "type": "delegation"}
-            ],
+            agent_interactions=[{"from": "manager", "to": "researcher", "type": "delegation"}],
             tool_calls=[{"tool_name": "delegate_research", "success": True, "duration": 0.5}],
             timing_data={"start_time": 0.0, "end_time": 1.5, "total_duration": 1.5},
         )
@@ -241,9 +241,9 @@ async def test_graph_trace_data_passed_to_evaluation():
         call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
 
         # This assertion will fail until STORY-003 is implemented
-        assert (
-            "execution_trace" in call_kwargs
-        ), "evaluate_comprehensive should receive execution_trace parameter"
+        assert "execution_trace" in call_kwargs, (
+            "evaluate_comprehensive should receive execution_trace parameter"
+        )
 
         # When implemented, execution_trace should be GraphTraceData instance
         # assert isinstance(call_kwargs["execution_trace"], GraphTraceData)
@@ -268,8 +268,8 @@ async def test_graph_trace_data_constructed_via_model_validate():
         graph_trace = GraphTraceData.model_validate(trace_dict)
         mock_load_trace.return_value = graph_trace
 
-        from app.evals.trace_processors import TraceCollector
         from app.evals.settings import JudgeSettings
+        from app.evals.trace_processors import TraceCollector
 
         collector = TraceCollector(JudgeSettings())
         result = collector.load_trace("test_123")
@@ -294,8 +294,9 @@ async def test_delegation_logs_interaction_with_timing():
         mock_collector = MagicMock()
         mock_get_collector.return_value = mock_collector
 
-        from app.agents.agent_system import _add_research_tool
         from pydantic_ai import Agent
+
+        from app.agents.agent_system import _add_research_tool
 
         manager_agent = Agent(model="test", output_type=str)
         research_agent = MagicMock()
