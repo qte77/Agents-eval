@@ -8,7 +8,6 @@ Verifies that:
 """
 
 import ast
-import subprocess
 from pathlib import Path
 
 
@@ -78,6 +77,15 @@ def test_no_deprecated_config_json():
     assert not deprecated_config.exists(), (
         "Deprecated config/config_eval.json should be removed. "
         "Configuration is now managed via pydantic-settings."
+    )
+
+
+def test_no_evals_module():
+    """Old app.evals module should be completely removed."""
+    evals_dir = Path("src/app/evals")
+    assert not evals_dir.exists(), (
+        "Old app.evals/ directory should be removed. "
+        "All evaluation code has been migrated to app.judge/"
     )
 
 
