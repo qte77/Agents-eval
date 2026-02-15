@@ -661,15 +661,17 @@ class TestOptionalFieldHandling:
     @given(
         # Generate arbitrary subsets of optional fields to test any combination
         missing_fields=st.lists(
-            st.sampled_from([
-                "IMPACT",
-                "SUBSTANCE",
-                "APPROPRIATENESS",
-                "MEANINGFUL_COMPARISON",
-                "SOUNDNESS_CORRECTNESS",
-                "ORIGINALITY",
-                "CLARITY",
-            ]),
+            st.sampled_from(
+                [
+                    "IMPACT",
+                    "SUBSTANCE",
+                    "APPROPRIATENESS",
+                    "MEANINGFUL_COMPARISON",
+                    "SOUNDNESS_CORRECTNESS",
+                    "ORIGINALITY",
+                    "CLARITY",
+                ]
+            ),
             min_size=0,
             max_size=7,
             unique=True,
