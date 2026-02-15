@@ -146,6 +146,45 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         return read_paper_pdf(ctx, pdf_path)
 
 
+def _truncate_paper_content(abstract: str, body: str, max_length: int) -> str:
+    """Truncate paper content to fit within max_length while preserving abstract.
+
+    Args:
+        abstract: The paper abstract (always preserved).
+        body: The full body content to be truncated if necessary.
+        max_length: Maximum total character length.
+
+    Returns:
+        str: Content with abstract preserved and body truncated if needed.
+    """
+    # Reason: Always preserve abstract as it contains critical paper summary
+    abstract_section = f"Abstract:\n{abstract}\n\n"
+    full_content = abstract_section + body
+
+    if len(full_content) <= max_length:
+        return full_content
+
+    # Calculate available space for body after abstract
+    available_for_body = max_length - len(abstract_section) - len("\n[TRUNCATED]")
+
+    if available_for_body <= 0:
+        logger.warning(
+            f"Content truncation: abstract alone exceeds max_length. "
+            f"Original: {len(full_content)} chars, Limit: {max_length} chars"
+        )
+        return abstract_section + "[TRUNCATED]"
+
+    truncated_body = body[:available_for_body]
+    result = abstract_section + truncated_body + "\n[TRUNCATED]"
+
+    logger.warning(
+        f"Content truncated: {len(full_content)} chars -> {len(result)} chars "
+        f"(limit: {max_length})"
+    )
+
+    return result
+
+
 def _load_paper_content_with_fallback(
     ctx: RunContext[None],
     loader: PeerReadLoader,
@@ -181,18 +220,34 @@ def _load_and_format_template(
     paper_content: str,
     tone: str,
     review_focus: str,
+    max_content_length: int,
 ) -> str:
-    """Load review template and format with paper information."""
+    """Load review template and format with paper information.
+
+    Args:
+        paper_title: Title of the paper.
+        paper_abstract: Abstract of the paper.
+        paper_content: Full body content of the paper.
+        tone: Review tone.
+        review_focus: Review focus type.
+        max_content_length: Maximum content length for truncation.
+
+    Returns:
+        str: Formatted review template with truncated content if needed.
+    """
     template_path = get_review_template_path()
 
     try:
         with open(template_path, encoding="utf-8") as f:
             template_content = f.read()
 
+        # Truncate paper content before formatting into template
+        truncated_content = _truncate_paper_content(paper_abstract, paper_content, max_content_length)
+
         return template_content.format(
             paper_title=paper_title,
             paper_abstract=paper_abstract,
-            paper_full_content=paper_content,
+            paper_full_content=truncated_content,
             tone=tone,
             review_focus=review_focus,
         )
@@ -247,7 +302,7 @@ def add_peerread_review_tools_to_manager(
             paper_content = _load_paper_content_with_fallback(ctx, loader, paper_id, paper.abstract)
 
             review_template = _load_and_format_template(
-                paper.title, paper.abstract, paper_content, tone, review_focus
+                paper.title, paper.abstract, paper_content, tone, review_focus, max_content_length
             )
 
             logger.info(f"Created review template for paper {paper_id} (NOT a real review)")

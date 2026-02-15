@@ -257,15 +257,23 @@ class TestContentTruncation:
         abstract = "Abstract."
         body = "C" * 15000
         max_length = 1000
-        original_length = len(abstract) + len(body)
 
-        result = _truncate_paper_content(abstract, body, max_length)
+        # Capture logs via Loguru sink
+        import io
+        from loguru import logger
 
-        # Should log warning with size information
-        assert any("truncat" in record.message.lower() for record in caplog.records)
-        # Log should mention original and truncated size
-        warning_messages = [r.message for r in caplog.records if r.levelno >= logging.WARNING]
-        assert len(warning_messages) > 0
+        log_capture = io.StringIO()
+        handler_id = logger.add(log_capture, level="WARNING")
+
+        try:
+            result = _truncate_paper_content(abstract, body, max_length)
+            log_output = log_capture.getvalue()
+
+            # Should log warning with size information
+            assert "truncat" in log_output.lower()
+            assert str(max_length) in log_output
+        finally:
+            logger.remove(handler_id)
 
     def test_generate_review_template_with_truncation(self):
         """Test that generate_paper_review_content_from_template truncates long content."""
