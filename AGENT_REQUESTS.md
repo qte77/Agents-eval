@@ -25,7 +25,7 @@
   **Context**: Running `make run_cli` with non-OpenAI chat providers (e.g., Cerebras)
   **Problem**: `LLMJudgeEngine` uses `tier2_provider="openai"` and `tier2_model="gpt-4o-mini"` by default. When no `OPENAI_API_KEY` is set, all Tier 2 metrics (technical_accuracy, constructiveness, planning_rationality) fail with 401 and score 0.0, deflating the composite score.
   **Files**: `src/app/evals/settings.py:74-75`, `src/app/evals/llm_evaluation_managers.py:43-44`
-  - Tracked in: PRD-Sprint3.md Feature 6 / STORY-008 (Judge Provider Fallback)
+  - Tracked in: PRD-Sprint3.md Feature 6 / STORY-002 (Judge Provider Fallback)
 
 ## Closed Requests
 

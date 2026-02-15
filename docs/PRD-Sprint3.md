@@ -1,6 +1,6 @@
 ---
 title: Product Requirements Document: Agents-eval Sprint 3
-version: 3.8.0
+version: 3.9.0
 created: 2026-02-15
 updated: 2026-02-15
 ---
@@ -9,7 +9,7 @@ updated: 2026-02-15
 
 **Agents-eval** evaluates multi-agent AI systems using the PeerRead dataset for scientific paper review assessment. The system generates reviews via a 4-agent delegation pipeline (Manager → Researcher → Analyst → Synthesizer) and evaluates them through a three-tier engine: Tier 1 (traditional text metrics), Tier 2 (LLM-as-Judge), and Tier 3 (graph analysis).
 
-Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the evaluation pipeline into a plugin architecture (`EvaluatorPlugin` + `PluginRegistry` → `JudgeAgent`), adds model-aware content truncation for provider rate limits, introduces a standalone CC OTel observability plugin, aligns the test suite with documented testing strategy (hypothesis for property-based tests, inline-snapshot for regression tests), and wires the Streamlit GUI to display actual pydantic-settings defaults. All Sprint 2 features (settings migration, eval wiring, trace capture, graph-vs-text comparison, Logfire+Phoenix tracing, Streamlit dashboard) are prerequisites.
+Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the evaluation pipeline into a plugin architecture (`EvaluatorPlugin` + `PluginRegistry` → `JudgeAgent`), adds model-aware content truncation for provider rate limits, introduces a standalone CC OTel observability plugin, aligns the test suite with documented testing strategy (hypothesis for property-based tests, inline-snapshot for regression tests), and wires the Streamlit GUI to display actual pydantic-settings defaults, makes weave observability optional, fixes trace data quality for Tier 3 graph analysis, and adds GUI controls for provider and sub-agent configuration. All Sprint 2 features (settings migration, eval wiring, trace capture, graph-vs-text comparison, Logfire+Phoenix tracing, Streamlit dashboard) are prerequisites.
 
 ---
 
@@ -55,6 +55,11 @@ Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the ev
 - [ ] When no valid judge provider is available, Tier 2 is skipped with a warning (not scored 0.0)
 - [ ] Composite score adjusts weights when Tier 2 is skipped (redistribute to Tier 1 + Tier 3)
 - [ ] `JudgeSettings.tier2_provider` and `tier2_model` overridable via `JUDGE_TIER2_PROVIDER` / `JUDGE_TIER2_MODEL` env vars (already exists, ensure it works end-to-end)
+- [ ] Fallback heuristic scores capped at 0.5 (neutral) when LLM assessment fails due to auth/provider errors
+- [ ] Tier2Result includes metadata flag indicating whether fallback was used
+- [ ] CompositeScorer logs warning when using fallback-derived scores
+- [ ] Tests: Hypothesis property tests for fallback score bounds (0.0 ≤ fallback ≤ 0.5)
+- [ ] Tests: inline-snapshot for Tier2Result structure with fallback metadata
 - [ ] `make validate` passes
 
 **Technical Requirements**:
@@ -63,6 +68,8 @@ Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the ev
 - Implement provider fallback chain: configured → fallback → skip
 - Update `CompositeScorer` to handle missing Tier 2 (weight redistribution)
 - Log clear warning when Tier 2 is skipped due to missing provider
+- Fix `_fallback_planning_check()` in `llm_evaluation_managers.py:356-357` — cap fallback scores at 0.5 instead of 1.0 for "optimal range"
+- Distinguish auth failures (401) from timeouts in fallback scoring
 
 **Files**:
 
@@ -201,6 +208,7 @@ Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the ev
 - [ ] No re-export shims remain
 - [ ] `config/config_eval.json` removed
 - [ ] Remove or implement commented-out `error_handling_context()` FIXME notes in `agent_system.py` (lines 443, 514, 583)
+- [ ] Delete duplicate `src/app/agents/peerread_tools.py` (canonical: `src/app/tools/peerread_tools.py`, imported at `agent_system.py:63`)
 - [ ] CHANGELOG.md updated
 - [ ] `make validate` passes, no dead code
 
@@ -336,6 +344,104 @@ Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the ev
 
 ---
 
+#### Feature 16: Optional Weave Integration
+
+**Description**: Make weave dependency optional. Only import/init when `WANDB_API_KEY` is configured. Eliminates warning noise for users who don't use Weights & Biases.
+
+**Acceptance Criteria**:
+
+- [ ] `weave` moved from required to optional dependency group in `pyproject.toml`
+- [ ] `login.py` conditionally imports weave only when `WANDB_API_KEY` is present
+- [ ] `app.py` provides no-op `@op()` decorator fallback when weave unavailable
+- [ ] No warning messages emitted when `WANDB_API_KEY` not set
+- [ ] Existing weave tracing works unchanged when `WANDB_API_KEY` IS set
+- [ ] Tests use Hypothesis for import guard property tests (weave present vs absent)
+- [ ] `make validate` passes
+- [ ] CHANGELOG.md updated
+
+**Technical Requirements**:
+
+- Move `weave>=0.52.28` to optional group in `pyproject.toml`
+- `try/except ImportError` guard in `app.py`: `op = lambda: lambda f: f`
+- Conditional import in `login.py` — only import weave inside the `if is_api_key:` block
+
+**Files**:
+
+- `pyproject.toml`
+- `src/app/utils/login.py`
+- `src/app/app.py`
+
+---
+
+#### Feature 17: Trace Data Quality & Manager Tool Tracing
+
+**Description**: Fix trace data transformation bugs, add trace logging to PeerRead tools, initialize Logfire instrumentation, and improve trace storage logging.
+
+**Acceptance Criteria**:
+
+- [ ] Fix: `_process_events()` includes `agent_id` in tool_call dicts (`trace_processors.py:268-269`)
+- [ ] Fix: `_parse_trace_events()` includes `agent_id` in tool_call dicts (`trace_processors.py:376-377`)
+- [ ] Tier 3 graph analysis succeeds with `--include-researcher` traces (no "missing agent_id" error)
+- [ ] PeerRead tools log trace events via `trace_collector.log_tool_call()` (all 6 tools)
+- [ ] `initialize_logfire_instrumentation_from_settings()` called at startup when `logfire_enabled=True`
+- [ ] `_store_trace()` logs full storage path (JSONL + SQLite) at least once per execution
+- [ ] Manager-only runs produce non-empty trace data
+- [ ] Tests: Hypothesis property tests for trace event schema invariants (agent_id always present)
+- [ ] Tests: inline-snapshot for GraphTraceData transformation output structure
+- [ ] `make validate` passes
+- [ ] CHANGELOG.md updated
+
+**Technical Requirements**:
+
+- In `_process_events()` line 269: add `"agent_id": event.agent_id` to tool_call dict
+- In `_parse_trace_events()` line 377: add `"agent_id": agent_id` to tool_call dict
+- Add `trace_collector.log_tool_call()` to 6 PeerRead tools in `src/app/tools/peerread_tools.py` following delegation tool pattern (`time.perf_counter()` timing, success/failure)
+- Call `initialize_logfire_instrumentation_from_settings()` in `src/app/app.py` after settings load
+- Extend log message at `trace_processors.py:352-358` to include `self.storage_path`
+- Use `JudgeSettings.logfire_enabled` as authoritative setting for Logfire initialization (not `CommonSettings.enable_logfire`)
+
+**Files**:
+
+- `src/app/evals/trace_processors.py` (agent_id fix + path logging)
+- `src/app/tools/peerread_tools.py` (trace logging for 6 tools)
+- `src/app/app.py` (Logfire init call)
+
+**Note**: `src/app/agents/peerread_tools.py` appears to be a duplicate of `src/app/tools/peerread_tools.py`. Canonical import is `app.tools.peerread_tools` (used at `agent_system.py:63`).
+
+---
+
+#### Feature 18: GUI Agent & Provider Configuration
+
+**Description**: Expose provider selection and sub-agent toggles in the Streamlit GUI with session state persistence. Currently CLI-only (`--chat-provider`, `--include-researcher/analyst/synthesiser`).
+
+**Depends**: STORY-010
+
+**Acceptance Criteria**:
+
+- [ ] Settings page displays provider selectbox with all providers from `PROVIDER_REGISTRY`
+- [ ] Settings page displays checkboxes for include_researcher, include_analyst, include_synthesiser
+- [ ] Selections persist across page navigation via `st.session_state`
+- [ ] Run App page passes all flags to `main()` from session state
+- [ ] Default provider matches `CHAT_DEFAULT_PROVIDER`
+- [ ] Tests: inline-snapshot for session state defaults structure
+- [ ] `make validate` passes
+- [ ] CHANGELOG.md updated
+
+**Technical Requirements**:
+
+- Settings page: provider selectbox keyed to `st.session_state`, agent checkboxes
+- Run App page: read from session state, pass to `main(chat_provider=..., include_researcher=..., ...)`
+- `run_gui.py`: initialize session state defaults on startup
+- Import `PROVIDER_REGISTRY` from `app.data_models.app_models` for provider list
+
+**Files**:
+
+- `src/gui/pages/settings.py`
+- `src/gui/pages/run_app.py`
+- `src/run_gui.py`
+
+---
+
 ## Non-Functional Requirements
 
 - **Maintainability:**
@@ -347,6 +453,13 @@ Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the ev
 - **Documentation:**
   - Comprehensive documentation for setup, usage, and testing.
   - Docstrings for all new functions and classes (Google style format).
+- **Testing:**
+  - All new features must include tests per `docs/best-practices/testing-strategy.md`
+  - Use **Hypothesis** (`@given`) for property-based tests: score bounds, input validation, serialization invariants
+  - Use **inline-snapshot** (`snapshot()`) for regression tests: Pydantic model dumps, complex result structures
+  - Use **pytest** for standard unit/integration tests with Arrange-Act-Assert structure
+  - Tool selection: pytest for **logic**, Hypothesis for **properties**, inline-snapshot for **structure**
+  - NO pytest-bdd / Gherkin (already in Out of Scope)
 
 ## Out of Scope
 
@@ -369,16 +482,19 @@ Sprint 3 adds judge provider fallback for Tier 2 evaluation, restructures the ev
 
 <!-- PARSER REQUIREMENT: Include story count in parentheses -->
 <!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
-Story Breakdown - Sprint 3 (11 stories total):
+Story Breakdown - Sprint 3 (14 stories total):
 
-- **Feature 5 (Content Truncation)** → STORY-007: Model-aware content truncation
-- **Feature 6 (Judge Fallback)** → STORY-008: Judge provider fallback for Tier 2
-- **Feature 7 (Plugin Base)** → STORY-009: EvaluatorPlugin base and registry (depends: STORY-004)
-- **Feature 8 (Traditional Adapter)** → STORY-010: TraditionalMetricsPlugin wrapper (depends: STORY-009)
-- **Feature 9 (LLM Judge Adapter)** → STORY-011: LLMJudgePlugin wrapper (depends: STORY-009)
-- **Feature 10 (Graph Adapter)** → STORY-012: GraphEvaluatorPlugin wrapper (depends: STORY-009)
-- **Feature 11 (Plugin Pipeline)** → STORY-013: JudgeAgent replaces EvaluationPipeline (depends: STORY-010, STORY-011, STORY-012)
-- **Feature 12 (Migration Cleanup)** → STORY-014: Remove shims and update imports (depends: STORY-013)
-- **Feature 13 (CC OTel)** → STORY-015: CC OTel observability plugin (depends: STORY-013)
-- **Feature 14 (GUI Settings Wiring)** → STORY-016: Wire GUI to actual settings (depends: STORY-014)
-- **Feature 15 (Test Refactoring)** → STORY-017: Test infrastructure alignment (depends: STORY-014)
+- **Feature 5 (Content Truncation)** → STORY-001: Model-aware content truncation
+- **Feature 6 (Judge Fallback)** → STORY-002: Judge provider fallback for Tier 2
+- **Feature 7 (Plugin Base)** → STORY-003: EvaluatorPlugin base and registry
+- **Feature 8 (Traditional Adapter)** → STORY-004: TraditionalMetricsPlugin wrapper (depends: STORY-003)
+- **Feature 9 (LLM Judge Adapter)** → STORY-005: LLMJudgePlugin wrapper (depends: STORY-003)
+- **Feature 10 (Graph Adapter)** → STORY-006: GraphEvaluatorPlugin wrapper (depends: STORY-003)
+- **Feature 11 (Plugin Pipeline)** → STORY-007: JudgeAgent replaces EvaluationPipeline (depends: STORY-004, STORY-005, STORY-006)
+- **Feature 12 (Migration Cleanup)** → STORY-008: Remove shims and update imports (depends: STORY-007)
+- **Feature 13 (CC OTel)** → STORY-009: CC OTel observability plugin (depends: STORY-007)
+- **Feature 14 (GUI Settings Wiring)** → STORY-010: Wire GUI to actual settings (depends: STORY-008)
+- **Feature 15 (Test Refactoring)** → STORY-011: Test infrastructure alignment (depends: STORY-008)
+- **Feature 16 (Optional Weave)** → STORY-012: Make weave dependency optional
+- **Feature 17 (Trace Quality)** → STORY-013: Trace data quality fixes + manager tool tracing
+- **Feature 18 (GUI Config)** → STORY-014: GUI agent & provider configuration (depends: STORY-010)
