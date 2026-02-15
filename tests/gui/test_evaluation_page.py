@@ -5,8 +5,9 @@ Following TDD approach for STORY-006 evaluation dashboard implementation.
 Tests verify that the page renders Tier 1/2/3 scores and graph vs text comparison.
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 from app.data_models.evaluation_models import (
     CompositeResult,
@@ -88,9 +89,7 @@ class TestEvaluationPage:
         """Test page renders with valid CompositeResult data."""
         from gui.pages.evaluation import render_evaluation
 
-        with patch("streamlit.header"), patch("streamlit.metric"), patch(
-            "streamlit.bar_chart"
-        ):
+        with patch("streamlit.header"), patch("streamlit.metric"), patch("streamlit.bar_chart"):
             # Should not raise any exceptions
             render_evaluation(mock_composite_result)
 
@@ -98,8 +97,10 @@ class TestEvaluationPage:
         """Test that all three tier scores are displayed."""
         from gui.pages.evaluation import render_evaluation
 
-        with patch("streamlit.header"), patch("streamlit.metric") as mock_metric, patch(
-            "streamlit.bar_chart"
+        with (
+            patch("streamlit.header"),
+            patch("streamlit.metric") as mock_metric,
+            patch("streamlit.bar_chart"),
         ):
             render_evaluation(mock_composite_result)
 
@@ -110,9 +111,11 @@ class TestEvaluationPage:
         """Test that bar chart compares graph metrics vs text metrics."""
         from gui.pages.evaluation import render_evaluation
 
-        with patch("streamlit.header"), patch("streamlit.metric"), patch(
-            "streamlit.bar_chart"
-        ) as mock_chart:
+        with (
+            patch("streamlit.header"),
+            patch("streamlit.metric"),
+            patch("streamlit.bar_chart") as mock_chart,
+        ):
             render_evaluation(mock_composite_result)
 
             # Should create at least one bar chart
@@ -145,9 +148,11 @@ class TestEvaluationPage:
 
         from gui.pages.evaluation import render_evaluation
 
-        with patch("streamlit.header"), patch("streamlit.metric"), patch(
-            "streamlit.warning"
-        ) as mock_warning:
+        with (
+            patch("streamlit.header"),
+            patch("streamlit.metric"),
+            patch("streamlit.warning") as mock_warning,
+        ):
             render_evaluation(partial_result)
 
             # Should warn about incomplete evaluation
@@ -157,9 +162,11 @@ class TestEvaluationPage:
         """Test extraction of graph-specific metrics for visualization."""
         from gui.pages.evaluation import render_evaluation
 
-        with patch("streamlit.header"), patch("streamlit.metric"), patch(
-            "streamlit.bar_chart"
-        ) as mock_chart:
+        with (
+            patch("streamlit.header"),
+            patch("streamlit.metric"),
+            patch("streamlit.bar_chart") as mock_chart,
+        ):
             render_evaluation(mock_composite_result)
 
             # Verify bar chart is called with data containing graph metrics
@@ -172,9 +179,11 @@ class TestEvaluationPage:
         """Test extraction of text-specific metrics for visualization."""
         from gui.pages.evaluation import render_evaluation
 
-        with patch("streamlit.header"), patch("streamlit.metric"), patch(
-            "streamlit.bar_chart"
-        ) as mock_chart:
+        with (
+            patch("streamlit.header"),
+            patch("streamlit.metric"),
+            patch("streamlit.bar_chart") as mock_chart,
+        ):
             render_evaluation(mock_composite_result)
 
             # Verify bar chart is called with data containing text metrics

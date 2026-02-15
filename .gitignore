@@ -17,6 +17,7 @@ dist/
 .coverage/
 .coverage
 .hypothesis/
+pytest-of-vscode/
 
 # Sanity Checks
 .complexipy_cache/
@@ -32,6 +33,7 @@ logs/
 .tmp/
 
 # Traces
+opik/
 scalene-profiles
 profile.html
 profile.json

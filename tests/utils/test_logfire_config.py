@@ -4,7 +4,6 @@ This module tests the LogfireConfig class which replaces OpikConfig
 for Logfire + Phoenix tracing integration.
 """
 
-
 from app.evals.settings import JudgeSettings
 from app.utils.load_configs import LogfireConfig
 

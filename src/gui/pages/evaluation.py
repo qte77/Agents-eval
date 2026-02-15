@@ -26,9 +26,7 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
     st.header("📊 Evaluation Results")
 
     if result is None:
-        st.info(
-            "No evaluation results available. Run an evaluation to see results here."
-        )
+        st.info("No evaluation results available. Run an evaluation to see results here.")
         return
 
     # Display overall results

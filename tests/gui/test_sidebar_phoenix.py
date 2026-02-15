@@ -5,8 +5,7 @@ Following TDD approach for STORY-006 sidebar Phoenix integration.
 Tests verify that the sidebar includes Phoenix status link.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 
 class TestSidebarPhoenixLink:
@@ -16,9 +15,11 @@ class TestSidebarPhoenixLink:
         """Test that sidebar includes Phoenix status link."""
         from gui.components.sidebar import render_sidebar
 
-        with patch("streamlit.sidebar.title"), patch(
-            "streamlit.sidebar.radio"
-        ) as mock_radio, patch("streamlit.sidebar.markdown") as mock_markdown:
+        with (
+            patch("streamlit.sidebar.title"),
+            patch("streamlit.sidebar.radio") as mock_radio,
+            patch("streamlit.sidebar.markdown") as mock_markdown,
+        ):
             mock_radio.return_value = "Home"
             render_sidebar("Test App")
 
@@ -29,9 +30,11 @@ class TestSidebarPhoenixLink:
         """Test that Phoenix link has correct format and URL."""
         from gui.components.sidebar import render_sidebar
 
-        with patch("streamlit.sidebar.title"), patch(
-            "streamlit.sidebar.radio"
-        ) as mock_radio, patch("streamlit.sidebar.markdown") as mock_markdown:
+        with (
+            patch("streamlit.sidebar.title"),
+            patch("streamlit.sidebar.radio") as mock_radio,
+            patch("streamlit.sidebar.markdown") as mock_markdown,
+        ):
             mock_radio.return_value = "Home"
             render_sidebar("Test App")
 
@@ -54,10 +57,11 @@ class TestSidebarPhoenixLink:
         """Test that sidebar includes divider before Phoenix section."""
         from gui.components.sidebar import render_sidebar
 
-        with patch("streamlit.sidebar.title"), patch(
-            "streamlit.sidebar.radio"
-        ) as mock_radio, patch("streamlit.sidebar.divider") as mock_divider, patch(
-            "streamlit.sidebar.markdown"
+        with (
+            patch("streamlit.sidebar.title"),
+            patch("streamlit.sidebar.radio") as mock_radio,
+            patch("streamlit.sidebar.divider") as mock_divider,
+            patch("streamlit.sidebar.markdown"),
         ):
             mock_radio.return_value = "Home"
             render_sidebar("Test App")
@@ -69,9 +73,11 @@ class TestSidebarPhoenixLink:
         """Test that Phoenix link uses correct default endpoint."""
         from gui.components.sidebar import render_sidebar
 
-        with patch("streamlit.sidebar.title"), patch(
-            "streamlit.sidebar.radio"
-        ) as mock_radio, patch("streamlit.sidebar.markdown") as mock_markdown:
+        with (
+            patch("streamlit.sidebar.title"),
+            patch("streamlit.sidebar.radio") as mock_radio,
+            patch("streamlit.sidebar.markdown") as mock_markdown,
+        ):
             mock_radio.return_value = "Home"
             render_sidebar("Test App")
 

@@ -5,9 +5,10 @@ Following TDD approach for STORY-006 agent graph visualization implementation.
 Tests verify that the page renders NetworkX graph as interactive Pyvis visualization.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 import networkx as nx
+import pytest
 
 from app.data_models.evaluation_models import GraphTraceData
 
@@ -133,9 +134,11 @@ class TestAgentGraphPage:
         """Test that Pyvis Network is created from NetworkX graph."""
         from gui.pages.agent_graph import render_agent_graph
 
-        with patch("streamlit.header"), patch(
-            "streamlit.components.v1.html"
-        ) as mock_html, patch("pyvis.network.Network") as mock_pyvis:
+        with (
+            patch("streamlit.header"),
+            patch("streamlit.components.v1.html") as mock_html,
+            patch("pyvis.network.Network") as mock_pyvis,
+        ):
             render_agent_graph(mock_networkx_graph)
 
             # Should create Pyvis Network instance

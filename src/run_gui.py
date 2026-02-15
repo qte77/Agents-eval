@@ -34,6 +34,8 @@ from gui.components.sidebar import render_sidebar  # noqa: E402
 from gui.config.config import APP_CONFIG_PATH  # noqa: E402
 from gui.config.styling import add_custom_styling  # noqa: E402
 from gui.config.text import PAGE_TITLE  # noqa: E402
+from gui.pages.agent_graph import render_agent_graph  # noqa: E402
+from gui.pages.evaluation import render_evaluation  # noqa: E402
 from gui.pages.home import render_home  # noqa: E402
 from gui.pages.prompts import render_prompts  # noqa: E402
 from gui.pages.run_app import render_app  # noqa: E402
@@ -63,6 +65,12 @@ async def main():
     elif selected_page == "App":
         logger.info(f"Page 'App' provider: {CHAT_DEFAULT_PROVIDER}")
         await render_app(CHAT_DEFAULT_PROVIDER, chat_config_file)
+    elif selected_page == "Evaluation Results":
+        # Render with None initially - real data would come from session state
+        render_evaluation(None)
+    elif selected_page == "Agent Graph":
+        # Render with None initially - real data would come from session state
+        render_agent_graph(None)
 
 
 if __name__ == "__main__":
