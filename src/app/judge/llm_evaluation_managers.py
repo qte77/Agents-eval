@@ -60,6 +60,9 @@ class LLMJudgeEngine:
             "planning_rationality": 0.3,
         }
 
+        # Track auth failures for fallback_used flag
+        self._auth_failure_count = 0
+
     def validate_provider_api_key(self, provider: str, env_config: AppEnv) -> bool:
         """Validate API key availability for a provider.
 
@@ -174,6 +177,7 @@ Provide scores and brief explanation."""
             if is_auth_failure:
                 # Auth failures get neutral score (0.5) - provider unavailable
                 logger.warning("Auth failure detected - using neutral fallback score")
+                self._auth_failure_count += 1
                 return 0.5
             else:
                 # Timeouts and other errors use semantic similarity fallback
@@ -210,8 +214,18 @@ Provide scores and brief explanation."""
 
         except Exception as e:
             logger.warning(f"Constructiveness assessment failed: {e}")
-            # Simple fallback: check for key constructive phrases
-            return self._fallback_constructiveness_check(review)
+            # Distinguish auth failures (401) from other errors
+            error_msg = str(e).lower()
+            is_auth_failure = "401" in error_msg or "unauthorized" in error_msg
+
+            if is_auth_failure:
+                # Auth failures get neutral score (0.5) - provider unavailable
+                logger.warning("Auth failure detected - using neutral fallback score")
+                self._auth_failure_count += 1
+                return 0.5
+            else:
+                # Other errors use heuristic fallback
+                return self._fallback_constructiveness_check(review)
 
     async def assess_planning_rationality(self, execution_trace: dict[str, Any]) -> float:
         """Assess quality of agent planning and decision-making."""
@@ -247,8 +261,18 @@ Provide scores and brief explanation."""
 
         except Exception as e:
             logger.warning(f"Planning rationality assessment failed: {e}")
-            # Simple fallback based on trace structure
-            return self._fallback_planning_check(execution_trace)
+            # Distinguish auth failures (401) from other errors
+            error_msg = str(e).lower()
+            is_auth_failure = "401" in error_msg or "unauthorized" in error_msg
+
+            if is_auth_failure:
+                # Auth failures get neutral score (0.5) - provider unavailable
+                logger.warning("Auth failure detected - using neutral fallback score")
+                self._auth_failure_count += 1
+                return 0.5
+            else:
+                # Other errors use heuristic fallback
+                return self._fallback_planning_check(execution_trace)
 
     def _handle_assessment_failures(
         self,
@@ -299,6 +323,9 @@ Provide scores and brief explanation."""
     ) -> Tier2Result:
         """Run comprehensive LLM-based evaluation."""
         try:
+            # Reset auth failure counter for this evaluation
+            self._auth_failure_count = 0
+
             # Run assessments concurrently for efficiency
             technical_task = self.assess_technical_accuracy(paper, review)
             constructiveness_task = self.assess_constructiveness(review)
@@ -329,6 +356,10 @@ Provide scores and brief explanation."""
                 review,
                 execution_trace,
             )
+
+            # Check if any auth failures occurred (tracked in assess_* methods)
+            if self._auth_failure_count > 0:
+                fallback_used = True
 
             # Estimate API cost (approximate)
             total_tokens = len(paper) / 4 + len(review) / 4 + 500
