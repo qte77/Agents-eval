@@ -22,8 +22,8 @@
         "src/app/agents/peerread_tools.py",
         "src/app/common/settings.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-15T11:33:15Z",
       "content_hash": "c62d43fc6d46b0c800ba2f2681cea975c0c0ab4944e63e5392a9f012b181c224",
       "depends_on": []
     },
@@ -40,14 +40,14 @@
         "Fallback heuristic scores capped at 0.5 (neutral) when LLM assessment fails due to auth/provider errors",
         "Tier2Result includes metadata flag indicating whether fallback was used",
         "CompositeScorer logs warning when using fallback-derived scores",
-        "Tests: Hypothesis property tests for fallback score bounds (0.0 \u2264 fallback \u2264 0.5)",
+        "Tests: Hypothesis property tests for fallback score bounds (0.0 ≤ fallback ≤ 0.5)",
         "Tests: inline-snapshot for Tier2Result structure with fallback metadata",
         "`make validate` passes",
         "Add API key availability check in `LLMJudgeEngine` initialization",
-        "Implement provider fallback chain: configured \u2192 fallback \u2192 skip",
+        "Implement provider fallback chain: configured → fallback → skip",
         "Update `CompositeScorer` to handle missing Tier 2 (weight redistribution)",
         "Log clear warning when Tier 2 is skipped due to missing provider",
-        "Fix `_fallback_planning_check()` in `llm_evaluation_managers.py:356-357` \u2014 cap fallback scores at 0.5 instead of 1.0 for \"optimal range\"",
+        "Fix `_fallback_planning_check()` in `llm_evaluation_managers.py:356-357` — cap fallback scores at 0.5 instead of 1.0 for \"optimal range\"",
         "Distinguish auth failures (401) from timeouts in fallback scoring"
       ],
       "files": [
@@ -155,7 +155,7 @@
       "acceptance": [
         "JudgeAgent replaces EvaluationPipeline using PluginRegistry",
         "Explicit tier execution order in code",
-        "Context flows Tier 1 \u2192 Tier 2 \u2192 Tier 3",
+        "Context flows Tier 1 → Tier 2 → Tier 3",
         "TraceStore with thread-safe storage",
         "Graceful degradation preserved",
         "Re-export shim for EvaluationPipeline",
@@ -210,7 +210,7 @@
     {
       "id": "STORY-009",
       "title": "CC OTel observability plugin",
-      "description": "Standalone CC telemetry plugin using OTel \u2192 Logfire + Phoenix pipeline. Enables CC session tracing alongside PydanticAI Logfire auto-instrumentation.",
+      "description": "Standalone CC telemetry plugin using OTel → Logfire + Phoenix pipeline. Enables CC session tracing alongside PydanticAI Logfire auto-instrumentation.",
       "acceptance": [
         "`src/app/cc_otel/` module with config + enable/disable API",
         "`CCOtelConfig` with env var export",
@@ -286,7 +286,7 @@
         "CHANGELOG.md updated",
         "Add `from hypothesis import given, strategies as st` imports",
         "Add `from inline_snapshot import snapshot` imports",
-        "Convert score calculation tests to property tests with invariants (0.0 \u2264 score \u2264 1.0)",
+        "Convert score calculation tests to property tests with invariants (0.0 ≤ score ≤ 1.0)",
         "Convert model serialization tests to snapshot tests",
         "Document usage patterns in test files for future reference",
         "NO pytest-bdd, NO Gherkin, NO BDD methodology (use TDD with hypothesis for properties)"
@@ -321,7 +321,7 @@
         "CHANGELOG.md updated",
         "Move `weave>=0.52.28` to optional group in `pyproject.toml`",
         "`try/except ImportError` guard in `app.py`: `op = lambda: lambda f: f`",
-        "Conditional import in `login.py` \u2014 only import weave inside the `if is_api_key:` block"
+        "Conditional import in `login.py` — only import weave inside the `if is_api_key:` block"
       ],
       "files": [
         "pyproject.toml",
