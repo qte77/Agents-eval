@@ -85,8 +85,12 @@ def render_settings(common_settings: CommonSettings, judge_settings: JudgeSettin
             config_path = resolve_config_path(CHAT_CONFIG_FILE)
             chat_config = load_config(config_path, ChatConfig)
             current_provider_val = st.session_state.get("chat_provider", "ollama")
-            provider_config = chat_config.providers.get(current_provider_val, {})  # type: ignore[reportAttributeAccessIssue]
-            default_limit = provider_config.get("usage_limits", 25000) if provider_config else 25000  # type: ignore[reportAttributeAccessIssue]
+            provider_config = chat_config.providers.get(current_provider_val)  # type: ignore[reportAttributeAccessIssue]
+            default_limit = (
+                provider_config.usage_limits
+                if provider_config and provider_config.usage_limits
+                else 25000
+            )
 
             text("**Token Limit:**")
             st.session_state["token_limit"] = number_input(

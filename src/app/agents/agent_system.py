@@ -555,6 +555,65 @@ async def run_manager(
         raise
 
 
+def _determine_effective_token_limit(
+    token_limit: int | None,
+    chat_env_config: AppEnv,
+    provider_config: ProviderConfig,
+) -> int | None:
+    """Determine effective token limit with priority: CLI/GUI > env var > config.
+
+    Args:
+        token_limit: Optional CLI/GUI token limit override
+        chat_env_config: App environment config with AGENT_TOKEN_LIMIT
+        provider_config: Provider config with usage_limits
+
+    Returns:
+        Effective token limit or None if not set
+    """
+    if token_limit is not None:
+        return token_limit
+    if chat_env_config.AGENT_TOKEN_LIMIT is not None:
+        return chat_env_config.AGENT_TOKEN_LIMIT
+    return provider_config.usage_limits
+
+
+def _validate_token_limit(effective_limit: int | None) -> None:
+    """Validate token limit bounds (1000-1000000).
+
+    Args:
+        effective_limit: Token limit to validate
+
+    Raises:
+        ValueError: If limit is outside valid range
+    """
+    if effective_limit is None:
+        return
+
+    if effective_limit < 1000:
+        msg = f"Token limit {effective_limit} below minimum 1000"
+        logger.error(msg)
+        raise ValueError(msg)
+
+    if effective_limit > 1000000:
+        msg = f"Token limit {effective_limit} above maximum 1000000"
+        logger.error(msg)
+        raise ValueError(msg)
+
+
+def _create_usage_limits(effective_limit: int | None) -> UsageLimits | None:
+    """Create UsageLimits object if token limit is set.
+
+    Args:
+        effective_limit: Effective token limit
+
+    Returns:
+        UsageLimits object or None
+    """
+    if effective_limit is None:
+        return None
+    return UsageLimits(request_limit=10, total_tokens_limit=effective_limit)
+
+
 def setup_agent_env(
     provider: str,
     query: UserPromptType,
@@ -582,11 +641,8 @@ def setup_agent_env(
 
     if not isinstance(chat_config, ChatConfig):
         raise TypeError("'chat_config' of invalid type: ChatConfig expected")
-    msg: str | None
-    # FIXME context manager try-catch
-    # with error_handling_context("setup_agent_env()"):
-    provider_config = get_provider_config(provider, chat_config.providers)
 
+    provider_config = get_provider_config(provider, chat_config.providers)
     prompts = chat_config.prompts
     is_api_key, api_key_msg = get_api_key(provider, chat_env_config)
 
@@ -609,58 +665,12 @@ def setup_agent_env(
         logger.error(msg)
         raise ValueError(msg)
 
-    # TODO Separate Gemini request into function
-    # FIXME GeminiModel not compatible with pydantic-ai OpenAIModel
-    # ModelRequest not iterable
-    # Input should be 'STOP', 'MAX_TOKENS' or 'SAFETY'
-    # [type=literal_error, input_value='MALFORMED_FUNCTION_CALL', input_type=str]
-    # For further information visit https://errors.pydantic.dev/2.11/v/literal_error
-    # if provider.lower() == "gemini":
-    #     if isinstance(query, str):
-    #         query = ModelRequest.user_text_prompt(query)
-    #     elif isinstance(query, list):  # type: ignore[reportUnnecessaryIsInstance]
-    #         # query = [
-    #         #    ModelRequest.user_text_prompt(
-    #         #        str(msg.get("content", ""))
-    #         #    )  # type: ignore[reportUnknownArgumentType]
-    #         #    if isinstance(msg, dict)
-    #         #    else msg
-    #         #    for msg in query
-    #         # ]
-    #         raise NotImplementedError("Currently conflicting with UserPromptType")
-    #     else:
-    #         msg = f"Unsupported query type for Gemini: {type(query)}"
-    #         logger.error(msg)
-    #         raise TypeError(msg)
-
-    # Determine token limit with priority: CLI/GUI > env var > config
-    # Reason: Allow runtime override of config defaults via CLI, GUI, or environment
-    effective_limit = None
-    if token_limit is not None:
-        # CLI/GUI override has highest priority
-        effective_limit = token_limit
-    elif chat_env_config.AGENT_TOKEN_LIMIT is not None:
-        # Environment variable has second priority
-        effective_limit = chat_env_config.AGENT_TOKEN_LIMIT
-    elif provider_config.usage_limits is not None:
-        # Config file has lowest priority (fallback)
-        effective_limit = provider_config.usage_limits
-
-    # Validate token limit bounds (1000-1000000)
-    if effective_limit is not None:
-        if effective_limit < 1000:
-            msg = f"Token limit {effective_limit} below minimum 1000"
-            logger.error(msg)
-            raise ValueError(msg)
-        if effective_limit > 1000000:
-            msg = f"Token limit {effective_limit} above maximum 1000000"
-            logger.error(msg)
-            raise ValueError(msg)
-
-    # Create UsageLimits object if token limit is set
-    usage_limits = None
-    if effective_limit is not None:
-        usage_limits = UsageLimits(request_limit=10, total_tokens_limit=effective_limit)
+    # Determine and validate token limit with priority: CLI/GUI > env var > config
+    effective_limit = _determine_effective_token_limit(
+        token_limit, chat_env_config, provider_config
+    )
+    _validate_token_limit(effective_limit)
+    usage_limits = _create_usage_limits(effective_limit)
 
     return EndpointConfig.model_validate(
         {
