@@ -312,8 +312,12 @@ class TestComprehensiveEvaluation:
 
     @pytest.fixture
     def pipeline(self):
-        """Pipeline instance for testing."""
-        return EvaluationPipeline()
+        """Pipeline instance with Tier 2 enabled for comprehensive mock testing."""
+        p = EvaluationPipeline()
+        # Reason: These tests mock all engines directly; tier2_available must be True
+        # so _execute_tier2 calls the mocked evaluate_comprehensive instead of skipping.
+        p.llm_engine.tier2_available = True
+        return p
 
     @pytest.mark.asyncio
     async def test_comprehensive_evaluation_success(

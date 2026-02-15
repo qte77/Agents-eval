@@ -382,7 +382,6 @@ class CompositeScorer:
             )
             # Redistribute Tier 2 metrics (planning_rationality: 0.167) to other metrics
             # Split evenly across remaining 5 metrics
-            # FIXME redundant weights, should only be in config
             adjusted_weights = {
                 "time_taken": 0.2,  # 0.167 + 0.033
                 "task_success": 0.2,  # 0.167 + 0.033

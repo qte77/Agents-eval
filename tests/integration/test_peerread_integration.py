@@ -196,8 +196,12 @@ class TestPeerReadIntegration:
 
     @pytest.fixture
     def evaluation_pipeline(self):
-        """Fixture providing initialized evaluation pipeline."""
-        return EvaluationPipeline()
+        """Fixture providing evaluation pipeline with Tier 2 enabled for integration testing."""
+        p = EvaluationPipeline()
+        # Reason: Integration tests mock engines and expect full 3-tier flow;
+        # tier2_available must be True regardless of env API key availability.
+        p.llm_engine.tier2_available = True
+        return p
 
     @pytest.mark.asyncio
     async def test_peerread_data_format_compatibility(self, peerread_data, evaluation_pipeline):

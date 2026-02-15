@@ -62,9 +62,9 @@ class TestProviderFallbackChain:
     def test_should_use_primary_when_available(self):
         """Should use primary provider when API key is available."""
         settings = JudgeSettings(tier2_provider="openai")
-        env_config = AppEnv(OPENAI_API_KEY="test-key")
+        env_config = AppEnv(OPENAI_API_KEY="test-key", GITHUB_API_KEY="")
 
-        engine = LLMJudgeEngine(settings)
+        engine = LLMJudgeEngine(settings, env_config=env_config)
         selected_provider = engine.select_available_provider(env_config)
 
         assert selected_provider == ("openai", "gpt-4o-mini")

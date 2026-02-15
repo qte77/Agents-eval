@@ -25,8 +25,9 @@ def settings():
 
 @pytest.fixture
 def engine(settings):
-    """Fixture providing LLMJudgeEngine instance."""
-    return LLMJudgeEngine(settings)
+    """Fixture providing LLMJudgeEngine instance with controlled environment."""
+    env_config = AppEnv(OPENAI_API_KEY="sk-test-key", GITHUB_API_KEY="")
+    return LLMJudgeEngine(settings, env_config=env_config)
 
 
 @pytest.fixture
@@ -351,8 +352,8 @@ class TestProviderSelection:
     def test_select_available_provider_primary_available(self):
         """Should select primary provider when API key is available."""
         settings = JudgeSettings(tier2_provider="openai", tier2_model="gpt-4o-mini")
-        engine = LLMJudgeEngine(settings)
-        env_config = AppEnv(OPENAI_API_KEY="sk-test-key")
+        env_config = AppEnv(OPENAI_API_KEY="sk-test-key", GITHUB_API_KEY="")
+        engine = LLMJudgeEngine(settings, env_config=env_config)
 
         result = engine.select_available_provider(env_config)
 
@@ -414,7 +415,7 @@ class TestProviderSelection:
     def test_engine_marks_tier2_skipped_when_no_providers_available(self):
         """Engine should mark Tier 2 as skipped when no providers available (STORY-001)."""
         settings = JudgeSettings(tier2_provider="openai")
-        env_config = AppEnv(OPENAI_API_KEY="")
+        env_config = AppEnv(OPENAI_API_KEY="", GITHUB_API_KEY="")
 
         engine = LLMJudgeEngine(settings, env_config=env_config)
 
@@ -526,7 +527,7 @@ class TestStory001AcceptanceCriteria:
     async def test_skipped_tier2_returns_none_not_neutral_scores(self):
         """When Tier 2 skipped, should return None not neutral 0.5 scores."""
         settings = JudgeSettings(tier2_provider="openai")
-        env_config = AppEnv(OPENAI_API_KEY="")
+        env_config = AppEnv(OPENAI_API_KEY="", GITHUB_API_KEY="")
 
         engine = LLMJudgeEngine(settings, env_config=env_config)
         assert engine.tier2_available is False
@@ -705,20 +706,22 @@ class TestProviderSelectionProperties:
             assert result is None
 
     @given(
-        chat_provider=st.sampled_from(["openai", "github", "cerebras", "groq"]),
+        chat_provider=st.sampled_from(["openai", "github", "cerebras", "grok"]),
     )
     def test_auto_mode_inherits_chat_provider(self, chat_provider):
         """Property: auto mode always inherits the provided chat_provider."""
         settings = JudgeSettings(tier2_provider="auto")
 
-        # Create minimal env with key for the chat_provider
+        # Create env with key for the chat_provider and clear fallback key
         env_keys = {
             "openai": "OPENAI_API_KEY",
             "github": "GITHUB_API_KEY",
             "cerebras": "CEREBRAS_API_KEY",
-            "groq": "GROQ_API_KEY",
+            "grok": "GROK_API_KEY",
         }
-        env_config = AppEnv(**{env_keys[chat_provider]: "test-key"})
+        # Reason: Clear GITHUB_API_KEY (default fallback) to prevent env leakage
+        env_kwargs = {env_keys[chat_provider]: "test-key", "GITHUB_API_KEY": ""}
+        env_config = AppEnv(**env_kwargs)
 
         engine = LLMJudgeEngine(settings, env_config=env_config, chat_provider=chat_provider)
 
@@ -758,7 +761,7 @@ class TestProviderSelectionBehavior:
     def test_engine_marks_unavailable_when_no_providers(self):
         """Engine should mark Tier 2 unavailable when no providers."""
         settings = JudgeSettings(tier2_provider="openai")
-        env_config = AppEnv(OPENAI_API_KEY="")
+        env_config = AppEnv(OPENAI_API_KEY="", GITHUB_API_KEY="")
 
         engine = LLMJudgeEngine(settings, env_config=env_config)
 

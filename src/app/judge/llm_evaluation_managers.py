@@ -200,7 +200,7 @@ Provide scores and brief explanation."""
 
         except Exception as e:
             logger.warning(f"Technical accuracy assessment failed: {e}")
-            # Distinguish auth failures (401) from timeouts per STORY-002
+            # Distinguish auth failures (401) from timeouts per STORY-001
             error_msg = str(e).lower()
             is_auth_failure = "401" in error_msg or "unauthorized" in error_msg
 
@@ -438,7 +438,7 @@ Provide scores and brief explanation."""
         """Simple fallback for constructiveness assessment.
 
         Returns:
-            Fallback score capped at 0.5 (neutral) per STORY-002 acceptance criteria
+            Fallback score capped at 0.5 (neutral) per STORY-001 acceptance criteria
         """
         constructive_phrases = [
             "suggest",
@@ -460,7 +460,7 @@ Provide scores and brief explanation."""
         review_lower = review.lower()
         matches = sum(1 for phrase in constructive_phrases if phrase in review_lower)
 
-        # Cap fallback scores at 0.5 (neutral) per STORY-002
+        # Cap fallback scores at 0.5 (neutral) per STORY-001
         raw_score = matches / len(constructive_phrases)
         return min(0.5, raw_score)
 
@@ -468,7 +468,7 @@ Provide scores and brief explanation."""
         """Simple fallback for planning rationality.
 
         Returns:
-            Fallback score capped at 0.5 (neutral) per STORY-002 acceptance criteria
+            Fallback score capped at 0.5 (neutral) per STORY-001 acceptance criteria
         """
         try:
             interactions = len(execution_trace.get("agent_interactions", []))
@@ -484,7 +484,7 @@ Provide scores and brief explanation."""
             else:
                 activity_score = max(0.0, 0.5 - (total_activity - 10) * 0.05)
 
-            # Cap fallback scores at 0.5 (neutral) per STORY-002
+            # Cap fallback scores at 0.5 (neutral) per STORY-001
             return min(0.5, max(0.0, activity_score))
 
         except Exception:

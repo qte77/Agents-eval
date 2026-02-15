@@ -296,7 +296,12 @@ class EvaluationPipeline:
             ValueError: If insufficient tier results for scoring
         """
         if results.tier2 is None:
-            # Tier 2 skipped - use weight redistribution
+            # Tier 2 skipped - validate Tier 1 and Tier 3 before redistribution
+            if not results.tier1 or not results.tier3:
+                raise ValueError(
+                    "Cannot generate composite score: Tier 1 and Tier 3 required "
+                    "when Tier 2 is skipped"
+                )
             return self.composite_scorer.evaluate_composite_with_optional_tier2(results)
         elif results.is_complete():
             # All tiers available

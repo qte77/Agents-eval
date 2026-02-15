@@ -78,7 +78,8 @@ class TestTier2ProviderFallbackIntegration:
         """Tier2Result should include fallback_used flag when fallback triggered."""
         # Arrange: simulate auth failure to trigger fallback
         settings = JudgeSettings()
-        engine = LLMJudgeEngine(settings)
+        env_config = AppEnv(OPENAI_API_KEY="sk-test-key", GITHUB_API_KEY="")
+        engine = LLMJudgeEngine(settings, env_config=env_config)
 
         # Act: Force auth failure
         with patch.object(
