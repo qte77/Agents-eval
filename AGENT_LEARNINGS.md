@@ -99,3 +99,22 @@ Non-obvious patterns that prevent repeated mistakes.
   ```
 
 - **References**: `src/app/llms/models.py`, [OpenAI Function Calling Guide](https://developers.openai.com/api/docs/guides/function-calling/)
+
+### Pydantic validation_alias for External Data Mapping
+
+- **Context**: Pydantic models receiving external data with different key names (e.g., PeerRead uppercase `IMPACT` → model lowercase `impact`)
+- **Problem**: `alias` changes constructor signature — breaks pyright `reportCallIssue` for direct `Model(field=value)` calls. `model_validator(mode="before")` couples model to external format, violates separation of concerns.
+- **Solution**: Use `validation_alias` — only affects `model_validate()`, not the constructor. Combine with `ConfigDict(populate_by_name=True)` to accept both alias and field name.
+- **Example**:
+
+  ```python
+  class PeerReadReview(BaseModel):
+      model_config = ConfigDict(populate_by_name=True)
+
+      impact: str = Field(
+          default="UNKNOWN", validation_alias="IMPACT"
+      )
+  ```
+
+- **Anti-pattern**: Smuggling context via sentinel keys (e.g., `_paper_id`) in data dicts passed to `model_validate()`. Use Pydantic's `context` parameter instead.
+- **References**: `src/app/data_models/peerread_models.py`, `src/app/data_utils/datasets_peerread.py`
