@@ -83,6 +83,12 @@ make validate
 
 All checks (formatting, type checking, tests) must pass.
 
+**Note on pre-existing test failures:** The Ralph loop captures a baseline of
+failing tests before your story starts. Pre-existing failures unrelated to your
+story are handled by the baseline comparison and will not block your progress.
+Focus only on making YOUR story's tests pass. Do not attempt to fix unrelated
+failing tests.
+
 ## Reminder: Commit Discipline
 
 Your work is verified by checking git history. Before finishing, confirm:

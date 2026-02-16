@@ -5,9 +5,10 @@
 # Usage: ./ralph/scripts/ralph.sh
 #
 # Environment variables:
-#   RALPH_MODEL      - Claude model to use (default: sonnet)
-#   MAX_ITERATIONS   - Maximum loop iterations (default: 10)
-#   REQUIRE_REFACTOR - Require [REFACTOR] commit (default: true)
+#   RALPH_MODEL         - Claude model to use (default: sonnet)
+#   MAX_ITERATIONS      - Maximum loop iterations (default: 10)
+#   REQUIRE_REFACTOR    - Require [REFACTOR] commit (default: true)
+#   RALPH_BASELINE_MODE - Baseline-aware test validation (default: true)
 #
 # This script orchestrates autonomous task execution by:
 # 1. Reading prd.json for incomplete stories
@@ -37,6 +38,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source libraries
 source "$SCRIPT_DIR/lib/common.sh"
+source "$SCRIPT_DIR/lib/baseline.sh"
 
 # Configuration
 RALPH_MODEL=${RALPH_MODEL:-"sonnet"}  # Model: sonnet, opus, haiku
@@ -46,6 +48,8 @@ PRD_JSON="ralph/docs/prd.json"
 PROGRESS_FILE="ralph/docs/progress.txt"
 PROMPT_FILE="ralph/docs/templates/prompt.md"
 MAX_RETRIES=3
+RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
+BASELINE_FILE="/tmp/claude/ralph_baseline_failures.txt"
 
 # Set up logging
 LOG_DIR="logs/ralph"
@@ -190,17 +194,20 @@ detect_already_complete() {
     return 1
 }
 
-# Run quality checks
+# Run quality checks (dispatches to baseline-aware or original mode)
 run_quality_checks() {
-    log_info "Running quality checks (make validate)..."
-
-    if make validate 2>&1 | tee /tmp/ralph_validate.log; then
-        log_info "Quality checks passed"
-        return 0
+    if [ "$RALPH_BASELINE_MODE" = "true" ]; then
+        run_quality_checks_baseline "$BASELINE_FILE"
     else
-        log_error "Quality checks failed"
-        cat /tmp/ralph_validate.log
-        return 1
+        log_info "Running quality checks (make validate)..."
+        if make validate 2>&1 | tee /tmp/claude/ralph_validate.log; then
+            log_info "Quality checks passed"
+            return 0
+        else
+            log_error "Quality checks failed"
+            cat /tmp/claude/ralph_validate.log
+            return 1
+        fi
     fi
 }
 
@@ -270,10 +277,15 @@ check_tdd_commits() {
 # Main loop
 main() {
     log_info "Starting Ralph Loop"
-    log_info "Configuration: MAX_ITERATIONS=$MAX_ITERATIONS, RALPH_MODEL=$RALPH_MODEL, REQUIRE_REFACTOR=$REQUIRE_REFACTOR"
+    log_info "Configuration: MAX_ITERATIONS=$MAX_ITERATIONS, RALPH_MODEL=$RALPH_MODEL, REQUIRE_REFACTOR=$REQUIRE_REFACTOR, RALPH_BASELINE_MODE=$RALPH_BASELINE_MODE"
     log_info "Log file: $LOG_FILE"
 
     validate_environment
+
+    # Capture test baseline before loop starts
+    if [ "$RALPH_BASELINE_MODE" = "true" ]; then
+        capture_test_baseline "$BASELINE_FILE"
+    fi
 
     local iteration=0
 

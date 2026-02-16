@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Ralph Baseline Validation)
+
+- Baseline-aware test validation (`ralph/scripts/lib/baseline.sh`): captures pre-existing test failures at loop start, only blocks on new regressions
+- `RALPH_BASELINE_MODE` env var (default: `true`) to toggle baseline comparison vs original `make validate`
+
 ### Added (Sprint 6 - STORY-004)
 
 - CC artifact collection scripts: `collect-cc-solo.sh` (metadata.json + tool_calls.jsonl), `collect-cc-teams.sh` (config.json + tasks with structure preservation)

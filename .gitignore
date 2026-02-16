@@ -57,6 +57,9 @@ datasets/
 write-up/
 results/sweeps/
 
+# Ralph state
+ralph/state/
+
 # npm
 node_modules/
 package-lock.json
