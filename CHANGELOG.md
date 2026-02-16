@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-013: Removed dead `communication_overhead` metric from Tier3Result - field was computed but never contributed to overall_score calculation
 - STORY-014: wandb import guard - wandb and weave imports moved inside function try/except to prevent ImportError when optional wandb package not installed
 - STORY-014: WANDB_ERROR_REPORTING environment variable now defaults to "false" to disable crash telemetry to Sentry (respects user override if already set)
+- STORY-015: Missing diagnostic logs when API keys exist in .env but resolve to empty strings - added debug log in `get_api_key()` to diagnose transient .env loading issues (CWD mismatch, unset env vars between runs)
 
 ### Changed (Sprint 5)
 
