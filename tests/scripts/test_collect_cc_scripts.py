@@ -27,9 +27,7 @@ class TestCollectCCSolo:
         script = Path("scripts/collect-cc-solo.sh")
 
         # ACT
-        result = subprocess.run(
-            [str(script)], capture_output=True, text=True, check=False
-        )
+        result = subprocess.run([str(script)], capture_output=True, text=True, check=False)
 
         # ASSERT
         assert result.returncode == 2, "Expected exit code 2 for missing args"
@@ -131,9 +129,7 @@ class TestCollectCCTeams:
         script = Path("scripts/collect-cc-teams.sh")
 
         # ACT
-        result = subprocess.run(
-            [str(script)], capture_output=True, text=True, check=False
-        )
+        result = subprocess.run([str(script)], capture_output=True, text=True, check=False)
 
         # ASSERT
         assert result.returncode == 2, "Expected exit code 2 for missing args"
@@ -152,9 +148,7 @@ class TestCollectCCTeams:
         mock_teams_dir = tmp_path / "mock_claude" / "teams" / "test-team"
         mock_teams_dir.mkdir(parents=True)
         config_path = mock_teams_dir / "config.json"
-        config_path.write_text(
-            json.dumps({"team_name": "test-team", "members": []})
-        )
+        config_path.write_text(json.dumps({"team_name": "test-team", "members": []}))
 
         # ACT
         result = subprocess.run(
@@ -197,14 +191,10 @@ class TestCollectCCTeams:
         mock_tasks_dir.mkdir(parents=True)
 
         config_path = mock_teams_dir / "config.json"
-        config_path.write_text(
-            json.dumps({"team_name": "test-team", "members": []})
-        )
+        config_path.write_text(json.dumps({"team_name": "test-team", "members": []}))
 
         task_path = mock_tasks_dir / "task-001.json"
-        task_path.write_text(
-            json.dumps({"id": "task-001", "status": "completed"})
-        )
+        task_path.write_text(json.dumps({"id": "task-001", "status": "completed"}))
 
         # ACT
         result = subprocess.run(
@@ -277,16 +267,12 @@ class TestCollectCCTeams:
         mock_tasks_dir.mkdir(parents=True)
 
         config_path = mock_teams_dir / "config.json"
-        config_path.write_text(
-            json.dumps({"team_name": "test-team", "members": []})
-        )
+        config_path.write_text(json.dumps({"team_name": "test-team", "members": []}))
 
         # Create nested task structure
         (mock_tasks_dir / "subtasks").mkdir()
         subtask_path = mock_tasks_dir / "subtasks" / "subtask-001.json"
-        subtask_path.write_text(
-            json.dumps({"id": "subtask-001", "status": "completed"})
-        )
+        subtask_path.write_text(json.dumps({"id": "subtask-001", "status": "completed"}))
 
         # ACT
         result = subprocess.run(
