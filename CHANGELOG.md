@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- STORY-014: Behavioral tests for 5 critical low-coverage modules (12 tests) — content extraction, tool tracing, provider-specific configurations, result type selection, delegation flows
+  - `datasets_peerread.py`: PDF content loading, nested section extraction (3 tests)
+  - `peerread_tools.py`: Tool tracing integration for paper retrieval and review saving (2 tests)
+  - `llms/models.py`: Provider-specific strict tool definition handling (2 tests)
+  - `agent_system.py`: Result type selection, delegation tool addition (5 tests)
 - Behavioral tests for `datasets_peerread.py`: error handling, retry logic, URL construction, paper validation with missing fields (27% -> 47% coverage)
 - Behavioral tests for `peerread_tools.py`: PDF extraction errors, content truncation, tool registration (22% -> 36% coverage)
 - Edge case tests for `llms/models.py` with EndpointConfig validation (24% -> 80%, above 50% target ✓)
