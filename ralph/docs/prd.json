@@ -45,15 +45,15 @@
         "tests/evals/test_opik_metrics.py",
         "docs/analysis/CC-agent-teams-orchestration.md"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-16T12:06:24Z",
       "content_hash": "e2cd9e09a3f16f17eb398be6e392c08c2f0f936ad055a6ce5a9a248c118cb821",
       "depends_on": []
     },
     {
       "id": "STORY-002",
       "title": "Fix Phoenix Docker recipe with volume, ports, restart policy + Agent graph fix (one-line change bundled as P0 quick win)",
-      "description": "The current `make start_phoenix` recipe has three problems: (1) no volume mount \u2014 trace data is lost on `docker rm`, (2) missing gRPC port 4317 \u2014 only HTTP OTLP on 6006 is exposed, (3) no restart policy \u2014 container dies on devcontainer restart (exit code 255) and doesn't come back. Additionally, `make start_phoenix` fails with \"container name already in use\" when a stopped container exists. Fix all four issues.",
+      "description": "The current `make start_phoenix` recipe has three problems: (1) no volume mount — trace data is lost on `docker rm`, (2) missing gRPC port 4317 — only HTTP OTLP on 6006 is exposed, (3) no restart policy — container dies on devcontainer restart (exit code 255) and doesn't come back. Additionally, `make start_phoenix` fails with \"container name already in use\" when a stopped container exists. Fix all four issues.",
       "acceptance": [
         "`make start_phoenix` persists trace data across container restarts via Docker volume `phoenix_data`",
         "Both OTLP endpoints exposed: HTTP on port 6006, gRPC on port 4317",
@@ -86,7 +86,7 @@
     {
       "id": "STORY-003",
       "title": "Fix CCTraceAdapter path handling for sibling teams/tasks directories",
-      "description": "The CC baseline infrastructure was built in Sprint 4 but has a teams mode path mismatch \u2014 adapter expects `tasks/` as child of teams dir, but CC stores tasks at `~/.claude/tasks/{team-name}/` (sibling of `~/.claude/teams/`). Fix the adapter to support both layouts.",
+      "description": "The CC baseline infrastructure was built in Sprint 4 but has a teams mode path mismatch — adapter expects `tasks/` as child of teams dir, but CC stores tasks at `~/.claude/tasks/{team-name}/` (sibling of `~/.claude/teams/`). Fix the adapter to support both layouts.",
       "acceptance": [
         "Teams mode adapter accepts separate `teams_dir` and `tasks_dir` parameters (or auto-discovers `tasks/` as sibling)",
         "Adapter works with real `~/.claude/teams/{name}/` + `~/.claude/tasks/{name}/` directory layout",
@@ -145,7 +145,7 @@
     {
       "id": "STORY-005",
       "title": "Wire paper and review extraction in evaluation runner",
-      "description": "`evaluation_runner.py:101-106` passes empty strings for `paper=\"\"` and `review=\"\"` to `evaluate_comprehensive()`, making Tier 1 text similarity scores meaningless (near-zero). The manager run result contains both paper ID and generated review, but `run_manager()` only returns the `execution_id` string \u2014 discarding `result.output`. Fix: return the result object alongside execution_id, extract the review text and paper content, and pass them to the evaluation pipeline.",
+      "description": "`evaluation_runner.py:101-106` passes empty strings for `paper=\"\"` and `review=\"\"` to `evaluate_comprehensive()`, making Tier 1 text similarity scores meaningless (near-zero). The manager run result contains both paper ID and generated review, but `run_manager()` only returns the `execution_id` string — discarding `result.output`. Fix: return the result object alongside execution_id, extract the review text and paper content, and pass them to the evaluation pipeline.",
       "acceptance": [
         "`run_manager()` returns both `execution_id` and the manager result output (change return type from `str` to `tuple[str, Any]`)",
         "`evaluation_runner.py` receives `ReviewGenerationResult.review.comments` as the generated review text",
@@ -177,7 +177,7 @@
     {
       "id": "STORY-006",
       "title": "Delete orphaned cc_otel module (independent of Opik)",
-      "description": "`src/app/cc_otel/` is an orphaned module containing `CCOtelConfig` \u2014 a Pydantic settings model for configuring Claude Code's OpenTelemetry environment variables from Python. This approach is fundamentally wrong: CC tracing is configured via infrastructure-level env vars (set in shell or `.claude/settings.json`), not application code. The module has no consumers \u2014 no imports of `app.cc_otel` exist anywhere in the codebase. The correct approach for CC baseline comparison is headless invocation via `claude -p` (Feature 7) with post-hoc artifact collection. This is independent of Opik removal (Feature 1) \u2014 cc_otel was for Claude Code OTel configuration, not Opik.",
+      "description": "`src/app/cc_otel/` is an orphaned module containing `CCOtelConfig` — a Pydantic settings model for configuring Claude Code's OpenTelemetry environment variables from Python. This approach is fundamentally wrong: CC tracing is configured via infrastructure-level env vars (set in shell or `.claude/settings.json`), not application code. The module has no consumers — no imports of `app.cc_otel` exist anywhere in the codebase. The correct approach for CC baseline comparison is headless invocation via `claude -p` (Feature 7) with post-hoc artifact collection. This is independent of Opik removal (Feature 1) — cc_otel was for Claude Code OTel configuration, not Opik.",
       "acceptance": [
         "`src/app/cc_otel/` directory deleted (including `__init__.py`, `config.py`)",
         "`tests/cc_otel/` directory deleted (including `test_cc_otel_config.py`, `test_cc_otel_instrumentation.py`)",
@@ -217,7 +217,7 @@
         "`make sweep` Makefile target wrapping CLI with sensible defaults",
         "Sweep results saved to `results/sweeps/{timestamp}/` with `results.json` + `summary.md`",
         "`.gitignore` includes `results/sweeps/` to prevent committing large JSON result files",
-        "Reuses existing `EvaluationPipeline`, `CompositeScorer`, `baseline_comparison.compare()` \u2014 no new evaluation logic",
+        "Reuses existing `EvaluationPipeline`, `CompositeScorer`, `baseline_comparison.compare()` — no new evaluation logic",
         "Tests: pytest tests for sweep config validation, composition generation, results aggregation, runner error handling",
         "Tests: pytest tests for sweep runner (mock `main()` and `subprocess.run()`, verify result collection and CC invocation)",
         "Tests: Hypothesis property tests for statistical calculations (mean/stddev bounds)",
@@ -290,7 +290,7 @@
         "In `src/app/app.py:203`: change `enable_review_tools: bool = False` to `enable_review_tools: bool = True`",
         "In `src/run_cli.py`: add `--no-review-tools` flag that sets `enable_review_tools=False`",
         "Keep `--enable-review-tools` for backward compatibility (already True by default, becomes no-op)",
-        "In `src/app/app.py:94`: adjust OR logic \u2014 `_prepare_query()` auto-enable no longer needed since default is True, but keep for explicitness"
+        "In `src/app/app.py:94`: adjust OR logic — `_prepare_query()` auto-enable no longer needed since default is True, but keep for explicitness"
       ],
       "files": [
         "src/app/app.py",
@@ -307,7 +307,7 @@
     {
       "id": "STORY-010",
       "title": "Add SSRF URL allowlist and document known CVE advisories",
-      "description": "The Sprint 5 MAESTRO security review (Finding CVE-1, `docs/reviews/sprint5-code-review.md`) identified CVE-2026-25580, a CRITICAL PydanticAI SSRF vulnerability allowing information disclosure via malicious URLs in message history. Agent tools that process URLs (PeerRead dataset downloads, DuckDuckGo search) need domain-allowlist validation to prevent SSRF attacks against internal services. CVE-2026-25640 (Stored XSS in PydanticAI web UI) does not affect this project since we don't use `clai web` or `Agent.to_web()` \u2014 document this as a known advisory. CVE-2024-5206 (scikit-learn) is already mitigated by `scikit-learn>=1.8.0` in `pyproject.toml`.",
+      "description": "The Sprint 5 MAESTRO security review (Finding CVE-1, `docs/reviews/sprint5-code-review.md`) identified CVE-2026-25580, a CRITICAL PydanticAI SSRF vulnerability allowing information disclosure via malicious URLs in message history. Agent tools that process URLs (PeerRead dataset downloads, DuckDuckGo search) need domain-allowlist validation to prevent SSRF attacks against internal services. CVE-2026-25640 (Stored XSS in PydanticAI web UI) does not affect this project since we don't use `clai web` or `Agent.to_web()` — document this as a known advisory. CVE-2024-5206 (scikit-learn) is already mitigated by `scikit-learn>=1.8.0` in `pyproject.toml`.",
       "acceptance": [
         "`validate_url()` function enforces HTTPS-only and domain allowlist for all external requests",
         "Allowlist includes: `raw.githubusercontent.com`, `arxiv.org`, `api.openai.com`, `api.anthropic.com`, `api.cerebras.ai`",
@@ -344,7 +344,7 @@
         "Existing prompt behavior unchanged for well-formed inputs (no regression in evaluation quality)",
         "Tests: pytest tests for truncation at boundary lengths",
         "Tests: pytest tests for format string injection attempts (e.g., `{__import__}` in paper title)",
-        "Tests: Hypothesis property tests \u2014 for all strings, output length <= max_length + delimiter overhead, and output always contains XML delimiters",
+        "Tests: Hypothesis property tests — for all strings, output length <= max_length + delimiter overhead, and output always contains XML delimiters",
         "`make validate` passes",
         "CHANGELOG.md updated",
         "Create `src/app/utils/prompt_sanitization.py` (~40 lines) with sanitize_for_prompt(), sanitize_paper_title(), sanitize_paper_abstract(), sanitize_review_text()"
@@ -373,7 +373,7 @@
         "Existing logging behavior preserved for non-sensitive messages (no over-scrubbing)",
         "Tests: pytest tests for Loguru filter (sensitive patterns redacted, normal messages pass through)",
         "Tests: pytest tests for Logfire scrubbing configuration (patterns applied)",
-        "Tests: Hypothesis property tests \u2014 for all messages containing any SENSITIVE_PATTERNS match, output contains `[REDACTED]`",
+        "Tests: Hypothesis property tests — for all messages containing any SENSITIVE_PATTERNS match, output contains `[REDACTED]`",
         "`make validate` passes",
         "CHANGELOG.md updated",
         "Create `src/app/utils/log_scrubbing.py` (~40 lines) with SENSITIVE_PATTERNS, scrub_log_record(), get_logfire_scrubbing_patterns()"
@@ -396,22 +396,22 @@
       "title": "Create security test suite in `tests/security/`",
       "description": "The Sprint 5 MAESTRO review (Recommendations, Priority 4) explicitly tagged \"Add comprehensive security test suite\" for Sprint 6. Zero security-focused tests currently exist. Create `tests/security/` with tests validating the security controls added by Features 10-12 and testing additional attack vectors identified in the review: plugin input size limits, tool registration scope, and prompt injection scenarios.",
       "acceptance": [
-        "`tests/security/test_ssrf_prevention.py` \u2014 SSRF attack vectors: internal IPs blocked, non-HTTPS blocked, AWS metadata endpoint, localhost, IDN homograph attacks",
-        "`tests/security/test_prompt_injection.py` \u2014 injection attempts in paper titles/abstracts rejected or sanitized",
-        "`tests/security/test_sensitive_data_filtering.py` \u2014 API key patterns filtered from logs and traces, Bearer tokens redacted",
-        "`tests/security/test_input_size_limits.py` \u2014 oversized inputs to plugin adapters rejected (DoS prevention)",
-        "`tests/security/test_tool_registration.py` \u2014 tools only registered from expected modules (no runtime injection)",
+        "`tests/security/test_ssrf_prevention.py` — SSRF attack vectors: internal IPs blocked, non-HTTPS blocked, AWS metadata endpoint, localhost, IDN homograph attacks",
+        "`tests/security/test_prompt_injection.py` — injection attempts in paper titles/abstracts rejected or sanitized",
+        "`tests/security/test_sensitive_data_filtering.py` — API key patterns filtered from logs and traces, Bearer tokens redacted",
+        "`tests/security/test_input_size_limits.py` — oversized inputs to plugin adapters rejected (DoS prevention)",
+        "`tests/security/test_tool_registration.py` — tools only registered from expected modules (no runtime injection)",
         "All security tests use pytest with clear arrange/act/assert structure",
         "Hypothesis property tests for input boundary fuzzing (oversized strings, unicode edge cases)",
         "Security tests run as part of `make test_all` (no separate security test suite command needed)",
         "`make validate` passes",
         "CHANGELOG.md updated",
         "Create `tests/security/__init__.py`",
-        "Create `tests/security/test_ssrf_prevention.py` \u2014 test `validate_url()` from Feature 10 with: allowed domains, blocked domains, HTTP (non-HTTPS), `169.254.169.254` (AWS metadata), `localhost`, `0.0.0.0`, unicode domain IDN homograph attacks",
-        "Create `tests/security/test_prompt_injection.py` \u2014 test `sanitize_for_prompt()` from Feature 11 with: `\"Ignore previous instructions\"` payloads, format string attempts (`{__import__}`), oversized inputs, null bytes",
-        "Create `tests/security/test_sensitive_data_filtering.py` \u2014 test `scrub_log_record()` from Feature 12 with: messages containing `api_key=sk-...`, `password=secret`, `Bearer token` patterns",
-        "Create `tests/security/test_input_size_limits.py` \u2014 test plugin `evaluate()` with oversized `agent_output` (>100KB) and `reference_texts` (>10 items)",
-        "Create `tests/security/test_tool_registration.py` \u2014 verify agent tool lists match expected registrations per agent role"
+        "Create `tests/security/test_ssrf_prevention.py` — test `validate_url()` from Feature 10 with: allowed domains, blocked domains, HTTP (non-HTTPS), `169.254.169.254` (AWS metadata), `localhost`, `0.0.0.0`, unicode domain IDN homograph attacks",
+        "Create `tests/security/test_prompt_injection.py` — test `sanitize_for_prompt()` from Feature 11 with: `\"Ignore previous instructions\"` payloads, format string attempts (`{__import__}`), oversized inputs, null bytes",
+        "Create `tests/security/test_sensitive_data_filtering.py` — test `scrub_log_record()` from Feature 12 with: messages containing `api_key=sk-...`, `password=secret`, `Bearer token` patterns",
+        "Create `tests/security/test_input_size_limits.py` — test plugin `evaluate()` with oversized `agent_output` (>100KB) and `reference_texts` (>10 items)",
+        "Create `tests/security/test_tool_registration.py` — verify agent tool lists match expected registrations per agent role"
       ],
       "files": [
         "tests/security/__init__.py",
@@ -435,11 +435,11 @@
       "title": "Increase test coverage for 5 critical low-coverage modules",
       "description": "The Sprint 5 MAESTRO review (Recommendations, Priority 5) identified five modules with critically low test coverage that handle core data loading, agent tools, and orchestration. These modules have high regression risk and are frequently modified across sprints. Add targeted behavioral tests to increase coverage before the test audit (Feature 15) removes low-value tests elsewhere.",
       "acceptance": [
-        "`datasets_peerread.py`: 27% -> 60% \u2014 tests for download error handling, URL construction, paper validation with missing fields, retry logic",
-        "`peerread_tools.py`: 22% -> 60% \u2014 tests for tool registration, PDF extraction error handling, content truncation, template loading",
-        "`llms/models.py`: 24% -> 50% \u2014 tests for model creation with different providers, error handling for unsupported models",
-        "`agent_factories.py`: 39% -> 60% \u2014 tests for agent creation with various toggle combinations, system prompt construction",
-        "`agent_system.py`: 47% -> 60% \u2014 tests for delegation flow, usage limit enforcement, single-agent fallback",
+        "`datasets_peerread.py`: 27% -> 60% — tests for download error handling, URL construction, paper validation with missing fields, retry logic",
+        "`peerread_tools.py`: 22% -> 60% — tests for tool registration, PDF extraction error handling, content truncation, template loading",
+        "`llms/models.py`: 24% -> 50% — tests for model creation with different providers, error handling for unsupported models",
+        "`agent_factories.py`: 39% -> 60% — tests for agent creation with various toggle combinations, system prompt construction",
+        "`agent_system.py`: 47% -> 60% — tests for delegation flow, usage limit enforcement, single-agent fallback",
         "All new tests verify behavior (error handling, data flow, edge cases), not implementation details",
         "Coverage measured via `make coverage_all` before and after",
         "`make validate` passes",
@@ -460,8 +460,8 @@
     },
     {
       "id": "STORY-015",
-      "title": "Execute Sprint 5 test audit refactoring plan \u2014 delete ~55 implementation-detail tests",
-      "description": "Sprint 5 STORY-011 produced `docs/reviews/sprint5-test-audit.md` \u2014 a detailed per-file audit with explicit keep/delete/refactor decisions for all test files. The audit was completed but the actual refactoring (deleting ~55 implementation-detail tests from 9 files) was not executed. This story executes the audit plan. Note: `test_migration_cleanup.py` is already deleted, and `tests/cc_otel/` is deleted by Feature 6 (cc_otel removal).",
+      "title": "Execute Sprint 5 test audit refactoring plan — delete ~55 implementation-detail tests",
+      "description": "Sprint 5 STORY-011 produced `docs/reviews/sprint5-test-audit.md` — a detailed per-file audit with explicit keep/delete/refactor decisions for all test files. The audit was completed but the actual refactoring (deleting ~55 implementation-detail tests from 9 files) was not executed. This story executes the audit plan. Note: `test_migration_cleanup.py` is already deleted, and `tests/cc_otel/` is deleted by Feature 6 (cc_otel removal).",
       "acceptance": [
         "`tests/evals/test_judge_settings.py`: `TestJudgeSettingsDefaults` class deleted (13 tests verifying default constants)",
         "`tests/common/test_common_settings.py`: 2 implementation-detail tests deleted (`test_common_settings_defaults`, `test_common_settings_type_validation`)",
@@ -472,7 +472,7 @@
         "`tests/judge/test_plugin_traditional.py`: 3 tests deleted (isinstance check, name property, tier property)",
         "`tests/judge/test_plugin_graph.py`: 3 tests deleted (isinstance check, name property, tier property)",
         "`tests/evals/test_graph_analysis.py`: review for field-existence or type-check tests; delete any found (skip if none exist)",
-        "No reduction in behavioral test coverage \u2014 only implementation-detail tests removed",
+        "No reduction in behavioral test coverage — only implementation-detail tests removed",
         "`make test_all` passes with all remaining tests green",
         "`make validate` passes",
         "CHANGELOG.md updated",
