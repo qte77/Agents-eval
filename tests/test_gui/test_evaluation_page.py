@@ -227,7 +227,9 @@ class TestEvaluationPage:
         assert "tool_selection_accuracy" not in metrics
 
 
-# STORY-004: Hypothesis property-based tests for GUI state management
+# MARK: --- Hypothesis Property Tests ---
+
+
 class TestEvaluationPageStateInvariants:
     """Property-based tests for GUI state management invariants."""
 
@@ -258,7 +260,9 @@ class TestEvaluationPageStateInvariants:
             render_evaluation(result)
 
 
-# STORY-004: Inline-snapshot regression tests for GUI page rendering
+# MARK: --- Inline-Snapshot Tests ---
+
+
 class TestEvaluationPageRenderingSnapshots:
     """Snapshot tests for GUI page rendering output structures."""
 

@@ -1,23 +1,27 @@
 """
 Tests for GUI session state wiring (STORY-008).
 
-Verifies that CompositeResult and GraphTraceData from App tab execution
-are correctly passed to Evaluation Results and Agent Graph tabs.
+Verifies that CompositeResult and graph data from App tab execution
+flow correctly through session state to Evaluation Results and Agent Graph tabs.
 """
 
-from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 import networkx as nx
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
-from app.data_models.evaluation_models import CompositeResult, GraphTraceData
+from app.data_models.evaluation_models import CompositeResult
+
+# MARK: --- Fixtures ---
 
 
 @pytest.fixture
-def mock_composite_result():
-    """Create mock CompositeResult for session state testing."""
+def sample_composite_result():
+    """CompositeResult representing a typical evaluation output."""
     return CompositeResult(
         composite_score=0.85,
         recommendation="accept",
@@ -39,35 +43,8 @@ def mock_composite_result():
 
 
 @pytest.fixture
-def mock_graph_trace_data():
-    """Create mock GraphTraceData for session state testing."""
-    return GraphTraceData(
-        execution_id="test-exec-123",
-        agent_interactions=[
-            {
-                "source_agent": "manager",
-                "target_agent": "researcher",
-                "interaction_type": "delegation",
-                "timestamp": "2026-02-16T00:00:00Z",
-            }
-        ],
-        tool_calls=[
-            {
-                "agent_id": "researcher",
-                "tool_name": "search_tool",
-                "timestamp": "2026-02-16T00:00:05Z",
-                "duration": 1.2,
-                "success": True,
-            }
-        ],
-        timing_data={},
-        coordination_events=[],
-    )
-
-
-@pytest.fixture
-def mock_networkx_graph():
-    """Create mock NetworkX graph for session state testing."""
+def sample_graph():
+    """NetworkX graph representing agent interactions."""
     graph = nx.DiGraph()
     graph.add_node("manager", node_type="agent", label="Manager")
     graph.add_node("researcher", node_type="agent", label="Researcher")
@@ -75,189 +52,388 @@ def mock_networkx_graph():
     return graph
 
 
-class TestSessionStateWiring:
-    """Test session state wiring between App tab and visualization tabs."""
+# MARK: --- Behavioral: _execute_query_background stores results in session state ---
+
+
+class TestExecuteQueryStoresData:
+    """Verify _execute_query_background stores composite_result and graph in session state."""
 
     @pytest.mark.asyncio
-    async def test_main_returns_composite_result_and_graph(self):
-        """Test that main() returns CompositeResult and NetworkX graph."""
-        # This test ensures main() is updated to return data
-        # Currently main() returns None - this should FAIL
+    async def test_dict_result_stored_in_session_state(self, sample_composite_result, sample_graph):
+        """When main() returns a result dict, both keys are stored in session state."""
+        from gui.pages.run_app import _execute_query_background
+
+        mock_state = SimpleNamespace()
+
+        with (
+            patch("gui.pages.run_app.st.session_state", mock_state),
+            patch("gui.pages.run_app.main", new_callable=AsyncMock) as mock_main,
+        ):
+            mock_main.return_value = {
+                "composite_result": sample_composite_result,
+                "graph": sample_graph,
+            }
+
+            await _execute_query_background(
+                query="test",
+                provider="cerebras",
+                include_researcher=False,
+                include_analyst=False,
+                include_synthesiser=False,
+                chat_config_file=None,
+            )
+
+            assert mock_state.execution_state == "completed"
+            assert mock_state.execution_composite_result is sample_composite_result
+            assert mock_state.execution_graph is sample_graph
+            # Legacy key also set
+            assert mock_state.execution_result is sample_composite_result
+
+    @pytest.mark.asyncio
+    async def test_none_result_clears_session_state(self):
+        """When main() returns None (skip_eval), session state keys are set to None."""
+        from gui.pages.run_app import _execute_query_background
+
+        mock_state = SimpleNamespace()
+
+        with (
+            patch("gui.pages.run_app.st.session_state", mock_state),
+            patch("gui.pages.run_app.main", new_callable=AsyncMock) as mock_main,
+        ):
+            mock_main.return_value = None
+
+            await _execute_query_background(
+                query="test",
+                provider="cerebras",
+                include_researcher=False,
+                include_analyst=False,
+                include_synthesiser=False,
+                chat_config_file=None,
+            )
+
+            assert mock_state.execution_state == "completed"
+            assert mock_state.execution_composite_result is None
+            assert mock_state.execution_graph is None
+
+
+# MARK: --- Behavioral: run_gui.main() passes session state to page renderers ---
+
+
+class TestRunGuiWiring:
+    """Verify run_gui.main() reads session state and passes data to page renderers."""
+
+    @pytest.mark.asyncio
+    async def test_evaluation_page_receives_session_data(self, sample_composite_result):
+        """When user navigates to Evaluation Results, render_evaluation gets session data."""
+        from run_gui import main
+
+        with (
+            patch("run_gui.add_custom_styling"),
+            patch("run_gui.render_sidebar", return_value="Evaluation Results"),
+            patch("run_gui.initialize_session_state"),
+            patch("run_gui.render_evaluation") as mock_render,
+            patch("run_gui.st") as mock_st,
+        ):
+            mock_st.session_state = {"execution_composite_result": sample_composite_result}
+
+            await main()
+
+            mock_render.assert_called_once_with(sample_composite_result)
+
+    @pytest.mark.asyncio
+    async def test_agent_graph_page_receives_session_data(self, sample_graph):
+        """When user navigates to Agent Graph, render_agent_graph gets session data."""
+        from run_gui import main
+
+        with (
+            patch("run_gui.add_custom_styling"),
+            patch("run_gui.render_sidebar", return_value="Agent Graph"),
+            patch("run_gui.initialize_session_state"),
+            patch("run_gui.render_agent_graph") as mock_render,
+            patch("run_gui.st") as mock_st,
+        ):
+            mock_st.session_state = {"execution_graph": sample_graph}
+
+            await main()
+
+            mock_render.assert_called_once_with(sample_graph)
+
+    @pytest.mark.asyncio
+    async def test_evaluation_page_gets_none_when_no_execution(self):
+        """Before any execution, render_evaluation receives None."""
+        from run_gui import main
+
+        with (
+            patch("run_gui.add_custom_styling"),
+            patch("run_gui.render_sidebar", return_value="Evaluation Results"),
+            patch("run_gui.initialize_session_state"),
+            patch("run_gui.render_evaluation") as mock_render,
+            patch("run_gui.st") as mock_st,
+        ):
+            mock_st.session_state = {}
+
+            await main()
+
+            mock_render.assert_called_once_with(None)
+
+    @pytest.mark.asyncio
+    async def test_agent_graph_page_gets_none_when_no_execution(self):
+        """Before any execution, render_agent_graph receives None."""
+        from run_gui import main
+
+        with (
+            patch("run_gui.add_custom_styling"),
+            patch("run_gui.render_sidebar", return_value="Agent Graph"),
+            patch("run_gui.initialize_session_state"),
+            patch("run_gui.render_agent_graph") as mock_render,
+            patch("run_gui.st") as mock_st,
+        ):
+            mock_st.session_state = {}
+
+            await main()
+
+            mock_render.assert_called_once_with(None)
+
+
+# MARK: --- Behavioral: main() returns result dict ---
+
+
+class TestMainReturnType:
+    """Verify app.main() returns properly structured result dict."""
+
+    @pytest.mark.asyncio
+    async def test_main_returns_dict_with_composite_and_graph_keys(self):
+        """main() returns a dict containing composite_result and graph."""
         from app.app import main
 
-        # Mock all dependencies
+        mock_result = CompositeResult(
+            composite_score=0.85,
+            recommendation="accept",
+            recommendation_weight=0.9,
+            metric_scores={},
+            tier1_score=0.80,
+            tier2_score=0.88,
+            tier3_score=0.83,
+            evaluation_complete=True,
+        )
+
         with (
             patch("app.app.load_config"),
             patch("app.app.setup_agent_env"),
             patch("app.app.login"),
             patch("app.app._initialize_instrumentation"),
             patch("app.app.get_manager"),
-            patch("app.app.run_manager") as mock_run_manager,
-            patch("app.app._run_evaluation_if_enabled") as mock_eval,
+            patch("app.app.run_manager", return_value="exec-id"),
+            patch("app.app._run_evaluation_if_enabled", return_value=mock_result),
+            patch("app.app._build_graph_from_trace", return_value=None),
         ):
-            # Setup mocks
-            mock_run_manager.return_value = "test-exec-id"
-            mock_eval.return_value = CompositeResult(
-                composite_score=0.85,
-                recommendation="accept",
-                recommendation_weight=0.9,
-                metric_scores={},
-                tier1_score=0.80,
-                tier2_score=0.88,
-                tier3_score=0.83,
-                evaluation_complete=True,
-            )
-
-            # Call main
             result = await main(
-                query="test query", chat_config_file="test_config.json", skip_eval=False
+                query="test query",
+                chat_config_file="test.json",
+                skip_eval=False,
             )
 
-            # Should return something (not None)
-            # This will FAIL until main() is updated to return data
-            assert result is not None, "main() should return CompositeResult and graph data"
-            assert isinstance(result, dict), "main() should return dict with result and graph"
-            assert "composite_result" in result, "result should contain composite_result"
-            assert "graph" in result, "result should contain graph"
+            assert result is not None
+            assert isinstance(result, dict)
+            assert "composite_result" in result
+            assert "graph" in result
+            assert result["composite_result"] is mock_result
 
-    def test_execution_result_stored_in_session_state(
-        self, mock_composite_result, mock_networkx_graph
-    ):
-        """Test that execution stores CompositeResult in session state."""
-        # This tests that run_app.py stores the result correctly
-        # Should FAIL initially until run_app.py is updated
-
-        # Mock session state
-        mock_session_state = {}
-
-        # Simulate storing result (what run_app.py should do)
-        mock_session_state["execution_composite_result"] = mock_composite_result
-        mock_session_state["execution_graph"] = mock_networkx_graph
-
-        # Verify data is accessible
-        assert "execution_composite_result" in mock_session_state
-        assert "execution_graph" in mock_session_state
-        assert isinstance(mock_session_state["execution_composite_result"], CompositeResult)
-        assert isinstance(mock_session_state["execution_graph"], nx.DiGraph)
-
-    def test_evaluation_page_receives_session_state_data(self, mock_composite_result):
-        """Test that evaluation page receives CompositeResult from session state."""
-        from gui.pages.evaluation import render_evaluation
-
-        # This should FAIL until run_gui.py passes session_state data
-        # Currently render_evaluation(None) at line 100
+    @pytest.mark.asyncio
+    async def test_main_returns_none_when_eval_skipped(self):
+        """main() returns None when evaluation is skipped."""
+        from app.app import main
 
         with (
-            patch("streamlit.header"),
-            patch("streamlit.metric"),
-            patch("streamlit.bar_chart"),
+            patch("app.app.load_config"),
+            patch("app.app.setup_agent_env"),
+            patch("app.app.login"),
+            patch("app.app._initialize_instrumentation"),
+            patch("app.app.get_manager"),
+            patch("app.app.run_manager", return_value="exec-id"),
+            patch("app.app._run_evaluation_if_enabled", return_value=None),
         ):
-            # Should be able to render with CompositeResult
-            render_evaluation(mock_composite_result)
-            # If this passes, the page can handle real data
-
-    def test_agent_graph_page_receives_session_state_data(self, mock_networkx_graph):
-        """Test that agent graph page receives NetworkX graph from session state."""
-        from gui.pages.agent_graph import render_agent_graph
-
-        # This should FAIL until run_gui.py passes session_state data
-        # Currently render_agent_graph(None) at line 103
-
-        with patch("streamlit.header"), patch("streamlit.components.v1.html"):
-            # Should be able to render with NetworkX graph
-            render_agent_graph(mock_networkx_graph)
-            # If this passes, the page can handle real data
-
-    def test_run_gui_wires_evaluation_page_data(self):
-        """Test that run_gui.py passes session state to evaluation page."""
-        # This test checks the wiring in run_gui.py
-        # Should FAIL until run_gui.py is updated to pass st.session_state data
-
-        # This is a behavioral test - we check that render_evaluation
-        # is called with non-None data when session state has results
-        with (
-            patch("gui.pages.evaluation.render_evaluation"),
-            patch("streamlit.session_state", new_callable=MagicMock) as mock_session,
-        ):
-            # Simulate session state with data
-            mock_session.get.return_value = CompositeResult(
-                composite_score=0.85,
-                recommendation="accept",
-                recommendation_weight=0.9,
-                metric_scores={},
-                tier1_score=0.80,
-                tier2_score=0.88,
-                tier3_score=0.83,
-                evaluation_complete=True,
+            result = await main(
+                query="test query",
+                chat_config_file="test.json",
+                skip_eval=True,
             )
 
-            # Behavioral test passes if run_gui.py correctly wires session state
+            assert result is None
 
-    def test_run_gui_wires_agent_graph_page_data(self):
-        """Test that run_gui.py passes session state to agent graph page."""
-        # This test checks the wiring in run_gui.py
+
+# MARK: --- Inline-Snapshot Tests ---
+
+
+class TestSessionStateSnapshots:
+    """Snapshot tests for session state structure after execution."""
+
+    @pytest.mark.asyncio
+    async def test_session_state_keys_after_successful_execution(self, sample_composite_result):
+        """Snapshot: session state keys set after a successful execution."""
+        from gui.pages.run_app import _execute_query_background
+
+        mock_state = SimpleNamespace()
 
         with (
-            patch("gui.pages.agent_graph.render_agent_graph"),
-            patch("streamlit.session_state", new_callable=MagicMock) as mock_session,
+            patch("gui.pages.run_app.st.session_state", mock_state),
+            patch("gui.pages.run_app.main", new_callable=AsyncMock) as mock_main,
         ):
-            # Simulate session state with graph data
-            mock_graph = nx.DiGraph()
-            mock_graph.add_node("agent1", node_type="agent", label="Agent1")
-            mock_session.get.return_value = mock_graph
+            mock_main.return_value = {
+                "composite_result": sample_composite_result,
+                "graph": None,
+            }
 
-            # Behavioral test passes if run_gui.py correctly wires session state
+            await _execute_query_background(
+                query="review paper 304",
+                provider="cerebras",
+                include_researcher=True,
+                include_analyst=False,
+                include_synthesiser=False,
+                chat_config_file=None,
+            )
+
+        state_keys = sorted(k for k in vars(mock_state) if k.startswith("execution_"))
+        assert state_keys == snapshot(
+            [
+                "execution_composite_result",
+                "execution_graph",
+                "execution_provider",
+                "execution_query",
+                "execution_result",
+                "execution_state",
+            ]
+        )
+
+    @pytest.mark.asyncio
+    async def test_session_state_values_after_successful_execution(self):
+        """Snapshot: session state values after execution with known inputs."""
+        from gui.pages.run_app import _execute_query_background
+
+        mock_state = SimpleNamespace()
+        mock_result = CompositeResult(
+            composite_score=0.75,
+            recommendation="weak_accept",
+            recommendation_weight=0.5,
+            metric_scores={"cosine_score": 0.75},
+            tier1_score=0.75,
+            tier2_score=None,
+            tier3_score=0.80,
+            evaluation_complete=False,
+        )
+
+        with (
+            patch("gui.pages.run_app.st.session_state", mock_state),
+            patch("gui.pages.run_app.main", new_callable=AsyncMock) as mock_main,
+        ):
+            mock_main.return_value = {"composite_result": mock_result, "graph": None}
+
+            await _execute_query_background(
+                query="test query",
+                provider="openai",
+                include_researcher=False,
+                include_analyst=False,
+                include_synthesiser=False,
+                chat_config_file=None,
+            )
+
+        assert mock_state.execution_state == snapshot("completed")
+        assert mock_state.execution_query == snapshot("test query")
+        assert mock_state.execution_provider == snapshot("openai")
+        assert mock_state.execution_composite_result.composite_score == snapshot(0.75)
+        assert mock_state.execution_composite_result.recommendation == snapshot("weak_accept")
 
 
-class TestSessionStateDataIntegrity:
-    """Hypothesis property tests for session state data integrity across page switches."""
+# MARK: --- Hypothesis Property Tests ---
+
+
+class TestSessionStateProperties:
+    """Property tests for data fidelity through the session state wiring."""
 
     @given(
         composite_score=st.floats(min_value=0.0, max_value=1.0, allow_nan=False),
-        tier_scores=st.lists(
-            st.floats(min_value=0.0, max_value=1.0, allow_nan=False), min_size=3, max_size=3
-        ),
+        tier1=st.floats(min_value=0.0, max_value=1.0, allow_nan=False),
+        tier3=st.floats(min_value=0.0, max_value=1.0, allow_nan=False),
     )
-    def test_composite_result_persists_across_navigation(self, composite_score, tier_scores):
-        """Property: CompositeResult data persists unchanged in session state."""
-        # Create CompositeResult
-        result = CompositeResult(
+    @pytest.mark.asyncio
+    async def test_composite_score_preserved_through_execution(
+        self,
+        composite_score,
+        tier1,
+        tier3,
+    ):
+        """Property: composite score is stored unchanged through _execute_query_background."""
+        from gui.pages.run_app import _execute_query_background
+
+        mock_result = CompositeResult(
             composite_score=composite_score,
             recommendation="accept",
             recommendation_weight=0.8,
-            metric_scores={"test_metric": 0.5},
-            tier1_score=tier_scores[0],
-            tier2_score=tier_scores[1],
-            tier3_score=tier_scores[2],
+            metric_scores={},
+            tier1_score=tier1,
+            tier2_score=None,
+            tier3_score=tier3,
             evaluation_complete=True,
         )
 
-        # Simulate storing and retrieving from session state
-        mock_session_state = {"execution_composite_result": result}
+        mock_state = SimpleNamespace()
 
-        # Retrieve and verify data integrity
-        retrieved = mock_session_state["execution_composite_result"]
-        assert retrieved.composite_score == composite_score
-        assert retrieved.tier1_score == tier_scores[0]
-        assert retrieved.tier2_score == tier_scores[1]
-        assert retrieved.tier3_score == tier_scores[2]
+        with (
+            patch("gui.pages.run_app.st.session_state", mock_state),
+            patch("gui.pages.run_app.main", new_callable=AsyncMock) as mock_main,
+        ):
+            mock_main.return_value = {"composite_result": mock_result, "graph": None}
+
+            await _execute_query_background(
+                query="q",
+                provider="p",
+                include_researcher=False,
+                include_analyst=False,
+                include_synthesiser=False,
+                chat_config_file=None,
+            )
+
+        assert mock_state.execution_composite_result.composite_score == composite_score
+        assert mock_state.execution_composite_result.tier1_score == tier1
+        assert mock_state.execution_composite_result.tier3_score == tier3
 
     @given(num_nodes=st.integers(min_value=1, max_value=20))
-    def test_graph_structure_persists_across_navigation(self, num_nodes):
-        """Property: NetworkX graph structure persists unchanged in session state."""
-        # Create graph with random nodes
+    @pytest.mark.asyncio
+    async def test_graph_node_count_preserved_through_execution(self, num_nodes):
+        """Property: graph node count is preserved through _execute_query_background."""
+        from gui.pages.run_app import _execute_query_background
+
         graph = nx.DiGraph()
         for i in range(num_nodes):
-            graph.add_node(f"node_{i}", node_type="agent", label=f"Agent{i}")
+            graph.add_node(f"agent_{i}", node_type="agent")
 
-        # Add some edges
-        if num_nodes > 1:
-            graph.add_edge("node_0", "node_1", interaction="delegation")
+        mock_result = CompositeResult(
+            composite_score=0.5,
+            recommendation="accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier2_score=None,
+            tier3_score=0.5,
+            evaluation_complete=True,
+        )
 
-        # Simulate storing and retrieving from session state
-        mock_session_state = {"execution_graph": graph}
+        mock_state = SimpleNamespace()
 
-        # Retrieve and verify graph integrity
-        retrieved = mock_session_state["execution_graph"]
-        assert retrieved.number_of_nodes() == num_nodes
-        assert isinstance(retrieved, nx.DiGraph)
+        with (
+            patch("gui.pages.run_app.st.session_state", mock_state),
+            patch("gui.pages.run_app.main", new_callable=AsyncMock) as mock_main,
+        ):
+            mock_main.return_value = {"composite_result": mock_result, "graph": graph}
+
+            await _execute_query_background(
+                query="q",
+                provider="p",
+                include_researcher=False,
+                include_analyst=False,
+                include_synthesiser=False,
+                chat_config_file=None,
+            )
+
+        assert mock_state.execution_graph.number_of_nodes() == num_nodes
+        assert isinstance(mock_state.execution_graph, nx.DiGraph)

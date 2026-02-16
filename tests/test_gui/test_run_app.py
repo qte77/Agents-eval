@@ -35,7 +35,8 @@ class TestBackgroundExecutionAPI:
             patch("gui.pages.run_app.st.session_state", mock_state),
             patch("gui.pages.run_app.main", new_callable=AsyncMock) as mock_main,
         ):
-            mock_main.return_value = "Test result"
+            # Reason: main() returns dict with composite_result and graph keys
+            mock_main.return_value = {"composite_result": "mock_composite", "graph": None}
 
             # Call the background execution function
             await _execute_query_background(
@@ -49,8 +50,10 @@ class TestBackgroundExecutionAPI:
             )
 
             # Then state should be completed with result
-            assert mock_state.execution_state == snapshot("error")
-            assert mock_state.execution_result == snapshot("Test result")
+            assert mock_state.execution_state == snapshot("completed")
+            assert mock_state.execution_composite_result == snapshot("mock_composite")
+            assert mock_state.execution_graph is None
+            assert mock_state.execution_result == snapshot("mock_composite")
             assert mock_state.execution_query == snapshot("Test query")
             assert mock_state.execution_provider == snapshot("cerebras")
 

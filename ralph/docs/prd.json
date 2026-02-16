@@ -237,8 +237,8 @@
         "tests/test_gui/test_evaluation_page.py",
         "tests/test_gui/test_agent_graph_page.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-16T00:59:05Z",
       "content_hash": "01ad08923e54522e03288a6e51bbb5bccbd7ff30760069c667119d93808fed05",
       "depends_on": [
         "STORY-006"
