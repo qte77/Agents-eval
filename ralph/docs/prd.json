@@ -386,8 +386,8 @@
         "src/app/llms/providers.py",
         "tests/utils/test_log_scrubbing.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-16T14:56:47Z",
       "content_hash": "7db3b037d25d30f47192cb51db07dc6a8ae1d346d8d3917258807e7ff0feedf8",
       "depends_on": []
     },
