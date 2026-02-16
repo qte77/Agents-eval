@@ -238,8 +238,8 @@
         "tests/benchmark/test_sweep_runner.py",
         "tests/benchmark/test_sweep_analysis.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-16T14:01:58Z",
       "content_hash": "d421c9b8f2357c6aa49e893cb107c64383da7e7e79235cc1478df177d33fc292",
       "depends_on": [
         "STORY-003",
