@@ -85,11 +85,22 @@ class LogfireInstrumentationManager:
 
             scrubbing_patterns = get_logfire_scrubbing_patterns()
 
-            logfire.configure(  # type: ignore
-                service_name=self.config.service_name,
-                send_to_logfire=self.config.send_to_cloud,
-                scrubbing=logfire.ScrubbingOptions(extra_patterns=scrubbing_patterns),  # type: ignore
-            )
+            # Reason: When send_to_cloud=False, pass token=None to prevent SDK from
+            # making API handshake calls to logfire-us.pydantic.dev. When True,
+            # omit token parameter to let SDK read from LOGFIRE_TOKEN env var.
+            if self.config.send_to_cloud:
+                logfire.configure(  # type: ignore
+                    service_name=self.config.service_name,
+                    send_to_logfire=True,
+                    scrubbing=logfire.ScrubbingOptions(extra_patterns=scrubbing_patterns),  # type: ignore
+                )
+            else:
+                logfire.configure(  # type: ignore
+                    service_name=self.config.service_name,
+                    send_to_logfire=False,
+                    token=None,  # Disable cloud API calls
+                    scrubbing=logfire.ScrubbingOptions(extra_patterns=scrubbing_patterns),  # type: ignore
+                )
 
             # Auto-instrument all PydanticAI agents
             logfire.instrument_pydantic_ai()  # type: ignore
