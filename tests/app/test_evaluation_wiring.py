@@ -38,7 +38,7 @@ async def test_evaluation_runs_after_manager_by_default():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = "test_exec_123"
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline instance
         mock_pipeline = MagicMock()
@@ -102,7 +102,7 @@ async def test_skip_eval_flag_prevents_evaluation():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = "test_exec_123"
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         mock_pipeline = MagicMock()
         mock_pipeline.evaluate_comprehensive = AsyncMock()
@@ -146,7 +146,7 @@ async def test_graceful_skip_without_ground_truth():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = "test_exec_123"
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         mock_pipeline = MagicMock()
         mock_pipeline.evaluate_comprehensive = AsyncMock()

@@ -21,6 +21,48 @@ from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
 
+def _extract_paper_and_review_content(manager_output: Any) -> tuple[str, str]:
+    """Extract paper and review content from manager output.
+
+    Args:
+        manager_output: Manager result output containing ReviewGenerationResult (optional).
+
+    Returns:
+        Tuple of (paper_content, review_text).
+    """
+    paper_content = ""
+    review_text = ""
+
+    if manager_output is None:
+        return paper_content, review_text
+
+    from app.data_models.peerread_models import ReviewGenerationResult
+    from app.data_utils.datasets_peerread import PeerReadLoader
+
+    # Check if manager_output is ReviewGenerationResult
+    if not isinstance(manager_output, ReviewGenerationResult):
+        return paper_content, review_text
+
+    # Extract review text from ReviewGenerationResult
+    review_text = manager_output.review.comments
+
+    # Load paper content from PeerReadLoader
+    loader = PeerReadLoader()
+    paper_id = manager_output.paper_id
+
+    # Try to load parsed PDF content first
+    parsed_content = loader.load_parsed_pdf_content(paper_id)
+    if parsed_content:
+        paper_content = parsed_content
+    else:
+        # Fallback to abstract if PDF unavailable
+        paper = loader.get_paper_by_id(paper_id)
+        if paper:
+            paper_content = paper.abstract
+
+    return paper_content, review_text
+
+
 def build_graph_from_trace(execution_id: str | None) -> nx.DiGraph[str] | None:
     """Build interaction graph from execution trace data.
 
@@ -103,31 +145,7 @@ async def run_evaluation_if_enabled(
             logger.warning(f"No trace data found for execution: {execution_id}")
 
     # Extract paper and review content from manager_output
-    paper_content = ""
-    review_text = ""
-
-    if manager_output is not None:
-        from app.data_models.peerread_models import ReviewGenerationResult
-        from app.data_utils.datasets_peerread import PeerReadLoader
-
-        # Check if manager_output is ReviewGenerationResult
-        if isinstance(manager_output, ReviewGenerationResult):
-            # Extract review text from ReviewGenerationResult
-            review_text = manager_output.review.comments
-
-            # Load paper content from PeerReadLoader
-            loader = PeerReadLoader()
-            paper_id = manager_output.paper_id
-
-            # Try to load parsed PDF content first
-            parsed_content = loader.load_parsed_pdf_content(paper_id)
-            if parsed_content:
-                paper_content = parsed_content
-            else:
-                # Fallback to abstract if PDF unavailable
-                paper = loader.get_paper_by_id(paper_id)
-                if paper:
-                    paper_content = paper.abstract
+    paper_content, review_text = _extract_paper_and_review_content(manager_output)
 
     pydantic_result = await pipeline.evaluate_comprehensive(
         paper=paper_content,

@@ -42,7 +42,10 @@ class TestCLITokenLimitFlag:
             )
             mock_manager = MagicMock()
             mock_get_manager.return_value = mock_manager
-            mock_run_manager.return_value = "test_exec_123"
+            mock_run_manager.return_value = (
+                "test_exec_123",
+                None,
+            )  # (execution_id, manager_output)
             mock_load_config.return_value = MagicMock(prompts={})
 
             # Run main with --token-limit flag
@@ -78,7 +81,10 @@ class TestCLITokenLimitFlag:
             )
             mock_manager = MagicMock()
             mock_get_manager.return_value = mock_manager
-            mock_run_manager.return_value = "test_exec_123"
+            mock_run_manager.return_value = (
+                "test_exec_123",
+                None,
+            )  # (execution_id, manager_output)
             mock_load_config.return_value = MagicMock(prompts={})
 
             # Run main with CLI override
@@ -165,7 +171,10 @@ class TestEnvVarTokenLimit:
             )
             mock_manager = MagicMock()
             mock_get_manager.return_value = mock_manager
-            mock_run_manager.return_value = "test_exec_123"
+            mock_run_manager.return_value = (
+                "test_exec_123",
+                None,
+            )  # (execution_id, manager_output)
             mock_load_config.return_value = MagicMock(prompts={})
 
             # Run main without CLI flag (should pick up env var)
@@ -201,7 +210,10 @@ class TestEnvVarTokenLimit:
             )
             mock_manager = MagicMock()
             mock_get_manager.return_value = mock_manager
-            mock_run_manager.return_value = "test_exec_123"
+            mock_run_manager.return_value = (
+                "test_exec_123",
+                None,
+            )  # (execution_id, manager_output)
             mock_load_config.return_value = MagicMock(prompts={})
 
             # Run main with CLI flag (should override env var)
@@ -263,7 +275,10 @@ class TestConfigFallback:
             )
             mock_manager = MagicMock()
             mock_get_manager.return_value = mock_manager
-            mock_run_manager.return_value = "test_exec_123"
+            mock_run_manager.return_value = (
+                "test_exec_123",
+                None,
+            )  # (execution_id, manager_output)
             mock_load_config.return_value = MagicMock(prompts={})
 
             # Run main without any token limit override

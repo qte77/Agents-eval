@@ -38,7 +38,7 @@ async def test_cli_accepts_cc_solo_dir_flag():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = "test_exec_123"
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline and adapter
         mock_pipeline = MagicMock()
@@ -98,7 +98,7 @@ async def test_cli_accepts_cc_teams_dir_flag():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = "test_exec_123"
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline and adapter
         mock_pipeline = MagicMock()
@@ -159,7 +159,7 @@ async def test_three_way_comparison_with_both_cc_baselines():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = "test_exec_123"
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline to return CompositeResult for each evaluation
         mock_pipeline = MagicMock()
@@ -236,7 +236,7 @@ async def test_baseline_comparison_printed_to_console():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = "test_exec_123"
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline
         mock_pipeline = MagicMock()
@@ -309,7 +309,7 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = "test_exec_123"
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         mock_pipeline = MagicMock()
         mock_pipeline.evaluate_comprehensive = AsyncMock()

@@ -223,7 +223,7 @@ class TestMainReturnType:
             patch("app.app.login"),
             patch("app.app._initialize_instrumentation"),
             patch("app.app.get_manager"),
-            patch("app.app.run_manager", return_value="exec-id"),
+            patch("app.app.run_manager", return_value=("exec-id", None)),  # (execution_id, manager_output)
             patch("app.app._run_evaluation_if_enabled", return_value=mock_result),
             patch("app.app._build_graph_from_trace", return_value=None),
         ):
@@ -250,7 +250,7 @@ class TestMainReturnType:
             patch("app.app.login"),
             patch("app.app._initialize_instrumentation"),
             patch("app.app.get_manager"),
-            patch("app.app.run_manager", return_value="exec-id"),
+            patch("app.app.run_manager", return_value=("exec-id", None)),  # (execution_id, manager_output)
             patch("app.app._run_evaluation_if_enabled", return_value=None),
         ):
             result = await main(

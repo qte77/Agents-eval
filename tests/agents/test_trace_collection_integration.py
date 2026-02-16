@@ -218,7 +218,7 @@ async def test_graph_trace_data_passed_to_evaluation():
         mock_get_collector.return_value = mock_collector
 
         # Mock run_manager to return execution_id
-        mock_run_manager.return_value = "test_exec_123"
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline
         mock_pipeline = MagicMock()
