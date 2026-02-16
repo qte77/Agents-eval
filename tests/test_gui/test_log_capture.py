@@ -92,10 +92,13 @@ class TestLogCaptureSink:
         )
 
     def test_log_capture_formats_html_output(self):
-        """Test that log entries can be formatted as HTML."""
+        """Test that log entries are formatted as color-coded HTML.
+
+        Spec: INFO=default, WARNING=yellow, ERROR=red.
+        """
         from gui.utils.log_capture import LogCapture
 
-        # Given a log capture with multiple entries
+        # Given a log capture with entries at each key level
         capture = LogCapture()
         capture.add_log_entry(
             timestamp="2026-02-15 10:00:00",
@@ -105,6 +108,12 @@ class TestLogCaptureSink:
         )
         capture.add_log_entry(
             timestamp="2026-02-15 10:00:01",
+            level="WARNING",
+            module="app.judge.evaluation_pipeline",
+            message="Tier 2 skipped",
+        )
+        capture.add_log_entry(
+            timestamp="2026-02-15 10:00:02",
             level="ERROR",
             module="app.judge.llm_evaluation_managers",
             message="Provider unavailable",
@@ -113,11 +122,10 @@ class TestLogCaptureSink:
         # When formatted as HTML
         html = capture.format_html()
 
-        # Then HTML should include color-coded entries
-        assert "INFO" in html
-        assert "ERROR" in html
-        assert "Execution started" in html
-        assert "Provider unavailable" in html
+        # Then HTML structure should match with correct color coding
+        assert html == snapshot(
+            '<div style="margin-bottom: 8px; font-family: monospace; font-size: 12px;"><span style="color: #666;">2026-02-15 10:00:00</span> <span style="color: #666666; font-weight: bold;">[INFO]</span> <span style="color: #999;">app.app</span> <span>Execution started</span></div><div style="margin-bottom: 8px; font-family: monospace; font-size: 12px;"><span style="color: #666;">2026-02-15 10:00:01</span> <span style="color: #DAA520; font-weight: bold;">[WARNING]</span> <span style="color: #999;">app.judge.evaluation_pipeline</span> <span>Tier 2 skipped</span></div><div style="margin-bottom: 8px; font-family: monospace; font-size: 12px;"><span style="color: #666;">2026-02-15 10:00:02</span> <span style="color: #F44336; font-weight: bold;">[ERROR]</span> <span style="color: #999;">app.judge.llm_evaluation_managers</span> <span>Provider unavailable</span></div>'
+        )
 
 
 class TestLogCaptureIntegration:

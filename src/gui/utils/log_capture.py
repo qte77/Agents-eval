@@ -80,8 +80,7 @@ class LogCapture:
 
         html_parts: list[str] = []
         level_colors = {
-            "INFO": "#4CAF50",  # Green
-            "WARNING": "#FF9800",  # Orange
+            "WARNING": "#DAA520",  # Yellow (goldenrod)
             "ERROR": "#F44336",  # Red
             "DEBUG": "#2196F3",  # Blue
             "CRITICAL": "#9C27B0",  # Purple
