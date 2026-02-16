@@ -21,19 +21,68 @@ from gui.pages.settings import render_settings
 @pytest.fixture
 def mock_streamlit():
     """Mock Streamlit components for testing."""
-    with patch("gui.pages.settings.st") as mock_st:
+    with (
+        patch("gui.pages.settings.st") as mock_st,
+        patch("gui.pages.settings.button") as mock_button,
+        patch("gui.pages.settings.checkbox") as mock_checkbox,
+        patch("gui.pages.settings.number_input") as mock_number_input,
+        patch("gui.pages.settings.selectbox") as mock_selectbox,
+        patch("gui.pages.settings.text_input") as mock_text_input,
+        patch("gui.pages.settings.text") as mock_text,
+        patch("gui.pages.settings.header") as mock_header,
+        patch("gui.pages.settings.expander") as mock_expander,
+    ):
         # Setup session_state as a dict
         mock_st.session_state = {}
 
-        # Mock component functions to return values
-        mock_st.selectbox = MagicMock(side_effect=lambda label, **kwargs: kwargs.get("value", ""))
-        mock_st.number_input = MagicMock(side_effect=lambda label, **kwargs: kwargs.get("value", 0))
-        mock_st.checkbox = MagicMock(side_effect=lambda label, **kwargs: kwargs.get("value", False))
-        mock_st.text_input = MagicMock(side_effect=lambda label, **kwargs: kwargs.get("value", ""))
-        mock_st.button = MagicMock(return_value=False)
-        mock_st.expander = MagicMock()
-        mock_st.header = MagicMock()
-        mock_st.text = MagicMock()
+        # Mock component functions to return values and store in session_state
+        def number_input_side_effect(label, **kwargs):
+            value = kwargs.get("value", 0)
+            key = kwargs.get("key", "")
+            if key:
+                mock_st.session_state[key] = value
+            return value
+
+        def checkbox_side_effect(label, **kwargs):
+            value = kwargs.get("value", False)
+            key = kwargs.get("key", "")
+            if key:
+                mock_st.session_state[key] = value
+            return value
+
+        def text_input_side_effect(label, **kwargs):
+            value = kwargs.get("value", "")
+            key = kwargs.get("key", "")
+            if key:
+                mock_st.session_state[key] = value
+            return value
+
+        def selectbox_side_effect(label, **kwargs):
+            value = kwargs.get("value", "")
+            key = kwargs.get("key", "")
+            if key:
+                mock_st.session_state[key] = value
+            return value
+
+        # Wire up the mock functions
+        mock_number_input.side_effect = number_input_side_effect
+        mock_checkbox.side_effect = checkbox_side_effect
+        mock_text_input.side_effect = text_input_side_effect
+        mock_selectbox.side_effect = selectbox_side_effect
+        mock_button.return_value = False
+        mock_expander.return_value.__enter__ = MagicMock()
+        mock_expander.return_value.__exit__ = MagicMock()
+
+        # Store references for test assertions
+        mock_st.number_input = mock_number_input
+        mock_st.checkbox = mock_checkbox
+        mock_st.text_input = mock_text_input
+        mock_st.selectbox = mock_selectbox
+        mock_st.button = mock_button
+        mock_st.expander = mock_expander
+        mock_st.text = mock_text
+        mock_st.header = mock_header
+        mock_st.rerun = MagicMock()
 
         yield mock_st
 
@@ -179,11 +228,11 @@ def test_settings_page_widget_structure_snapshot(mock_streamlit):
     # Note: Exact counts will be determined after implementation
     assert widget_structure == snapshot(
         {
-            "number_input_calls": 0,
-            "checkbox_calls": 0,
-            "text_input_calls": 0,
-            "selectbox_calls": 0,
-            "button_calls": 0,
+            "number_input_calls": 9,
+            "checkbox_calls": 5,
+            "text_input_calls": 5,
+            "selectbox_calls": 1,
+            "button_calls": 1,
         }
     )
 

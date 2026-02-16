@@ -209,6 +209,7 @@ async def main(
     cc_solo_dir: str | None = None,
     cc_teams_dir: str | None = None,
     token_limit: int | None = None,
+    judge_settings: JudgeSettings | None = None,
 ) -> dict[str, Any] | None:
     """Main entry point for the application.
 
@@ -253,7 +254,13 @@ async def main(
 
             # Run evaluation after manager completes
             composite_result = await _run_evaluation_if_enabled(
-                skip_eval, paper_number, execution_id, cc_solo_dir, cc_teams_dir, chat_provider
+                skip_eval,
+                paper_number,
+                execution_id,
+                cc_solo_dir,
+                cc_teams_dir,
+                chat_provider,
+                judge_settings,
             )
 
             # Build interaction graph from trace data for visualization

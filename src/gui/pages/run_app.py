@@ -19,6 +19,7 @@ from streamlit import button, exception, header, info, spinner, subheader, text,
 
 from app.app import main
 from app.config.config_app import CHAT_DEFAULT_PROVIDER
+from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 from gui.components.output import render_output
 from gui.config.text import (
@@ -49,6 +50,30 @@ def _get_session_config(provider: str | None) -> tuple[str, bool, bool, bool]:
     include_analyst: bool = st.session_state.get("include_analyst", False)
     include_synthesiser: bool = st.session_state.get("include_synthesiser", False)
     return provider_from_state, include_researcher, include_analyst, include_synthesiser
+
+
+def _build_judge_settings_from_session() -> JudgeSettings | None:
+    """Build JudgeSettings from session state overrides.
+
+    Checks session state for judge settings overrides (prefixed with 'judge_')
+    and constructs a JudgeSettings instance if any are found. If no overrides
+    exist, returns None to use defaults.
+
+    Returns:
+        JudgeSettings instance with session state overrides, or None if no overrides.
+    """
+    # Check if any judge settings exist in session state
+    judge_overrides = {
+        k.replace("judge_", ""): v
+        for k, v in st.session_state.items()
+        if isinstance(k, str) and k.startswith("judge_")
+    }
+
+    if not judge_overrides:
+        return None
+
+    # Build JudgeSettings with overrides
+    return JudgeSettings(**judge_overrides)
 
 
 def _format_enabled_agents(
@@ -124,6 +149,7 @@ async def _execute_query_background(
     include_synthesiser: bool,
     chat_config_file: str | Path | None,
     token_limit: int | None = None,
+    judge_settings: JudgeSettings | None = None,
 ) -> None:
     """Execute agent query in background with session state persistence.
 
@@ -138,6 +164,7 @@ async def _execute_query_background(
         include_synthesiser: Whether to include synthesiser agent
         chat_config_file: Path to chat configuration file
         token_limit: Optional token limit override from GUI
+        judge_settings: Optional JudgeSettings override from GUI settings page
     """
     # Set running state
     st.session_state.execution_state = "running"
@@ -158,6 +185,7 @@ async def _execute_query_background(
             include_synthesiser=include_synthesiser,
             chat_config_file=chat_config_file,
             token_limit=token_limit,
+            judge_settings=judge_settings,
         )
 
         # Store result and transition to completed
@@ -271,6 +299,9 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     # Handle button click - start new execution
     if button(RUN_APP_BUTTON):
         if query:
+            # Build judge settings from session state
+            judge_settings = _build_judge_settings_from_session()
+
             # Start background execution
             info(f"{RUN_APP_QUERY_RUN_INFO} {query}")
             await _execute_query_background(
@@ -281,6 +312,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
                 include_synthesiser,
                 chat_config_file,
                 token_limit,
+                judge_settings,
             )
             # Force rerun to show updated state
             st.rerun()

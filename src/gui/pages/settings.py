@@ -1,16 +1,16 @@
 """
-Streamlit settings UI for displaying application settings.
+Streamlit settings UI for displaying and editing application settings.
 
-This module provides a function to display actual settings from pydantic-settings
-classes (CommonSettings and JudgeSettings). Read-only display following YAGNI
-principle - no save functionality as settings come from environment variables.
+This module provides a function to display and edit settings from pydantic-settings
+classes (CommonSettings and JudgeSettings). Settings are editable via the GUI and
+applied to the current session via st.session_state.
 
 Also provides UI controls for chat provider selection and sub-agent configuration
 with session state persistence.
 """
 
 import streamlit as st
-from streamlit import checkbox, expander, header, number_input, selectbox, text
+from streamlit import button, checkbox, expander, header, number_input, selectbox, text, text_input
 
 from app.common.settings import CommonSettings
 from app.data_models.app_models import PROVIDER_REGISTRY
@@ -103,41 +103,157 @@ def render_settings(common_settings: CommonSettings, judge_settings: JudgeSettin
                 key="token_limit_input",
             )
 
-    # Common Settings Section
+    # Common Settings Section (read-only for now)
     with expander("Common Settings", expanded=True):
         text(f"Log Level: {common_settings.log_level}")
         text(f"Enable Logfire: {common_settings.enable_logfire}")
         text(f"Max Content Length: {common_settings.max_content_length}")
 
-    # Judge Settings - Tier Configuration
-    with expander("Judge Settings - Tier Configuration"):
-        text(f"Enabled Tiers: {judge_settings.tiers_enabled}")
-        text(f"Tier 1 Max Seconds: {judge_settings.tier1_max_seconds}")
-        text(f"Tier 2 Max Seconds: {judge_settings.tier2_max_seconds}")
-        text(f"Tier 3 Max Seconds: {judge_settings.tier3_max_seconds}")
-        text(f"Total Max Seconds: {judge_settings.total_max_seconds}")
+    # Judge Settings - Tier Configuration (editable)
+    with expander("Judge Settings - Tier Configuration", expanded=True):
+        # Timeout values (editable)
+        st.session_state["judge_tier1_max_seconds"] = number_input(
+            "Tier 1 Max Seconds",
+            min_value=0.1,
+            max_value=300.0,
+            value=st.session_state.get("judge_tier1_max_seconds", judge_settings.tier1_max_seconds),
+            step=0.1,
+            key="tier1_max_seconds_input",
+            help="Tier 1 timeout (Traditional Metrics). Range: 0.1-300 seconds.",
+        )
+        st.session_state["judge_tier2_max_seconds"] = number_input(
+            "Tier 2 Max Seconds",
+            min_value=0.1,
+            max_value=300.0,
+            value=st.session_state.get("judge_tier2_max_seconds", judge_settings.tier2_max_seconds),
+            step=0.1,
+            key="tier2_max_seconds_input",
+            help="Tier 2 timeout (LLM-as-Judge). Range: 0.1-300 seconds.",
+        )
+        st.session_state["judge_tier3_max_seconds"] = number_input(
+            "Tier 3 Max Seconds",
+            min_value=0.1,
+            max_value=300.0,
+            value=st.session_state.get("judge_tier3_max_seconds", judge_settings.tier3_max_seconds),
+            step=0.1,
+            key="tier3_max_seconds_input",
+            help="Tier 3 timeout (Graph Analysis). Range: 0.1-300 seconds.",
+        )
+        st.session_state["judge_total_max_seconds"] = number_input(
+            "Total Max Seconds",
+            min_value=0.1,
+            max_value=300.0,
+            value=st.session_state.get("judge_total_max_seconds", judge_settings.total_max_seconds),
+            step=0.1,
+            key="total_max_seconds_input",
+            help="Total pipeline timeout. Range: 0.1-300 seconds.",
+        )
 
-    # Judge Settings - Composite Scoring
+    # Judge Settings - Composite Scoring (editable)
     with expander("Judge Settings - Composite Scoring"):
-        text(f"Accept Threshold: {judge_settings.composite_accept_threshold}")
-        text(f"Weak Accept Threshold: {judge_settings.composite_weak_accept_threshold}")
-        text(f"Weak Reject Threshold: {judge_settings.composite_weak_reject_threshold}")
-        text(f"Fallback Strategy: {judge_settings.fallback_strategy}")
+        st.session_state["judge_composite_accept_threshold"] = number_input(
+            "Accept Threshold",
+            min_value=0.0,
+            max_value=1.0,
+            value=st.session_state.get(
+                "judge_composite_accept_threshold", judge_settings.composite_accept_threshold
+            ),
+            step=0.01,
+            key="composite_accept_threshold_input",
+            help="Score threshold for 'accept' recommendation. Range: 0.0-1.0.",
+        )
+        st.session_state["judge_composite_weak_accept_threshold"] = number_input(
+            "Weak Accept Threshold",
+            min_value=0.0,
+            max_value=1.0,
+            value=st.session_state.get(
+                "judge_composite_weak_accept_threshold",
+                judge_settings.composite_weak_accept_threshold,
+            ),
+            step=0.01,
+            key="composite_weak_accept_threshold_input",
+            help="Score threshold for 'weak_accept'. Range: 0.0-1.0.",
+        )
+        st.session_state["judge_composite_weak_reject_threshold"] = number_input(
+            "Weak Reject Threshold",
+            min_value=0.0,
+            max_value=1.0,
+            value=st.session_state.get(
+                "judge_composite_weak_reject_threshold",
+                judge_settings.composite_weak_reject_threshold,
+            ),
+            step=0.01,
+            key="composite_weak_reject_threshold_input",
+            help="Score threshold for 'weak_reject'. Range: 0.0-1.0.",
+        )
 
-    # Judge Settings - Tier 2 LLM Judge
+    # Judge Settings - Tier 2 LLM Judge (editable)
     with expander("Judge Settings - Tier 2 LLM Judge"):
-        text(f"Provider: {judge_settings.tier2_provider}")
-        text(f"Model: {judge_settings.tier2_model}")
-        text(f"Fallback Provider: {judge_settings.tier2_fallback_provider}")
-        text(f"Fallback Model: {judge_settings.tier2_fallback_model}")
-        text(f"Max Retries: {judge_settings.tier2_max_retries}")
-        text(f"Timeout Seconds: {judge_settings.tier2_timeout_seconds}")
+        st.session_state["judge_tier2_provider"] = text_input(
+            "Provider",
+            value=st.session_state.get("judge_tier2_provider", judge_settings.tier2_provider),
+            key="tier2_provider_input",
+            help="LLM provider for Tier 2 evaluation (e.g., 'openai', 'github', 'auto').",
+        )
+        st.session_state["judge_tier2_model"] = text_input(
+            "Model",
+            value=st.session_state.get("judge_tier2_model", judge_settings.tier2_model),
+            key="tier2_model_input",
+            help="LLM model for Tier 2 evaluation (e.g., 'gpt-4o-mini').",
+        )
+        st.session_state["judge_tier2_fallback_provider"] = text_input(
+            "Fallback Provider",
+            value=st.session_state.get(
+                "judge_tier2_fallback_provider", judge_settings.tier2_fallback_provider
+            ),
+            key="tier2_fallback_provider_input",
+            help="Fallback LLM provider if primary fails.",
+        )
+        st.session_state["judge_tier2_fallback_model"] = text_input(
+            "Fallback Model",
+            value=st.session_state.get(
+                "judge_tier2_fallback_model", judge_settings.tier2_fallback_model
+            ),
+            key="tier2_fallback_model_input",
+            help="Fallback LLM model if primary fails.",
+        )
+        st.session_state["judge_tier2_timeout_seconds"] = number_input(
+            "Timeout Seconds",
+            min_value=0.1,
+            max_value=300.0,
+            value=st.session_state.get(
+                "judge_tier2_timeout_seconds", judge_settings.tier2_timeout_seconds
+            ),
+            step=0.1,
+            key="tier2_timeout_seconds_input",
+            help="Request timeout for LLM calls. Range: 0.1-300 seconds.",
+        )
 
-    # Judge Settings - Observability
+    # Judge Settings - Observability (editable)
     with expander("Judge Settings - Observability"):
-        text(f"Trace Collection: {judge_settings.trace_collection}")
-        text(f"Trace Storage Path: {judge_settings.trace_storage_path}")
-        text(f"Logfire Enabled: {judge_settings.logfire_enabled}")
-        text(f"Logfire Send to Cloud: {judge_settings.logfire_send_to_cloud}")
-        text(f"Phoenix Endpoint: {judge_settings.phoenix_endpoint}")
-        text(f"Performance Logging: {judge_settings.performance_logging}")
+        st.session_state["judge_logfire_enabled"] = checkbox(
+            "Logfire Enabled",
+            value=st.session_state.get("judge_logfire_enabled", judge_settings.logfire_enabled),
+            key="logfire_enabled_checkbox",
+            help="Enable Logfire tracing.",
+        )
+        st.session_state["judge_phoenix_endpoint"] = text_input(
+            "Phoenix Endpoint",
+            value=st.session_state.get("judge_phoenix_endpoint", judge_settings.phoenix_endpoint),
+            key="phoenix_endpoint_input",
+            help="Phoenix local trace viewer endpoint (e.g., 'http://localhost:6006').",
+        )
+        st.session_state["judge_trace_collection"] = checkbox(
+            "Trace Collection",
+            value=st.session_state.get("judge_trace_collection", judge_settings.trace_collection),
+            key="trace_collection_checkbox",
+            help="Enable trace collection.",
+        )
+
+    # Reset to Defaults Button
+    if button("Reset to Defaults"):
+        # Clear all judge settings from session state
+        judge_keys = [k for k in st.session_state.keys() if isinstance(k, str) and k.startswith("judge_")]
+        for key in judge_keys:
+            del st.session_state[key]
+        st.rerun()

@@ -16,6 +16,7 @@ from app.judge.baseline_comparison import compare_all
 from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
 from app.judge.graph_builder import build_interaction_graph
+from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
 
@@ -53,6 +54,7 @@ async def run_evaluation_if_enabled(
     cc_solo_dir: str | None = None,
     cc_teams_dir: str | None = None,
     chat_provider: str | None = None,
+    judge_settings: JudgeSettings | None = None,
 ) -> CompositeResult | None:
     """Run evaluation pipeline after manager completes if enabled.
 
@@ -63,6 +65,7 @@ async def run_evaluation_if_enabled(
         cc_solo_dir: Path to Claude Code solo artifacts directory for baseline comparison.
         cc_teams_dir: Path to Claude Code teams artifacts directory for baseline comparison.
         chat_provider: Active chat provider from agent system.
+        judge_settings: Optional JudgeSettings override from GUI or programmatic calls.
 
     Returns:
         CompositeResult from PydanticAI evaluation or None if skipped.
@@ -72,7 +75,7 @@ async def run_evaluation_if_enabled(
         return None
 
     logger.info("Running evaluation pipeline...")
-    pipeline = EvaluationPipeline(chat_provider=chat_provider)
+    pipeline = EvaluationPipeline(settings=judge_settings, chat_provider=chat_provider)
 
     if not paper_number:
         logger.info("Skipping evaluation: no ground-truth reviews available")
