@@ -377,6 +377,109 @@ class TestPDFExtractionErrorHandling:
         assert isinstance(result, str)
 
 
+class TestToolTracingIntegration:
+    """Test tool tracing and trace collector integration."""
+
+    def test_get_peerread_paper_tool_captures_trace(self):
+        """Test that get_peerread_paper tool records trace data."""
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        sample_paper = PeerReadPaper(
+            paper_id="test_001",
+            title="Test Paper",
+            abstract="Test abstract",
+            reviews=[],
+            histories=[],
+        )
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+            patch("app.tools.peerread_tools.get_trace_collector") as mock_get_collector,
+        ):
+            mock_loader = Mock()
+            mock_loader.get_paper_by_id.return_value = sample_paper
+            mock_loader_class.return_value = mock_loader
+
+            mock_collector = Mock()
+            mock_get_collector.return_value = mock_collector
+
+            add_peerread_tools_to_agent(agent, agent_id="test_agent")
+
+            # Get the tool
+            get_paper_tool = None
+            for tool in registered_tools:
+                if "peerread_paper" in tool.__name__:
+                    get_paper_tool = tool
+                    break
+
+            # Act
+            import asyncio
+
+            asyncio.run(get_paper_tool(None, "test_001"))
+
+            # Assert - trace collector should be called
+            assert mock_get_collector.called
+
+    def test_save_paper_review_tool_captures_trace(self):
+        """Test that save_paper_review tool records trace data."""
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_review_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader"),
+            patch("app.tools.peerread_tools.ReviewPersistence"),
+            patch("app.tools.peerread_tools.get_trace_collector") as mock_get_collector,
+        ):
+            mock_collector = Mock()
+            mock_get_collector.return_value = mock_collector
+
+            add_peerread_review_tools_to_agent(agent, "test_agent")
+
+            # Get the save review tool
+            save_review_tool = None
+            for tool in registered_tools:
+                if "save" in tool.__name__ and "review" in tool.__name__:
+                    save_review_tool = tool
+                    break
+
+            # Act
+            if save_review_tool:
+                import asyncio
+
+                result = asyncio.run(
+                    save_review_tool(None, "test_001", "Test review", "accept", 0.9)
+                )
+
+                # Assert - trace collector should be called
+                assert mock_get_collector.called
+                assert result is not None
+
+
 class TestTemplateLoading:
     """Test review template loading functionality."""
 

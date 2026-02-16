@@ -470,6 +470,139 @@ class TestRealExternalDependencies:
 
 
 # STORY-004: Hypothesis property-based tests for data validation invariants
+class TestContentExtraction:
+    """Test PDF parsed content extraction."""
+
+    def test_load_parsed_pdf_content_success(self):
+        """Test successful loading of parsed PDF content."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        # Act - paper 104 has parsed content
+        result = loader.load_parsed_pdf_content("104")
+
+        # Assert
+        assert result is not None
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_load_parsed_pdf_content_missing_file(self):
+        """Test loading parsed PDF for nonexistent paper."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        # Act
+        result = loader.load_parsed_pdf_content("nonexistent_paper_99999")
+
+        # Assert
+        assert result is None
+
+    def test_extract_text_with_nested_sections(self):
+        """Test text extraction from nested section structure."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+        parsed_data = {
+            "metadata": {
+                "sections": [
+                    {"heading": "Introduction", "text": "Intro text here."},
+                    {"heading": "Methods", "text": "Methods text here."},
+                    {
+                        "heading": "Results",
+                        "text": "Results overview.",
+                        "subsections": [
+                            {"heading": "Experiment 1", "text": "Exp 1 results."},
+                            {"heading": "Experiment 2", "text": "Exp 2 results."},
+                        ],
+                    },
+                ]
+            }
+        }
+
+        # Act
+        text = loader._extract_text_from_parsed_data(parsed_data)
+
+        # Assert
+        assert "Intro text here" in text
+        assert "Methods text here" in text
+        assert "Results overview" in text
+
+
+class TestDownloadVenueSplit:
+    """Test venue/split download functionality."""
+
+    def test_download_venue_split_with_max_papers(self):
+        """Test downloading limited number of papers from venue/split."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        with patch.object(downloader, "download_file") as mock_download:
+            mock_download.return_value = {
+                "id": "test",
+                "title": "Test",
+                "abstract": "Abstract",
+                "reviews": [],
+                "histories": [],
+            }
+
+            with patch.object(downloader, "_get_paper_ids_from_directory") as mock_get_ids:
+                mock_get_ids.return_value = ["001", "002", "003", "004", "005"]
+
+                # Act
+                result = downloader.download_venue_split("acl_2017", "train", max_papers=3)
+
+                # Assert
+                assert result.success is True
+                assert result.papers_downloaded == 3
+                assert mock_download.call_count == 3
+
+    def test_download_venue_split_handles_partial_failures(self):
+        """Test download continues after individual paper failures."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        with patch.object(downloader, "download_file") as mock_download:
+            # First download fails, second succeeds
+            mock_download.side_effect = [
+                None,
+                {
+                    "id": "002",
+                    "title": "Test",
+                    "abstract": "Abstract",
+                    "reviews": [],
+                    "histories": [],
+                },
+            ]
+
+            with patch.object(downloader, "_get_paper_ids_from_directory") as mock_get_ids:
+                mock_get_ids.return_value = ["001", "002"]
+
+                # Act
+                result = downloader.download_venue_split("acl_2017", "train", max_papers=2)
+
+                # Assert - should succeed with 1 paper even though 1 failed
+                assert result.success is True
+                assert result.papers_downloaded == 1
+
+
 class TestPeerReadDataInvariants:
     """Property-based tests for PeerRead data validation invariants."""
 

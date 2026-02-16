@@ -219,3 +219,103 @@ class TestModelConfigurationEdgeCases:
 
         model = create_llm_model(endpoint_config)
         assert isinstance(model, OpenAIChatModel)
+
+    def test_create_agent_models_with_all_agents(self):
+        """Test creating models for all agent types."""
+        from app.llms.models import create_agent_models
+
+        endpoint_config = EndpointConfig(
+            prompts={
+                "manager": "Manager prompt",
+                "researcher": "Researcher prompt",
+                "analyst": "Analyst prompt",
+                "synthesiser": "Synthesiser prompt",
+            },
+            provider="openai",
+            api_key="test-key",
+            provider_config=ProviderConfig(
+                model_name="gpt-4",
+                base_url="https://api.openai.com/v1",
+            ),
+        )
+
+        models = create_agent_models(
+            endpoint_config,
+            include_researcher=True,
+            include_analyst=True,
+            include_synthesiser=True,
+        )
+
+        assert models.model_manager is not None
+        assert models.model_researcher is not None
+        assert models.model_analyst is not None
+        assert models.model_synthesiser is not None
+
+    def test_create_agent_models_manager_only(self):
+        """Test creating models with only manager agent."""
+        from app.llms.models import create_agent_models
+
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "Manager prompt"},
+            provider="openai",
+            api_key="test-key",
+            provider_config=ProviderConfig(
+                model_name="gpt-4",
+                base_url="https://api.openai.com/v1",
+            ),
+        )
+
+        models = create_agent_models(
+            endpoint_config,
+            include_researcher=False,
+            include_analyst=False,
+            include_synthesiser=False,
+        )
+
+        assert models.model_manager is not None
+        assert models.model_researcher is None
+        assert models.model_analyst is None
+        assert models.model_synthesiser is None
+
+
+class TestProviderSpecificBehavior:
+    """Test provider-specific model creation behavior."""
+
+    def test_openai_compatible_provider_without_strict_tools(self):
+        """Test that non-OpenAI providers disable strict tool definitions."""
+        from app.llms.models import create_llm_model
+
+        # Test with a provider that doesn't support strict tools
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "Manager prompt"},
+            provider="cerebras",
+            api_key="test-key",
+            provider_config=ProviderConfig(
+                model_name="llama3-8b",
+                base_url="https://api.cerebras.ai/v1",
+            ),
+        )
+
+        model = create_llm_model(endpoint_config)
+
+        # Assert strict tool definition is disabled
+        assert model.profile.openai_supports_strict_tool_definition is False
+
+    def test_openai_provider_with_strict_tools_enabled(self):
+        """Test that OpenAI provider enables strict tool definitions by default."""
+        from app.llms.models import create_llm_model
+
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "Manager prompt"},
+            provider="openai",
+            api_key="test-key",
+            provider_config=ProviderConfig(
+                model_name="gpt-4",
+                base_url="https://api.openai.com/v1",
+            ),
+        )
+
+        model = create_llm_model(endpoint_config)
+
+        # Assert strict tool definition is enabled for OpenAI
+        assert model.profile.openai_supports_strict_tool_definition is True
