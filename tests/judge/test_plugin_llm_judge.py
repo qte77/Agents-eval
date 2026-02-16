@@ -11,7 +11,6 @@ import pytest
 from pydantic import BaseModel
 
 from app.data_models.evaluation_models import Tier2Result
-from app.judge.plugins.base import EvaluatorPlugin
 from app.judge.plugins.llm_judge import LLMJudgePlugin
 
 

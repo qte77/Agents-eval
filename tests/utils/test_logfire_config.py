@@ -22,5 +22,3 @@ def test_logfire_config_from_settings_custom():
     assert config.send_to_cloud is True
     assert config.phoenix_endpoint == "http://localhost:6007"
     assert config.service_name == "custom-service"
-
-
