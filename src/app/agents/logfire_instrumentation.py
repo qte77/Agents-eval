@@ -55,30 +55,27 @@ class LogfireInstrumentationManager:
             import os
 
             # Set Phoenix OTLP endpoint via environment variable if not sending to cloud
-            # Reason: Use traces-specific env var because Phoenix only supports
-            # /v1/traces, not /v1/metrics. The generic OTEL_EXPORTER_OTLP_ENDPOINT
-            # causes the SDK to also export metrics → 405 Method Not Allowed.
-            # FIXME(Sprint5-Ralph STORY-012): PRD acceptance #3 specifies
-            # OTEL_EXPORTER_OTLP_ENDPOINT with base URL only, but that would NOT fix
-            # the 405 for metrics — Phoenix doesn't support /v1/metrics regardless of
-            # path construction. Our approach (OTEL_EXPORTER_OTLP_TRACES_ENDPOINT +
-            # OTEL_METRICS_EXPORTER=none) is more correct. Update PRD acceptance
-            # criterion to match implementation.
+            # Reason: Per OTEL spec, SDK auto-appends signal-specific paths
+            # (/v1/traces, /v1/metrics) to base endpoint. Set base URL only.
+            # Phoenix doesn't support /v1/metrics, so disable metrics export explicitly.
             if not self.config.send_to_cloud:
-                phoenix_otlp = f"{self.config.phoenix_endpoint}/v1/traces"
-                os.environ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"] = phoenix_otlp
+                # Base URL without signal-specific path
+                phoenix_base_url = self.config.phoenix_endpoint
+                os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = phoenix_base_url
                 os.environ["OTEL_METRICS_EXPORTER"] = "none"
 
                 # Check endpoint connectivity before configuring exporters
                 # Reason: Prevents ConnectionRefusedError stack traces during span/metrics export
+                # Check /v1/traces path specifically since that's what SDK will use
+                phoenix_traces_endpoint = f"{phoenix_base_url}/v1/traces"
                 try:
-                    requests.head(phoenix_otlp, timeout=2.0)
+                    requests.head(phoenix_traces_endpoint, timeout=2.0)
                 except (
                     requests.exceptions.ConnectionError,
                     requests.exceptions.Timeout,
                 ):
                     logger.warning(
-                        f"Logfire tracing unavailable: {phoenix_otlp} unreachable "
+                        f"Logfire tracing unavailable: {phoenix_traces_endpoint} unreachable "
                         f"(spans and metrics export disabled)"
                     )
                     self.config.enabled = False
@@ -95,9 +92,9 @@ class LogfireInstrumentationManager:
             if self.config.send_to_cloud:
                 endpoint_info = "Logfire cloud"
             else:
-                traces_ep = os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "not set")
-                metrics_ep = os.environ.get("OTEL_METRICS_EXPORTER", "default")
-                endpoint_info = f"traces={traces_ep}, metrics_exporter={metrics_ep}"
+                base_url = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "not set")
+                metrics_exp = os.environ.get("OTEL_METRICS_EXPORTER", "default")
+                endpoint_info = f"endpoint={base_url}, metrics_exporter={metrics_exp}"
             logger.info(f"Logfire tracing initialized: {endpoint_info}")
         except Exception as e:
             logger.error(f"Failed to initialize Logfire: {e}")
