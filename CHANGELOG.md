@@ -11,7 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added (Sprint 6)
+### Added
+
+- Behavioral tests for `datasets_peerread.py`: error handling, retry logic, URL construction, paper validation with missing fields (27% -> 44% coverage)
+- Behavioral tests for `peerread_tools.py`: PDF extraction errors, content truncation, tool registration (22% -> 32% coverage)
+- Edge case tests improving `llms/models.py` coverage (24% -> 58%, above 50% target)
+- Edge case tests improving `agent_system.py` coverage (47% -> 65%, above 60% target) (Sprint 6)
 
 - STORY-013: Security test suite (`tests/security/`) — 135 tests across 5 modules (SSRF, prompt injection, data filtering, input limits, tool registration) with Hypothesis property tests
 - STORY-007: MAS composition sweep (`src/app/benchmark/`) — `SweepRunner` for N×M×P benchmarking, CC headless baseline via `claude -p`, statistical analysis, CLI `run_sweep.py` + `make sweep` (33 tests)
