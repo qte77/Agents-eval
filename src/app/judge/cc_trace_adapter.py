@@ -31,11 +31,14 @@ class CCTraceAdapter:
         mode: Detected mode ('teams' or 'solo')
     """
 
-    def __init__(self, artifacts_dir: Path):
+    def __init__(self, artifacts_dir: Path, *, tasks_dir: Path | None = None):
         """Initialize adapter with artifacts directory.
 
         Args:
-            artifacts_dir: Path to directory containing CC artifacts
+            artifacts_dir: Path to directory containing CC artifacts (teams mode)
+                          or session exports (solo mode)
+            tasks_dir: Optional explicit path to tasks directory. If None, will
+                      auto-discover for teams mode by checking sibling and child layouts.
 
         Raises:
             ValueError: If directory does not exist
@@ -45,8 +48,12 @@ class CCTraceAdapter:
 
         self.artifacts_dir = artifacts_dir
         self.mode: Literal["teams", "solo"] = self._detect_mode()
+        self.tasks_dir = self._resolve_tasks_dir(tasks_dir)
 
-        logger.debug(f"CCTraceAdapter initialized: mode={self.mode}, path={artifacts_dir}")
+        logger.debug(
+            f"CCTraceAdapter initialized: mode={self.mode}, teams_path={artifacts_dir}, "
+            f"tasks_path={self.tasks_dir}"
+        )
 
     def _detect_mode(self) -> Literal["teams", "solo"]:
         """Auto-detect mode from directory structure.
@@ -74,6 +81,50 @@ class CCTraceAdapter:
                 return "teams"
 
         return "solo"
+
+    def _resolve_tasks_dir(self, explicit_tasks_dir: Path | None) -> Path | None:
+        """Resolve tasks directory path for teams mode.
+
+        Supports two directory layouts:
+        1. Sibling layout (real CC): ~/.claude/teams/{name}/ + ~/.claude/tasks/{name}/
+        2. Child layout (legacy): teams/{name}/tasks/
+
+        Args:
+            explicit_tasks_dir: Explicitly provided tasks directory path
+
+        Returns:
+            Resolved tasks directory path, or None if not in teams mode or not found
+        """
+        # Solo mode doesn't use separate tasks directory
+        if self.mode != "teams":
+            return None
+
+        # If explicitly provided, use it
+        if explicit_tasks_dir is not None:
+            if explicit_tasks_dir.exists():
+                return explicit_tasks_dir
+            logger.warning(f"Explicit tasks_dir does not exist: {explicit_tasks_dir}")
+            return None
+
+        # Auto-discovery: try sibling layout first (real CC structure)
+        # ~/.claude/teams/{team-name}/ -> ~/.claude/tasks/{team-name}/
+        team_name = self.artifacts_dir.name
+        sibling_tasks = self.artifacts_dir.parent.parent / "tasks" / team_name
+
+        if sibling_tasks.exists():
+            logger.debug(f"Found tasks dir via sibling layout: {sibling_tasks}")
+            return sibling_tasks
+
+        # Fallback: child layout (backward compatibility)
+        child_tasks = self.artifacts_dir / "tasks"
+
+        if child_tasks.exists():
+            logger.debug(f"Found tasks dir via child layout: {child_tasks}")
+            return child_tasks
+
+        # No tasks directory found (not an error - tasks are optional)
+        logger.debug("No tasks directory found (neither sibling nor child layout)")
+        return None
 
     def parse(self) -> GraphTraceData:
         """Parse CC artifacts into GraphTraceData format.
@@ -206,10 +257,11 @@ class CCTraceAdapter:
         Returns:
             List of tool call dictionaries (derived from tasks)
         """
-        tasks_dir = self.artifacts_dir / "tasks"
-
-        if not tasks_dir.exists():
+        # Use resolved tasks directory instead of assuming child layout
+        if self.tasks_dir is None or not self.tasks_dir.exists():
             return []
+
+        tasks_dir = self.tasks_dir
 
         tool_calls: list[dict[str, Any]] = []
 

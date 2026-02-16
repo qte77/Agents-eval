@@ -13,39 +13,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added (Ralph Monitoring)
 
-- `make ralph_stop` - Two-phase kill for hung Ralph loops and orphaned Claude processes
-- `make ralph_watch` - Live-tail Ralph log with process tree visualization via `pstree`
-- `make ralph_get_log` - Show latest Ralph log or specific log file
-- `make ralph_run RALPH_TIMEOUT=3600` - Optional timeout to prevent infinite hangs
-- `ralph/scripts/stop.sh` + `ralph/scripts/lib/stop_ralph_processes.sh` - Process stop library
-- `ralph/scripts/watch.sh` - Monitoring script with watch/status/log subcommands
+- Process management: `make ralph_stop` (two-phase kill for hung loops), `make ralph_watch` (live-tail with pstree), `make ralph_get_log`
+- Timeout protection: `make ralph_run RALPH_TIMEOUT=3600` prevents infinite hangs
+- Monitoring infrastructure: `ralph/scripts/{stop.sh,watch.sh,lib/stop_ralph_processes.sh}`
 
 ### Fixed (Sprint 6 - STORY-002)
 
-- STORY-002: Phoenix Docker recipe persistence - added volume mount `phoenix_data:/phoenix` to preserve trace data across container restarts
-- STORY-002: Phoenix gRPC port exposure - added port mapping `4317:4317` for gRPC OTLP endpoint alongside HTTP on port 6006
-- STORY-002: Phoenix container restart policy - added `--restart unless-stopped` for automatic recovery after devcontainer restarts
-- STORY-002: Phoenix container name conflict - added `docker rm -f` before `docker run` to remove stale containers
-- STORY-002: Agent interaction graph rendering - graph now renders when `execution_id` exists regardless of evaluation success (fixes --skip-eval and failed evaluation scenarios)
+- Phoenix Docker recipe: Added persistent volume (`phoenix_data:/phoenix`), gRPC port exposure (4317), auto-restart policy, and stale container cleanup (`docker rm -f`)
+- Agent interaction graph: Now renders when `execution_id` exists regardless of evaluation success (fixes `--skip-eval` and failed evaluation scenarios)
 
 ### Removed (Sprint 6 - STORY-001)
 
-- STORY-001: All Opik code, configuration, and infrastructure removed - replaced by Logfire/Phoenix in Sprint 4
-- STORY-001: Deleted `src/app/agents/opik_instrumentation.py` (~140 lines)
-- STORY-001: Deleted `OpikConfig` class from `src/app/utils/load_configs.py`
-- STORY-001: Deleted `docker-compose.opik.yaml` Docker stack (11 services: ClickHouse, Redis, Zookeeper, etc.)
-- STORY-001: Removed Opik-related fields from `CompositeResult` model (`opik_trace_id`, `opik_metadata`)
-- STORY-001: Removed Makefile targets: `setup_opik`, `setup_opik_env`, `start_opik`, `stop_opik`, `clean_opik`, `status_opik`
-- STORY-001: Removed Opik environment variables from `.env.example`: `OPIK_URL_OVERRIDE`, `OPIK_WORKSPACE`, `OPIK_PROJECT_NAME`
-- STORY-001: Removed Opik entries from `.gitignore`: `opik/`, `.opik_install_reported`
-- STORY-001: Deleted `docs/howtos/opik-setup-usage-integration.md`
-- STORY-001: Deleted test files: `tests/integration/test_opik_integration.py`, `tests/evals/test_opik_metrics.py`
-- STORY-001: Removed Opik references from CONTRIBUTING.md command reference table
+- Complete Opik removal (replaced by Logfire/Phoenix in Sprint 4): instrumentation module (~140 lines), configuration classes, Docker stack (11 services), data model fields (`opik_trace_id`, `opik_metadata`), 6 Makefile targets, environment variables, test files, and documentation
 
 ### Changed (Sprint 6 - STORY-001)
 
-- STORY-001: Updated `docs/analysis/CC-agent-teams-orchestration.md` - all 13 Opik references replaced with Phoenix/Logfire equivalents
-- STORY-001: Updated `src/app/agents/logfire_instrumentation.py` docstrings to remove Opik references
+- Documentation cleanup: Replaced 13 Opik references with Phoenix/Logfire equivalents in `docs/analysis/CC-agent-teams-orchestration.md` and removed Opik from `logfire_instrumentation.py` docstrings
 
 ### Removed (Sprint 5 - STORY-017)
 
