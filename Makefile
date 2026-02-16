@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_opik setup_opik_env start_opik stop_opik clean_opik status_opik setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_status ralph_clean ralph_reorganize help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_status ralph_clean ralph_reorganize help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -56,9 +56,8 @@ setup_devc:  ## Setup dev environment with sandbox
 	$(MAKE) -s setup_sandbox
 	$(MAKE) -s setup_dev
 	
-setup_devc_full: ## Complete dev setup including sandbox and Opik tracing stack
+setup_devc_full: ## Complete dev setup including sandbox
 	$(MAKE) -s setup_devc
-	$(MAKE) -s setup_opik
 
 setup_prod_ollama:  ## Install uv and deps, Download and start Ollama 
 	$(MAKE) -s setup_prod
@@ -75,10 +74,9 @@ setup_devc_ollama:  ## Setup dev environment with ollama and sandbox
 	$(MAKE) -s setup_ollama
 	$(MAKE) -s start_ollama
 
-setup_devc_ollama_full:  ## Complete dev setup including Ollama, sandbox and Opik tracing stack
+setup_devc_ollama_full:  ## Complete dev setup including Ollama and sandbox
 	$(MAKE) -s setup_devc
 	$(MAKE) -s setup_ollama
-	$(MAKE) -s setup_opik
 	$(MAKE) -s start_ollama
 
 setup_claude_code:  ## Setup claude code CLI
@@ -303,60 +301,6 @@ output_unset_app_env_sh:  ## Unset app environment variables
 	uf="./unset_env.sh"
 	echo "Outputing '$${uf}' ..."
 	printenv | awk -F= '/_API_KEY=/ {print "unset " $$1}' > $$uf
-
-
-# MARK: opik
-
-setup_opik:  ## Complete Opik setup (start services + configure environment)
-	# FIXME: Remove once Phoenix/Logfire are fully functional
-	echo "Setting up Opik tracing stack..."
-	$(MAKE) start_opik
-	echo "Waiting for services to be healthy..."
-	sleep 20
-	$(MAKE) setup_opik_env
-	echo "Opik setup complete!"
-
-setup_opik_env:  ## Setup Opik environment variables for local development
-	# FIXME: Remove once Phoenix/Logfire are fully functional
-	echo "Setting up Opik environment variables ..."
-	echo "export OPIK_URL_OVERRIDE=http://localhost:8080" >> ~/.bashrc  # do not send to comet.com/api
-	echo "export OPIK_WORKSPACE=peerread-evaluation" >> ~/.bashrc
-	echo "export OPIK_PROJECT_NAME=peerread-evaluation" >> ~/.bashrc
-	echo "Environment variables added to ~/.bashrc"
-	echo "Run: source ~/.bashrc"
-
-start_opik:  ## Start local Opik tracing with ClickHouse database
-	# FIXME: Remove once Phoenix/Logfire are fully functional
-	# https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml
-	# https://www.comet.com/docs/opik/self-host/local_deployment/
-	echo "Starting Opik stack with ClickHouse ..."
-	docker-compose -f docker-compose.opik.yaml up -d
-	echo "Frontend: http://localhost:5173"
-	echo "Backend API: http://localhost:8080"
-	echo "ClickHouse: http://localhost:8123"
-
-stop_opik:  ## Stop local Opik tracing stack
-	# FIXME: Remove once Phoenix/Logfire are fully functional
-	echo "Stopping Opik stack ..."
-	docker-compose -f docker-compose.opik.yaml down
-
-clean_opik:  ## Stop Opik and remove all trace data (WARNING: destructive)
-	# FIXME: Remove once Phoenix/Logfire are fully functional
-	echo "WARNING: This will remove all Opik trace data!"
-	echo "Press Ctrl+C to cancel, Enter to continue..."
-	read
-	docker-compose -f docker-compose.opik.yaml down -v
-
-status_opik:  ## Check Opik services health status
-	# FIXME: Remove once Phoenix/Logfire are fully functional
-	echo "Checking Opik services status ..."
-	docker-compose -f docker-compose.opik.yaml ps
-	echo "API Health:"
-	curl -f http://localhost:8080/health-check 2>/dev/null &&
-		echo "Opik API healthy" || echo "Opik API not responding"
-	echo "ClickHouse:"
-	curl -s http://localhost:8123/ping 2>/dev/null &&
-		echo "ClickHouse healthy" || echo "ClickHouse not responding"
 
 
 # MARK: phoenix

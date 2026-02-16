@@ -162,13 +162,8 @@ class CompositeResult(BaseModel):
         description="List of enabled tier numbers", default=None
     )
 
-    # Optional Opik integration fields
-    opik_trace_id: str | None = Field(description="Opik trace identifier", default=None)
     agent_assessment_scores: dict[str, float] | None = Field(
         description="Optional agent-level assessment scores", default=None
-    )
-    opik_metadata: dict[str, Any] | None = Field(
-        description="Additional Opik tracing metadata", default=None
     )
 
 

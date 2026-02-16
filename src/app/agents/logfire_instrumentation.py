@@ -1,8 +1,7 @@
 """Logfire tracing instrumentation for PydanticAI agents.
 
-This module replaces opik_instrumentation.py and uses Logfire's native
-PydanticAI auto-instrumentation via logfire.instrument_pydantic_ai().
-No manual decorators or wrappers needed.
+Uses Logfire's native PydanticAI auto-instrumentation via
+logfire.instrument_pydantic_ai(). No manual decorators or wrappers needed.
 """
 
 import requests
@@ -38,8 +37,8 @@ class LogfireInstrumentationManager:
         """Initialize Logfire with Phoenix OTLP endpoint.
 
         Checks OTLP endpoint connectivity before initialization to prevent
-        noisy stack traces when endpoint is unreachable (e.g., Opik service
-        not running). Logs single warning and disables tracing gracefully.
+        noisy stack traces when endpoint is unreachable. Logs single warning
+        and disables tracing gracefully.
         """
         if not self.config.enabled:
             logger.info("Logfire tracing disabled")

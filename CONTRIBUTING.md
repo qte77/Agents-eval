@@ -49,11 +49,6 @@ updated: 2026-02-16
 | `make run_pandoc` | Convert MD to PDF with citations. See `make run_pandoc HELP=1` | pandoc + texlive installed | Try `make setup_pdf_converter CONVERTER=pandoc` |
 | `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
 | `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notify user |
-| `make start_opik` | Start local Opik tracing stack | Docker installed | Try `docker-compose -f docker-compose.opik.yaml up -d` |
-| `make stop_opik` | Stop local Opik tracing stack | Docker running | Try `docker-compose -f docker-compose.opik.yaml down` |
-| `make status_opik` | Check Opik services health | Opik running | Check Docker containers manually |
-| `make setup_opik_env` | Setup Opik environment variables | Shell access | Add variables to shell profile manually |
-| `make clean_opik` | Remove all Opik trace data | Confirmation prompt | Warning: Destructive operation |
 
 ## Code Patterns Quick Reference
 
@@ -308,7 +303,6 @@ make validate
 git reset --hard HEAD  # Clean reset, no commits made
 
 # Integration testing scripts
-./scripts/worktrees/setup-opik.sh          # Setup Opik deployment
 ./scripts/worktrees/integration-workflow.sh test-all  # Test all features
 ./scripts/worktrees/cleanup-worktrees.sh   # Clean up when done
 ```

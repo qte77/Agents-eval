@@ -60,39 +60,6 @@ def load_config(config_path: str | Path, data_model: type[BaseModel]) -> BaseMod
         raise Exception(msg) from e
 
 
-class OpikConfig(BaseModel):
-    """Configuration for Opik tracing integration.
-
-    Constructed from JudgeSettings via from_settings(). All values
-    are controlled by JUDGE_OPIK_* env vars through pydantic-settings.
-
-    DEPRECATED: Use LogfireConfig instead. Kept for backward compatibility.
-    """
-
-    enabled: bool = False
-    api_url: str = "http://localhost:8080"
-    workspace: str = "peerread-evaluation"
-    project: str = "peerread-evaluation"
-    log_start_trace_span: bool = True
-    batch_size: int = 100
-    timeout_seconds: float = 30.0
-
-    @classmethod
-    def from_settings(cls, settings: JudgeSettings) -> OpikConfig:
-        """Create OpikConfig from JudgeSettings.
-
-        Args:
-            settings: JudgeSettings instance with opik fields.
-
-        Returns:
-            OpikConfig populated from pydantic-settings.
-
-        DEPRECATED: Use LogfireConfig.from_settings() instead.
-        """
-        # Return disabled config since Opik is deprecated
-        return cls(enabled=False)
-
-
 class LogfireConfig(BaseModel):
     """Configuration for Logfire + Phoenix tracing integration.
 

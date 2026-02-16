@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (Sprint 6 - STORY-001)
+
+- STORY-001: All Opik code, configuration, and infrastructure removed - replaced by Logfire/Phoenix in Sprint 4
+- STORY-001: Deleted `src/app/agents/opik_instrumentation.py` (~140 lines)
+- STORY-001: Deleted `OpikConfig` class from `src/app/utils/load_configs.py`
+- STORY-001: Deleted `docker-compose.opik.yaml` Docker stack (11 services: ClickHouse, Redis, Zookeeper, etc.)
+- STORY-001: Removed Opik-related fields from `CompositeResult` model (`opik_trace_id`, `opik_metadata`)
+- STORY-001: Removed Makefile targets: `setup_opik`, `setup_opik_env`, `start_opik`, `stop_opik`, `clean_opik`, `status_opik`
+- STORY-001: Removed Opik environment variables from `.env.example`: `OPIK_URL_OVERRIDE`, `OPIK_WORKSPACE`, `OPIK_PROJECT_NAME`
+- STORY-001: Removed Opik entries from `.gitignore`: `opik/`, `.opik_install_reported`
+- STORY-001: Deleted `docs/howtos/opik-setup-usage-integration.md`
+- STORY-001: Deleted test files: `tests/integration/test_opik_integration.py`, `tests/evals/test_opik_metrics.py`
+- STORY-001: Removed Opik references from CONTRIBUTING.md command reference table
+
+### Changed (Sprint 6 - STORY-001)
+
+- STORY-001: Updated `docs/analysis/CC-agent-teams-orchestration.md` - all 13 Opik references replaced with Phoenix/Logfire equivalents
+- STORY-001: Updated `src/app/agents/logfire_instrumentation.py` docstrings to remove Opik references
+
 ### Removed (Sprint 5 - STORY-017)
 
 - STORY-017: Deleted duplicate AppEnv class from load_settings.py - canonical AppEnv in app.data_models.app_models is now the single source of truth

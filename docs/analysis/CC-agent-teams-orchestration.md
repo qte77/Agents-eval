@@ -88,7 +88,7 @@ Compare MAS (Manager -> Researcher -> Analyst -> Synthesizer) against simpler pa
 
 **Baselines** (all PydanticAI within `src/`):
 
-1. **PydanticAI MAS** (current): Sequential delegation with approval loop, Pydantic models, token tracking, Opik observability
+1. **PydanticAI MAS** (current): Sequential delegation with approval loop, Pydantic models, token tracking, Logfire/Phoenix observability
 2. **Single-Agent**: One agent, one pass, no delegation — tests value of multi-agent orchestration
 3. **Parallel-Agents**: Independent agents via `asyncio.gather`, coordinator merges — tests parallel vs sequential
 
@@ -106,15 +106,15 @@ Compare MAS (Manager -> Researcher -> Analyst -> Synthesizer) against simpler pa
 
 ## Tracing & Observability
 
-**Gap**: PydanticAI MAS has Opik tracing; CC baselines need equivalent.
+**Gap**: PydanticAI MAS has Logfire/Phoenix tracing; CC baselines need equivalent.
 
 ### Approach Comparison
 
 <!-- markdownlint-disable MD013 -->
 
-| Dimension | OTel -> Opik (recommended) | Hooks -> Opik | Langfuse |
-| --------- | -------------------------- | ------------- | -------- |
-| Same Opik instance | Yes | Yes | No |
+| Dimension | OTel -> Phoenix (recommended) | Hooks -> Phoenix | Langfuse |
+| --------- | ----------------------------- | ---------------- | -------- |
+| Same Phoenix instance | Yes | Yes | No |
 | Token/cost tracking | Yes | No | Yes |
 | Tool-level traces | Yes | Yes | Yes |
 | LLM-call traces | Yes | No | Yes |
@@ -124,9 +124,9 @@ Compare MAS (Manager -> Researcher -> Analyst -> Synthesizer) against simpler pa
 
 <!-- markdownlint-enable MD013 -->
 
-### OTel -> Opik (Recommended)
+### OTel -> Phoenix (Recommended)
 
-Already partially configured in `.claude/settings.json` (currently disabled). Richest data, reuses existing Opik ClickHouse.
+Already partially configured in `.claude/settings.json` (currently disabled). Richest data, reuses existing Phoenix OTLP endpoint.
 
 **Full enabled config** (`settings.json` env section):
 
@@ -143,11 +143,11 @@ Already partially configured in `.claude/settings.json` (currently disabled). Ri
 
 **Optional**: `OTEL_LOG_TOOL_DETAILS`: `"1"`, `OTEL_LOG_USER_PROMPTS`: `"1"`, `OTEL_RESOURCE_ATTRIBUTES`: `"project=peerread-benchmark"`, `OTEL_METRIC_EXPORT_INTERVAL`: `"10000"` (10s for testing)
 
-**Infrastructure**: Add OTel Collector container to `docker-compose.opik.yaml` — receive OTLP on `:4317`, export to Opik ClickHouse on `:8123`.
+**Infrastructure**: Phoenix container already accepts OTLP on `:4317` (gRPC) and `:6006` (HTTP). No additional infrastructure needed.
 
-### Hooks -> Opik (Fallback)
+### Hooks -> Phoenix (Fallback)
 
-`PostToolUse` hook script calling `opik.trace()` directly. Lower setup (single script), coarser data (tool-level only, no token/cost). Sufficient for coarse Tier 3 execution graphs.
+`PostToolUse` hook script sending traces to Phoenix OTLP endpoint. Lower setup (single script), coarser data (tool-level only, no token/cost). Sufficient for coarse Tier 3 execution graphs.
 
 ### Langfuse (Last Resort)
 
@@ -155,9 +155,9 @@ Official CC integration. Turnkey setup but splits observability across two platf
 
 ### Integration Points
 
-Plugs into existing stack: `OpikConfig` in `load_configs.py:60`, `track()` wrappers in `opik_instrumentation.py:76`, `_record_opik_metadata()` in `evaluation_pipeline.py:389`, Docker stack in `docker-compose.opik.yaml`.
+Plugs into existing stack: `LogfireConfig` in `load_configs.py`, Logfire instrumentation in `logfire_instrumentation.py`, Phoenix Docker container via `make start_phoenix`.
 
-CC OTel is infrastructure-level (env vars + Collector), separate from application-level PydanticAI Opik. Enable/disable without touching `src/app/agents/`.
+CC OTel is infrastructure-level (env vars + Phoenix endpoint), separate from application-level PydanticAI Logfire. Enable/disable without touching `src/app/agents/`.
 
 ### References
 
@@ -167,7 +167,7 @@ CC OTel is infrastructure-level (env vars + Collector), separate from applicatio
 - [CC on Bedrock monitoring][cc-bed]
 - [OTel exporter spec][otel-spec]
 - [Langfuse CC integration][langfuse]
-- [Opik Anthropic integration][opik-anth]
+- [Phoenix Arize docs][phoenix-docs]
 
 [cc-mon]: https://code.claude.com/docs/en/monitoring-usage
 [cc-set]: https://code.claude.com/docs/en/settings
@@ -175,7 +175,7 @@ CC OTel is infrastructure-level (env vars + Collector), separate from applicatio
 [cc-bed]: https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/blob/main/assets/docs/MONITORING.md
 [otel-spec]: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md
 [langfuse]: https://langfuse.com/integrations/other/claude-code
-[opik-anth]: https://www.comet.com/docs/opik/integrations/anthropic
+[phoenix-docs]: https://docs.arize.com/phoenix
 
 ## Recommendation
 
@@ -317,11 +317,11 @@ Each task is tracked in its own JSON file:
 - **Output**: Full review content preserved in mailboxes (19k+ chars each)
 - **Report**: [evaluation-pipeline-parallel-review-2026-02-11.md](../reviews/evaluation-pipeline-parallel-review-2026-02-11.md)
 
-### Opik Correlation
+### Phoenix/Logfire Correlation
 
-- **Application traces** (PydanticAI MAS): Opik ClickHouse, `:5173` frontend, `OpikConfig`
+- **Application traces** (PydanticAI MAS): Phoenix OTLP endpoint (`:6006` HTTP, `:4317` gRPC), Logfire SDK, `LogfireConfig`
 - **Agent Teams traces** (CC orchestration): `~/.claude/teams/` + `~/.claude/tasks/`, file-based JSON
-- **Unified approach**: Opik for application-level, CC traces for orchestration-level, aggregated findings to `docs/reviews/`, cross-reference by timestamps
+- **Unified approach**: Phoenix/Logfire for application-level, CC traces for orchestration-level, aggregated findings to `docs/reviews/`, cross-reference by timestamps
 
 ### Sources
 

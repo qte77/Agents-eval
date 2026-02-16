@@ -105,9 +105,9 @@ def test_contributing_opik_references_removed() -> None:
 
 def test_no_opik_imports_in_src() -> None:
     """Verify no remaining Opik imports or references in src/app/."""
-    # Use grep to search for opik references (case-insensitive)
+    # Use grep to search for opik references (case-insensitive), excluding binary files
     result = subprocess.run(
-        ["grep", "-ri", "opik", "src/app/"],
+        ["grep", "-ri", "--exclude-dir=__pycache__", "opik", "src/app/"],
         capture_output=True,
         text=True,
     )
