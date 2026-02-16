@@ -48,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-007: `LogCapture` utility class for filtering and storing app.* module logs
 - STORY-007: Log capture sink integration with loguru logger for real-time capture
 - STORY-007: HTML formatting for log entries with color-coded levels (INFO/WARNING/ERROR)
+- STORY-010: Comprehensive MAESTRO security review covering all 7 layers (Model, Agent Logic, Integration, Monitoring, Execution, Environment, Orchestration)
+- STORY-010: Code quality audit using `reviewing-code` skill across all `src/app/` modules
+- STORY-010: Context7 MCP integration to verify PydanticAI, Logfire, and Streamlit security best practices
+- STORY-010: Exa MCP CVE database check identifying 2 critical vulnerabilities in PydanticAI dependencies
 - STORY-009: Editable settings page with all JudgeSettings fields as interactive widgets
 - STORY-009: Tier timeout fields (tier1/2/3_max_seconds, total_max_seconds) editable via number_input
 - STORY-009: Composite scoring thresholds (accept/weak_accept/weak_reject) editable via number_input
@@ -83,6 +87,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Default to "UNKNOWN" for missing IMPACT, SUBSTANCE, APPROPRIATENESS, MEANINGFUL_COMPARISON, SOUNDNESS_CORRECTNESS, ORIGINALITY, CLARITY
   - Papers with missing optional fields now validate successfully instead of being silently skipped
   - Improves dataset coverage by including previously excluded papers
+
+### Security (Sprint 5)
+
+- STORY-010: **CRITICAL** - CVE-2026-25580 (PydanticAI SSRF vulnerability) identified - affects agent message URL handling
+- STORY-010: **HIGH** - CVE-2026-25640 (PydanticAI Stored XSS) identified - affects web UI (not currently used)
+- STORY-010: **MEDIUM** - CVE-2024-5206 (scikit-learn data leakage) identified - affects TF-IDF vectorizer
+- STORY-010: 31 security findings documented across all 7 MAESTRO layers with fix recommendations
+  - 3 CRITICAL: SSRF vulnerability, prompt injection risk, API key logging
+  - 6 HIGH: XSS vulnerability, API keys in os.environ, trace data leakage, uncontrolled tool registration, low test coverage
+  - 8 MEDIUM: Template injection, TLS validation, input size limits, log scrubbing, PDF memory limits, plugin tier validation
+  - 2 LOW: Immutable trace storage, missing docstrings
+- STORY-010: Detailed mitigation strategies provided for all findings in `docs/reviews/sprint5-code-review.md`
+- STORY-010: Code fixes for critical/high findings deferred to Sprint 6 per review recommendations
 
 ### Added (Sprint 2)
 
