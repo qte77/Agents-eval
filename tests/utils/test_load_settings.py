@@ -39,9 +39,7 @@ def test_no_module_level_chat_config():
     tree = ast.parse(source)
 
     # Find all module-level assignments
-    module_level_assigns = [
-        node for node in tree.body if isinstance(node, ast.Assign)
-    ]
+    module_level_assigns = [node for node in tree.body if isinstance(node, ast.Assign)]
 
     for assign in module_level_assigns:
         for target in assign.targets:
@@ -84,9 +82,7 @@ def test_load_config_function_still_works():
     This ensures we don't break the ChatConfig loading functionality.
     """
     # Import the module
-    spec = importlib.util.spec_from_file_location(
-        "load_settings", "src/app/utils/load_settings.py"
-    )
+    spec = importlib.util.spec_from_file_location("load_settings", "src/app/utils/load_settings.py")
     assert spec is not None
     assert spec.loader is not None
 

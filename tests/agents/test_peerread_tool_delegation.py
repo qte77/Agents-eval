@@ -69,9 +69,9 @@ def test_multi_agent_peerread_tools_on_researcher(
     # Verify PeerRead tools are NOT on manager in multi-agent mode
     peerread_base_tools = ["get_peerread_paper", "query_peerread_papers", "read_paper_pdf_tool"]
     for tool_name in peerread_base_tools:
-        assert (
-            tool_name not in manager_tool_names
-        ), f"PeerRead tool '{tool_name}' should NOT be on manager in multi-agent mode"
+        assert tool_name not in manager_tool_names, (
+            f"PeerRead tool '{tool_name}' should NOT be on manager in multi-agent mode"
+        )
 
     # Note: We cannot easily access the researcher agent to verify its tools without
     # running the agent. The key verification is that PeerRead tools are NOT on manager.
@@ -106,9 +106,11 @@ def test_single_agent_peerread_tools_on_manager(
     peerread_base_tools = ["get_peerread_paper", "query_peerread_papers", "read_paper_pdf_tool"]
 
     for tool_name in peerread_base_tools:
-        assert (
-            tool_name in manager_tool_names
-        ), f"PeerRead tool '{tool_name}' should be on manager in single-agent mode"
+        assert tool_name in manager_tool_names, (
+            f"PeerRead tool '{tool_name}' should be on manager in single-agent mode"
+        )
 
     # Verify no delegation tools in single-agent mode
-    assert "delegate_research" not in manager_tool_names, "Manager should not have delegate_research tool in single-agent mode"
+    assert "delegate_research" not in manager_tool_names, (
+        "Manager should not have delegate_research tool in single-agent mode"
+    )

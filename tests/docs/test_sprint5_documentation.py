@@ -23,8 +23,9 @@ def test_readme_version_badge_updated() -> None:
     major, minor, _ = map(int, version.split("."))
 
     # Sprint 5 should be version 3.3.0 or higher
-    assert (major > 3 or (major == 3 and minor >= 3)), \
+    assert major > 3 or (major == 3 and minor >= 3), (
         f"Version {version} is too low for Sprint 5 (expected 3.3.x or higher)"
+    )
 
 
 def test_readme_mentions_sprint5() -> None:
@@ -33,8 +34,9 @@ def test_readme_mentions_sprint5() -> None:
     readme_content = readme_path.read_text()
 
     # Should mention Sprint 5 somewhere in the status/project details
-    assert "Sprint 5" in readme_content or "sprint 5" in readme_content.lower(), \
+    assert "Sprint 5" in readme_content or "sprint 5" in readme_content.lower(), (
         "README.md should reference Sprint 5 in status section"
+    )
 
 
 def test_roadmap_has_sprint5_entry() -> None:
@@ -47,12 +49,12 @@ def test_roadmap_has_sprint5_entry() -> None:
 
     # Should have status (Active or Delivered)
     sprint5_pattern = r"\*\*Sprint 5\*\*.*\|.*(Active|Delivered)"
-    assert re.search(sprint5_pattern, roadmap_content), \
+    assert re.search(sprint5_pattern, roadmap_content), (
         "Sprint 5 entry should have Active or Delivered status"
+    )
 
     # Should link to PRD-Sprint5-Ralph.md
-    assert "PRD-Sprint5-Ralph.md" in roadmap_content, \
-        "Sprint 5 should link to PRD-Sprint5-Ralph.md"
+    assert "PRD-Sprint5-Ralph.md" in roadmap_content, "Sprint 5 should link to PRD-Sprint5-Ralph.md"
 
 
 def test_architecture_composite_scoring_updated() -> None:
@@ -61,12 +63,15 @@ def test_architecture_composite_scoring_updated() -> None:
     arch_content = arch_path.read_text()
 
     # Should mention single-agent mode or weight redistribution
-    assert any(phrase in arch_content.lower() for phrase in [
-        "single-agent",
-        "single agent",
-        "weight redistribution",
-        "coordination_quality"
-    ]), "architecture.md should document single-agent weight redistribution behavior"
+    assert any(
+        phrase in arch_content.lower()
+        for phrase in [
+            "single-agent",
+            "single agent",
+            "weight redistribution",
+            "coordination_quality",
+        ]
+    ), "architecture.md should document single-agent weight redistribution behavior"
 
 
 def test_architecture_tier2_provider_fallback_updated() -> None:
@@ -75,12 +80,10 @@ def test_architecture_tier2_provider_fallback_updated() -> None:
     arch_content = arch_path.read_text()
 
     # Should mention provider fallback or auto mode
-    assert any(phrase in arch_content.lower() for phrase in [
-        "provider fallback",
-        "fallback chain",
-        "tier2_provider",
-        "auto mode"
-    ]), "architecture.md should document Tier 2 provider fallback and auto mode"
+    assert any(
+        phrase in arch_content.lower()
+        for phrase in ["provider fallback", "fallback chain", "tier2_provider", "auto mode"]
+    ), "architecture.md should document Tier 2 provider fallback and auto mode"
 
 
 def test_architecture_implementation_status_has_sprint5() -> None:
@@ -96,8 +99,9 @@ def test_architecture_implementation_status_has_sprint5() -> None:
     impl_section = match.group(0)
 
     # Should mention Sprint 5
-    assert "Sprint 5" in impl_section or "sprint 5" in impl_section.lower(), \
+    assert "Sprint 5" in impl_section or "sprint 5" in impl_section.lower(), (
         "Implementation Status section should reference Sprint 5"
+    )
 
 
 def test_graph_analysis_no_opik_references() -> None:
@@ -111,8 +115,9 @@ def test_graph_analysis_no_opik_references() -> None:
 
     # Check that no docstring contains "Opik" (should reference Phoenix instead)
     for docstring in docstrings:
-        assert "Opik" not in docstring, \
+        assert "Opik" not in docstring, (
             "Found stale 'Opik' reference in docstring - should be 'Phoenix'"
+        )
 
 
 def test_changelog_has_story005_entry() -> None:
@@ -121,15 +126,13 @@ def test_changelog_has_story005_entry() -> None:
     changelog_content = changelog_path.read_text()
 
     # Should have STORY-005 entry in Unreleased section
-    assert "STORY-005" in changelog_content, \
-        "CHANGELOG.md should have STORY-005 entry"
+    assert "STORY-005" in changelog_content, "CHANGELOG.md should have STORY-005 entry"
 
     # Should mention documentation update
-    assert any(phrase in changelog_content.lower() for phrase in [
-        "documentation update",
-        "architecture update",
-        "sprint 5 documentation"
-    ]), "CHANGELOG.md should describe documentation updates for Sprint 5"
+    assert any(
+        phrase in changelog_content.lower()
+        for phrase in ["documentation update", "architecture update", "sprint 5 documentation"]
+    ), "CHANGELOG.md should describe documentation updates for Sprint 5"
 
 
 def test_no_broken_internal_links_in_updated_docs() -> None:

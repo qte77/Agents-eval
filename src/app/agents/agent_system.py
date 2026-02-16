@@ -66,7 +66,6 @@ from app.llms.providers import (
 from app.tools.peerread_tools import (
     add_peerread_review_tools_to_manager,
     add_peerread_tools_to_agent,
-    add_peerread_tools_to_manager,
 )
 from app.utils.error_messages import generic_exception, invalid_data_model_format
 from app.utils.load_configs import LogfireConfig
