@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Sprint 6 - STORY-007)
+
+- MAS composition sweep infrastructure (`src/app/benchmark/`) for automated benchmarking across configurable agent compositions
+- `SweepConfig` and `AgentComposition` Pydantic models with validation (min 1 composition, min 1 repetition, min 1 paper)
+- `generate_all_compositions()` utility to generate all 2^3=8 agent toggle combinations
+- `SweepRunner` orchestrates N repetitions × M compositions × P papers through existing evaluation pipeline
+- Claude Code headless baseline comparison via `claude -p` with `--output-format json` (optional, gated by `cc_baseline_enabled`)
+- Statistical analysis: mean, stddev, min, max per composition across all metrics (overall, tier1, tier2, tier3, confidence)
+- Result export: machine-readable JSON (`results.json`) and human-readable Markdown table (`summary.md`) with mean ± stddev formatting
+- CLI entry point `python src/run_sweep.py` with `--config`, `--paper-numbers`, `--repetitions`, `--all-compositions`, `--cc-baseline` flags
+- Makefile `sweep` target: `make sweep ARGS="--paper-numbers 1,2,3 --repetitions 3 --all-compositions"`
+- Comprehensive test suite: 33 tests including Hypothesis property tests for statistical bounds validation
+- Results saved to `results/sweeps/{timestamp}/` (already in `.gitignore`)
+
 ### Removed (Sprint 6 - STORY-006)
 
 - Orphaned `cc_otel` module (`src/app/cc_otel/`) — wrong abstraction for CC tracing configuration (infrastructure-level env vars, not application code)
