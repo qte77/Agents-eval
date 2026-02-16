@@ -63,10 +63,7 @@ from app.llms.providers import (
     get_provider_config,
     setup_llm_environment,
 )
-from app.tools.peerread_tools import (
-    add_peerread_review_tools_to_manager,
-    add_peerread_tools_to_agent,
-)
+from app.tools.peerread_tools import add_peerread_tools_to_agent
 from app.utils.error_messages import generic_exception, invalid_data_model_format
 from app.utils.load_configs import LogfireConfig
 from app.utils.log import logger
@@ -322,6 +319,7 @@ def _create_manager(
     models: ModelDict,
     provider: str,
     enable_review_tools: bool = False,
+    max_content_length: int = 15000,
 ) -> Agent[None, BaseModel]:
     """
     Creates and configures a manager Agent with associated researcher, analyst,
@@ -412,11 +410,25 @@ def _create_manager(
 
     _add_tools_to_manager_agent(manager, researcher, analyst, synthesiser, result_type)
 
-    # Add PeerRead tools to researcher if present, otherwise to manager (fallback)
+    # Add PeerRead base tools to researcher if present, otherwise to manager (fallback)
     if researcher is not None:
         add_peerread_tools_to_agent(researcher, agent_id="researcher")
     else:
         add_peerread_tools_to_agent(manager, agent_id="manager")
+
+    # Add review tools based on enable_review_tools flag
+    # Route to researcher if present, otherwise to manager (single-agent fallback)
+    if enable_review_tools:
+        from app.tools.peerread_tools import add_peerread_review_tools_to_agent
+
+        if researcher is not None:
+            add_peerread_review_tools_to_agent(
+                researcher, agent_id="researcher", max_content_length=max_content_length
+            )
+        else:
+            add_peerread_review_tools_to_agent(
+                manager, agent_id="manager", max_content_length=max_content_length
+            )
 
     return manager
 
@@ -461,33 +473,12 @@ def get_manager(
     models = create_agent_models(
         model_config, include_researcher, include_analyst, include_synthesiser
     )
-    manager = _create_manager(prompts, models, provider, enable_review_tools)
-
-    # Conditionally add review tools based on flag
-    def conditionally_add_review_tools(
-        manager: Agent[None, BaseModel],
-        enable: bool = False,
-        max_content_length: int = 15000,
-    ):
-        """Conditionally add review persistence tools to the manager.
-
-        Args:
-            manager: The manager agent to potentially add tools to.
-            enable: Flag to determine whether to add review tools.
-            max_content_length: The maximum number of characters to include in the
-                prompt.
-        """
-        if enable:
-            add_peerread_review_tools_to_manager(manager, max_content_length=max_content_length)
-        return manager
-
     max_content_length = provider_config.max_content_length or 15000
-
-    return conditionally_add_review_tools(
-        manager,
-        enable=enable_review_tools,
-        max_content_length=max_content_length,
+    manager = _create_manager(
+        prompts, models, provider, enable_review_tools, max_content_length
     )
+
+    return manager
 
 
 def _handle_model_http_error(error: ModelHTTPError, provider: str, model_name: str) -> NoReturn:

@@ -307,17 +307,20 @@ def _load_and_format_template(
         raise ValueError(f"Failed to load review template: {str(e)}")
 
 
-def add_peerread_review_tools_to_manager(
-    manager_agent: Agent[None, BaseModel], max_content_length: int = 15000
+def add_peerread_review_tools_to_agent(
+    agent: Agent[None, BaseModel],
+    agent_id: str = "manager",
+    max_content_length: int = 15000,
 ):
-    """Add PeerRead review generation and persistence tools to the manager agent.
+    """Add PeerRead review generation and persistence tools to an agent.
 
     Args:
-        manager_agent: The manager agent to which review tools will be added.
+        agent: The agent to which review tools will be added.
+        agent_id: The agent identifier for tracing (default: "manager").
         max_content_length: The maximum number of characters to include in the prompt.
     """
 
-    @manager_agent.tool
+    @agent.tool
     async def generate_paper_review_content_from_template(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None],
         paper_id: str,
@@ -367,14 +370,14 @@ def add_peerread_review_tools_to_manager(
         finally:
             duration = time.perf_counter() - start_time
             trace_collector.log_tool_call(
-                agent_id="manager",
+                agent_id=agent_id,
                 tool_name="generate_paper_review_content_from_template",
                 success=success,
                 duration=duration,
                 context=f"paper_id={paper_id},focus={review_focus}",
             )
 
-    @manager_agent.tool
+    @agent.tool
     async def save_paper_review(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None],
         paper_id: str,
@@ -419,14 +422,14 @@ def add_peerread_review_tools_to_manager(
         finally:
             duration = time.perf_counter() - start_time
             trace_collector.log_tool_call(
-                agent_id="manager",
+                agent_id=agent_id,
                 tool_name="save_paper_review",
                 success=success,
                 duration=duration,
                 context=f"paper_id={paper_id}",
             )
 
-    @manager_agent.tool
+    @agent.tool
     async def save_structured_review(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None],
         paper_id: str,
@@ -481,9 +484,26 @@ def add_peerread_review_tools_to_manager(
         finally:
             duration = time.perf_counter() - start_time
             trace_collector.log_tool_call(
-                agent_id="manager",
+                agent_id=agent_id,
                 tool_name="save_structured_review",
                 success=success,
                 duration=duration,
                 context=f"paper_id={paper_id}",
             )
+
+
+# Backward compatibility alias
+def add_peerread_review_tools_to_manager(
+    manager_agent: Agent[None, BaseModel], max_content_length: int = 15000
+):
+    """Backward compatibility wrapper for add_peerread_review_tools_to_agent.
+
+    Deprecated: Use add_peerread_review_tools_to_agent instead.
+
+    Args:
+        manager_agent: The manager agent to which review tools will be added.
+        max_content_length: The maximum number of characters to include in the prompt.
+    """
+    return add_peerread_review_tools_to_agent(
+        manager_agent, agent_id="manager", max_content_length=max_content_length
+    )
