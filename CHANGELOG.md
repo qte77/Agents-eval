@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (Sprint 6 - STORY-003)
+
+- CCTraceAdapter path handling: Now supports both sibling directory layout (`~/.claude/teams/{name}/` + `~/.claude/tasks/{name}/`) and legacy child layout (`teams/{name}/tasks/`)
+- Added optional `tasks_dir` parameter to `CCTraceAdapter.__init__()` with automatic sibling/child discovery when not specified
+- CLI flag `--cc-teams-tasks-dir` added for explicit tasks directory specification (optional, auto-discovered by default)
+- Backward compatible: Existing code using child layout continues to work without changes
+
 ### Added (Ralph Monitoring)
 
 - Process management: `make ralph_stop` (two-phase kill for hung loops), `make ralph_watch` (live-tail with pstree), `make ralph_get_log`
