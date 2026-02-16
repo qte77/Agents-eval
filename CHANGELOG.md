@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Sprint 6 - STORY-004)
+
+- CC artifact collection scripts: `collect-cc-solo.sh` (metadata.json + tool_calls.jsonl), `collect-cc-teams.sh` (config.json + tasks with structure preservation)
+- Script documentation in `scripts/README.md` with usage examples, exit codes, integration guide
+- Test suite in `tests/scripts/test_collect_cc_scripts.py` for both collection scripts
+
 ### Fixed (Sprint 6 - STORY-003)
 
 - CCTraceAdapter: supports both sibling (`~/.claude/teams/` + `~/.claude/tasks/`) and legacy child layout with automatic discovery
