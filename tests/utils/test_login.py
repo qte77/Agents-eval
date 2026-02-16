@@ -4,9 +4,9 @@ Tests for login.py utility module.
 Verifies wandb/weave import guard behavior and crash telemetry settings.
 """
 
-from unittest.mock import patch, MagicMock
 import os
-import pytest
+from unittest.mock import MagicMock, patch
+
 from inline_snapshot import snapshot
 
 from app.data_models.app_models import AppEnv
@@ -80,6 +80,7 @@ def test_login_sets_wandb_error_reporting_to_false():
     # Verify that setdefault is called correctly by checking the environment
     # Mock the imports to avoid requiring wandb package
     import sys
+
     mock_wandb = MagicMock()
     mock_weave = MagicMock()
 
@@ -110,6 +111,7 @@ def test_login_respects_user_wandb_error_reporting_override():
     mock_env = AppEnv()
 
     import sys
+
     mock_wandb = MagicMock()
     mock_weave = MagicMock()
 
@@ -140,6 +142,7 @@ def test_login_works_when_wandb_installed_and_key_present():
     mock_env = AppEnv()
 
     import sys
+
     mock_wandb_login = MagicMock()
     mock_weave_init = MagicMock()
     mock_wandb = MagicMock()
@@ -152,8 +155,10 @@ def test_login_works_when_wandb_installed_and_key_present():
     with patch.dict(sys.modules, {"wandb": mock_wandb, "weave": mock_weave}):
         with patch("app.utils.login.get_api_key") as mock_get_key:
             mock_get_key.side_effect = lambda key, env: (
-                (True, "fake_wandb_key") if key == "WANDB"
-                else (True, "fake_logfire_key") if key == "LOGFIRE"
+                (True, "fake_wandb_key")
+                if key == "WANDB"
+                else (True, "fake_logfire_key")
+                if key == "LOGFIRE"
                 else (False, "")
             )
 
@@ -171,7 +176,7 @@ def test_no_agentops_commented_code_in_login():
     Tests STORY-014 acceptance: "Dead agentops commented code removed from login.py:
     commented import at line 7 and commented code block at lines 30-37"
     """
-    with open("/workspaces/Agents-eval/src/app/utils/login.py", "r") as f:
+    with open("/workspaces/Agents-eval/src/app/utils/login.py") as f:
         content = f.read()
 
     # Should not contain any agentops references (commented or otherwise)
