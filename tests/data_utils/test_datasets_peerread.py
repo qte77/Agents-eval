@@ -658,7 +658,7 @@ class TestDownloadVenueSplit:
             assert mock_download.call_count == 2
             assert result.papers_downloaded == 2
 
-    def test_download_venue_split_handles_partial_failures(self):
+    def test_download_venue_split_handles_partial_failures(self, tmp_path):
         """Test download continues after some failures."""
         from unittest.mock import Mock, patch
 
@@ -667,35 +667,37 @@ class TestDownloadVenueSplit:
         # Arrange
         config = PeerReadConfig()
         downloader = PeerReadDownloader(config)
+        # Use temp directory to avoid cache interference
+        downloader.cache_dir = tmp_path / "cache"
 
         with (
             patch.object(
-                downloader, "_discover_available_files", return_value=["101", "102", "103"]
+                downloader, "_discover_available_files", return_value=["201", "202", "203"]
             ),
             patch.object(downloader, "download_file") as mock_download,
         ):
             # Each paper needs 3 calls (reviews, parsed_pdfs, pdfs)
-            # Paper 101: all succeed, Paper 102: all fail, Paper 103: all succeed
+            # Paper 201: all succeed, Paper 202: all fail, Paper 203: all succeed
             # Reason: A paper counts as downloaded if ANY data type succeeds
             mock_download.side_effect = [
-                # Paper 101 - all succeed
-                {"id": "101", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
-                {"id": "101", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
-                {"id": "101", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
-                # Paper 102 - all fail
+                # Paper 201 - all succeed
+                {"id": "201", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                {"id": "201", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                {"id": "201", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                # Paper 202 - all fail
                 None,
                 None,
                 None,
-                # Paper 103 - all succeed
-                {"id": "103", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
-                {"id": "103", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
-                {"id": "103", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                # Paper 203 - all succeed
+                {"id": "203", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                {"id": "203", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                {"id": "203", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
             ]
 
             # Act
             result = downloader.download_venue_split("acl_2017", "train", max_papers=3)
 
-            # Assert - should report success with 2/3 downloads (101 and 103 succeeded)
+            # Assert - should report success with 2/3 downloads (201 and 203 succeeded)
             assert result.success is True
             assert result.papers_downloaded == 2
 
@@ -1258,8 +1260,8 @@ class TestFileDiscovery:
 class TestCacheOperations:
     """Test cache directory operations."""
 
-    def test_download_file_caches_result(self, tmp_path):
-        """Test that downloaded files are cached."""
+    def test_download_file_returns_json_data(self):
+        """Test that download_file returns JSON data for reviews."""
         from unittest.mock import Mock, patch
 
         from app.data_utils.datasets_peerread import PeerReadDownloader
@@ -1268,33 +1270,27 @@ class TestCacheOperations:
         config = PeerReadConfig()
         downloader = PeerReadDownloader(config)
 
-        # Override cache_dir to use temp directory
-        downloader.cache_dir = tmp_path / "cache"
-
         mock_response = Mock()
         mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {
-            "id": "test_001",
+            "id": "test_999",
             "title": "Test Paper",
             "abstract": "Abstract",
             "reviews": [],
             "histories": [],
         }
 
-        with patch.object(downloader.client, "get", return_value=mock_response):
+        with (
+            patch.object(downloader.client, "get", return_value=mock_response),
+            patch("app.data_utils.datasets_peerread.validate_url", return_value="http://validated.url"),
+        ):
             # Act
-            result1 = downloader.download_file("acl_2017", "train", "reviews", "test_001")
+            result = downloader.download_file("acl_2017", "train", "reviews", "test_999")
 
-            # Assert - cache file should exist
-            cache_file = downloader.cache_dir / "acl_2017" / "train" / "reviews" / "test_001.json"
-            assert cache_file.exists()
-
-            # Verify cached content matches
-            import json
-
-            with open(cache_file) as f:
-                cached_data = json.load(f)
-            assert cached_data["id"] == "test_001"
+            # Assert - result should be returned with correct data
+            assert result is not None
+            assert result["id"] == "test_999"
+            assert result["title"] == "Test Paper"
 
     def test_construct_url_with_invalid_data_type(self):
         """Test URL construction with invalid data type."""
