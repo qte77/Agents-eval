@@ -6,8 +6,6 @@ was executed and documented according to STORY-010 acceptance criteria.
 
 from pathlib import Path
 
-import pytest
-
 
 def test_sprint5_review_document_exists() -> None:
     """Verify sprint5-code-review.md exists in docs/reviews/."""
@@ -34,9 +32,7 @@ def test_sprint5_review_has_required_sections() -> None:
     ]
 
     for section in required_sections:
-        assert (
-            section in content
-        ), f"Review must include {section} analysis"
+        assert section in content, f"Review must include {section} analysis"
 
 
 def test_sprint5_review_documents_findings() -> None:
