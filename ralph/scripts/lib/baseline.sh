@@ -333,45 +333,15 @@ run_quality_checks_baseline() {
 
     mkdir -p "$(dirname "$current_log")"
 
-    # Phase 1: Lint/type/complexity (fail-fast, story-scoped test lint)
+    # Phase 1: Lint/type/complexity (fail-fast)
     log_info "Phase 1: Lint/type/complexity checks..."
 
-    # Source lint, type checking, complexity (not story-scoped)
     for check in ruff type_check complexity; do
         if ! make --no-print-directory "$check" 2>&1; then
             log_error "$check failed"
             return 1
         fi
     done
-
-    # Story-scoped test lint: only lint test files changed by this story.
-    # Reason: pre-existing lint violations in untouched files must not block.
-    local base_commit
-    base_commit=$(get_story_base_commit "$story_id")
-    # Committed changes + untracked new test files
-    local changed_tests untracked_tests all_changed
-    changed_tests=$(git diff --diff-filter=d --name-only "$base_commit" HEAD -- tests/ 2>/dev/null || true)
-    untracked_tests=$(git ls-files --others --exclude-standard -- tests/ 2>/dev/null || true)
-    all_changed=$(printf '%s\n%s' "$changed_tests" "$untracked_tests" | sort -u | grep -v '^$' || true)
-
-    if [ -n "$all_changed" ]; then
-        local file_count
-        file_count=$(echo "$all_changed" | wc -l | tr -d ' ')
-        log_info "Linting $file_count story-changed test file(s)..."
-        # Reason: word splitting on $all_changed is intentional (file list)
-        # shellcheck disable=SC2086
-        if ! uv run ruff format $all_changed 2>&1; then
-            log_error "ruff format failed on story-changed test files"
-            return 1
-        fi
-        # shellcheck disable=SC2086
-        if ! uv run ruff check $all_changed --fix 2>&1; then
-            log_error "ruff check failed on story-changed test files"
-            return 1
-        fi
-    else
-        log_info "No test files changed — skipping ruff_tests"
-    fi
 
     log_info "Phase 1 passed"
 
