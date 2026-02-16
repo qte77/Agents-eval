@@ -303,7 +303,13 @@ class TestDownloadErrorHandling:
             )
             mock_response_success = Mock()
             mock_response_success.raise_for_status.return_value = None
-            mock_response_success.json.return_value = {"id": "test", "title": "Test", "abstract": "Abstract", "reviews": [], "histories": []}
+            mock_response_success.json.return_value = {
+                "id": "test",
+                "title": "Test",
+                "abstract": "Abstract",
+                "reviews": [],
+                "histories": [],
+            }
 
             mock_get.side_effect = [
                 mock_response_fail,
@@ -323,7 +329,51 @@ class TestDownloadErrorHandling:
 class TestPaperValidationEdgeCases:
     """Test paper validation with missing fields and edge cases."""
 
-    pass  # Empty string validation not enforced by Pydantic models
+    def test_validate_papers_filters_invalid_papers(self):
+        """Test that _validate_papers filters out papers with validation errors."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        test_papers = [
+            {
+                "id": "valid_001",
+                "title": "Valid Paper",
+                "abstract": "Valid abstract",
+                "reviews": [],
+                "histories": [],
+            },
+            {
+                "id": "invalid_001",
+                # Missing required title field
+                "abstract": "Abstract without title",
+                "reviews": [],
+                "histories": [],
+            },
+        ]
+
+        # Act
+        validated_papers = loader._validate_papers(test_papers)
+
+        # Assert - should only return valid paper
+        assert len(validated_papers) == 1
+        assert validated_papers[0].paper_id == "valid_001"
+
+    def test_validate_papers_with_empty_list(self):
+        """Test validation with empty papers list."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        # Act
+        validated_papers = loader._validate_papers([])
+
+        # Assert
+        assert len(validated_papers) == 0
 
 
 class TestPeerReadLoaderEdgeCases:
@@ -539,10 +589,134 @@ class TestContentExtraction:
 class TestDownloadVenueSplit:
     """Test venue/split download functionality."""
 
-    # Tests for download_venue_split removed - they test internal implementation details
-    # that are complex to mock (multiple file types per paper). The function is tested
-    # via integration tests and existing download_file tests.
-    pass
+    def test_download_venue_split_success(self):
+        """Test successful download of venue/split with file discovery."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Mock file discovery to return paper IDs
+        with (
+            patch.object(
+                downloader, "_discover_available_files", return_value=["101", "102", "103"]
+            ),
+            patch.object(downloader, "download_file") as mock_download,
+        ):
+            # Each paper requires 3 downloads (reviews, parsed_pdfs, pdfs)
+            # Reason: download_venue_split downloads all data types per paper
+            mock_download.return_value = {
+                "id": "test",
+                "title": "Paper",
+                "abstract": "Abstract",
+                "reviews": [],
+                "histories": [],
+            }
+
+            # Act
+            result = downloader.download_venue_split("acl_2017", "train", max_papers=3)
+
+            # Assert
+            assert result.success is True
+            assert result.papers_downloaded == 3
+            assert result.error_message is None
+
+    def test_download_venue_split_with_max_papers_limit(self):
+        """Test download respects max_papers limit."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Mock file discovery to return many paper IDs
+        with (
+            patch.object(
+                downloader,
+                "_discover_available_files",
+                return_value=["101", "102", "103", "104", "105"],
+            ),
+            patch.object(downloader, "download_file") as mock_download,
+        ):
+            mock_download.return_value = {
+                "id": "test",
+                "title": "Test",
+                "abstract": "Abstract",
+                "reviews": [],
+                "histories": [],
+            }
+
+            # Act - limit to 2 papers
+            result = downloader.download_venue_split("acl_2017", "train", max_papers=2)
+
+            # Assert - should only download 2
+            assert mock_download.call_count == 2
+            assert result.papers_downloaded == 2
+
+    def test_download_venue_split_handles_partial_failures(self):
+        """Test download continues after some failures."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        with (
+            patch.object(
+                downloader, "_discover_available_files", return_value=["101", "102", "103"]
+            ),
+            patch.object(downloader, "download_file") as mock_download,
+        ):
+            # Each paper needs 3 calls (reviews, parsed_pdfs, pdfs)
+            # Paper 101: all succeed, Paper 102: all fail, Paper 103: all succeed
+            # Reason: A paper counts as downloaded if ANY data type succeeds
+            mock_download.side_effect = [
+                # Paper 101 - all succeed
+                {"id": "101", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                {"id": "101", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                {"id": "101", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                # Paper 102 - all fail
+                None,
+                None,
+                None,
+                # Paper 103 - all succeed
+                {"id": "103", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                {"id": "103", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                {"id": "103", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+            ]
+
+            # Act
+            result = downloader.download_venue_split("acl_2017", "train", max_papers=3)
+
+            # Assert - should report success with 2/3 downloads (101 and 103 succeeded)
+            assert result.success is True
+            assert result.papers_downloaded == 2
+
+    def test_download_venue_split_discovery_failure(self):
+        """Test download handles file discovery failure."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        with patch.object(downloader, "_discover_available_files", return_value=[]):
+            # Act
+            result = downloader.download_venue_split("acl_2017", "train", max_papers=10)
+
+            # Assert
+            assert result.success is False
+            assert result.papers_downloaded == 0
+            assert "No review files discovered" in result.error_message
 
 
 class TestPeerReadDataInvariants:
@@ -981,3 +1155,155 @@ class TestOptionalFieldHandling:
             field_name = field.lower()
             if hasattr(review, field_name):
                 assert getattr(review, field_name) == "UNKNOWN"
+
+
+class TestFileDiscovery:
+    """Test file discovery functionality."""
+
+    def test_extract_paper_id_from_reviews_filename(self):
+        """Test extracting paper ID from reviews JSON filename."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Act
+        paper_id = downloader._extract_paper_id_from_filename("104.json", "reviews")
+
+        # Assert
+        assert paper_id == "104"
+
+    def test_extract_paper_id_from_parsed_pdf_filename(self):
+        """Test extracting paper ID from parsed PDF filename."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Act
+        paper_id = downloader._extract_paper_id_from_filename("104.pdf.json", "parsed_pdfs")
+
+        # Assert
+        assert paper_id == "104"
+
+    def test_extract_paper_id_from_pdf_filename(self):
+        """Test extracting paper ID from PDF filename."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Act
+        paper_id = downloader._extract_paper_id_from_filename("104.pdf", "pdfs")
+
+        # Assert
+        assert paper_id == "104"
+
+    def test_extract_paper_id_returns_none_for_invalid_filename(self):
+        """Test that invalid filename returns None."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Act
+        paper_id = downloader._extract_paper_id_from_filename("invalid.txt", "reviews")
+
+        # Assert
+        assert paper_id is None
+
+    def test_discover_available_files_with_api_error(self):
+        """Test file discovery handles API errors."""
+        from unittest.mock import patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        with patch.object(downloader.client, "get", side_effect=httpx.RequestError("API error")):
+            # Act
+            paper_ids = downloader._discover_available_files("acl_2017", "train", "reviews")
+
+            # Assert - should return empty list on error
+            assert paper_ids == []
+
+    def test_discover_available_files_with_invalid_json(self):
+        """Test file discovery handles invalid JSON response."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.side_effect = JSONDecodeError("Invalid JSON", "", 0)
+
+        with patch.object(downloader.client, "get", return_value=mock_response):
+            # Act
+            paper_ids = downloader._discover_available_files("acl_2017", "train", "reviews")
+
+            # Assert
+            assert paper_ids == []
+
+
+class TestCacheOperations:
+    """Test cache directory operations."""
+
+    def test_download_file_caches_result(self, tmp_path):
+        """Test that downloaded files are cached."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Override cache_dir to use temp directory
+        downloader.cache_dir = tmp_path / "cache"
+
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {
+            "id": "test_001",
+            "title": "Test Paper",
+            "abstract": "Abstract",
+            "reviews": [],
+            "histories": [],
+        }
+
+        with patch.object(downloader.client, "get", return_value=mock_response):
+            # Act
+            result1 = downloader.download_file("acl_2017", "train", "reviews", "test_001")
+
+            # Assert - cache file should exist
+            cache_file = downloader.cache_dir / "acl_2017" / "train" / "reviews" / "test_001.json"
+            assert cache_file.exists()
+
+            # Verify cached content matches
+            import json
+
+            with open(cache_file) as f:
+                cached_data = json.load(f)
+            assert cached_data["id"] == "test_001"
+
+    def test_construct_url_with_invalid_data_type(self):
+        """Test URL construction with invalid data type."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="Invalid data_type"):
+            downloader._construct_url("acl_2017", "train", "invalid_type", "104")
