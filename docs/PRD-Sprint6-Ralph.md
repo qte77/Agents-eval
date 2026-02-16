@@ -711,6 +711,7 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, **
 - Configuration path traversal protection (validate config paths against allowlist — Sprint 7+, per parallel review Item 10)
 - BDD scenario tests for evaluation pipeline (end-to-end user workflow tests — Sprint 7+, per parallel review Item 12)
 - Time tracking consistency across tiers (standardize timing pattern — Sprint 7+, per parallel review Item 7)
+- Hardcoded settings audit: search codebase for module-level constants (e.g., `ALLOWED_DOMAINS`, timeout values, default providers) that should be extracted into Pydantic `BaseSettings` or `settings.json` for runtime configurability (Sprint 7+, discovered during STORY-010)
 
 ---
 
