@@ -52,6 +52,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-007: `_render_debug_log_panel()` and `_capture_execution_logs()` helper functions
 - STORY-007: Static `format_logs_as_html()` method for efficient HTML rendering
 - STORY-007: Comprehensive pytest tests for log filtering, capture, and HTML formatting
+- STORY-008: `graph_builder.py` utility module to convert `GraphTraceData` to NetworkX `DiGraph` for GUI visualization
+- STORY-008: Session state persistence for `execution_composite_result` and `execution_graph` in Streamlit App tab
+- STORY-008: Real-time data wiring from App tab execution to Evaluation Results and Agent Graph visualization tabs
+- STORY-008: Comprehensive test suite with Hypothesis property tests for session state data integrity across page navigation
+
+### Changed (Sprint 5)
+
+- STORY-008: `main()` in `app.py` now returns `dict[str, Any]` with `composite_result` and `graph` keys (was `None`)
+- STORY-008: `run_gui.py` passes session state data to `render_evaluation()` and `render_agent_graph()` (was `None`)
+- STORY-008: Evaluation Results and Agent Graph tabs display actual execution data when available
+- STORY-008: Refactored `main()` complexity from 19 to 10 by extracting helper functions: `_build_graph_from_trace()`, `_prepare_result_dict()`, `_run_agent_execution()`
 
 ### Fixed (Sprint 5)
 
