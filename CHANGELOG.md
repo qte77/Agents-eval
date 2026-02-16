@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (Sprint 5)
+
+- STORY-011: Test suite refactored to remove 31 implementation-detail tests per testing strategy criteria
+- STORY-011: Deleted `TestJudgeSettingsDefaults` class (13 default constant tests)
+- STORY-011: Removed plugin interface tests (9 tests: isinstance, name, tier property checks)
+- STORY-011: Removed settings default/type validation tests (7 tests relying on Pydantic)
+- STORY-011: Test count reduced from ~595 to 564 tests (5% reduction) with no loss of behavioral coverage
+
+### Removed (Sprint 5)
+
+- STORY-011: `tests/evals/test_opik_removal.py` (import existence and AST parsing tests)
+- STORY-011: `tests/test_migration_cleanup.py` (file deletion and import verification tests)
+
 ### Added (Sprint 5)
 
 - STORY-001: Tier 2 judge provider fallback chain with `select_available_provider()` wired into `LLMJudgeEngine` initialization
