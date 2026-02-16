@@ -215,7 +215,118 @@ class TestPeerReadConfig:
 class TestDownloadErrorHandling:
     """Test error handling in download operations."""
 
-    pass  # Tests moved to test_datasets_peerread_coverage.py
+    def test_download_http_error(self):
+        """Test handling of HTTP errors during download."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        with patch("app.data_utils.datasets_peerread.Client") as mock_client_class:
+            mock_client = Mock()
+            mock_response = Mock()
+            mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+                "404 Not Found", request=Mock(), response=Mock(status_code=404)
+            )
+            mock_client.__enter__.return_value.get.return_value = mock_response
+            mock_client_class.return_value = mock_client
+
+            # Act
+            result = downloader.download_file("acl_2017", "train", "reviews", "nonexistent")
+
+            # Assert
+            assert result is None
+
+    def test_download_network_error(self):
+        """Test handling of network errors during download."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        with patch("app.data_utils.datasets_peerread.Client") as mock_client_class:
+            mock_client = Mock()
+            mock_client.__enter__.return_value.get.side_effect = httpx.RequestError(
+                "Network error"
+            )
+            mock_client_class.return_value = mock_client
+
+            # Act
+            result = downloader.download_file("acl_2017", "train", "reviews", "test")
+
+            # Assert
+            assert result is None
+
+    def test_download_json_decode_error(self):
+        """Test handling of invalid JSON in response."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        with patch("app.data_utils.datasets_peerread.Client") as mock_client_class:
+            mock_client = Mock()
+            mock_response = Mock()
+            mock_response.raise_for_status.return_value = None
+            mock_response.json.side_effect = JSONDecodeError("Invalid JSON", "", 0)
+            mock_client.__enter__.return_value.get.return_value = mock_response
+            mock_client_class.return_value = mock_client
+
+            # Act
+            result = downloader.download_file("acl_2017", "train", "reviews", "test")
+
+            # Assert
+            assert result is None
+
+    def test_download_retry_logic(self):
+        """Test retry logic on transient failures."""
+        from unittest.mock import Mock, patch
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        # Arrange
+        config = PeerReadConfig()
+        config.max_retries = 3
+        config.retry_delay_seconds = 0.1
+        downloader = PeerReadDownloader(config)
+
+        with (
+            patch("app.data_utils.datasets_peerread.Client") as mock_client_class,
+            patch("app.data_utils.datasets_peerread.sleep") as mock_sleep,
+        ):
+            mock_client = Mock()
+            # First two attempts fail, third succeeds
+            mock_response_fail = Mock()
+            mock_response_fail.raise_for_status.side_effect = httpx.HTTPStatusError(
+                "503 Service Unavailable", request=Mock(), response=Mock(status_code=503)
+            )
+            mock_response_success = Mock()
+            mock_response_success.raise_for_status.return_value = None
+            mock_response_success.json.return_value = {"id": "test", "title": "Test", "abstract": "Abstract", "reviews": [], "histories": []}
+
+            mock_client.__enter__.return_value.get.side_effect = [
+                mock_response_fail,
+                mock_response_fail,
+                mock_response_success,
+            ]
+            mock_client_class.return_value = mock_client
+
+            # Act
+            result = downloader.download_file("acl_2017", "train", "reviews", "test")
+
+            # Assert
+            assert result is not None
+            assert mock_client.__enter__.return_value.get.call_count == 3
+            assert mock_sleep.call_count == 2
 
 
 class TestPaperValidationEdgeCases:

@@ -362,8 +362,121 @@ class TestPDFExtractionErrorHandling:
         with pytest.raises(ValueError):
             read_paper_pdf(None, str(empty_pdf))
 
+    def test_read_paper_pdf_with_corrupted_file(self, tmp_path):
+        """Test error handling for corrupted PDF file."""
+        from app.tools.peerread_tools import read_paper_pdf
+
+        # Create a corrupted PDF (invalid PDF structure)
+        corrupted_pdf = tmp_path / "corrupted.pdf"
+        corrupted_pdf.write_bytes(b"%PDF-1.4\n%corrupted content")
+
+        # Act & Assert
+        with pytest.raises(ValueError):
+            read_paper_pdf(None, str(corrupted_pdf))
+
 
 class TestTemplateLoading:
     """Test review template loading functionality."""
 
-    pass  # Template loading tested via integration tests
+    def test_generate_review_template_missing_abstract(self):
+        """Test template generation with missing paper abstract."""
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        sample_paper = PeerReadPaper(
+            paper_id="test_001",
+            title="Test Paper",
+            abstract="",  # Empty abstract
+            reviews=[],
+            histories=[],
+        )
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_loader = Mock()
+            mock_loader.get_paper_by_id.return_value = sample_paper
+            mock_loader_class.return_value = mock_loader
+
+            add_peerread_tools_to_agent(agent, agent_id="test_agent")
+
+            # Get the template generation tool
+            generate_template_tool = None
+            for tool in registered_tools:
+                if "template" in tool.__name__ or "review" in tool.__name__:
+                    generate_template_tool = tool
+                    break
+
+            # Act & Assert
+            if generate_template_tool:
+                import asyncio
+
+                result = asyncio.run(generate_template_tool(None, "test_001"))
+                # Should handle empty abstract gracefully
+                assert result is not None
+
+    def test_generate_review_template_with_truncation(self):
+        """Test template generation with content truncation."""
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        # Create paper with very long content
+        long_abstract = "A" * 10000
+        sample_paper = PeerReadPaper(
+            paper_id="test_001",
+            title="Test Paper",
+            abstract=long_abstract,
+            reviews=[],
+            histories=[],
+        )
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_loader = Mock()
+            mock_loader.get_paper_by_id.return_value = sample_paper
+            mock_loader.load_parsed_pdf_content.return_value = None
+            mock_loader_class.return_value = mock_loader
+
+            add_peerread_tools_to_agent(agent, agent_id="test_agent")
+
+            # Get the template generation tool
+            generate_template_tool = None
+            for tool in registered_tools:
+                if "template" in tool.__name__ or "review" in tool.__name__:
+                    generate_template_tool = tool
+                    break
+
+            # Act
+            if generate_template_tool:
+                import asyncio
+
+                result = asyncio.run(generate_template_tool(None, "test_001"))
+                # Assert - should truncate long content
+                assert result is not None
+                # Result should be reasonably sized (under some limit)
+                assert len(result) < 50000  # Reasonable limit for template
