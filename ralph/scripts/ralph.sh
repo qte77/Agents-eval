@@ -137,6 +137,68 @@ log_progress() {
     } >> "$PROGRESS_FILE"
 }
 
+# Monitor git commits during story execution.
+# Runs in background, polls for new TDD phase commits every 30s.
+# Logs phase transitions with elapsed time and story progress estimate.
+#
+# Args:
+#   $1 - commit count before execution started
+#   $2 - story ID
+monitor_story_progress() {
+    local commits_before="$1"
+    local story_id="$2"
+    local poll_interval=30
+    local phase_start=$(date +%s)
+    local seen_red=false
+    local seen_green=false
+    local seen_refactor=false
+    local current_phase="STARTING"
+
+    while true; do
+        sleep "$poll_interval"
+
+        local commits_now=$(git rev-list --count HEAD 2>/dev/null || echo "$commits_before")
+        local new_count=$((commits_now - commits_before))
+
+        if [ "$new_count" -gt 0 ]; then
+            local recent=$(git log --oneline -n "$new_count" 2>/dev/null)
+            local now=$(date +%s)
+            local elapsed=$((now - phase_start))
+            local elapsed_min=$((elapsed / 60))
+            local elapsed_sec=$((elapsed % 60))
+
+            # Detect phase transitions
+            if [ "$seen_red" = "false" ] && echo "$recent" | grep -q "\[RED\]"; then
+                seen_red=true
+                current_phase="RED"
+                phase_start=$now
+                log_info "  >> [$story_id] [RED] phase committed (${elapsed_min}m${elapsed_sec}s) ~33% story done"
+            fi
+            if [ "$seen_green" = "false" ] && echo "$recent" | grep -q "\[GREEN\]"; then
+                seen_green=true
+                current_phase="GREEN"
+                phase_start=$now
+                log_info "  >> [$story_id] [GREEN] phase committed (${elapsed_min}m${elapsed_sec}s) ~66% story done"
+            fi
+            if [ "$seen_refactor" = "false" ] && echo "$recent" | grep -qE "\[REFACTOR\]|\[BLUE\]"; then
+                seen_refactor=true
+                current_phase="REFACTOR"
+                phase_start=$now
+                log_info "  >> [$story_id] [REFACTOR] phase committed (${elapsed_min}m${elapsed_sec}s) ~90% story done"
+            fi
+        fi
+
+        # Heartbeat: show current phase every 2 minutes (4 poll cycles)
+        local now=$(date +%s)
+        local total_elapsed=$((now - RALPH_STORY_START))
+        local total_min=$((total_elapsed / 60))
+        local total_sec=$((total_elapsed % 60))
+        if [ $((total_elapsed % 120)) -lt "$poll_interval" ]; then
+            log_info "  >> [$story_id] phase: $current_phase | elapsed: ${total_min}m${total_sec}s"
+        fi
+    done
+}
+
 # Execute single story via Claude Code
 execute_story() {
     local story_id="$1"
@@ -162,13 +224,40 @@ execute_story() {
     # Mark log position before agent execution
     local log_start=$(wc -l < "$LOG_FILE" 2>/dev/null || echo "0")
 
+    # Track story start time for monitor
+    RALPH_STORY_START=$(date +%s)
+
+    # Record commit count for monitor
+    local commits_before=$(git rev-list --count HEAD)
+
     # Execute via Claude Code
     log_info "Running Claude Code with story context..."
     log_info "  Story: $story_id - $title"
     log_info "  Model: $RALPH_MODEL"
     log_info "  Prompt: $iteration_prompt ($(wc -l < "$iteration_prompt") lines)"
     log_info "  PRD: $PRD_JSON"
+
+    # Start background progress monitor
+    monitor_story_progress "$commits_before" "$story_id" &
+    local monitor_pid=$!
+
+    local claude_exit=0
     if cat "$iteration_prompt" | claude -p --dangerously-skip-permissions --model "$RALPH_MODEL"; then
+        claude_exit=0
+    else
+        claude_exit=$?
+    fi
+
+    # Stop background monitor
+    kill "$monitor_pid" 2>/dev/null; wait "$monitor_pid" 2>/dev/null || true
+
+    local end=$(date +%s)
+    local story_elapsed=$((end - RALPH_STORY_START))
+    local story_min=$((story_elapsed / 60))
+    local story_sec=$((story_elapsed % 60))
+    log_info "Story execution finished in ${story_min}m${story_sec}s"
+
+    if [ $claude_exit -eq 0 ]; then
         # Check if agent reported story already complete
         if detect_already_complete "$log_start"; then
             log_info "Agent detected story is already complete"
@@ -204,7 +293,7 @@ run_quality_checks() {
         run_quality_checks_baseline "$BASELINE_FILE"
     else
         log_info "Running quality checks (make validate)..."
-        if make validate 2>&1 | tee /tmp/claude/ralph_validate.log; then
+        if make --no-print-directory validate 2>&1 | tee /tmp/claude/ralph_validate.log; then
             log_info "Quality checks passed"
             return 0
         else
@@ -343,8 +432,6 @@ main() {
     # Track timing for ETA calculation
     RALPH_START_TIME=$(date +%s)
     RALPH_START_PASSING=$(jq '[.stories[] | select(.passes == true)] | length' "$PRD_JSON")
-
-    print_progress
 
     local iteration=0
 
