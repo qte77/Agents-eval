@@ -5,12 +5,9 @@ sensitive data from logs and traces while preserving non-sensitive content.
 """
 
 import re
-from unittest.mock import MagicMock
 
-import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from loguru import logger
 
 
 class TestSensitivePatterns:
@@ -31,18 +28,15 @@ class TestSensitivePatterns:
         patterns_str = " ".join(str(p) for p in SENSITIVE_PATTERNS).lower()
 
         # Must include patterns for these categories
-        assert any(
-            keyword in patterns_str
-            for keyword in ["password", "passwd", "pwd"]
-        ), "Missing password patterns"
-        assert any(
-            keyword in patterns_str
-            for keyword in ["secret", "credential"]
-        ), "Missing secret/credential patterns"
-        assert any(
-            keyword in patterns_str
-            for keyword in ["api", "key", "token"]
-        ), "Missing API key/token patterns"
+        assert any(keyword in patterns_str for keyword in ["password", "passwd", "pwd"]), (
+            "Missing password patterns"
+        )
+        assert any(keyword in patterns_str for keyword in ["secret", "credential"]), (
+            "Missing secret/credential patterns"
+        )
+        assert any(keyword in patterns_str for keyword in ["api", "key", "token"]), (
+            "Missing API key/token patterns"
+        )
 
 
 class TestLogRecordScrubbing:
@@ -110,9 +104,7 @@ class TestLogRecordScrubbing:
             max_size=64,
         ).filter(lambda s: "[REDACTED]" not in s)  # Exclude edge case
     )
-    def test_scrub_log_record_property_any_message_with_api_key_pattern(
-        self, secret_value: str
-    ):
+    def test_scrub_log_record_property_any_message_with_api_key_pattern(self, secret_value: str):
         """Property test: any message with 'api_key=' should be redacted."""
         from app.utils.log_scrubbing import scrub_log_record
 
@@ -149,8 +141,7 @@ class TestLogfireScrubbingPatterns:
 
         # Must include patterns for these field names
         assert any(
-            keyword in patterns_str
-            for keyword in ["password", "secret", "api", "key", "token"]
+            keyword in patterns_str for keyword in ["password", "secret", "api", "key", "token"]
         ), "Logfire patterns missing common sensitive fields"
 
     def test_logfire_patterns_compatible_with_configure(self):
@@ -168,8 +159,7 @@ class TestLogfireScrubbingPatterns:
         elif isinstance(patterns, dict):
             # Common Logfire scrubbing config keys
             assert any(
-                key in patterns
-                for key in ["callback", "extra", "patterns", "redaction_text"]
+                key in patterns for key in ["callback", "extra", "patterns", "redaction_text"]
             )
 
 
@@ -180,8 +170,8 @@ class TestLoguruIntegration:
         """Loguru sinks should be configured with scrubbing filter."""
         # This will be verified during implementation
         # Check that log.py and common/log.py have filter parameter
-        from app.utils import log
         from app.common import log as common_log
+        from app.utils import log
 
         # Both modules should have logger.add calls with filter
         # We'll verify this by checking the source or runtime state
@@ -194,8 +184,9 @@ class TestProviderLoggingLevel:
 
     def test_setup_llm_environment_uses_debug_level(self):
         """setup_llm_environment should log at DEBUG, not INFO."""
-        from app.llms.providers import setup_llm_environment
         import inspect
+
+        from app.llms.providers import setup_llm_environment
 
         # Check source code for logger.debug instead of logger.info
         source = inspect.getsource(setup_llm_environment)

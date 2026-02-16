@@ -31,9 +31,9 @@ class TestGetApiKey:
             assert success is False
             assert "not found" in message.lower()
 
-            # Should log debug message with env_key name
+            # Should log debug message with env_key name (scrubbed)
             log_content = log_output.getvalue()
-            assert "OPENAI_API_KEY" in log_content
+            assert "[REDACTED]" in log_content  # API key names are scrubbed
             assert "empty" in log_content.lower()
         finally:
             logger.remove(log_id)
@@ -55,9 +55,9 @@ class TestGetApiKey:
             assert success is False
             assert "not found" in message.lower()
 
-            # Should log debug message with env_key name
+            # Should log debug message with env_key name (scrubbed)
             log_content = log_output.getvalue()
-            assert "ANTHROPIC_API_KEY" in log_content
+            assert "[REDACTED]" in log_content  # API key names are scrubbed
         finally:
             logger.remove(log_id)
 
@@ -123,9 +123,9 @@ class TestGetApiKey:
             # Should fail
             assert success is False
 
-            # Debug log should mention both env_key and provider
+            # Debug log should mention env_key (scrubbed) and provider
             log_content = log_output.getvalue()
-            assert "CEREBRAS_API_KEY" in log_content
+            assert "[REDACTED]" in log_content  # API key names are scrubbed
             assert "cerebras" in log_content.lower() or "provider" in log_content.lower()
         finally:
             logger.remove(log_id)

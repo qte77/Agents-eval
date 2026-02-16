@@ -15,5 +15,5 @@ logger.add(
     rotation="1 MB",
     retention="7 days",
     compression="zip",
-    filter=scrub_log_record,
+    filter=scrub_log_record,  # type: ignore[arg-type]
 )

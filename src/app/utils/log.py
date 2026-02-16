@@ -14,5 +14,5 @@ logger.add(
     # level="DEBUG",
     retention="7 days",
     compression="zip",
-    filter=scrub_log_record,
+    filter=scrub_log_record,  # type: ignore[arg-type]
 )

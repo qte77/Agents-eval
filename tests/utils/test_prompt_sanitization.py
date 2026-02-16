@@ -2,12 +2,11 @@
 
 from hypothesis import given
 from hypothesis import strategies as st
-import pytest
 
 from app.utils.prompt_sanitization import (
     sanitize_for_prompt,
-    sanitize_paper_title,
     sanitize_paper_abstract,
+    sanitize_paper_title,
     sanitize_review_text,
 )
 
