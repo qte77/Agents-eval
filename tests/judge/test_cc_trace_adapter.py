@@ -427,3 +427,166 @@ def test_timestamps_ordered_invariant(tool_calls: list[dict]):
 
         # Invariant: start_time <= end_time
         assert trace_data.timing_data["start_time"] <= trace_data.timing_data["end_time"]
+
+
+class TestCCTraceAdapterPathLayouts:
+    """Test CC trace adapter with different directory layouts."""
+
+    @pytest.fixture
+    def cc_sibling_layout(self, tmp_path: Path) -> tuple[Path, Path]:
+        """Create CC artifacts with sibling teams/tasks directories.
+
+        This mimics the real CC directory structure:
+        ~/.claude/teams/{team-name}/
+        ~/.claude/tasks/{team-name}/
+
+        Args:
+            tmp_path: pytest temp directory
+
+        Returns:
+            Tuple of (teams_dir, tasks_dir) paths
+        """
+        # Create sibling directories
+        teams_dir = tmp_path / "teams" / "sibling-team"
+        tasks_dir = tmp_path / "tasks" / "sibling-team"
+        teams_dir.mkdir(parents=True)
+        tasks_dir.mkdir(parents=True)
+
+        # config.json in teams directory
+        config = {
+            "team_name": "sibling-team",
+            "members": [
+                {"name": "agent1", "agentId": "a1", "agentType": "worker"},
+            ],
+        }
+        (teams_dir / "config.json").write_text(json.dumps(config))
+
+        # inboxes in teams directory
+        inboxes_dir = teams_dir / "inboxes"
+        inboxes_dir.mkdir()
+        message = {
+            "from": "agent1",
+            "to": "leader",
+            "timestamp": 1708000000.0,
+        }
+        (inboxes_dir / "msg1.json").write_text(json.dumps(message))
+
+        # tasks in separate tasks directory (sibling)
+        task = {
+            "id": "task-001",
+            "owner": "agent1",
+            "status": "completed",
+            "created_at": 1708000000.0,
+            "completed_at": 1708000100.0,
+            "title": "Test task",
+        }
+        (tasks_dir / "task-001.json").write_text(json.dumps(task))
+
+        return teams_dir, tasks_dir
+
+    @pytest.fixture
+    def cc_child_layout(self, tmp_path: Path) -> Path:
+        """Create CC artifacts with tasks as child of teams directory.
+
+        This is the old expected layout (backward compatibility):
+        teams/
+          tasks/
+
+        Args:
+            tmp_path: pytest temp directory
+
+        Returns:
+            Path to teams directory
+        """
+        teams_dir = tmp_path / "legacy-team"
+        teams_dir.mkdir(parents=True)
+
+        # config.json
+        config = {
+            "team_name": "legacy-team",
+            "members": [
+                {"name": "agent1", "agentId": "a1", "agentType": "worker"},
+            ],
+        }
+        (teams_dir / "config.json").write_text(json.dumps(config))
+
+        # inboxes
+        inboxes_dir = teams_dir / "inboxes"
+        inboxes_dir.mkdir()
+        message = {
+            "from": "agent1",
+            "to": "leader",
+            "timestamp": 1708000000.0,
+        }
+        (inboxes_dir / "msg1.json").write_text(json.dumps(message))
+
+        # tasks as child directory
+        tasks_dir = teams_dir / "tasks"
+        tasks_dir.mkdir()
+        task = {
+            "id": "task-001",
+            "owner": "agent1",
+            "status": "completed",
+            "created_at": 1708000000.0,
+            "completed_at": 1708000100.0,
+            "title": "Test task",
+        }
+        (tasks_dir / "task-001.json").write_text(json.dumps(task))
+
+        return teams_dir
+
+    def test_sibling_layout_with_explicit_tasks_dir(self, cc_sibling_layout: tuple[Path, Path]):
+        """Adapter accepts explicit tasks_dir parameter for sibling layout."""
+        teams_dir, tasks_dir = cc_sibling_layout
+
+        # Pass both directories explicitly
+        adapter = CCTraceAdapter(teams_dir, tasks_dir=tasks_dir)
+        trace_data = adapter.parse()
+
+        assert trace_data.execution_id == "sibling-team"
+        assert len(trace_data.tool_calls) >= 1
+        assert len(trace_data.agent_interactions) >= 1
+
+    def test_sibling_layout_auto_discovery(self, cc_sibling_layout: tuple[Path, Path]):
+        """Adapter auto-discovers sibling tasks directory."""
+        teams_dir, tasks_dir = cc_sibling_layout
+
+        # Pass only teams_dir, let adapter discover tasks_dir
+        adapter = CCTraceAdapter(teams_dir)
+        trace_data = adapter.parse()
+
+        assert trace_data.execution_id == "sibling-team"
+        # Should find tasks from auto-discovered sibling directory
+        assert len(trace_data.tool_calls) >= 1
+
+    def test_child_layout_backward_compatibility(self, cc_child_layout: Path):
+        """Adapter still works with tasks as child directory (backward compatible)."""
+        adapter = CCTraceAdapter(cc_child_layout)
+        trace_data = adapter.parse()
+
+        assert trace_data.execution_id == "legacy-team"
+        assert len(trace_data.tool_calls) >= 1
+        assert len(trace_data.agent_interactions) >= 1
+
+    def test_no_tasks_dir_graceful_fallback(self, tmp_path: Path):
+        """Adapter handles missing tasks directory gracefully."""
+        teams_dir = tmp_path / "no-tasks-team"
+        teams_dir.mkdir()
+
+        config = {
+            "team_name": "no-tasks-team",
+            "members": [{"name": "agent1", "agentId": "a1", "agentType": "worker"}],
+        }
+        (teams_dir / "config.json").write_text(json.dumps(config))
+
+        inboxes_dir = teams_dir / "inboxes"
+        inboxes_dir.mkdir()
+
+        # No tasks directory created
+
+        adapter = CCTraceAdapter(teams_dir)
+        trace_data = adapter.parse()
+
+        # Should succeed with empty tool_calls list
+        assert trace_data.execution_id == "no-tasks-team"
+        assert len(trace_data.tool_calls) == 0
