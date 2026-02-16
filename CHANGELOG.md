@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security (Sprint 6 - STORY-012)
+
+- **HIGH Priority Security**: Log and trace data scrubbing for sensitive data
+- Added log scrubbing module (`src/app/utils/log_scrubbing.py`) with pattern-based redaction for API keys, passwords, tokens, and credentials
+- Sensitive patterns configured: `password`, `secret`, `api_key`, `token`, `bearer`, `jwt`, `credential`, and environment variable names (e.g., `OPENAI_API_KEY`)
+- Loguru filter (`scrub_log_record()`) integrated into file sinks in `log.py` and `common/log.py` to redact sensitive data before writing logs
+- Logfire scrubbing patterns configured via `ScrubbingOptions(extra_patterns=...)` to redact sensitive fields in OTLP trace exports to Phoenix
+- Changed `setup_llm_environment()` to log at DEBUG level instead of INFO to reduce exposure surface for environment variable names
+- All sensitive patterns use case-insensitive matching and replace matches with `[REDACTED]`
+- Comprehensive test suite: 13 tests including Hypothesis property tests for pattern coverage
+- Prevents data leakage vectors: API keys in exception traces, Bearer tokens in logs, passwords in debug output, unredacted trace data in Phoenix
+
 ### Security (Sprint 6 - STORY-011)
 
 - **HIGH Priority Security**: Prompt injection mitigation with input sanitization
