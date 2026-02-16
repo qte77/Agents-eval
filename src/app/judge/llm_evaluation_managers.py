@@ -108,6 +108,10 @@ class LLMJudgeEngine:
             logger.debug(f"API key validation failed for {provider}: {message}")
         return is_valid
 
+    # FIXME(Sprint5-Ralph STORY-001): Fallback chain uses hardcoded openai→github but ignores
+    # the user's chat_provider. When github credentials are invalid, all Tier 2
+    # metrics get neutral 0.5 fallback scores. STORY-001 is marked passing but
+    # the 401 errors persist on refactor-arch branch.
     def select_available_provider(self, env_config: AppEnv) -> tuple[str, str] | None:
         """Select available provider with fallback chain.
 

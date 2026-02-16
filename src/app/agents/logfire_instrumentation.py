@@ -58,6 +58,11 @@ class LogfireInstrumentationManager:
             # Reason: Use traces-specific env var because Phoenix only supports
             # /v1/traces, not /v1/metrics. The generic OTEL_EXPORTER_OTLP_ENDPOINT
             # causes the SDK to also export metrics → 405 Method Not Allowed.
+            # FIXME(Sprint5-Ralph STORY-012): PRD acceptance #3 specifies OTEL_EXPORTER_OTLP_ENDPOINT
+            # with base URL only, but that would NOT fix the 405 for metrics — Phoenix
+            # doesn't support /v1/metrics regardless of path construction. Our approach
+            # (OTEL_EXPORTER_OTLP_TRACES_ENDPOINT + OTEL_METRICS_EXPORTER=none) is more
+            # correct. Update PRD acceptance criterion to match implementation.
             if not self.config.send_to_cloud:
                 phoenix_otlp = f"{self.config.phoenix_endpoint}/v1/traces"
                 os.environ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"] = phoenix_otlp
