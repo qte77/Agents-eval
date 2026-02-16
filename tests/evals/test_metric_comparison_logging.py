@@ -47,7 +47,6 @@ async def test_log_metric_comparison_called_after_evaluation():
             tier3_result = Tier3Result(
                 path_convergence=0.85,
                 tool_selection_accuracy=0.90,
-                communication_overhead=0.70,
                 coordination_centrality=0.88,
                 task_distribution_balance=0.82,
                 overall_score=0.83,
@@ -134,7 +133,6 @@ async def test_individual_graph_metrics_displayed():
             tier3_result = Tier3Result(
                 path_convergence=0.85,
                 tool_selection_accuracy=0.90,
-                communication_overhead=0.70,
                 coordination_centrality=0.88,
                 task_distribution_balance=0.82,
                 overall_score=0.83,
@@ -181,9 +179,7 @@ async def test_individual_graph_metrics_displayed():
             assert "tool_selection_accuracy" in logged_messages, (
                 "Graph metric tool_selection_accuracy should be logged"
             )
-            assert "communication_overhead" in logged_messages, (
-                "Graph metric communication_overhead should be logged"
-            )
+            # communication_overhead removed in STORY-013 (dead metric)
             assert "coordination_centrality" in logged_messages, (
                 "Graph metric coordination_centrality should be logged"
             )
@@ -222,7 +218,6 @@ async def test_individual_text_metrics_displayed():
             tier3_result = Tier3Result(
                 path_convergence=0.85,
                 tool_selection_accuracy=0.90,
-                communication_overhead=0.70,
                 coordination_centrality=0.88,
                 task_distribution_balance=0.82,
                 overall_score=0.83,
@@ -300,7 +295,6 @@ async def test_composite_score_tier_contribution_displayed():
             tier3_result = Tier3Result(
                 path_convergence=0.85,
                 tool_selection_accuracy=0.90,
-                communication_overhead=0.70,
                 coordination_centrality=0.88,
                 task_distribution_balance=0.82,
                 overall_score=0.83,

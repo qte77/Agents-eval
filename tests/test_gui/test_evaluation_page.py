@@ -337,7 +337,6 @@ class TestEvaluationPageRenderingSnapshots:
                 "tier3": {
                     "path_convergence": 0.85,
                     "tool_selection_accuracy": 0.9,
-                    "communication_overhead": 0.75,
                     "coordination_centrality": 0.88,
                     "task_distribution_balance": 0.8,
                     "overall_score": 0.83,
