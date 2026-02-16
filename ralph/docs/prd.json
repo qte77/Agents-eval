@@ -1,0 +1,504 @@
+{
+  "project": "Agents-eval Sprint 6",
+  "description": "Benchmarking infrastructure, CC baseline completion, tool access refinement, security hardening (CVE mitigations, input sanitization, log scrubbing), and test quality improvements for the Agents-eval MAS evaluation framework.",
+  "source": "PRD-Sprint6-Ralph.md",
+  "generated": "2026-02-16 11:49:13",
+  "stories": [
+    {
+      "id": "STORY-001",
+      "title": "Remove all Opik code, config, Docker, docs, and tests",
+      "description": "Remove all Opik-related code, configuration, Docker infrastructure, Makefile targets, documentation, and tests from the project. Opik was replaced by Logfire + Phoenix in Sprint 4. Deprecated stubs (`opik_instrumentation.py`, `OpikConfig`) and the full Docker stack (`docker-compose.opik.yaml`, 11 services) remain as dead code. This cleanup removes ~800 lines of unused code and configuration.",
+      "acceptance": [
+        "`src/app/agents/opik_instrumentation.py` deleted",
+        "`OpikConfig` class removed from `src/app/utils/load_configs.py`",
+        "`docker-compose.opik.yaml` deleted",
+        "Makefile targets removed: `setup_opik`, `setup_opik_env`, `start_opik`, `stop_opik`, `clean_opik`, `status_opik`",
+        "`.env.example` Opik variables removed (`OPIK_URL_OVERRIDE`, `OPIK_WORKSPACE`, `OPIK_PROJECT_NAME`)",
+        "`.gitignore` Opik entries removed (`opik/`, `.opik_install_reported`)",
+        "`docs/howtos/opik-setup-usage-integration.md` deleted",
+        "Test stubs deleted: `tests/integration/test_opik_integration.py`, `tests/evals/test_opik_metrics.py`",
+        "`CONTRIBUTING.md` Opik references removed (make commands, setup instructions)",
+        "No remaining imports or references to `opik` in `src/app/` (verified via grep)",
+        "`docs/analysis/CC-agent-teams-orchestration.md` all Opik references (13 occurrences, verified via grep) updated to reflect Phoenix/Logfire",
+        "Keep `load_configs.py` with `LogfireConfig` intact (4 active consumers: `agent_system.py`, `logfire_instrumentation.py`, and 2 test files)",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Delete files: `src/app/agents/opik_instrumentation.py`, `docker-compose.opik.yaml`, `docs/howtos/opik-setup-usage-integration.md`",
+        "Delete test files: `tests/integration/test_opik_integration.py`, `tests/evals/test_opik_metrics.py`",
+        "In `src/app/utils/load_configs.py`: delete `OpikConfig` class (the DEPRECATED class), keep `LogfireConfig`",
+        "In `Makefile`: delete all opik targets (`setup_opik`, `setup_opik_env`, `start_opik`, `stop_opik`, `clean_opik`, `status_opik`), remove `setup_opik` from `setup_devc_full` and `setup_devc_ollama_full`",
+        "In `.env.example`: remove Opik env vars (`OPIK_URL_OVERRIDE`, `OPIK_WORKSPACE`, `OPIK_PROJECT_NAME`)",
+        "In `.gitignore`: remove `opik/` and `.opik_install_reported` entries",
+        "In `CONTRIBUTING.md`: remove Opik make commands from command reference table and setup instructions",
+        "Verify cleanup: `grep -ri opik src/app/` returns no matches"
+      ],
+      "files": [
+        "src/app/agents/opik_instrumentation.py",
+        "src/app/utils/load_configs.py",
+        "docker-compose.opik.yaml",
+        "Makefile",
+        ".env.example",
+        ".gitignore",
+        "CONTRIBUTING.md",
+        "docs/howtos/opik-setup-usage-integration.md",
+        "tests/integration/test_opik_integration.py",
+        "tests/evals/test_opik_metrics.py",
+        "docs/analysis/CC-agent-teams-orchestration.md"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "e2cd9e09a3f16f17eb398be6e392c08c2f0f936ad055a6ce5a9a248c118cb821",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-002",
+      "title": "Fix Phoenix Docker recipe with volume, ports, restart policy + Agent graph fix (one-line change bundled as P0 quick win)",
+      "description": "The current `make start_phoenix` recipe has three problems: (1) no volume mount \u2014 trace data is lost on `docker rm`, (2) missing gRPC port 4317 \u2014 only HTTP OTLP on 6006 is exposed, (3) no restart policy \u2014 container dies on devcontainer restart (exit code 255) and doesn't come back. Additionally, `make start_phoenix` fails with \"container name already in use\" when a stopped container exists. Fix all four issues.",
+      "acceptance": [
+        "`make start_phoenix` persists trace data across container restarts via Docker volume `phoenix_data`",
+        "Both OTLP endpoints exposed: HTTP on port 6006, gRPC on port 4317",
+        "Container auto-restarts after devcontainer restart (`--restart unless-stopped`)",
+        "`make start_phoenix` succeeds even when a stopped `phoenix-tracing` container exists (removes old container first)",
+        "`make stop_phoenix` stops container but preserves volume data",
+        "`make status_phoenix` shows container status and both port mappings",
+        "Phoenix UI accessible at `http://localhost:6006` after `make start_phoenix`",
+        "OTLP traces received on both `http://localhost:6006/v1/traces` (HTTP) and `localhost:4317` (gRPC)",
+        "Logfire SDK (`logfire_instrumentation.py`) continues to export traces successfully via HTTP endpoint",
+        "Tests: pytest test for Makefile recipe validation (recipe contains required flags)",
+        "**Quick Win**: Agent Interaction Graph renders when trace data exists, regardless of evaluation success (change `app.py:267` from conditional to unconditional)",
+        "**Quick Win**: Graph renders correctly after `--skip-eval` runs and after failed evaluation",
+        "Tests: pytest test verifying `_build_graph_from_trace()` is called when `execution_id` exists and `composite_result` is None",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Update `start_phoenix` recipe in `Makefile` with volume mount, gRPC port, restart policy, and force-remove"
+      ],
+      "files": [
+        "Makefile",
+        "src/app/app.py",
+        "tests/infra/test_makefile_recipes.py",
+        "tests/app/test_app.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "15e53c4814c32266340eaf6afb483dcc35c740bb30682106848c2888a40216c2",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-003",
+      "title": "Fix CCTraceAdapter path handling for sibling teams/tasks directories",
+      "description": "The CC baseline infrastructure was built in Sprint 4 but has a teams mode path mismatch \u2014 adapter expects `tasks/` as child of teams dir, but CC stores tasks at `~/.claude/tasks/{team-name}/` (sibling of `~/.claude/teams/`). Fix the adapter to support both layouts.",
+      "acceptance": [
+        "Teams mode adapter accepts separate `teams_dir` and `tasks_dir` parameters (or auto-discovers `tasks/` as sibling)",
+        "Adapter works with real `~/.claude/teams/{name}/` + `~/.claude/tasks/{name}/` directory layout",
+        "Backward compatible: still works if `tasks/` is a subdirectory of teams dir",
+        "CLI `--cc-teams-dir` accepts teams directory; tasks directory auto-discovered or specified separately",
+        "Tests: pytest tests with both directory layouts (sibling and child)",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "In `CCTraceAdapter.__init__()`: accept optional `tasks_dir: Path | None` parameter alongside existing `teams_dir`",
+        "When `tasks_dir` is None: auto-discover by checking `teams_dir.parent / \"tasks\" / teams_dir.name` (sibling layout), then `teams_dir / \"tasks\"` (child layout)",
+        "In `src/run_cli.py`: add `--cc-teams-tasks-dir` optional flag that maps to `tasks_dir` parameter",
+        "Preserve existing behavior when `tasks/` is a child directory (backward compatible)"
+      ],
+      "files": [
+        "src/app/judge/cc_trace_adapter.py",
+        "tests/judge/test_cc_trace_adapter.py",
+        "src/run_cli.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "52d8f401c85a12dbf31d2139af14ee5cf163e74b7657198c65520ee38630b8aa",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-004",
+      "title": "Create CC artifact collection scripts",
+      "description": "CC doesn't natively export artifacts in the format expected by `CCTraceAdapter`. Create bash scripts to collect solo session and teams mode artifacts into adapter-compatible directory structures.",
+      "acceptance": [
+        "`scripts/collect-cc-solo.sh` captures CC solo session data into adapter-expected format (`metadata.json` + `tool_calls.jsonl`)",
+        "`scripts/collect-cc-teams.sh` copies `~/.claude/teams/{name}/` + `~/.claude/tasks/{name}/` into single adapter-compatible directory",
+        "Both scripts accept named parameters: `--name <session/team-name>` and `--output-dir <path>` (required)",
+        "Both scripts validate output directory structure matches adapter expectations",
+        "Exit code 0 on success, exit code 1 on validation failure (missing source dirs, malformed artifacts), exit code 2 on usage error (missing required params)",
+        "README in `scripts/` documents usage, examples, and exit codes",
+        "Tests: pytest tests invoking scripts via `subprocess.run()`, verifying exit codes and output directory structure",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "`scripts/collect-cc-solo.sh`: parse `--name` and `--output-dir` args, locate CC session data in `~/.claude/projects/` or user-specified path, create `metadata.json` (session name, timestamp, model) and `tool_calls.jsonl` (one JSON object per tool call) in output dir",
+        "`scripts/collect-cc-teams.sh`: parse `--name` and `--output-dir` args, copy `~/.claude/teams/{name}/config.json` and `~/.claude/tasks/{name}/*.json` into output dir preserving structure",
+        "Both scripts: validate output structure matches `CCTraceAdapter` expectations (required files exist, valid JSON), exit 1 on validation failure, exit 2 on usage error",
+        "Use `set -euo pipefail` for strict error handling in both scripts"
+      ],
+      "files": [
+        "scripts/collect-cc-solo.sh",
+        "scripts/collect-cc-teams.sh",
+        "scripts/README.md",
+        "tests/scripts/test_collect_cc_scripts.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "1863a3b58c26d496336453f3057b96da8ddee9274d0b86bfc829efbd0fa6a39f",
+      "depends_on": [
+        "STORY-003"
+      ]
+    },
+    {
+      "id": "STORY-005",
+      "title": "Wire paper and review extraction in evaluation runner",
+      "description": "`evaluation_runner.py:101-106` passes empty strings for `paper=\"\"` and `review=\"\"` to `evaluate_comprehensive()`, making Tier 1 text similarity scores meaningless (near-zero). The manager run result contains both paper ID and generated review, but `run_manager()` only returns the `execution_id` string \u2014 discarding `result.output`. Fix: return the result object alongside execution_id, extract the review text and paper content, and pass them to the evaluation pipeline.",
+      "acceptance": [
+        "`run_manager()` returns both `execution_id` and the manager result output (change return type from `str` to `tuple[str, Any]`)",
+        "`evaluation_runner.py` receives `ReviewGenerationResult.review.comments` as the generated review text",
+        "Paper content loaded via `PeerReadLoader.load_parsed_pdf_content(paper_id)` using `ReviewGenerationResult.paper_id`",
+        "Fallback: if parsed PDF unavailable, use `PeerReadPaper.abstract` as paper content",
+        "Tier 1 metrics (cosine, jaccard, semantic similarity) produce non-zero scores with real content",
+        "CC baseline evaluations receive the same paper content (loaded by paper_id) for fair comparison",
+        "When review tools are disabled (no `ReviewGenerationResult`), gracefully pass empty strings (current behavior preserved)",
+        "Tests: pytest test verifying non-empty paper/review passed to pipeline",
+        "Tests: pytest test for fallback when parsed PDF is unavailable",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "In `agent_system.py:510`: change `run_manager()` return from `str` to `tuple[str, Any]`, return `(execution_id, result.output)`",
+        "In `app.py:112`: destructure return: `execution_id, manager_output = await run_manager(...)`",
+        "In `app.py:256`: pass `manager_output` to `_run_evaluation_if_enabled()`",
+        "In `evaluation_runner.py:101-106`: extract review_text from ReviewGenerationResult.review.comments, paper_content from PeerReadLoader with abstract fallback"
+      ],
+      "files": [
+        "src/app/agents/agent_system.py",
+        "src/app/app.py",
+        "src/app/judge/evaluation_runner.py",
+        "tests/judge/test_evaluation_runner.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "813052de40982e7dd73486c7815de59bec0b4958153c11e66ae8e55ada40709e",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-006",
+      "title": "Delete orphaned cc_otel module (independent of Opik)",
+      "description": "`src/app/cc_otel/` is an orphaned module containing `CCOtelConfig` \u2014 a Pydantic settings model for configuring Claude Code's OpenTelemetry environment variables from Python. This approach is fundamentally wrong: CC tracing is configured via infrastructure-level env vars (set in shell or `.claude/settings.json`), not application code. The module has no consumers \u2014 no imports of `app.cc_otel` exist anywhere in the codebase. The correct approach for CC baseline comparison is headless invocation via `claude -p` (Feature 7) with post-hoc artifact collection. This is independent of Opik removal (Feature 1) \u2014 cc_otel was for Claude Code OTel configuration, not Opik.",
+      "acceptance": [
+        "`src/app/cc_otel/` directory deleted (including `__init__.py`, `config.py`)",
+        "`tests/cc_otel/` directory deleted (including `test_cc_otel_config.py`, `test_cc_otel_instrumentation.py`)",
+        "No remaining imports of `app.cc_otel` in codebase (verified via grep)",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Delete `src/app/cc_otel/` directory entirely (2 files: `__init__.py`, `config.py`)",
+        "Delete `tests/cc_otel/` directory entirely (2 files: `test_cc_otel_config.py`, `test_cc_otel_instrumentation.py`)",
+        "Verify cleanup: `grep -ri cc_otel src/app/` and `grep -ri cc_otel tests/` return no matches"
+      ],
+      "files": [
+        "src/app/cc_otel/",
+        "tests/cc_otel/"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "59531275bc739660083fdcd2d215b8dcc818477166c49326e41edb28a50efe16",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-007",
+      "title": "Build MAS composition sweep infrastructure with statistical analysis",
+      "description": "Build automated benchmarking infrastructure to run the PydanticAI MAS evaluation pipeline across configurable agent composition variations and optionally invoke Claude Code in headless mode (`claude -p`) for CC baseline comparison. The default composition set is all 8 combinations of `include_researcher` / `include_analyst` / `include_synthesiser` toggles (2^3 = 8), but both the number of compositions and the agent toggles within each composition are configurable. Each composition runs a configurable number of repetitions on the same paper(s) for statistical significance. Results are aggregated with mean/stddev per metric per composition and output as both JSON (machine-readable) and Markdown (human-readable).",
+      "acceptance": [
+        "`SweepConfig` Pydantic model defines: compositions (variable length), repetitions, paper_numbers, output_dir, cc options",
+        "Compositions are configurable: user can specify any subset of agent toggle combinations, not hardcoded to 8",
+        "Default `generate_all_compositions()` produces all 2^3 = 8 combinations as a convenience",
+        "Sweep runner executes N repetitions x M compositions x P papers through existing `main()` pipeline",
+        "Each run produces a `CompositeResult` stored in structured JSON output",
+        "If `cc_baseline_enabled=True`: sweep invokes `claude -p` in headless mode with the same paper review prompt used by the MAS, collects artifacts, and evaluates via `CCTraceAdapter`",
+        "CC headless invocation uses `--output-format json` for structured parsing of results",
+        "When `cc_baseline_enabled=True` and `claude` CLI not found (`shutil.which(\"claude\")` returns None), sweep exits with clear error message",
+        "If pre-collected CC artifact directories provided instead, those are evaluated without re-running CC",
+        "Analysis module calculates per-composition statistics: mean, stddev, min, max for all 6 composite metrics",
+        "Markdown summary table generated with compositions as rows, metrics as columns, mean +/- stddev values",
+        "CLI entry point: `python src/run_sweep.py --config sweep_config.json` or `python src/run_sweep.py --paper-numbers 1,2,3 --repetitions 3`",
+        "`make sweep` Makefile target wrapping CLI with sensible defaults",
+        "Sweep results saved to `results/sweeps/{timestamp}/` with `results.json` + `summary.md`",
+        "`.gitignore` includes `results/sweeps/` to prevent committing large JSON result files",
+        "Reuses existing `EvaluationPipeline`, `CompositeScorer`, `baseline_comparison.compare()` \u2014 no new evaluation logic",
+        "Tests: pytest tests for sweep config validation, composition generation, results aggregation, runner error handling",
+        "Tests: pytest tests for sweep runner (mock `main()` and `subprocess.run()`, verify result collection and CC invocation)",
+        "Tests: Hypothesis property tests for statistical calculations (mean/stddev bounds)",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Create `src/app/benchmark/sweep_config.py` (~70 lines) with SweepConfig and AgentComposition Pydantic models, generate_all_compositions() convenience function"
+      ],
+      "files": [
+        "src/app/benchmark/__init__.py",
+        "src/app/benchmark/sweep_config.py",
+        "src/app/benchmark/sweep_runner.py",
+        "src/app/benchmark/sweep_analysis.py",
+        "src/run_sweep.py",
+        "Makefile",
+        ".gitignore",
+        "CONTRIBUTING.md",
+        "tests/benchmark/test_sweep_config.py",
+        "tests/benchmark/test_sweep_runner.py",
+        "tests/benchmark/test_sweep_analysis.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "d421c9b8f2357c6aa49e893cb107c64383da7e7e79235cc1478df177d33fc292",
+      "depends_on": [
+        "STORY-003",
+        "STORY-004",
+        "STORY-005"
+      ]
+    },
+    {
+      "id": "STORY-008",
+      "title": "Move review tools to researcher when present, manager when single-agent",
+      "description": "Sprint 5 STORY-016 moved PeerRead base tools from manager to researcher. However, review tools (`generate_paper_review_content_from_template`, `save_paper_review`, `save_structured_review`) are still added unconditionally to the manager via `conditionally_add_review_tools()`. When a researcher agent is present, review tools should be placed on the researcher (alongside base PeerRead tools and DuckDuckGo). When no researcher is present (single-agent mode), review tools should fall back to the manager so single-agent review generation continues to work.",
+      "acceptance": [
+        "When `include_researcher=True`: review tools registered on researcher agent, not manager",
+        "When `include_researcher=False`: review tools registered on manager agent (single-agent fallback)",
+        "Manager retains only delegation tools (`researcher()`, `analyst()`, `synthesiser()`) in multi-agent mode",
+        "Researcher has: PeerRead base tools + review tools + `duckduckgo_search_tool()` in multi-agent mode",
+        "Single-agent mode produces correct review output (no regression)",
+        "Multi-agent mode delegates PeerRead + review operations to researcher (verified via trace data)",
+        "Tests: pytest tests for tool registration (which agent has which tools) in both modes",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "In `src/app/agents/agent_system.py`: add `researcher` parameter to `conditionally_add_review_tools()`, route review tools to researcher when present"
+      ],
+      "files": [
+        "src/app/agents/agent_system.py",
+        "src/app/tools/peerread_tools.py",
+        "tests/agents/test_agent_system.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "6e8af08f40299c7b154c97a6293a64bfee0608b34be84b9ff08bf6d682cde1bb",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-009",
+      "title": "Enable review tools by default with opt-out flag",
+      "description": "Review tools (`--enable-review-tools`) currently default to `False`, requiring explicit opt-in for review generation. Since the primary use case of this project is PeerRead paper review evaluation, review tools should be enabled by default. Users who want to run general queries without review tools can opt out via `--no-review-tools`.",
+      "acceptance": [
+        "`enable_review_tools` defaults to `True` in `main()` signature (`app.py`)",
+        "CLI: `--no-review-tools` flag disables review tools (replaces opt-in with opt-out)",
+        "CLI: `--enable-review-tools` flag kept for backward compatibility (no-op since default is True)",
+        "GUI: Review tools checkbox in settings defaults to checked",
+        "Auto-enable logic from `_prepare_query()` still works (no regression when `--paper-number` provided)",
+        "Tests: pytest tests for default-on behavior and opt-out flag",
+        "Tests: inline-snapshot for CLI help text showing new flag",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "In `src/app/app.py:203`: change `enable_review_tools: bool = False` to `enable_review_tools: bool = True`",
+        "In `src/run_cli.py`: add `--no-review-tools` flag that sets `enable_review_tools=False`",
+        "Keep `--enable-review-tools` for backward compatibility (already True by default, becomes no-op)",
+        "In `src/app/app.py:94`: adjust OR logic \u2014 `_prepare_query()` auto-enable no longer needed since default is True, but keep for explicitness"
+      ],
+      "files": [
+        "src/app/app.py",
+        "src/run_cli.py",
+        "tests/app/test_cli_baseline.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "f323614c41c3f547d0da26473ef1e3c46e98dbc78e8fc48a3d38f21b3f3094b4",
+      "depends_on": [
+        "STORY-008"
+      ]
+    },
+    {
+      "id": "STORY-010",
+      "title": "Add SSRF URL allowlist and document known CVE advisories",
+      "description": "The Sprint 5 MAESTRO security review (Finding CVE-1, `docs/reviews/sprint5-code-review.md`) identified CVE-2026-25580, a CRITICAL PydanticAI SSRF vulnerability allowing information disclosure via malicious URLs in message history. Agent tools that process URLs (PeerRead dataset downloads, DuckDuckGo search) need domain-allowlist validation to prevent SSRF attacks against internal services. CVE-2026-25640 (Stored XSS in PydanticAI web UI) does not affect this project since we don't use `clai web` or `Agent.to_web()` \u2014 document this as a known advisory. CVE-2024-5206 (scikit-learn) is already mitigated by `scikit-learn>=1.8.0` in `pyproject.toml`.",
+      "acceptance": [
+        "`validate_url()` function enforces HTTPS-only and domain allowlist for all external requests",
+        "Allowlist includes: `raw.githubusercontent.com`, `arxiv.org`, `api.openai.com`, `api.anthropic.com`, `api.cerebras.ai`",
+        "PeerRead dataset download URLs validated before `httpx.Client.get()` in `datasets_peerread.py`",
+        "URLs in agent tool responses validated before any HTTP requests",
+        "Blocked URLs raise `ValueError` with domain name (no URL echoing to prevent log injection)",
+        "CVE-2026-25640 documented in `SECURITY.md` advisory section (project does not use affected features)",
+        "Tests: pytest tests for URL validation (allowed domains, blocked domains, non-HTTPS, internal IPs)",
+        "Tests: Hypothesis property tests for URL parsing edge cases (unicode domains, IP addresses, port variations)",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Create `src/app/utils/url_validation.py` (~30 lines) with ALLOWED_DOMAINS frozenset and validate_url() function"
+      ],
+      "files": [
+        "src/app/utils/url_validation.py",
+        "src/app/data_utils/datasets_peerread.py",
+        "SECURITY.md",
+        "tests/utils/test_url_validation.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "981d9cb57f5716d6a2c845adebeebfe010a5caf5c9612c5ebe274e157e225653",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-011",
+      "title": "Add prompt input sanitization with length limits and XML delimiters",
+      "description": "The Sprint 5 MAESTRO review (Finding L1.1, HIGH) and parallel pipeline review (Item 1, CRITICAL) both identified unsanitized user input flowing into LLM prompts. `llm_evaluation_managers.py:177-188` interpolates `paper_excerpt` and `review` via f-strings. `peerread_tools.py:295` uses `.format()` with `paper_title` and `paper_abstract` from the PeerRead dataset. Malicious paper content could inject prompt instructions or trigger unintended LLM behavior. Add length-limited structured inputs and XML delimiter wrapping.",
+      "acceptance": [
+        "Paper titles truncated to 500 chars, abstracts to 5000 chars, review text to 50000 chars before prompt insertion",
+        "User-controlled content wrapped in XML delimiters (`<paper_content>...</paper_content>`) in LLM judge prompts to separate instructions from data",
+        "`peerread_tools.py` template formatting uses `string.Template.safe_substitute()` instead of `str.format()` to prevent format string injection",
+        "Truncation happens at the sanitization boundary (before prompt construction), not ad-hoc per call site",
+        "Existing prompt behavior unchanged for well-formed inputs (no regression in evaluation quality)",
+        "Tests: pytest tests for truncation at boundary lengths",
+        "Tests: pytest tests for format string injection attempts (e.g., `{__import__}` in paper title)",
+        "Tests: Hypothesis property tests \u2014 for all strings, output length <= max_length + delimiter overhead, and output always contains XML delimiters",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Create `src/app/utils/prompt_sanitization.py` (~40 lines) with sanitize_for_prompt(), sanitize_paper_title(), sanitize_paper_abstract(), sanitize_review_text()"
+      ],
+      "files": [
+        "src/app/utils/prompt_sanitization.py",
+        "src/app/judge/llm_evaluation_managers.py",
+        "src/app/tools/peerread_tools.py",
+        "tests/utils/test_prompt_sanitization.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "73b84e88b967083ae5c24e1002dba523c8bbbcb6e202b28320fce0a514a9df17",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-012",
+      "title": "Configure Logfire scrubbing patterns and Loguru sensitive data filter",
+      "description": "The Sprint 5 MAESTRO review identified three related data leakage risks: (1) no Logfire scrubbing patterns configured (Finding L4.2, HIGH), so trace data exported to Phoenix contains unredacted API keys and user content; (2) no Loguru log filtering (Finding L4.1, MEDIUM), so exception traces may contain local variables with API key values; (3) `setup_llm_environment()` in `providers.py:80` logs env var names at INFO level. Add scrubbing patterns to both Logfire (trace export) and Loguru (file/console logging).",
+      "acceptance": [
+        "Logfire configured with scrubbing patterns for: `password`, `passwd`, `secret`, `auth`, `credential`, `api[._-]?key`, `token`, `jwt`",
+        "Loguru file sink filters sensitive patterns from log messages before writing",
+        "`setup_llm_environment()` logs at DEBUG level instead of INFO (reduces exposure surface)",
+        "Exception traces from Loguru do not contain raw API key values (local variable scrubbing)",
+        "Trace data exported to Phoenix via OTLP has sensitive fields redacted",
+        "Existing logging behavior preserved for non-sensitive messages (no over-scrubbing)",
+        "Tests: pytest tests for Loguru filter (sensitive patterns redacted, normal messages pass through)",
+        "Tests: pytest tests for Logfire scrubbing configuration (patterns applied)",
+        "Tests: Hypothesis property tests \u2014 for all messages containing any SENSITIVE_PATTERNS match, output contains `[REDACTED]`",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Create `src/app/utils/log_scrubbing.py` (~40 lines) with SENSITIVE_PATTERNS, scrub_log_record(), get_logfire_scrubbing_patterns()"
+      ],
+      "files": [
+        "src/app/utils/log_scrubbing.py",
+        "src/app/utils/log.py",
+        "src/app/common/log.py",
+        "src/app/agents/logfire_instrumentation.py",
+        "src/app/llms/providers.py",
+        "tests/utils/test_log_scrubbing.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "7db3b037d25d30f47192cb51db07dc6a8ae1d346d8d3917258807e7ff0feedf8",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-013",
+      "title": "Create security test suite in `tests/security/`",
+      "description": "The Sprint 5 MAESTRO review (Recommendations, Priority 4) explicitly tagged \"Add comprehensive security test suite\" for Sprint 6. Zero security-focused tests currently exist. Create `tests/security/` with tests validating the security controls added by Features 10-12 and testing additional attack vectors identified in the review: plugin input size limits, tool registration scope, and prompt injection scenarios.",
+      "acceptance": [
+        "`tests/security/test_ssrf_prevention.py` \u2014 SSRF attack vectors: internal IPs blocked, non-HTTPS blocked, AWS metadata endpoint, localhost, IDN homograph attacks",
+        "`tests/security/test_prompt_injection.py` \u2014 injection attempts in paper titles/abstracts rejected or sanitized",
+        "`tests/security/test_sensitive_data_filtering.py` \u2014 API key patterns filtered from logs and traces, Bearer tokens redacted",
+        "`tests/security/test_input_size_limits.py` \u2014 oversized inputs to plugin adapters rejected (DoS prevention)",
+        "`tests/security/test_tool_registration.py` \u2014 tools only registered from expected modules (no runtime injection)",
+        "All security tests use pytest with clear arrange/act/assert structure",
+        "Hypothesis property tests for input boundary fuzzing (oversized strings, unicode edge cases)",
+        "Security tests run as part of `make test_all` (no separate security test suite command needed)",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Create `tests/security/__init__.py`",
+        "Create `tests/security/test_ssrf_prevention.py` \u2014 test `validate_url()` from Feature 10 with: allowed domains, blocked domains, HTTP (non-HTTPS), `169.254.169.254` (AWS metadata), `localhost`, `0.0.0.0`, unicode domain IDN homograph attacks",
+        "Create `tests/security/test_prompt_injection.py` \u2014 test `sanitize_for_prompt()` from Feature 11 with: `\"Ignore previous instructions\"` payloads, format string attempts (`{__import__}`), oversized inputs, null bytes",
+        "Create `tests/security/test_sensitive_data_filtering.py` \u2014 test `scrub_log_record()` from Feature 12 with: messages containing `api_key=sk-...`, `password=secret`, `Bearer token` patterns",
+        "Create `tests/security/test_input_size_limits.py` \u2014 test plugin `evaluate()` with oversized `agent_output` (>100KB) and `reference_texts` (>10 items)",
+        "Create `tests/security/test_tool_registration.py` \u2014 verify agent tool lists match expected registrations per agent role"
+      ],
+      "files": [
+        "tests/security/__init__.py",
+        "tests/security/test_ssrf_prevention.py",
+        "tests/security/test_prompt_injection.py",
+        "tests/security/test_sensitive_data_filtering.py",
+        "tests/security/test_input_size_limits.py",
+        "tests/security/test_tool_registration.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "6f9a607fc4134bbd10e5711d010f63487bc7db7181ea543f44c47122bf92b5d0",
+      "depends_on": [
+        "STORY-010",
+        "STORY-011",
+        "STORY-012"
+      ]
+    },
+    {
+      "id": "STORY-014",
+      "title": "Increase test coverage for 5 critical low-coverage modules",
+      "description": "The Sprint 5 MAESTRO review (Recommendations, Priority 5) identified five modules with critically low test coverage that handle core data loading, agent tools, and orchestration. These modules have high regression risk and are frequently modified across sprints. Add targeted behavioral tests to increase coverage before the test audit (Feature 15) removes low-value tests elsewhere.",
+      "acceptance": [
+        "`datasets_peerread.py`: 27% -> 60% \u2014 tests for download error handling, URL construction, paper validation with missing fields, retry logic",
+        "`peerread_tools.py`: 22% -> 60% \u2014 tests for tool registration, PDF extraction error handling, content truncation, template loading",
+        "`llms/models.py`: 24% -> 50% \u2014 tests for model creation with different providers, error handling for unsupported models",
+        "`agent_factories.py`: 39% -> 60% \u2014 tests for agent creation with various toggle combinations, system prompt construction",
+        "`agent_system.py`: 47% -> 60% \u2014 tests for delegation flow, usage limit enforcement, single-agent fallback",
+        "All new tests verify behavior (error handling, data flow, edge cases), not implementation details",
+        "Coverage measured via `make coverage_all` before and after",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Tests go in existing test directories mirroring `src/app/` structure (test_datasets_peerread.py, test_peerread_tools.py, test_models.py, test_agent_factories.py, test_agent_system.py)"
+      ],
+      "files": [
+        "tests/data_utils/test_datasets_peerread.py",
+        "tests/agents/test_peerread_tools.py",
+        "tests/llms/test_models.py",
+        "tests/agents/test_agent_factories.py",
+        "tests/agents/test_agent_system.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "807a9d8ab11e59f24b444c3e94335cd4473f26b4802b89373044f36001cf9591",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-015",
+      "title": "Execute Sprint 5 test audit refactoring plan \u2014 delete ~55 implementation-detail tests",
+      "description": "Sprint 5 STORY-011 produced `docs/reviews/sprint5-test-audit.md` \u2014 a detailed per-file audit with explicit keep/delete/refactor decisions for all test files. The audit was completed but the actual refactoring (deleting ~55 implementation-detail tests from 9 files) was not executed. This story executes the audit plan. Note: `test_migration_cleanup.py` is already deleted, and `tests/cc_otel/` is deleted by Feature 6 (cc_otel removal).",
+      "acceptance": [
+        "`tests/evals/test_judge_settings.py`: `TestJudgeSettingsDefaults` class deleted (13 tests verifying default constants)",
+        "`tests/common/test_common_settings.py`: 2 implementation-detail tests deleted (`test_common_settings_defaults`, `test_common_settings_type_validation`)",
+        "`tests/utils/test_logfire_config.py`: 3 tests deleted (`test_logfire_config_from_settings_defaults`, `test_logfire_config_direct_instantiation`, `test_logfire_config_type_validation`)",
+        "`tests/judge/test_plugin_base.py`: `TestEvaluatorPluginABC` class deleted (4 property-existence tests)",
+        "`tests/judge/test_trace_store.py`: basic CRUD and metadata-tracking tests deleted (tests dict-like behavior assumed by Python)",
+        "`tests/judge/test_plugin_llm_judge.py`: 3 tests deleted (isinstance check, name property, tier property)",
+        "`tests/judge/test_plugin_traditional.py`: 3 tests deleted (isinstance check, name property, tier property)",
+        "`tests/judge/test_plugin_graph.py`: 3 tests deleted (isinstance check, name property, tier property)",
+        "`tests/evals/test_graph_analysis.py`: review for field-existence or type-check tests; delete any found (skip if none exist)",
+        "No reduction in behavioral test coverage \u2014 only implementation-detail tests removed",
+        "`make test_all` passes with all remaining tests green",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Follow execution plan in `docs/reviews/sprint5-test-audit.md` exactly (Phase 2: Delete Implementation-Detail Tests)",
+        "Delete tests by removing specific test functions or classes, not entire files (files contain mix of keep and delete tests)",
+        "Run `make test_all` after each file modification to catch regressions immediately",
+        "Expected net reduction: ~55 tests from 9 files"
+      ],
+      "files": [
+        "tests/evals/test_judge_settings.py",
+        "tests/common/test_common_settings.py",
+        "tests/utils/test_logfire_config.py",
+        "tests/judge/test_plugin_base.py",
+        "tests/judge/test_trace_store.py",
+        "tests/judge/test_plugin_llm_judge.py",
+        "tests/judge/test_plugin_traditional.py",
+        "tests/judge/test_plugin_graph.py",
+        "tests/evals/test_graph_analysis.py"
+      ],
+      "passes": false,
+      "completed_at": null,
+      "content_hash": "978eda91ce9a410e1a7a5993f5c85ebc20bac8c6f9518ffeaa56616193fdb316",
+      "depends_on": [
+        "STORY-014",
+        "STORY-006"
+      ]
+    }
+  ]
+}
