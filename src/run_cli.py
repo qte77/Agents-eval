@@ -71,7 +71,8 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
             "Path to Claude Code Agent Teams artifacts directory for baseline comparison"
         ),
         "--cc-teams-tasks-dir": (
-            "Path to Claude Code Agent Teams tasks directory (optional, auto-discovered if not specified)"
+            "Path to Claude Code Agent Teams tasks directory "
+            "(optional, auto-discovered if not specified)"
         ),
     }
 

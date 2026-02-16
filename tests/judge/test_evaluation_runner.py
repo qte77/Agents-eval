@@ -201,7 +201,7 @@ class TestRunBaselineComparisons:
             from app.judge.evaluation_runner import run_baseline_comparisons
 
             pipeline = MagicMock()
-            await run_baseline_comparisons(pipeline, None, None, None)
+            await run_baseline_comparisons(pipeline, None, None, None, None)
             mock_compare.assert_not_called()
 
     @pytest.mark.asyncio
@@ -230,7 +230,7 @@ class TestRunBaselineComparisons:
             pipeline = MagicMock()
             pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
 
-            await run_baseline_comparisons(pipeline, None, "/tmp/solo", None)
+            await run_baseline_comparisons(pipeline, None, "/tmp/solo", None, None)
 
             mock_adapter_class.assert_called_once()
             assert pipeline.evaluate_comprehensive.call_count == 1
@@ -248,7 +248,7 @@ class TestRunBaselineComparisons:
             from app.judge.evaluation_runner import run_baseline_comparisons
 
             pipeline = MagicMock()
-            await run_baseline_comparisons(pipeline, None, "/tmp/solo", None)
+            await run_baseline_comparisons(pipeline, None, "/tmp/solo", None, None)
 
             mock_logger.warning.assert_called_once()
             assert "parse error" in str(mock_logger.warning.call_args)
