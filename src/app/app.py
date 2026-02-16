@@ -9,8 +9,9 @@ and supports both CLI and programmatic execution.
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import TypeVar, cast
+from typing import Any, TypeVar, cast
 
+import networkx as nx
 from logfire import span
 
 # Reason: weave is optional - only import if available (requires WANDB_API_KEY)
@@ -51,6 +52,7 @@ from app.data_utils.datasets_peerread import (
 from app.judge.baseline_comparison import compare_all
 from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
+from app.judge.graph_builder import build_interaction_graph
 from app.judge.settings import JudgeSettings
 from app.utils.error_messages import generic_exception
 from app.utils.load_configs import load_config
@@ -255,7 +257,7 @@ async def main(
     cc_teams_dir: str | None = None,
     token_limit: int | None = None,
     # chat_config_path: str | Path,
-) -> None:
+) -> dict[str, Any] | None:
     """
     Main entry point for the application.
 
@@ -263,7 +265,8 @@ async def main(
         See `--help`.
 
     Returns:
-        None
+        Dictionary with 'composite_result' (CompositeResult) and 'graph' (nx.DiGraph)
+        if evaluation runs successfully, None otherwise (CLI mode or download-only).
     """
     logger.info(f"Starting app '{PROJECT_NAME}' v{__version__}")
 
@@ -317,11 +320,34 @@ async def main(
             )
 
             # Run evaluation after manager completes
-            await _run_evaluation_if_enabled(
+            composite_result = await _run_evaluation_if_enabled(
                 skip_eval, paper_number, execution_id, cc_solo_dir, cc_teams_dir, chat_provider
             )
 
+            # Build interaction graph from trace data for visualization
+            graph: nx.DiGraph[str] | None = None
+            if execution_id and composite_result:
+                from app.judge.trace_processors import get_trace_collector
+
+                trace_collector = get_trace_collector()
+                execution_trace = trace_collector.load_trace(execution_id)
+                if execution_trace:
+                    graph = build_interaction_graph(execution_trace)
+                    logger.info(
+                        f"Built interaction graph: {graph.number_of_nodes()} nodes, "
+                        f"{graph.number_of_edges()} edges"
+                    )
+
             logger.info(f"Exiting app '{PROJECT_NAME}'")
+
+            # Return data for GUI usage
+            if composite_result is not None:
+                return {
+                    "composite_result": composite_result,
+                    "graph": graph,
+                }
+
+            return None
 
     except Exception as e:
         msg = generic_exception(f"Aborting app '{PROJECT_NAME}' with: {e}")

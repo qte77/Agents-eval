@@ -162,7 +162,18 @@ async def _execute_query_background(
 
         # Store result and transition to completed
         st.session_state.execution_state = "completed"
-        st.session_state.execution_result = result
+
+        # Extract CompositeResult and graph from result dict
+        if result is not None and isinstance(result, dict):
+            st.session_state.execution_composite_result = result.get("composite_result")
+            st.session_state.execution_graph = result.get("graph")
+            # Keep legacy execution_result for backward compatibility
+            st.session_state.execution_result = result.get("composite_result")
+        else:
+            # No evaluation result (e.g., skip_eval=True)
+            st.session_state.execution_composite_result = None
+            st.session_state.execution_graph = None
+            st.session_state.execution_result = None
 
         # Clear error if previously set
         if hasattr(st.session_state, "execution_error"):

@@ -96,11 +96,13 @@ async def main():
         logger.info(f"Page 'App' provider: {CHAT_DEFAULT_PROVIDER}")
         await render_app(CHAT_DEFAULT_PROVIDER, chat_config_file)
     elif selected_page == "Evaluation Results":
-        # Render with None initially - real data would come from session state
-        render_evaluation(None)
+        # Pass composite result from session state if available
+        composite_result = st.session_state.get("execution_composite_result", None)
+        render_evaluation(composite_result)
     elif selected_page == "Agent Graph":
-        # Render with None initially - real data would come from session state
-        render_agent_graph(None)
+        # Pass graph from session state if available
+        graph = st.session_state.get("execution_graph", None)
+        render_agent_graph(graph)
 
 
 if __name__ == "__main__":
