@@ -256,9 +256,13 @@ detect_already_complete() {
 }
 
 # Run quality checks (dispatches to baseline-aware or original mode)
+# Args:
+#   $1 - Story ID (for baseline refresh metadata)
 run_quality_checks() {
+    local story_id="${1:-unknown}"
+
     if [ "$RALPH_BASELINE_MODE" = "true" ]; then
-        run_quality_checks_baseline "$BASELINE_FILE"
+        run_quality_checks_baseline "$BASELINE_FILE" "$story_id"
     else
         log_info "Running quality checks (make validate)..."
         if make --no-print-directory validate 2>&1 | tee /tmp/claude/ralph_validate.log; then
@@ -391,11 +395,6 @@ main() {
 
     validate_environment
 
-    # Capture test baseline before loop starts
-    if [ "$RALPH_BASELINE_MODE" = "true" ]; then
-        capture_test_baseline "$BASELINE_FILE"
-    fi
-
     # Track timing for ETA calculation
     RALPH_START_TIME=$(date +%s)
     RALPH_START_PASSING=$(jq '[.stories[] | select(.passes == true)] | length' "$PRD_JSON")
@@ -424,6 +423,11 @@ main() {
             last_story_id="$story_id"
         fi
 
+        # Capture per-story baseline (persisted to prevent absorption on restart)
+        if [ "$RALPH_BASELINE_MODE" = "true" ]; then
+            capture_test_baseline "$BASELINE_FILE" "$story_id"
+        fi
+
         # Record commit count before execution
         local commits_before=$(commit_count)
 
@@ -437,7 +441,7 @@ main() {
             # Story already complete - skip TDD verification, just run quality checks
             log_info "Story already complete - verifying with quality checks"
 
-            if run_quality_checks; then
+            if run_quality_checks "$story_id"; then
                 # Mark as passing
                 update_story_status "$story_id" "true"
                 log_progress "$iteration" "$story_id" "PASS" "Already complete, verified by quality checks"
@@ -484,7 +488,7 @@ main() {
             fi
 
             # Run quality checks
-            if run_quality_checks; then
+            if run_quality_checks "$story_id"; then
                 # Mark as passing
                 update_story_status "$story_id" "true"
                 log_progress "$iteration" "$story_id" "PASS" "Completed successfully with TDD commits"

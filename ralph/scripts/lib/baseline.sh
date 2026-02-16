@@ -6,37 +6,101 @@
 # story advancement on NEW failures (regressions). This prevents
 # unrelated failures from blocking story progress.
 #
+# ANTI-CONTAMINATION: Baseline is automatically refreshed after successful
+# validation to prevent failures from leaking between stories.
+#
+# ANTI-ABSORPTION: Baselines are persisted per story ID. On restart, the
+# original pre-story baseline is reused so a story's own failures from a
+# prior attempt cannot be laundered into the baseline.
+#
+# STORY-SCOPED LINT: Phase 1 test linting only checks files changed by
+# the current story (git diff + untracked). Pre-existing lint violations
+# in untouched test files do not block story progress.
+#
 # Source this file: source "$SCRIPT_DIR/lib/baseline.sh"
 #
 # Functions:
-#   capture_test_baseline   - Snapshot current failing tests
-#   compare_test_failures   - Diff current failures against baseline
-#   run_quality_checks_baseline - Lint/type/test with baseline comparison
+#   get_story_base_commit          - Find pre-story commit for scoped diffs
+#   capture_test_baseline          - Snapshot current failing tests (per-story persistent)
+#   refresh_baseline_on_success    - Update baseline after clean validation
+#   compare_test_failures          - Diff current failures against baseline
+#   run_quality_checks_baseline    - Lint/type/test with baseline comparison
+#   get_baseline_age               - Check baseline freshness
 #
 
 # Freshness threshold for pytest cache (seconds)
 BASELINE_CACHE_MAX_AGE=${BASELINE_CACHE_MAX_AGE:-300}
+
+# Auto-refresh baseline after successful validation (prevents contamination)
+RALPH_AUTO_REFRESH_BASELINE=${RALPH_AUTO_REFRESH_BASELINE:-true}
+
+# Persistent per-story baseline storage (prevents absorption across restarts)
+BASELINE_STORE_DIR="${BASELINE_STORE_DIR:-/tmp/claude/ralph_baselines}"
+
+# Find the commit before a story's first commit.
+# Used to scope lint checks and baseline captures to story-changed files.
+# Returns HEAD if no story commits exist yet.
+#
+# Args:
+#   $1 - Story ID (e.g., STORY-014)
+get_story_base_commit() {
+    local story_id="$1"
+    local first
+    first=$(git log --format="%H" --grep="$story_id" --reverse | head -1)
+    if [ -n "$first" ]; then
+        git rev-parse "${first}^" 2>/dev/null || git rev-parse HEAD
+    else
+        git rev-parse HEAD
+    fi
+}
 
 # Capture current test failures as baseline.
 # Uses pytest cache if fresh, falls back to full test run.
 #
 # Args:
 #   $1 - Path to baseline file
+#   $2 - Optional story ID for tracking (default: "loop-init")
 capture_test_baseline() {
     local baseline_file="$1"
+    local story_id="${2:-loop-init}"
     local cache_file=".pytest_cache/v/cache/lastfailed"
 
-    log_info "Capturing test baseline..."
+    log_info "Capturing test baseline for $story_id..."
     mkdir -p "$(dirname "$baseline_file")"
+    mkdir -p "$BASELINE_STORE_DIR"
+
+    # Reuse persisted baseline if it exists for this story (prevents absorption
+    # of story's own failures across restarts)
+    local stored="${BASELINE_STORE_DIR}/${story_id}.txt"
+    if [ "$story_id" != "loop-init" ] && [ -f "$stored" ]; then
+        log_info "Reusing persisted baseline for $story_id (prevents absorption)"
+        cp "$stored" "$baseline_file"
+        local count
+        count=$(grep -v "^#" "$baseline_file" | grep -c . || echo 0)
+        log_info "Persisted baseline: $count pre-existing failure(s)"
+        return 0
+    fi
 
     # Try pytest cache first (instant, no test execution)
     if [ -f "$cache_file" ]; then
         local cache_age=$(($(date +%s) - $(stat -c %Y "$cache_file")))
         if [ "$cache_age" -lt "$BASELINE_CACHE_MAX_AGE" ]; then
             log_info "Using pytest cache (${cache_age}s old, threshold: ${BASELINE_CACHE_MAX_AGE}s)"
-            jq -r 'keys[]' "$cache_file" | sort > "$baseline_file"
+
+            local failures_temp=$(mktemp)
+            jq -r 'keys[]' "$cache_file" | sort > "$failures_temp"
+
+            # Add metadata header
+            {
+                echo "# Baseline captured: $(date --iso-8601=seconds)"
+                echo "# Story: $story_id"
+                echo "# Source: pytest-cache"
+                cat "$failures_temp"
+            } > "$baseline_file"
+            rm "$failures_temp"
+
             local count
-            count=$(wc -l < "$baseline_file" | tr -d ' ')
+            count=$(grep -v "^#" "$baseline_file" | grep -c . || echo 0)
             if [ "$count" -eq 0 ]; then
                 log_info "Baseline captured: all tests passing (cached)"
             else
@@ -56,18 +120,102 @@ capture_test_baseline() {
 
     # Extract FAILED lines, strip "FAILED " prefix, sort
     # Reason: grep returns 1 when no matches; || true prevents set -e abort
+    local failures_temp=$(mktemp)
     echo "$test_output" \
         | { grep "^FAILED " || true; } \
         | sed 's/^FAILED //' \
-        | sort > "$baseline_file"
+        | sort > "$failures_temp"
+
+    # Add metadata header
+    {
+        echo "# Baseline captured: $(date --iso-8601=seconds)"
+        echo "# Story: $story_id"
+        echo "# Source: full-test-run"
+        cat "$failures_temp"
+    } > "$baseline_file"
+    rm "$failures_temp"
 
     local count
-    count=$(wc -l < "$baseline_file" | tr -d ' ')
+    count=$(grep -v "^#" "$baseline_file" | grep -c . || echo 0)
 
     if [ "$count" -eq 0 ]; then
         log_info "Baseline captured: all tests passing"
     else
         log_warn "Baseline captured: $count pre-existing failure(s)"
+    fi
+
+    # Persist for this story (reused on restart to prevent absorption)
+    if [ "$story_id" != "loop-init" ]; then
+        cp "$baseline_file" "${BASELINE_STORE_DIR}/${story_id}.txt"
+        log_info "Baseline persisted for $story_id"
+    fi
+}
+
+# Get baseline age in seconds.
+# Returns age, or -1 if baseline doesn't exist or has no metadata.
+#
+# Args:
+#   $1 - Path to baseline file
+get_baseline_age() {
+    local baseline_file="$1"
+
+    if [ ! -f "$baseline_file" ]; then
+        echo "-1"
+        return
+    fi
+
+    # Extract timestamp from metadata header
+    local baseline_ts
+    baseline_ts=$(grep "^# Baseline captured:" "$baseline_file" | head -1 | sed 's/^# Baseline captured: //')
+
+    if [ -z "$baseline_ts" ]; then
+        # No metadata, fall back to file modification time
+        local file_age=$(($(date +%s) - $(stat -c %Y "$baseline_file")))
+        echo "$file_age"
+        return
+    fi
+
+    local baseline_epoch
+    baseline_epoch=$(date -d "$baseline_ts" +%s 2>/dev/null || echo "-1")
+
+    if [ "$baseline_epoch" -eq -1 ]; then
+        echo "-1"
+        return
+    fi
+
+    local age=$(($(date +%s) - baseline_epoch))
+    echo "$age"
+}
+
+# Refresh baseline after successful validation.
+# This prevents contamination: if validation passes, the current state
+# becomes the new baseline for the next story.
+#
+# Args:
+#   $1 - Path to baseline file
+#   $2 - Story ID that just passed
+#   $3 - Current failures count (default: 0)
+refresh_baseline_on_success() {
+    local baseline_file="$1"
+    local story_id="$2"
+    local current_failures="${3:-0}"
+
+    log_info "Refreshing baseline after successful validation of $story_id"
+
+    # Clean up persisted baseline (story completed, no restart protection needed)
+    rm -f "${BASELINE_STORE_DIR}/${story_id}.txt"
+
+    if [ "$current_failures" -eq 0 ]; then
+        log_success "Clean state: all tests passing — baseline cleared"
+        {
+            echo "# Baseline refreshed: $(date --iso-8601=seconds)"
+            echo "# Story: $story_id"
+            echo "# Status: all-tests-passing"
+        } > "$baseline_file"
+    else
+        log_info "State has $current_failures pre-existing failure(s) — baseline updated"
+        # Reason: "loop-refresh" skips per-story persistence (story already completed)
+        capture_test_baseline "$baseline_file" "loop-refresh"
     fi
 }
 
@@ -87,6 +235,11 @@ compare_test_failures() {
         return 1
     fi
 
+    # Extract baseline failures (skip metadata lines starting with #)
+    local baseline_failures
+    baseline_failures=$(mktemp /tmp/claude/ralph_baseline_failures.XXXXXX)
+    grep -v "^#" "$baseline_file" | sort > "$baseline_failures"
+
     # Extract current FAILED lines into sorted temp file
     local current_failures
     current_failures=$(mktemp /tmp/claude/ralph_current_failures.XXXXXX)
@@ -97,14 +250,14 @@ compare_test_failures() {
 
     # Find new failures (in current but not in baseline)
     local new_failures
-    new_failures=$(comm -13 "$baseline_file" "$current_failures")
+    new_failures=$(comm -13 "$baseline_failures" "$current_failures")
 
     # Find resolved failures (in baseline but not in current)
     local resolved_failures
-    resolved_failures=$(comm -23 "$baseline_file" "$current_failures")
+    resolved_failures=$(comm -23 "$baseline_failures" "$current_failures")
 
     local baseline_count current_count new_count resolved_count
-    baseline_count=$(wc -l < "$baseline_file" | tr -d ' ')
+    baseline_count=$(wc -l < "$baseline_failures" | tr -d ' ')
     current_count=$(wc -l < "$current_failures" | tr -d ' ')
     new_count=$(echo "$new_failures" | grep -c . || true)
     resolved_count=$(echo "$resolved_failures" | grep -c . || true)
@@ -128,7 +281,7 @@ compare_test_failures() {
         echo "$new_failures" | while read -r line; do
             [ -n "$line" ] && log_error "  New: $line"
         done
-        rm "$current_failures"
+        rm "$baseline_failures" "$current_failures"
         return 1
     fi
 
@@ -138,7 +291,11 @@ compare_test_failures() {
     fi
 
     log_success "No new test failures — baseline-aware validation passed"
-    rm "$current_failures"
+
+    # Export current failure count for caller (used by refresh function)
+    export RALPH_CURRENT_FAILURE_COUNT="$current_count"
+
+    rm "$baseline_failures" "$current_failures"
     return 0
 }
 
@@ -146,25 +303,60 @@ compare_test_failures() {
 # Lint/type/complexity checks fail-fast. Test failures are compared
 # against the baseline to distinguish regressions from pre-existing issues.
 #
+# ANTI-CONTAMINATION: Automatically refreshes baseline after successful
+# validation (controlled by RALPH_AUTO_REFRESH_BASELINE env var).
+#
 # Args:
 #   $1 - Path to baseline file
+#   $2 - Optional story ID (for baseline refresh metadata)
 run_quality_checks_baseline() {
     local baseline_file="$1"
+    local story_id="${2:-unknown}"
     local current_log="/tmp/claude/ralph_current_tests.log"
 
     log_info "Running quality checks (baseline-aware)..."
+
     mkdir -p "$(dirname "$current_log")"
 
-    # Phase 1: Lint/type/complexity (fail-fast)
+    # Phase 1: Lint/type/complexity (fail-fast, story-scoped test lint)
     log_info "Phase 1: Lint/type/complexity checks..."
 
-    local checks=(ruff ruff_tests type_check complexity)
-    for check in "${checks[@]}"; do
+    # Source lint, type checking, complexity (not story-scoped)
+    for check in ruff type_check complexity; do
         if ! make --no-print-directory "$check" 2>&1; then
             log_error "$check failed"
             return 1
         fi
     done
+
+    # Story-scoped test lint: only lint test files changed by this story.
+    # Reason: pre-existing lint violations in untouched files must not block.
+    local base_commit
+    base_commit=$(get_story_base_commit "$story_id")
+    # Committed changes + untracked new test files
+    local changed_tests untracked_tests all_changed
+    changed_tests=$(git diff --name-only "$base_commit" HEAD -- tests/ 2>/dev/null || true)
+    untracked_tests=$(git ls-files --others --exclude-standard -- tests/ 2>/dev/null || true)
+    all_changed=$(printf '%s\n%s' "$changed_tests" "$untracked_tests" | sort -u | grep -v '^$' || true)
+
+    if [ -n "$all_changed" ]; then
+        local file_count
+        file_count=$(echo "$all_changed" | wc -l | tr -d ' ')
+        log_info "Linting $file_count story-changed test file(s)..."
+        # Reason: word splitting on $all_changed is intentional (file list)
+        # shellcheck disable=SC2086
+        if ! uv run ruff format $all_changed 2>&1; then
+            log_error "ruff format failed on story-changed test files"
+            return 1
+        fi
+        # shellcheck disable=SC2086
+        if ! uv run ruff check $all_changed --fix 2>&1; then
+            log_error "ruff check failed on story-changed test files"
+            return 1
+        fi
+    else
+        log_info "No test files changed — skipping ruff_tests"
+    fi
 
     log_info "Phase 1 passed"
 
@@ -176,9 +368,27 @@ run_quality_checks_baseline() {
 
     if [ "$test_exit" -eq 0 ]; then
         log_info "All tests passed"
+
+        # Auto-refresh baseline on clean success
+        if [ "$RALPH_AUTO_REFRESH_BASELINE" = "true" ]; then
+            refresh_baseline_on_success "$baseline_file" "$story_id" 0
+        fi
+
         return 0
     fi
 
     # Tests failed — check if failures are only pre-existing
-    compare_test_failures "$baseline_file" "$current_log"
+    if compare_test_failures "$baseline_file" "$current_log"; then
+        # No new failures — validation passed with pre-existing issues
+
+        # Auto-refresh baseline to current state (prevents contamination)
+        if [ "$RALPH_AUTO_REFRESH_BASELINE" = "true" ]; then
+            refresh_baseline_on_success "$baseline_file" "$story_id" "$RALPH_CURRENT_FAILURE_COUNT"
+        fi
+
+        return 0
+    else
+        # New failures detected
+        return 1
+    fi
 }

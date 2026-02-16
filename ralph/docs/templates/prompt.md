@@ -80,27 +80,31 @@ Follow the project's testing best practices. Tests MUST be written and
 - Fix any remaining test failures or edge cases from GREEN phase
 - Improve code structure while keeping tests passing
   - Use focused checks: `make ruff`, `make type_check`, `uv run pytest <test-file>`
-  - Run `make validate` only at the very end before marking story complete
+  - Do NOT run `make validate` — Ralph handles full validation after your work
   - **COMMIT**: `git add . && git commit -m "refactor(STORY-XXX): fix edge cases [REFACTOR]"`
 
 **CRITICAL**: The Ralph loop counts your commits and checks for `[RED]` and
 `[GREEN]` markers. If these commits are missing, ALL your work will be reset
 and you must start over.
 
-**Retry after quality failure**: If Ralph retries your story after `make validate`
+**Retry after quality failure**: If Ralph retries your story after quality checks
 failed, your prior `[RED]` and `[GREEN]` commits still exist. You only need a
 `[REFACTOR]` commit to fix the remaining issues — do NOT recreate `[RED]` or
 `[GREEN]`. Check git log to confirm they exist before deciding your approach.
 
 ## Quality Gates
 
-Before marking the story complete:
+Ralph runs quality checks automatically after your work completes.
+Use focused checks during development to catch issues early:
 
 ```bash
-make validate
+make ruff          # Format and lint src
+make type_check    # Static type checking
+uv run pytest <test-file>  # Run specific tests
 ```
 
-All checks (formatting, type checking, tests) must pass.
+Do NOT run `make validate` — it lints all test files including pre-existing
+issues outside your story scope. Ralph's validation is story-scoped.
 
 **Note on pre-existing test failures:** The Ralph loop captures a baseline of
 failing tests before your story starts. Pre-existing failures unrelated to your
