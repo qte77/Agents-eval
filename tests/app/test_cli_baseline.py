@@ -23,9 +23,9 @@ async def test_cli_accepts_cc_solo_dir_flag():
         patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
-        patch("app.app.EvaluationPipeline") as mock_pipeline_class,
+        patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
-        patch("app.app.CCTraceAdapter") as mock_adapter,
+        patch("app.judge.evaluation_runner.CCTraceAdapter") as mock_adapter,
     ):
         # Setup mocks
         mock_setup.return_value = MagicMock(
@@ -83,9 +83,9 @@ async def test_cli_accepts_cc_teams_dir_flag():
         patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
-        patch("app.app.EvaluationPipeline") as mock_pipeline_class,
+        patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
-        patch("app.app.CCTraceAdapter") as mock_adapter,
+        patch("app.judge.evaluation_runner.CCTraceAdapter") as mock_adapter,
     ):
         # Setup mocks
         mock_setup.return_value = MagicMock(
@@ -143,10 +143,10 @@ async def test_three_way_comparison_with_both_cc_baselines():
         patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
-        patch("app.app.EvaluationPipeline") as mock_pipeline_class,
+        patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
-        patch("app.app.CCTraceAdapter") as mock_adapter,
-        patch("app.app.compare_all") as mock_compare_all,
+        patch("app.judge.evaluation_runner.CCTraceAdapter") as mock_adapter,
+        patch("app.judge.evaluation_runner.compare_all") as mock_compare_all,
     ):
         # Setup mocks
         mock_setup.return_value = MagicMock(
@@ -219,11 +219,11 @@ async def test_baseline_comparison_printed_to_console():
         patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
-        patch("app.app.EvaluationPipeline") as mock_pipeline_class,
+        patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
-        patch("app.app.CCTraceAdapter") as mock_adapter,
-        patch("app.app.compare_all") as mock_compare_all,
-        patch("app.app.logger") as mock_logger,
+        patch("app.judge.evaluation_runner.CCTraceAdapter") as mock_adapter,
+        patch("app.judge.evaluation_runner.compare_all") as mock_compare_all,
+        patch("app.judge.evaluation_runner.logger") as mock_logger,
     ):
         # Setup mocks
         mock_setup.return_value = MagicMock(
@@ -294,9 +294,9 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
-        patch("app.app.EvaluationPipeline") as mock_pipeline_class,
+        patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
-        patch("app.app.compare_all") as mock_compare_all,
+        patch("app.judge.evaluation_runner.compare_all") as mock_compare_all,
     ):
         # Setup mocks
         mock_setup.return_value = MagicMock(

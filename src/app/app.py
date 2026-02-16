@@ -5,6 +5,8 @@ This module initializes the agentic system, loads configuration files,
 handles user input, and orchestrates the multi-agent workflow using
 asynchronous execution. It integrates logging, tracing, and authentication,
 and supports both CLI and programmatic execution.
+
+Evaluation orchestration is delegated to app.judge.evaluation_runner.
 """
 
 from __future__ import annotations
@@ -13,7 +15,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
-import networkx as nx
 from logfire import span
 
 # Reason: weave is optional - only import if available (requires WANDB_API_KEY)
@@ -47,14 +48,15 @@ from app.config.config_app import (
     PROJECT_NAME,
 )
 from app.data_models.app_models import AppEnv, ChatConfig
-from app.data_models.evaluation_models import CompositeResult
 from app.data_utils.datasets_peerread import (
     download_peerread_dataset,
 )
-from app.judge.baseline_comparison import compare_all
-from app.judge.cc_trace_adapter import CCTraceAdapter
-from app.judge.evaluation_pipeline import EvaluationPipeline
-from app.judge.graph_builder import build_interaction_graph
+from app.judge.evaluation_runner import (
+    build_graph_from_trace as _build_graph_from_trace,
+)
+from app.judge.evaluation_runner import (
+    run_evaluation_if_enabled as _run_evaluation_if_enabled,
+)
 from app.judge.settings import JudgeSettings
 from app.utils.error_messages import generic_exception
 from app.utils.load_configs import load_config
@@ -63,53 +65,6 @@ from app.utils.login import login
 from app.utils.paths import resolve_config_path
 
 CONFIG_FOLDER = "config"
-
-
-def _build_graph_from_trace(execution_id: str | None) -> nx.DiGraph[str] | None:
-    """Build interaction graph from execution trace data.
-
-    Args:
-        execution_id: Execution ID for trace retrieval
-
-    Returns:
-        NetworkX DiGraph if trace data available, None otherwise
-    """
-    if not execution_id:
-        return None
-
-    from app.judge.trace_processors import get_trace_collector
-
-    trace_collector = get_trace_collector()
-    execution_trace = trace_collector.load_trace(execution_id)
-
-    if not execution_trace:
-        return None
-
-    graph = build_interaction_graph(execution_trace)
-    logger.info(
-        f"Built interaction graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges"
-    )
-    return graph
-
-
-def _prepare_result_dict(
-    composite_result: CompositeResult | None, graph: nx.DiGraph[str] | None
-) -> dict[str, Any] | None:
-    """Prepare result dictionary for GUI usage.
-
-    Args:
-        composite_result: Evaluation result
-        graph: Interaction graph
-
-    Returns:
-        Dict with result and graph if available, None otherwise
-    """
-    if composite_result is not None:
-        return {
-            "composite_result": composite_result,
-            "graph": graph,
-        }
-    return None
 
 
 async def _run_agent_execution(
@@ -165,128 +120,6 @@ async def _run_agent_execution(
     return execution_id, prompts
 
 
-async def _run_evaluation_if_enabled(
-    skip_eval: bool,
-    paper_number: str | None,
-    execution_id: str | None,
-    cc_solo_dir: str | None = None,
-    cc_teams_dir: str | None = None,
-    chat_provider: str | None = None,
-) -> CompositeResult | None:
-    """Run evaluation pipeline after manager completes if enabled.
-
-    Args:
-        skip_eval: Whether to skip evaluation via CLI flag
-        paper_number: Paper number for PeerRead review (indicates ground truth availability)
-        execution_id: Execution ID for trace retrieval
-        cc_solo_dir: Path to Claude Code solo artifacts directory for baseline comparison
-        cc_teams_dir: Path to Claude Code teams artifacts directory for baseline comparison
-        chat_provider: Active chat provider from agent system (STORY-001)
-
-    Returns:
-        CompositeResult from PydanticAI evaluation or None if skipped
-    """
-    if skip_eval:
-        logger.info("Evaluation skipped via --skip-eval flag")
-        return None
-
-    logger.info("Running evaluation pipeline...")
-    pipeline = EvaluationPipeline(chat_provider=chat_provider)
-
-    # Gracefully handle when no ground-truth reviews available
-    if not paper_number:
-        logger.info("Skipping evaluation: no ground-truth reviews available")
-
-    # Retrieve GraphTraceData from trace collector
-    execution_trace = None
-    if execution_id:
-        from app.judge.trace_processors import get_trace_collector
-
-        trace_collector = get_trace_collector()
-        execution_trace = trace_collector.load_trace(execution_id)
-
-        if execution_trace:
-            logger.info(
-                f"Loaded trace data: {len(execution_trace.agent_interactions)} interactions, "
-                f"{len(execution_trace.tool_calls)} tool calls"
-            )
-        else:
-            logger.warning(f"No trace data found for execution: {execution_id}")
-
-    # TODO: Extract paper and review from run_manager result
-    # For now, calling with minimal placeholder data to satisfy wiring requirement
-    pydantic_result = await pipeline.evaluate_comprehensive(
-        paper="",  # Placeholder - will be extracted from manager result
-        review="",  # Placeholder - will be extracted from manager result
-        execution_trace=execution_trace,
-        reference_reviews=None,
-    )
-
-    # Run baseline comparisons if Claude Code directories provided
-    await _run_baseline_comparisons(pipeline, pydantic_result, cc_solo_dir, cc_teams_dir)
-
-    return pydantic_result
-
-
-async def _run_baseline_comparisons(
-    pipeline: EvaluationPipeline,
-    pydantic_result: CompositeResult | None,
-    cc_solo_dir: str | None,
-    cc_teams_dir: str | None,
-) -> None:
-    """Run baseline comparisons against Claude Code solo and teams if directories provided.
-
-    Args:
-        pipeline: Evaluation pipeline instance
-        pydantic_result: PydanticAI evaluation result
-        cc_solo_dir: Path to Claude Code solo artifacts directory
-        cc_teams_dir: Path to Claude Code teams artifacts directory
-    """
-    if not cc_solo_dir and not cc_teams_dir:
-        return
-
-    logger.info("Running baseline comparisons...")
-
-    # Evaluate Claude Code solo baseline if directory provided
-    cc_solo_result: CompositeResult | None = None
-    if cc_solo_dir:
-        try:
-            logger.info(f"Evaluating Claude Code solo baseline from {cc_solo_dir}")
-            adapter = CCTraceAdapter(Path(cc_solo_dir))
-            cc_solo_trace = adapter.parse()
-            cc_solo_result = await pipeline.evaluate_comprehensive(
-                paper="",
-                review="",
-                execution_trace=cc_solo_trace,
-                reference_reviews=None,
-            )
-            logger.info(f"Claude Code solo baseline score: {cc_solo_result.composite_score:.2f}")
-        except Exception as e:
-            logger.warning(f"Failed to evaluate Claude Code solo baseline: {e}")
-
-    # Evaluate Claude Code teams baseline if directory provided
-    cc_teams_result: CompositeResult | None = None
-    if cc_teams_dir:
-        try:
-            logger.info(f"Evaluating Claude Code teams baseline from {cc_teams_dir}")
-            adapter = CCTraceAdapter(Path(cc_teams_dir))
-            cc_teams_trace = adapter.parse()
-            cc_teams_result = await pipeline.evaluate_comprehensive(
-                paper="",
-                review="",
-                execution_trace=cc_teams_trace,
-                reference_reviews=None,
-            )
-            logger.info(f"Claude Code teams baseline score: {cc_teams_result.composite_score:.2f}")
-        except Exception as e:
-            logger.warning(f"Failed to evaluate Claude Code teams baseline: {e}")
-
-    # Generate and log comparisons
-    comparisons = compare_all(pydantic_result, cc_solo_result, cc_teams_result)
-    for comparison in comparisons:
-        logger.info(f"Baseline comparison: {comparison.summary}")
-
-
 def _handle_download_mode(
     download_full: bool, download_samples: bool, max_samples: int | None
 ) -> bool:
@@ -340,6 +173,24 @@ def _prepare_query(
     return query, False
 
 
+def _prepare_result_dict(composite_result: Any | None, graph: Any | None) -> dict[str, Any] | None:
+    """Prepare result dictionary for GUI usage.
+
+    Args:
+        composite_result: Evaluation result
+        graph: Interaction graph
+
+    Returns:
+        Dict with result and graph if available, None otherwise
+    """
+    if composite_result is not None:
+        return {
+            "composite_result": composite_result,
+            "graph": graph,
+        }
+    return None
+
+
 @op()  # type: ignore[reportUntypedFunctionDecorator]
 async def main(
     chat_provider: str = CHAT_DEFAULT_PROVIDER,
@@ -358,10 +209,8 @@ async def main(
     cc_solo_dir: str | None = None,
     cc_teams_dir: str | None = None,
     token_limit: int | None = None,
-    # chat_config_path: str | Path,
 ) -> dict[str, Any] | None:
-    """
-    Main entry point for the application.
+    """Main entry point for the application.
 
     Args:
         See `--help`.

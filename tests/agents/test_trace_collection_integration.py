@@ -190,7 +190,7 @@ async def test_graph_trace_data_passed_to_evaluation():
         patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
-        patch("app.app.EvaluationPipeline") as mock_pipeline_class,
+        patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
         patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
     ):

@@ -24,7 +24,7 @@ async def test_evaluation_runs_after_manager_by_default():
         patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
-        patch("app.app.EvaluationPipeline") as mock_pipeline_class,
+        patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
     ):
         # Setup mocks
@@ -88,7 +88,7 @@ async def test_skip_eval_flag_prevents_evaluation():
         patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
-        patch("app.app.EvaluationPipeline") as mock_pipeline_class,
+        patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
     ):
         # Setup mocks
@@ -131,9 +131,9 @@ async def test_graceful_skip_without_ground_truth():
         patch("app.app.login"),
         patch("app.app.get_manager") as mock_get_manager,
         patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
-        patch("app.app.EvaluationPipeline") as mock_pipeline_class,
+        patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
-        patch("app.app.logger") as mock_logger,
+        patch("app.judge.evaluation_runner.logger") as mock_logger,
     ):
         # Setup mocks
         mock_setup.return_value = MagicMock(
