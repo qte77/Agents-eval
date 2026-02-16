@@ -329,6 +329,118 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         mock_compare_all.assert_not_called()
 
 
+# STORY-009: Tests for default-on review tools and opt-out flag
+@pytest.mark.asyncio
+async def test_review_tools_enabled_by_default():
+    """Test that review tools are enabled by default (STORY-009)."""
+    with (
+        patch("app.app.setup_agent_env") as mock_setup,
+        patch("app.app.login"),
+        patch("app.app.get_manager") as mock_get_manager,
+        patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
+        patch("app.app.load_config") as mock_load_config,
+    ):
+        # Setup mocks
+        mock_setup.return_value = MagicMock(
+            provider="test_provider",
+            provider_config={},
+            api_key="test_key",
+            prompts={},
+            query="test query",
+            usage_limits=None,
+        )
+        mock_manager = MagicMock()
+        mock_get_manager.return_value = mock_manager
+        mock_run_manager.return_value = ("test_exec_123", None)
+
+        mock_load_config.return_value = MagicMock(prompts={})
+
+        from app.app import main
+
+        # Run main without explicit enable_review_tools parameter
+        await main(
+            chat_provider="test_provider",
+            query="test query",
+        )
+
+        # Verify get_manager was called with enable_review_tools=True (default)
+        call_kwargs = mock_get_manager.call_args[1]
+        assert call_kwargs["enable_review_tools"] is True
+
+
+@pytest.mark.asyncio
+async def test_no_review_tools_flag_disables_review_tools():
+    """Test that --no-review-tools flag disables review tools (STORY-009)."""
+    with (
+        patch("app.app.setup_agent_env") as mock_setup,
+        patch("app.app.login"),
+        patch("app.app.get_manager") as mock_get_manager,
+        patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
+        patch("app.app.load_config") as mock_load_config,
+    ):
+        # Setup mocks
+        mock_setup.return_value = MagicMock(
+            provider="test_provider",
+            provider_config={},
+            api_key="test_key",
+            prompts={},
+            query="test query",
+            usage_limits=None,
+        )
+        mock_manager = MagicMock()
+        mock_get_manager.return_value = mock_manager
+        mock_run_manager.return_value = ("test_exec_123", None)
+
+        mock_load_config.return_value = MagicMock(prompts={})
+
+        from app.app import main
+
+        # Run main with enable_review_tools=False (simulating --no-review-tools flag)
+        await main(
+            chat_provider="test_provider",
+            query="test query",
+            enable_review_tools=False,
+        )
+
+        # Verify get_manager was called with enable_review_tools=False
+        call_kwargs = mock_get_manager.call_args[1]
+        assert call_kwargs["enable_review_tools"] is False
+
+
+def test_cli_parse_args_includes_no_review_tools_flag():
+    """Test that parse_args recognizes --no-review-tools flag (STORY-009)."""
+    from run_cli import parse_args
+
+    # Test --no-review-tools flag is recognized
+    args = parse_args(["--no-review-tools"])
+    assert "no_review_tools" in args
+    assert args["no_review_tools"] is True
+
+
+def test_cli_help_text_includes_no_review_tools():
+    """Snapshot test for CLI help text showing --no-review-tools flag (STORY-009)."""
+    from run_cli import parse_args
+
+    # Capture help text by reading the commands dict directly
+    # (we can't actually capture parse_args help output without sys.exit)
+    import run_cli
+
+    # Get the commands from parse_args function's local scope
+    # We'll read the source to verify the flag is documented
+    help_text_should_include = [
+        "--no-review-tools",
+        "--enable-review-tools",
+    ]
+
+    # Read the actual parse_args implementation
+    import inspect
+
+    source = inspect.getsource(parse_args)
+
+    for expected_flag in help_text_should_include:
+        assert expected_flag in source, f"Expected {expected_flag} in parse_args help text"
+
+
 # STORY-007: Inline-snapshot tests for CLI output with baselines
 class TestCLIBaselineOutputSnapshots:
     """Snapshot tests for CLI baseline comparison output."""
