@@ -74,16 +74,23 @@ Follow the project's testing best practices. Tests MUST be written and
   - **STOP AND COMMIT NOW**: `git add src/ && git commit -m "feat(STORY-XXX): implement to pass tests [GREEN]"`
   - Do NOT proceed to REFACTOR until this commit is made
 
-### REFACTOR: Clean up
+### REFACTOR: Fix remaining issues and clean up
 
 - **STATUS**: Output "Starting REFACTOR phase"
-- Clean up while keeping tests passing
-  - Ensure `make validate` passes
-  - **COMMIT REFACTORINGS** (if any): `git add . && git commit -m "refactor(STORY-XXX): cleanup [REFACTOR]"`
+- Fix any remaining test failures or edge cases from GREEN phase
+- Improve code structure while keeping tests passing
+  - Use focused checks: `make ruff`, `make type_check`, `uv run pytest <test-file>`
+  - Run `make validate` only at the very end before marking story complete
+  - **COMMIT**: `git add . && git commit -m "refactor(STORY-XXX): fix edge cases [REFACTOR]"`
 
 **CRITICAL**: The Ralph loop counts your commits and checks for `[RED]` and
 `[GREEN]` markers. If these commits are missing, ALL your work will be reset
 and you must start over.
+
+**Retry after quality failure**: If Ralph retries your story after `make validate`
+failed, your prior `[RED]` and `[GREEN]` commits still exist. You only need a
+`[REFACTOR]` commit to fix the remaining issues — do NOT recreate `[RED]` or
+`[GREEN]`. Check git log to confirm they exist before deciding your approach.
 
 ## Quality Gates
 

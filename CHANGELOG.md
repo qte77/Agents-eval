@@ -21,8 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `test_input_size_limits.py` (16 tests): Plugin input size validation, DoS prevention, memory exhaustion protection
   - `test_tool_registration.py` (18 tests): Tool registration scope, agent role-based assignment, isolation between agent instances
 - All test modules include Hypothesis property-based tests for comprehensive edge case coverage
-- Total: 135 security tests added across 5 files (120 passing, 15 expected failures for tool registration API changes)
+- Total: 135 security tests added across 5 files (all passing)
 - Security tests run as part of `make test_all` (no separate command needed)
+
+### Fixed (Sprint 6 - STORY-013)
+
+- **Log Scrubbing Edge Cases**: Enhanced sensitive data patterns in `src/app/utils/log_scrubbing.py`
+  - Added natural language patterns for "password to" and "credential to" phrasings
+  - Broadened OpenAI API key pattern from `sk-[a-zA-Z0-9]+` to `sk-\S+` to support Unicode characters
+  - Fixed 3 edge case test failures in `test_sensitive_data_filtering.py`
 
 ### Security (Sprint 6 - STORY-012)
 

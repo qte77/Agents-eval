@@ -274,6 +274,7 @@ run_quality_checks() {
 
 # Check that TDD commits were made during story execution
 # Verifies: at least 2 commits, [RED] and [GREEN] markers, [REFACTOR] optional, correct order
+# Also accepts REFACTOR-only iterations when prior RED+GREEN exist (quality fix-up)
 check_tdd_commits() {
     local story_id="$1"
     local commits_before="$2"
@@ -283,13 +284,8 @@ check_tdd_commits() {
     local commits_after=$(commit_count)
     local new_commits=$((commits_after - commits_before))
 
-    local min_commits=2
-    if [ "$REQUIRE_REFACTOR" = "true" ]; then
-        min_commits=3
-    fi
-
-    if [ $new_commits -lt $min_commits ]; then
-        log_error "Expected at least $min_commits commits (RED + GREEN + REFACTOR), found $new_commits"
+    if [ $new_commits -eq 0 ]; then
+        log_error "No commits made during story execution"
         return 1
     fi
 
@@ -301,29 +297,40 @@ check_tdd_commits() {
     local green_commit=$(echo "$recent_commits" | grep "\[GREEN\]" | head -1)
     local refactor_commit=$(echo "$recent_commits" | grep -E "\[REFACTOR\]|\[BLUE\]" | head -1)
 
-    if [ -n "$red_commit" ]; then
-        log_info "  [RED]      $red_commit"
-    else
-        log_warn "  [RED]      not found"
-    fi
-    if [ -n "$green_commit" ]; then
-        log_info "  [GREEN]    $green_commit"
-    else
-        log_warn "  [GREEN]    not found"
-    fi
-    if [ -n "$refactor_commit" ]; then
-        log_info "  [REFACTOR] $refactor_commit"
-    else
-        log_info "  [REFACTOR] skipped"
+    [ -n "$red_commit" ] && log_info "  [RED]      $red_commit" || log_warn "  [RED]      not found"
+    [ -n "$green_commit" ] && log_info "  [GREEN]    $green_commit" || log_warn "  [GREEN]    not found"
+    [ -n "$refactor_commit" ] && log_info "  [REFACTOR] $refactor_commit" || log_info "  [REFACTOR] skipped"
+
+    # REFACTOR-only iteration: agent is fixing quality issues after a prior RED+GREEN
+    if [ -z "$red_commit" ] && [ -z "$green_commit" ] && [ -n "$refactor_commit" ]; then
+        # Reason: --grep + --all-match requires both patterns in the same commit message
+        local prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
+        local prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
+
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+            log_info "REFACTOR-only: prior RED ($prior_red) + GREEN ($prior_green) found"
+            return 0
+        fi
+        log_error "REFACTOR-only commit but no prior [RED]+[GREEN] for $story_id"
+        return 1
     fi
 
-    # Check markers exist
+    # Standard path: require RED + GREEN in current iteration
+    local min_commits=2
+    if [ "$REQUIRE_REFACTOR" = "true" ]; then
+        min_commits=3
+    fi
+
+    if [ $new_commits -lt $min_commits ]; then
+        log_error "Expected at least $min_commits commits (RED + GREEN), found $new_commits"
+        return 1
+    fi
+
     if [ -z "$red_commit" ] || [ -z "$green_commit" ]; then
         log_error "Missing [RED] and/or [GREEN] markers"
         return 1
     fi
 
-    # Check REFACTOR marker if required
     if [ "$REQUIRE_REFACTOR" = "true" ] && [ -z "$refactor_commit" ]; then
         log_error "Missing [REFACTOR] or [BLUE] marker (REQUIRE_REFACTOR=true)"
         return 1
@@ -486,8 +493,16 @@ main() {
                 commit_state_files "chore: Update Ralph state after completing $story_id"
                 print_progress
             else
-                log_warn "Story completed but quality checks failed"
-                log_progress "$iteration" "$story_id" "FAIL" "Quality checks failed"
+                # Keep commits (RED+GREEN are valid) so next iteration can REFACTOR
+                retry_count=$((retry_count + 1))
+                log_error "Quality check failed (attempt $retry_count/$MAX_RETRIES)"
+                log_progress "$iteration" "$story_id" "RETRY" "Quality checks failed, retrying"
+
+                if [ $retry_count -ge $MAX_RETRIES ]; then
+                    log_error "Max retries reached for story $story_id"
+                    exit 1
+                fi
+                continue
             fi
 
         else
