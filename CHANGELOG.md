@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (Sprint 6 - STORY-006)
+
+- Orphaned `cc_otel` module (`src/app/cc_otel/`) — wrong abstraction for CC tracing configuration (infrastructure-level env vars, not application code)
+- `cc_otel` tests (`tests/cc_otel/`) and cleanup verification tests added
+
 ### Added (Ralph Baseline Validation)
 
 - Baseline-aware test validation (`ralph/scripts/lib/baseline.sh`): captures pre-existing test failures at loop start, only blocks on new regressions
