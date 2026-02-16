@@ -297,6 +297,7 @@ check_tdd_commits() {
 }
 
 # Print progress: percent done, stories completed, estimated time remaining
+# ETA is only shown when at least one story has completed this run
 print_progress() {
     local total=$(jq '.stories | length' "$PRD_JSON")
     local passing=$(jq '[.stories[] | select(.passes == true)] | length' "$PRD_JSON")
@@ -311,7 +312,7 @@ print_progress() {
     local empty=$((bar_len - filled))
     local bar=$(printf '%0.s#' $(seq 1 $filled 2>/dev/null) || true)$(printf '%0.s-' $(seq 1 $empty 2>/dev/null) || true)
 
-    local eta_str="n/a"
+    local eta_suffix=""
     local now=$(date +%s)
     local elapsed=$((now - RALPH_START_TIME))
     if [ "$passing" -gt "$RALPH_START_PASSING" ] && [ "$remaining" -gt 0 ]; then
@@ -320,17 +321,17 @@ print_progress() {
         local eta=$((avg * remaining))
         local eta_min=$((eta / 60))
         local eta_sec=$((eta % 60))
-        eta_str="${eta_min}m${eta_sec}s"
+        eta_suffix=" | ETA: ${eta_min}m${eta_sec}s"
     fi
 
-    log_info "Progress: [$bar] $pct% ($passing/$total stories) | remaining: $remaining | ETA: $eta_str"
+    log_info "Progress: [$bar] $pct% ($passing/$total stories) | remaining: $remaining$eta_suffix"
 }
 
 # Main loop
 main() {
     log_info "Starting Ralph Loop"
     log_info "Configuration: MAX_ITERATIONS=$MAX_ITERATIONS, RALPH_MODEL=$RALPH_MODEL, REQUIRE_REFACTOR=$REQUIRE_REFACTOR, RALPH_BASELINE_MODE=$RALPH_BASELINE_MODE"
-    log_info "Log file: $(cd "$(dirname "$LOG_FILE")" && pwd)/$(basename "$LOG_FILE")"
+    log_info "Log file: $LOG_FILE"
 
     validate_environment
 
@@ -371,6 +372,8 @@ main() {
 
         # Record commit count before execution
         local commits_before=$(git rev-list --count HEAD)
+
+        print_progress
 
         # Execute story and capture return code (use || true to prevent set -e from exiting on non-zero)
         local exec_status=0

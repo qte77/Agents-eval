@@ -14,17 +14,43 @@
 #   run_quality_checks_baseline - Lint/type/test with baseline comparison
 #
 
+# Freshness threshold for pytest cache (seconds)
+BASELINE_CACHE_MAX_AGE=${BASELINE_CACHE_MAX_AGE:-300}
+
 # Capture current test failures as baseline.
-# Creates a sorted list of FAILED test IDs for later comparison.
+# Uses pytest cache if fresh, falls back to full test run.
 #
 # Args:
 #   $1 - Path to baseline file
 capture_test_baseline() {
     local baseline_file="$1"
+    local cache_file=".pytest_cache/v/cache/lastfailed"
 
     log_info "Capturing test baseline..."
     mkdir -p "$(dirname "$baseline_file")"
 
+    # Try pytest cache first (instant, no test execution)
+    if [ -f "$cache_file" ]; then
+        local cache_age=$(($(date +%s) - $(stat -c %Y "$cache_file")))
+        if [ "$cache_age" -lt "$BASELINE_CACHE_MAX_AGE" ]; then
+            log_info "Using pytest cache (${cache_age}s old, threshold: ${BASELINE_CACHE_MAX_AGE}s)"
+            jq -r 'keys[]' "$cache_file" | sort > "$baseline_file"
+            local count
+            count=$(wc -l < "$baseline_file" | tr -d ' ')
+            if [ "$count" -eq 0 ]; then
+                log_info "Baseline captured: all tests passing (cached)"
+            else
+                log_warn "Baseline captured: $count pre-existing failure(s) (cached)"
+            fi
+            return 0
+        else
+            log_warn "Pytest cache stale (${cache_age}s old) — running fresh baseline"
+        fi
+    else
+        log_info "No pytest cache found — running fresh baseline"
+    fi
+
+    # Fallback: full test run
     local test_output
     test_output=$(uv run pytest --tb=no -q 2>&1) || true
 
