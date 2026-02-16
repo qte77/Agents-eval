@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-02-15
+updated: 2026-02-16
 category: architecture
-version: 3.4.0
+version: 3.5.0
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -339,7 +339,8 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 2**: Eval wiring, trace capture, Logfire+Phoenix, Streamlit dashboard -- Delivered
 - **Sprint 3**: Plugin architecture, GUI wiring, test alignment, optional weave, trace quality -- Delivered
 - **Sprint 4**: Operational resilience, Claude Code baseline comparison (solo + teams) -- Delivered
-- **Sprint 5**: Runtime fixes, GUI enhancements, architecture improvements, code quality review -- Active
+- **Sprint 5**: Runtime fixes, GUI enhancements, architecture improvements, code quality review -- Delivered
+- **Sprint 6**: Benchmarking infrastructure, CC baseline completion, security hardening, test quality -- Planned
 
 For sprint details, see [roadmap.md](roadmap.md).
 
