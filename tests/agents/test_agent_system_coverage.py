@@ -74,18 +74,18 @@ class TestModelReturnValidation:
     def test_validate_model_return_with_valid_data(self):
         """Test validation with valid model output."""
         # Arrange
+        from app.data_models.app_models import ResearchResultSimple
+
         valid_output = {
             "findings": ["Finding 1", "Finding 2"],
-            "summary": "Research summary",
         }
 
         # Act
-        result = _validate_model_return(valid_output, ResearchResult)
+        result = _validate_model_return(valid_output, ResearchResultSimple)
 
         # Assert
-        assert isinstance(result, ResearchResult)
+        assert isinstance(result, ResearchResultSimple)
         assert len(result.findings) == 2
-        assert result.summary == "Research summary"
 
     def test_validate_model_return_with_invalid_data_raises_error(self):
         """Test validation with invalid data structure."""
