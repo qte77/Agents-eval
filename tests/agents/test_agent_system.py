@@ -52,19 +52,17 @@ class TestModelValidation:
     def test_validate_model_return_success(self):
         """Test successful model validation."""
         result_data = {
-            "summary": ResearchSummary(
-                key_findings=["Finding 1", "Finding 2"],
-                main_topics=["Topic 1"],
-                confidence_score=0.9,
-            ),
+            "topic": "Research topic",
+            "findings": ["Finding 1", "Finding 2"],
             "sources": ["Source 1"],
         }
 
         validated = _validate_model_return(result_data, ResearchResult)
 
         assert isinstance(validated, ResearchResult)
-        assert len(validated.summary.key_findings) == 2
-        assert validated.summary.confidence_score == 0.9
+        assert validated.topic == "Research topic"
+        assert len(validated.findings) == 2
+        assert validated.sources == ["Source 1"]
 
     def test_validate_model_return_validation_error(self):
         """Test validation error handling."""
@@ -91,11 +89,8 @@ class TestDelegationFlow:
         agent.run = AsyncMock(
             return_value=Mock(
                 output=ResearchResult(
-                    summary=ResearchSummary(
-                        key_findings=["Finding 1"],
-                        main_topics=["Topic 1"],
-                        confidence_score=0.8,
-                    ),
+                    topic="Research topic",
+                    findings=["Finding 1"],
                     sources=["Source 1"],
                 )
             )
@@ -105,20 +100,18 @@ class TestDelegationFlow:
     @pytest.mark.asyncio
     async def test_research_delegation_captures_trace(self, mock_manager_agent, mock_research_agent):
         """Test that research delegation captures trace data."""
-        with (
-            patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
-            patch("app.agents.agent_system._add_research_tool") as mock_add_tool,
-        ):
+        with patch("app.agents.agent_system.get_trace_collector") as mock_get_collector:
             mock_collector = Mock()
             mock_get_collector.return_value = mock_collector
 
-            # Simulate adding research tool and calling it
+            # Add research tool to manager agent
             from app.agents.agent_system import _add_research_tool
 
             _add_research_tool(mock_manager_agent, mock_research_agent, ResearchResult)
 
-            # Verify delegation tool was added
-            assert mock_manager_agent.tool.called
+            # Verify the tool decorator was called on the manager agent
+            # The @manager_agent.tool decorator is called inside _add_research_tool
+            assert mock_manager_agent.tool.call_count >= 1
 
 
 class TestUsageLimitEnforcement:
@@ -150,32 +143,39 @@ class TestSingleAgentFallback:
         return EndpointConfig(
             provider="openai",
             api_key="test-key",
+            prompts={"manager": "You are a manager"},
             provider_config=ProviderConfig(
                 model_name="gpt-4",
                 base_url="https://api.openai.com/v1",
             ),
         )
 
-    def test_single_agent_mode_has_no_delegation_tools(self):
+    def test_single_agent_mode_has_no_delegation_tools(self, mock_endpoint_config):
         """Test that single-agent mode doesn't add delegation tools."""
         # In single-agent mode, manager should not have delegation tools
         # This is tested by verifying tool registration when include_researcher=False
         from app.agents.agent_system import get_manager
+        from pydantic_ai.models import Model
 
         with (
             patch("app.agents.agent_system.create_agent_models") as mock_create_models,
             patch("app.agents.agent_system.add_peerread_tools_to_agent"),
         ):
-            mock_models = Mock()
-            mock_models.model_manager = Mock()
-            mock_models.model_researcher = None
+            from app.data_models.app_models import ModelDict
+
+            mock_models = ModelDict.model_construct(
+                model_manager=Mock(spec=Model),
+                model_researcher=None,
+                model_analyst=None,
+                model_synthesiser=None,
+            )
             mock_create_models.return_value = mock_models
 
             manager = get_manager(
                 provider="openai",
-                provider_config=Mock(),
+                provider_config=mock_endpoint_config.provider_config,
                 api_key="test-key",
-                prompts={"manager": "You are a manager"},
+                prompts={"system_prompt_manager": "You are a manager"},
                 include_researcher=False,
                 include_analyst=False,
                 include_synthesiser=False,

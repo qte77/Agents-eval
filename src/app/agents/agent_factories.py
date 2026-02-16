@@ -36,13 +36,11 @@ class AgentFactory:
                 include_analyst=include_analyst,
                 include_synthesiser=include_synthesiser,
             )
-        return self._models or ModelDict.model_validate(
-            {
-                "model_manager": None,
-                "model_researcher": None,
-                "model_analyst": None,
-                "model_synthesiser": None,
-            }
+        return self._models or ModelDict.model_construct(
+            model_manager=None,
+            model_researcher=None,
+            model_analyst=None,
+            model_synthesiser=None,
         )
 
     def create_manager_agent(self, system_prompt: str | None = None) -> Agent:

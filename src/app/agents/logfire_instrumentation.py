@@ -50,71 +50,84 @@ class LogfireInstrumentationManager:
             return
 
         try:
-            # Configure Logfire with Phoenix as OTLP endpoint
-            import os
-
-            # Set Phoenix OTLP endpoint via environment variable if not sending to cloud
-            # Reason: Per OTEL spec, SDK auto-appends signal-specific paths
-            # (/v1/traces, /v1/metrics) to base endpoint. Set base URL only.
-            # Phoenix doesn't support /v1/metrics, so disable metrics export explicitly.
-            if not self.config.send_to_cloud:
-                # Base URL without signal-specific path
-                phoenix_base_url = self.config.phoenix_endpoint
-                os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = phoenix_base_url
-                os.environ["OTEL_METRICS_EXPORTER"] = "none"
-
-                # Check endpoint connectivity before configuring exporters
-                # Reason: Prevents ConnectionRefusedError stack traces during span/metrics export
-                # Check /v1/traces path specifically since that's what SDK will use
-                phoenix_traces_endpoint = f"{phoenix_base_url}/v1/traces"
-                try:
-                    requests.head(phoenix_traces_endpoint, timeout=2.0)
-                except (
-                    requests.exceptions.ConnectionError,
-                    requests.exceptions.Timeout,
-                ):
-                    logger.warning(
-                        f"Logfire tracing unavailable: {phoenix_traces_endpoint} unreachable "
-                        f"(spans and metrics export disabled)"
-                    )
-                    self.config.enabled = False
-                    return
-
-            # Get scrubbing patterns for sensitive data redaction
-            from app.utils.log_scrubbing import get_logfire_scrubbing_patterns
-
-            scrubbing_patterns = get_logfire_scrubbing_patterns()
-
-            # Reason: When send_to_cloud=False, pass token=None to prevent SDK from
-            # making API handshake calls to logfire-us.pydantic.dev. When True,
-            # omit token parameter to let SDK read from LOGFIRE_TOKEN env var.
-            if self.config.send_to_cloud:
-                logfire.configure(  # type: ignore
-                    service_name=self.config.service_name,
-                    send_to_logfire=True,
-                    scrubbing=logfire.ScrubbingOptions(extra_patterns=scrubbing_patterns),  # type: ignore
-                )
-            else:
-                logfire.configure(  # type: ignore
-                    service_name=self.config.service_name,
-                    send_to_logfire=False,
-                    token=None,  # Disable cloud API calls
-                    scrubbing=logfire.ScrubbingOptions(extra_patterns=scrubbing_patterns),  # type: ignore
-                )
-
-            # Auto-instrument all PydanticAI agents
+            self._configure_phoenix_endpoint()
+            self._configure_logfire()
             logfire.instrument_pydantic_ai()  # type: ignore
-
-            if self.config.send_to_cloud:
-                endpoint_info = "Logfire cloud"
-            else:
-                base_url = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "not set")
-                metrics_exp = os.environ.get("OTEL_METRICS_EXPORTER", "default")
-                endpoint_info = f"endpoint={base_url}, metrics_exporter={metrics_exp}"
-            logger.info(f"Logfire tracing initialized: {endpoint_info}")
+            self._log_initialization_info()
         except Exception as e:
             logger.error(f"Failed to initialize Logfire: {e}")
             self.config.enabled = False
+
+    def _configure_phoenix_endpoint(self) -> None:
+        """Configure Phoenix OTLP endpoint environment variables.
+
+        Checks endpoint connectivity before configuration to prevent
+        ConnectionRefusedError stack traces during span export.
+        """
+        if self.config.send_to_cloud:
+            return
+
+        import os
+
+        # Set Phoenix OTLP endpoint via environment variable
+        # Reason: Per OTEL spec, SDK auto-appends signal-specific paths
+        # (/v1/traces, /v1/metrics) to base endpoint. Set base URL only.
+        # Phoenix doesn't support /v1/metrics, so disable metrics export explicitly.
+        phoenix_base_url = self.config.phoenix_endpoint
+        os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = phoenix_base_url
+        os.environ["OTEL_METRICS_EXPORTER"] = "none"
+
+        # Check endpoint connectivity before configuring exporters
+        phoenix_traces_endpoint = f"{phoenix_base_url}/v1/traces"
+        try:
+            requests.head(phoenix_traces_endpoint, timeout=2.0)
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+        ):
+            logger.warning(
+                f"Logfire tracing unavailable: {phoenix_traces_endpoint} unreachable "
+                f"(spans and metrics export disabled)"
+            )
+            self.config.enabled = False
+            raise ConnectionError("Phoenix endpoint unreachable")
+
+    def _configure_logfire(self) -> None:
+        """Configure Logfire with scrubbing patterns.
+
+        Reason: When send_to_cloud=False, pass token=None to prevent SDK from
+        making API handshake calls to logfire-us.pydantic.dev. When True,
+        omit token parameter to let SDK read from LOGFIRE_TOKEN env var.
+        """
+        from app.utils.log_scrubbing import get_logfire_scrubbing_patterns
+
+        scrubbing_patterns = get_logfire_scrubbing_patterns()
+
+        if self.config.send_to_cloud:
+            logfire.configure(  # type: ignore
+                service_name=self.config.service_name,
+                send_to_logfire=True,
+                scrubbing=logfire.ScrubbingOptions(extra_patterns=scrubbing_patterns),  # type: ignore
+            )
+        else:
+            logfire.configure(  # type: ignore
+                service_name=self.config.service_name,
+                send_to_logfire=False,
+                token=None,  # Disable cloud API calls
+                scrubbing=logfire.ScrubbingOptions(extra_patterns=scrubbing_patterns),  # type: ignore
+            )
+
+    def _log_initialization_info(self) -> None:
+        """Log Logfire initialization info with endpoint details."""
+        import os
+
+        if self.config.send_to_cloud:
+            endpoint_info = "Logfire cloud"
+        else:
+            base_url = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "not set")
+            metrics_exp = os.environ.get("OTEL_METRICS_EXPORTER", "default")
+            endpoint_info = f"endpoint={base_url}, metrics_exporter={metrics_exp}"
+        logger.info(f"Logfire tracing initialized: {endpoint_info}")
 
 
 # Global instrumentation manager
