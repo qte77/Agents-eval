@@ -410,25 +410,21 @@ def _create_manager(
 
     _add_tools_to_manager_agent(manager, researcher, analyst, synthesiser, result_type)
 
-    # Add PeerRead base tools to researcher if present, otherwise to manager (fallback)
-    if researcher is not None:
-        add_peerread_tools_to_agent(researcher, agent_id="researcher")
-    else:
-        add_peerread_tools_to_agent(manager, agent_id="manager")
+    # Determine target agent for PeerRead tools
+    # Researcher gets tools in multi-agent mode, manager in single-agent mode
+    target_agent = researcher if researcher is not None else manager
+    target_agent_id = "researcher" if researcher is not None else "manager"
 
-    # Add review tools based on enable_review_tools flag
-    # Route to researcher if present, otherwise to manager (single-agent fallback)
+    # Add PeerRead base tools
+    add_peerread_tools_to_agent(target_agent, agent_id=target_agent_id)
+
+    # Add review tools if enabled
     if enable_review_tools:
         from app.tools.peerread_tools import add_peerread_review_tools_to_agent
 
-        if researcher is not None:
-            add_peerread_review_tools_to_agent(
-                researcher, agent_id="researcher", max_content_length=max_content_length
-            )
-        else:
-            add_peerread_review_tools_to_agent(
-                manager, agent_id="manager", max_content_length=max_content_length
-            )
+        add_peerread_review_tools_to_agent(
+            target_agent, agent_id=target_agent_id, max_content_length=max_content_length
+        )
 
     return manager
 
