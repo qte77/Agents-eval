@@ -77,21 +77,14 @@ def test_login_sets_wandb_error_reporting_to_false():
 
     mock_env = AppEnv()
 
-    with patch("app.utils.login.get_api_key") as mock_get_key:
-        # Mock wandb imports since they're imported inside the function
-        with patch("builtins.__import__") as mock_import:
-            mock_wandb_module = MagicMock()
-            mock_weave_module = MagicMock()
+    # Verify that setdefault is called correctly by checking the environment
+    # Mock the imports to avoid requiring wandb package
+    import sys
+    mock_wandb = MagicMock()
+    mock_weave = MagicMock()
 
-            def import_side_effect(name, *args, **kwargs):
-                if name == "wandb":
-                    return mock_wandb_module
-                elif name == "weave":
-                    return mock_weave_module
-                # Call real import for other modules
-                return __import__(name, *args, **kwargs)
-
-            mock_import.side_effect = import_side_effect
+    with patch.dict(sys.modules, {"wandb": mock_wandb, "weave": mock_weave}):
+        with patch("app.utils.login.get_api_key") as mock_get_key:
             mock_get_key.side_effect = lambda key, env: (
                 (True, "fake_key") if key == "WANDB" else (False, "")
             )
@@ -116,20 +109,12 @@ def test_login_respects_user_wandb_error_reporting_override():
 
     mock_env = AppEnv()
 
-    with patch("app.utils.login.get_api_key") as mock_get_key:
-        # Mock wandb imports since they're imported inside the function
-        with patch("builtins.__import__") as mock_import:
-            mock_wandb_module = MagicMock()
-            mock_weave_module = MagicMock()
+    import sys
+    mock_wandb = MagicMock()
+    mock_weave = MagicMock()
 
-            def import_side_effect(name, *args, **kwargs):
-                if name == "wandb":
-                    return mock_wandb_module
-                elif name == "weave":
-                    return mock_weave_module
-                return __import__(name, *args, **kwargs)
-
-            mock_import.side_effect = import_side_effect
+    with patch.dict(sys.modules, {"wandb": mock_wandb, "weave": mock_weave}):
+        with patch("app.utils.login.get_api_key") as mock_get_key:
             mock_get_key.side_effect = lambda key, env: (
                 (True, "fake_key") if key == "WANDB" else (False, "")
             )
@@ -154,26 +139,18 @@ def test_login_works_when_wandb_installed_and_key_present():
 
     mock_env = AppEnv()
 
-    with patch("app.utils.login.get_api_key") as mock_get_key:
-        # Mock wandb imports since they're imported inside the function
-        with patch("builtins.__import__") as mock_import:
-            mock_wandb_module = MagicMock()
-            mock_weave_module = MagicMock()
-            mock_wandb_login = MagicMock()
-            mock_weave_init = MagicMock()
+    import sys
+    mock_wandb_login = MagicMock()
+    mock_weave_init = MagicMock()
+    mock_wandb = MagicMock()
+    mock_weave = MagicMock()
 
-            # Setup the mock module attributes
-            mock_wandb_module.login = mock_wandb_login
-            mock_weave_module.init = mock_weave_init
+    # Setup the mock module attributes
+    mock_wandb.login = mock_wandb_login
+    mock_weave.init = mock_weave_init
 
-            def import_side_effect(name, *args, **kwargs):
-                if name == "wandb":
-                    return mock_wandb_module
-                elif name == "weave":
-                    return mock_weave_module
-                return __import__(name, *args, **kwargs)
-
-            mock_import.side_effect = import_side_effect
+    with patch.dict(sys.modules, {"wandb": mock_wandb, "weave": mock_weave}):
+        with patch("app.utils.login.get_api_key") as mock_get_key:
             mock_get_key.side_effect = lambda key, env: (
                 (True, "fake_wandb_key") if key == "WANDB"
                 else (True, "fake_logfire_key") if key == "LOGFIRE"
