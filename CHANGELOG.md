@@ -48,6 +48,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-007: `LogCapture` utility class for filtering and storing app.* module logs
 - STORY-007: Log capture sink integration with loguru logger for real-time capture
 - STORY-007: HTML formatting for log entries with color-coded levels (INFO/WARNING/ERROR)
+- STORY-009: Editable settings page with all JudgeSettings fields as interactive widgets
+- STORY-009: Tier timeout fields (tier1/2/3_max_seconds, total_max_seconds) editable via number_input
+- STORY-009: Composite scoring thresholds (accept/weak_accept/weak_reject) editable via number_input
+- STORY-009: Tier 2 provider/model fields (tier2_provider, tier2_model, fallback variants) editable via text_input
+- STORY-009: Observability settings (logfire_enabled, phoenix_endpoint, trace_collection) editable via checkbox/text_input
+- STORY-009: "Reset to Defaults" button to restore original JudgeSettings() defaults
+- STORY-009: Session state persistence with 'judge_' prefix for all settings overrides
+- STORY-009: `_build_judge_settings_from_session()` helper to construct JudgeSettings from session state
+- STORY-009: `judge_settings` parameter in `main()`, `run_evaluation_if_enabled()`, and `EvaluationPipeline`
+- STORY-009: Settings changes take effect on next App tab execution without restart
+- STORY-009: Comprehensive pytest tests (9 tests) with Hypothesis property tests for value bounds
+- STORY-009: Inline-snapshot tests for widget structure verification
 - STORY-007: Log persistence to session state during background execution
 - STORY-007: `_render_debug_log_panel()` and `_capture_execution_logs()` helper functions
 - STORY-007: Static `format_logs_as_html()` method for efficient HTML rendering
