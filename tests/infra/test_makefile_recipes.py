@@ -55,8 +55,9 @@ def test_phoenix_recipe_has_force_remove():
 
     # Should remove existing container before starting
     # Either 'docker rm -f' or 'docker rm' followed by docker run
-    assert "docker rm" in phoenix_section or "rm -f" in phoenix_section, \
+    assert "docker rm" in phoenix_section or "rm -f" in phoenix_section, (
         "Phoenix recipe should remove existing container"
+    )
 
 
 def _extract_phoenix_recipe(makefile_content: str) -> str:

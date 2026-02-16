@@ -25,6 +25,7 @@ PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=rep
 PANDOC_TITLE_FILE := 01_titel_abstrakt.md
 PHOENIX_CONTAINER_NAME := phoenix-tracing
 PHOENIX_PORT := 6006
+PHOENIX_GRPC_PORT := 4317
 PHOENIX_IMAGE := arizephoenix/phoenix:latest
 # write-up
 BIBLIOGRAPHY :=
@@ -316,17 +317,18 @@ start_phoenix:  ## Start local Arize Phoenix trace viewer (OTLP endpoint on port
 	docker rm -f $(PHOENIX_CONTAINER_NAME) 2>/dev/null || true
 	docker run -d --name $(PHOENIX_CONTAINER_NAME) \
 		--restart unless-stopped \
-		-v phoenix_data:/phoenix \
+		-v phoenix_data:/mnt/data \
+		-e PHOENIX_WORKING_DIR=/mnt/data \
 		-p $(PHOENIX_PORT):$(PHOENIX_PORT) \
-		-p 4317:4317 \
+		-p $(PHOENIX_GRPC_PORT):$(PHOENIX_GRPC_PORT) \
 		$(PHOENIX_IMAGE)
 	echo "Phoenix UI: http://localhost:$(PHOENIX_PORT)"
 	echo "OTLP HTTP endpoint: http://localhost:$(PHOENIX_PORT)/v1/traces"
 	echo "OTLP gRPC endpoint: localhost:4317"
 
-stop_phoenix:  ## Stop Phoenix trace viewer
+stop_phoenix:  ## Stop Phoenix trace viewer (volume data preserved)
 	echo "Stopping Phoenix ..."
-	docker stop $(PHOENIX_CONTAINER_NAME) && docker rm $(PHOENIX_CONTAINER_NAME)
+	docker stop $(PHOENIX_CONTAINER_NAME)
 
 status_phoenix:  ## Check Phoenix health status
 	echo "Checking Phoenix status ..."
