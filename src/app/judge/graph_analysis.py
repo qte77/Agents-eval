@@ -142,7 +142,6 @@ class GraphAnalysisEngine:
                 logger.warning(f"NetworkX operation failed: {e}")
                 raise
 
-
     def _accumulate_tool_outcomes(
         self, tool_calls: list[dict[str, Any]]
     ) -> tuple[dict[str, list[bool]], dict[tuple[str, str], list[bool]]]:
