@@ -11,12 +11,13 @@ updated: 2026-02-16
 
 Sprint 5 delivered runtime fixes, GUI enhancements, architectural improvements, code quality review (OWASP MAESTRO), and test suite audit across 17 stories.
 
-Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, and **tool access refinement** across 7 stories:
+Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, and **tool access refinement** across 9 stories:
 
-1. **Cleanup (Features 1-2)**: Remove Opik entirely, fix Phoenix Docker recipe
-2. **Benchmarking (Features 3-4)**: Complete CC baseline end-to-end, build MAS composition sweep
-3. **Tool Access (Features 5-6)**: Conditional review tool placement, enable review tools by default
-4. **GUI Fix (Feature 7)**: Fix empty Agent Interaction Graph tab
+1. **Cleanup (Features 1-2, 6)**: Remove Opik entirely, fix Phoenix Docker recipe, delete orphaned cc_otel module
+2. **CC Baseline (Features 3-5)**: Fix adapter path handling, create collection scripts, wire paper extraction
+3. **Benchmarking (Feature 7)**: Build MAS composition sweep infrastructure
+4. **Tool Access (Features 8-9)**: Conditional review tool placement, enable review tools by default
+5. **Quick Win (bundled with Feature 2)**: Fix empty Agent Interaction Graph (one-line change)
 
 ---
 
@@ -108,9 +109,11 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 
 ---
 
-#### Feature 2: Fix Phoenix Docker Recipe
+#### Feature 2: Fix Phoenix Docker Recipe + Agent Graph Fix (P0 Quick Win Bundle)
 
 **Description**: The current `make start_phoenix` recipe has three problems: (1) no volume mount — trace data is lost on `docker rm`, (2) missing gRPC port 4317 — only HTTP OTLP on 6006 is exposed, (3) no restart policy — container dies on devcontainer restart (exit code 255) and doesn't come back. Additionally, `make start_phoenix` fails with "container name already in use" when a stopped container exists. Fix all four issues.
+
+**Bundled Quick Win**: The Agent Interaction Graph tab in the GUI shows "No agent interaction data available" even when trace data exists because graph building is coupled to evaluation success (`app.py:267` only builds graph when `composite_result` is not None). Fix: change conditional graph building to unconditional when `execution_id` exists (one-line change).
 
 **Acceptance Criteria**:
 
@@ -124,6 +127,8 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 - [ ] OTLP traces received on both `http://localhost:6006/v1/traces` (HTTP) and `localhost:4317` (gRPC)
 - [ ] Logfire SDK (`logfire_instrumentation.py`) continues to export traces successfully via HTTP endpoint
 - [ ] Tests: pytest test for Makefile recipe validation (recipe contains required flags)
+- [ ] **Quick Win**: Agent Interaction Graph renders when trace data exists, regardless of evaluation success (change `app.py:267` from conditional to unconditional)
+- [ ] **Quick Win**: Graph renders correctly after `--skip-eval` runs and after failed evaluation
 - [ ] `make validate` passes
 - [ ] CHANGELOG.md updated
 
@@ -152,11 +157,9 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 
 ---
 
-#### Feature 3: Complete CC Baseline End-to-End
+#### Feature 3: Fix CCTraceAdapter Path Handling
 
-**Description**: The CC baseline infrastructure (trace adapter, comparison engine, CLI wiring) was built in Sprint 4 but has never been validated against real Claude Code artifacts. Four gaps prevent end-to-end operation: (1) teams mode path mismatch — adapter expects `tasks/` as child of teams dir, but CC stores tasks at `~/.claude/tasks/{team-name}/` (sibling), (2) no artifact collection scripts — CC doesn't natively export in the adapter-expected format, (3) paper/review extraction is placeholder — `evaluation_runner.py` passes empty strings, making Tier 1 scores meaningless, (4) orphaned `src/app/cc_otel/` module that is never called and solves the wrong problem (application-level instrumentation vs infrastructure-level env vars).
-
-##### 3.1 Fix CCTraceAdapter Path Handling
+**Description**: The CC baseline infrastructure was built in Sprint 4 but has a teams mode path mismatch — adapter expects `tasks/` as child of teams dir, but CC stores tasks at `~/.claude/tasks/{team-name}/` (sibling of `~/.claude/teams/`). Fix the adapter to support both layouts.
 
 **Acceptance Criteria**:
 
@@ -166,6 +169,7 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 - [ ] CLI `--cc-teams-dir` accepts teams directory; tasks directory auto-discovered or specified separately
 - [ ] Tests: pytest tests with both directory layouts (sibling and child)
 - [ ] `make validate` passes
+- [ ] CHANGELOG.md updated
 
 **Files**:
 
@@ -173,7 +177,11 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 - `tests/judge/test_cc_trace_adapter.py`
 - `src/run_cli.py` (add `--cc-teams-tasks-dir` optional flag)
 
-##### 3.2 Create CC Artifact Collection Scripts
+---
+
+#### Feature 4: Create CC Artifact Collection Scripts
+
+**Description**: CC doesn't natively export artifacts in the format expected by `CCTraceAdapter`. Create bash scripts to collect solo session and teams mode artifacts into adapter-compatible directory structures.
 
 **Acceptance Criteria**:
 
@@ -181,14 +189,21 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 - [ ] `scripts/collect-cc-teams.sh` copies `~/.claude/teams/{name}/` + `~/.claude/tasks/{name}/` into single adapter-compatible directory
 - [ ] Both scripts accept team/session name as argument
 - [ ] Both scripts validate output directory structure matches adapter expectations
-- [ ] README in `scripts/` documents usage
+- [ ] README in `scripts/` documents usage and examples
+- [ ] Tests: bash script validation (check for required functions and paths)
+- [ ] CHANGELOG.md updated
 
 **Files**:
 
 - `scripts/collect-cc-solo.sh` (new)
 - `scripts/collect-cc-teams.sh` (new)
+- `scripts/README.md` (update)
 
-##### 3.3 Wire Paper and Review Extraction
+---
+
+#### Feature 5: Wire Paper and Review Extraction
+
+**Description**: `evaluation_runner.py` currently passes empty strings for paper content and generated review, making Tier 1 scores meaningless. Extract actual content from manager run results and pass to evaluation pipeline.
 
 **Acceptance Criteria**:
 
@@ -197,19 +212,25 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 - [ ] CC baseline evaluations receive the same paper content for fair comparison
 - [ ] Tests: pytest test verifying non-empty paper/review passed to pipeline
 - [ ] `make validate` passes
+- [ ] CHANGELOG.md updated
 
 **Files**:
 
 - `src/app/judge/evaluation_runner.py`
 - `src/app/app.py`
+- `tests/judge/test_evaluation_runner.py` (update)
 
-##### 3.4 Delete Orphaned cc_otel Module
+---
+
+#### Feature 6: Delete Orphaned cc_otel Module
+
+**Description**: `src/app/cc_otel/` is an orphaned module that solves the wrong problem (application-level instrumentation vs infrastructure-level env vars). It was scheduled for deletion in Sprint 5 PRD line 471 but still exists. This is independent of Opik removal — cc_otel was for Claude Code OTel configuration, not Opik.
 
 **Acceptance Criteria**:
 
 - [ ] `src/app/cc_otel/` directory deleted (including `__init__.py`, `config.py`)
 - [ ] `tests/cc_otel/` directory deleted (including `test_cc_otel_config.py`, `test_cc_otel_instrumentation.py`)
-- [ ] No remaining imports of `app.cc_otel` in codebase
+- [ ] No remaining imports of `app.cc_otel` in codebase (verified via grep)
 - [ ] `make validate` passes
 - [ ] CHANGELOG.md updated
 
@@ -220,7 +241,7 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 
 ---
 
-#### Feature 4: MAS Composition Sweep Infrastructure
+#### Feature 7: MAS Composition Sweep Infrastructure
 
 **Description**: Build automated benchmarking infrastructure to run the PydanticAI MAS evaluation pipeline across all agent composition variations (8 combinations of researcher/analyst/synthesiser toggles) and optionally include pre-collected CC baseline artifacts. Each composition runs multiple repetitions on the same paper(s) for statistical significance. Results are aggregated with mean/stddev per metric per composition and output as both JSON (machine-readable) and Markdown (human-readable).
 
@@ -235,6 +256,7 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 - [ ] CLI entry point: `python src/run_sweep.py --config sweep_config.json` or `python src/run_sweep.py --paper-numbers 1,2,3 --repetitions 3`
 - [ ] `make sweep` Makefile target wrapping CLI with sensible defaults
 - [ ] Sweep results saved to `results/sweeps/{timestamp}/` with `results.json` + `summary.md`
+- [ ] `.gitignore` includes `results/sweeps/` to prevent committing large JSON result files
 - [ ] Reuses existing `EvaluationPipeline`, `CompositeScorer`, `baseline_comparison.compare()` — no new evaluation logic
 - [ ] Tests: pytest tests for sweep config validation, composition generation, results aggregation
 - [ ] Tests: Hypothesis property tests for statistical calculations (mean/stddev bounds)
@@ -270,12 +292,13 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 - `src/app/benchmark/sweep_analysis.py` (new)
 - `src/run_sweep.py` (new)
 - `Makefile` (edit)
+- `.gitignore` (edit - add results/sweeps/)
 - `tests/benchmark/test_sweep_config.py` (new)
 - `tests/benchmark/test_sweep_analysis.py` (new)
 
 ---
 
-#### Feature 5: Review Tools Conditional Access
+#### Feature 8: Review Tools Conditional Access
 
 **Description**: Sprint 5 STORY-016 moved PeerRead base tools from manager to researcher. However, review tools (`generate_paper_review_content_from_template`, `save_paper_review`, `save_structured_review`) are still added unconditionally to the manager via `conditionally_add_review_tools()`. When a researcher agent is present, review tools should be placed on the researcher (alongside base PeerRead tools and DuckDuckGo). When no researcher is present (single-agent mode), review tools should fall back to the manager so single-agent review generation continues to work.
 
@@ -310,7 +333,7 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 
 ---
 
-#### Feature 6: Enable Review Tools by Default
+#### Feature 9: Enable Review Tools by Default
 
 **Description**: Review tools (`--enable-review-tools`) currently default to `False`, requiring explicit opt-in for review generation. Since the primary use case of this project is PeerRead paper review evaluation, review tools should be enabled by default. Users who want to run general queries without review tools can opt out via `--no-review-tools`.
 
@@ -339,39 +362,6 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 - `src/run_cli.py`
 - `tests/app/test_cli_baseline.py` (update)
 
----
-
-#### Feature 7: Fix Agent Interaction Graph in GUI
-
-**Description**: The "Agent Interaction Graph" tab in the Streamlit GUI shows "No agent interaction data available" even when a NetworkX graph has been created from trace data. The root cause is that graph building is coupled to evaluation success: `app.py:267` only builds the graph when `composite_result` is not None. If evaluation is skipped (`--skip-eval`) or fails, no graph is rendered despite trace data being available. The graph should be built whenever trace data exists, independent of evaluation outcome.
-
-**Acceptance Criteria**:
-
-- [ ] Agent Interaction Graph renders when trace data exists, regardless of evaluation success/failure
-- [ ] Graph renders correctly after `--skip-eval` runs (evaluation skipped but traces collected)
-- [ ] Graph renders correctly after failed evaluation (Tier 2 provider unavailable, etc.)
-- [ ] Graph shows agent nodes, tool nodes, and delegation edges from `GraphTraceData`
-- [ ] Empty graph state only shown when no trace data exists (no execution has run)
-- [ ] Existing evaluation flow unchanged (graph still available when evaluation succeeds)
-- [ ] Tests: pytest test verifying graph built from trace data without evaluation
-- [ ] `make validate` passes
-- [ ] CHANGELOG.md updated
-
-**Technical Requirements**:
-
-- In `src/app/app.py:267`: decouple graph building from `composite_result`
-  - Current: `graph = _build_graph_from_trace(execution_id) if composite_result else None`
-  - Fix: `graph = _build_graph_from_trace(execution_id)` (always attempt when execution_id exists)
-- In `src/app/judge/evaluation_runner.py:23-47`: `build_graph_from_trace()` already handles None execution_id and missing traces gracefully — no changes needed
-- Verify `src/gui/pages/agent_graph.py` renders correctly when graph has nodes but no evaluation result
-- Verify `src/gui/pages/run_app.py:197` stores graph in session state correctly
-
-**Files**:
-
-- `src/app/app.py`
-- `tests/app/test_app.py` (update)
-
----
 
 ## Non-Functional Requirements
 
@@ -395,19 +385,21 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, an
 
 **Priority Order:**
 
-- **P0 (Quick Wins)**: STORY-001 (Opik removal), STORY-002 (Phoenix recipe), STORY-007 (graph fix)
-- **P1 (CC Baseline)**: STORY-003 (CC baseline completion)
-- **P2 (Tool Access)**: STORY-005 (conditional access), STORY-006 (default enabled)
-- **P3 (Benchmarking)**: STORY-004 (sweep infrastructure)
+- **P0 (Quick Wins)**: STORY-001 (Opik removal), STORY-002 (Phoenix recipe + graph fix), STORY-006 (cc_otel deletion)
+- **P1 (CC Baseline)**: STORY-003 (adapter paths), STORY-004 (collection scripts), STORY-005 (paper extraction)
+- **P2 (Tool Access)**: STORY-008 (conditional access), STORY-009 (default enabled)
+- **P3 (Benchmarking)**: STORY-007 (sweep infrastructure)
 
 <!-- PARSER REQUIREMENT: Include story count in parentheses -->
 <!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
-Story Breakdown - Phase 1 (7 stories total):
+Story Breakdown - Phase 1 (9 stories total):
 
 - **Feature 1 (Remove Opik)** → STORY-001: Remove all Opik code, config, Docker, docs, and tests
-- **Feature 2 (Phoenix Recipe)** → STORY-002: Fix Phoenix Docker recipe with volume, ports, restart policy
-- **Feature 3 (CC Baseline)** → STORY-003: Complete CC baseline end-to-end (adapter fix, collection scripts, paper extraction, delete cc_otel) (depends: STORY-001)
-- **Feature 4 (Composition Sweep)** → STORY-004: Build MAS composition sweep infrastructure with statistical analysis (depends: STORY-003)
-- **Feature 5 (Review Tools Conditional)** → STORY-005: Move review tools to researcher when present, manager when single-agent
-- **Feature 6 (Review Tools Default)** → STORY-006: Enable review tools by default with opt-out flag (depends: STORY-005)
-- **Feature 7 (Agent Graph Fix)** → STORY-007: Fix empty Agent Interaction Graph in GUI by decoupling from evaluation
+- **Feature 2 (Phoenix Recipe)** → STORY-002: Fix Phoenix Docker recipe with volume, ports, restart policy + Agent graph fix (one-line change bundled as P0 quick win)
+- **Feature 3 (CC Adapter Paths)** → STORY-003: Fix CCTraceAdapter path handling for sibling teams/tasks directories
+- **Feature 4 (CC Collection Scripts)** → STORY-004: Create CC artifact collection scripts (depends: STORY-003)
+- **Feature 5 (Paper Extraction)** → STORY-005: Wire paper and review extraction in evaluation runner
+- **Feature 6 (Delete cc_otel)** → STORY-006: Delete orphaned cc_otel module (independent of Opik)
+- **Feature 7 (Composition Sweep)** → STORY-007: Build MAS composition sweep infrastructure with statistical analysis (depends: STORY-003, STORY-004, STORY-005)
+- **Feature 8 (Review Tools Conditional)** → STORY-008: Move review tools to researcher when present, manager when single-agent
+- **Feature 9 (Review Tools Default)** → STORY-009: Enable review tools by default with opt-out flag (depends: STORY-008)

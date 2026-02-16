@@ -57,6 +57,7 @@ data/
 test_data/
 datasets/
 write-up/
+results/sweeps/
 
 # npm
 node_modules/
