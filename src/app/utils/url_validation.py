@@ -50,5 +50,38 @@ def validate_url(url: str) -> str:
             ...
         ValueError: URL domain not allowed: 169.254.169.254
     """
-    # TODO: Implement URL validation
-    raise NotImplementedError("URL validation not yet implemented")
+    from urllib.parse import urlparse
+
+    # Validate input is not empty or whitespace-only
+    if not url or not url.strip():
+        raise ValueError("URL cannot be empty or whitespace-only")
+
+    # Parse URL
+    try:
+        parsed = urlparse(url)
+    except Exception as e:
+        raise ValueError(f"Malformed URL: {e}") from e
+
+    # Enforce HTTPS-only
+    if parsed.scheme != "https":
+        raise ValueError("Only HTTPS URLs allowed")
+
+    # Extract domain (netloc without port/credentials)
+    # netloc format: [user[:password]@]host[:port]
+    netloc = parsed.netloc
+    if not netloc:
+        raise ValueError("URL must contain a domain")
+
+    # Remove credentials if present (user:pass@domain)
+    if "@" in netloc:
+        netloc = netloc.split("@")[-1]
+
+    # Remove port if present (domain:port)
+    domain = netloc.split(":")[0]
+
+    # Check domain against allowlist
+    if domain not in ALLOWED_DOMAINS:
+        # Error message contains only domain, not full URL (prevents log injection)
+        raise ValueError(f"URL domain not allowed: {domain}")
+
+    return url

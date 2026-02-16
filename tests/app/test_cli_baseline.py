@@ -423,11 +423,9 @@ def test_cli_parse_args_includes_no_review_tools_flag():
 
 def test_cli_help_text_includes_no_review_tools():
     """Snapshot test for CLI help text showing --no-review-tools flag (STORY-009)."""
-    from run_cli import parse_args
-
     # Capture help text by reading the commands dict directly
     # (we can't actually capture parse_args help output without sys.exit)
-    import run_cli
+    from run_cli import parse_args
 
     # Get the commands from parse_args function's local scope
     # We'll read the source to verify the flag is documented

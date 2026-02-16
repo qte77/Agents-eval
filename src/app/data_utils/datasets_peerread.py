@@ -23,6 +23,7 @@ from app.data_models.peerread_models import (
 )
 from app.utils.log import logger
 from app.utils.paths import resolve_config_path, resolve_project_path
+from app.utils.url_validation import validate_url
 
 
 def _perform_downloads(
@@ -295,8 +296,10 @@ class PeerReadDownloader:
         api_url = f"{self.config.github_api_base_url}/{venue}/{split}/{data_type}"
 
         try:
+            # Validate URL for SSRF protection (CVE-2026-25580 mitigation)
+            validated_url = validate_url(api_url)
             logger.info(f"Discovering {data_type} files in {venue}/{split} via GitHub API")
-            response = self.client.get(api_url, timeout=self.config.download_timeout)
+            response = self.client.get(validated_url, timeout=self.config.download_timeout)
             response.raise_for_status()
 
             files_data = response.json()
@@ -376,12 +379,14 @@ class PeerReadDownloader:
 
         for attempt in range(self.config.max_retries):
             try:
+                # Validate URL for SSRF protection (CVE-2026-25580 mitigation)
+                validated_url = validate_url(url)
                 logger.info(
-                    f"Downloading {data_type}/{paper_id} from {url} "
+                    f"Downloading {data_type}/{paper_id} from {validated_url} "
                     f"(Attempt {attempt + 1}/{self.config.max_retries})"
                 )
 
-                response = self.client.get(url, timeout=self.config.download_timeout)
+                response = self.client.get(validated_url, timeout=self.config.download_timeout)
                 response.raise_for_status()
 
                 if data_type in ["reviews", "parsed_pdfs"]:
