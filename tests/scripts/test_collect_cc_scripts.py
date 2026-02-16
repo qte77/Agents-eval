@@ -15,7 +15,7 @@ import pytest
 
 
 class TestCollectCCSolo:
-    """Tests for scripts/artifacts/collect-cc-solo.sh."""
+    """Tests for scripts/collect-cc-traces/collect-cc-solo.sh."""
 
     def test_missing_required_args_returns_exit_code_2(self, tmp_path: Path) -> None:
         """Script exits with code 2 when required arguments are missing.
@@ -24,7 +24,7 @@ class TestCollectCCSolo:
             tmp_path: Temporary directory fixture
         """
         # ARRANGE
-        script = Path("scripts/artifacts/collect-cc-solo.sh")
+        script = Path("scripts/collect-cc-traces/collect-cc-solo.sh")
 
         # ACT
         result = subprocess.run([str(script)], capture_output=True, text=True, check=False)
@@ -39,7 +39,7 @@ class TestCollectCCSolo:
             tmp_path: Temporary directory fixture
         """
         # ARRANGE
-        script = Path("scripts/artifacts/collect-cc-solo.sh")
+        script = Path("scripts/collect-cc-traces/collect-cc-solo.sh")
         output_dir = tmp_path / "output"
         session_name = "test-session"
 
@@ -75,7 +75,7 @@ class TestCollectCCSolo:
             tmp_path: Temporary directory fixture
         """
         # ARRANGE
-        script = Path("scripts/artifacts/collect-cc-solo.sh")
+        script = Path("scripts/collect-cc-traces/collect-cc-solo.sh")
         output_dir = tmp_path / "output"
         session_name = "test-session"
 
@@ -117,7 +117,7 @@ class TestCollectCCSolo:
 
 
 class TestCollectCCTeams:
-    """Tests for scripts/artifacts/collect-cc-teams.sh."""
+    """Tests for scripts/collect-cc-traces/collect-cc-teams.sh."""
 
     def test_missing_required_args_returns_exit_code_2(self, tmp_path: Path) -> None:
         """Script exits with code 2 when required arguments are missing.
@@ -126,7 +126,7 @@ class TestCollectCCTeams:
             tmp_path: Temporary directory fixture
         """
         # ARRANGE
-        script = Path("scripts/artifacts/collect-cc-teams.sh")
+        script = Path("scripts/collect-cc-traces/collect-cc-teams.sh")
 
         # ACT
         result = subprocess.run([str(script)], capture_output=True, text=True, check=False)
@@ -141,7 +141,7 @@ class TestCollectCCTeams:
             tmp_path: Temporary directory fixture
         """
         # ARRANGE
-        script = Path("scripts/artifacts/collect-cc-teams.sh")
+        script = Path("scripts/collect-cc-traces/collect-cc-teams.sh")
         output_dir = tmp_path / "output"
 
         # Create mock CC teams directory structure
@@ -181,7 +181,7 @@ class TestCollectCCTeams:
             tmp_path: Temporary directory fixture
         """
         # ARRANGE
-        script = Path("scripts/artifacts/collect-cc-teams.sh")
+        script = Path("scripts/collect-cc-traces/collect-cc-teams.sh")
         output_dir = tmp_path / "output"
 
         # Create mock CC directory structure
@@ -229,7 +229,7 @@ class TestCollectCCTeams:
             tmp_path: Temporary directory fixture
         """
         # ARRANGE
-        script = Path("scripts/artifacts/collect-cc-teams.sh")
+        script = Path("scripts/collect-cc-traces/collect-cc-teams.sh")
         output_dir = tmp_path / "output"
         team_name = "nonexistent-team-12345"
 
@@ -257,7 +257,7 @@ class TestCollectCCTeams:
             tmp_path: Temporary directory fixture
         """
         # ARRANGE
-        script = Path("scripts/artifacts/collect-cc-teams.sh")
+        script = Path("scripts/collect-cc-traces/collect-cc-teams.sh")
         output_dir = tmp_path / "output"
 
         # Create mock CC directory structure with nested directories

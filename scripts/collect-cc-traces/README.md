@@ -1,4 +1,4 @@
-# CC Artifact Collection Scripts
+# CC Trace Collection Scripts
 
 Scripts for collecting Claude Code execution artifacts into `CCTraceAdapter`-compatible directory structures for evaluation pipeline integration.
 
@@ -11,7 +11,7 @@ Collects Claude Code solo session data into adapter-expected format.
 **Usage:**
 
 ```bash
-./scripts/artifacts/collect-cc-solo.sh --name <session-name> --output-dir <path>
+./scripts/collect-cc-traces/collect-cc-solo.sh --name <session-name> --output-dir <path>
 ```
 
 **Arguments:**
@@ -30,7 +30,7 @@ Collects Claude Code solo session data into adapter-expected format.
 **Example:**
 
 ```bash
-./scripts/artifacts/collect-cc-solo.sh --name my-session --output-dir ./artifacts/solo-run
+./scripts/collect-cc-traces/collect-cc-solo.sh --name my-session --output-dir ./artifacts/solo-run
 ```
 
 ### `collect-cc-teams.sh`
@@ -40,7 +40,7 @@ Collects Claude Code teams mode artifacts from `~/.claude/teams/` and `~/.claude
 **Usage:**
 
 ```bash
-./scripts/artifacts/collect-cc-teams.sh --name <team-name> --output-dir <path> \
+./scripts/collect-cc-traces/collect-cc-teams.sh --name <team-name> --output-dir <path> \
   [--teams-source <path>] [--tasks-source <path>]
 ```
 
@@ -67,13 +67,13 @@ Collects Claude Code teams mode artifacts from `~/.claude/teams/` and `~/.claude
 **Example:**
 
 ```bash
-./scripts/artifacts/collect-cc-teams.sh --name review-team --output-dir ./artifacts/teams-run
+./scripts/collect-cc-traces/collect-cc-teams.sh --name review-team --output-dir ./artifacts/teams-run
 ```
 
 **Example with custom source paths:**
 
 ```bash
-./scripts/artifacts/collect-cc-teams.sh --name review-team --output-dir ./artifacts/teams-run \
+./scripts/collect-cc-traces/collect-cc-teams.sh --name review-team --output-dir ./artifacts/teams-run \
   --teams-source /tmp/mock-teams --tasks-source /tmp/mock-tasks
 ```
 

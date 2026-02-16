@@ -115,8 +115,8 @@
       "title": "Create CC artifact collection scripts",
       "description": "CC doesn't natively export artifacts in the format expected by `CCTraceAdapter`. Create bash scripts to collect solo session and teams mode artifacts into adapter-compatible directory structures.",
       "acceptance": [
-        "`scripts/artifacts/collect-cc-solo.sh` captures CC solo session data into adapter-expected format (`metadata.json` + `tool_calls.jsonl`)",
-        "`scripts/artifacts/collect-cc-teams.sh` copies `~/.claude/teams/{name}/` + `~/.claude/tasks/{name}/` into single adapter-compatible directory",
+        "`scripts/collect-cc-traces/collect-cc-solo.sh` captures CC solo session data into adapter-expected format (`metadata.json` + `tool_calls.jsonl`)",
+        "`scripts/collect-cc-traces/collect-cc-teams.sh` copies `~/.claude/teams/{name}/` + `~/.claude/tasks/{name}/` into single adapter-compatible directory",
         "Both scripts accept named parameters: `--name <session/team-name>` and `--output-dir <path>` (required)",
         "Both scripts validate output directory structure matches adapter expectations",
         "Exit code 0 on success, exit code 1 on validation failure (missing source dirs, malformed artifacts), exit code 2 on usage error (missing required params)",
@@ -124,15 +124,15 @@
         "Tests: pytest tests invoking scripts via `subprocess.run()`, verifying exit codes and output directory structure",
         "`make validate` passes",
         "CHANGELOG.md updated",
-        "`scripts/artifacts/collect-cc-solo.sh`: parse `--name` and `--output-dir` args, locate CC session data in `~/.claude/projects/` or user-specified path, create `metadata.json` (session name, timestamp, model) and `tool_calls.jsonl` (one JSON object per tool call) in output dir",
-        "`scripts/artifacts/collect-cc-teams.sh`: parse `--name` and `--output-dir` args, copy `~/.claude/teams/{name}/config.json` and `~/.claude/tasks/{name}/*.json` into output dir preserving structure",
+        "`scripts/collect-cc-traces/collect-cc-solo.sh`: parse `--name` and `--output-dir` args, locate CC session data in `~/.claude/projects/` or user-specified path, create `metadata.json` (session name, timestamp, model) and `tool_calls.jsonl` (one JSON object per tool call) in output dir",
+        "`scripts/collect-cc-traces/collect-cc-teams.sh`: parse `--name` and `--output-dir` args, copy `~/.claude/teams/{name}/config.json` and `~/.claude/tasks/{name}/*.json` into output dir preserving structure",
         "Both scripts: validate output structure matches `CCTraceAdapter` expectations (required files exist, valid JSON), exit 1 on validation failure, exit 2 on usage error",
         "Use `set -euo pipefail` for strict error handling in both scripts"
       ],
       "files": [
-        "scripts/artifacts/collect-cc-solo.sh",
-        "scripts/artifacts/collect-cc-teams.sh",
-        "scripts/artifacts/README.md",
+        "scripts/collect-cc-traces/collect-cc-solo.sh",
+        "scripts/collect-cc-traces/collect-cc-teams.sh",
+        "scripts/collect-cc-traces/README.md",
         "tests/scripts/test_collect_cc_scripts.py"
       ],
       "passes": true,
