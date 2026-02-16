@@ -8,6 +8,7 @@ and interaction graph construction from trace data.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import networkx as nx
 
@@ -56,6 +57,7 @@ async def run_evaluation_if_enabled(
     cc_teams_tasks_dir: str | None = None,
     chat_provider: str | None = None,
     judge_settings: JudgeSettings | None = None,
+    manager_output: Any = None,
 ) -> CompositeResult | None:
     """Run evaluation pipeline after manager completes if enabled.
 
@@ -69,6 +71,7 @@ async def run_evaluation_if_enabled(
                            auto-discovered if not specified).
         chat_provider: Active chat provider from agent system.
         judge_settings: Optional JudgeSettings override from GUI or programmatic calls.
+        manager_output: Manager result output containing ReviewGenerationResult (optional).
 
     Returns:
         CompositeResult from PydanticAI evaluation or None if skipped.
@@ -99,11 +102,36 @@ async def run_evaluation_if_enabled(
         else:
             logger.warning(f"No trace data found for execution: {execution_id}")
 
-    # TODO: Extract paper and review from run_manager result
-    # For now, calling with minimal placeholder data to satisfy wiring requirement
+    # Extract paper and review content from manager_output
+    paper_content = ""
+    review_text = ""
+
+    if manager_output is not None:
+        from app.data_models.peerread_models import ReviewGenerationResult
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Check if manager_output is ReviewGenerationResult
+        if isinstance(manager_output, ReviewGenerationResult):
+            # Extract review text from ReviewGenerationResult
+            review_text = manager_output.review.comments
+
+            # Load paper content from PeerReadLoader
+            loader = PeerReadLoader()
+            paper_id = manager_output.paper_id
+
+            # Try to load parsed PDF content first
+            parsed_content = loader.load_parsed_pdf_content(paper_id)
+            if parsed_content:
+                paper_content = parsed_content
+            else:
+                # Fallback to abstract if PDF unavailable
+                paper = loader.get_paper_by_id(paper_id)
+                if paper:
+                    paper_content = paper.abstract
+
     pydantic_result = await pipeline.evaluate_comprehensive(
-        paper="",  # Placeholder - will be extracted from manager result
-        review="",  # Placeholder - will be extracted from manager result
+        paper=paper_content,
+        review=review_text,
         execution_trace=execution_trace,
         reference_reviews=None,
     )

@@ -338,7 +338,7 @@ class TestPaperAndReviewExtraction:
         with (
             patch("app.judge.trace_processors.get_trace_collector") as mock_get,
             patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
-            patch("app.judge.evaluation_runner.PeerReadLoader") as mock_loader_class,
+            patch("app.data_utils.datasets_peerread.PeerReadLoader") as mock_loader_class,
         ):
             mock_collector = MagicMock()
             mock_collector.load_trace.return_value = MagicMock()
@@ -395,7 +395,7 @@ class TestPaperAndReviewExtraction:
         with (
             patch("app.judge.trace_processors.get_trace_collector") as mock_get,
             patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
-            patch("app.judge.evaluation_runner.PeerReadLoader") as mock_loader_class,
+            patch("app.data_utils.datasets_peerread.PeerReadLoader") as mock_loader_class,
         ):
             mock_collector = MagicMock()
             mock_collector.load_trace.return_value = MagicMock()
@@ -410,7 +410,7 @@ class TestPaperAndReviewExtraction:
             mock_loader.load_parsed_pdf_content.return_value = None
             mock_paper = MagicMock()
             mock_paper.abstract = "This is the paper abstract as fallback content."
-            mock_loader.load_paper.return_value = mock_paper
+            mock_loader.get_paper_by_id.return_value = mock_paper
             mock_loader_class.return_value = mock_loader
 
             from app.judge.evaluation_runner import run_evaluation_if_enabled

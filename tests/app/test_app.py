@@ -33,7 +33,7 @@ async def test_graph_built_when_skip_eval_and_execution_id_exists():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = "test_exec_123"  # Valid execution_id
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
         mock_eval.return_value = None  # No evaluation result (skipped)
         mock_build_graph.return_value = MagicMock()  # Mock graph object
         mock_load_config.return_value = MagicMock(prompts={})
@@ -75,7 +75,7 @@ async def test_graph_built_when_evaluation_fails():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = "test_exec_456"  # Valid execution_id
+        mock_run_manager.return_value = ("test_exec_456", None)  # (execution_id, manager_output)
         mock_eval.return_value = None  # Evaluation failed
         mock_build_graph.return_value = MagicMock()  # Mock graph object
         mock_load_config.return_value = MagicMock(prompts={})
@@ -117,7 +117,7 @@ async def test_graph_not_built_when_no_execution_id():
         )
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
-        mock_run_manager.return_value = None  # No execution_id
+        mock_run_manager.return_value = (None, None)  # No execution_id
         mock_eval.return_value = None
         mock_load_config.return_value = MagicMock(prompts={})
 

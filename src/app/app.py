@@ -78,14 +78,14 @@ async def _run_agent_execution(
     include_synthesiser: bool,
     pydantic_ai_stream: bool,
     token_limit: int | None,
-) -> tuple[str, dict[str, str]]:
-    """Execute agent system and return execution ID and prompts.
+) -> tuple[str, dict[str, str], Any]:
+    """Execute agent system and return execution ID, prompts, and manager output.
 
     Args:
         All agent execution configuration parameters
 
     Returns:
-        Tuple of (execution_id, prompts dict)
+        Tuple of (execution_id, prompts dict, manager_output)
     """
     chat_config = load_config(chat_config_file, ChatConfig)
     prompts: dict[str, str] = cast(dict[str, str], chat_config.prompts)  # type: ignore[reportUnknownMemberType,reportAttributeAccessIssue]
@@ -109,7 +109,7 @@ async def _run_agent_execution(
         include_synthesiser,
         enable_review_tools,
     )
-    execution_id = await run_manager(
+    execution_id, manager_output = await run_manager(
         manager,
         agent_env.query,
         agent_env.provider,
@@ -117,7 +117,7 @@ async def _run_agent_execution(
         pydantic_ai_stream,
     )
 
-    return execution_id, prompts
+    return execution_id, prompts, manager_output
 
 
 def _handle_download_mode(
@@ -241,7 +241,7 @@ async def main(
             if not chat_provider:
                 chat_provider = input("Which inference chat_provider to use? ")
 
-            execution_id, _ = await _run_agent_execution(
+            execution_id, _, manager_output = await _run_agent_execution(
                 chat_config_file,
                 chat_provider,
                 query,
@@ -264,6 +264,7 @@ async def main(
                 cc_teams_tasks_dir,
                 chat_provider,
                 judge_settings,
+                manager_output,
             )
 
             # Build interaction graph from trace data for visualization

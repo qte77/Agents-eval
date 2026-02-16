@@ -28,7 +28,7 @@ Functions:
 
 import time
 import uuid
-from typing import NoReturn
+from typing import Any, NoReturn
 
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
@@ -507,7 +507,7 @@ async def run_manager(
     provider: str,
     usage_limits: UsageLimits | None,
     pydantic_ai_stream: bool = False,
-) -> str:
+) -> tuple[str, Any]:
     """
     Asynchronously runs the manager with the given query and provider, handling errors
         and printing results.
@@ -523,7 +523,7 @@ async def run_manager(
         pydantic_ai_stream (bool, optional): Flag to enable or disable Pydantic AI
             stream. Defaults to False.
     Returns:
-        str: Execution ID for trace retrieval
+        tuple[str, Any]: Tuple of (execution_id, manager_output) for trace retrieval and evaluation
     """
     # Initialize trace collection
     trace_collector = get_trace_collector()
@@ -565,7 +565,7 @@ async def run_manager(
         trace_collector.end_execution()
         logger.info(f"Trace collection completed for execution: {execution_id}")
 
-        return execution_id
+        return execution_id, result.data
 
     except ModelHTTPError as e:
         trace_collector.end_execution()
