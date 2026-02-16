@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security (Sprint 6 - STORY-011)
+
+- **HIGH Priority Security**: Prompt injection mitigation with input sanitization
+- Added prompt input sanitization module (`src/app/utils/prompt_sanitization.py`) with length limits and XML delimiter wrapping
+- Length limits enforced: paper titles (500 chars), abstracts (5000 chars), review text (50000 chars)
+- XML delimiters wrap user-controlled content to separate instructions from data in LLM prompts:
+  - `<paper_title>`, `<paper_abstract>`, `<review_text>`, `<content>` for generic use
+- Sanitization integrated into LLM judge prompts (`llm_evaluation_managers.py`) for paper excerpts and reviews
+- PeerRead template formatting (`peerread_tools.py`) now sanitizes titles and abstracts before template insertion
+- Format string injection prevented: malicious placeholders (`{__import__}`) cannot execute in sanitized content
+- Comprehensive test suite: 25 tests including Hypothesis property tests for boundary fuzzing and prompt injection attempts
+- Prevents attack vectors: "Ignore previous instructions", system prompt override, null byte injection, excessive newlines
+
 ### Security (Sprint 6 - STORY-010)
 
 - **CRITICAL CVE Mitigation**: CVE-2026-25580 PydanticAI SSRF vulnerability
