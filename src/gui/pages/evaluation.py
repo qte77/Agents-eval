@@ -24,7 +24,6 @@ def _extract_graph_metrics(metric_scores: dict[str, float]) -> dict[str, float]:
     graph_metric_names = [
         "path_convergence",
         "tool_selection_accuracy",
-        "communication_overhead",
         "coordination_centrality",
         "task_distribution_balance",
     ]

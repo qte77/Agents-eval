@@ -161,16 +161,41 @@ class GraphAnalysisEngine:
             # Create tool usage graph
             tool_graph = nx.DiGraph()
 
+            # Track tool call outcomes for accumulation
+            tool_outcomes: dict[str, list[bool]] = {}
+            edge_outcomes: dict[tuple[str, str], list[bool]] = {}
+
             # Add tool call sequences as graph edges
             for i, call in enumerate(trace_data.tool_calls):
                 tool_name = call.get("tool_name", f"tool_{i}")
                 agent_id = call.get("agent_id", f"agent_{i}")
                 success = call.get("success", False)
 
-                # Add nodes and edges for tool usage patterns
-                tool_graph.add_node(tool_name, type="tool", success_rate=1.0 if success else 0.0)
-                tool_graph.add_node(agent_id, type="agent")
-                tool_graph.add_edge(agent_id, tool_name, weight=1.0 if success else 0.5)
+                # Accumulate outcomes instead of overwriting
+                if tool_name not in tool_outcomes:
+                    tool_outcomes[tool_name] = []
+                tool_outcomes[tool_name].append(success)
+
+                edge_key = (agent_id, tool_name)
+                if edge_key not in edge_outcomes:
+                    edge_outcomes[edge_key] = []
+                edge_outcomes[edge_key].append(success)
+
+            # Add nodes with accumulated success rates
+            for tool_name, outcomes in tool_outcomes.items():
+                success_rate = sum(outcomes) / len(outcomes)
+                tool_graph.add_node(tool_name, type="tool", success_rate=success_rate)
+
+            # Add agent nodes
+            for call in trace_data.tool_calls:
+                agent_id = call.get("agent_id", f"agent_{call}")
+                if not tool_graph.has_node(agent_id):
+                    tool_graph.add_node(agent_id, type="agent")
+
+            # Add edges with accumulated weights
+            for (agent_id, tool_name), outcomes in edge_outcomes.items():
+                avg_weight = sum(1.0 if s else 0.5 for s in outcomes) / len(outcomes)
+                tool_graph.add_edge(agent_id, tool_name, weight=avg_weight)
 
             if len(tool_graph.nodes) < self.min_nodes_for_analysis:  # type: ignore[arg-type]
                 return {"path_convergence": 0.5, "tool_selection_accuracy": 0.5}
@@ -376,7 +401,6 @@ class GraphAnalysisEngine:
             # Extract individual metrics
             path_convergence = tool_metrics.get("path_convergence", 0.0)
             tool_accuracy = tool_metrics.get("tool_selection_accuracy", 0.0)
-            communication_efficiency = interaction_metrics.get("communication_overhead", 0.0)
             coordination_quality = interaction_metrics.get("coordination_centrality", 0.0)
 
             # Calculate graph complexity (total unique nodes)
@@ -399,7 +423,6 @@ class GraphAnalysisEngine:
             return Tier3Result(
                 path_convergence=path_convergence,
                 tool_selection_accuracy=tool_accuracy,
-                communication_overhead=1.0 - communication_efficiency,  # Invert for overhead
                 coordination_centrality=coordination_quality,
                 task_distribution_balance=task_balance,
                 overall_score=overall_score,
@@ -412,7 +435,6 @@ class GraphAnalysisEngine:
             return Tier3Result(
                 path_convergence=0.0,
                 tool_selection_accuracy=0.0,
-                communication_overhead=1.0,
                 coordination_centrality=0.0,
                 task_distribution_balance=0.0,
                 overall_score=0.0,
@@ -545,7 +567,6 @@ def evaluate_single_graph_analysis(
         return Tier3Result(
             path_convergence=0.0,
             tool_selection_accuracy=0.0,
-            communication_overhead=1.0,
             coordination_centrality=0.0,
             task_distribution_balance=0.0,
             overall_score=0.0,

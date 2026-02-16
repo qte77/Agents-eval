@@ -82,7 +82,6 @@ class GraphEvaluatorPlugin(EvaluatorPlugin):
             return Tier3Result(
                 path_convergence=0.0,
                 tool_selection_accuracy=0.0,
-                communication_overhead=1.0,
                 coordination_centrality=0.0,
                 task_distribution_balance=0.0,
                 overall_score=0.0,

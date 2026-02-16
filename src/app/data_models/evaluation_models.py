@@ -78,12 +78,11 @@ class Tier3Result(BaseModel):
     """Graph-based analysis result.
 
     Contains metrics derived from analyzing agent coordination patterns,
-    tool usage efficiency, and communication overhead using NetworkX.
+    tool usage efficiency using NetworkX.
     """
 
     path_convergence: float = Field(ge=0.0, le=1.0, description="Tool usage efficiency")
     tool_selection_accuracy: float = Field(ge=0.0, le=1.0, description="Tool choice accuracy")
-    communication_overhead: float = Field(ge=0.0, le=1.0, description="Communication efficiency")
     coordination_centrality: float = Field(ge=0.0, le=1.0, description="Coordination quality")
     task_distribution_balance: float = Field(ge=0.0, le=1.0, description="Load balancing")
     overall_score: float = Field(ge=0.0, le=1.0, description="Weighted graph analysis score")
