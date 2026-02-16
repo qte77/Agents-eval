@@ -339,3 +339,73 @@ def test_multiple_connection_failures_single_warning():
 
         # Should have exactly ONE warning call
         assert mock_logger.warning.call_count == 1
+
+
+# STORY-012: Fix OTLP endpoint double-path bug
+# Tests for correct OTLP endpoint construction per OTEL spec
+
+
+def test_otlp_endpoint_uses_base_url_only():
+    """Test OTEL_EXPORTER_OTLP_ENDPOINT is set to base URL without signal path.
+
+    Acceptance criteria:
+    - OTEL_EXPORTER_OTLP_ENDPOINT set to http://localhost:6006 (base URL only)
+    - Not http://localhost:6006/v1/traces (no signal-specific path)
+    - SDK will auto-append signal paths per OTEL spec
+    """
+    config = LogfireConfig(
+        enabled=True,
+        send_to_cloud=False,
+        phoenix_endpoint="http://localhost:6006",
+        service_name="test-service",
+    )
+
+    with (
+        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("requests.head") as mock_head,
+        patch.dict("os.environ", {}, clear=True) as mock_env,
+    ):
+        # Mock successful connection check
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_head.return_value = mock_response
+
+        LogfireInstrumentationManager(config)
+
+        # Should set base URL without signal-specific path
+        import os
+
+        otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+        assert otlp_endpoint == "http://localhost:6006"
+        assert "/v1/traces" not in otlp_endpoint
+        assert "/v1/metrics" not in otlp_endpoint
+
+
+def test_otlp_endpoint_snapshot():
+    """Test OTLP endpoint value using inline-snapshot.
+
+    Acceptance criteria:
+    - Constructed OTLP endpoint matches expected base URL format
+    """
+    config = LogfireConfig(
+        enabled=True,
+        send_to_cloud=False,
+        phoenix_endpoint="http://localhost:6006",
+        service_name="test-service",
+    )
+
+    with (
+        patch("app.agents.logfire_instrumentation.logfire"),
+        patch("requests.head") as mock_head,
+        patch.dict("os.environ", {}, clear=True),
+    ):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_head.return_value = mock_response
+
+        LogfireInstrumentationManager(config)
+
+        import os
+
+        otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+        assert otlp_endpoint == snapshot("http://localhost:6006")
