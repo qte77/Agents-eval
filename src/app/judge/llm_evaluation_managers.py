@@ -24,6 +24,7 @@ from app.data_models.evaluation_models import (
 from app.judge.traditional_metrics import TraditionalMetricsEngine
 from app.llms.providers import get_api_key
 from app.utils.log import logger
+from app.utils.prompt_sanitization import sanitize_for_prompt, sanitize_review_text
 
 if TYPE_CHECKING:
     from app.judge.settings import JudgeSettings
@@ -174,11 +175,17 @@ class LLMJudgeEngine:
                 else paper
             )
 
+            # Sanitize user-controlled content with XML delimiters
+            sanitized_paper = sanitize_for_prompt(
+                paper_excerpt, max_length=self.paper_excerpt_length, delimiter="paper_excerpt"
+            )
+            sanitized_review = sanitize_review_text(review)
+
             prompt = f"""Evaluate technical accuracy of this review (1-5 scale):
 
-Paper Excerpt: {paper_excerpt}
+Paper Excerpt: {sanitized_paper}
 
-Review: {review}
+Review: {sanitized_review}
 
 Rate each aspect (1=poor, 5=excellent):
 1. Factual Correctness: Are claims supported by the paper?
@@ -220,9 +227,12 @@ Provide scores and brief explanation."""
     async def assess_constructiveness(self, review: str) -> float:
         """Assess constructiveness and helpfulness of review."""
         try:
+            # Sanitize user-controlled content with XML delimiters
+            sanitized_review = sanitize_review_text(review)
+
             prompt = f"""Evaluate constructiveness of this review (1-5 scale):
 
-Review: {review}
+Review: {sanitized_review}
 
 Rate each aspect (1=poor, 5=excellent):
 1. Actionable Feedback: Specific, implementable suggestions?

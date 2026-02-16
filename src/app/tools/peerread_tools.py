@@ -24,6 +24,7 @@ from app.data_utils.review_persistence import ReviewPersistence
 from app.judge.trace_processors import get_trace_collector
 from app.utils.log import logger
 from app.utils.paths import get_review_template_path
+from app.utils.prompt_sanitization import sanitize_paper_abstract, sanitize_paper_title
 
 
 def read_paper_pdf(
@@ -292,9 +293,16 @@ def _load_and_format_template(
             paper_abstract, paper_content, max_content_length
         )
 
+        # Sanitize user-controlled content before template formatting
+        # This prevents format string injection attacks while preserving template compatibility
+        sanitized_title = sanitize_paper_title(paper_title)
+        sanitized_abstract = sanitize_paper_abstract(paper_abstract)
+
+        # Safe to use .format() here since inputs are sanitized and wrapped in XML delimiters
+        # Template uses {variable} placeholders which is the standard Python format
         return template_content.format(
-            paper_title=paper_title,
-            paper_abstract=paper_abstract,
+            paper_title=sanitized_title,
+            paper_abstract=sanitized_abstract,
             paper_full_content=truncated_content,
             tone=tone,
             review_focus=review_focus,
