@@ -230,6 +230,14 @@ class TraceCollector:
             ProcessedTrace object with patterns, or None if no execution active
         """
         if not self.trace_enabled or not self.current_execution_id or not self.current_events:
+            reason = (
+                "tracing disabled"
+                if not self.trace_enabled
+                else "no active execution"
+                if not self.current_execution_id
+                else "no events collected (is the OTLP endpoint reachable?)"
+            )
+            logger.warning(f"Trace storage skipped: {reason}")
             return None
 
         try:

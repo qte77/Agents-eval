@@ -55,9 +55,13 @@ class LogfireInstrumentationManager:
             import os
 
             # Set Phoenix OTLP endpoint via environment variable if not sending to cloud
+            # Reason: Use traces-specific env var because Phoenix only supports
+            # /v1/traces, not /v1/metrics. The generic OTEL_EXPORTER_OTLP_ENDPOINT
+            # causes the SDK to also export metrics → 405 Method Not Allowed.
             if not self.config.send_to_cloud:
                 phoenix_otlp = f"{self.config.phoenix_endpoint}/v1/traces"
-                os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = phoenix_otlp
+                os.environ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"] = phoenix_otlp
+                os.environ["OTEL_METRICS_EXPORTER"] = "none"
 
                 # Check endpoint connectivity before configuring exporters
                 # Reason: Prevents ConnectionRefusedError stack traces during span/metrics export
@@ -82,12 +86,13 @@ class LogfireInstrumentationManager:
             # Auto-instrument all PydanticAI agents
             logfire.instrument_pydantic_ai()  # type: ignore
 
-            endpoint = (
-                "Logfire cloud"
-                if self.config.send_to_cloud
-                else os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "Phoenix local")
-            )
-            logger.info(f"Logfire tracing initialized: {endpoint}")
+            if self.config.send_to_cloud:
+                endpoint_info = "Logfire cloud"
+            else:
+                traces_ep = os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "not set")
+                metrics_ep = os.environ.get("OTEL_METRICS_EXPORTER", "default")
+                endpoint_info = f"traces={traces_ep}, metrics_exporter={metrics_ep}"
+            logger.info(f"Logfire tracing initialized: {endpoint_info}")
         except Exception as e:
             logger.error(f"Failed to initialize Logfire: {e}")
             self.config.enabled = False

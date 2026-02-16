@@ -28,16 +28,19 @@ Functions:
 
 import time
 import uuid
+from typing import NoReturn
 
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.common_tools.duckduckgo import (
     duckduckgo_search_tool,  # type: ignore[reportUnknownVariableType]
 )
+from pydantic_ai.exceptions import ModelHTTPError, UsageLimitExceeded
 from pydantic_ai.usage import UsageLimits
 
 from app.agents.logfire_instrumentation import initialize_logfire_instrumentation
 from app.data_models.app_models import (
+    PROVIDER_REGISTRY,
     AgentConfig,
     AnalysisResult,
     AppEnv,
@@ -482,6 +485,17 @@ def get_manager(
     )
 
 
+def _handle_model_http_error(error: ModelHTTPError, provider: str, model_name: str) -> NoReturn:
+    """Handle ModelHTTPError with actionable logging. Exits on 429, re-raises otherwise."""
+    if error.status_code == 429:
+        body = error.body if isinstance(error.body, dict) else {}
+        detail = body.get("message") or body.get("details") or str(error)
+        logger.error(f"Rate limit exceeded for {provider}({model_name}): {detail}")
+        raise SystemExit(1) from error
+    logger.error(f"HTTP error from model {provider}({model_name}): {error}")
+    raise error
+
+
 async def run_manager(
     manager: Agent[None, BaseModel],
     query: UserPromptType,
@@ -548,8 +562,16 @@ async def run_manager(
 
         return execution_id
 
+    except ModelHTTPError as e:
+        trace_collector.end_execution()
+        _handle_model_http_error(e, provider, model_name)
+
+    except UsageLimitExceeded as e:
+        trace_collector.end_execution()
+        logger.error(f"Token limit reached for {provider}({model_name}): {e}")
+        raise SystemExit(1) from e
+
     except Exception as e:
-        # End trace collection even on error
         trace_collector.end_execution()
         logger.error(f"Error in run_manager: {e}")
         raise
@@ -646,17 +668,11 @@ def setup_agent_env(
     prompts = chat_config.prompts
     is_api_key, api_key_msg = get_api_key(provider, chat_env_config)
 
-    # Set up LLM environment with all available API keys
+    # Set up LLM environment with all available API keys from provider registry
     api_keys = {
-        "openai": chat_env_config.OPENAI_API_KEY,
-        "anthropic": chat_env_config.ANTHROPIC_API_KEY,
-        "gemini": chat_env_config.GEMINI_API_KEY,
-        "github": chat_env_config.GITHUB_API_KEY,
-        "grok": chat_env_config.GROK_API_KEY,
-        "huggingface": chat_env_config.HUGGINGFACE_API_KEY,
-        "openrouter": chat_env_config.OPENROUTER_API_KEY,
-        "perplexity": chat_env_config.PERPLEXITY_API_KEY,
-        "together": chat_env_config.TOGETHER_API_KEY,
+        meta.name: getattr(chat_env_config, meta.env_key, "")
+        for meta in PROVIDER_REGISTRY.values()
+        if meta.env_key is not None
     }
     setup_llm_environment(api_keys)
 
