@@ -66,14 +66,17 @@ def read_paper_pdf(
         raise ValueError(f"Failed to read PDF: {str(e)}")
 
 
-def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
-    """Add PeerRead dataset tools to the manager agent.
+def add_peerread_tools_to_agent(
+    agent: Agent[None, BaseModel], agent_id: str = "manager"
+):
+    """Add PeerRead dataset tools to an agent.
 
     Args:
-        manager_agent: The manager agent to which PeerRead tools will be added.
+        agent: The agent to which PeerRead tools will be added.
+        agent_id: The agent identifier for tracing (default: "manager").
     """
 
-    @manager_agent.tool
+    @agent.tool
     async def get_peerread_paper(ctx: RunContext[None], paper_id: str) -> PeerReadPaper:  # type: ignore[reportUnusedFunction]
         """Get a specific paper from the PeerRead dataset.
 
@@ -105,14 +108,14 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         finally:
             duration = time.perf_counter() - start_time
             trace_collector.log_tool_call(
-                agent_id="manager",
+                agent_id=agent_id,
                 tool_name="get_peerread_paper",
                 success=success,
                 duration=duration,
                 context=f"paper_id={paper_id}",
             )
 
-    @manager_agent.tool
+    @agent.tool
     async def query_peerread_papers(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], venue: str = "", min_reviews: int = 1
     ) -> list[PeerReadPaper]:
@@ -150,14 +153,14 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         finally:
             duration = time.perf_counter() - start_time
             trace_collector.log_tool_call(
-                agent_id="manager",
+                agent_id=agent_id,
                 tool_name="query_peerread_papers",
                 success=success,
                 duration=duration,
                 context=f"venue={venue},min_reviews={min_reviews}",
             )
 
-    @manager_agent.tool
+    @agent.tool
     async def read_paper_pdf_tool(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None],
         pdf_path: str,
@@ -184,12 +187,24 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         finally:
             duration = time.perf_counter() - start_time
             trace_collector.log_tool_call(
-                agent_id="manager",
+                agent_id=agent_id,
                 tool_name="read_paper_pdf_tool",
                 success=success,
                 duration=duration,
                 context=f"pdf_path={pdf_path}",
             )
+
+
+def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
+    """Add PeerRead dataset tools to the manager agent.
+
+    Deprecated: Use add_peerread_tools_to_agent() instead.
+    This wrapper exists for backwards compatibility.
+
+    Args:
+        manager_agent: The manager agent to which PeerRead tools will be added.
+    """
+    add_peerread_tools_to_agent(manager_agent, agent_id="manager")
 
 
 def _truncate_paper_content(abstract: str, body: str, max_length: int) -> str:

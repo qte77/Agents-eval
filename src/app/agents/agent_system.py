@@ -65,6 +65,7 @@ from app.llms.providers import (
 )
 from app.tools.peerread_tools import (
     add_peerread_review_tools_to_manager,
+    add_peerread_tools_to_agent,
     add_peerread_tools_to_manager,
 )
 from app.utils.error_messages import generic_exception, invalid_data_model_format
@@ -411,7 +412,12 @@ def _create_manager(
         )
 
     _add_tools_to_manager_agent(manager, researcher, analyst, synthesiser, result_type)
-    add_peerread_tools_to_manager(manager)
+
+    # Add PeerRead tools to researcher if present, otherwise to manager (fallback)
+    if researcher is not None:
+        add_peerread_tools_to_agent(researcher, agent_id="researcher")
+    else:
+        add_peerread_tools_to_agent(manager, agent_id="manager")
 
     return manager
 
