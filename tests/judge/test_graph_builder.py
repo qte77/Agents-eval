@@ -14,7 +14,6 @@ from inline_snapshot import snapshot
 from app.data_models.evaluation_models import GraphTraceData
 from app.judge.graph_builder import build_interaction_graph
 
-
 # MARK: --- Fixtures ---
 
 
