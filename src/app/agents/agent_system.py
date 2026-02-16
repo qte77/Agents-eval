@@ -470,9 +470,7 @@ def get_manager(
         model_config, include_researcher, include_analyst, include_synthesiser
     )
     max_content_length = provider_config.max_content_length or 15000
-    manager = _create_manager(
-        prompts, models, provider, enable_review_tools, max_content_length
-    )
+    manager = _create_manager(prompts, models, provider, enable_review_tools, max_content_length)
 
     return manager
 
