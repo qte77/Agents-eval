@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Sprint 5)
 
+- AGENT_LEARNINGS.md: Added YAML frontmatter and condensed content (~25% reduction from 147 to 110 lines) - improved scannability while preserving all essential information
 - STORY-005: Documentation updates for Sprint 5 - README.md now references Sprint 5 features, roadmap.md updated with Sprint 5 entry, architecture.md documented single-agent weight redistribution and Tier 2 provider fallback, implementation status updated with Sprint 5 improvements
 - STORY-005: Stale "Opik" references in graph_analysis.py docstrings updated to reference "Phoenix" (lines 477, 560)
 - STORY-011: Test suite refactored to remove 31 implementation-detail tests per testing strategy criteria

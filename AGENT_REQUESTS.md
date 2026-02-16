@@ -1,4 +1,10 @@
-# Agent Requests to Humans
+---
+title: Agent Requests to Humans
+description: Escalation protocol and active requests requiring human decision
+version: 1.0.0
+created: 2025-08-19
+updated: 2026-02-16
+---
 
 **Always escalate when:**
 

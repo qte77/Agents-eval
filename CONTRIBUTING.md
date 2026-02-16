@@ -1,4 +1,10 @@
-# Contributing to Agents-eval
+---
+title: Contributing to Agents-eval
+description: Technical development workflows, coding standards, and implementation guidelines
+version: 1.0.0
+created: 2025-08-23
+updated: 2026-02-16
+---
 
 **This document contains technical development workflows, coding standards, and implementation guidelines shared by both human developers and AI coding agents.** For AI agent behavioral rules and compliance requirements, see [AGENTS.md](AGENTS.md). For project overview and navigation, see [README.md](README.md).
 
