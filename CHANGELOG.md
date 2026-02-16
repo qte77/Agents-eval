@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Sprint 6)
 
+- STORY-015: Executed Sprint 5 test audit refactoring plan — deleted ~61 implementation-detail tests from `test_trace_store.py` (basic CRUD and metadata tests) while preserving all behavioral coverage (thread-safety, context manager tests retained)
 - STORY-014: Fixed failing test expectations to match actual behavior — removed tests for non-existent error propagation, empty string validation, corrupted PDF errors
 - STORY-009: Review tools enabled by default; `--no-review-tools` to opt out
 - STORY-008: Review tools routed to researcher agent (was manager-only); single-agent fallback preserved
