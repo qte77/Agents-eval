@@ -668,12 +668,12 @@ def setup_agent_env(
     prompts = chat_config.prompts
     is_api_key, api_key_msg = get_api_key(provider, chat_env_config)
 
-    # Set up LLM environment with all available API keys from provider registry
-    api_keys = {
-        meta.name: getattr(chat_env_config, meta.env_key, "")
-        for meta in PROVIDER_REGISTRY.values()
-        if meta.env_key is not None
-    }
+    # Set up LLM environment with only the selected provider's API key
+    selected_meta = PROVIDER_REGISTRY.get(provider)
+    if selected_meta and selected_meta.env_key:
+        api_keys = {selected_meta.name: getattr(chat_env_config, selected_meta.env_key, "")}
+    else:
+        api_keys = {}
     setup_llm_environment(api_keys)
 
     if provider.lower() != "ollama" and not is_api_key:
