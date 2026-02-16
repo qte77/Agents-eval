@@ -22,6 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-007: MAS composition sweep (`src/app/benchmark/`) — `SweepRunner` for N×M×P benchmarking, CC headless baseline via `claude -p`, statistical analysis, CLI `run_sweep.py` + `make sweep` (33 tests)
 - STORY-004: CC artifact collection scripts (`collect-cc-solo.sh`, `collect-cc-teams.sh`) with docs and tests
 - Ralph: baseline-aware test validation (`RALPH_BASELINE_MODE`), process management (`ralph_stop`, `ralph_watch`, `ralph_get_log`), timeout protection
+- Ralph: story-scoped test lint — Phase 1 only lints test files changed by the current story via `get_story_base_commit()` git diff
+- Ralph: per-story baseline persistence — prevents absorption of a story's own failures into the baseline across restarts
+
+### Fixed
+
+- Ralph: `ruff_tests` in Phase 1 blocked stories on pre-existing lint violations in untouched test files
+- Ralph: baseline captured on restart absorbed failures from prior story attempts, allowing stories to pass with their own regressions
+- Ralph: prompt template instructed Claude to run `make validate` (all-file lint), causing scope creep on pre-existing issues
 
 ### Changed (Sprint 6)
 
