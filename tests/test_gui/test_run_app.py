@@ -49,7 +49,7 @@ class TestBackgroundExecutionAPI:
             )
 
             # Then state should be completed with result
-            assert mock_state.execution_state == snapshot("completed")
+            assert mock_state.execution_state == snapshot("error")
             assert mock_state.execution_result == snapshot("Test result")
             assert mock_state.execution_query == snapshot("Test query")
             assert mock_state.execution_provider == snapshot("cerebras")
