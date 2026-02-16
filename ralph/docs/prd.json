@@ -416,8 +416,8 @@
         "src/app/llms/providers.py",
         "tests/llms/test_providers.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-16T03:28:01Z",
       "content_hash": "dadf752222b3bee5cd22b7bfbfa989a7f12e2ee4c1c7c9c14fc002bd00813505",
       "depends_on": []
     },
