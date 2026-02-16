@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Ralph Monitoring)
+
+- `make ralph_stop` - Two-phase kill for hung Ralph loops and orphaned Claude processes
+- `make ralph_watch` - Live-tail Ralph log with process tree visualization via `pstree`
+- `make ralph_get_log` - Show latest Ralph log or specific log file
+- `make ralph_run RALPH_TIMEOUT=3600` - Optional timeout to prevent infinite hangs
+- `ralph/scripts/stop.sh` + `ralph/scripts/lib/stop_ralph_processes.sh` - Process stop library
+- `ralph/scripts/watch.sh` - Monitoring script with watch/status/log subcommands
+
 ### Fixed (Sprint 6 - STORY-002)
 
 - STORY-002: Phoenix Docker recipe persistence - added volume mount `phoenix_data:/phoenix` to preserve trace data across container restarts

@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_status ralph_clean ralph_reorganize help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean ralph_reorganize help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -23,6 +23,7 @@ PANDOC_SCRIPT := scripts/run-pandoc.sh
 PDF_CONVERTER_SCRIPT := scripts/setup-pdf-converter.sh
 PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex
 PANDOC_TITLE_FILE := 01_titel_abstrakt.md
+RALPH_TIMEOUT ?=
 PHOENIX_CONTAINER_NAME := phoenix-tracing
 PHOENIX_PORT := 6006
 PHOENIX_GRPC_PORT := 4317
@@ -322,9 +323,9 @@ start_phoenix:  ## Start local Arize Phoenix trace viewer (OTLP endpoint on port
 		-p $(PHOENIX_PORT):$(PHOENIX_PORT) \
 		-p $(PHOENIX_GRPC_PORT):$(PHOENIX_GRPC_PORT) \
 		$(PHOENIX_IMAGE)
-	echo "Phoenix UI: http://localhost:$(PHOENIX_PORT)"
-	echo "OTLP HTTP endpoint: http://localhost:$(PHOENIX_PORT)/v1/traces"
-	echo "OTLP gRPC endpoint: localhost:4317"
+	echo "Phoenix UI: localhost:$(PHOENIX_PORT)"
+	echo "OTLP HTTP endpoint: localhost:$(PHOENIX_PORT)/v1/traces"
+	echo "OTLP gRPC endpoint: localhost:$(PHOENIX_GRPC_PORT)"
 
 stop_phoenix:  ## Stop Phoenix trace viewer (volume data preserved)
 	echo "Stopping Phoenix ..."
@@ -356,9 +357,14 @@ ralph_init:  ## Initialize Ralph loop environment
 	echo "Initializing Ralph loop environment ..."
 	bash ralph/scripts/init.sh
 
-ralph_run:  ## Run Ralph autonomous development loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku)
+ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds)
 	echo "Starting Ralph loop ..."
-	RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) bash ralph/scripts/ralph.sh
+	$(if $(RALPH_TIMEOUT),timeout $(RALPH_TIMEOUT)) \
+		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) bash ralph/scripts/ralph.sh \
+		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph loop timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
+
+ralph_stop:  ## Stop all running Ralph loops (keeps state and data)
+	bash ralph/scripts/stop.sh
 
 ralph_status:  ## Show Ralph loop progress and status
 	echo "Ralph Loop Status"
@@ -373,6 +379,12 @@ ralph_status:  ## Show Ralph loop progress and status
 	else
 		echo "prd.json not found. Run 'make ralph_init' first."
 	fi
+
+ralph_watch:  ## Live-watch Ralph loop output with process tree
+	bash ralph/scripts/watch.sh watch
+
+ralph_get_log:  ## Show latest Ralph log (or specific: make ralph_get_log LOG=path/to/file.log)
+	bash ralph/scripts/watch.sh log $(LOG)
 
 ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
 	echo "WARNING: This will reset Ralph loop state!"

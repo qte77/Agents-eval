@@ -63,4 +63,4 @@ package-lock.json
 package.json
 
 # Frontend libraries (Pyvis uses CDN, not local lib/)
-lib/
+/lib/

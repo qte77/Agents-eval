@@ -1,5 +1,4 @@
-"""
-Tests for Makefile recipes validation (STORY-002).
+"""Tests for Makefile recipes validation (STORY-002).
 
 Validates that Phoenix Docker recipe contains required volume mounts,
 port mappings, restart policy, and force-remove flags.
@@ -8,10 +7,12 @@ port mappings, restart policy, and force-remove flags.
 import re
 from pathlib import Path
 
+MAKEFILE_PATH = Path(__file__).parent.parent.parent / "Makefile"
+
 
 def test_phoenix_recipe_has_volume_mount():
     """Test that start_phoenix recipe includes volume mount for data persistence."""
-    makefile_path = Path(__file__).parent.parent.parent / "Makefile"
+    makefile_path = MAKEFILE_PATH
     content = makefile_path.read_text()
 
     # Find start_phoenix target
@@ -24,7 +25,7 @@ def test_phoenix_recipe_has_volume_mount():
 
 def test_phoenix_recipe_has_grpc_port():
     """Test that start_phoenix recipe exposes gRPC port 4317."""
-    makefile_path = Path(__file__).parent.parent.parent / "Makefile"
+    makefile_path = MAKEFILE_PATH
     content = makefile_path.read_text()
 
     phoenix_section = _extract_phoenix_recipe(content)
@@ -36,7 +37,7 @@ def test_phoenix_recipe_has_grpc_port():
 
 def test_phoenix_recipe_has_restart_policy():
     """Test that start_phoenix recipe includes restart policy."""
-    makefile_path = Path(__file__).parent.parent.parent / "Makefile"
+    makefile_path = MAKEFILE_PATH
     content = makefile_path.read_text()
 
     phoenix_section = _extract_phoenix_recipe(content)
@@ -48,7 +49,7 @@ def test_phoenix_recipe_has_restart_policy():
 
 def test_phoenix_recipe_has_force_remove():
     """Test that start_phoenix recipe removes existing container first."""
-    makefile_path = Path(__file__).parent.parent.parent / "Makefile"
+    makefile_path = MAKEFILE_PATH
     content = makefile_path.read_text()
 
     phoenix_section = _extract_phoenix_recipe(content)
@@ -62,9 +63,8 @@ def test_phoenix_recipe_has_force_remove():
 
 def _extract_phoenix_recipe(makefile_content: str) -> str:
     """Extract the start_phoenix recipe section from Makefile."""
-    # Find start_phoenix target and grab lines until next target
     lines = makefile_content.split("\n")
-    phoenix_lines = []
+    phoenix_lines: list[str] = []
     in_phoenix = False
 
     for line in lines:
@@ -72,7 +72,6 @@ def _extract_phoenix_recipe(makefile_content: str) -> str:
             in_phoenix = True
             phoenix_lines.append(line)
         elif in_phoenix:
-            # Stop at next target (line starting with word followed by colon)
             if re.match(r"^[a-z_]+:", line):
                 break
             phoenix_lines.append(line)
