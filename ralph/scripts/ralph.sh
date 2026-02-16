@@ -30,6 +30,12 @@
 # verification logic to accept alternative markers and workflow patterns.
 # Future: Add RALPH_TEST_WORKFLOW=tdd|bdd switch to select verification strategy.
 #
+# NOTE: Context management during story execution relies on Claude Code's
+# built-in automatic summarization (kicks in when context window fills up).
+# The custom /compacting-context skill forks a separate Explore agent with
+# file reads — overkill for mid-story compaction. Similarly /researching-codebase
+# forks an Explore agent; prefer inline file reads in the prompt template instead.
+#
 
 set -euo pipefail
 

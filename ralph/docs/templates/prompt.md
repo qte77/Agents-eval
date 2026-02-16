@@ -49,6 +49,11 @@ Follow the project's testing best practices. Tests MUST be written and
 
 ## Workflow
 
+### Before starting: Read relevant files
+
+- Read ALL files listed in the story's `files` array from prd.json
+- Understand existing patterns before writing any code
+
 ### RED: Write failing tests
 
 - Read story acceptance criteria, write FAILING tests
