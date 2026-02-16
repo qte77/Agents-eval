@@ -313,9 +313,16 @@ setup_phoenix:  ## Pull Phoenix Docker image (pre-download without starting)
 
 start_phoenix:  ## Start local Arize Phoenix trace viewer (OTLP endpoint on port 6006)
 	echo "Starting Arize Phoenix ..."
-	docker run -d --name $(PHOENIX_CONTAINER_NAME) -p $(PHOENIX_PORT):$(PHOENIX_PORT) $(PHOENIX_IMAGE)
+	docker rm -f $(PHOENIX_CONTAINER_NAME) 2>/dev/null || true
+	docker run -d --name $(PHOENIX_CONTAINER_NAME) \
+		--restart unless-stopped \
+		-v phoenix_data:/phoenix \
+		-p $(PHOENIX_PORT):$(PHOENIX_PORT) \
+		-p 4317:4317 \
+		$(PHOENIX_IMAGE)
 	echo "Phoenix UI: http://localhost:$(PHOENIX_PORT)"
-	echo "OTLP endpoint: http://localhost:$(PHOENIX_PORT)/v1/traces"
+	echo "OTLP HTTP endpoint: http://localhost:$(PHOENIX_PORT)/v1/traces"
+	echo "OTLP gRPC endpoint: localhost:4317"
 
 stop_phoenix:  ## Stop Phoenix trace viewer
 	echo "Stopping Phoenix ..."

@@ -131,4 +131,5 @@ async def test_graph_not_built_when_no_execution_id():
 
         # Graph should not be built when no execution_id
         mock_build_graph.assert_not_called()
-        assert result["graph"] is None
+        # When no execution happens, result is None
+        assert result is None

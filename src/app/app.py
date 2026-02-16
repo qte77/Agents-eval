@@ -183,7 +183,8 @@ def _prepare_result_dict(composite_result: Any | None, graph: Any | None) -> dic
     Returns:
         Dict with result and graph if available, None otherwise
     """
-    if composite_result is not None:
+    # Return dict if we have either result or graph
+    if composite_result is not None or graph is not None:
         return {
             "composite_result": composite_result,
             "graph": graph,
@@ -264,7 +265,7 @@ async def main(
             )
 
             # Build interaction graph from trace data for visualization
-            graph = _build_graph_from_trace(execution_id) if composite_result else None
+            graph = _build_graph_from_trace(execution_id) if execution_id else None
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 
