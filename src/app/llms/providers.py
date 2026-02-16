@@ -42,9 +42,7 @@ def get_api_key(
     else:
         # Reason: Diagnose transient .env loading issues (CWD mismatch, unset env vars)
         if key_content is not None and not key_content.strip():
-            logger.debug(
-                f"Provider '{provider}' has empty API key for {provider_metadata.env_key}"
-            )
+            logger.debug(f"Provider '{provider}' has empty API key for {provider_metadata.env_key}")
         return (
             False,
             f"API key for provider '{provider}' not found in configuration.",

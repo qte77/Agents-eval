@@ -4,8 +4,6 @@ Tests for LLM provider configuration and API key management.
 Covers get_api_key() functionality including empty key debug logging.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 from io import StringIO
 
 from app.data_models.app_models import AppEnv
@@ -128,6 +126,6 @@ class TestGetApiKey:
             # Debug log should mention both env_key and provider
             log_content = log_output.getvalue()
             assert "CEREBRAS_API_KEY" in log_content
-            assert ("cerebras" in log_content.lower() or "provider" in log_content.lower())
+            assert "cerebras" in log_content.lower() or "provider" in log_content.lower()
         finally:
             logger.remove(log_id)
