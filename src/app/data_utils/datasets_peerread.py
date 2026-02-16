@@ -14,13 +14,13 @@ from typing import Any
 from httpx import Client, HTTPStatusError, RequestError
 
 from app.config.config_app import DATASETS_CONFIG_FILE
+from app.data_models.app_models import AppEnv
 from app.data_models.peerread_models import (
     DownloadResult,
     PeerReadConfig,
     PeerReadPaper,
     PeerReadReview,
 )
-from app.utils.load_settings import chat_config
 from app.utils.log import logger
 from app.utils.paths import resolve_config_path, resolve_project_path
 
@@ -207,9 +207,10 @@ class PeerReadDownloader:
         # Resolve cache directory relative to project root
         self.cache_dir = resolve_project_path(config.cache_directory)
         headers: dict[str, str] = {}
-        if chat_config.GITHUB_API_KEY:
+        app_env = AppEnv()
+        if app_env.GITHUB_API_KEY:
             logger.info("Using GitHub API key for authenticated requests")
-            headers["Authorization"] = f"token {chat_config.GITHUB_API_KEY}"
+            headers["Authorization"] = f"token {app_env.GITHUB_API_KEY}"
         self.client = Client(headers=headers)
 
     def _construct_url(
