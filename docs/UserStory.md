@@ -23,6 +23,7 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 - As a researcher, I want a Streamlit dashboard showing Tier 1/2/3 evaluation scores so I can visually compare graph-based and text-based metrics without parsing log output.
 - As a researcher, I want an interactive agent graph visualization so I can see how agents delegated tasks and coordinated during review generation.
 - As a researcher, I want to compare PydanticAI MAS evaluation results against Claude Code baselines (solo and teams) so I can quantify the coordination quality difference between orchestration approaches.
+- As a researcher, I want to run the evaluation pipeline across all agent composition variations so I can identify which agent combination produces the best review quality compared to graph quality.
 
 ## Success Criteria
 
