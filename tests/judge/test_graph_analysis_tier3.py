@@ -8,12 +8,11 @@ This module tests the GraphAnalysisEngine implementation, focusing on:
 
 from __future__ import annotations
 
-import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
-from app.data_models.evaluation_models import GraphTraceData, Tier3Result
+from app.data_models.evaluation_models import GraphTraceData
 from app.judge.graph_analysis import GraphAnalysisEngine
 from app.judge.settings import JudgeSettings
 
@@ -37,11 +36,8 @@ class TestToolSuccessRateAccumulation:
 
         # Tool "search_tool" called 10 times: 9 successes, 1 failure
         tool_calls = [
-            {"agent_id": "agent1", "tool_name": "search_tool", "success": True}
-            for _ in range(9)
-        ] + [
-            {"agent_id": "agent1", "tool_name": "search_tool", "success": False}
-        ]
+            {"agent_id": "agent1", "tool_name": "search_tool", "success": True} for _ in range(9)
+        ] + [{"agent_id": "agent1", "tool_name": "search_tool", "success": False}]
 
         trace_data = GraphTraceData(
             execution_id="test_exec_1",
@@ -194,12 +190,8 @@ class TestCommunicationOverheadMetric:
 
         trace_data = GraphTraceData(
             execution_id="test_exec_4",
-            tool_calls=[
-                {"agent_id": "agent1", "tool_name": "tool1", "success": True}
-            ],
-            agent_interactions=[
-                {"from": "agent1", "to": "agent2", "type": "delegation"}
-            ],
+            tool_calls=[{"agent_id": "agent1", "tool_name": "tool1", "success": True}],
+            agent_interactions=[{"from": "agent1", "to": "agent2", "type": "delegation"}],
             coordination_events=[],
             timing_data={},
         )
@@ -219,18 +211,15 @@ class TestCommunicationOverheadMetric:
 
         trace_data = GraphTraceData(
             execution_id="test_exec_5",
-            tool_calls=[
-                {"agent_id": "agent1", "tool_name": "tool1", "success": True}
-            ],
-            agent_interactions=[
-                {"from": "agent1", "to": "agent2", "type": "delegation"}
-            ],
+            tool_calls=[{"agent_id": "agent1", "tool_name": "tool1", "success": True}],
+            agent_interactions=[{"from": "agent1", "to": "agent2", "type": "delegation"}],
             coordination_events=[],
             timing_data={},
         )
 
         # Act
-        result = engine.evaluate_graph_metrics(trace_data)
+        # No need to store result, we're testing weights structure
+        _ = engine.evaluate_graph_metrics(trace_data)
 
         # Assert
         # overall_score should be computed from 4 metrics only:

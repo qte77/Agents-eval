@@ -411,7 +411,6 @@ class EvaluationPipeline:
                 results.tier3 = Tier3Result(
                     path_convergence=0.5,
                     tool_selection_accuracy=0.5,
-                    communication_overhead=0.5,
                     coordination_centrality=0.5,
                     task_distribution_balance=0.5,
                     overall_score=0.5,
@@ -463,7 +462,6 @@ class EvaluationPipeline:
             logger.info("Graph Metrics (Tier 3):")
             logger.info(f"  path_convergence: {results.tier3.path_convergence:.3f}")
             logger.info(f"  tool_selection_accuracy: {results.tier3.tool_selection_accuracy:.3f}")
-            logger.info(f"  communication_overhead: {results.tier3.communication_overhead:.3f}")
             logger.info(f"  coordination_centrality: {results.tier3.coordination_centrality:.3f}")
             logger.info(
                 f"  task_distribution_balance: {results.tier3.task_distribution_balance:.3f}"

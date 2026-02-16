@@ -142,6 +142,74 @@ class GraphAnalysisEngine:
                 logger.warning(f"NetworkX operation failed: {e}")
                 raise
 
+
+    def _accumulate_tool_outcomes(
+        self, tool_calls: list[dict[str, Any]]
+    ) -> tuple[dict[str, list[bool]], dict[tuple[str, str], list[bool]]]:
+        """Accumulate tool and edge outcomes from tool calls.
+
+        Args:
+            tool_calls: List of tool call dictionaries
+
+        Returns:
+            Tuple of (tool_outcomes, edge_outcomes) dictionaries
+        """
+        tool_outcomes: dict[str, list[bool]] = {}
+        edge_outcomes: dict[tuple[str, str], list[bool]] = {}
+
+        for i, call in enumerate(tool_calls):
+            tool_name = call.get("tool_name", f"tool_{i}")
+            agent_id = call.get("agent_id", f"agent_{i}")
+            success = call.get("success", False)
+
+            # Accumulate outcomes instead of overwriting
+            if tool_name not in tool_outcomes:
+                tool_outcomes[tool_name] = []
+            tool_outcomes[tool_name].append(success)
+
+            edge_key = (agent_id, tool_name)
+            if edge_key not in edge_outcomes:
+                edge_outcomes[edge_key] = []
+            edge_outcomes[edge_key].append(success)
+
+        return tool_outcomes, edge_outcomes
+
+    def _build_tool_graph(
+        self,
+        tool_calls: list[dict[str, Any]],
+        tool_outcomes: dict[str, list[bool]],
+        edge_outcomes: dict[tuple[str, str], list[bool]],
+    ) -> Any:
+        """Build tool usage graph with accumulated metrics.
+
+        Args:
+            tool_calls: List of tool call dictionaries
+            tool_outcomes: Accumulated tool outcomes
+            edge_outcomes: Accumulated edge outcomes
+
+        Returns:
+            NetworkX directed graph
+        """
+        tool_graph = nx.DiGraph()
+
+        # Add tool nodes with accumulated success rates
+        for tool_name, outcomes in tool_outcomes.items():
+            success_rate = sum(outcomes) / len(outcomes)
+            tool_graph.add_node(tool_name, type="tool", success_rate=success_rate)
+
+        # Add agent nodes
+        for call in tool_calls:
+            agent_id = call.get("agent_id", f"agent_{call}")
+            if not tool_graph.has_node(agent_id):
+                tool_graph.add_node(agent_id, type="agent")
+
+        # Add edges with accumulated weights
+        for (agent_id, tool_name), outcomes in edge_outcomes.items():
+            avg_weight = sum(1.0 if s else 0.5 for s in outcomes) / len(outcomes)
+            tool_graph.add_edge(agent_id, tool_name, weight=avg_weight)
+
+        return tool_graph
+
     def analyze_tool_usage_patterns(self, trace_data: GraphTraceData) -> dict[str, float]:
         """Analyze tool usage efficiency and selection patterns.
 
@@ -158,44 +226,9 @@ class GraphAnalysisEngine:
             return {"path_convergence": 0.0, "tool_selection_accuracy": 0.0}
 
         try:
-            # Create tool usage graph
-            tool_graph = nx.DiGraph()
-
-            # Track tool call outcomes for accumulation
-            tool_outcomes: dict[str, list[bool]] = {}
-            edge_outcomes: dict[tuple[str, str], list[bool]] = {}
-
-            # Add tool call sequences as graph edges
-            for i, call in enumerate(trace_data.tool_calls):
-                tool_name = call.get("tool_name", f"tool_{i}")
-                agent_id = call.get("agent_id", f"agent_{i}")
-                success = call.get("success", False)
-
-                # Accumulate outcomes instead of overwriting
-                if tool_name not in tool_outcomes:
-                    tool_outcomes[tool_name] = []
-                tool_outcomes[tool_name].append(success)
-
-                edge_key = (agent_id, tool_name)
-                if edge_key not in edge_outcomes:
-                    edge_outcomes[edge_key] = []
-                edge_outcomes[edge_key].append(success)
-
-            # Add nodes with accumulated success rates
-            for tool_name, outcomes in tool_outcomes.items():
-                success_rate = sum(outcomes) / len(outcomes)
-                tool_graph.add_node(tool_name, type="tool", success_rate=success_rate)
-
-            # Add agent nodes
-            for call in trace_data.tool_calls:
-                agent_id = call.get("agent_id", f"agent_{call}")
-                if not tool_graph.has_node(agent_id):
-                    tool_graph.add_node(agent_id, type="agent")
-
-            # Add edges with accumulated weights
-            for (agent_id, tool_name), outcomes in edge_outcomes.items():
-                avg_weight = sum(1.0 if s else 0.5 for s in outcomes) / len(outcomes)
-                tool_graph.add_edge(agent_id, tool_name, weight=avg_weight)
+            # Accumulate outcomes and build graph
+            tool_outcomes, edge_outcomes = self._accumulate_tool_outcomes(trace_data.tool_calls)
+            tool_graph = self._build_tool_graph(trace_data.tool_calls, tool_outcomes, edge_outcomes)
 
             if len(tool_graph.nodes) < self.min_nodes_for_analysis:  # type: ignore[arg-type]
                 return {"path_convergence": 0.5, "tool_selection_accuracy": 0.5}

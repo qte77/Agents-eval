@@ -237,7 +237,6 @@ class TestGraphAnalysisEngine:
         assert isinstance(result, Tier3Result)
         assert 0.0 <= result.path_convergence <= 1.0
         assert 0.0 <= result.tool_selection_accuracy <= 1.0
-        assert 0.0 <= result.communication_overhead <= 1.0
         assert 0.0 <= result.coordination_centrality <= 1.0
         assert 0.0 <= result.task_distribution_balance <= 1.0
         assert 0.0 <= result.overall_score <= 1.0
@@ -286,7 +285,7 @@ class TestGraphAnalysisEngine:
 
         # Then zero scores are returned
         assert result.overall_score == 0.0
-        assert result.communication_overhead == 1.0  # Maximum overhead for no data
+        # communication_overhead removed from Tier3Result (dead metric)
 
     def test_evaluate_single_graph_analysis_with_custom_settings(self, sample_trace_data):
         """When custom settings are provided, then uses them for evaluation."""

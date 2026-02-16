@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - STORY-012: OTLP endpoint double-path bug in Logfire instrumentation - set `OTEL_EXPORTER_OTLP_ENDPOINT` to base URL (http://localhost:6006) instead of traces-specific endpoint with /v1/traces path
 - STORY-012: Phoenix trace export failures caused by SDK auto-appending /v1/traces to already-present /v1/traces path (HTTP 405 errors)
+- STORY-013: Tool success_rate accumulation bug - now tracks all tool calls instead of overwriting with last call outcome (9/10 successes now correctly shows 0.9 instead of 0.0)
+- STORY-013: Agent-tool edge weight accumulation bug - now averages weights across repeated calls instead of overwriting
+- STORY-013: Removed dead `communication_overhead` metric from Tier3Result - field was computed but never contributed to overall_score calculation
 
 ### Changed (Sprint 5)
 
