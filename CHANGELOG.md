@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (Sprint 6 - STORY-002)
+
+- STORY-002: Phoenix Docker recipe persistence - added volume mount `phoenix_data:/phoenix` to preserve trace data across container restarts
+- STORY-002: Phoenix gRPC port exposure - added port mapping `4317:4317` for gRPC OTLP endpoint alongside HTTP on port 6006
+- STORY-002: Phoenix container restart policy - added `--restart unless-stopped` for automatic recovery after devcontainer restarts
+- STORY-002: Phoenix container name conflict - added `docker rm -f` before `docker run` to remove stale containers
+- STORY-002: Agent interaction graph rendering - graph now renders when `execution_id` exists regardless of evaluation success (fixes --skip-eval and failed evaluation scenarios)
+
 ### Removed (Sprint 6 - STORY-001)
 
 - STORY-001: All Opik code, configuration, and infrastructure removed - replaced by Logfire/Phoenix in Sprint 4
