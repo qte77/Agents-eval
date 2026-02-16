@@ -421,8 +421,8 @@
         "tests/security/test_input_size_limits.py",
         "tests/security/test_tool_registration.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-16T17:30:00Z",
       "content_hash": "6f9a607fc4134bbd10e5711d010f63487bc7db7181ea543f44c47122bf92b5d0",
       "depends_on": [
         "STORY-010",
