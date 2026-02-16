@@ -68,9 +68,9 @@ class TestCVEDocumentation:
         """CVE-2026-25640 should document affected features."""
         content = security_md_path.read_text()
         # Should mention the specific affected features
-        assert any(
-            feature in content for feature in ["clai web", "Agent.to_web()"]
-        ), "CVE-2026-25640 affected features not documented"
+        assert any(feature in content for feature in ["clai web", "Agent.to_web()"]), (
+            "CVE-2026-25640 affected features not documented"
+        )
 
     def test_cve_2024_5206_documented(self, security_md_path: Path):
         """CVE-2024-5206 (scikit-learn) should be documented."""
@@ -81,9 +81,9 @@ class TestCVEDocumentation:
         """CVE-2024-5206 mitigation (version upgrade) should be documented."""
         content = security_md_path.read_text()
         # Should mention scikit-learn version requirement
-        assert any(
-            term in content for term in ["scikit-learn>=1.8.0", "scikit-learn 1.8"]
-        ), "CVE-2024-5206 mitigation (version) not documented"
+        assert any(term in content for term in ["scikit-learn>=1.8.0", "scikit-learn 1.8"]), (
+            "CVE-2024-5206 mitigation (version) not documented"
+        )
 
 
 class TestSecurityMDStructure:
@@ -93,8 +93,7 @@ class TestSecurityMDStructure:
         """SECURITY.md should have a Security Advisories section."""
         content = security_md_path.read_text()
         assert any(
-            heading in content
-            for heading in ["# Security Advisories", "## Security Advisories"]
+            heading in content for heading in ["# Security Advisories", "## Security Advisories"]
         ), "Security Advisories section not found"
 
     def test_has_vulnerability_reporting_section(self, security_md_path: Path):

@@ -12,13 +12,15 @@ CVE Context:
 
 # Allowed domains for external HTTP requests
 # This allowlist prevents SSRF attacks against internal services
-ALLOWED_DOMAINS: frozenset[str] = frozenset([
-    "raw.githubusercontent.com",  # PeerRead dataset downloads
-    "arxiv.org",                   # arXiv paper repository
-    "api.openai.com",              # OpenAI API
-    "api.anthropic.com",           # Anthropic API
-    "api.cerebras.ai",             # Cerebras API
-])
+ALLOWED_DOMAINS: frozenset[str] = frozenset(
+    [
+        "raw.githubusercontent.com",  # PeerRead dataset downloads
+        "arxiv.org",  # arXiv paper repository
+        "api.openai.com",  # OpenAI API
+        "api.anthropic.com",  # Anthropic API
+        "api.cerebras.ai",  # Cerebras API
+    ]
+)
 
 
 def validate_url(url: str) -> str:
