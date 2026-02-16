@@ -206,8 +206,8 @@
         "src/gui/utils/log_capture.py",
         "tests/test_gui/test_log_capture.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-16T00:10:00Z",
       "content_hash": "f768e730d0fbfa7e6f1815fda4d45dcce8c27eb41d0f80d5260cc1746332cf99",
       "depends_on": [
         "STORY-006"
