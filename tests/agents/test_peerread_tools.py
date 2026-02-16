@@ -281,3 +281,89 @@ class TestContentTruncation:
         # This test will validate the integration with the actual tool
         # Will be implemented after _truncate_paper_content is added
         pass
+
+
+class TestToolRegistration:
+    """Test tool registration and initialization."""
+
+    def test_add_peerread_tools_registers_all_tools(self):
+        """Test that add_peerread_tools_to_agent registers all expected tools."""
+        from unittest.mock import Mock
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        mock_agent = Mock()
+        mock_agent.tool = Mock(return_value=lambda f: f)  # Decorator that returns function
+
+        # Act
+        add_peerread_tools_to_agent(mock_agent, agent_id="test_agent")
+
+        # Assert
+        # Should register get_peerread_paper, query_peerread_papers, read_paper_pdf_tool
+        assert mock_agent.tool.call_count >= 3
+
+    def test_peerread_tool_with_invalid_paper_id(self):
+        """Test tool behavior with invalid paper ID."""
+        # This test validates error handling in tools
+        # Will fail until proper error handling is implemented
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_loader = Mock()
+            mock_loader.get_paper_by_id.return_value = None  # Paper not found
+            mock_loader_class.return_value = mock_loader
+
+            add_peerread_tools_to_agent(agent, agent_id="test_agent")
+
+            # Get the get_peerread_paper tool
+            get_paper_tool = None
+            for tool in registered_tools:
+                if "peerread_paper" in tool.__name__:
+                    get_paper_tool = tool
+                    break
+
+            # Act & Assert
+            import pytest
+
+            with pytest.raises(ValueError, match="not found"):
+                import asyncio
+
+                asyncio.run(get_paper_tool(None, "invalid_id"))
+
+
+class TestPDFExtractionErrorHandling:
+    """Test PDF extraction error handling."""
+
+    def test_read_paper_pdf_with_empty_file(self, tmp_path):
+        """Test error handling for empty PDF file."""
+        from app.tools.peerread_tools import read_paper_pdf
+
+        # Create an empty file
+        empty_pdf = tmp_path / "empty.pdf"
+        empty_pdf.write_bytes(b"")
+
+        # Act & Assert
+        with pytest.raises(ValueError):
+            read_paper_pdf(None, str(empty_pdf))
+
+
+class TestTemplateLoading:
+    """Test review template loading functionality."""
+
+    pass  # Template loading tested via integration tests

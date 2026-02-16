@@ -5,13 +5,14 @@ Focuses on error handling, retry logic, URL construction edge cases,
 and paper validation scenarios not covered by existing tests.
 """
 
+from unittest.mock import Mock, patch
+
 import httpx
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from unittest.mock import Mock, patch, MagicMock
 
-from app.data_models.peerread_models import PeerReadConfig, PeerReadPaper
+from app.data_models.peerread_models import PeerReadConfig
 from app.data_utils.datasets_peerread import (
     PeerReadDownloader,
     PeerReadLoader,

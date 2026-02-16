@@ -5,6 +5,7 @@ Tests for pure dataset functionality including download, loading, and querying
 operations without evaluation logic.
 """
 
+
 import httpx
 import hypothesis
 import pytest
@@ -210,6 +211,81 @@ class TestPeerReadConfig:
         assert isinstance(config, PeerReadConfig)
         assert len(config.venues) > 0
         assert len(config.splits) > 0
+
+
+class TestDownloadErrorHandling:
+    """Test error handling in download operations."""
+
+    pass  # Tests moved to test_datasets_peerread_coverage.py
+
+
+class TestPaperValidationEdgeCases:
+    """Test paper validation with missing fields and edge cases."""
+
+    pass  # Empty string validation not enforced by Pydantic models
+
+
+class TestPeerReadLoaderEdgeCases:
+    """Test PeerReadLoader edge cases and error handling."""
+
+    def test_get_paper_by_id_not_found(self):
+        """Test get_paper_by_id returns None for nonexistent paper."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        # Act
+        paper = loader.get_paper_by_id("nonexistent_paper_id_12345")
+
+        # Assert
+        assert paper is None
+
+    def test_extract_text_from_parsed_data_with_no_sections(self):
+        """Test text extraction when parsed data has no sections."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+        parsed_data = {"metadata": {}}  # No sections key
+
+        # Act
+        text = loader._extract_text_from_parsed_data(parsed_data)
+
+        # Assert
+        assert text == ""
+
+    def test_extract_text_from_parsed_data_with_empty_sections(self):
+        """Test text extraction with empty sections list."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+        parsed_data = {"metadata": {"sections": []}}
+
+        # Act
+        text = loader._extract_text_from_parsed_data(parsed_data)
+
+        # Assert
+        assert text == ""
+
+    def test_extract_text_from_parsed_data_with_sections_no_text(self):
+        """Test text extraction when sections have no text field."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        # Arrange
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+        parsed_data = {"metadata": {"sections": [{"heading": "Introduction"}]}}
+
+        # Act
+        text = loader._extract_text_from_parsed_data(parsed_data)
+
+        # Assert
+        assert text == ""
 
 
 class TestRealExternalDependencies:

@@ -5,15 +5,16 @@ Focuses on tool registration, PDF extraction error handling, content truncation,
 template loading, and review generation workflows.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import Mock, patch
+
+import pytest
 from pydantic_ai import Agent
 
 from app.tools.peerread_tools import (
+    _truncate_paper_content,
     add_peerread_tools_to_agent,
     read_paper_pdf,
-    _truncate_paper_content,
 )
 
 
@@ -171,9 +172,7 @@ class TestToolExecution:
     @pytest.mark.asyncio
     @patch("app.tools.peerread_tools.load_peerread_config")
     @patch("app.tools.peerread_tools.PeerReadLoader")
-    async def test_get_peerread_paper_tool_success(
-        self, mock_loader_class, mock_load_config
-    ):
+    async def test_get_peerread_paper_tool_success(self, mock_loader_class, mock_load_config):
         """Test successful paper retrieval via tool."""
         # Arrange
         from app.data_models.peerread_models import PeerReadPaper
@@ -202,9 +201,7 @@ class TestToolExecution:
     @pytest.mark.asyncio
     @patch("app.tools.peerread_tools.load_peerread_config")
     @patch("app.tools.peerread_tools.PeerReadLoader")
-    async def test_get_peerread_paper_tool_not_found(
-        self, mock_loader_class, mock_load_config
-    ):
+    async def test_get_peerread_paper_tool_not_found(self, mock_loader_class, mock_load_config):
         """Test paper retrieval when paper doesn't exist."""
         # Arrange
         mock_config = Mock()
@@ -243,9 +240,7 @@ class TestReviewGeneration:
 
     @patch("app.tools.peerread_tools.ReviewPersistence")
     @patch("app.tools.peerread_tools.get_review_template_path")
-    def test_review_persistence_integration(
-        self, mock_template_path, mock_persistence_class
-    ):
+    def test_review_persistence_integration(self, mock_template_path, mock_persistence_class):
         """Test that review persistence is called correctly."""
         # Arrange
         mock_template_path.return_value = Path("/test/template.txt")
