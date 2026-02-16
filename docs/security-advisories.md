@@ -84,3 +84,11 @@ This project pins `scikit-learn>=1.8.0` in `pyproject.toml`, which includes the 
 
 - <https://vulert.com/vuln-db/CVE-2024-5206>
 - <https://www.ibm.com/support/pages/node/7233502>
+
+---
+
+## Related Frameworks
+
+- [MITRE ATLAS](https://atlas.mitre.org/) — Adversarial threat landscape for AI/ML systems
+- [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/) — LLM-specific vulnerability categories
+- [OWASP MAESTRO](https://owasp.org/www-project-multi-agent-security-testing-and-review-operations/) — Multi-agent security testing (used in Sprint 5 review)
