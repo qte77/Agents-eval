@@ -98,7 +98,9 @@ class TestDelegationFlow:
         return agent
 
     @pytest.mark.asyncio
-    async def test_research_delegation_captures_trace(self, mock_manager_agent, mock_research_agent):
+    async def test_research_delegation_captures_trace(
+        self, mock_manager_agent, mock_research_agent
+    ):
         """Test that research delegation captures trace data."""
         with patch("app.agents.agent_system.get_trace_collector") as mock_get_collector:
             mock_collector = Mock()

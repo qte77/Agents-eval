@@ -384,7 +384,9 @@ class TestPerformDownloads:
             )
 
             # Act
-            total_downloaded, failed_downloads = _perform_downloads(downloader, config, max_papers=10)
+            total_downloaded, failed_downloads = _perform_downloads(
+                downloader, config, max_papers=10
+            )
 
             # Assert
             assert total_downloaded == 5
@@ -423,7 +425,9 @@ class TestPerformDownloads:
             ]
 
             # Act
-            total_downloaded, failed_downloads = _perform_downloads(downloader, config, max_papers=10)
+            total_downloaded, failed_downloads = _perform_downloads(
+                downloader, config, max_papers=10
+            )
 
             # Assert
             assert total_downloaded == 3

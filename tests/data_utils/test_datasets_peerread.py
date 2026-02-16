@@ -681,17 +681,53 @@ class TestDownloadVenueSplit:
             # Reason: A paper counts as downloaded if ANY data type succeeds
             mock_download.side_effect = [
                 # Paper 201 - all succeed
-                {"id": "201", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
-                {"id": "201", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
-                {"id": "201", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                {
+                    "id": "201",
+                    "title": "Paper",
+                    "abstract": "Abstract",
+                    "reviews": [],
+                    "histories": [],
+                },
+                {
+                    "id": "201",
+                    "title": "Paper",
+                    "abstract": "Abstract",
+                    "reviews": [],
+                    "histories": [],
+                },
+                {
+                    "id": "201",
+                    "title": "Paper",
+                    "abstract": "Abstract",
+                    "reviews": [],
+                    "histories": [],
+                },
                 # Paper 202 - all fail
                 None,
                 None,
                 None,
                 # Paper 203 - all succeed
-                {"id": "203", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
-                {"id": "203", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
-                {"id": "203", "title": "Paper", "abstract": "Abstract", "reviews": [], "histories": []},
+                {
+                    "id": "203",
+                    "title": "Paper",
+                    "abstract": "Abstract",
+                    "reviews": [],
+                    "histories": [],
+                },
+                {
+                    "id": "203",
+                    "title": "Paper",
+                    "abstract": "Abstract",
+                    "reviews": [],
+                    "histories": [],
+                },
+                {
+                    "id": "203",
+                    "title": "Paper",
+                    "abstract": "Abstract",
+                    "reviews": [],
+                    "histories": [],
+                },
             ]
 
             # Act
@@ -1282,7 +1318,9 @@ class TestCacheOperations:
 
         with (
             patch.object(downloader.client, "get", return_value=mock_response),
-            patch("app.data_utils.datasets_peerread.validate_url", return_value="http://validated.url"),
+            patch(
+                "app.data_utils.datasets_peerread.validate_url", return_value="http://validated.url"
+            ),
         ):
             # Act
             result = downloader.download_file("acl_2017", "train", "reviews", "test_999")

@@ -179,7 +179,9 @@ class TestModelsCaching:
             model_synthesiser=None,
         )
 
-        with patch("app.agents.agent_factories.create_agent_models", return_value=mock_models) as mock_create:
+        with patch(
+            "app.agents.agent_factories.create_agent_models", return_value=mock_models
+        ) as mock_create:
             factory = AgentFactory(endpoint_config=mock_endpoint_config)
 
             # First call
