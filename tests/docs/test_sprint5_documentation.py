@@ -88,8 +88,8 @@ def test_architecture_implementation_status_has_sprint5() -> None:
     arch_path = Path("docs/architecture.md")
     arch_content = arch_path.read_text()
 
-    # Find Implementation Status section
-    impl_status_pattern = r"## Implementation Status.*?(?=##|\Z)"
+    # Find Implementation Status section (capture more content with greedy match)
+    impl_status_pattern = r"## Implementation Status.*?(?=\n## [A-Z]|\Z)"
     match = re.search(impl_status_pattern, arch_content, re.DOTALL)
 
     assert match is not None, "Implementation Status section not found"

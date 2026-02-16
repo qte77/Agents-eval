@@ -474,7 +474,7 @@ class GraphAnalysisEngine:
             )
 
     def export_trace_to_networkx(self, trace_data: GraphTraceData) -> nx.DiGraph[str] | None:
-        """Export trace data to NetworkX graph for Opik integration.
+        """Export trace data to NetworkX graph for Phoenix visualization.
 
         Args:
             trace_data: Execution trace data to convert
@@ -557,7 +557,7 @@ class GraphAnalysisEngine:
     def _add_graph_metadata(
         self, graph: Any, trace_data: GraphTraceData, agent_nodes: set[str]
     ) -> None:
-        """Add metadata to graph for Opik integration."""
+        """Add metadata to graph for Phoenix visualization."""
         graph.graph.update(
             {
                 "execution_id": trace_data.execution_id,

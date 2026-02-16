@@ -57,6 +57,12 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 
 (DRAFT) (WIP) ----> Not fully implemented yet
 
+**Current Release**: Version 3.3.0 - Sprint 5 (Active)
+- Runtime fixes (judge provider fallback, token limits, PeerRead validation)
+- GUI enhancements (background execution, debug logs, live results)
+- Architecture improvements (single-agent scoring, tool delegation)
+- Code quality review (MAESTRO security audit, test suite refactoring)
+
 For version history see the [CHANGELOG](CHANGELOG.md).
 
 ## Setup and Usage

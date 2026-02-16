@@ -199,13 +199,45 @@ The evaluation framework is built around large context window models capable of 
 - Recommendation scoring with config weights and confidence threshold (0.8)
 - Performance trend analysis with configurable evaluation parameters
 
+**Adaptive Weight Redistribution** (Sprint 5):
+
+- **Single-Agent Mode Detection**: Automatically detects single-agent runs from `GraphTraceData` (0-1 unique agent IDs, empty `coordination_events`)
+- **Weight Redistribution**: When single-agent mode is detected, the `coordination_quality` metric (0.167 weight) is excluded and its weight is redistributed equally across the remaining 5 metrics (0.20 each)
+- **Transparency**: `CompositeResult` includes `single_agent_mode: bool` flag to indicate when redistribution occurred
+- **Compound Redistribution**: When both Tier 2 is skipped (no valid provider) AND single-agent mode is detected, weights are redistributed across the remaining available metrics to always sum to ~1.0
+
 ## Implementation Status
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-**Note**: Sprint 5 architectural changes (provider fallback, weight redistribution, graph analysis fixes) will be documented here upon completion of STORY-005 (Documentation Updates).
+### Current Implementation (Sprint 5 - Delivered)
 
-### Current Implementation (Sprint 4 Complete, Sprint 5 Active)
+**Sprint 5 Key Improvements**:
+
+- **Runtime Fixes**:
+  - Tier 2 judge provider fallback with automatic API key validation
+  - Configurable agent token limits via CLI (`--token-limit`), GUI, and env var
+  - PeerRead dataset validation resilience for optional fields (IMPACT, SUBSTANCE)
+  - OTLP endpoint double-path bug fix for Phoenix trace export
+
+- **GUI Enhancements**:
+  - Background query execution with tab navigation resilience
+  - Debug log panel in App tab with real-time capture
+  - Evaluation Results and Agent Graph tabs wired to live data
+  - Editable settings page with session-scoped persistence
+
+- **Architecture Improvements**:
+  - Single-agent composite score weight redistribution (adaptive scoring)
+  - PeerRead tools moved from manager to researcher agent (separation of concerns)
+  - Tier 3 tool accuracy accumulation bug fixes
+  - Dead code removal (duplicate AppEnv class, commented agentops code)
+
+- **Code Quality**:
+  - OWASP MAESTRO 7-layer security review (Model, Agent Logic, Integration, Monitoring, Execution, Environment, Orchestration)
+  - Test suite refactoring to remove implementation-detail tests (595 → 564 tests, no behavioral coverage loss)
+  - Debug logging for empty API keys in provider resolution
+
+### Previous Implementation (Sprint 4 Complete)
 
 The three-tiered evaluation framework is fully operational with plugin architecture:
 
@@ -223,6 +255,11 @@ The three-tiered evaluation framework is fully operational with plugin architect
 - Planning rationality evaluation
 - Technical accuracy scoring
 - Cost-budgeted evaluation with retry mechanisms
+- **Provider Fallback Chain** (Sprint 5): Automatically selects available LLM provider by validating API key availability before attempting calls
+  - Primary provider validation → Fallback provider if primary unavailable → Skip Tier 2 entirely if both unavailable
+  - `tier2_provider=auto` mode inherits the agent system's active `chat_provider` for consistency
+  - When Tier 2 is skipped, its 3 metrics (`technical_accuracy`, `constructiveness`, `planning_rationality`) are excluded from composite scoring and weights redistributed to Tier 1 and Tier 3
+  - Prevents 401 authentication errors and neutral 0.5 fallback scores when providers are unavailable
 
 **✅ Tier 3 - Graph Analysis (PRIMARY)** (`src/app/judge/plugins/graph_metrics.py`):
 
