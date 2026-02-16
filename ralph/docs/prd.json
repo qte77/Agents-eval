@@ -297,8 +297,8 @@
         "src/run_cli.py",
         "tests/app/test_cli_baseline.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-16T14:30:16Z",
       "content_hash": "f323614c41c3f547d0da26473ef1e3c46e98dbc78e8fc48a3d38f21b3f3094b4",
       "depends_on": [
         "STORY-008"
