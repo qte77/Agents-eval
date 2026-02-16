@@ -445,6 +445,7 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, **
 
 - [ ] `validate_url()` function enforces HTTPS-only and domain allowlist for all external requests
 - [ ] Allowlist includes: `raw.githubusercontent.com`, `arxiv.org`, `api.openai.com`, `api.anthropic.com`, `api.cerebras.ai`
+- [ ] `ALLOWED_DOMAINS` is a Pydantic `BaseSettings` field (not a hardcoded module-level frozenset), allowing override via environment variable or settings file
 - [ ] PeerRead dataset download URLs validated before `httpx.Client.get()` in `datasets_peerread.py`
 - [ ] URLs in agent tool responses validated before any HTTP requests
 - [ ] Blocked URLs raise `ValueError` with domain name (no URL echoing to prevent log injection)
@@ -456,19 +457,24 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, **
 
 **Technical Requirements**:
 
-- Create `src/app/utils/url_validation.py` (~30 lines):
+- Create `src/app/utils/url_validation.py` (~40 lines):
 
   ```python
-  ALLOWED_DOMAINS = frozenset({
-      "raw.githubusercontent.com", "arxiv.org",
-      "api.openai.com", "api.anthropic.com", "api.cerebras.ai",
-  })
+  from pydantic_settings import BaseSettings
+
+  class UrlValidationSettings(BaseSettings):
+      allowed_domains: frozenset[str] = frozenset({
+          "raw.githubusercontent.com", "arxiv.org",
+          "api.openai.com", "api.anthropic.com", "api.cerebras.ai",
+      })
+
+  _settings = UrlValidationSettings()
 
   def validate_url(url: str) -> str:
       parsed = urlparse(url)
       if parsed.scheme != "https":
           raise ValueError("Only HTTPS URLs allowed")
-      if parsed.netloc not in ALLOWED_DOMAINS:
+      if parsed.netloc not in _settings.allowed_domains:
           raise ValueError(f"URL domain not allowed: {parsed.netloc}")
       return url
   ```
