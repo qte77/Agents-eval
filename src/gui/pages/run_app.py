@@ -164,7 +164,7 @@ async def _execute_query_background(
         st.session_state.execution_state = "completed"
 
         # Extract CompositeResult and graph from result dict
-        if result is not None and isinstance(result, dict):
+        if result is not None:
             st.session_state.execution_composite_result = result.get("composite_result")
             st.session_state.execution_graph = result.get("graph")
             # Keep legacy execution_result for backward compatibility

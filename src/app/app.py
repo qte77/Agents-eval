@@ -7,6 +7,8 @@ asynchronous execution. It integrates logging, tracing, and authentication,
 and supports both CLI and programmatic execution.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, TypeVar, cast
@@ -61,6 +63,106 @@ from app.utils.login import login
 from app.utils.paths import resolve_config_path
 
 CONFIG_FOLDER = "config"
+
+
+def _build_graph_from_trace(execution_id: str | None) -> nx.DiGraph[str] | None:
+    """Build interaction graph from execution trace data.
+
+    Args:
+        execution_id: Execution ID for trace retrieval
+
+    Returns:
+        NetworkX DiGraph if trace data available, None otherwise
+    """
+    if not execution_id:
+        return None
+
+    from app.judge.trace_processors import get_trace_collector
+
+    trace_collector = get_trace_collector()
+    execution_trace = trace_collector.load_trace(execution_id)
+
+    if not execution_trace:
+        return None
+
+    graph = build_interaction_graph(execution_trace)
+    logger.info(
+        f"Built interaction graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges"
+    )
+    return graph
+
+
+def _prepare_result_dict(
+    composite_result: CompositeResult | None, graph: nx.DiGraph[str] | None
+) -> dict[str, Any] | None:
+    """Prepare result dictionary for GUI usage.
+
+    Args:
+        composite_result: Evaluation result
+        graph: Interaction graph
+
+    Returns:
+        Dict with result and graph if available, None otherwise
+    """
+    if composite_result is not None:
+        return {
+            "composite_result": composite_result,
+            "graph": graph,
+        }
+    return None
+
+
+async def _run_agent_execution(
+    chat_config_file: str | Path,
+    chat_provider: str,
+    query: str,
+    paper_number: str | None,
+    enable_review_tools: bool,
+    include_researcher: bool,
+    include_analyst: bool,
+    include_synthesiser: bool,
+    pydantic_ai_stream: bool,
+    token_limit: int | None,
+) -> tuple[str, dict[str, str]]:
+    """Execute agent system and return execution ID and prompts.
+
+    Args:
+        All agent execution configuration parameters
+
+    Returns:
+        Tuple of (execution_id, prompts dict)
+    """
+    chat_config = load_config(chat_config_file, ChatConfig)
+    prompts: dict[str, str] = cast(dict[str, str], chat_config.prompts)  # type: ignore[reportUnknownMemberType,reportAttributeAccessIssue]
+
+    query, review_tools_enabled = _prepare_query(paper_number, query, prompts)
+    enable_review_tools = enable_review_tools or review_tools_enabled
+
+    chat_env_config = AppEnv()
+    agent_env = setup_agent_env(chat_provider, query, chat_config, chat_env_config, token_limit)
+
+    login(PROJECT_NAME, chat_env_config)
+    _initialize_instrumentation()
+
+    manager = get_manager(
+        agent_env.provider,
+        agent_env.provider_config,
+        agent_env.api_key,
+        agent_env.prompts,
+        include_researcher,
+        include_analyst,
+        include_synthesiser,
+        enable_review_tools,
+    )
+    execution_id = await run_manager(
+        manager,
+        agent_env.query,
+        agent_env.provider,
+        agent_env.usage_limits,
+        pydantic_ai_stream,
+    )
+
+    return execution_id, prompts
 
 
 async def _run_evaluation_if_enabled(
@@ -287,36 +389,17 @@ async def main(
             if not chat_provider:
                 chat_provider = input("Which inference chat_provider to use? ")
 
-            chat_config = load_config(chat_config_file, ChatConfig)
-            prompts: dict[str, str] = cast(dict[str, str], chat_config.prompts)  # type: ignore[reportUnknownMemberType,reportAttributeAccessIssue]
-
-            query, review_tools_enabled = _prepare_query(paper_number, query, prompts)
-            enable_review_tools = enable_review_tools or review_tools_enabled
-
-            chat_env_config = AppEnv()
-            agent_env = setup_agent_env(
-                chat_provider, query, chat_config, chat_env_config, token_limit
-            )
-
-            login(PROJECT_NAME, chat_env_config)
-            _initialize_instrumentation()
-
-            manager = get_manager(
-                agent_env.provider,
-                agent_env.provider_config,
-                agent_env.api_key,
-                agent_env.prompts,
+            execution_id, _ = await _run_agent_execution(
+                chat_config_file,
+                chat_provider,
+                query,
+                paper_number,
+                enable_review_tools,
                 include_researcher,
                 include_analyst,
                 include_synthesiser,
-                enable_review_tools,
-            )
-            execution_id = await run_manager(
-                manager,
-                agent_env.query,
-                agent_env.provider,
-                agent_env.usage_limits,
                 pydantic_ai_stream,
+                token_limit,
             )
 
             # Run evaluation after manager completes
@@ -325,29 +408,12 @@ async def main(
             )
 
             # Build interaction graph from trace data for visualization
-            graph: nx.DiGraph[str] | None = None
-            if execution_id and composite_result:
-                from app.judge.trace_processors import get_trace_collector
-
-                trace_collector = get_trace_collector()
-                execution_trace = trace_collector.load_trace(execution_id)
-                if execution_trace:
-                    graph = build_interaction_graph(execution_trace)
-                    logger.info(
-                        f"Built interaction graph: {graph.number_of_nodes()} nodes, "
-                        f"{graph.number_of_edges()} edges"
-                    )
+            graph = _build_graph_from_trace(execution_id) if composite_result else None
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 
             # Return data for GUI usage
-            if composite_result is not None:
-                return {
-                    "composite_result": composite_result,
-                    "graph": graph,
-                }
-
-            return None
+            return _prepare_result_dict(composite_result, graph)
 
     except Exception as e:
         msg = generic_exception(f"Aborting app '{PROJECT_NAME}' with: {e}")
