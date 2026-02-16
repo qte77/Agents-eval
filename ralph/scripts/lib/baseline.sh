@@ -350,7 +350,7 @@ run_quality_checks_baseline() {
     base_commit=$(get_story_base_commit "$story_id")
     # Committed changes + untracked new test files
     local changed_tests untracked_tests all_changed
-    changed_tests=$(git diff --name-only "$base_commit" HEAD -- tests/ 2>/dev/null || true)
+    changed_tests=$(git diff --diff-filter=d --name-only "$base_commit" HEAD -- tests/ 2>/dev/null || true)
     untracked_tests=$(git ls-files --others --exclude-standard -- tests/ 2>/dev/null || true)
     all_changed=$(printf '%s\n%s' "$changed_tests" "$untracked_tests" | sort -u | grep -v '^$' || true)
 
