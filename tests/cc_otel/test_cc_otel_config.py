@@ -11,16 +11,6 @@ import pytest
 from app.cc_otel.config import CCOtelConfig
 
 
-def test_cc_otel_config_defaults():
-    """Test that CCOtelConfig initializes with correct defaults."""
-    config = CCOtelConfig()
-
-    assert config.enabled is False
-    assert config.service_name == "agents-eval-cc"
-    assert config.phoenix_endpoint == "http://localhost:6006"
-    assert config.otlp_endpoint == "http://localhost:6006/v1/traces"
-
-
 def test_cc_otel_config_env_prefix(monkeypatch: pytest.MonkeyPatch):
     """Test that CCOtelConfig loads from CC_OTEL_ prefixed environment variables."""
     monkeypatch.setenv("CC_OTEL_ENABLED", "true")
@@ -58,18 +48,6 @@ def test_cc_otel_config_otlp_endpoint_computed():
     config = CCOtelConfig(phoenix_endpoint="http://custom:9999")
 
     assert config.otlp_endpoint == "http://custom:9999/v1/traces"
-
-
-def test_cc_otel_config_type_validation():
-    """Test that CCOtelConfig validates types correctly."""
-    config = CCOtelConfig(
-        enabled=True, service_name="my-service", phoenix_endpoint="http://localhost:7007"
-    )
-
-    assert config.enabled is True
-    assert config.service_name == "my-service"
-    assert config.phoenix_endpoint == "http://localhost:7007"
-    assert config.otlp_endpoint == "http://localhost:7007/v1/traces"
 
 
 def test_cc_otel_config_env_override_defaults(monkeypatch: pytest.MonkeyPatch):

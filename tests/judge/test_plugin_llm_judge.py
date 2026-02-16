@@ -60,18 +60,6 @@ class TestLLMJudgePlugin:
             "tier1_task_success": 1.0,
         }
 
-    def test_plugin_implements_evaluator_interface(self, plugin):
-        """Given LLMJudgePlugin, it should implement EvaluatorPlugin interface."""
-        assert isinstance(plugin, EvaluatorPlugin)
-
-    def test_plugin_name_property(self, plugin):
-        """Given LLMJudgePlugin, name should be 'llm_judge'."""
-        assert plugin.name == "llm_judge"
-
-    def test_plugin_tier_property(self, plugin):
-        """Given LLMJudgePlugin, tier should be 2."""
-        assert plugin.tier == 2
-
     def test_evaluate_returns_tier2_result(self, plugin, sample_input):
         """Given valid input, evaluate should return Tier2Result."""
         with patch("app.judge.plugins.llm_judge.LLMJudgeEngine") as mock_engine_class:

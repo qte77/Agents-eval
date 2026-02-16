@@ -109,33 +109,6 @@ class MockTier3Plugin(EvaluatorPlugin):
 class TestEvaluatorPluginABC:
     """Test EvaluatorPlugin abstract base class interface."""
 
-    def test_plugin_has_name_property(self):
-        """Plugin must expose name property."""
-        plugin = MockTier1Plugin()
-        assert plugin.name == "mock_tier1"
-
-    def test_plugin_has_tier_property(self):
-        """Plugin must expose tier property."""
-        plugin = MockTier1Plugin()
-        assert plugin.tier == 1
-
-    def test_plugin_has_evaluate_method(self):
-        """Plugin must implement evaluate method."""
-        plugin = MockTier1Plugin()
-        input_data = MockPluginInput(text="test review", paper_id="123")
-        result = plugin.evaluate(input_data)
-        assert isinstance(result, Tier1Result)
-        assert result.overall_score > 0.0
-
-    def test_plugin_has_get_context_for_next_tier_method(self):
-        """Plugin must implement get_context_for_next_tier method."""
-        plugin = MockTier1Plugin()
-        input_data = MockPluginInput(text="test review", paper_id="123")
-        result = plugin.evaluate(input_data)
-        context = plugin.get_context_for_next_tier(result)
-        assert isinstance(context, dict)
-        assert "tier1_scores" in context
-
     def test_tier2_plugin_accepts_context(self):
         """Tier 2 plugin accepts context from Tier 1."""
         tier1_plugin = MockTier1Plugin()

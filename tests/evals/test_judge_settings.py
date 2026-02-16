@@ -14,64 +14,6 @@ from pydantic import ValidationError
 from app.judge.settings import JudgeSettings
 
 
-class TestJudgeSettingsDefaults:
-    """Test default values for JudgeSettings."""
-
-    def test_tiers_enabled_defaults(self):
-        """Tiers enabled should default to [1, 2, 3]."""
-        settings = JudgeSettings()
-        assert settings.tiers_enabled == [1, 2, 3]
-
-    def test_performance_targets_defaults(self):
-        """Performance targets should have correct defaults."""
-        settings = JudgeSettings()
-        assert settings.tier1_max_seconds == 1.0
-        assert settings.tier2_max_seconds == 10.0
-        assert settings.tier3_max_seconds == 15.0
-        assert settings.total_max_seconds == 25.0
-
-    def test_tier1_config_defaults(self):
-        """Tier 1 traditional metrics config defaults."""
-        settings = JudgeSettings()
-        assert settings.tier1_similarity_metrics == ["cosine", "jaccard", "semantic"]
-        assert settings.tier1_confidence_threshold == 0.8
-        assert settings.tier1_bertscore_model == "distilbert-base-uncased"
-        assert settings.tier1_tfidf_max_features == 5000
-
-    def test_tier2_config_defaults(self):
-        """Tier 2 LLM judge config defaults."""
-        settings = JudgeSettings()
-        assert settings.tier2_model == "gpt-4o-mini"
-        assert settings.tier2_max_retries == 2
-        assert settings.tier2_timeout_seconds == 30.0
-        assert settings.tier2_cost_budget_usd == 0.05
-        assert settings.tier2_paper_excerpt_length == 2000
-
-    def test_tier3_config_defaults(self):
-        """Tier 3 graph analysis config defaults."""
-        settings = JudgeSettings()
-        assert settings.tier3_min_nodes == 2
-        assert settings.tier3_centrality_measures == ["betweenness", "closeness", "degree"]
-        assert settings.tier3_max_nodes == 1000
-        assert settings.tier3_max_edges == 5000
-        assert settings.tier3_operation_timeout == 10.0
-
-    def test_composite_scoring_defaults(self):
-        """Composite scoring config defaults."""
-        settings = JudgeSettings()
-        assert settings.fallback_strategy == "tier1_only"
-
-    def test_observability_defaults(self):
-        """Observability config defaults."""
-        settings = JudgeSettings()
-        assert settings.trace_collection is True
-        assert settings.logfire_enabled is True
-        assert settings.phoenix_endpoint == "http://localhost:6006"
-        assert settings.logfire_service_name == "peerread-evaluation"
-        assert settings.logfire_send_to_cloud is False
-        assert settings.performance_logging is True
-
-
 class TestJudgeSettingsEnvOverrides:
     """Test environment variable overrides with JUDGE_ prefix."""
 

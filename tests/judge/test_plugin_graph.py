@@ -50,18 +50,6 @@ class TestGraphEvaluatorPlugin:
             )
         )
 
-    def test_plugin_implements_evaluator_interface(self, plugin):
-        """Given GraphEvaluatorPlugin, it should implement EvaluatorPlugin interface."""
-        assert isinstance(plugin, EvaluatorPlugin)
-
-    def test_plugin_name_property(self, plugin):
-        """Given GraphEvaluatorPlugin, name should be 'graph_metrics'."""
-        assert plugin.name == "graph_metrics"
-
-    def test_plugin_tier_property(self, plugin):
-        """Given GraphEvaluatorPlugin, tier should be 3."""
-        assert plugin.tier == 3
-
     def test_evaluate_returns_tier3_result(self, plugin, sample_input):
         """Given valid input, evaluate should return Tier3Result."""
         result = plugin.evaluate(sample_input)

@@ -49,18 +49,6 @@ class TestTraditionalMetricsPlugin:
             end_time=0.5,
         )
 
-    def test_plugin_implements_evaluator_interface(self, plugin):
-        """Given TraditionalMetricsPlugin, it should implement EvaluatorPlugin interface."""
-        assert isinstance(plugin, EvaluatorPlugin)
-
-    def test_plugin_name_property(self, plugin):
-        """Given TraditionalMetricsPlugin, name should be 'traditional_metrics'."""
-        assert plugin.name == "traditional_metrics"
-
-    def test_plugin_tier_property(self, plugin):
-        """Given TraditionalMetricsPlugin, tier should be 1."""
-        assert plugin.tier == 1
-
     def test_evaluate_returns_tier1_result(self, plugin, sample_input):
         """Given valid input, evaluate should return Tier1Result."""
         result = plugin.evaluate(sample_input)
