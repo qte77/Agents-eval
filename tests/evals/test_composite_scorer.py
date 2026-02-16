@@ -432,9 +432,7 @@ class TestCompositeResultStructure:
                     "output_similarity": 0.167,
                 },
                 "tiers_enabled": [1, 2, 3],
-                "opik_trace_id": None,
                 "agent_assessment_scores": None,
-                "opik_metadata": None,
             }
         )
 
@@ -502,8 +500,6 @@ class TestCompositeResultStructure:
                     "output_similarity": 0.167,
                 },
                 "tiers_enabled": [1, 2, 3],
-                "opik_trace_id": None,
                 "agent_assessment_scores": None,
-                "opik_metadata": None,
             }
         )

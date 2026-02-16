@@ -49,9 +49,7 @@ def test_makefile_opik_targets_removed() -> None:
     ]
 
     for target in opik_targets:
-        assert (
-            target not in content
-        ), f"Makefile should not contain {target} target"
+        assert target not in content, f"Makefile should not contain {target} target"
 
 
 def test_env_example_opik_vars_removed() -> None:
@@ -71,9 +69,9 @@ def test_gitignore_opik_entries_removed() -> None:
     content = gitignore.read_text()
 
     assert "opik/" not in content, ".gitignore should not contain opik/ entry"
-    assert (
-        ".opik_install_reported" not in content
-    ), ".gitignore should not contain .opik_install_reported entry"
+    assert ".opik_install_reported" not in content, (
+        ".gitignore should not contain .opik_install_reported entry"
+    )
 
 
 def test_opik_howto_doc_deleted() -> None:
@@ -114,9 +112,7 @@ def test_no_opik_imports_in_src() -> None:
 
     # grep returns 1 when no matches found (success for us)
     # grep returns 0 when matches found (failure for us)
-    assert (
-        result.returncode == 1
-    ), f"Found Opik references in src/app/:\n{result.stdout}"
+    assert result.returncode == 1, f"Found Opik references in src/app/:\n{result.stdout}"
 
 
 def test_logfire_config_intact() -> None:

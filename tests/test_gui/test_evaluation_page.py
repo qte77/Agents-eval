@@ -294,9 +294,7 @@ class TestEvaluationPageRenderingSnapshots:
                 "config_version": "1.0.0",
                 "weights_used": {"tier1": 0.3, "tier2": 0.4, "tier3": 0.3},
                 "tiers_enabled": None,
-                "opik_trace_id": None,
                 "agent_assessment_scores": None,
-                "opik_metadata": None,
             }
         )
 

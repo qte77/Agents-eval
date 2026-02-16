@@ -333,9 +333,7 @@ class TestCompareFunction:
                     "config_version": "1.0.0",
                     "weights_used": None,
                     "tiers_enabled": None,
-                    "opik_trace_id": None,
                     "agent_assessment_scores": None,
-                    "opik_metadata": None,
                 },  # Full CompositeResult
                 "result_b": {
                     "composite_score": 0.65,
@@ -358,9 +356,7 @@ class TestCompareFunction:
                     "config_version": "1.0.0",
                     "weights_used": None,
                     "tiers_enabled": None,
-                    "opik_trace_id": None,
                     "agent_assessment_scores": None,
-                    "opik_metadata": None,
                 },  # Full CompositeResult
                 "metric_deltas": {
                     "time_taken": 0.10000000000000009,

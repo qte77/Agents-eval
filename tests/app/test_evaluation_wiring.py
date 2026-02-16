@@ -255,8 +255,6 @@ class TestEvaluationWiringSnapshots:
                 "config_version": "1.0.0",
                 "weights_used": None,
                 "tiers_enabled": None,
-                "opik_trace_id": None,
                 "agent_assessment_scores": None,
-                "opik_metadata": None,
             }
         )
