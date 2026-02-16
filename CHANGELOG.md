@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security (Sprint 6 - STORY-010)
+
+- **CRITICAL CVE Mitigation**: CVE-2026-25580 PydanticAI SSRF vulnerability
+- Added URL validation with HTTPS-only and domain allowlisting (`src/app/utils/url_validation.py`)
+- Allowed domains: `raw.githubusercontent.com`, `arxiv.org`, `api.openai.com`, `api.anthropic.com`, `api.cerebras.ai`
+- SSRF protection blocks: internal IPs (127.0.0.1, 169.254.169.254), private networks (10.0.0.0/8, 192.168.0.0/16), localhost, IPv6 loopback
+- URL validation integrated into all HTTP requests in `datasets_peerread.py` (GitHub API calls and file downloads)
+- Comprehensive security documentation in `SECURITY.md` with CVE advisories:
+  - CVE-2026-25580 (CRITICAL, MITIGATED): PydanticAI SSRF vulnerability - domain allowlist implemented
+  - CVE-2026-25640 (HIGH, NOT APPLICABLE): PydanticAI XSS in web UI - project does not use `clai web` or `Agent.to_web()`
+  - CVE-2024-5206 (MEDIUM, MITIGATED): scikit-learn data leakage - project uses scikit-learn>=1.8.0 with fix
+- Test suite: 49 tests for URL validation (SSRF prevention, IDN homograph attacks, edge cases) and CVE documentation completeness
+
 ### Changed (Sprint 6 - STORY-009)
 
 - Review tools now enabled by default (`enable_review_tools: bool = True` in `main()`)
