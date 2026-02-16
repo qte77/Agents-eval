@@ -201,7 +201,7 @@ async def main(
     include_synthesiser: bool = False,
     pydantic_ai_stream: bool = False,
     chat_config_file: str | Path | None = None,
-    enable_review_tools: bool = False,
+    enable_review_tools: bool = True,
     paper_number: str | None = None,
     skip_eval: bool = False,
     download_peerread_full_only: bool = False,

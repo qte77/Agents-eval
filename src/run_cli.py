@@ -51,7 +51,8 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
         "--include-synthesiser": "Include the synthesiser agent",
         "--pydantic-ai-stream": "Enable streaming output",
         "--chat-config-file": "Specify the path to the chat configuration file",
-        "--enable-review-tools": "Enable PeerRead review generation tools",
+        "--enable-review-tools": "Enable PeerRead review generation tools (enabled by default)",
+        "--no-review-tools": "Disable PeerRead review generation tools (opt-out)",
         "--paper-number": "Specify paper number for PeerRead review generation",
         "--skip-eval": "Skip evaluation after run_manager completes",
         "--token-limit": "Override agent token limit (1000-1000000, default from config)",
@@ -91,6 +92,11 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
             key, value = arg.split("=", 1) if "=" in arg else (arg, True)
             key = key.lstrip("--").replace("-", "_")
             parsed_args[key] = _convert_value(key, value)
+
+    # Handle --no-review-tools flag (convert to enable_review_tools=False)
+    if "no_review_tools" in parsed_args:
+        parsed_args["enable_review_tools"] = False
+        del parsed_args["no_review_tools"]
 
     return parsed_args
 

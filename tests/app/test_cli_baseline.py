@@ -363,9 +363,12 @@ async def test_review_tools_enabled_by_default():
             query="test query",
         )
 
-        # Verify get_manager was called with enable_review_tools=True (default)
-        call_kwargs = mock_get_manager.call_args[1]
-        assert call_kwargs["enable_review_tools"] is True
+        # Verify get_manager was called with enable_review_tools=True (8th positional arg)
+        call_args = mock_get_manager.call_args[0]
+        # get_manager(provider, provider_config, api_key, prompts,
+        #             include_researcher, include_analyst, include_synthesiser, enable_review_tools)
+        assert len(call_args) >= 8
+        assert call_args[7] is True  # enable_review_tools is 8th arg (index 7)
 
 
 @pytest.mark.asyncio
@@ -402,19 +405,20 @@ async def test_no_review_tools_flag_disables_review_tools():
             enable_review_tools=False,
         )
 
-        # Verify get_manager was called with enable_review_tools=False
-        call_kwargs = mock_get_manager.call_args[1]
-        assert call_kwargs["enable_review_tools"] is False
+        # Verify get_manager was called with enable_review_tools=False (8th positional arg)
+        call_args = mock_get_manager.call_args[0]
+        assert len(call_args) >= 8
+        assert call_args[7] is False  # enable_review_tools is 8th arg (index 7)
 
 
 def test_cli_parse_args_includes_no_review_tools_flag():
     """Test that parse_args recognizes --no-review-tools flag (STORY-009)."""
     from run_cli import parse_args
 
-    # Test --no-review-tools flag is recognized
+    # Test --no-review-tools flag is recognized and converted to enable_review_tools=False
     args = parse_args(["--no-review-tools"])
-    assert "no_review_tools" in args
-    assert args["no_review_tools"] is True
+    assert "enable_review_tools" in args
+    assert args["enable_review_tools"] is False
 
 
 def test_cli_help_text_includes_no_review_tools():
