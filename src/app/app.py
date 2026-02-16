@@ -209,6 +209,7 @@ async def main(
     peerread_max_papers_per_sample_download: int | None = 5,
     cc_solo_dir: str | None = None,
     cc_teams_dir: str | None = None,
+    cc_teams_tasks_dir: str | None = None,
     token_limit: int | None = None,
     judge_settings: JudgeSettings | None = None,
 ) -> dict[str, Any] | None:
@@ -260,6 +261,7 @@ async def main(
                 execution_id,
                 cc_solo_dir,
                 cc_teams_dir,
+                cc_teams_tasks_dir,
                 chat_provider,
                 judge_settings,
             )

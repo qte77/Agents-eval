@@ -53,6 +53,7 @@ async def run_evaluation_if_enabled(
     execution_id: str | None,
     cc_solo_dir: str | None = None,
     cc_teams_dir: str | None = None,
+    cc_teams_tasks_dir: str | None = None,
     chat_provider: str | None = None,
     judge_settings: JudgeSettings | None = None,
 ) -> CompositeResult | None:
@@ -64,6 +65,8 @@ async def run_evaluation_if_enabled(
         execution_id: Execution ID for trace retrieval.
         cc_solo_dir: Path to Claude Code solo artifacts directory for baseline comparison.
         cc_teams_dir: Path to Claude Code teams artifacts directory for baseline comparison.
+        cc_teams_tasks_dir: Path to Claude Code teams tasks directory (optional,
+                           auto-discovered if not specified).
         chat_provider: Active chat provider from agent system.
         judge_settings: Optional JudgeSettings override from GUI or programmatic calls.
 
@@ -106,7 +109,9 @@ async def run_evaluation_if_enabled(
     )
 
     # Run baseline comparisons if Claude Code directories provided
-    await run_baseline_comparisons(pipeline, pydantic_result, cc_solo_dir, cc_teams_dir)
+    await run_baseline_comparisons(
+        pipeline, pydantic_result, cc_solo_dir, cc_teams_dir, cc_teams_tasks_dir
+    )
 
     return pydantic_result
 
@@ -116,6 +121,7 @@ async def run_baseline_comparisons(
     pydantic_result: CompositeResult | None,
     cc_solo_dir: str | None,
     cc_teams_dir: str | None,
+    cc_teams_tasks_dir: str | None,
 ) -> None:
     """Run baseline comparisons against Claude Code solo and teams if directories provided.
 
@@ -124,6 +130,8 @@ async def run_baseline_comparisons(
         pydantic_result: PydanticAI evaluation result.
         cc_solo_dir: Path to Claude Code solo artifacts directory.
         cc_teams_dir: Path to Claude Code teams artifacts directory.
+        cc_teams_tasks_dir: Path to Claude Code teams tasks directory (optional,
+                           auto-discovered if not specified).
     """
     if not cc_solo_dir and not cc_teams_dir:
         return
@@ -152,7 +160,9 @@ async def run_baseline_comparisons(
     if cc_teams_dir:
         try:
             logger.info(f"Evaluating Claude Code teams baseline from {cc_teams_dir}")
-            adapter = CCTraceAdapter(Path(cc_teams_dir))
+            # Pass optional tasks_dir if provided, otherwise let adapter auto-discover
+            tasks_path = Path(cc_teams_tasks_dir) if cc_teams_tasks_dir else None
+            adapter = CCTraceAdapter(Path(cc_teams_dir), tasks_dir=tasks_path)
             cc_teams_trace = adapter.parse()
             cc_teams_result = await pipeline.evaluate_comprehensive(
                 paper="",
