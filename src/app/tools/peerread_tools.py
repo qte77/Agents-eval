@@ -66,9 +66,7 @@ def read_paper_pdf(
         raise ValueError(f"Failed to read PDF: {str(e)}")
 
 
-def add_peerread_tools_to_agent(
-    agent: Agent[None, BaseModel], agent_id: str = "manager"
-):
+def add_peerread_tools_to_agent(agent: Agent[None, BaseModel], agent_id: str = "manager"):
     """Add PeerRead dataset tools to an agent.
 
     Args:
@@ -193,18 +191,6 @@ def add_peerread_tools_to_agent(
                 duration=duration,
                 context=f"pdf_path={pdf_path}",
             )
-
-
-def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
-    """Add PeerRead dataset tools to the manager agent.
-
-    Deprecated: Use add_peerread_tools_to_agent() instead.
-    This wrapper exists for backwards compatibility.
-
-    Args:
-        manager_agent: The manager agent to which PeerRead tools will be added.
-    """
-    add_peerread_tools_to_agent(manager_agent, agent_id="manager")
 
 
 def _truncate_paper_content(abstract: str, body: str, max_length: int) -> str:
