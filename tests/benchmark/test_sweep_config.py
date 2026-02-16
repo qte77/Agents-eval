@@ -154,8 +154,7 @@ class TestGenerateAllCompositions:
         compositions = generate_all_compositions()
         # Convert to tuples for set comparison
         unique = {
-            (c.include_researcher, c.include_analyst, c.include_synthesiser)
-            for c in compositions
+            (c.include_researcher, c.include_analyst, c.include_synthesiser) for c in compositions
         }
         assert len(unique) == 8
 
@@ -172,9 +171,7 @@ class TestGenerateAllCompositions:
         """Test that combination with all agents disabled is included."""
         compositions = generate_all_compositions()
         all_disabled = any(
-            not c.include_researcher
-            and not c.include_analyst
-            and not c.include_synthesiser
+            not c.include_researcher and not c.include_analyst and not c.include_synthesiser
             for c in compositions
         )
         assert all_disabled is True

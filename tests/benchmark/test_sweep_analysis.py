@@ -4,8 +4,6 @@ This module tests the statistical analysis module that calculates mean,
 stddev, min, max per composition and generates summary reports.
 """
 
-from pathlib import Path
-
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
@@ -169,9 +167,7 @@ class TestSweepAnalyzer:
         stats = analyzer.analyze()
 
         # First composition has 2 results: 0.75, 0.80
-        comp1_stats = next(
-            s for s in stats if s.composition.include_researcher is True
-        )
+        comp1_stats = next(s for s in stats if s.composition.include_researcher is True)
         expected_mean = (0.75 + 0.80) / 2
         assert abs(comp1_stats.overall_score_mean - expected_mean) < 0.01
 
@@ -182,12 +178,8 @@ class TestSweepAnalyzer:
         analyzer = SweepAnalyzer(sample_results)
         stats = analyzer.analyze()
 
-        comp1_stats = next(
-            s for s in stats if s.composition.include_researcher is True
-        )
-        comp2_stats = next(
-            s for s in stats if s.composition.include_analyst is True
-        )
+        comp1_stats = next(s for s in stats if s.composition.include_researcher is True)
+        comp2_stats = next(s for s in stats if s.composition.include_analyst is True)
 
         assert comp1_stats.num_samples == 2
         assert comp2_stats.num_samples == 1

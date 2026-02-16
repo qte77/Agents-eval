@@ -113,7 +113,9 @@ class SweepAnalyzer:
             overall_stats = calculate_statistics(overall_scores)
             tier1_stats = calculate_statistics(tier1_scores)
             tier2_stats = (
-                calculate_statistics(tier2_scores) if tier2_scores else {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}
+                calculate_statistics(tier2_scores)
+                if tier2_scores
+                else {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}
             )
             tier3_stats = calculate_statistics(tier3_scores)
             confidence_stats = calculate_statistics(confidences)

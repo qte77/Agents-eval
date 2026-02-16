@@ -146,9 +146,7 @@ class TestCCBaselineIntegration:
             patch("shutil.which", return_value="/usr/bin/claude"),
         ):
             mock_main.return_value = {"composite_result": mock_composite_result}
-            mock_subprocess.return_value = MagicMock(
-                returncode=0, stdout='{"result": "test"}'
-            )
+            mock_subprocess.return_value = MagicMock(returncode=0, stdout='{"result": "test"}')
 
             await runner.run()
 
