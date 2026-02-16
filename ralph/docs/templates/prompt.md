@@ -25,6 +25,11 @@ everything** if commits are missing or bundled.
 - **Atomic changes**: Keep changes focused and minimal
 - **Quality first**: All changes must pass `make validate`
 - **No scope creep**: Implement exactly what the story requires
+- **Status updates**: Output brief progress messages regularly and at milestones:
+  - Before each TDD phase (e.g., "Starting RED phase: writing tests for ...")
+  - After each commit (e.g., "RED committed. Moving to GREEN phase.")
+  - When running long commands (e.g., "Running make validate...")
+  - When encountering issues (e.g., "Test X failing, investigating...")
 
 ## References
 
