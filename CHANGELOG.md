@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (Sprint 5 - STORY-017)
+
+- STORY-017: Deleted duplicate AppEnv class from load_settings.py - canonical AppEnv in app.data_models.app_models is now the single source of truth
+- STORY-017: Removed module-level chat_config instance from load_settings.py - consumers should instantiate AppEnv directly when needed
+
 ### Changed (Sprint 5 - STORY-016)
 
 - STORY-016: PeerRead tools moved from manager to researcher agent in multi-agent mode - enforces separation of concerns (manager coordinates, researcher executes)
