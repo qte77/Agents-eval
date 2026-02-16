@@ -1,23 +1,49 @@
 """Log scrubbing patterns and sensitive data filtering.
 
 This module provides scrubbing patterns and filters to redact sensitive data
-from logs (Loguru) and traces (Logfire). Prevents data leakage of API keys,
-passwords, tokens, and other credentials in log files and OTLP trace exports.
+from two independent output channels:
+
+1. **Loguru** (file/console logs): Uses ``scrub_log_record()`` filter with the
+   full ``SENSITIVE_PATTERNS`` set, since Loguru has no built-in scrubbing.
+2. **Logfire** (OTLP trace export): Has built-in default patterns covering
+   password, secret, credential, api_key, jwt, session, cookie, csrf, ssn,
+   credit_card. We only supply *extra* patterns Logfire doesn't cover.
 
 Security features:
 - Pattern-based redaction for common secret types
 - Loguru filter function for file sink integration
-- Logfire scrubbing patterns for OTLP export
+- Logfire extra patterns (additive, not duplicating built-in defaults)
 - Case-insensitive pattern matching
 """
 
 import re
 from typing import Any
 
-# Sensitive data patterns for detection and redaction
-# These patterns match common secret types in log messages
-SENSITIVE_PATTERNS = frozenset(
+# Patterns already covered by Logfire's built-in scrubbing defaults:
+#   password, passwd, mysql_pwd, secret, credential, auth (excl. "authors"),
+#   private[._-]?key, api[._-]?key, session, cookie, csrf, xsrf, jwt, ssn,
+#   social[._-]?security, credit[._-]?card
+#
+# See: https://logfire.pydantic.dev/docs/how-to-guides/scrubbing/
+
+# Patterns NOT covered by Logfire defaults — supplied as extra_patterns
+LOGFIRE_EXTRA_PATTERNS: frozenset[str] = frozenset(
     [
+        r"bearer\s+\S+",  # Bearer token headers
+        r"sk-\S+",  # OpenAI API key format
+        r"password\s+to\s+['\"]?\S+",  # Natural language: "password to 'hunter2'"
+        r"credential\s+to\s+['\"]?\S+",  # Natural language: "credential to 'val'"
+        r"\b[A-Z_]+API_KEY\b",  # Env var names like OPENAI_API_KEY
+        r"\b[A-Z_]+SECRET\b",  # Env var names like DATABASE_SECRET
+        r"\b[A-Z_]+TOKEN\b",  # Env var names like JWT_TOKEN
+    ]
+)
+
+# Full pattern set for Loguru (which has no built-in scrubbing).
+# Includes both Logfire-default-covered patterns and our extras.
+SENSITIVE_PATTERNS: frozenset[str] = frozenset(
+    [
+        # Assignment patterns (covered by Logfire defaults, needed for Loguru)
         r"password\s*[=:]\s*\S+",
         r"passwd\s*[=:]\s*\S+",
         r"pwd\s*[=:]\s*\S+",
@@ -27,12 +53,8 @@ SENSITIVE_PATTERNS = frozenset(
         r"api[._-]?key\s*[=:]\s*\S+",
         r"token\s*[=:]\s*\S+",
         r"jwt\s*[=:]\s*\S+",
-        r"bearer\s+\S+",
-        r"sk-[a-zA-Z0-9]+",  # OpenAI API key format
-        # Environment variable patterns
-        r"\b[A-Z_]+API_KEY\b",
-        r"\b[A-Z_]+SECRET\b",
-        r"\b[A-Z_]+TOKEN\b",
+        # Extra patterns (not in Logfire defaults)
+        *LOGFIRE_EXTRA_PATTERNS,
     ]
 )
 
@@ -42,6 +64,7 @@ def scrub_log_record(record: dict[str, Any]) -> bool:
 
     This function is intended to be used as a Loguru filter. It modifies
     the log record in-place by replacing sensitive patterns with [REDACTED].
+    Uses the full SENSITIVE_PATTERNS set since Loguru has no built-in scrubbing.
 
     Args:
         record: Loguru log record dict with 'message' key.
@@ -54,9 +77,7 @@ def scrub_log_record(record: dict[str, Any]) -> bool:
     """
     message = record.get("message", "")
 
-    # Apply all patterns with case-insensitive matching
     for pattern in SENSITIVE_PATTERNS:
-        # Use re.IGNORECASE for case-insensitive matching
         message = re.sub(pattern, "[REDACTED]", message, flags=re.IGNORECASE)
 
     record["message"] = message
@@ -64,19 +85,17 @@ def scrub_log_record(record: dict[str, Any]) -> bool:
 
 
 def get_logfire_scrubbing_patterns() -> list[str]:
-    """Get scrubbing patterns for Logfire trace export.
+    """Get extra scrubbing patterns for Logfire trace export.
 
-    Returns pattern strings for use with logfire.ScrubbingOptions(extra_patterns=...).
-    These patterns are combined with Logfire's default patterns and redact sensitive
-    data in OTLP trace exports to Phoenix.
+    Returns only patterns NOT already covered by Logfire's built-in defaults.
+    These are passed to ``logfire.ScrubbingOptions(extra_patterns=...)``.
 
     Returns:
-        list[str]: List of regex pattern strings for Logfire scrubbing.
+        list[str]: List of regex pattern strings for Logfire extra scrubbing.
 
     Example:
         >>> import logfire
         >>> patterns = get_logfire_scrubbing_patterns()
         >>> logfire.configure(scrubbing=logfire.ScrubbingOptions(extra_patterns=patterns))
     """
-    # Return pattern strings (Logfire handles compilation and case-insensitivity)
-    return list(SENSITIVE_PATTERNS)
+    return list(LOGFIRE_EXTRA_PATTERNS)

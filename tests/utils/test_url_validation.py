@@ -19,10 +19,8 @@ class TestURLValidationAllowedDomains:
         "url",
         [
             "https://raw.githubusercontent.com/dataset/file.json",
+            "https://api.github.com/repos/allenai/PeerRead/contents/data",
             "https://arxiv.org/pdf/1234.5678.pdf",
-            "https://api.openai.com/v1/completions",
-            "https://api.anthropic.com/v1/messages",
-            "https://api.cerebras.ai/v1/chat/completions",
         ],
     )
     def test_allowed_domains_pass_validation(self, url: str):
@@ -38,7 +36,7 @@ class TestURLValidationAllowedDomains:
 
     def test_allowed_domain_with_port(self):
         """Allowed domain with explicit HTTPS port should pass."""
-        url = "https://api.openai.com:443/v1/completions"
+        url = "https://api.github.com:443/repos/allenai/PeerRead"
         result = validate_url(url)
         assert result == url
 
@@ -78,7 +76,7 @@ class TestURLValidationHTTPSEnforcement:
         [
             "http://raw.githubusercontent.com/data.json",
             "http://arxiv.org/pdf/1234.pdf",
-            "ftp://api.openai.com/data",
+            "ftp://api.github.com/data",
             "file:///etc/passwd",
             "data:text/html,<script>alert(1)</script>",
         ],
@@ -229,13 +227,13 @@ class TestURLValidationPortVariations:
 
     def test_non_standard_port_on_allowed_domain(self):
         """Non-standard port on allowed domain should pass if implementation allows."""
-        url = "https://api.openai.com:8443/v1/completions"
+        url = "https://api.github.com:8443/repos/allenai/PeerRead"
         # Should pass as long as domain is allowed
         result = validate_url(url)
         assert result == url
 
     def test_port_80_on_https_allowed_domain(self):
         """Unusual port 80 with HTTPS on allowed domain should pass."""
-        url = "https://api.openai.com:80/data"
+        url = "https://api.github.com:80/data"
         result = validate_url(url)
         assert result == url

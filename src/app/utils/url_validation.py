@@ -10,15 +10,16 @@ CVE Context:
   before HTTP requests.
 """
 
-# Allowed domains for external HTTP requests
-# This allowlist prevents SSRF attacks against internal services
+# Allowed domains for external HTTP requests made via httpx.Client
+# This allowlist prevents SSRF attacks against internal services.
+# Note: LLM provider APIs (OpenAI, Anthropic, Cerebras, etc.) are called
+# through PydanticAI's internal HTTP clients, not our httpx.Client,
+# so they don't pass through validate_url() and are not listed here.
 ALLOWED_DOMAINS: frozenset[str] = frozenset(
     [
-        "raw.githubusercontent.com",  # PeerRead dataset downloads
+        "raw.githubusercontent.com",  # PeerRead dataset raw file downloads
+        "api.github.com",  # GitHub API for PeerRead file listing
         "arxiv.org",  # arXiv paper repository
-        "api.openai.com",  # OpenAI API
-        "api.anthropic.com",  # Anthropic API
-        "api.cerebras.ai",  # Cerebras API
     ]
 )
 

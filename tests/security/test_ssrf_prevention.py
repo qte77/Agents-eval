@@ -77,7 +77,7 @@ class TestSSRFNonHTTPSBlocking:
         "url,scheme",
         [
             ("http://raw.githubusercontent.com/data", "http"),
-            ("ftp://api.openai.com/data", "ftp"),
+            ("ftp://api.github.com/data", "ftp"),
             ("file:///etc/passwd", "file"),
             ("file:///c:/windows/system32/config/sam", "file (Windows)"),
             ("data:text/html,<script>alert(1)</script>", "data URI"),

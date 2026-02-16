@@ -188,12 +188,12 @@ class TestLogfirePatternsGeneration:
         assert len(patterns) > 0
         assert all(isinstance(p, str) for p in patterns)
 
-    def test_logfire_patterns_match_sensitive_patterns(self):
-        """Logfire patterns should match SENSITIVE_PATTERNS."""
+    def test_logfire_patterns_are_subset_of_sensitive_patterns(self):
+        """Logfire extra patterns should be a subset of SENSITIVE_PATTERNS."""
         patterns = get_logfire_scrubbing_patterns()
 
-        # Should contain same patterns as SENSITIVE_PATTERNS
-        assert set(patterns) == set(SENSITIVE_PATTERNS)
+        # Extra patterns are a subset — Logfire defaults cover the rest
+        assert set(patterns).issubset(set(SENSITIVE_PATTERNS))
 
     def test_logfire_patterns_cover_common_secrets(self):
         """Logfire patterns should cover common secret types."""
