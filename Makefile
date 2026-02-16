@@ -18,9 +18,9 @@ CHAT_CFG_FILE := $(CONFIG_PATH)/config_chat.json
 OLLAMA_SETUP_URL := https://ollama.com/install.sh
 OLLAMA_MODEL_NAME := $$(jq -r '.providers.ollama.model_name' $(CHAT_CFG_FILE))
 PLANTUML_CONTAINER := plantuml/plantuml:latest
-PLANTUML_SCRIPT := scripts/generate-plantuml-png.sh
-PANDOC_SCRIPT := scripts/run-pandoc.sh
-PDF_CONVERTER_SCRIPT := scripts/setup-pdf-converter.sh
+PLANTUML_SCRIPT := scripts/writeup/generate-plantuml-png.sh
+PANDOC_SCRIPT := scripts/writeup/run-pandoc.sh
+PDF_CONVERTER_SCRIPT := scripts/writeup/setup-pdf-converter.sh
 PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex
 PANDOC_TITLE_FILE := 01_titel_abstrakt.md
 RALPH_TIMEOUT ?=

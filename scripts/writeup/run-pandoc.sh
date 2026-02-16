@@ -325,7 +325,7 @@ if [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ]; then
         echo "Citation style: $csl_file"
     else
         # Pandoc default is Chicago author-date; use IEEE numeric [1] style
-        default_csl="$PROJECT_ROOT/scripts/citation-styles/ieee.csl"
+        default_csl="$PROJECT_ROOT/scripts/writeup/citation-styles/ieee.csl"
         if [ -f "$default_csl" ]; then
             set -- "$@" --csl="$default_csl"
         fi

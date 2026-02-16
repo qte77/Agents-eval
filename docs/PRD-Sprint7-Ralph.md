@@ -90,7 +90,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 
 **Acceptance Criteria**:
 - [ ] `cc_baseline_comparison.py` demonstrates `CCTraceAdapter` usage
-- [ ] Prerequisites documented: collected artifacts via `scripts/collect-cc-*.sh`
+- [ ] Prerequisites documented: collected artifacts via `scripts/artifacts/collect-cc-*.sh`
 - [ ] Shows: loading CC artifacts, comparing MAS vs CC results
 - [ ] Test verifies adapter integration (mock artifact loading)
 
@@ -246,7 +246,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 **Technical Requirements**:
 - Update "Current Implementation (Sprint 6 - Delivered)":
   - Benchmarking sweep with `make sweep`
-  - CC artifact collection via `scripts/collect-cc-*.sh`
+  - CC artifact collection via `scripts/artifacts/collect-cc-*.sh`
   - Security controls active (URL validation, prompt sanitization, log scrubbing)
   - Test quality: 5 critical modules at 60%+ coverage
 
@@ -270,7 +270,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 **Technical Requirements**:
 - File: `docs/arch_vis/metrics-eval-sweep.plantuml` (~80 lines)
 - Style: activity diagram or sequence diagram
-- Generate: `./scripts/generate-plantuml-png.sh docs/arch_vis/metrics-eval-sweep.plantuml`
+- Generate: `./scripts/writeup/generate-plantuml-png.sh docs/arch_vis/metrics-eval-sweep.plantuml`
 
 **Files**:
 - `docs/arch_vis/metrics-eval-sweep.plantuml` (new)

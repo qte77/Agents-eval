@@ -209,8 +209,8 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, **
 
 **Acceptance Criteria**:
 
-- [ ] `scripts/collect-cc-solo.sh` captures CC solo session data into adapter-expected format (`metadata.json` + `tool_calls.jsonl`)
-- [ ] `scripts/collect-cc-teams.sh` copies `~/.claude/teams/{name}/` + `~/.claude/tasks/{name}/` into single adapter-compatible directory
+- [ ] `scripts/artifacts/collect-cc-solo.sh` captures CC solo session data into adapter-expected format (`metadata.json` + `tool_calls.jsonl`)
+- [ ] `scripts/artifacts/collect-cc-teams.sh` copies `~/.claude/teams/{name}/` + `~/.claude/tasks/{name}/` into single adapter-compatible directory
 - [ ] Both scripts accept named parameters: `--name <session/team-name>` and `--output-dir <path>` (required)
 - [ ] Both scripts validate output directory structure matches adapter expectations
 - [ ] Exit code 0 on success, exit code 1 on validation failure (missing source dirs, malformed artifacts), exit code 2 on usage error (missing required params)
@@ -221,16 +221,16 @@ Sprint 6 focuses on **benchmarking infrastructure**, **baseline completion**, **
 
 **Technical Requirements**:
 
-- `scripts/collect-cc-solo.sh`: parse `--name` and `--output-dir` args, locate CC session data in `~/.claude/projects/` or user-specified path, create `metadata.json` (session name, timestamp, model) and `tool_calls.jsonl` (one JSON object per tool call) in output dir
-- `scripts/collect-cc-teams.sh`: parse `--name` and `--output-dir` args, copy `~/.claude/teams/{name}/config.json` and `~/.claude/tasks/{name}/*.json` into output dir preserving structure
+- `scripts/artifacts/collect-cc-solo.sh`: parse `--name` and `--output-dir` args, locate CC session data in `~/.claude/projects/` or user-specified path, create `metadata.json` (session name, timestamp, model) and `tool_calls.jsonl` (one JSON object per tool call) in output dir
+- `scripts/artifacts/collect-cc-teams.sh`: parse `--name` and `--output-dir` args, copy `~/.claude/teams/{name}/config.json` and `~/.claude/tasks/{name}/*.json` into output dir preserving structure
 - Both scripts: validate output structure matches `CCTraceAdapter` expectations (required files exist, valid JSON), exit 1 on validation failure, exit 2 on usage error
 - Use `set -euo pipefail` for strict error handling in both scripts
 
 **Files**:
 
-- `scripts/collect-cc-solo.sh` (new)
-- `scripts/collect-cc-teams.sh` (new)
-- `scripts/README.md` (new)
+- `scripts/artifacts/collect-cc-solo.sh` (new)
+- `scripts/artifacts/collect-cc-teams.sh` (new)
+- `scripts/artifacts/README.md` (new)
 - `tests/scripts/test_collect_cc_scripts.py` (new)
 
 ---

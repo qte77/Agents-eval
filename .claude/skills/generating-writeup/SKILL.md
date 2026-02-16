@@ -32,10 +32,10 @@ support. IEEE `[1]` style by default.
 
 | Style | How | Notes |
 | ----- | --- | ----- |
-| IEEE (default) | Bundled (`scripts/citation-styles/ieee.csl`) | Numeric `[1]` |
-| APA | Bundled (`scripts/citation-styles/apa.csl`) | Author-date `(Smith, 2024)` |
-| Chicago | Bundled (`scripts/citation-styles/chicago-author-date.csl`) | Author-date `(Smith 2024)` |
-| Vancouver | Bundled (`scripts/citation-styles/vancouver.csl`) | Numeric `(1)` |
+| IEEE (default) | Bundled (`scripts/writeup/citation-styles/ieee.csl`) | Numeric `[1]` |
+| APA | Bundled (`scripts/writeup/citation-styles/apa.csl`) | Author-date `(Smith, 2024)` |
+| Chicago | Bundled (`scripts/writeup/citation-styles/chicago-author-date.csl`) | Author-date `(Smith 2024)` |
+| Vancouver | Bundled (`scripts/writeup/citation-styles/vancouver.csl`) | Numeric `(1)` |
 
 Additional CSL files are available from the
 [Zotero Style Repository](https://www.zotero.org/styles).
@@ -60,7 +60,7 @@ make run_pandoc \
   INPUT_FILES="$$(printf '%s\036' $$dir/*.md)" \
   OUTPUT_FILE="$$dir/output.pdf" \
   BIBLIOGRAPHY="$$dir/references.bib" \
-  CSL="scripts/citation-styles/apa.csl"
+  CSL="scripts/writeup/citation-styles/apa.csl"
 ```
 
 ## Quality Checks
