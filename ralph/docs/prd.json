@@ -137,7 +137,7 @@
       ],
       "passes": true,
       "completed_at": "2026-02-16T13:00:57Z",
-      "content_hash": "1863a3b58c26d496336453f3057b96da8ddee9274d0b86bfc829efbd0fa6a39f",
+      "content_hash": "7ae39c10c094f6f529ff02e85ba4fe1d38ad42b201dd284d18a0aae5310aa9f8",
       "depends_on": [
         "STORY-003"
       ]
