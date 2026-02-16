@@ -164,6 +164,10 @@ execute_story() {
 
     # Execute via Claude Code
     log_info "Running Claude Code with story context..."
+    log_info "  Story: $story_id - $title"
+    log_info "  Model: $RALPH_MODEL"
+    log_info "  Prompt: $iteration_prompt ($(wc -l < "$iteration_prompt") lines)"
+    log_info "  PRD: $PRD_JSON"
     if cat "$iteration_prompt" | claude -p --dangerously-skip-permissions --model "$RALPH_MODEL"; then
         # Check if agent reported story already complete
         if detect_already_complete "$log_start"; then
@@ -233,21 +237,39 @@ check_tdd_commits() {
     fi
 
     local recent_commits=$(git log --oneline -n $new_commits)
-    log_info "Recent commits:"
-    echo "$recent_commits"
+    log_info "Found $new_commits new commit(s) for $story_id:"
+
+    # Report detected phases with their commits
+    local red_commit=$(echo "$recent_commits" | grep "\[RED\]" | head -1)
+    local green_commit=$(echo "$recent_commits" | grep "\[GREEN\]" | head -1)
+    local refactor_commit=$(echo "$recent_commits" | grep -E "\[REFACTOR\]|\[BLUE\]" | head -1)
+
+    if [ -n "$red_commit" ]; then
+        log_info "  [RED]      $red_commit"
+    else
+        log_warn "  [RED]      not found"
+    fi
+    if [ -n "$green_commit" ]; then
+        log_info "  [GREEN]    $green_commit"
+    else
+        log_warn "  [GREEN]    not found"
+    fi
+    if [ -n "$refactor_commit" ]; then
+        log_info "  [REFACTOR] $refactor_commit"
+    else
+        log_info "  [REFACTOR] skipped"
+    fi
 
     # Check markers exist
-    if ! echo "$recent_commits" | grep -q "\[RED\]" || ! echo "$recent_commits" | grep -q "\[GREEN\]"; then
+    if [ -z "$red_commit" ] || [ -z "$green_commit" ]; then
         log_error "Missing [RED] and/or [GREEN] markers"
         return 1
     fi
 
     # Check REFACTOR marker if required
-    if [ "$REQUIRE_REFACTOR" = "true" ]; then
-        if ! echo "$recent_commits" | grep -qE "\[REFACTOR\]|\[BLUE\]"; then
-            log_error "Missing [REFACTOR] or [BLUE] marker (REQUIRE_REFACTOR=true)"
-            return 1
-        fi
+    if [ "$REQUIRE_REFACTOR" = "true" ] && [ -z "$refactor_commit" ]; then
+        log_error "Missing [REFACTOR] or [BLUE] marker (REQUIRE_REFACTOR=true)"
+        return 1
     fi
 
     # Verify order: [RED] must appear after [GREEN] in git log (older = later in output)
@@ -260,25 +282,55 @@ check_tdd_commits() {
     fi
 
     # If REFACTOR exists, verify it comes after GREEN
-    if echo "$recent_commits" | grep -qE "\[REFACTOR\]|\[BLUE\]"; then
+    if [ -n "$refactor_commit" ]; then
         local refactor_line=$(echo "$recent_commits" | grep -nE "\[REFACTOR\]|\[BLUE\]" | head -1 | cut -d: -f1)
         if [ "$refactor_line" -ge "$green_line" ]; then
             log_error "[REFACTOR]/[BLUE] must be committed AFTER [GREEN]"
             return 1
         fi
-        log_info "TDD verified: [RED] → [GREEN] → [REFACTOR] order correct"
+        log_info "TDD verified: [RED] -> [GREEN] -> [REFACTOR] order correct"
     else
-        log_info "TDD verified: [RED] → [GREEN] order correct"
+        log_info "TDD verified: [RED] -> [GREEN] order correct"
     fi
 
     return 0
+}
+
+# Print progress: percent done, stories completed, estimated time remaining
+print_progress() {
+    local total=$(jq '.stories | length' "$PRD_JSON")
+    local passing=$(jq '[.stories[] | select(.passes == true)] | length' "$PRD_JSON")
+    local remaining=$((total - passing))
+    local pct=0
+    if [ "$total" -gt 0 ]; then
+        pct=$((passing * 100 / total))
+    fi
+
+    local bar_len=20
+    local filled=$((pct * bar_len / 100))
+    local empty=$((bar_len - filled))
+    local bar=$(printf '%0.s#' $(seq 1 $filled 2>/dev/null) || true)$(printf '%0.s-' $(seq 1 $empty 2>/dev/null) || true)
+
+    local eta_str="n/a"
+    local now=$(date +%s)
+    local elapsed=$((now - RALPH_START_TIME))
+    if [ "$passing" -gt "$RALPH_START_PASSING" ] && [ "$remaining" -gt 0 ]; then
+        local done_this_run=$((passing - RALPH_START_PASSING))
+        local avg=$((elapsed / done_this_run))
+        local eta=$((avg * remaining))
+        local eta_min=$((eta / 60))
+        local eta_sec=$((eta % 60))
+        eta_str="${eta_min}m${eta_sec}s"
+    fi
+
+    log_info "Progress: [$bar] $pct% ($passing/$total stories) | remaining: $remaining | ETA: $eta_str"
 }
 
 # Main loop
 main() {
     log_info "Starting Ralph Loop"
     log_info "Configuration: MAX_ITERATIONS=$MAX_ITERATIONS, RALPH_MODEL=$RALPH_MODEL, REQUIRE_REFACTOR=$REQUIRE_REFACTOR, RALPH_BASELINE_MODE=$RALPH_BASELINE_MODE"
-    log_info "Log file: $LOG_FILE"
+    log_info "Log file: $(cd "$(dirname "$LOG_FILE")" && pwd)/$(basename "$LOG_FILE")"
 
     validate_environment
 
@@ -286,6 +338,12 @@ main() {
     if [ "$RALPH_BASELINE_MODE" = "true" ]; then
         capture_test_baseline "$BASELINE_FILE"
     fi
+
+    # Track timing for ETA calculation
+    RALPH_START_TIME=$(date +%s)
+    RALPH_START_PASSING=$(jq '[.stories[] | select(.passes == true)] | length' "$PRD_JSON")
+
+    print_progress
 
     local iteration=0
 
@@ -332,6 +390,7 @@ main() {
                 log_info "Committing state files..."
                 git add "$PRD_JSON" "$PROGRESS_FILE" 2>/dev/null || log_warn "Could not stage state files (may be ignored)"
                 git commit -m "chore: Update Ralph state after verifying $story_id (already complete)" || log_warn "No state changes to commit"
+                print_progress
             else
                 log_error "Story reported as complete but quality checks failed"
                 log_progress "$iteration" "$story_id" "FAIL" "Quality checks failed despite reported completion"
@@ -381,6 +440,7 @@ main() {
                 log_info "Committing state files..."
                 git add "$PRD_JSON" "$PROGRESS_FILE" 2>/dev/null || log_warn "Could not stage state files (may be ignored)"
                 git commit -m "chore: Update Ralph state after completing $story_id" || log_warn "No state changes to commit"
+                print_progress
             else
                 log_warn "Story completed but quality checks failed"
                 log_progress "$iteration" "$story_id" "FAIL" "Quality checks failed"
