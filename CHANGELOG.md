@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (Sprint 5 - STORY-016)
+
+- STORY-016: PeerRead tools moved from manager to researcher agent in multi-agent mode - enforces separation of concerns (manager coordinates, researcher executes)
+- STORY-016: Single-agent mode maintains PeerRead tools on manager as fallback - preserves backwards compatibility when researcher agent is not present
+
 ### Fixed (Sprint 5)
 
 - STORY-012: OTLP endpoint double-path bug in Logfire instrumentation - set `OTEL_EXPORTER_OTLP_ENDPOINT` to base URL (http://localhost:6006) instead of traces-specific endpoint with /v1/traces path
