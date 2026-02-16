@@ -20,11 +20,6 @@ Non-obvious patterns that prevent repeated mistakes.
 - **Example**:
 
   ```python
-  except TimeoutError as e:
-      error_msg = f"Tier 2 timeout after {timeout}s (LLM-as-Judge evaluation)"
-      logger.error(f"{error_msg}. Consider increasing tier2_max_seconds.")
-      self._record_tier_failure(2, "timeout", time.time() - start_time, error_msg)
-
   bottleneck_threshold = total_time * 0.4
   for tier, t in tier_times.items():
       if t > bottleneck_threshold:
@@ -37,16 +32,7 @@ Non-obvious patterns that prevent repeated mistakes.
 
 - **Context**: PlantUML diagrams in `docs/arch_vis`
 - **Problem**: Redundant files for light/dark themes
-- **Solution**: Single file with theme variable: `!include styles/github-$STYLE.puml`
-- **Example**:
-
-  ```plantuml
-  !ifndef STYLE
-  !define STYLE "light"
-  !endif
-  !include styles/github-$STYLE.puml
-  ```
-
+- **Solution**: Single file with theme variable: `!ifndef STYLE !define STYLE "light" !endif` then `!include styles/github-$STYLE.puml`
 - **References**: `docs/arch_vis/`
 
 ### Module Naming Conflicts
@@ -75,7 +61,6 @@ Non-obvious patterns that prevent repeated mistakes.
   TaskCreate(subject="Quality review", ...)    # Task 2
   TaskCreate(subject="Coverage review", ...)   # Task 3
   TaskCreate(subject="Aggregate", blockedBy=["1","2","3"])  # Task 4
-  # Spawn 3 teammates → parallel execution (~26s vs ~60s sequential)
   ```
 
 - **Key Finding**: Parallel reduces latency but token cost scales linearly (N teammates = N instances)
@@ -84,13 +69,11 @@ Non-obvious patterns that prevent repeated mistakes.
 ### OpenAI-Compatible Provider Strict Tool Definitions
 
 - **Context**: PydanticAI with OpenAI-compatible providers (Cerebras, Groq, etc.)
-- **Problem**: OpenAI `strict: true` on tool definitions enforces model arguments exactly match the JSON schema ([Structured Outputs](https://openai.com/index/introducing-structured-outputs-in-the-api/)). PydanticAI infers `strict` per-tool based on schema compatibility — mixed values cause HTTP 422 on providers like Cerebras.
+- **Problem**: OpenAI `strict: true` on tool definitions enforces exact JSON schema match. PydanticAI infers `strict` per-tool — mixed values cause HTTP 422 on providers like Cerebras.
 - **Solution**: Disable strict inference via `OpenAIModelProfile(openai_supports_strict_tool_definition=False)`. Do NOT force all tools to `strict=True` — risks stripped `default` values and forced `additionalProperties: false`.
 - **Example**:
 
   ```python
-  from pydantic_ai.profiles.openai import OpenAIModelProfile
-
   OpenAIChatModel(
       model_name=model_name,
       provider=OpenAIProvider(base_url=base_url, api_key=api_key),
@@ -98,7 +81,7 @@ Non-obvious patterns that prevent repeated mistakes.
   )
   ```
 
-- **References**: `src/app/llms/models.py`, [OpenAI Function Calling Guide](https://developers.openai.com/api/docs/guides/function-calling/)
+- **References**: `src/app/llms/models.py`, [OpenAI Structured Outputs](https://openai.com/index/introducing-structured-outputs-in-the-api/)
 
 ### Pydantic validation_alias for External Data Mapping
 
