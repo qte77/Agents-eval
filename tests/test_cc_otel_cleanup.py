@@ -45,15 +45,16 @@ def test_no_cc_otel_imports_in_src() -> None:
 def test_no_cc_otel_imports_in_tests() -> None:
     """Verify no imports of cc_otel remain in tests/."""
     # Use grep to search for any cc_otel references in test code
+    # Exclude this test file itself from the search
     result = subprocess.run(
-        ["grep", "-r", "cc_otel", "tests/", "--include=*.py"],
+        ["grep", "-r", "cc_otel", "tests/", "--include=*.py", "--exclude=test_cc_otel_cleanup.py"],
         capture_output=True,
         text=True,
     )
 
     # grep returns 1 when no matches found (success), 0 when matches found
     assert result.returncode == 1, (
-        f"Found cc_otel references in tests/:\n{result.stdout}\n"
+        f"Found cc_otel references in tests/ (excluding this cleanup test):\n{result.stdout}\n"
         "All cc_otel imports should have been removed (STORY-006)."
     )
 
