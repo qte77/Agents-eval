@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-013: Tool success_rate accumulation bug - now tracks all tool calls instead of overwriting with last call outcome (9/10 successes now correctly shows 0.9 instead of 0.0)
 - STORY-013: Agent-tool edge weight accumulation bug - now averages weights across repeated calls instead of overwriting
 - STORY-013: Removed dead `communication_overhead` metric from Tier3Result - field was computed but never contributed to overall_score calculation
+- STORY-014: wandb import guard - wandb and weave imports moved inside function try/except to prevent ImportError when optional wandb package not installed
+- STORY-014: WANDB_ERROR_REPORTING environment variable now defaults to "false" to disable crash telemetry to Sentry (respects user override if already set)
 
 ### Changed (Sprint 5)
 
@@ -31,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - STORY-011: `tests/evals/test_opik_removal.py` (import existence and AST parsing tests)
 - STORY-011: `tests/test_migration_cleanup.py` (file deletion and import verification tests)
+- STORY-014: Dead agentops commented code from login.py - removed commented import and commented initialization code block
 
 ### Added (Sprint 5)
 
@@ -49,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STORY-003: `single_agent_mode` flag in `CompositeResult` for transparency in evaluation results
 - STORY-003: Single-agent mode detection from `GraphTraceData` (empty `coordination_events` or 0-1 unique agent IDs)
 - STORY-003: Weight redistribution logic to exclude `coordination_quality` metric in single-agent runs
+- STORY-014: Comprehensive test suite for wandb import guard behavior and telemetry settings with inline-snapshot validation
 - STORY-003: Compound redistribution support for both Tier 2 skip AND single-agent mode (4 metrics × 0.25 each)
 - STORY-003: `evaluate_composite_with_trace()` method in `CompositeScorer` for trace-based evaluation
 - STORY-003: Hypothesis property tests for weight sum invariants across single-agent and multi-agent modes
