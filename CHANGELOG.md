@@ -13,158 +13,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed (Sprint 6 - STORY-003)
 
-- CCTraceAdapter path handling: Now supports both sibling directory layout (`~/.claude/teams/{name}/` + `~/.claude/tasks/{name}/`) and legacy child layout (`teams/{name}/tasks/`)
-- Added optional `tasks_dir` parameter to `CCTraceAdapter.__init__()` with automatic sibling/child discovery when not specified
-- CLI flag `--cc-teams-tasks-dir` added for explicit tasks directory specification (optional, auto-discovered by default)
-- Backward compatible: Existing code using child layout continues to work without changes
+- CCTraceAdapter: supports both sibling (`~/.claude/teams/` + `~/.claude/tasks/`) and legacy child layout with automatic discovery
+- CLI flag `--cc-teams-tasks-dir` for explicit tasks directory (optional, auto-discovered by default)
 
 ### Added (Ralph Monitoring)
 
-- Process management: `make ralph_stop` (two-phase kill for hung loops), `make ralph_watch` (live-tail with pstree), `make ralph_get_log`
+- Process management: `make ralph_stop`, `make ralph_watch`, `make ralph_get_log`
 - Timeout protection: `make ralph_run RALPH_TIMEOUT=3600` prevents infinite hangs
-- Monitoring infrastructure: `ralph/scripts/{stop.sh,watch.sh,lib/stop_ralph_processes.sh}`
 
 ### Fixed (Sprint 6 - STORY-002)
 
-- Phoenix Docker recipe: Added persistent volume (`phoenix_data:/phoenix`), gRPC port exposure (4317), auto-restart policy, and stale container cleanup (`docker rm -f`)
-- Agent interaction graph: Now renders when `execution_id` exists regardless of evaluation success (fixes `--skip-eval` and failed evaluation scenarios)
+- Phoenix Docker recipe: persistent volume, gRPC port (4317), auto-restart, stale container cleanup
+- Agent interaction graph renders when `execution_id` exists regardless of evaluation success
 
 ### Removed (Sprint 6 - STORY-001)
 
-- Complete Opik removal (replaced by Logfire/Phoenix in Sprint 4): instrumentation module (~140 lines), configuration classes, Docker stack (11 services), data model fields (`opik_trace_id`, `opik_metadata`), 6 Makefile targets, environment variables, test files, and documentation
+- Complete Opik removal (~140 lines instrumentation, Docker stack, data model fields, Makefile targets, env vars, tests, docs) — replaced by Logfire/Phoenix in Sprint 4
 
 ### Changed (Sprint 6 - STORY-001)
 
-- Documentation cleanup: Replaced 13 Opik references with Phoenix/Logfire equivalents in `docs/analysis/CC-agent-teams-orchestration.md` and removed Opik from `logfire_instrumentation.py` docstrings
-
-### Removed (Sprint 5 - STORY-017)
-
-- STORY-017: Deleted duplicate AppEnv class from load_settings.py - canonical AppEnv in app.data_models.app_models is now the single source of truth
-- STORY-017: Removed module-level chat_config instance from load_settings.py - consumers should instantiate AppEnv directly when needed
-
-### Changed (Sprint 5 - STORY-016)
-
-- STORY-016: PeerRead tools moved from manager to researcher agent in multi-agent mode - enforces separation of concerns (manager coordinates, researcher executes)
-- STORY-016: Single-agent mode maintains PeerRead tools on manager as fallback - preserves backwards compatibility when researcher agent is not present
-
-### Fixed (Sprint 5)
-
-- STORY-012: OTLP endpoint double-path bug in Logfire instrumentation - set `OTEL_EXPORTER_OTLP_ENDPOINT` to base URL (http://localhost:6006) instead of traces-specific endpoint with /v1/traces path
-- STORY-012: Phoenix trace export failures caused by SDK auto-appending /v1/traces to already-present /v1/traces path (HTTP 405 errors)
-- STORY-013: Tool success_rate accumulation bug - now tracks all tool calls instead of overwriting with last call outcome (9/10 successes now correctly shows 0.9 instead of 0.0)
-- STORY-013: Agent-tool edge weight accumulation bug - now averages weights across repeated calls instead of overwriting
-- STORY-013: Removed dead `communication_overhead` metric from Tier3Result - field was computed but never contributed to overall_score calculation
-- STORY-014: wandb import guard - wandb and weave imports moved inside function try/except to prevent ImportError when optional wandb package not installed
-- STORY-014: WANDB_ERROR_REPORTING environment variable now defaults to "false" to disable crash telemetry to Sentry (respects user override if already set)
-- STORY-015: Missing diagnostic logs when API keys exist in .env but resolve to empty strings - added debug log in `get_api_key()` to diagnose transient .env loading issues (CWD mismatch, unset env vars between runs)
-
-### Changed (Sprint 5)
-
-- AGENT_LEARNINGS.md: Added YAML frontmatter and condensed content (~25% reduction from 147 to 110 lines) - improved scannability while preserving all essential information
-- STORY-005: Documentation updates for Sprint 5 - README.md now references Sprint 5 features, roadmap.md updated with Sprint 5 entry, architecture.md documented single-agent weight redistribution and Tier 2 provider fallback, implementation status updated with Sprint 5 improvements
-- STORY-005: Stale "Opik" references in graph_analysis.py docstrings updated to reference "Phoenix" (lines 477, 560)
-- STORY-011: Test suite refactored to remove 31 implementation-detail tests per testing strategy criteria
-- STORY-011: Deleted `TestJudgeSettingsDefaults` class (13 default constant tests)
-- STORY-011: Removed plugin interface tests (9 tests: isinstance, name, tier property checks)
-- STORY-011: Removed settings default/type validation tests (7 tests relying on Pydantic)
-- STORY-011: Test count reduced from ~595 to 564 tests (5% reduction) with no loss of behavioral coverage
-
-### Removed (Sprint 5)
-
-- STORY-011: `tests/evals/test_opik_removal.py` (import existence and AST parsing tests)
-- STORY-011: `tests/test_migration_cleanup.py` (file deletion and import verification tests)
-- STORY-014: Dead agentops commented code from login.py - removed commented import and commented initialization code block
+- Replaced 13 Opik references with Phoenix/Logfire equivalents in docs and docstrings
 
 ### Added (Sprint 5)
 
-- STORY-001: Tier 2 judge provider fallback chain with `select_available_provider()` wired into `LLMJudgeEngine` initialization
-- STORY-001: `tier2_provider=auto` mode to inherit agent system's active `chat_provider`
-- STORY-001: `chat_provider` parameter in `EvaluationPipeline` and `app.py` for provider inheritance
-- STORY-001: `tier2_available` flag to skip Tier 2 when no valid providers are available (prevents 401 errors and neutral fallback scores)
-- STORY-001: Hypothesis property tests for provider selection invariants (fallback only when primary unavailable)
-- STORY-001: Comprehensive test coverage for auto mode inheritance and provider skipping behavior
-- STORY-002: CLI `--token-limit` flag to override agent token limits (1000-1000000) from command line
-- STORY-002: GUI token limit input field in settings sidebar with min/max validation
-- STORY-002: `AGENT_TOKEN_LIMIT` environment variable support for config-free token limit override
-- STORY-002: Token limit priority order: CLI/GUI > env var > config_chat.json
-- STORY-002: Validation bounds (1000-1000000) enforced in `setup_agent_env`
-- STORY-002: Comprehensive test coverage with Hypothesis property tests for bounds and priority
-- STORY-003: `single_agent_mode` flag in `CompositeResult` for transparency in evaluation results
-- STORY-003: Single-agent mode detection from `GraphTraceData` (empty `coordination_events` or 0-1 unique agent IDs)
-- STORY-003: Weight redistribution logic to exclude `coordination_quality` metric in single-agent runs
-- STORY-014: Comprehensive test suite for wandb import guard behavior and telemetry settings with inline-snapshot validation
-- STORY-003: Compound redistribution support for both Tier 2 skip AND single-agent mode (4 metrics × 0.25 each)
-- STORY-003: `evaluate_composite_with_trace()` method in `CompositeScorer` for trace-based evaluation
-- STORY-003: Hypothesis property tests for weight sum invariants across single-agent and multi-agent modes
-- STORY-003: Comprehensive test coverage with 8 tests including compound redistribution scenarios
-- STORY-004: Optional field handling with "UNKNOWN" defaults for missing PeerRead review fields (IMPACT, SUBSTANCE, etc.)
-- STORY-004: `_create_review_from_dict()` helper method for cleaner review validation
-- STORY-004: Debug logging when optional review fields are missing
-- STORY-004: Hypothesis property tests for arbitrary combinations of missing optional fields
-- STORY-004: Inline-snapshot tests for validated paper structure with missing fields
-- STORY-006: Background query execution with session state persistence in Streamlit GUI
-- STORY-006: Session state management for execution lifecycle (idle → running → completed/error)
-- STORY-006: Progress indicator (spinner) during query execution with navigation resilience
-- STORY-006: `_execute_query_background()` function for async execution with state transitions
-- STORY-006: `_initialize_execution_state()` and `_get_execution_state()` helper functions
-- STORY-006: `_display_configuration()` and `_display_execution_result()` UI helper functions
-- STORY-006: Comprehensive pytest tests for session state transitions and navigation resilience
-- STORY-007: Debug log panel in App tab with expandable/collapsible interface
-- STORY-007: `LogCapture` utility class for filtering and storing app.* module logs
-- STORY-007: Log capture sink integration with loguru logger for real-time capture
-- STORY-007: HTML formatting for log entries with color-coded levels (INFO/WARNING/ERROR)
-- STORY-010: Comprehensive MAESTRO security review covering all 7 layers (Model, Agent Logic, Integration, Monitoring, Execution, Environment, Orchestration)
-- STORY-010: Code quality audit using `reviewing-code` skill across all `src/app/` modules
-- STORY-010: Context7 MCP integration to verify PydanticAI, Logfire, and Streamlit security best practices
-- STORY-010: Exa MCP CVE database check identifying 2 critical vulnerabilities in PydanticAI dependencies
-- STORY-009: Editable settings page with all JudgeSettings fields as interactive widgets
-- STORY-009: Tier timeout fields (tier1/2/3_max_seconds, total_max_seconds) editable via number_input
-- STORY-009: Composite scoring thresholds (accept/weak_accept/weak_reject) editable via number_input
-- STORY-009: Tier 2 provider/model fields (tier2_provider, tier2_model, fallback variants) editable via text_input
-- STORY-009: Observability settings (logfire_enabled, phoenix_endpoint, trace_collection) editable via checkbox/text_input
-- STORY-009: "Reset to Defaults" button to restore original JudgeSettings() defaults
-- STORY-009: Session state persistence with 'judge_' prefix for all settings overrides
-- STORY-009: `_build_judge_settings_from_session()` helper to construct JudgeSettings from session state
-- STORY-009: `judge_settings` parameter in `main()`, `run_evaluation_if_enabled()`, and `EvaluationPipeline`
-- STORY-009: Settings changes take effect on next App tab execution without restart
-- STORY-009: Comprehensive pytest tests (9 tests) with Hypothesis property tests for value bounds
-- STORY-009: Inline-snapshot tests for widget structure verification
-- STORY-007: Log persistence to session state during background execution
-- STORY-007: `_render_debug_log_panel()` and `_capture_execution_logs()` helper functions
-- STORY-007: Static `format_logs_as_html()` method for efficient HTML rendering
-- STORY-007: Comprehensive pytest tests for log filtering, capture, and HTML formatting
-- STORY-008: `graph_builder.py` utility module to convert `GraphTraceData` to NetworkX `DiGraph` for GUI visualization
-- STORY-008: Session state persistence for `execution_composite_result` and `execution_graph` in Streamlit App tab
-- STORY-008: Real-time data wiring from App tab execution to Evaluation Results and Agent Graph visualization tabs
-- STORY-008: Comprehensive test suite with Hypothesis property tests for session state data integrity across page navigation
+- STORY-001: Tier 2 judge provider fallback chain — `select_available_provider()`, `tier2_provider=auto` mode, `tier2_available` skip flag, Hypothesis property tests
+- STORY-002: Token limit override — CLI `--token-limit`, GUI input, `AGENT_TOKEN_LIMIT` env var; priority: CLI/GUI > env > config; bounds 1000–1000000
+- STORY-003: Single-agent mode — detection from trace data, weight redistribution (excludes `coordination_quality`), compound redistribution for Tier 2 skip + single-agent, `evaluate_composite_with_trace()`, Hypothesis property tests
+- STORY-004: PeerRead optional field handling — "UNKNOWN" defaults for missing review fields, Hypothesis property tests
+- STORY-006: Streamlit background execution — session state persistence, progress spinner, navigation resilience
+- STORY-007: Debug log panel — `LogCapture` utility, loguru sink, HTML color-coded levels, persistence during background execution
+- STORY-008: Graph visualization wiring — `graph_builder.py` (GraphTraceData→NetworkX), session state for results/graphs, real-time data to Evaluation/Graph tabs
+- STORY-009: Editable judge settings page — timeouts, thresholds, provider/model, observability toggles, "Reset to Defaults", `judge_settings` plumbed through pipeline
+- STORY-010: MAESTRO 7-layer security review — code audit, Context7/Exa MCP verification, 2 critical CVEs in PydanticAI dependencies
+- STORY-014: Test suite for wandb import guard behavior and telemetry settings
 
 ### Changed (Sprint 5)
 
-- STORY-008: `main()` in `app.py` now returns `dict[str, Any]` with `composite_result` and `graph` keys (was `None`)
-- STORY-008: `run_gui.py` passes session state data to `render_evaluation()` and `render_agent_graph()` (was `None`)
-- STORY-008: Evaluation Results and Agent Graph tabs display actual execution data when available
-- STORY-008: Refactored `main()` complexity from 19 to 10 by extracting helper functions: `_build_graph_from_trace()`, `_prepare_result_dict()`, `_run_agent_execution()`
+- STORY-016: PeerRead tools moved from manager to researcher in multi-agent mode; single-agent retains tools on manager
+- STORY-008: `main()` returns `dict` with `composite_result`/`graph` keys; complexity 19→10 via extracted helpers
+- STORY-011: Deleted 31 implementation-detail tests (595→564, no behavioral coverage loss)
+- STORY-005: README, roadmap, architecture docs updated for Sprint 5
+- AGENT_LEARNINGS.md condensed ~25% with YAML frontmatter
+
+### Removed (Sprint 5)
+
+- STORY-017: Duplicate `AppEnv` class and module-level `chat_config` from `load_settings.py` — canonical in `app.data_models.app_models`
+- STORY-011: `test_opik_removal.py` and `test_migration_cleanup.py`
+- STORY-014: Dead agentops commented code from `login.py`
 
 ### Fixed (Sprint 5)
 
-- STORY-004: PeerRead papers 304-308, 330 failing validation with `KeyError: 'IMPACT'`
-  - Replace direct dict access with `.get()` for optional review score fields
-  - Default to "UNKNOWN" for missing IMPACT, SUBSTANCE, APPROPRIATENESS, MEANINGFUL_COMPARISON, SOUNDNESS_CORRECTNESS, ORIGINALITY, CLARITY
-  - Papers with missing optional fields now validate successfully instead of being silently skipped
-  - Improves dataset coverage by including previously excluded papers
+- STORY-012: OTLP endpoint double-path bug — base URL instead of traces-specific endpoint (HTTP 405)
+- STORY-013: Tool `success_rate` tracks all calls instead of overwriting with last outcome
+- STORY-013: Agent-tool edge weights averaged across repeated calls; removed dead `communication_overhead` metric
+- STORY-014: wandb/weave imports guarded with try/except; `WANDB_ERROR_REPORTING` defaults to "false"
+- STORY-015: Debug log in `get_api_key()` for diagnosing empty .env strings
+- STORY-004: PeerRead papers 304-308, 330 — `.get()` for optional review fields, improving dataset coverage
 
 ### Security (Sprint 5)
 
-- STORY-010: **CRITICAL** - CVE-2026-25580 (PydanticAI SSRF vulnerability) identified - affects agent message URL handling
-- STORY-010: **HIGH** - CVE-2026-25640 (PydanticAI Stored XSS) identified - affects web UI (not currently used)
-- STORY-010: **MEDIUM** - CVE-2024-5206 (scikit-learn data leakage) identified - affects TF-IDF vectorizer
-- STORY-010: 31 security findings documented across all 7 MAESTRO layers with fix recommendations
-  - 3 CRITICAL: SSRF vulnerability, prompt injection risk, API key logging
-  - 6 HIGH: XSS vulnerability, API keys in os.environ, trace data leakage, uncontrolled tool registration, low test coverage
-  - 8 MEDIUM: Template injection, TLS validation, input size limits, log scrubbing, PDF memory limits, plugin tier validation
-  - 2 LOW: Immutable trace storage, missing docstrings
-- STORY-010: Detailed mitigation strategies provided for all findings in `docs/reviews/sprint5-code-review.md`
-- STORY-010: Code fixes for critical/high findings deferred to Sprint 6 per review recommendations
+- STORY-010: **CRITICAL** — CVE-2026-25580 (PydanticAI SSRF), CVE-2026-25640 (Stored XSS)
+- STORY-010: **MEDIUM** — CVE-2024-5206 (scikit-learn data leakage)
+- STORY-010: 31 findings across 7 MAESTRO layers (3 critical, 6 high, 8 medium, 2 low) — mitigations in `docs/reviews/sprint5-code-review.md`
 
 ### Added (Sprint 2)
 
