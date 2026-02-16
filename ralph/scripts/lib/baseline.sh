@@ -46,7 +46,7 @@ BASELINE_STORE_DIR="${BASELINE_STORE_DIR:-/tmp/claude/ralph_baselines}"
 get_story_base_commit() {
     local story_id="$1"
     local first
-    first=$(git log --format="%H" --grep="$story_id" --reverse | head -1)
+    first=$(git log --format="%H" --grep="$story_id" --reverse | sed -n '1p')
     if [ -n "$first" ]; then
         git rev-parse "${first}^" 2>/dev/null || git rev-parse HEAD
     else
@@ -73,12 +73,24 @@ capture_test_baseline() {
     # of story's own failures across restarts)
     local stored="${BASELINE_STORE_DIR}/${story_id}.txt"
     if [ "$story_id" != "loop-init" ] && [ -f "$stored" ]; then
-        log_info "Reusing persisted baseline for $story_id (prevents absorption)"
-        cp "$stored" "$baseline_file"
-        local count
-        count=$(grep -v "^#" "$baseline_file" | grep -c . || echo 0)
-        log_info "Persisted baseline: $count pre-existing failure(s)"
-        return 0
+        # Staleness check: invalidate if codebase changed since capture
+        local stored_commit
+        stored_commit=$(grep "^# Base-commit:" "$stored" 2>/dev/null | sed -n '1p' | sed 's/^# Base-commit: //' || true)
+        local current_base
+        current_base=$(get_story_base_commit "$story_id")
+
+        if [ -n "$stored_commit" ] && [ "$stored_commit" != "$current_base" ]; then
+            log_warn "Persisted baseline stale (base ${stored_commit:0:8} != current ${current_base:0:8}) — re-capturing"
+            rm -f "$stored"
+            # Fall through to fresh capture below
+        else
+            log_info "Reusing persisted baseline for $story_id (prevents absorption)"
+            cp "$stored" "$baseline_file"
+            local count
+            count=$(grep -v "^#" "$baseline_file" | grep -c . || true)
+            log_info "Persisted baseline: $count pre-existing failure(s)"
+            return 0
+        fi
     fi
 
     # Try pytest cache first (instant, no test execution)
@@ -95,12 +107,13 @@ capture_test_baseline() {
                 echo "# Baseline captured: $(date --iso-8601=seconds)"
                 echo "# Story: $story_id"
                 echo "# Source: pytest-cache"
+                echo "# Base-commit: $(git rev-parse HEAD)"
                 cat "$failures_temp"
             } > "$baseline_file"
             rm "$failures_temp"
 
             local count
-            count=$(grep -v "^#" "$baseline_file" | grep -c . || echo 0)
+            count=$(grep -v "^#" "$baseline_file" | grep -c . || true)
             if [ "$count" -eq 0 ]; then
                 log_info "Baseline captured: all tests passing (cached)"
             else
@@ -131,12 +144,13 @@ capture_test_baseline() {
         echo "# Baseline captured: $(date --iso-8601=seconds)"
         echo "# Story: $story_id"
         echo "# Source: full-test-run"
+        echo "# Base-commit: $(git rev-parse HEAD)"
         cat "$failures_temp"
     } > "$baseline_file"
     rm "$failures_temp"
 
     local count
-    count=$(grep -v "^#" "$baseline_file" | grep -c . || echo 0)
+    count=$(grep -v "^#" "$baseline_file" | grep -c . || true)
 
     if [ "$count" -eq 0 ]; then
         log_info "Baseline captured: all tests passing"
@@ -166,7 +180,7 @@ get_baseline_age() {
 
     # Extract timestamp from metadata header
     local baseline_ts
-    baseline_ts=$(grep "^# Baseline captured:" "$baseline_file" | head -1 | sed 's/^# Baseline captured: //')
+    baseline_ts=$(grep "^# Baseline captured:" "$baseline_file" 2>/dev/null | sed -n '1p' | sed 's/^# Baseline captured: //' || true)
 
     if [ -z "$baseline_ts" ]; then
         # No metadata, fall back to file modification time
@@ -211,6 +225,7 @@ refresh_baseline_on_success() {
             echo "# Baseline refreshed: $(date --iso-8601=seconds)"
             echo "# Story: $story_id"
             echo "# Status: all-tests-passing"
+            echo "# Base-commit: $(git rev-parse HEAD)"
         } > "$baseline_file"
     else
         log_info "State has $current_failures pre-existing failure(s) — baseline updated"

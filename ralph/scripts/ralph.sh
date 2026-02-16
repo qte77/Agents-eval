@@ -112,7 +112,7 @@ get_next_story() {
       | select(.passes == false)
       | select((.depends_on // []) - $done | length == 0)
       | .id
-    ' "$PRD_JSON" | head -n 1
+    ' "$PRD_JSON" | sed -n '1p'
 }
 
 # Get story details
@@ -154,16 +154,25 @@ log_progress() {
 }
 
 # Log heartbeat with phase detection while story executes in background.
+# Scans commits for the current story within the current sprint only
+# (using prd.json generated timestamp as sprint boundary).
 # Args:
 #   $1 - story ID
 monitor_story_progress() {
     local story_id="$1"
+    local sprint_start
+    sprint_start=$(jq -r '.generated' "$PRD_JSON")
+
     while sleep 60; do
         local elapsed=$(($(date +%s) - RALPH_STORY_START))
-        local phase="WORKING"
-        local recent=$(git log --oneline -3 2>/dev/null)
-        if echo "$recent" | grep -q "\[GREEN\]"; then phase="REFACTOR"
-        elif echo "$recent" | grep -q "\[RED\]"; then phase="GREEN"
+        local phase="RED"
+        local story_commits
+        story_commits=$(git log --grep="$story_id" --since="$sprint_start" --oneline 2>/dev/null)
+
+        if [ -n "$story_commits" ]; then
+            if echo "$story_commits" | grep -q "\[GREEN\]"; then phase="REFACTOR"
+            elif echo "$story_commits" | grep -q "\[RED\]"; then phase="GREEN"
+            fi
         fi
         log_info "  >> [$story_id] phase: $phase | elapsed: $(fmt_elapsed $elapsed)"
     done
@@ -297,9 +306,9 @@ check_tdd_commits() {
     log_info "Found $new_commits new commit(s) for $story_id:"
 
     # Report detected phases with their commits
-    local red_commit=$(echo "$recent_commits" | grep "\[RED\]" | head -1)
-    local green_commit=$(echo "$recent_commits" | grep "\[GREEN\]" | head -1)
-    local refactor_commit=$(echo "$recent_commits" | grep -E "\[REFACTOR\]|\[BLUE\]" | head -1)
+    local red_commit=$(echo "$recent_commits" | grep "\[RED\]" | sed -n '1p')
+    local green_commit=$(echo "$recent_commits" | grep "\[GREEN\]" | sed -n '1p')
+    local refactor_commit=$(echo "$recent_commits" | grep -E "\[REFACTOR\]|\[BLUE\]" | sed -n '1p')
 
     [ -n "$red_commit" ] && log_info "  [RED]      $red_commit" || log_warn "  [RED]      not found"
     [ -n "$green_commit" ] && log_info "  [GREEN]    $green_commit" || log_warn "  [GREEN]    not found"
@@ -341,8 +350,8 @@ check_tdd_commits() {
     fi
 
     # Verify order: [RED] must appear after [GREEN] in git log (older = later in output)
-    local red_line=$(echo "$recent_commits" | grep -n "\[RED\]" | head -1 | cut -d: -f1)
-    local green_line=$(echo "$recent_commits" | grep -n "\[GREEN\]" | head -1 | cut -d: -f1)
+    local red_line=$(echo "$recent_commits" | grep -n "\[RED\]" | sed -n '1p' | cut -d: -f1)
+    local green_line=$(echo "$recent_commits" | grep -n "\[GREEN\]" | sed -n '1p' | cut -d: -f1)
 
     if [ "$red_line" -le "$green_line" ]; then
         log_error "[RED] must be committed BEFORE [GREEN]"
@@ -351,7 +360,7 @@ check_tdd_commits() {
 
     # If REFACTOR exists, verify it comes after GREEN
     if [ -n "$refactor_commit" ]; then
-        local refactor_line=$(echo "$recent_commits" | grep -nE "\[REFACTOR\]|\[BLUE\]" | head -1 | cut -d: -f1)
+        local refactor_line=$(echo "$recent_commits" | grep -nE "\[REFACTOR\]|\[BLUE\]" | sed -n '1p' | cut -d: -f1)
         if [ "$refactor_line" -ge "$green_line" ]; then
             log_error "[REFACTOR]/[BLUE] must be committed AFTER [GREEN]"
             return 1

@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Ralph: baseline log formatting — `grep -c . || echo 0` produced `"0\n0"` on zero matches, splitting the log line; changed to `|| true` (3 locations in `baseline.sh`)
+- Ralph: persisted baseline staleness detection — added `# Base-commit:` metadata to baselines; on reuse, invalidates if codebase HEAD diverged from stored commit (prevents stale baselines after external changes); backward compatible with old baselines missing metadata
+- Ralph: monitor phase detection — default changed from `WORKING` to `RED`; commit scan now scoped to current story ID + current sprint (`--since` from `prd.json.generated`) instead of global last 3 commits
+- Ralph: added `make complexity` to prompt.md REFACTOR phase checks and `make quick_validate` — prevents wasted iterations from uncaught complexity failures
+- Ralph: sandbox compatibility — replaced all `head -1` with `sed -n '1p'` in `baseline.sh`, `ralph.sh`, `watch.sh` (`head` blocked by `.claude/settings.json` deny list)
+
 ### Added
 
 - STORY-014: Behavioral tests for 5 critical low-coverage modules (12 tests) — content extraction, tool tracing, provider-specific configurations, result type selection, delegation flows

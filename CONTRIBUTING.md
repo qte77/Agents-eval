@@ -13,7 +13,7 @@ updated: 2026-02-16
 **Development Workflow:**
 
 - `make setup_dev` → Setup development environment  
-- `make quick_validate` → Fast validation during development (ruff + type checking)
+- `make quick_validate` → Fast validation during development (ruff + type checking + complexity)
 - `make validate` → Complete pre-commit validation (ruff + type check + test_all)
 
 **Testing:**
@@ -43,7 +43,7 @@ updated: 2026-02-16
 | `make test_all` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
 | `make coverage_all` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
 | `make validate` | Complete pre-commit validation | Above dependencies | Run individual commands manually |
-| `make quick_validate` | Fast development validation | Ruff and pyright installed | Run `make ruff && make type_check` |
+| `make quick_validate` | Fast development validation | Ruff, pyright, complexipy installed | Run `make ruff && make type_check && make complexity` |
 | `make setup_markdownlint` | Setup markdownlint CLI | Node.js and npm installed | Try `npm install -gs markdownlint-cli` |
 | `make run_markdownlint INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
 | `make run_pandoc` | Convert MD to PDF with citations. See `make run_pandoc HELP=1` | pandoc + texlive installed | Try `make setup_pdf_converter CONVERTER=pandoc` |
@@ -211,7 +211,7 @@ Security tests run as part of `make test_all` (no separate command needed).
 ### Pre-commit Checklist
 
 1. **Automated validation**: `make validate` - runs streamlined sequence (ruff + type_check + test_all)
-2. **Quick validation** (development): `make quick_validate` - runs fast checks (ruff + type_check only)
+2. **Quick validation** (development): `make quick_validate` - runs fast checks (ruff + type_check + complexity)
 3. **Update CHANGELOG.md**: Add entry to `## [Unreleased]` section describing your changes
 4. Update documentation as described above.
 

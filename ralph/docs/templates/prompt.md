@@ -79,7 +79,7 @@ Follow the project's testing best practices. Tests MUST be written and
 - **STATUS**: Output "Starting REFACTOR phase"
 - Fix any remaining test failures or edge cases from GREEN phase
 - Improve code structure while keeping tests passing
-  - Use focused checks: `make ruff`, `make type_check`, `uv run pytest <test-file>`
+  - Use focused checks: `make ruff`, `make type_check`, `make complexity`, `uv run pytest <test-file>`
   - Do NOT run `make validate` — Ralph handles full validation after your work
   - **COMMIT**: `git add . && git commit -m "refactor(STORY-XXX): fix edge cases [REFACTOR]"`
 
@@ -100,6 +100,7 @@ Use focused checks during development to catch issues early:
 ```bash
 make ruff          # Format and lint src
 make type_check    # Static type checking
+make complexity    # Cognitive complexity check
 uv run pytest <test-file>  # Run specific tests
 ```
 

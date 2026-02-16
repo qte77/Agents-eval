@@ -164,6 +164,10 @@ ralph/
         └── stop_ralph_processes.sh # Process cleanup
 ```
 
+## TODO / Future Work
+
+- **Intermediate progress visibility**: The `prompt.md` STATUS instructions aren't being followed by Claude in `-p` mode. Worth investigating whether `--output-format stream-json` or a hook could capture intermediate progress during story execution. Currently, only the heartbeat monitor provides coarse visibility (60s intervals, phase detection from git log).
+
 ## Sources
 
 - [Ralph Wiggum technique](https://ghuntley.com/ralph/) - Geoffrey Huntley

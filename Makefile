@@ -300,6 +300,7 @@ quick_validate:  ## Fast development cycle validation
 	echo "Running quick validation ..."
 	$(MAKE) -s ruff
 	$(MAKE) -s type_check
+	$(MAKE) -s complexity
 	echo "Quick validation completed (check output for any failures)"
 
 output_unset_app_env_sh:  ## Unset app environment variables

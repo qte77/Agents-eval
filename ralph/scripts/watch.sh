@@ -52,7 +52,7 @@ show_process_tree() {
 
 get_latest_log() {
     if [ -d "$LOG_DIR" ]; then
-        ls -t "$LOG_DIR"/*.log 2>/dev/null | head -1
+        ls -t "$LOG_DIR"/*.log 2>/dev/null | sed -n '1p'
     fi
 }
 
