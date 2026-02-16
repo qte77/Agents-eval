@@ -198,13 +198,12 @@ class TestLogfirePatternsGeneration:
     def test_logfire_patterns_cover_common_secrets(self):
         """Logfire patterns should cover common secret types."""
         patterns = get_logfire_scrubbing_patterns()
-        pattern_str = "|".join(patterns)
 
         # Should match common secret patterns
-        assert any(re.search(r"password", pattern_str, re.IGNORECASE) for pattern_str in patterns)
-        assert any(re.search(r"api.*key", pattern_str, re.IGNORECASE) for pattern_str in patterns)
-        assert any(re.search(r"token", pattern_str, re.IGNORECASE) for pattern_str in patterns)
-        assert any(re.search(r"sk-", pattern_str) for pattern_str in patterns)
+        assert any(re.search(r"password", pattern, re.IGNORECASE) for pattern in patterns)
+        assert any(re.search(r"api.*key", pattern, re.IGNORECASE) for pattern in patterns)
+        assert any(re.search(r"token", pattern, re.IGNORECASE) for pattern in patterns)
+        assert any(re.search(r"sk-", pattern) for pattern in patterns)
 
 
 class TestPropertyBasedFiltering:
