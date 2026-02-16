@@ -114,6 +114,16 @@ The project requirements are in `pyproject.toml`. Use the provided `Makefile` to
 - **Iteratively improve** tests and code until feature requirements are met
 - All code quality and tests must **pass before advancing** to the next step
 
+#### Security Tests (`tests/security/`)
+
+- SSRF prevention (URL validation, domain allowlisting, internal IP blocking)
+- Prompt injection resistance (length limits, XML delimiter wrapping, format string prevention)
+- Sensitive data filtering in logs and traces (API keys, passwords, tokens, env var names)
+- Input size limits (DoS prevention)
+- Tool registration scope validation
+
+Security tests run as part of `make test_all` (no separate command needed).
+
 **Testing Guidelines:**
 
 - **Mock for**: Unit tests, CI/CD pipelines, deterministic behavior

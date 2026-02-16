@@ -11,174 +11,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added (Sprint 6 - STORY-013)
+### Added (Sprint 6)
 
-- **Security Test Suite**: Comprehensive security-focused test suite in `tests/security/`
-- Created 5 test modules validating Sprint 5 MAESTRO security review findings:
-  - `test_ssrf_prevention.py` (37 tests): SSRF attack vectors, internal IP blocking, IDN homograph attacks, link-local addresses
-  - `test_prompt_injection.py` (29 tests): Malicious instruction injection, format string attacks, length limit enforcement, XML delimiter wrapping
-  - `test_sensitive_data_filtering.py` (35 tests): API key/password/token redaction in logs and traces, case-insensitive pattern matching
-  - `test_input_size_limits.py` (16 tests): Plugin input size validation, DoS prevention, memory exhaustion protection
-  - `test_tool_registration.py` (18 tests): Tool registration scope, agent role-based assignment, isolation between agent instances
-- All test modules include Hypothesis property-based tests for comprehensive edge case coverage
-- Total: 135 security tests added across 5 files (all passing)
-- Security tests run as part of `make test_all` (no separate command needed)
+- STORY-013: Security test suite (`tests/security/`) — 135 tests across 5 modules (SSRF, prompt injection, data filtering, input limits, tool registration) with Hypothesis property tests
+- STORY-007: MAS composition sweep (`src/app/benchmark/`) — `SweepRunner` for N×M×P benchmarking, CC headless baseline via `claude -p`, statistical analysis, CLI `run_sweep.py` + `make sweep` (33 tests)
+- STORY-004: CC artifact collection scripts (`collect-cc-solo.sh`, `collect-cc-teams.sh`) with docs and tests
+- Ralph: baseline-aware test validation (`RALPH_BASELINE_MODE`), process management (`ralph_stop`, `ralph_watch`, `ralph_get_log`), timeout protection
 
-### Fixed (Sprint 6 - STORY-013)
+### Changed (Sprint 6)
 
-- **Log Scrubbing Edge Cases**: Enhanced sensitive data patterns in `src/app/utils/log_scrubbing.py`
-  - Added natural language patterns for "password to" and "credential to" phrasings
-  - Broadened OpenAI API key pattern from `sk-[a-zA-Z0-9]+` to `sk-\S+` to support Unicode characters
-  - Fixed 3 edge case test failures in `test_sensitive_data_filtering.py`
+- STORY-009: Review tools enabled by default; `--no-review-tools` to opt out
+- STORY-008: Review tools routed to researcher agent (was manager-only); single-agent fallback preserved
+- STORY-001: Complete Opik removal (~140 lines) — replaced 13 references with Phoenix/Logfire equivalents
+- Logfire scrubbing: `get_logfire_scrubbing_patterns()` returns only 7 extra patterns not covered by Logfire defaults
 
-### Security (Sprint 6 - STORY-012)
+### Fixed (Sprint 6)
 
-- **HIGH Priority Security**: Log and trace data scrubbing for sensitive data
-- Added log scrubbing module (`src/app/utils/log_scrubbing.py`) with pattern-based redaction for API keys, passwords, tokens, and credentials
-- Sensitive patterns configured: `password`, `secret`, `api_key`, `token`, `bearer`, `jwt`, `credential`, and environment variable names (e.g., `OPENAI_API_KEY`)
-- Loguru filter (`scrub_log_record()`) integrated into file sinks in `log.py` and `common/log.py` to redact sensitive data before writing logs
-- Logfire scrubbing patterns configured via `ScrubbingOptions(extra_patterns=...)` to redact sensitive fields in OTLP trace exports to Phoenix
-- Changed `setup_llm_environment()` to log at DEBUG level instead of INFO to reduce exposure surface for environment variable names
-- All sensitive patterns use case-insensitive matching and replace matches with `[REDACTED]`
-- Comprehensive test suite: 13 tests including Hypothesis property tests for pattern coverage
-- Prevents data leakage vectors: API keys in exception traces, Bearer tokens in logs, passwords in debug output, unredacted trace data in Phoenix
+- STORY-013: Log scrubbing edge cases — natural language patterns ("password to"), broadened OpenAI key regex to `sk-\S+`
+- STORY-003: CCTraceAdapter supports sibling and legacy directory layouts with auto-discovery; `--cc-teams-tasks-dir` flag
+- STORY-002: Phoenix Docker recipe (persistent volume, gRPC 4317, auto-restart); graph renders when `execution_id` exists
+- SSRF allowlist: added `api.github.com`, removed 3 unused LLM provider domains
 
-### Security (Sprint 6 - STORY-011)
+### Removed (Sprint 6)
 
-- **HIGH Priority Security**: Prompt injection mitigation with input sanitization
-- Added prompt input sanitization module (`src/app/utils/prompt_sanitization.py`) with length limits and XML delimiter wrapping
-- Length limits enforced: paper titles (500 chars), abstracts (5000 chars), review text (50000 chars)
-- XML delimiters wrap user-controlled content to separate instructions from data in LLM prompts:
-  - `<paper_title>`, `<paper_abstract>`, `<review_text>`, `<content>` for generic use
-- Sanitization integrated into LLM judge prompts (`llm_evaluation_managers.py`) for paper excerpts and reviews
-- PeerRead template formatting (`peerread_tools.py`) now sanitizes titles and abstracts before template insertion
-- Format string injection prevented: malicious placeholders (`{__import__}`) cannot execute in sanitized content
-- Comprehensive test suite: 25 tests including Hypothesis property tests for boundary fuzzing and prompt injection attempts
-- Prevents attack vectors: "Ignore previous instructions", system prompt override, null byte injection, excessive newlines
+- STORY-006: Orphaned `cc_otel` module and tests — wrong abstraction for CC tracing
 
-### Security (Sprint 6 - STORY-010)
+### Security (Sprint 6)
 
-- **CRITICAL CVE Mitigation**: CVE-2026-25580 PydanticAI SSRF vulnerability
-- Added URL validation with HTTPS-only and domain allowlisting (`src/app/utils/url_validation.py`)
-- Allowed domains: `raw.githubusercontent.com`, `arxiv.org`, `api.openai.com`, `api.anthropic.com`, `api.cerebras.ai`
-- SSRF protection blocks: internal IPs (127.0.0.1, 169.254.169.254), private networks (10.0.0.0/8, 192.168.0.0/16), localhost, IPv6 loopback
-- URL validation integrated into all HTTP requests in `datasets_peerread.py` (GitHub API calls and file downloads)
-- Comprehensive security documentation in `SECURITY.md` with CVE advisories:
-  - CVE-2026-25580 (CRITICAL, MITIGATED): PydanticAI SSRF vulnerability - domain allowlist implemented
-  - CVE-2026-25640 (HIGH, NOT APPLICABLE): PydanticAI XSS in web UI - project does not use `clai web` or `Agent.to_web()`
-  - CVE-2024-5206 (MEDIUM, MITIGATED): scikit-learn data leakage - project uses scikit-learn>=1.8.0 with fix
-- Test suite: 49 tests for URL validation (SSRF prevention, IDN homograph attacks, edge cases) and CVE documentation completeness
-
-### Changed (Sprint 6 - STORY-009)
-
-- Review tools now enabled by default (`enable_review_tools: bool = True` in `main()`)
-- CLI flag behavior: `--no-review-tools` disables review tools (opt-out), `--enable-review-tools` kept for backward compatibility (now no-op)
-- Primary use case is PeerRead paper review evaluation, so review tools should be on by default
-- Users wanting general queries without review tools can use `--no-review-tools` flag
-
-### Changed (Sprint 6 - STORY-008)
-
-- Review tools routing: moved from manager-only to researcher-first with single-agent fallback
-- Multi-agent mode: review tools (`generate_paper_review_content_from_template`, `save_paper_review`, `save_structured_review`) now registered on researcher agent alongside PeerRead base tools and DuckDuckGo
-- Single-agent mode: review tools fall back to manager when no researcher present (preserves existing behavior)
-- `add_peerread_review_tools_to_manager()` refactored to `add_peerread_review_tools_to_agent()` with `agent_id` parameter for flexible routing
-- Backward compatibility alias maintained for old function name
-- Tool registration logic consolidated in `_create_manager()` to eliminate duplication
-
-### Added (Sprint 6 - STORY-007)
-
-- MAS composition sweep infrastructure (`src/app/benchmark/`) for automated benchmarking across configurable agent compositions
-- `SweepConfig` and `AgentComposition` Pydantic models with validation (min 1 composition, min 1 repetition, min 1 paper)
-- `generate_all_compositions()` utility to generate all 2^3=8 agent toggle combinations
-- `SweepRunner` orchestrates N repetitions × M compositions × P papers through existing evaluation pipeline
-- Claude Code headless baseline comparison via `claude -p` with `--output-format json` (optional, gated by `cc_baseline_enabled`)
-- Statistical analysis: mean, stddev, min, max per composition across all metrics (overall, tier1, tier2, tier3, confidence)
-- Result export: machine-readable JSON (`results.json`) and human-readable Markdown table (`summary.md`) with mean ± stddev formatting
-- CLI entry point `python src/run_sweep.py` with `--config`, `--paper-numbers`, `--repetitions`, `--all-compositions`, `--cc-baseline` flags
-- Makefile `sweep` target: `make sweep ARGS="--paper-numbers 1,2,3 --repetitions 3 --all-compositions"`
-- Comprehensive test suite: 33 tests including Hypothesis property tests for statistical bounds validation
-- Results saved to `results/sweeps/{timestamp}/` (already in `.gitignore`)
-
-### Removed (Sprint 6 - STORY-006)
-
-- Orphaned `cc_otel` module (`src/app/cc_otel/`) — wrong abstraction for CC tracing configuration (infrastructure-level env vars, not application code)
-- `cc_otel` tests (`tests/cc_otel/`) and cleanup verification tests added
-
-### Added (Ralph Baseline Validation)
-
-- Baseline-aware test validation (`ralph/scripts/lib/baseline.sh`): captures pre-existing test failures at loop start, only blocks on new regressions
-- `RALPH_BASELINE_MODE` env var (default: `true`) to toggle baseline comparison vs original `make validate`
-
-### Added (Sprint 6 - STORY-004)
-
-- CC artifact collection scripts: `collect-cc-solo.sh` (metadata.json + tool_calls.jsonl), `collect-cc-teams.sh` (config.json + tasks with structure preservation)
-- Script documentation in `scripts/README.md` with usage examples, exit codes, integration guide
-- Test suite in `tests/scripts/test_collect_cc_scripts.py` for both collection scripts
-
-### Fixed (Sprint 6 - STORY-003)
-
-- CCTraceAdapter: supports both sibling (`~/.claude/teams/` + `~/.claude/tasks/`) and legacy child layout with automatic discovery
-- CLI flag `--cc-teams-tasks-dir` for explicit tasks directory (optional, auto-discovered by default)
-
-### Added (Ralph Monitoring)
-
-- Process management: `make ralph_stop`, `make ralph_watch`, `make ralph_get_log`
-- Timeout protection: `make ralph_run RALPH_TIMEOUT=3600` prevents infinite hangs
-
-### Fixed (Sprint 6 - STORY-002)
-
-- Phoenix Docker recipe: persistent volume, gRPC port (4317), auto-restart, stale container cleanup
-- Agent interaction graph renders when `execution_id` exists regardless of evaluation success
-
-### Removed (Sprint 6 - STORY-001)
-
-- Complete Opik removal (~140 lines instrumentation, Docker stack, data model fields, Makefile targets, env vars, tests, docs) — replaced by Logfire/Phoenix in Sprint 4
-
-### Changed (Sprint 6 - STORY-001)
-
-- Replaced 13 Opik references with Phoenix/Logfire equivalents in docs and docstrings
+- STORY-010 **(CRITICAL)**: CVE-2026-25580 SSRF mitigation — URL validation with HTTPS-only + domain allowlist in `datasets_peerread.py` (49 tests). CVE advisories in `SECURITY.md`
+- STORY-011 **(HIGH)**: Prompt injection mitigation — input sanitization with length limits + XML delimiter wrapping in LLM judge prompts (25 tests)
+- STORY-012 **(HIGH)**: Log/trace data scrubbing — pattern-based redaction for API keys, passwords, tokens in Loguru sinks and Logfire OTLP exports (13 tests)
 
 ### Added (Sprint 5)
 
-- STORY-001: Tier 2 judge provider fallback chain — `select_available_provider()`, `tier2_provider=auto` mode, `tier2_available` skip flag, Hypothesis property tests
-- STORY-002: Token limit override — CLI `--token-limit`, GUI input, `AGENT_TOKEN_LIMIT` env var; priority: CLI/GUI > env > config; bounds 1000–1000000
-- STORY-003: Single-agent mode — detection from trace data, weight redistribution (excludes `coordination_quality`), compound redistribution for Tier 2 skip + single-agent, `evaluate_composite_with_trace()`, Hypothesis property tests
-- STORY-004: PeerRead optional field handling — "UNKNOWN" defaults for missing review fields, Hypothesis property tests
-- STORY-006: Streamlit background execution — session state persistence, progress spinner, navigation resilience
-- STORY-007: Debug log panel — `LogCapture` utility, loguru sink, HTML color-coded levels, persistence during background execution
-- STORY-008: Graph visualization wiring — `graph_builder.py` (GraphTraceData→NetworkX), session state for results/graphs, real-time data to Evaluation/Graph tabs
-- STORY-009: Editable judge settings page — timeouts, thresholds, provider/model, observability toggles, "Reset to Defaults", `judge_settings` plumbed through pipeline
-- STORY-010: MAESTRO 7-layer security review — code audit, Context7/Exa MCP verification, 2 critical CVEs in PydanticAI dependencies
-- STORY-014: Test suite for wandb import guard behavior and telemetry settings
+- STORY-001: Tier 2 judge provider fallback chain (`tier2_provider=auto`)
+- STORY-002: Token limit override (CLI `--token-limit`, GUI, env var)
+- STORY-003: Single-agent mode detection + weight redistribution
+- STORY-004: PeerRead optional field handling ("UNKNOWN" defaults)
+- STORY-006: Streamlit background execution with session state persistence
+- STORY-007: Debug log panel (`LogCapture`, loguru sink, HTML output)
+- STORY-008: Graph visualization wiring (GraphTraceData→NetworkX→GUI)
+- STORY-009: Editable judge settings page with pipeline plumbing
+- STORY-010: MAESTRO 7-layer security review (2 critical CVEs found)
+- STORY-014: wandb import guard tests
 
 ### Changed (Sprint 5)
 
-- STORY-016: PeerRead tools moved from manager to researcher in multi-agent mode; single-agent retains tools on manager
-- STORY-008: `main()` returns `dict` with `composite_result`/`graph` keys; complexity 19→10 via extracted helpers
-- STORY-011: Deleted 31 implementation-detail tests (595→564, no behavioral coverage loss)
-- STORY-005: README, roadmap, architecture docs updated for Sprint 5
-- AGENT_LEARNINGS.md condensed ~25% with YAML frontmatter
+- STORY-016: PeerRead tools moved from manager to researcher in multi-agent mode
+- STORY-008: `main()` returns dict; complexity 19→10 via extracted helpers
+- STORY-011: Deleted 31 implementation-detail tests (no behavioral coverage loss)
+- STORY-005: README, roadmap, architecture docs updated
 
 ### Removed (Sprint 5)
 
-- STORY-017: Duplicate `AppEnv` class and module-level `chat_config` from `load_settings.py` — canonical in `app.data_models.app_models`
+- STORY-017: Duplicate `AppEnv` class from `load_settings.py`
 - STORY-011: `test_opik_removal.py` and `test_migration_cleanup.py`
-- STORY-014: Dead agentops commented code from `login.py`
+- STORY-014: Dead agentops code from `login.py`
 
 ### Fixed (Sprint 5)
 
-- STORY-012: OTLP endpoint double-path bug — base URL instead of traces-specific endpoint (HTTP 405)
-- STORY-013: Tool `success_rate` tracks all calls instead of overwriting with last outcome
-- STORY-013: Agent-tool edge weights averaged across repeated calls; removed dead `communication_overhead` metric
-- STORY-014: wandb/weave imports guarded with try/except; `WANDB_ERROR_REPORTING` defaults to "false"
-- STORY-015: Debug log in `get_api_key()` for diagnosing empty .env strings
-- STORY-004: PeerRead papers 304-308, 330 — `.get()` for optional review fields, improving dataset coverage
+- STORY-012: OTLP endpoint double-path bug (HTTP 405)
+- STORY-013: Tool `success_rate` overwrite; agent-tool edge weight averaging; dead `communication_overhead` metric
+- STORY-014: wandb/weave import guards; `WANDB_ERROR_REPORTING` defaults to "false"
+- STORY-015: Debug log in `get_api_key()` for empty .env strings
+- STORY-004: PeerRead papers 304-308, 330 — `.get()` for optional review fields
 
 ### Security (Sprint 5)
 
 - STORY-010: **CRITICAL** — CVE-2026-25580 (PydanticAI SSRF), CVE-2026-25640 (Stored XSS)
 - STORY-010: **MEDIUM** — CVE-2024-5206 (scikit-learn data leakage)
-- STORY-010: 31 findings across 7 MAESTRO layers (3 critical, 6 high, 8 medium, 2 low) — mitigations in `docs/reviews/sprint5-code-review.md`
+- STORY-010: 31 findings across 7 MAESTRO layers — mitigations in `docs/reviews/sprint5-code-review.md`
 
 ### Added (Sprint 2)
 

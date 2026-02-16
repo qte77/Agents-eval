@@ -131,3 +131,11 @@ updated: 2026-02-16
 - **Problem**: Review says "upgrade scikit-learn to >=1.5.0 for CVE-2024-5206." Author writes the story without checking `pyproject.toml`. Turns out `scikit-learn>=1.8.0` already pinned — CVE already mitigated. Wasted story.
 - **Solution**: Before writing any CVE story, check current dependency version. If patched, note in PRD description ("already mitigated by...") and skip.
 - **References**: Sprint 6 Feature 10 (scikit-learn CVE dismissed after version check)
+
+### SSRF Allowlist Must Match Actual HTTP Call Sites
+
+- **Context**: SSRF URL validation with domain allowlisting
+- **Problem**: Allowlist built from *conceptual* dependencies (which services we use) rather than *actual* `validate_url()` call sites. Result: `api.github.com` missing (used but rejected), 3 LLM provider domains present (listed but never checked — PydanticAI uses its own HTTP clients).
+- **Solution**: Grep for `validate_url(` calls, trace each URL back to its domain. Only list domains that actually pass through the validation function.
+- **Anti-pattern**: Listing domains based on "what services does the project talk to" instead of "what domains flow through this specific validation gate."
+- **References**: `src/app/utils/url_validation.py`, `src/app/data_utils/datasets_peerread.py:300`
