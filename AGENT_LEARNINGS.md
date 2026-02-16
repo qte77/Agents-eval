@@ -108,3 +108,26 @@ updated: 2026-02-16
 - **Problem**: Sprint 3 `cc_otel` used wrong abstraction — CC tracing is infrastructure (env vars), not application code
 - **Solution**: `claude -p "prompt" --output-format json` via `subprocess.run()`. Check with `shutil.which("claude")`. Collect artifacts from `~/.claude/teams/` + `~/.claude/tasks/`, parse via `CCTraceAdapter`.
 - **References**: `docs/analysis/CC-agent-teams-orchestration.md`, Sprint 6 Feature 7
+
+### Review-to-PRD Traceability
+
+- **Context**: Planning a sprint after a security review or code audit produced findings tagged for future sprints
+- **Problem**: Review findings fall through the cracks between sprints. The Sprint 5 MAESTRO review tagged 14 findings as "Sprint 6" or "Sprint 7+" but the initial Sprint 6 PRD had zero of them.
+- **Solution**: After any review/audit sprint, the next PRD must account for every finding: feature, Out of Scope with sprint attribution, or explicitly dismissed with rationale. Checklist: for each review finding, grep the PRD for its ID or description.
+- **Anti-pattern**: Assuming review findings will be remembered. They won't.
+- **References**: Sprint 5 `docs/reviews/sprint5-code-review.md` → Sprint 6 Features 10-13 + Out of Scope
+
+### Coverage Before Audit Ordering
+
+- **Context**: Sprint includes both adding test coverage and deleting low-value tests
+- **Problem**: Deleting implementation-detail tests first creates a coverage gap. A module at 27% loses tests before behavioral replacements exist.
+- **Solution**: Order coverage improvements before test pruning. Express as `depends:` in story breakdown. Prove behavioral coverage exists, then safely prune.
+- **Anti-pattern**: "Clean up first, then build" — creates a coverage valley between deletion and addition.
+- **References**: Sprint 6 Features 14-15 (STORY-015 depends on STORY-014)
+
+### CVE Version Check Before PRD Story
+
+- **Context**: Writing a CVE remediation story from a security review finding
+- **Problem**: Review says "upgrade scikit-learn to >=1.5.0 for CVE-2024-5206." Author writes the story without checking `pyproject.toml`. Turns out `scikit-learn>=1.8.0` already pinned — CVE already mitigated. Wasted story.
+- **Solution**: Before writing any CVE story, check current dependency version. If patched, note in PRD description ("already mitigated by...") and skip.
+- **References**: Sprint 6 Feature 10 (scikit-learn CVE dismissed after version check)
