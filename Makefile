@@ -247,6 +247,9 @@ run_cli:  ## Run app on CLI only. Usage: make run_cli ARGS="--help" or make run_
 run_gui:  ## Run app with Streamlit GUI
 	PYTHONPATH=$(SRC_PATH) uv run streamlit run $(GUI_PATH_ST)
 
+sweep:  ## Run MAS composition sweep. Usage: make sweep ARGS="--paper-numbers 1,2,3 --repetitions 3 --all-compositions"
+	PYTHONPATH=$(SRC_PATH) uv run python $(SRC_PATH)/run_sweep.py $(ARGS)
+
 run_profile:  ## Profile app with scalene
 	uv run scalene --outfile \
 		"$(APP_PATH)/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \

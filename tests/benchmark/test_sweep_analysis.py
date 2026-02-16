@@ -34,34 +34,40 @@ def sample_results() -> list[tuple[AgentComposition, CompositeResult]]:
         (
             comp1,
             CompositeResult(
-                overall_score=0.75,
+                composite_score=0.75,
                 recommendation="Accept",
+                recommendation_weight=0.75,
+                metric_scores={"tier1": 0.8, "tier2": 0.7, "tier3": 0.75},
                 tier1_score=0.8,
                 tier2_score=0.7,
                 tier3_score=0.75,
-                confidence=0.85,
+                evaluation_complete=True,
             ),
         ),
         (
             comp1,
             CompositeResult(
-                overall_score=0.80,
+                composite_score=0.80,
                 recommendation="Accept",
+                recommendation_weight=0.80,
+                metric_scores={"tier1": 0.85, "tier2": 0.75, "tier3": 0.80},
                 tier1_score=0.85,
                 tier2_score=0.75,
                 tier3_score=0.80,
-                confidence=0.90,
+                evaluation_complete=True,
             ),
         ),
         (
             comp2,
             CompositeResult(
-                overall_score=0.65,
+                composite_score=0.65,
                 recommendation="Reject",
+                recommendation_weight=-0.65,
+                metric_scores={"tier1": 0.70, "tier2": 0.60, "tier3": 0.65},
                 tier1_score=0.70,
                 tier2_score=0.60,
                 tier3_score=0.65,
-                confidence=0.75,
+                evaluation_complete=True,
             ),
         ),
     ]
@@ -199,7 +205,7 @@ class TestMarkdownSummaryGeneration:
         markdown = generate_markdown_summary(stats)
 
         assert "| Composition" in markdown
-        assert "|---|" in markdown  # Table separator
+        assert "|-------" in markdown  # Table separator
 
     def test_markdown_summary_includes_all_metrics(
         self, sample_results: list[tuple[AgentComposition, CompositeResult]]

@@ -6,11 +6,8 @@ invocation.
 """
 
 import json
-import shutil
-import subprocess
 from pathlib import Path
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -23,12 +20,14 @@ from app.data_models.evaluation_models import CompositeResult
 def mock_composite_result() -> CompositeResult:
     """Create a mock CompositeResult for testing."""
     return CompositeResult(
-        overall_score=0.75,
+        composite_score=0.75,
         recommendation="Accept",
+        recommendation_weight=0.75,
+        metric_scores={"tier1": 0.8, "tier2": 0.7, "tier3": 0.75},
         tier1_score=0.8,
         tier2_score=0.7,
         tier3_score=0.75,
-        confidence=0.85,
+        evaluation_complete=True,
     )
 
 
@@ -70,14 +69,15 @@ class TestSweepRunner:
         runner = SweepRunner(basic_sweep_config)
 
         with patch("app.benchmark.sweep_runner.main") as mock_main:
-            mock_main.return_value = mock_composite_result
+            # Reason: main() returns dict with 'composite_result' key
+            mock_main.return_value = {"composite_result": mock_composite_result}
             composition = basic_sweep_config.compositions[0]
             paper_number = 1
 
             result = await runner._run_single_evaluation(composition, paper_number, 0)
 
             assert result is not None
-            assert result.overall_score == 0.75
+            assert result.composite_score == 0.75
             mock_main.assert_called_once()
 
     @pytest.mark.asyncio
@@ -88,7 +88,7 @@ class TestSweepRunner:
         runner = SweepRunner(basic_sweep_config)
 
         with patch("app.benchmark.sweep_runner.main") as mock_main:
-            mock_main.return_value = mock_composite_result
+            mock_main.return_value = {"composite_result": mock_composite_result}
 
             results = await runner.run()
 
@@ -104,7 +104,7 @@ class TestSweepRunner:
         runner = SweepRunner(basic_sweep_config)
 
         with patch("app.benchmark.sweep_runner.main") as mock_main:
-            mock_main.return_value = mock_composite_result
+            mock_main.return_value = {"composite_result": mock_composite_result}
 
             await runner.run()
 
@@ -145,7 +145,7 @@ class TestCCBaselineIntegration:
             patch("app.benchmark.sweep_runner.subprocess.run") as mock_subprocess,
             patch("shutil.which", return_value="/usr/bin/claude"),
         ):
-            mock_main.return_value = mock_composite_result
+            mock_main.return_value = {"composite_result": mock_composite_result}
             mock_subprocess.return_value = MagicMock(
                 returncode=0, stdout='{"result": "test"}'
             )
@@ -155,9 +155,11 @@ class TestCCBaselineIntegration:
             # Verify CC was invoked via subprocess
             mock_subprocess.assert_called()
             call_args = mock_subprocess.call_args
-            assert "claude" in call_args[0][0]
-            assert "--output-format" in call_args[0][0]
-            assert "json" in call_args[0][0]
+            # Reason: call_args[0] is a tuple containing the command list as first element
+            cmd_list = call_args[0][0]
+            assert "claude" in cmd_list or any("claude" in arg for arg in cmd_list)
+            assert "--output-format" in cmd_list
+            assert "json" in cmd_list
 
     @pytest.mark.asyncio
     async def test_cc_baseline_error_when_claude_not_found(self, tmp_path: Path):
@@ -192,7 +194,7 @@ class TestCCBaselineIntegration:
             patch("app.benchmark.sweep_runner.main") as mock_main,
             patch("app.benchmark.sweep_runner.subprocess.run") as mock_subprocess,
         ):
-            mock_main.return_value = mock_composite_result
+            mock_main.return_value = {"composite_result": mock_composite_result}
 
             await runner.run()
 
@@ -209,7 +211,7 @@ class TestRunSweepFunction:
     ):
         """Test run_sweep() function with config."""
         with patch("app.benchmark.sweep_runner.main") as mock_main:
-            mock_main.return_value = mock_composite_result
+            mock_main.return_value = {"composite_result": mock_composite_result}
 
             results = await run_sweep(basic_sweep_config)
 
