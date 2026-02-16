@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (Sprint 6 - STORY-009)
+
+- Review tools now enabled by default (`enable_review_tools: bool = True` in `main()`)
+- CLI flag behavior: `--no-review-tools` disables review tools (opt-out), `--enable-review-tools` kept for backward compatibility (now no-op)
+- Primary use case is PeerRead paper review evaluation, so review tools should be on by default
+- Users wanting general queries without review tools can use `--no-review-tools` flag
+
 ### Changed (Sprint 6 - STORY-008)
 
 - Review tools routing: moved from manager-only to researcher-first with single-agent fallback
