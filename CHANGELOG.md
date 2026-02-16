@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (Sprint 6 - STORY-008)
+
+- Review tools routing: moved from manager-only to researcher-first with single-agent fallback
+- Multi-agent mode: review tools (`generate_paper_review_content_from_template`, `save_paper_review`, `save_structured_review`) now registered on researcher agent alongside PeerRead base tools and DuckDuckGo
+- Single-agent mode: review tools fall back to manager when no researcher present (preserves existing behavior)
+- `add_peerread_review_tools_to_manager()` refactored to `add_peerread_review_tools_to_agent()` with `agent_id` parameter for flexible routing
+- Backward compatibility alias maintained for old function name
+- Tool registration logic consolidated in `_create_manager()` to eliminate duplication
+
 ### Added (Sprint 6 - STORY-007)
 
 - MAS composition sweep infrastructure (`src/app/benchmark/`) for automated benchmarking across configurable agent compositions
