@@ -63,6 +63,59 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _load_config_from_file(config_path: Path) -> SweepConfig | None:
+    """Load sweep config from JSON file."""
+    if not config_path.exists():
+        logger.error(f"Config file not found: {config_path}")
+        return None
+
+    with open(config_path) as f:
+        config_data = json.load(f)
+
+    compositions = [AgentComposition(**comp) for comp in config_data.get("compositions", [])]
+
+    return SweepConfig(
+        compositions=compositions,
+        repetitions=config_data["repetitions"],
+        paper_numbers=config_data["paper_numbers"],
+        output_dir=Path(config_data["output_dir"]),
+        cc_baseline_enabled=config_data.get("cc_baseline_enabled", False),
+    )
+
+
+def _build_config_from_args(args: argparse.Namespace) -> SweepConfig | None:
+    """Build sweep config from CLI arguments."""
+    if not args.paper_numbers:
+        logger.error("--paper-numbers required when not using --config")
+        return None
+
+    paper_numbers = [int(p.strip()) for p in args.paper_numbers.split(",")]
+
+    compositions = (
+        generate_all_compositions()
+        if args.all_compositions
+        else [
+            AgentComposition(
+                include_researcher=True,
+                include_analyst=True,
+                include_synthesiser=True,
+            )
+        ]
+    )
+
+    output_dir = args.output_dir or Path(
+        f"results/sweeps/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    )
+
+    return SweepConfig(
+        compositions=compositions,
+        repetitions=args.repetitions,
+        paper_numbers=paper_numbers,
+        output_dir=output_dir,
+        cc_baseline_enabled=args.cc_baseline,
+    )
+
+
 async def main_async() -> int:
     """Async main entry point.
 
@@ -72,64 +125,12 @@ async def main_async() -> int:
     args = parse_args()
 
     try:
-        # Load config from file if provided
-        if args.config:
-            if not args.config.exists():
-                logger.error(f"Config file not found: {args.config}")
-                return 1
+        config = (
+            _load_config_from_file(args.config) if args.config else _build_config_from_args(args)
+        )
 
-            with open(args.config) as f:
-                config_data = json.load(f)
-
-            # Convert compositions from dicts to AgentComposition objects
-            compositions = [
-                AgentComposition(**comp) for comp in config_data.get("compositions", [])
-            ]
-
-            config = SweepConfig(
-                compositions=compositions,
-                repetitions=config_data["repetitions"],
-                paper_numbers=config_data["paper_numbers"],
-                output_dir=Path(config_data["output_dir"]),
-                cc_baseline_enabled=config_data.get("cc_baseline_enabled", False),
-            )
-
-        # Build config from CLI arguments
-        else:
-            # Parse paper numbers
-            if not args.paper_numbers:
-                logger.error("--paper-numbers required when not using --config")
-                return 1
-
-            paper_numbers = [int(p.strip()) for p in args.paper_numbers.split(",")]
-
-            # Generate compositions
-            if args.all_compositions:
-                compositions = generate_all_compositions()
-            else:
-                # Default: single composition with all agents enabled
-                compositions = [
-                    AgentComposition(
-                        include_researcher=True,
-                        include_analyst=True,
-                        include_synthesiser=True,
-                    )
-                ]
-
-            # Set output directory
-            if args.output_dir:
-                output_dir = args.output_dir
-            else:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_dir = Path(f"results/sweeps/{timestamp}")
-
-            config = SweepConfig(
-                compositions=compositions,
-                repetitions=args.repetitions,
-                paper_numbers=paper_numbers,
-                output_dir=output_dir,
-                cc_baseline_enabled=args.cc_baseline,
-            )
+        if config is None:
+            return 1
 
         # Run sweep
         logger.info(f"Starting sweep with {len(config.compositions)} compositions")

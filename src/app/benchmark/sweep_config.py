@@ -32,7 +32,7 @@ class AgentComposition(BaseModel):
             >>> comp.get_name()
             'researcher'
         """
-        active_agents = []
+        active_agents: list[str] = []
         if self.include_researcher:
             active_agents.append("researcher")
         if self.include_analyst:
@@ -57,12 +57,8 @@ class SweepConfig(BaseModel):
     compositions: list[AgentComposition] = Field(
         ..., description="List of agent compositions to test", min_length=1
     )
-    repetitions: int = Field(
-        ..., description="Number of repetitions per composition", ge=1
-    )
-    paper_numbers: list[int] = Field(
-        ..., description="List of paper IDs to evaluate", min_length=1
-    )
+    repetitions: int = Field(..., description="Number of repetitions per composition", ge=1)
+    paper_numbers: list[int] = Field(..., description="List of paper IDs to evaluate", min_length=1)
     output_dir: Path = Field(..., description="Directory for sweep results")
 
     cc_baseline_enabled: bool = Field(
@@ -75,9 +71,7 @@ class SweepConfig(BaseModel):
 
     @field_validator("compositions")
     @classmethod
-    def validate_compositions_not_empty(
-        cls, v: list[AgentComposition]
-    ) -> list[AgentComposition]:
+    def validate_compositions_not_empty(cls, v: list[AgentComposition]) -> list[AgentComposition]:
         """Validate that compositions list is not empty.
 
         Args:

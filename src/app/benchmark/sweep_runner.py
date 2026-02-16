@@ -8,7 +8,6 @@ comparison.
 import json
 import shutil
 import subprocess
-from pathlib import Path
 from typing import Any
 
 from app.app import main
@@ -68,9 +67,7 @@ class SweepRunner:
             if isinstance(result, dict) and "composite_result" in result:
                 return result["composite_result"]
 
-            logger.warning(
-                f"Evaluation returned unexpected format: {type(result).__name__}"
-            )
+            logger.warning(f"Evaluation returned unexpected format: {type(result).__name__}")
             return None
 
         except Exception as e:
@@ -80,9 +77,7 @@ class SweepRunner:
             )
             return None
 
-    async def _invoke_cc_baseline(
-        self, paper_number: int
-    ) -> tuple[str, dict[str, Any]] | None:
+    async def _invoke_cc_baseline(self, paper_number: int) -> tuple[str, dict[str, Any]] | None:
         """Invoke Claude Code in headless mode for baseline comparison.
 
         Args:
@@ -125,26 +120,16 @@ class SweepRunner:
             logger.error("CC baseline timed out after 10 minutes")
             return None
 
-    async def run(self) -> list[tuple[AgentComposition, CompositeResult]]:
-        """Execute the full sweep across all compositions and repetitions.
-
-        Returns:
-            list[tuple[AgentComposition, CompositeResult]]: All evaluation results.
-
-        Raises:
-            RuntimeError: If cc_baseline_enabled but claude CLI not found.
-        """
-        # Validate CC baseline prerequisites
+    async def _validate_prerequisites(self) -> None:
+        """Validate sweep prerequisites."""
         if self.config.cc_baseline_enabled and not shutil.which("claude"):
             raise RuntimeError(
                 "CC baseline enabled but claude CLI not found. "
                 "Install Claude Code or set cc_baseline_enabled=False."
             )
 
-        # Create output directory
-        self.config.output_dir.mkdir(parents=True, exist_ok=True)
-
-        # Run MAS evaluations
+    async def _run_mas_evaluations(self) -> None:
+        """Run MAS evaluations for all compositions, papers, and repetitions."""
         for composition in self.config.compositions:
             for paper_number in self.config.paper_numbers:
                 for repetition in range(self.config.repetitions):
@@ -154,18 +139,32 @@ class SweepRunner:
                     if result:
                         self.results.append((composition, result))
 
-        # Run CC baseline if enabled
-        if self.config.cc_baseline_enabled:
-            for paper_number in self.config.paper_numbers:
-                cc_result = await self._invoke_cc_baseline(paper_number)
-                if cc_result:
-                    logger.info(f"CC baseline completed for paper {paper_number}")
-                    # CC evaluation integration would go here
-                    # For now, just log that CC was invoked
+    async def _run_cc_baselines(self) -> None:
+        """Run CC baseline evaluations if enabled."""
+        if not self.config.cc_baseline_enabled:
+            return
 
-        # Save results
+        for paper_number in self.config.paper_numbers:
+            cc_result = await self._invoke_cc_baseline(paper_number)
+            if cc_result:
+                logger.info(f"CC baseline completed for paper {paper_number}")
+                # CC evaluation integration would go here
+                # For now, just log that CC was invoked
+
+    async def run(self) -> list[tuple[AgentComposition, CompositeResult]]:
+        """Execute the full sweep across all compositions and repetitions.
+
+        Returns:
+            list[tuple[AgentComposition, CompositeResult]]: All evaluation results.
+
+        Raises:
+            RuntimeError: If cc_baseline_enabled but claude CLI not found.
+        """
+        await self._validate_prerequisites()
+        self.config.output_dir.mkdir(parents=True, exist_ok=True)
+        await self._run_mas_evaluations()
+        await self._run_cc_baselines()
         await self._save_results()
-
         return self.results
 
     async def _save_results(self) -> None:
