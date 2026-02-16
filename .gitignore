@@ -42,8 +42,8 @@ profile.json
 Thumbs.db
 
 # IDE specific files (adjust as needed)
-# .vscode/
-# .idea/
+.vscode/
+.idea/
 
 # mkdocs
 reference/
