@@ -77,7 +77,7 @@ def setup_llm_environment(api_keys: dict[str, str]) -> None:
         if api_key and api_key.strip():
             env_var = f"{provider.upper()}_API_KEY"
             os.environ[env_var] = api_key
-            logger.info(f"Set environment variable: {env_var}")
+            logger.debug(f"Set environment variable: {env_var}")
 
 
 def get_supported_providers() -> list[str]:

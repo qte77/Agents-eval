@@ -80,9 +80,15 @@ class LogfireInstrumentationManager:
                     self.config.enabled = False
                     return
 
+            # Get scrubbing patterns for sensitive data redaction
+            from app.utils.log_scrubbing import get_logfire_scrubbing_patterns
+
+            scrubbing_patterns = get_logfire_scrubbing_patterns()
+
             logfire.configure(  # type: ignore
                 service_name=self.config.service_name,
                 send_to_logfire=self.config.send_to_cloud,
+                scrubbing=logfire.ScrubbingOptions(extra_patterns=scrubbing_patterns),  # type: ignore
             )
 
             # Auto-instrument all PydanticAI agents
