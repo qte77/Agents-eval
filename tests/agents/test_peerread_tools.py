@@ -276,6 +276,39 @@ class TestContentTruncation:
         finally:
             logger.remove(handler_id)
 
+    def test_truncate_content_abstract_exceeds_limit(self):
+        """Test that truncation handles abstract larger than max_length."""
+        import io
+
+        from loguru import logger
+
+        from app.tools.peerread_tools import _truncate_paper_content
+
+        # Abstract alone exceeds max_length
+        abstract = "A" * 1500
+        body = "B" * 1000
+        max_length = 1000
+
+        # Capture logs to verify warning
+        log_capture = io.StringIO()
+        handler_id = logger.add(log_capture, level="WARNING")
+
+        try:
+            result = _truncate_paper_content(abstract, body, max_length)
+
+            # Should return abstract + [TRUNCATED] marker (preserves abstract even if too large)
+            assert "[TRUNCATED]" in result
+            assert abstract in result
+            # Body should be omitted since abstract alone exceeds limit
+            assert "B" not in result
+
+            # Should log warning about abstract exceeding limit
+            log_output = log_capture.getvalue()
+            assert "abstract alone exceeds" in log_output.lower()
+            assert str(max_length) in log_output
+        finally:
+            logger.remove(handler_id)
+
     def test_generate_review_template_with_truncation(self):
         """Test that generate_paper_review_content_from_template truncates long content."""
         # This test will validate the integration with the actual tool
@@ -478,6 +511,51 @@ class TestToolTracingIntegration:
                 # Assert - trace collector should be called
                 assert mock_get_collector.called
                 assert result is not None
+
+
+class TestQueryErrorHandling:
+    """Test error handling for query_peerread_papers tool."""
+
+    def test_query_peerread_papers_handles_loader_exception(self):
+        """Test that query_peerread_papers handles exceptions from loader."""
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+        ):
+            # Mock loader to raise an exception
+            mock_loader = Mock()
+            mock_loader.query_papers.side_effect = RuntimeError("Database connection failed")
+            mock_loader_class.return_value = mock_loader
+
+            add_peerread_tools_to_agent(agent, agent_id="test_agent")
+
+            # Get the query tool
+            query_tool = None
+            for tool in registered_tools:
+                if "query" in tool.__name__:
+                    query_tool = tool
+                    break
+
+            # Act & Assert
+            if query_tool:
+                import asyncio
+
+                with pytest.raises(ValueError, match="Failed to query papers"):
+                    asyncio.run(query_tool(None, "machine learning"))
 
 
 class TestTemplateLoading:

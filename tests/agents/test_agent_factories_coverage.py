@@ -18,19 +18,21 @@ from app.data_models.app_models import EndpointConfig, ModelDict, ProviderConfig
 class TestAgentFactoryModelCaching:
     """Test AgentFactory model caching behavior."""
 
-    def test_get_models_without_config_raises_validation_error(self):
-        """Test get_models fails validation when no endpoint_config provided."""
+    def test_get_models_without_config_returns_empty_models(self):
+        """Test get_models returns empty ModelDict when no endpoint_config provided."""
         from app.agents.agent_factories import AgentFactory
 
         # Arrange
         factory = AgentFactory(endpoint_config=None)
 
-        # Act & Assert
-        # ModelDict validation requires model_manager, so creating an empty ModelDict fails
-        from pydantic_core import ValidationError
+        # Act
+        models = factory.get_models()
 
-        with pytest.raises(ValidationError):
-            factory.get_models()
+        # Assert - returns ModelDict with all None values
+        assert models.model_manager is None
+        assert models.model_researcher is None
+        assert models.model_analyst is None
+        assert models.model_synthesiser is None
 
     def test_get_models_creates_models_with_config(self):
         """Test get_models creates models when config provided."""
