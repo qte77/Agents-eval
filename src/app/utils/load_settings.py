@@ -1,8 +1,8 @@
 """
-Utility functions and classes for loading application settings and configuration.
+Utility functions for loading application settings and configuration.
 
-This module defines the AppEnv class for managing environment variables using Pydantic,
-and provides a function to load and validate application configuration from a JSON file.
+This module provides functions to load and validate application configuration from a JSON file.
+For environment variables, use AppEnv from app.data_models.app_models.
 """
 
 import json
