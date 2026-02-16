@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (Sprint 5)
+
+- STORY-012: OTLP endpoint double-path bug in Logfire instrumentation - set `OTEL_EXPORTER_OTLP_ENDPOINT` to base URL (http://localhost:6006) instead of traces-specific endpoint with /v1/traces path
+- STORY-012: Phoenix trace export failures caused by SDK auto-appending /v1/traces to already-present /v1/traces path (HTTP 405 errors)
+
 ### Changed (Sprint 5)
 
 - STORY-011: Test suite refactored to remove 31 implementation-detail tests per testing strategy criteria

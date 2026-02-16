@@ -361,9 +361,9 @@ def test_otlp_endpoint_uses_base_url_only():
     )
 
     with (
-        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("app.agents.logfire_instrumentation.logfire"),
         patch("requests.head") as mock_head,
-        patch.dict("os.environ", {}, clear=True) as mock_env,
+        patch.dict("os.environ", {}, clear=True),
     ):
         # Mock successful connection check
         mock_response = MagicMock()
