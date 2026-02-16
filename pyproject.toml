@@ -78,7 +78,7 @@ exclude-newer = "2026-02-15T00:00:00Z"
 
 [tool.logfire]
 ignore_no_config=true
-send_to_logfire="if-token-present"
+send_to_logfire=false  # Was "if-token-present" - changed to disable pytest-logfire cloud API calls during test runs
 
 
 # MARK: Testing and linting configurations
