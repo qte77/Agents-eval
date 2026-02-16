@@ -157,7 +157,6 @@ make_executable() {
     log_info "Making scripts executable..."
     chmod +x ralph/scripts/ralph.sh
     chmod +x ralph/scripts/init.sh
-    chmod +x ralph/scripts/reorganize_prd.sh
     log_success "Scripts are executable"
 }
 

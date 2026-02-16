@@ -25,11 +25,7 @@ everything** if commits are missing or bundled.
 - **Atomic changes**: Keep changes focused and minimal
 - **Quality first**: All changes must pass `make validate`
 - **No scope creep**: Implement exactly what the story requires
-- **Status updates**: Output brief progress messages regularly and at milestones:
-  - Before each TDD phase (e.g., "Starting RED phase: writing tests for ...")
-  - After each commit (e.g., "RED committed. Moving to GREEN phase.")
-  - When running long commands (e.g., "Running make validate...")
-  - When encountering issues (e.g., "Test X failing, investigating...")
+- **Status updates**: Output a one-line status message at each step marked with **STATUS** below
 
 ## References
 
@@ -58,23 +54,29 @@ Follow the project's testing best practices. Tests MUST be written and
 
 - Read ALL files listed in the story's `files` array from prd.json
 - Understand existing patterns before writing any code
+- **STATUS**: Output "Reading story files for STORY-XXX"
 
 ### RED: Write failing tests
 
+- **STATUS**: Output "Starting RED phase: writing tests for ..."
 - Read story acceptance criteria, write FAILING tests
   - Run tests — they MUST fail (code doesn't exist yet)
+  - **STATUS**: Output "RED tests failing as expected. Committing."
   - **STOP AND COMMIT NOW**: `git add tests/ && git commit -m "test(STORY-XXX): add failing tests [RED]"`
   - Do NOT proceed to GREEN until this commit is made
 
 ### GREEN: Minimal implementation
 
+- **STATUS**: Output "Starting GREEN phase: implementing ..."
 - Implement MINIMAL code to pass tests
   - Run tests — they MUST pass now
+  - **STATUS**: Output "Tests passing. Committing GREEN."
   - **STOP AND COMMIT NOW**: `git add src/ && git commit -m "feat(STORY-XXX): implement to pass tests [GREEN]"`
   - Do NOT proceed to REFACTOR until this commit is made
 
 ### REFACTOR: Clean up
 
+- **STATUS**: Output "Starting REFACTOR phase"
 - Clean up while keeping tests passing
   - Ensure `make validate` passes
   - **COMMIT REFACTORINGS** (if any): `git add . && git commit -m "refactor(STORY-XXX): cleanup [REFACTOR]"`

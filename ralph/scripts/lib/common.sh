@@ -7,14 +7,19 @@
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# Utilities
+_ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+fmt_elapsed() { echo "$((${1} / 60))m$((${1} % 60))s"; }
+
 # Logging functions
-log_info() { echo -e "${GREEN}[INFO]${NC} $1" >&2; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1" >&2; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
-log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1" >&2; }
+log_info() { echo -e "${BLUE}[INFO]${NC} $(_ts) $1" >&2; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $(_ts) $1" >&2; }
+log_error() { echo -e "${RED}[ERROR]${NC} $(_ts) $1" >&2; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $(_ts) $1" >&2; }
 
 # Check if command exists
 require_command() {

@@ -58,8 +58,8 @@ Follows [Anthropic's production harness patterns](https://www.anthropic.com/engi
    git history (code); each session reads prior context before acting
 3. **Checkpointing** - Git commits per story enable resumption from
    known-good states
-4. **Error Recovery** - `git revert` recovers failed stories without manual
-   intervention
+4. **Error Recovery** - `git reset --hard` recovers failed stories without
+   manual intervention
 5. **Human-in-the-Loop** - Structured prompts: read progress → select story →
    implement → test → commit
 
@@ -101,7 +101,7 @@ docs/
 # Archive current sprint
 git tag sprint-2-complete -a -m "Sprint 2 complete"
 mkdir -p docs/archive/sprint2/
-cp ralph/docs/{prd.json,progress.txt} docs/archive/sprint2/
+cp ralph/docs/{prd.json,progress.txt} ralph/archive/sprint2/
 
 # Activate next sprint
 cd docs && ln -sf PRD-Sprint3.md PRD.md
@@ -157,10 +157,11 @@ ralph/
     ├── ralph.sh               # Main orchestration
     ├── generate_prd_json.py   # PRD.md → prd.json parser
     ├── init.sh                # Environment validation
-    ├── reorganize_prd.sh      # Archive and iterate
     ├── setup_project.sh       # Interactive setup
     └── lib/
-        └── common.sh          # Shared utilities
+        ├── common.sh              # Shared utilities
+        ├── baseline.sh            # Baseline-aware test validation
+        └── stop_ralph_processes.sh # Process cleanup
 ```
 
 ## Sources

@@ -141,7 +141,6 @@ your-project/
 │       ├── ralph.sh            # Main orchestration
 │       ├── generate_prd_json.py
 │       ├── init.sh
-│       ├── reorganize_prd.sh
 │       ├── setup_project.sh
 │       └── lib/common.sh
 ├── src/                        # Source code

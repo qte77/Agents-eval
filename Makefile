@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean ralph_reorganize help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -367,7 +367,7 @@ ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph loop timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
 
 ralph_stop:  ## Stop all running Ralph loops (keeps state and data)
-	bash ralph/scripts/stop.sh
+	bash ralph/scripts/lib/stop_ralph_processes.sh
 
 ralph_status:  ## Show Ralph loop progress and status
 	echo "Ralph Loop Status"
@@ -395,18 +395,6 @@ ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
 	read
 	rm -f ralph/docs/prd.json ralph/docs/progress.txt
 	echo "Ralph state cleaned. Run 'make ralph_init' to reinitialize."
-
-ralph_reorganize:  ## Archive current PRD and start new iteration. Usage: make ralph_reorganize NEW_PRD=path/to/new.md [VERSION=2]
-	if [ -z "$(NEW_PRD)" ]; then
-		echo "Error: NEW_PRD parameter required"
-		echo "Usage: make ralph_reorganize NEW_PRD=docs/PRD-New.md [VERSION=2]"
-		exit 1
-	fi
-	VERSION_ARG=""
-	if [ -n "$(VERSION)" ]; then
-		VERSION_ARG="-v $(VERSION)"
-	fi
-	bash ralph/scripts/reorganize_prd.sh $$VERSION_ARG $(NEW_PRD)
 
 
 # MARK: help

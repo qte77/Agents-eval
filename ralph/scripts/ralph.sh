@@ -7,7 +7,7 @@
 # Environment variables:
 #   RALPH_MODEL         - Claude model to use (default: sonnet)
 #   MAX_ITERATIONS      - Maximum loop iterations (default: 10)
-#   REQUIRE_REFACTOR    - Require [REFACTOR] commit (default: true)
+#   REQUIRE_REFACTOR    - Require [REFACTOR] commit (default: false)
 #   RALPH_BASELINE_MODE - Baseline-aware test validation (default: true)
 #
 # This script orchestrates autonomous task execution by:
@@ -46,6 +46,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 source "$SCRIPT_DIR/lib/baseline.sh"
 
+# Helpers
+commit_count() { git rev-list --count HEAD 2>/dev/null; }
+
+commit_state_files() {
+    local msg="$1"
+    log_info "Committing state files..."
+    git add "$PRD_JSON" "$PROGRESS_FILE" 2>/dev/null || log_warn "Could not stage state files (may be ignored)"
+    git commit -m "$msg" || log_warn "No state changes to commit"
+}
+
 # Configuration
 RALPH_MODEL=${RALPH_MODEL:-"sonnet"}  # Model: sonnet, opus, haiku
 MAX_ITERATIONS=${MAX_ITERATIONS:-25}
@@ -79,7 +89,7 @@ validate_environment() {
         log_warn "progress.txt not found, creating..."
         mkdir -p "$(dirname "$PROGRESS_FILE")"
         echo "# Ralph Loop Progress" > "$PROGRESS_FILE"
-        echo "Started: $(date)" >> "$PROGRESS_FILE"
+        echo "Started: $(_ts)" >> "$PROGRESS_FILE"
         echo "" >> "$PROGRESS_FILE"
     fi
 
@@ -115,7 +125,7 @@ get_story_details() {
 update_story_status() {
     local story_id="$1"
     local status="$2"
-    local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local timestamp=$(_ts)
 
     jq --arg id "$story_id" \
        --arg status "$status" \
@@ -135,7 +145,7 @@ log_progress() {
     local notes="$4"
 
     {
-        echo "## Iteration $iteration - $(date)"
+        echo "## Iteration $iteration - $(_ts)"
         echo "Story: $story_id"
         echo "Status: $status"
         echo "Notes: $notes"
@@ -143,65 +153,19 @@ log_progress() {
     } >> "$PROGRESS_FILE"
 }
 
-# Monitor git commits during story execution.
-# Runs in background, polls for new TDD phase commits every 30s.
-# Logs phase transitions with elapsed time and story progress estimate.
-#
+# Log heartbeat with phase detection while story executes in background.
 # Args:
-#   $1 - commit count before execution started
-#   $2 - story ID
+#   $1 - story ID
 monitor_story_progress() {
-    local commits_before="$1"
-    local story_id="$2"
-    local poll_interval=30
-    local phase_start=$(date +%s)
-    local seen_red=false
-    local seen_green=false
-    local seen_refactor=false
-    local current_phase="STARTING"
-
-    while true; do
-        sleep "$poll_interval"
-
-        local commits_now=$(git rev-list --count HEAD 2>/dev/null || echo "$commits_before")
-        local new_count=$((commits_now - commits_before))
-
-        if [ "$new_count" -gt 0 ]; then
-            local recent=$(git log --oneline -n "$new_count" 2>/dev/null)
-            local now=$(date +%s)
-            local elapsed=$((now - phase_start))
-            local elapsed_min=$((elapsed / 60))
-            local elapsed_sec=$((elapsed % 60))
-
-            # Detect phase transitions
-            if [ "$seen_red" = "false" ] && echo "$recent" | grep -q "\[RED\]"; then
-                seen_red=true
-                current_phase="RED"
-                phase_start=$now
-                log_info "  >> [$story_id] [RED] phase committed (${elapsed_min}m${elapsed_sec}s) ~33% story done"
-            fi
-            if [ "$seen_green" = "false" ] && echo "$recent" | grep -q "\[GREEN\]"; then
-                seen_green=true
-                current_phase="GREEN"
-                phase_start=$now
-                log_info "  >> [$story_id] [GREEN] phase committed (${elapsed_min}m${elapsed_sec}s) ~66% story done"
-            fi
-            if [ "$seen_refactor" = "false" ] && echo "$recent" | grep -qE "\[REFACTOR\]|\[BLUE\]"; then
-                seen_refactor=true
-                current_phase="REFACTOR"
-                phase_start=$now
-                log_info "  >> [$story_id] [REFACTOR] phase committed (${elapsed_min}m${elapsed_sec}s) ~90% story done"
-            fi
+    local story_id="$1"
+    while sleep 60; do
+        local elapsed=$(($(date +%s) - RALPH_STORY_START))
+        local phase="WORKING"
+        local recent=$(git log --oneline -3 2>/dev/null)
+        if echo "$recent" | grep -q "\[GREEN\]"; then phase="REFACTOR"
+        elif echo "$recent" | grep -q "\[RED\]"; then phase="GREEN"
         fi
-
-        # Heartbeat: show current phase every 2 minutes (4 poll cycles)
-        local now=$(date +%s)
-        local total_elapsed=$((now - RALPH_STORY_START))
-        local total_min=$((total_elapsed / 60))
-        local total_sec=$((total_elapsed % 60))
-        if [ $((total_elapsed % 120)) -lt "$poll_interval" ]; then
-            log_info "  >> [$story_id] phase: $current_phase | elapsed: ${total_min}m${total_sec}s"
-        fi
+        log_info "  >> [$story_id] phase: $phase | elapsed: $(fmt_elapsed $elapsed)"
     done
 }
 
@@ -234,7 +198,7 @@ execute_story() {
     RALPH_STORY_START=$(date +%s)
 
     # Record commit count for monitor
-    local commits_before=$(git rev-list --count HEAD)
+    local commits_before=$(commit_count)
 
     # Execute via Claude Code
     log_info "Running Claude Code with story context..."
@@ -244,7 +208,7 @@ execute_story() {
     log_info "  PRD: $PRD_JSON"
 
     # Start background progress monitor
-    monitor_story_progress "$commits_before" "$story_id" &
+    monitor_story_progress "$story_id" &
     local monitor_pid=$!
 
     local claude_exit=0
@@ -257,11 +221,8 @@ execute_story() {
     # Stop background monitor
     kill "$monitor_pid" 2>/dev/null; wait "$monitor_pid" 2>/dev/null || true
 
-    local end=$(date +%s)
-    local story_elapsed=$((end - RALPH_STORY_START))
-    local story_min=$((story_elapsed / 60))
-    local story_sec=$((story_elapsed % 60))
-    log_info "Story execution finished in ${story_min}m${story_sec}s"
+    local story_elapsed=$(($(date +%s) - RALPH_STORY_START))
+    log_info "Story execution finished in $(fmt_elapsed $story_elapsed)"
 
     if [ $claude_exit -eq 0 ]; then
         # Check if agent reported story already complete
@@ -278,19 +239,20 @@ execute_story() {
     fi
 }
 
-# Detect if agent output indicates story is already complete
+# Detect if agent output indicates story is already complete.
+# Prefers explicit sentinel file; falls back to scanning agent output.
 detect_already_complete() {
     local start_line="$1"
+    local sentinel="/tmp/claude/ralph_story_complete"
 
-    # Extract agent output from log (everything after start_line)
-    local agent_output=$(tail -n +$((start_line + 1)) "$LOG_FILE" 2>/dev/null)
-
-    # Patterns that indicate pre-completion
-    if echo "$agent_output" | grep -qi "is functionally complete\|already complete\|work is already done\|no further implementation.*required\|already implemented\|already present\|was already\|has been successfully completed\|implementation.*already.*present"; then
+    if [ -f "$sentinel" ]; then
+        rm -f "$sentinel"
         return 0
     fi
 
-    return 1
+    # Fallback: scan agent output for completion phrases
+    tail -n +$((start_line + 1)) "$LOG_FILE" 2>/dev/null \
+        | grep -qi "already complete\|already implemented\|no further implementation.*required" || return 1
 }
 
 # Run quality checks (dispatches to baseline-aware or original mode)
@@ -318,7 +280,7 @@ check_tdd_commits() {
 
     log_info "Checking TDD commits (REQUIRE_REFACTOR=$REQUIRE_REFACTOR)..."
 
-    local commits_after=$(git rev-list --count HEAD)
+    local commits_after=$(commit_count)
     local new_commits=$((commits_after - commits_before))
 
     local min_commits=2
@@ -402,24 +364,16 @@ print_progress() {
         pct=$((passing * 100 / total))
     fi
 
-    local bar_len=20
-    local filled=$((pct * bar_len / 100))
-    local empty=$((bar_len - filled))
-    local bar=$(printf '%0.s#' $(seq 1 $filled 2>/dev/null) || true)$(printf '%0.s-' $(seq 1 $empty 2>/dev/null) || true)
-
     local eta_suffix=""
     local now=$(date +%s)
     local elapsed=$((now - RALPH_START_TIME))
     if [ "$passing" -gt "$RALPH_START_PASSING" ] && [ "$remaining" -gt 0 ]; then
         local done_this_run=$((passing - RALPH_START_PASSING))
-        local avg=$((elapsed / done_this_run))
-        local eta=$((avg * remaining))
-        local eta_min=$((eta / 60))
-        local eta_sec=$((eta % 60))
-        eta_suffix=" | ETA: ${eta_min}m${eta_sec}s"
+        local eta=$(( (elapsed / done_this_run) * remaining ))
+        eta_suffix=" | ETA: $(fmt_elapsed $eta)"
     fi
 
-    log_info "Progress: [$bar] $pct% ($passing/$total stories) | remaining: $remaining$eta_suffix"
+    log_info "Progress: $pct% ($passing/$total stories) | remaining: $remaining$eta_suffix"
 }
 
 # Main loop
@@ -464,7 +418,7 @@ main() {
         fi
 
         # Record commit count before execution
-        local commits_before=$(git rev-list --count HEAD)
+        local commits_before=$(commit_count)
 
         print_progress
 
@@ -482,10 +436,7 @@ main() {
                 log_progress "$iteration" "$story_id" "PASS" "Already complete, verified by quality checks"
                 log_info "Story $story_id marked as PASSING (pre-existing implementation)"
 
-                # Commit state files
-                log_info "Committing state files..."
-                git add "$PRD_JSON" "$PROGRESS_FILE" 2>/dev/null || log_warn "Could not stage state files (may be ignored)"
-                git commit -m "chore: Update Ralph state after verifying $story_id (already complete)" || log_warn "No state changes to commit"
+                commit_state_files "chore: Update Ralph state after verifying $story_id (already complete)"
                 print_progress
             else
                 log_error "Story reported as complete but quality checks failed"
@@ -505,7 +456,7 @@ main() {
             # Verify TDD commits were made
             if ! check_tdd_commits "$story_id" "$commits_before"; then
                 # Clean up invalid commits and files before retry
-                local commits_after=$(git rev-list --count HEAD)
+                local commits_after=$(commit_count)
                 local new_commits=$((commits_after - commits_before))
                 if [ $new_commits -gt 0 ]; then
                     log_warn "Resetting $new_commits invalid commit(s)"
@@ -532,10 +483,7 @@ main() {
                 log_progress "$iteration" "$story_id" "PASS" "Completed successfully with TDD commits"
                 log_info "Story $story_id marked as PASSING"
 
-                # Commit state files
-                log_info "Committing state files..."
-                git add "$PRD_JSON" "$PROGRESS_FILE" 2>/dev/null || log_warn "Could not stage state files (may be ignored)"
-                git commit -m "chore: Update Ralph state after completing $story_id" || log_warn "No state changes to commit"
+                commit_state_files "chore: Update Ralph state after completing $story_id"
                 print_progress
             else
                 log_warn "Story completed but quality checks failed"
@@ -556,10 +504,7 @@ main() {
     fi
 
     # Summary
-    local total=$(jq '.stories | length' "$PRD_JSON")
-    local passing=$(jq '[.stories[] | select(.passes == true)] | length' "$PRD_JSON")
-
-    log_info "Summary: $passing/$total stories passing"
+    print_progress
 }
 
 # Run main

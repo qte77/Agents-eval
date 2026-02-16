@@ -158,25 +158,13 @@ run_quality_checks_baseline() {
     # Phase 1: Lint/type/complexity (fail-fast)
     log_info "Phase 1: Lint/type/complexity checks..."
 
-    if ! make --no-print-directory ruff 2>&1; then
-        log_error "Ruff formatting/linting failed"
-        return 1
-    fi
-
-    if ! make --no-print-directory ruff_tests 2>&1; then
-        log_error "Ruff test linting failed"
-        return 1
-    fi
-
-    if ! make --no-print-directory type_check 2>&1; then
-        log_error "Type checking failed"
-        return 1
-    fi
-
-    if ! make --no-print-directory complexity 2>&1; then
-        log_error "Complexity check failed"
-        return 1
-    fi
+    local checks=(ruff ruff_tests type_check complexity)
+    for check in "${checks[@]}"; do
+        if ! make --no-print-directory "$check" 2>&1; then
+            log_error "$check failed"
+            return 1
+        fi
+    done
 
     log_info "Phase 1 passed"
 
