@@ -24,7 +24,7 @@ Collects Claude Code solo session data into adapter-expected format.
 ```text
 <output-dir>/
 ├── metadata.json       # Session ID, timestamps, model info
-└── tool_calls.jsonl    # Tool usage events (one JSON object per line)
+└── tool_calls.jsonl    # Tool usage events (empty placeholder; populated when parsing real sessions)
 ```
 
 **Example:**
@@ -84,14 +84,13 @@ All scripts use consistent exit codes:
 | Code | Meaning | Description |
 |------|---------|-------------|
 | `0` | Success | Artifacts collected successfully |
-| `1` | Validation failure | Missing source directories or malformed artifacts |
+| `1` | Validation failure | Malformed artifacts or output structure verification failed |
 | `2` | Usage error | Missing required parameters or invalid arguments |
 
 ## Dependencies
 
 - `bash` (with `set -euo pipefail`)
 - `jq` (for JSON validation)
-- `rsync` (optional, for preserving directory structure in teams mode; falls back to `cp -r`)
 
 ## Integration with CCTraceAdapter
 

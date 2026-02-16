@@ -3,51 +3,22 @@
 #
 # Exit codes:
 #   0 - Success
-#   1 - Validation failure (missing source dirs, malformed artifacts)
+#   1 - Validation failure (malformed artifacts)
 #   2 - Usage error (missing required parameters)
 
 set -euo pipefail
 
-# Parse arguments
-NAME=""
-OUTPUT_DIR=""
+source "$(dirname "${BASH_SOURCE[0]}")/lib/collect-common.sh"
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --name)
-            NAME="$2"
-            shift 2
-            ;;
-        --output-dir)
-            OUTPUT_DIR="$2"
-            shift 2
-            ;;
-        *)
-            echo "Error: Unknown argument: $1" >&2
-            echo "Usage: $0 --name <session-name> --output-dir <path>" >&2
-            exit 2
-            ;;
-    esac
-done
+parse_collect_args "$@"
 
-# Validate required arguments
-if [[ -z "$NAME" ]] || [[ -z "$OUTPUT_DIR" ]]; then
-    echo "Error: Missing required arguments" >&2
-    echo "Usage: $0 --name <session-name> --output-dir <path>" >&2
+if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
+    echo "Error: Unknown argument: ${EXTRA_ARGS[0]}" >&2
     exit 2
 fi
 
 # Create output directory
 mkdir -p "$OUTPUT_DIR"
-
-# Locate CC session data
-# Reason: CC stores sessions in ~/.claude/projects/ or current working directory
-SESSION_DIR="${HOME}/.claude/projects/${NAME}"
-
-if [[ ! -d "$SESSION_DIR" ]]; then
-    # Try current directory as fallback
-    SESSION_DIR="."
-fi
 
 # Create metadata.json
 # Reason: CCTraceAdapter expects metadata.json with session_id, timestamps, model
@@ -61,11 +32,7 @@ cat > "$OUTPUT_DIR/metadata.json" << EOF
 }
 EOF
 
-# Validate metadata.json is valid JSON
-if ! jq empty "$OUTPUT_DIR/metadata.json" 2>/dev/null; then
-    echo "Error: Failed to create valid metadata.json" >&2
-    exit 1
-fi
+validate_json "$OUTPUT_DIR/metadata.json"
 
 # Create tool_calls.jsonl
 # Reason: CCTraceAdapter expects one JSON object per line
@@ -73,15 +40,8 @@ fi
 touch "$OUTPUT_DIR/tool_calls.jsonl"
 
 # Validate output structure
-if [[ ! -f "$OUTPUT_DIR/metadata.json" ]]; then
-    echo "Error: metadata.json not created" >&2
-    exit 1
-fi
-
-if [[ ! -f "$OUTPUT_DIR/tool_calls.jsonl" ]]; then
-    echo "Error: tool_calls.jsonl not created" >&2
-    exit 1
-fi
+require_file "$OUTPUT_DIR/metadata.json"
+require_file "$OUTPUT_DIR/tool_calls.jsonl"
 
 echo "Solo session artifacts collected successfully to: $OUTPUT_DIR"
 exit 0

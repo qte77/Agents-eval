@@ -8,22 +8,18 @@
 
 set -euo pipefail
 
-# Parse arguments
-NAME=""
-OUTPUT_DIR=""
+source "$(dirname "${BASH_SOURCE[0]}")/lib/collect-common.sh"
+
+# Defaults for optional args
 TEAMS_SOURCE="${HOME}/.claude/teams"
 TASKS_SOURCE="${HOME}/.claude/tasks"
 
+parse_collect_args "$@"
+set -- "${EXTRA_ARGS[@]}"
+
+# Parse script-specific arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --name)
-            NAME="$2"
-            shift 2
-            ;;
-        --output-dir)
-            OUTPUT_DIR="$2"
-            shift 2
-            ;;
         --teams-source)
             TEAMS_SOURCE="$2"
             shift 2
@@ -39,13 +35,6 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-# Validate required arguments
-if [[ -z "$NAME" ]] || [[ -z "$OUTPUT_DIR" ]]; then
-    echo "Error: Missing required arguments" >&2
-    echo "Usage: $0 --name <team-name> --output-dir <path> [--teams-source <path>] [--tasks-source <path>]" >&2
-    exit 2
-fi
 
 # Construct source paths
 TEAM_DIR="${TEAMS_SOURCE}/${NAME}"
@@ -68,28 +57,12 @@ mkdir -p "$OUTPUT_DIR"
 
 # Copy config.json
 cp "$TEAM_DIR/config.json" "$OUTPUT_DIR/config.json"
-
-# Validate copied config.json is valid JSON
-if ! jq empty "$OUTPUT_DIR/config.json" 2>/dev/null; then
-    echo "Error: Invalid JSON in config.json" >&2
-    exit 1
-fi
+validate_json "$OUTPUT_DIR/config.json"
 
 # Copy task files if tasks directory exists
-if [[ -d "$TASKS_DIR" ]]; then
-    # Create tasks subdirectory in output
+if [[ -d "$TASKS_DIR" ]] && [[ -n "$(ls -A "$TASKS_DIR" 2>/dev/null)" ]]; then
     mkdir -p "$OUTPUT_DIR/tasks"
-
-    # Copy all JSON files preserving directory structure
-    # Reason: CCTraceAdapter expects tasks/ subdirectory with preserved structure
-    if [[ -n "$(ls -A "$TASKS_DIR" 2>/dev/null)" ]]; then
-        # Use rsync to preserve structure, or fall back to cp -r
-        if command -v rsync &> /dev/null; then
-            rsync -av --include='*/' --include='*.json' --exclude='*' "$TASKS_DIR/" "$OUTPUT_DIR/tasks/"
-        else
-            cp -r "$TASKS_DIR"/* "$OUTPUT_DIR/tasks/" 2>/dev/null || true
-        fi
-    fi
+    cp -r "$TASKS_DIR"/* "$OUTPUT_DIR/tasks/" 2>/dev/null || true
 fi
 
 # Copy inboxes if they exist (optional)
@@ -99,10 +72,7 @@ if [[ -d "$TEAM_DIR/inboxes" ]]; then
 fi
 
 # Validate output structure
-if [[ ! -f "$OUTPUT_DIR/config.json" ]]; then
-    echo "Error: config.json not created in output" >&2
-    exit 1
-fi
+require_file "$OUTPUT_DIR/config.json"
 
 echo "Teams mode artifacts collected successfully to: $OUTPUT_DIR"
 exit 0
