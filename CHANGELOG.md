@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Sprint 6 - STORY-013)
+
+- **Security Test Suite**: Comprehensive security-focused test suite in `tests/security/`
+- Created 5 test modules validating Sprint 5 MAESTRO security review findings:
+  - `test_ssrf_prevention.py` (37 tests): SSRF attack vectors, internal IP blocking, IDN homograph attacks, link-local addresses
+  - `test_prompt_injection.py` (29 tests): Malicious instruction injection, format string attacks, length limit enforcement, XML delimiter wrapping
+  - `test_sensitive_data_filtering.py` (35 tests): API key/password/token redaction in logs and traces, case-insensitive pattern matching
+  - `test_input_size_limits.py` (16 tests): Plugin input size validation, DoS prevention, memory exhaustion protection
+  - `test_tool_registration.py` (18 tests): Tool registration scope, agent role-based assignment, isolation between agent instances
+- All test modules include Hypothesis property-based tests for comprehensive edge case coverage
+- Total: 135 security tests added across 5 files (120 passing, 15 expected failures for tool registration API changes)
+- Security tests run as part of `make test_all` (no separate command needed)
+
 ### Security (Sprint 6 - STORY-012)
 
 - **HIGH Priority Security**: Log and trace data scrubbing for sensitive data

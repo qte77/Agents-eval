@@ -1,12 +1,11 @@
-"""Security test suite.
+"""Security-focused test suite for Agents-eval.
 
-This package contains security-focused tests validating security controls
-and testing attack vectors identified in the Sprint 5 MAESTRO security review.
+This package contains comprehensive security tests validating:
+- SSRF prevention (URL validation, domain allowlisting)
+- Prompt injection protection (input sanitization, length limits)
+- Sensitive data filtering (log scrubbing, trace redaction)
+- Input size limits (DoS prevention for plugins)
+- Tool registration security (authorization, scope validation)
 
-Test modules:
-- test_ssrf_prevention: SSRF attack vector testing
-- test_prompt_injection: Prompt injection attack testing
-- test_sensitive_data_filtering: Log/trace data scrubbing tests
-- test_input_size_limits: DoS prevention via input size limits
-- test_tool_registration: Tool registration authorization tests
+These tests were created in response to Sprint 5 MAESTRO security review findings.
 """

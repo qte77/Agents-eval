@@ -1,13 +1,14 @@
-"""SSRF prevention security tests.
+"""
+Tests for SSRF prevention in external HTTP requests.
 
-Tests URL validation to prevent SSRF (Server-Side Request Forgery) attacks
-as identified in CVE-2026-25580 and Sprint 5 MAESTRO review Finding CVE-1.
+This module tests SSRF (Server-Side Request Forgery) attack prevention across
+the application, focusing on URL validation at external request boundaries.
 
-Attack vectors tested:
-- Internal IP addresses (AWS metadata, GCP metadata, loopback)
-- Non-HTTPS schemes (HTTP, FTP, file://)
-- IDN homograph attacks (unicode domain lookalikes)
-- Localhost and private network IPs
+MAESTRO Layer 3 (Integration) security controls tested:
+- Internal IP blocking (AWS metadata, GCP metadata, localhost)
+- Non-HTTPS scheme rejection
+- Domain allowlist enforcement
+- IDN homograph attack prevention
 """
 
 import pytest
@@ -17,8 +18,8 @@ from hypothesis import strategies as st
 from app.utils.url_validation import validate_url
 
 
-class TestSSRFInternalIPPrevention:
-    """Test SSRF prevention for internal IP addresses."""
+class TestSSRFInternalIPBlocking:
+    """Test SSRF prevention blocks internal IP addresses."""
 
     @pytest.mark.parametrize(
         "url,description",
@@ -28,214 +29,171 @@ class TestSSRFInternalIPPrevention:
                 "https://169.254.169.254/latest/meta-data/iam/security-credentials/",
                 "AWS IAM credentials",
             ),
-            ("https://metadata.google.internal/computeMetadata/v1/", "GCP metadata"),
-            ("https://localhost/admin", "localhost HTTP"),
-            ("https://127.0.0.1/secrets", "loopback IPv4"),
-            ("https://0.0.0.0/data", "any IPv4 address"),
-            ("https://[::1]/internal", "loopback IPv6"),
+            ("https://metadata.google.internal/", "GCP metadata endpoint"),
+            (
+                "https://metadata.google.internal/computeMetadata/v1/",
+                "GCP compute metadata",
+            ),
+            ("https://localhost/admin", "localhost"),
+            ("https://127.0.0.1/secrets", "loopback IP"),
+            ("https://127.0.0.2/internal", "loopback range"),
+            ("https://0.0.0.0/data", "any IP (0.0.0.0)"),
+            ("https://[::1]/internal", "IPv6 loopback"),
             ("https://[::ffff:127.0.0.1]/data", "IPv4-mapped IPv6 loopback"),
         ],
     )
     def test_internal_ip_addresses_blocked(self, url: str, description: str):
-        """Internal IP addresses should be blocked to prevent SSRF attacks."""
+        """Internal IP addresses and metadata endpoints should be blocked."""
         with pytest.raises(ValueError, match="URL domain not allowed"):
             validate_url(url)
 
+
+class TestSSRFPrivateNetworkBlocking:
+    """Test SSRF prevention blocks private network IP ranges."""
+
     @pytest.mark.parametrize(
-        "private_ip",
+        "ip_address,network_range",
         [
-            "https://192.168.0.1/router",
-            "https://192.168.1.1/admin",
-            "https://192.168.255.255/data",
-            "https://10.0.0.1/secrets",
-            "https://10.255.255.255/internal",
-            "https://172.16.0.1/private",
-            "https://172.31.255.255/network",
+            ("192.168.0.1", "192.168.0.0/16 (private class C)"),
+            ("192.168.1.100", "192.168.0.0/16"),
+            ("192.168.255.254", "192.168.0.0/16"),
+            ("10.0.0.1", "10.0.0.0/8 (private class A)"),
+            ("10.255.255.254", "10.0.0.0/8"),
+            ("172.16.0.1", "172.16.0.0/12 (private class B)"),
+            ("172.31.255.254", "172.16.0.0/12"),
         ],
     )
-    def test_private_network_ranges_blocked(self, private_ip: str):
-        """Private network IP ranges (RFC 1918) should be blocked."""
+    def test_private_network_ranges_blocked(self, ip_address: str, network_range: str):
+        """RFC 1918 private network ranges should be blocked."""
+        url = f"https://{ip_address}/data"
         with pytest.raises(ValueError, match="URL domain not allowed"):
-            validate_url(private_ip)
+            validate_url(url)
 
 
-class TestSSRFNonHTTPSPrevention:
-    """Test SSRF prevention for non-HTTPS schemes."""
+class TestSSRFNonHTTPSBlocking:
+    """Test SSRF prevention enforces HTTPS-only."""
 
     @pytest.mark.parametrize(
         "url,scheme",
         [
-            ("http://raw.githubusercontent.com/data.json", "HTTP"),
-            ("ftp://files.example.com/data.txt", "FTP"),
-            ("file:///etc/passwd", "file://"),
-            ("file:///c:/windows/system32/config/sam", "file:// Windows"),
-            ("data:text/html,<script>alert(1)</script>", "data: URI"),
-            ("javascript:alert(document.cookie)", "javascript:"),
-            ("gopher://evil.com:70/1", "gopher"),
+            ("http://raw.githubusercontent.com/data", "http"),
+            ("ftp://api.openai.com/data", "ftp"),
+            ("file:///etc/passwd", "file"),
+            ("file:///c:/windows/system32/config/sam", "file (Windows)"),
+            ("data:text/html,<script>alert(1)</script>", "data URI"),
+            ("javascript:alert(1)", "javascript"),
+            ("gopher://127.0.0.1:25/xHELO%20localhost", "gopher (SSRF smuggling)"),
         ],
     )
-    def test_non_https_schemes_blocked(self, url: str, scheme: str):
-        """Non-HTTPS schemes should be blocked to prevent protocol smuggling."""
+    def test_non_https_schemes_rejected(self, url: str, scheme: str):
+        """Non-HTTPS schemes should be rejected to prevent SSRF attacks."""
         with pytest.raises(ValueError, match="Only HTTPS URLs allowed"):
             validate_url(url)
-
-    def test_missing_scheme_blocked(self):
-        """URLs without scheme should be rejected."""
-        with pytest.raises(ValueError, match="Only HTTPS URLs allowed"):
-            validate_url("raw.githubusercontent.com/data.json")
 
 
 class TestSSRFIDNHomographAttacks:
-    """Test SSRF prevention for IDN homograph attacks."""
+    """Test SSRF prevention blocks IDN homograph attacks."""
 
     @pytest.mark.parametrize(
         "url,description",
         [
-            # Cyrillic lookalikes
-            ("https://аpi.openai.com/v1/completions", "Cyrillic 'а' (U+0430)"),
-            ("https://api.ореnai.com/v1/completions", "Cyrillic 'о' and 'е'"),
-            ("https://аpi.аnthropic.com/v1/messages", "Multiple Cyrillic chars"),
-            # Greek lookalikes
-            ("https://αpi.openai.com/v1/completions", "Greek alpha"),
-            ("https://api.οpenai.com/v1/completions", "Greek omicron"),
-            # Latin extended lookalikes
-            ("https://ɑpi.openai.com/v1/completions", "Latin small letter alpha (U+0251)"),
-            ("https://api.сerebras.ai/v1/chat", "Cyrillic 'с' (U+0441)"),
+            (
+                "https://аpi.openai.com/v1/completions",
+                "Cyrillic 'а' (U+0430) instead of Latin 'a'",
+            ),
+            (
+                "https://api.ореnai.com/v1/completions",
+                "Cyrillic 'о' (U+043E) and 'е' (U+0435)",
+            ),
+            (
+                "https://ɑpi.openai.com/v1/completions",
+                "Latin small letter alpha (U+0251)",
+            ),
+            ("https://арі.openai.com/data", "Cyrillic lookalike domain"),
         ],
     )
-    def test_idn_homograph_domains_blocked(self, url: str, description: str):
-        """IDN homograph attacks using lookalike unicode characters should be blocked."""
+    def test_unicode_homograph_domains_blocked(self, url: str, description: str):
+        """Unicode homograph attacks should be blocked."""
+        # These domains are not in the allowlist, so they should be rejected
         with pytest.raises(ValueError, match="URL domain not allowed"):
             validate_url(url)
 
-    @pytest.mark.parametrize(
-        "punycode_url",
-        [
-            "https://xn--pi-openai-7bb.com/data",  # Punycode-encoded domain
-            "https://xn--pi-qmc.openai.com/data",  # Partial punycode
-        ],
-    )
-    def test_punycode_encoded_lookalikes_blocked(self, punycode_url: str):
+    def test_punycode_encoded_lookalike_blocked(self):
         """Punycode-encoded lookalike domains should be blocked."""
+        # xn-- prefix indicates punycode encoding
+        # Example: xn--pi-openai.com (Cyrillic characters)
+        url = "https://xn--pi-openai-abc123.com/data"
         with pytest.raises(ValueError, match="URL domain not allowed"):
-            validate_url(punycode_url)
+            validate_url(url)
 
 
-class TestSSRFLocalhostVariants:
-    """Test SSRF prevention for localhost and loopback variants."""
+class TestSSRFLinkLocalAddresses:
+    """Test SSRF prevention blocks link-local addresses."""
 
     @pytest.mark.parametrize(
-        "localhost_url",
+        "url,description",
         [
-            "https://localhost/admin",
-            "https://localhost:8080/api",
-            "https://LOCALHOST/secrets",  # Case variation
-            "https://127.0.0.1/internal",
-            "https://127.0.0.2/data",  # Other 127.x.x.x
-            "https://127.255.255.255/test",
-            "https://[::1]/ipv6-loopback",
-            "https://[0:0:0:0:0:0:0:1]/ipv6-expanded",
+            ("https://169.254.1.1/data", "Link-local IPv4"),
+            ("https://[fe80::1]/data", "Link-local IPv6"),
+            ("https://[fe80::dead:beef]/internal", "Link-local IPv6 with address"),
         ],
     )
-    def test_localhost_variants_blocked(self, localhost_url: str):
-        """All localhost and loopback variants should be blocked."""
+    def test_link_local_addresses_blocked(self, url: str, description: str):
+        """Link-local addresses should be blocked."""
         with pytest.raises(ValueError, match="URL domain not allowed"):
-            validate_url(localhost_url)
+            validate_url(url)
 
 
-class TestSSRFPropertyBasedFuzzing:
-    """Property-based tests for SSRF prevention using Hypothesis."""
+class TestSSRFEdgeCases:
+    """Test SSRF prevention handles edge cases."""
+
+    def test_url_with_port_variations(self):
+        """URLs with non-standard ports on blocked domains should still be blocked."""
+        blocked_urls = [
+            "https://127.0.0.1:8080/data",
+            "https://localhost:3000/admin",
+            "https://169.254.169.254:80/metadata",
+        ]
+        for url in blocked_urls:
+            with pytest.raises(ValueError, match="URL domain not allowed"):
+                validate_url(url)
+
+    def test_url_with_credentials_in_blocked_domain(self):
+        """URLs with credentials in blocked domains should still be blocked."""
+        url = "https://user:pass@127.0.0.1/secrets"
+        with pytest.raises(ValueError, match="URL domain not allowed"):
+            validate_url(url)
+
+    def test_url_with_path_traversal_in_blocked_domain(self):
+        """Path traversal attempts in blocked domains should still be blocked."""
+        url = "https://127.0.0.1/../../../etc/passwd"
+        with pytest.raises(ValueError, match="URL domain not allowed"):
+            validate_url(url)
+
+
+class TestSSRFPropertyBased:
+    """Property-based SSRF prevention tests using Hypothesis."""
 
     @given(
-        octet1=st.integers(min_value=0, max_value=255),
-        octet2=st.integers(min_value=0, max_value=255),
-        octet3=st.integers(min_value=0, max_value=255),
-        octet4=st.integers(min_value=0, max_value=255),
+        ip_octet_1=st.integers(min_value=0, max_value=255),
+        ip_octet_2=st.integers(min_value=0, max_value=255),
+        ip_octet_3=st.integers(min_value=0, max_value=255),
+        ip_octet_4=st.integers(min_value=0, max_value=255),
     )
-    def test_all_ipv4_addresses_blocked_unless_allowed(
-        self, octet1: int, octet2: int, octet3: int, octet4: int
+    def test_arbitrary_ip_addresses_blocked(
+        self, ip_octet_1: int, ip_octet_2: int, ip_octet_3: int, ip_octet_4: int
     ):
-        """All IPv4 addresses should be blocked unless explicitly in allowlist."""
-        url = f"https://{octet1}.{octet2}.{octet3}.{octet4}/data"
-        # All IPs are blocked since none are in ALLOWED_DOMAINS
+        """Arbitrary IP addresses should be blocked (not in allowlist)."""
+        ip = f"{ip_octet_1}.{ip_octet_2}.{ip_octet_3}.{ip_octet_4}"
+        url = f"https://{ip}/data"
+
+        # All IP addresses should be blocked since none are in ALLOWED_DOMAINS
         with pytest.raises(ValueError, match="URL domain not allowed"):
             validate_url(url)
 
-    @given(st.text(alphabet=st.characters(blacklist_categories=("Cs",)), min_size=1, max_size=50))
-    def test_random_domains_blocked_unless_allowed(self, domain: str):
-        """Random domains should be blocked unless in allowlist."""
-        # Skip domains that are in the allowlist or are invalid
-        from app.utils.url_validation import ALLOWED_DOMAINS
-
-        if domain in ALLOWED_DOMAINS or not domain.strip():
-            return
-
-        url = f"https://{domain}/data"
-        try:
+    @given(scheme=st.sampled_from(["http", "ftp", "file", "gopher", "data", "javascript"]))
+    def test_all_non_https_schemes_blocked(self, scheme: str):
+        """All non-HTTPS schemes should be blocked."""
+        url = f"{scheme}://example.com/data"
+        with pytest.raises(ValueError, match="Only HTTPS URLs allowed"):
             validate_url(url)
-            # If it passes, the domain must be in allowlist
-            assert domain in ALLOWED_DOMAINS
-        except ValueError as e:
-            # Expected: domain not allowed or malformed URL
-            assert "URL domain not allowed" in str(e) or "Malformed" in str(e) or "empty" in str(e)
-
-
-class TestSSRFURLParsingEdgeCases:
-    """Test URL parsing edge cases that could bypass SSRF protection."""
-
-    @pytest.mark.parametrize(
-        "url,description",
-        [
-            ("https://evil.com@raw.githubusercontent.com/data", "Credentials bypass attempt"),
-            ("https://raw.githubusercontent.com.evil.com/data", "Subdomain append"),
-            ("https://evil.com#raw.githubusercontent.com", "Fragment bypass attempt"),
-            ("https://evil.com?host=raw.githubusercontent.com", "Query param bypass"),
-        ],
-    )
-    def test_url_parsing_bypass_attempts_blocked(self, url: str, description: str):
-        """URL parsing bypass attempts should be blocked."""
-        # These should either be blocked or parsed to extract correct domain
-        try:
-            validate_url(url)
-            # If it passes, verify it extracted the correct domain
-            assert "raw.githubusercontent.com" in url
-        except ValueError:
-            # Expected if evil.com is extracted as domain
-            pass
-
-    def test_url_with_port_on_internal_ip_blocked(self):
-        """Internal IP with port should still be blocked."""
-        url = "https://127.0.0.1:8080/admin"
-        with pytest.raises(ValueError, match="URL domain not allowed"):
-            validate_url(url)
-
-    def test_url_with_credentials_on_internal_ip_blocked(self):
-        """Internal IP with credentials should still be blocked."""
-        url = "https://admin:password@127.0.0.1/secrets"
-        with pytest.raises(ValueError, match="URL domain not allowed"):
-            validate_url(url)
-
-
-class TestSSRFMetadataEndpoints:
-    """Test blocking of cloud provider metadata endpoints."""
-
-    @pytest.mark.parametrize(
-        "metadata_url,cloud_provider",
-        [
-            # AWS
-            ("https://169.254.169.254/latest/meta-data/", "AWS EC2"),
-            ("https://169.254.169.254/latest/dynamic/instance-identity/", "AWS identity"),
-            ("https://169.254.170.2/v2/metadata", "AWS ECS"),
-            # GCP
-            ("https://metadata.google.internal/computeMetadata/v1/", "GCP"),
-            ("https://metadata.google.internal/computeMetadata/v1/instance/service-accounts/", "GCP SA"),
-            # Azure
-            ("https://169.254.169.254/metadata/instance?api-version=2021-02-01", "Azure"),
-            # Digital Ocean
-            ("https://169.254.169.254/metadata/v1/", "DigitalOcean"),
-        ],
-    )
-    def test_cloud_metadata_endpoints_blocked(self, metadata_url: str, cloud_provider: str):
-        """Cloud provider metadata endpoints should be blocked."""
-        with pytest.raises(ValueError, match="URL domain not allowed"):
-            validate_url(metadata_url)

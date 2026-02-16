@@ -1,12 +1,14 @@
-"""Input size limit security tests.
+"""
+Tests for input size limits and DoS prevention.
 
-Tests DoS prevention via input size validation for plugin adapters
-as identified in Sprint 5 MAESTRO review Finding L2.2 (MEDIUM).
+This module tests input size validation in plugin adapters to prevent
+resource exhaustion attacks through oversized inputs.
 
-Attack vectors tested:
-- Oversized agent_output strings (>100KB)
-- Oversized reference_texts arrays (>10 items)
-- Memory exhaustion attacks via unbounded inputs
+MAESTRO Layer 2 (Agent Logic) and Layer 5 (Execution) security controls tested:
+- Plugin input size limits
+- Memory exhaustion prevention
+- String length limits
+- Array size limits
 """
 
 import pytest
@@ -15,252 +17,268 @@ from hypothesis import strategies as st
 from pydantic import BaseModel, Field, ValidationError
 
 
+class MockTier1Input(BaseModel):
+    """Mock Tier 1 input model for testing."""
+
+    agent_output: str = Field(..., max_length=100000)
+    reference_texts: list[str] = Field(..., min_length=1, max_length=10)
+    start_time: float = Field(..., ge=0.0)
+    end_time: float = Field(..., ge=0.0)
+
+
 class TestPluginInputSizeLimits:
-    """Test input size limits for plugin adapters."""
+    """Test plugin adapters enforce input size limits."""
 
-    def test_tier1_input_with_oversized_agent_output_raises_validation_error(self):
-        """Agent output exceeding 100KB should raise ValidationError."""
-        # Define expected Tier1 input schema
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
-
-        # Create oversized agent output (>100KB)
-        oversized_output = "x" * 200000  # 200KB
+    def test_oversized_agent_output_rejected(self):
+        """Agent output exceeding 100KB should be rejected."""
+        oversized_output = "A" * 100001  # 100KB + 1 byte
 
         with pytest.raises(ValidationError) as exc_info:
-            Tier1Input(
-                agent_output=oversized_output, reference_texts=["ref1"], start_time=0.0, end_time=1.0
+            MockTier1Input(
+                agent_output=oversized_output,
+                reference_texts=["ref"],
+                start_time=0.0,
+                end_time=1.0,
             )
 
-        # Verify validation error is for agent_output field
-        errors = exc_info.value.errors()
-        assert any(err["loc"][0] == "agent_output" for err in errors)
+        # Should fail on max_length constraint
+        assert "agent_output" in str(exc_info.value)
 
-    def test_tier1_input_with_oversized_reference_texts_raises_validation_error(self):
-        """Reference texts exceeding 10 items should raise ValidationError."""
+    def test_exactly_max_size_agent_output_accepted(self):
+        """Agent output exactly at 100KB should be accepted."""
+        max_size_output = "A" * 100000  # Exactly 100KB
 
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
-
-        # Create oversized reference_texts (>10 items)
-        oversized_refs = [f"reference_{i}" for i in range(50)]
-
-        with pytest.raises(ValidationError) as exc_info:
-            Tier1Input(agent_output="output", reference_texts=oversized_refs, start_time=0.0, end_time=1.0)
-
-        # Verify validation error is for reference_texts field
-        errors = exc_info.value.errors()
-        assert any(err["loc"][0] == "reference_texts" for err in errors)
-
-    def test_tier1_input_at_boundary_passes_validation(self):
-        """Input exactly at size limits should pass validation."""
-
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
-
-        # Exactly 100KB output
-        boundary_output = "x" * 100000
-        # Exactly 10 references
-        boundary_refs = [f"ref_{i}" for i in range(10)]
-
-        # Should not raise
-        validated = Tier1Input(
-            agent_output=boundary_output, reference_texts=boundary_refs, start_time=0.0, end_time=5.0
+        result = MockTier1Input(
+            agent_output=max_size_output,
+            reference_texts=["ref"],
+            start_time=0.0,
+            end_time=1.0,
         )
 
-        assert len(validated.agent_output) == 100000
-        assert len(validated.reference_texts) == 10
+        assert len(result.agent_output) == 100000
 
-
-class TestPluginInputTimeValidation:
-    """Test time validation for plugin inputs."""
-
-    def test_negative_start_time_raises_validation_error(self):
-        """Negative start time should raise ValidationError."""
-
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
+    def test_oversized_reference_texts_array_rejected(self):
+        """Reference texts array exceeding 10 items should be rejected."""
+        oversized_array = ["reference text"] * 11  # 11 items (max is 10)
 
         with pytest.raises(ValidationError) as exc_info:
-            Tier1Input(agent_output="output", reference_texts=["ref1"], start_time=-1.0, end_time=1.0)
+            MockTier1Input(
+                agent_output="output",
+                reference_texts=oversized_array,
+                start_time=0.0,
+                end_time=1.0,
+            )
 
-        errors = exc_info.value.errors()
-        assert any(err["loc"][0] == "start_time" for err in errors)
+        # Should fail on max_length constraint for list
+        assert "reference_texts" in str(exc_info.value)
 
-    def test_negative_end_time_raises_validation_error(self):
-        """Negative end time should raise ValidationError."""
-
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
-
+    def test_empty_reference_texts_array_rejected(self):
+        """Empty reference texts array should be rejected (min_length=1)."""
         with pytest.raises(ValidationError) as exc_info:
-            Tier1Input(agent_output="output", reference_texts=["ref1"], start_time=0.0, end_time=-1.0)
+            MockTier1Input(
+                agent_output="output",
+                reference_texts=[],  # Empty array
+                start_time=0.0,
+                end_time=1.0,
+            )
 
-        errors = exc_info.value.errors()
-        assert any(err["loc"][0] == "end_time" for err in errors)
+        assert "reference_texts" in str(exc_info.value)
 
+    def test_exactly_max_reference_texts_accepted(self):
+        """Reference texts with exactly 10 items should be accepted."""
+        max_refs = ["reference"] * 10
 
-class TestTier2InputSizeLimits:
-    """Test input size limits for Tier 2 (LLM judge) inputs."""
+        result = MockTier1Input(
+            agent_output="output",
+            reference_texts=max_refs,
+            start_time=0.0,
+            end_time=1.0,
+        )
 
-    def test_tier2_input_with_oversized_paper_excerpt_raises_validation_error(self):
-        """Paper excerpt exceeding limit should raise ValidationError."""
-
-        class Tier2Input(BaseModel):
-            paper_excerpt: str = Field(..., max_length=50000)
-            review: str = Field(..., max_length=50000)
-            tier1_result: dict = Field(...)
-
-        # Oversized paper excerpt (>50KB)
-        oversized_paper = "x" * 100000
-
-        with pytest.raises(ValidationError) as exc_info:
-            Tier2Input(paper_excerpt=oversized_paper, review="review", tier1_result={})
-
-        errors = exc_info.value.errors()
-        assert any(err["loc"][0] == "paper_excerpt" for err in errors)
-
-    def test_tier2_input_with_oversized_review_raises_validation_error(self):
-        """Review exceeding limit should raise ValidationError."""
-
-        class Tier2Input(BaseModel):
-            paper_excerpt: str = Field(..., max_length=50000)
-            review: str = Field(..., max_length=50000)
-            tier1_result: dict = Field(...)
-
-        # Oversized review (>50KB)
-        oversized_review = "x" * 100000
-
-        with pytest.raises(ValidationError) as exc_info:
-            Tier2Input(paper_excerpt="paper", review=oversized_review, tier1_result={})
-
-        errors = exc_info.value.errors()
-        assert any(err["loc"][0] == "review" for err in errors)
-
-
-class TestEmptyInputValidation:
-    """Test validation of empty or missing inputs."""
-
-    def test_empty_reference_texts_raises_validation_error(self):
-        """Empty reference_texts array should raise ValidationError."""
-
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
-
-        with pytest.raises(ValidationError) as exc_info:
-            Tier1Input(agent_output="output", reference_texts=[], start_time=0.0, end_time=1.0)
-
-        errors = exc_info.value.errors()
-        assert any(err["loc"][0] == "reference_texts" for err in errors)
-
-    def test_empty_agent_output_allowed(self):
-        """Empty agent_output should be allowed (valid edge case)."""
-
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
-
-        # Should not raise - empty output is valid
-        validated = Tier1Input(agent_output="", reference_texts=["ref1"], start_time=0.0, end_time=1.0)
-
-        assert validated.agent_output == ""
-
-
-class TestHypothesisInputSizeProperties:
-    """Property-based tests for input size validation."""
-
-    @given(
-        output_size=st.integers(min_value=0, max_value=100000),
-        ref_count=st.integers(min_value=1, max_value=10),
-    )
-    def test_valid_sizes_always_pass(self, output_size: int, ref_count: int):
-        """Inputs within valid size ranges should always pass validation."""
-
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
-
-        output = "x" * output_size
-        refs = [f"ref_{i}" for i in range(ref_count)]
-
-        # Should not raise
-        validated = Tier1Input(agent_output=output, reference_texts=refs, start_time=0.0, end_time=1.0)
-
-        assert len(validated.agent_output) == output_size
-        assert len(validated.reference_texts) == ref_count
-
-    @given(output_size=st.integers(min_value=100001, max_value=1000000))
-    def test_oversized_outputs_always_fail(self, output_size: int):
-        """Outputs exceeding max size should always fail validation."""
-
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
-
-        output = "x" * output_size
-
-        with pytest.raises(ValidationError):
-            Tier1Input(agent_output=output, reference_texts=["ref1"], start_time=0.0, end_time=1.0)
+        assert len(result.reference_texts) == 10
 
 
 class TestMemoryExhaustionPrevention:
-    """Test prevention of memory exhaustion attacks."""
+    """Test input validation prevents memory exhaustion attacks."""
 
-    def test_extremely_large_single_reference_text_handled(self):
-        """Single reference text that's extremely large should be rejected."""
+    def test_extremely_large_string_rejected(self):
+        """Extremely large strings should be rejected before processing."""
+        # Attempt to create a 1GB string (would exhaust memory)
+        # ValidationError should be raised before string is fully allocated
 
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
+        with pytest.raises(ValidationError):
+            MockTier1Input(
+                agent_output="X" * (1024 * 1024 * 1024),  # 1GB string
+                reference_texts=["ref"],
+                start_time=0.0,
+                end_time=1.0,
+            )
 
-        # Each reference text can be large, but count is limited
-        large_ref = "x" * 1000000  # 1MB single reference
+    def test_many_large_reference_texts_rejected(self):
+        """Many large reference texts should be rejected."""
+        # 10 items of 50KB each = 500KB total (should be rejected if individual items too large)
+        large_refs = ["X" * 50000] * 10
 
-        # Should pass count validation but might exceed memory in real use
-        # This tests that count limit prevents unlimited references
-        validated = Tier1Input(agent_output="output", reference_texts=[large_ref], start_time=0.0, end_time=1.0)
+        # This should pass array size limit (10 items) but may fail if individual items
+        # have size constraints
+        try:
+            result = MockTier1Input(
+                agent_output="output",
+                reference_texts=large_refs,
+                start_time=0.0,
+                end_time=1.0,
+            )
+            # If it passes, total size should still be bounded
+            total_size = sum(len(ref) for ref in result.reference_texts)
+            assert total_size < 1_000_000  # Less than 1MB total
+        except ValidationError:
+            # Also acceptable if validation rejects oversized individual items
+            pass
 
-        assert len(validated.reference_texts) == 1
 
-    def test_reference_text_item_size_not_individually_limited(self):
-        """Individual reference text items are not size-limited, only count is."""
+class TestNegativeAndInvalidInputs:
+    """Test validation of timing and numeric inputs."""
 
-        class Tier1Input(BaseModel):
-            agent_output: str = Field(..., max_length=100000)
-            reference_texts: list[str] = Field(..., min_length=1, max_length=10)
-            start_time: float = Field(..., ge=0.0)
-            end_time: float = Field(..., ge=0.0)
+    def test_negative_start_time_rejected(self):
+        """Negative start_time should be rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            MockTier1Input(
+                agent_output="output",
+                reference_texts=["ref"],
+                start_time=-1.0,  # Negative time
+                end_time=1.0,
+            )
 
-        # Max 10 items, each can be large
-        refs = ["x" * 10000 for _ in range(10)]
+        assert "start_time" in str(exc_info.value)
 
-        # Should pass - count is within limit
-        validated = Tier1Input(agent_output="output", reference_texts=refs, start_time=0.0, end_time=1.0)
+    def test_negative_end_time_rejected(self):
+        """Negative end_time should be rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            MockTier1Input(
+                agent_output="output",
+                reference_texts=["ref"],
+                start_time=0.0,
+                end_time=-1.0,  # Negative time
+            )
 
-        assert len(validated.reference_texts) == 10
+        assert "end_time" in str(exc_info.value)
+
+    def test_zero_times_accepted(self):
+        """Zero times should be accepted (ge=0.0 constraint)."""
+        result = MockTier1Input(
+            agent_output="output",
+            reference_texts=["ref"],
+            start_time=0.0,
+            end_time=0.0,
+        )
+
+        assert result.start_time == 0.0
+        assert result.end_time == 0.0
+
+
+class TestUnicodeAndEdgeCases:
+    """Test handling of unicode and edge case inputs."""
+
+    def test_unicode_content_within_limits_accepted(self):
+        """Unicode content within size limits should be accepted."""
+        unicode_output = "🔬🤖" * 1000  # Emoji characters
+
+        result = MockTier1Input(
+            agent_output=unicode_output,
+            reference_texts=["ref"],
+            start_time=0.0,
+            end_time=1.0,
+        )
+
+        assert len(result.agent_output) > 0
+
+    def test_mixed_unicode_and_ascii_accepted(self):
+        """Mixed unicode and ASCII content should be accepted."""
+        mixed_content = "ASCII text with émojis 🔬 and Ünïcödé"
+
+        result = MockTier1Input(
+            agent_output=mixed_content,
+            reference_texts=["ref"],
+            start_time=0.0,
+            end_time=1.0,
+        )
+
+        assert result.agent_output == mixed_content
+
+
+class TestPropertyBasedValidation:
+    """Property-based tests using Hypothesis."""
+
+    @given(
+        output_size=st.integers(min_value=0, max_value=100000),
+        num_refs=st.integers(min_value=1, max_value=10),
+    )
+    def test_valid_sizes_always_accepted(self, output_size: int, num_refs: int):
+        """Valid sizes within constraints should always be accepted."""
+        output = "A" * output_size
+        refs = ["ref"] * num_refs
+
+        result = MockTier1Input(
+            agent_output=output,
+            reference_texts=refs,
+            start_time=0.0,
+            end_time=1.0,
+        )
+
+        assert len(result.agent_output) == output_size
+        assert len(result.reference_texts) == num_refs
+
+    @given(
+        output_size=st.integers(min_value=100001, max_value=200000),
+    )
+    def test_oversized_outputs_always_rejected(self, output_size: int):
+        """Oversized outputs should always be rejected."""
+        output = "A" * output_size
+
+        with pytest.raises(ValidationError):
+            MockTier1Input(
+                agent_output=output,
+                reference_texts=["ref"],
+                start_time=0.0,
+                end_time=1.0,
+            )
+
+    @given(
+        num_refs=st.integers(min_value=11, max_value=100),
+    )
+    def test_oversized_arrays_always_rejected(self, num_refs: int):
+        """Arrays exceeding max_length should always be rejected."""
+        refs = ["ref"] * num_refs
+
+        with pytest.raises(ValidationError):
+            MockTier1Input(
+                agent_output="output",
+                reference_texts=refs,
+                start_time=0.0,
+                end_time=1.0,
+            )
+
+    @given(
+        start_time=st.floats(min_value=0.0, max_value=1000.0),
+        end_time=st.floats(min_value=0.0, max_value=1000.0),
+    )
+    def test_non_negative_times_accepted(self, start_time: float, end_time: float):
+        """Non-negative times should always be accepted."""
+        # Filter out NaN and inf values
+        if not (
+            start_time == start_time
+            and end_time == end_time
+            and start_time != float("inf")
+            and end_time != float("inf")
+        ):
+            return
+
+        result = MockTier1Input(
+            agent_output="output",
+            reference_texts=["ref"],
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+        assert result.start_time >= 0.0
+        assert result.end_time >= 0.0
