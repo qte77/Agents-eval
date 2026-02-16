@@ -266,8 +266,8 @@
         "src/gui/pages/run_app.py",
         "tests/test_gui/test_settings_page.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-16T01:45:30Z",
       "content_hash": "5bcf21564208aa25c41758e743a471700aecabc6686c6d1f96dd5015a7f2dda3",
       "depends_on": [
         "STORY-001"
