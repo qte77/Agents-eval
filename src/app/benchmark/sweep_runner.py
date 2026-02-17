@@ -54,6 +54,7 @@ class SweepRunner:
         try:
             # Run evaluation through main() with specified composition
             result = await main(
+                chat_provider=self.config.chat_provider,
                 query=f"Evaluate paper {paper_number}",
                 paper_number=str(paper_number),
                 include_researcher=composition.include_researcher,

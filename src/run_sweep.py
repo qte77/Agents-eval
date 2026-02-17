@@ -12,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 
 from app.benchmark import AgentComposition, SweepConfig, generate_all_compositions, run_sweep
+from app.config.config_app import CHAT_DEFAULT_PROVIDER
+from app.data_models.app_models import PROVIDER_REGISTRY
 from app.utils.log import logger
 
 
@@ -55,6 +57,13 @@ def parse_args() -> argparse.Namespace:
         help="Use all 2^3=8 agent compositions (default)",
     )
     parser.add_argument(
+        "--provider",
+        type=str,
+        choices=list(PROVIDER_REGISTRY.keys()),
+        default=CHAT_DEFAULT_PROVIDER,
+        help=f"LLM provider to use (default: {CHAT_DEFAULT_PROVIDER})",
+    )
+    parser.add_argument(
         "--cc-baseline",
         action="store_true",
         help="Enable Claude Code baseline comparison",
@@ -79,6 +88,7 @@ def _load_config_from_file(config_path: Path) -> SweepConfig | None:
         repetitions=config_data["repetitions"],
         paper_numbers=config_data["paper_numbers"],
         output_dir=Path(config_data["output_dir"]),
+        chat_provider=config_data.get("provider", CHAT_DEFAULT_PROVIDER),
         cc_baseline_enabled=config_data.get("cc_baseline_enabled", False),
     )
 
@@ -112,6 +122,7 @@ def _build_config_from_args(args: argparse.Namespace) -> SweepConfig | None:
         repetitions=args.repetitions,
         paper_numbers=paper_numbers,
         output_dir=output_dir,
+        chat_provider=args.provider,
         cc_baseline_enabled=args.cc_baseline,
     )
 
@@ -134,6 +145,7 @@ async def main_async() -> int:
 
         # Run sweep
         logger.info(f"Starting sweep with {len(config.compositions)} compositions")
+        logger.info(f"Provider: {config.chat_provider}")
         logger.info(f"Papers: {config.paper_numbers}")
         logger.info(f"Repetitions: {config.repetitions}")
         logger.info(f"Output: {config.output_dir}")

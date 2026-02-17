@@ -9,6 +9,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.config.config_app import CHAT_DEFAULT_PROVIDER
+
 
 class AgentComposition(BaseModel):
     """Configuration for a specific agent composition.
@@ -60,6 +62,10 @@ class SweepConfig(BaseModel):
     repetitions: int = Field(..., description="Number of repetitions per composition", ge=1)
     paper_numbers: list[int] = Field(..., description="List of paper IDs to evaluate", min_length=1)
     output_dir: Path = Field(..., description="Directory for sweep results")
+
+    chat_provider: str = Field(
+        default=CHAT_DEFAULT_PROVIDER, description="LLM provider to use for evaluations"
+    )
 
     cc_baseline_enabled: bool = Field(
         default=False, description="Whether to run Claude Code baseline comparison"

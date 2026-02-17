@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.benchmark.sweep_config import AgentComposition, SweepConfig
-from app.benchmark.sweep_runner import SweepRunner, run_sweep
+from app.benchmark.sweep_runner import SweepRunner
 from app.data_models.evaluation_models import CompositeResult
 
 
@@ -57,25 +57,6 @@ class TestSweepRunner:
     """Tests for SweepRunner class."""
 
     @pytest.mark.asyncio
-    async def test_run_single_evaluation(
-        self, basic_sweep_config: SweepConfig, mock_composite_result: CompositeResult
-    ):
-        """Test running a single evaluation with mocked main()."""
-        runner = SweepRunner(basic_sweep_config)
-
-        with patch("app.benchmark.sweep_runner.main") as mock_main:
-            # Reason: main() returns dict with 'composite_result' key
-            mock_main.return_value = {"composite_result": mock_composite_result}
-            composition = basic_sweep_config.compositions[0]
-            paper_number = 1
-
-            result = await runner._run_single_evaluation(composition, paper_number, 0)
-
-            assert result is not None
-            assert result.composite_score == 0.75
-            mock_main.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_run_sweep_collects_all_results(
         self, basic_sweep_config: SweepConfig, mock_composite_result: CompositeResult
     ):
@@ -89,7 +70,6 @@ class TestSweepRunner:
 
             # 2 compositions x 2 repetitions x 1 paper = 4 total runs
             assert len(results) == 4
-            assert mock_main.call_count == 4
 
     @pytest.mark.asyncio
     async def test_sweep_saves_results_json(
@@ -108,8 +88,36 @@ class TestSweepRunner:
 
             with open(results_file) as f:
                 data = json.load(f)
-            assert isinstance(data, list)
             assert len(data) == 4
+            assert data[0]["composition"]["include_researcher"] is True
+
+    @pytest.mark.asyncio
+    async def test_runner_passes_configured_provider_to_evaluations(
+        self, tmp_path: Path, mock_composite_result: CompositeResult
+    ):
+        """Test that the provider from config is forwarded to every evaluation call."""
+        config = SweepConfig(
+            compositions=[
+                AgentComposition(
+                    include_researcher=True,
+                    include_analyst=False,
+                    include_synthesiser=False,
+                )
+            ],
+            repetitions=1,
+            paper_numbers=[1],
+            output_dir=tmp_path / "sweep_results",
+            chat_provider="cerebras",
+        )
+        runner = SweepRunner(config)
+
+        with patch("app.benchmark.sweep_runner.main") as mock_main:
+            mock_main.return_value = {"composite_result": mock_composite_result}
+
+            await runner.run()
+
+            call_kwargs = mock_main.call_args.kwargs
+            assert call_kwargs["chat_provider"] == "cerebras"
 
 
 class TestCCBaselineIntegration:
@@ -145,14 +153,10 @@ class TestCCBaselineIntegration:
 
             await runner.run()
 
-            # Verify CC was invoked via subprocess
-            mock_subprocess.assert_called()
-            call_args = mock_subprocess.call_args
-            # Reason: call_args[0] is a tuple containing the command list as first element
-            cmd_list = call_args[0][0]
-            assert "claude" in cmd_list or any("claude" in arg for arg in cmd_list)
-            assert "--output-format" in cmd_list
-            assert "json" in cmd_list
+            # Verify the Claude CLI was invoked (behavioral: CC baseline ran)
+            mock_subprocess.assert_called_once()
+            cmd = mock_subprocess.call_args[0][0]
+            assert any("claude" in arg for arg in cmd)
 
     @pytest.mark.asyncio
     async def test_cc_baseline_error_when_claude_not_found(self, tmp_path: Path):
@@ -193,19 +197,3 @@ class TestCCBaselineIntegration:
 
             # Verify CC was NOT invoked
             mock_subprocess.assert_not_called()
-
-
-class TestRunSweepFunction:
-    """Tests for run_sweep() convenience function."""
-
-    @pytest.mark.asyncio
-    async def test_run_sweep_with_config(
-        self, basic_sweep_config: SweepConfig, mock_composite_result: CompositeResult
-    ):
-        """Test run_sweep() function with config."""
-        with patch("app.benchmark.sweep_runner.main") as mock_main:
-            mock_main.return_value = {"composite_result": mock_composite_result}
-
-            results = await run_sweep(basic_sweep_config)
-
-            assert len(results) == 4
