@@ -15,7 +15,7 @@ navigate to other tabs, with results persisted in session state.
 from pathlib import Path
 
 import streamlit as st
-from streamlit import button, exception, header, info, spinner, subheader, text, text_input, warning
+from streamlit import button, exception, header, info, spinner, subheader, text_input, warning
 
 from app.app import main
 from app.config.config_app import CHAT_DEFAULT_PROVIDER
@@ -232,10 +232,10 @@ def _display_configuration(provider: str, token_limit: int | None, agents_text: 
         token_limit: Optional token limit
         agents_text: Formatted string of enabled agents
     """
-    text(f"**Provider:** {provider}")
-    text(f"**Enabled Sub-Agents:** {agents_text}")
+    st.markdown(f"**Provider:** {provider}")
+    st.markdown(f"**Enabled Sub-Agents:** {agents_text}")
     if token_limit is not None:
-        text(f"**Token Limit:** {token_limit}")
+        st.markdown(f"**Token Limit:** {token_limit}")
 
 
 def _display_execution_result(execution_state: str) -> None:

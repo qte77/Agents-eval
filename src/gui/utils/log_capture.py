@@ -3,8 +3,10 @@ Log capture utility for GUI debug panel.
 
 This module provides a loguru sink that captures log entries from app.* modules
 during execution and stores them in memory for display in the Streamlit debug panel.
+Supports thread-safe incremental polling via get_new_logs_since() for real-time streaming.
 """
 
+import threading
 from typing import Any
 
 from loguru import logger
@@ -16,11 +18,16 @@ class LogCapture:
     This class acts as a loguru sink that filters and stores log entries from
     app.* modules. It provides methods to retrieve, clear, and format logs
     for display in the Streamlit UI.
+
+    Thread safety: _buffer and _lock allow safe concurrent access from a worker
+    thread (writes via add_log_entry) and the Streamlit render thread (reads via
+    get_new_logs_since / get_logs).
     """
 
     def __init__(self) -> None:
-        """Initialize empty log buffer."""
+        """Initialize empty log buffer with thread lock."""
         self._buffer: list[dict[str, str]] = []
+        self._lock = threading.Lock()
         self._handler_id: int | None = None
 
     def add_log_entry(self, timestamp: str, level: str, module: str, message: str) -> None:
@@ -36,14 +43,40 @@ class LogCapture:
         if not module.startswith("app."):
             return
 
-        self._buffer.append(
-            {
-                "timestamp": timestamp,
-                "level": level,
-                "module": module,
-                "message": message,
-            }
-        )
+        with self._lock:
+            self._buffer.append(
+                {
+                    "timestamp": timestamp,
+                    "level": level,
+                    "module": module,
+                    "message": message,
+                }
+            )
+
+    def get_new_logs_since(self, index: int) -> list[dict[str, str]]:
+        """Return log entries added since the given index (for incremental polling).
+
+        The caller tracks the last-seen index and passes it on each poll.
+        Only entries at positions >= index are returned, allowing a Streamlit
+        fragment or polling loop to render only new content on each re-run.
+
+        Args:
+            index: Number of entries already seen (0 = return all entries)
+
+        Returns:
+            List of new log entry dictionaries since index
+        """
+        with self._lock:
+            return list(self._buffer[index:])
+
+    def log_count(self) -> int:
+        """Return the current number of buffered log entries.
+
+        Returns:
+            Number of entries in the buffer
+        """
+        with self._lock:
+            return len(self._buffer)
 
     def get_logs(self) -> list[dict[str, str]]:
         """Retrieve all captured log entries.
@@ -51,11 +84,13 @@ class LogCapture:
         Returns:
             List of log entry dictionaries
         """
-        return self._buffer.copy()
+        with self._lock:
+            return list(self._buffer)
 
     def clear(self) -> None:
         """Clear the log buffer."""
-        self._buffer.clear()
+        with self._lock:
+            self._buffer.clear()
 
     def format_html(self) -> str:
         """Format log entries as HTML with color-coded levels.
@@ -63,7 +98,7 @@ class LogCapture:
         Returns:
             HTML string with styled log entries
         """
-        return self.format_logs_as_html(self._buffer)
+        return self.format_logs_as_html(self.get_logs())
 
     @staticmethod
     def format_logs_as_html(logs: list[dict[str, str]]) -> str:

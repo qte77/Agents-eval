@@ -693,11 +693,19 @@ class PeerReadLoader:
             Validated PeerReadReview model.
         """
         # Reason: Papers 304-308, 330 lack IMPACT and other fields.
-        # Log missing optional fields for data quality visibility.
-        for _, field_info in PeerReadReview.model_fields.items():
-            alias = field_info.validation_alias
-            if alias and alias not in review_data and field_info.default == "UNKNOWN":
-                logger.debug(f"Paper {paper_id}: Optional field {alias} missing, using UNKNOWN")
+        # Aggregate missing optional fields into one log line to reduce noise.
+        missing = [
+            str(field_info.validation_alias)
+            for _, field_info in PeerReadReview.model_fields.items()
+            if field_info.validation_alias
+            and field_info.validation_alias not in review_data
+            and field_info.default == "UNKNOWN"
+        ]
+        if missing:
+            logger.debug(
+                f"Paper {paper_id}: {len(missing)} optional fields missing"
+                f" ({', '.join(missing)}), using UNKNOWN"
+            )
 
         # Pydantic model handles alias mapping and defaults
         return PeerReadReview.model_validate(review_data)
