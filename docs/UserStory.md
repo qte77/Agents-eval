@@ -2,7 +2,7 @@
 
 ## Problem Statement
 
-The multi-agent system (MAS) generates scientific paper reviews via agent delegation (Manager → Researcher → Analyst → Synthesizer), but the execution graph is never captured or evaluated. There is no way to compare graph-based coordination metrics (how agents coordinate) against conventional text similarity metrics (what agents produce). Generation (`run_manager()`) and evaluation (`EvaluationPipeline.evaluate_comprehensive()`) are disconnected, and `TraceCollector` is not wired into agent execution.
+The multi-agent system (MAS) generates scientific paper reviews via agent delegation (Manager → Researcher → Analyst → Synthesizer), but the execution graph is never captured or evaluated. There is no way to compare graph-based coordination metrics (how agents coordinate) against conventional text similarity metrics (what agents produce). Generation and evaluation are disconnected.
 
 ## Target Users
 
@@ -15,45 +15,35 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 ## User Stories
 
 - As a researcher, I want evaluation to run automatically after review generation so I don't have to wire it manually.
-- As a researcher, I want real agent execution traces captured as GraphTraceData so Tier 3 graph analysis uses actual data instead of synthetic traces.
+- As a researcher, I want real agent execution traces captured so graph analysis uses actual data instead of synthetic traces.
 - As a researcher, I want to see graph metrics alongside text metrics so I can compare evaluation approaches.
 - As a researcher, I want to skip evaluation with `--skip-eval` when I only need generation.
-- As a researcher, I want evaluation settings configurable via environment variables so I can tune tier weights, timeouts, and model selection without editing code or JSON files.
-- As a researcher, I want local tracing via `pip install` (Logfire + Phoenix) instead of 11 Docker containers so I can inspect agent traces without complex infrastructure setup.
+- As a researcher, I want evaluation settings configurable via environment variables so I can tune tier weights, timeouts, and model selection without editing code.
+- As a researcher, I want local tracing without Docker containers so I can inspect agent traces without complex infrastructure setup.
 - As a researcher, I want a Streamlit dashboard showing Tier 1/2/3 evaluation scores so I can visually compare graph-based and text-based metrics without parsing log output.
 - As a researcher, I want an interactive agent graph visualization so I can see how agents delegated tasks and coordinated during review generation.
-- As a researcher, I want to compare PydanticAI MAS evaluation results against Claude Code baselines (solo and teams) so I can quantify the coordination quality difference between orchestration approaches.
+- As a researcher, I want to compare MAS evaluation results against Claude Code baselines so I can quantify coordination quality differences between orchestration approaches.
 - As a researcher, I want to run the evaluation pipeline across all agent composition variations so I can identify which agent combination produces the best review quality compared to graph quality.
 
 ## Success Criteria
 
 1. `make run_cli ARGS="--paper-id=ID"` generates a review AND evaluates it automatically.
-2. GraphTraceData contains real agent delegations, tool calls, and timing data from MAS execution.
-3. Logs show Tier 1 (text) vs Tier 3 (graph) scores side by side with individual metric breakdowns.
+2. Execution traces contain real agent delegations, tool calls, and timing data.
+3. Logs show Tier 1 (text) vs Tier 3 (graph) scores side by side with metric breakdowns.
 4. `--skip-eval` flag skips evaluation when only generation is needed.
 5. `make validate` passes with all existing and new tests.
-6. `phoenix serve` starts a local trace viewer at localhost:6006; agent traces appear via Logfire auto-instrumentation without manual decorators.
-7. Streamlit "Evaluation Results" page displays tier scores and graph-vs-text comparison charts.
-8. Streamlit "Agent Graph" page renders the NetworkX delegation graph interactively via Pyvis.
+6. Local trace viewer shows agent execution traces without Docker setup.
+7. Streamlit "Evaluation Results" page displays tier scores and comparison charts.
+8. Streamlit "Agent Graph" page renders the delegation graph interactively.
 
 ## Constraints
 
-- Python 3.13 with pydantic-ai framework.
-- Must use `EvaluationPipeline` plugin API (`EvaluatorPlugin` interface, delivered Sprint 3).
-- Must use existing `TraceCollector` API for graph data capture.
-- Settings via pydantic-settings (`JudgeSettings` with `JUDGE_` prefix), consistent with `CommonSettings` (`EVAL_` prefix). No JSON config files at runtime.
-- Tracing via Logfire SDK + Arize Phoenix (zero Docker containers). `logfire.instrument_pydantic_ai()` auto-instruments all PydanticAI agents.
-- Streamlit + Phoenix are complementary (separate services on different ports), not embedded. Phoenix for trace inspection, Streamlit for custom evaluation dashboards.
+- Python 3.13 with PydanticAI framework.
+- Plugin-based evaluation architecture (see [architecture.md](architecture.md) for technical details).
+- Zero-Docker local tracing (Logfire + Arize Phoenix).
+- Streamlit for evaluation dashboards, Phoenix for trace inspection (complementary, separate services).
 
-## Current Sprint Status
-
-**Sprint 2-4**: ✅ All delivered (automatic evaluation, real traces, graph metrics, Logfire+Phoenix, Streamlit dashboard, Claude Code baseline comparison)
-
-**Sprint 5**: ✅ Delivered — Runtime fixes (judge provider fallback, token limits, score fairness, dataset validation), GUI enhancements (background execution, debug logs, editable settings), architecture improvements (OTLP endpoint, graph analysis accuracy, tool delegation), code quality review, and test suite audit. See [PRD-Sprint5-Ralph.md](PRD-Sprint5-Ralph.md).
-
-**Sprint 6**: ✅ Delivered — Benchmarking infrastructure (MAS composition sweep with statistical analysis), CC baseline completion (artifact collection scripts, adapter path fixes), security hardening (CVE mitigations, prompt sanitization, log/trace scrubbing), test quality improvements. See [PRD-Sprint6-Ralph.md](PRD-Sprint6-Ralph.md).
-
-**Sprint 7 Active**: Documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings), unified provider configuration, Claude Code engine option. See [PRD-Sprint7-Ralph.md](PRD-Sprint7-Ralph.md).
+For implementation details, see [architecture.md](architecture.md). For sprint status, see [roadmap.md](roadmap.md).
 
 ## Out of Scope
 
@@ -64,7 +54,7 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 - Model-aware content truncation — token-limit-aware truncation for provider rate limits.
 - Migration cleanup — removing backward-compatibility shims.
 - A2A protocol migration (PydanticAI stays).
-- Streamlit UI redesign (existing UI stays as-is).
+- Streamlit full redesign or new pages (incremental enhancements to existing pages are in scope).
 - pytest-bdd / Gherkin scenarios (use pytest + hypothesis instead).
 - HuggingFace `datasets` library (use GitHub API downloader instead).
 - Google Gemini SDK (use OpenAI-spec compatible providers only).

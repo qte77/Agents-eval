@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-02-16
+updated: 2026-02-17
 category: architecture
-version: 3.5.0
+version: 3.6.0
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -100,7 +100,7 @@ Evaluation Requirements Assessment
 
 The evaluation framework is built around large context window models capable of processing full PeerRead papers with automatic selection based on paper token count and intelligent fallback to document chunking for smaller context models.
 
-**Model Selection**: See [Large Language Models](landscape-agent-frameworks-infrastructure.md#2-large-language-models) for detailed model comparisons, context limits, and integration approaches for Claude 4 Opus/Sonnet, GPT-4 Turbo, and Gemini-1.5-Pro.
+**Model Selection**: Configurable per provider via `--chat-provider` and `--judge-provider`. See [Large Language Models](landscape-agent-frameworks-infrastructure.md#2-large-language-models) for model comparisons, context limits, and integration approaches.
 
 ### Sprint 1: PeerRead Evaluation Components
 
@@ -210,9 +210,39 @@ The evaluation framework is built around large context window models capable of 
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 5 - Delivered)
+### Current Implementation (Sprint 7 - Active)
 
-**Sprint 5 Key Improvements**:
+**Sprint 6 Key Deliverables** (Delivered):
+
+- **Benchmarking Infrastructure**:
+  - MAS composition sweep (`SweepRunner`): 8 agent compositions × N papers × N repetitions
+  - Statistical analysis (`SweepAnalyzer`): mean, stddev, min, max per composition
+  - Sweep CLI (`run_sweep.py`) with `--provider`, `--paper-numbers`, `--repetitions`, `--all-compositions`
+  - Results output: `results.json` (raw) + `summary.md` (Markdown table)
+
+- **CC Baseline Completion**:
+  - `CCTraceAdapter` for parsing Claude Code artifacts from headless invocation
+  - Artifact collection from `~/.claude/teams/` and `~/.claude/tasks/`
+
+- **Security Hardening**:
+  - SSRF prevention: URL validation with domain allowlisting
+  - Prompt injection resistance: length limits, XML delimiter wrapping
+  - Sensitive data filtering in logs and traces (API keys, tokens)
+  - Input size limits for DoS prevention
+
+- **Test Quality**:
+  - Security tests in `tests/security/` (SSRF, prompt injection, data scrubbing)
+  - Test filesystem isolation via `tmp_path`
+
+**Sprint 7 In Progress**:
+
+- Unified provider configuration (`--chat-provider`, `--judge-provider`, `--judge-model`)
+- `--engine=mas|cc` flag for CLI and sweep (replaces `--cc-baseline`)
+- Sweep rate-limit resilience (retry with backoff, incremental result persistence)
+- GUI: real-time debug log streaming, paper selection dropdown, editable settings
+- `_handle_model_http_error` fix: re-raise instead of `SystemExit(1)` on HTTP 429
+
+**Sprint 5 Key Improvements** (Delivered):
 
 - **Runtime Fixes**:
   - Tier 2 judge provider fallback with automatic API key validation
@@ -251,7 +281,7 @@ The three-tiered evaluation framework is fully operational with plugin architect
 
 **✅ Tier 2 - LLM-as-a-Judge** (`src/app/judge/plugins/llm_judge.py`):
 
-- Quality assessment using gpt-4o-mini model
+- Quality assessment using configurable judge provider (default: auto-inherits chat provider)
 - Planning rationality evaluation
 - Technical accuracy scoring
 - Cost-budgeted evaluation with retry mechanisms
@@ -340,7 +370,8 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 3**: Plugin architecture, GUI wiring, test alignment, optional weave, trace quality -- Delivered
 - **Sprint 4**: Operational resilience, Claude Code baseline comparison (solo + teams) -- Delivered
 - **Sprint 5**: Runtime fixes, GUI enhancements, architecture improvements, code quality review -- Delivered
-- **Sprint 6**: Benchmarking infrastructure, CC baseline completion, security hardening, test quality -- Planned
+- **Sprint 6**: Benchmarking infrastructure, CC baseline completion, security hardening, test quality -- Delivered
+- **Sprint 7**: Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine -- Active
 
 For sprint details, see [roadmap.md](roadmap.md).
 

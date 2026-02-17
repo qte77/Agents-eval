@@ -13,7 +13,7 @@ start
 
 if (First time use or dataset update?) then (yes)
   :Download PeerRead dataset with `make run_cli --download-peerread-full-only`;
-  :Dataset is cached locally in `datasets/peerread/`;
+  :Dataset cached locally in `datasets/peerread/`;
 else (no)
 endif
 
@@ -22,39 +22,46 @@ endif
 if (Interface choice) then (CLI)
   :Execute `make run_cli` with evaluation parameters;
   group CLI Agent Evaluation
-    :Select paper from PeerRead dataset;
-    :Configure agent system (Manager/Researcher/Analyst/Synthesizer);
-    :Initialize large context window models (Claude-3.5, GPT-4, Gemini-1.5);
+    :Select paper via `--paper-id=ID`;
+    :Choose engine: `--engine=mas` (default) or `--engine=cc`;
+    :Configure agent composition and provider via `--chat-provider`;
     :Agent system generates comprehensive review;
     :Three-tier evaluation runs automatically;
   end group
 else (Streamlit GUI)
   :Launch `make run_gui` for interactive evaluation;
   group GUI Agent Evaluation
-    :Browse PeerRead papers in web interface;
-    :Configure evaluation parameters and agent settings;
-    :Trigger agent review generation;
-    :View real-time evaluation metrics and scores;
+    :Browse and select PeerRead paper (dropdown with title/abstract);
+    :Choose engine (MAS or Claude Code);
+    :Configure provider, judge, and agent settings;
+    :Monitor agent progress via real-time debug log;
+    :View evaluation metrics and agent interaction graph;
   end group
 endif
 
 :System executes three-tier evaluation;
 
 group Three-Tier Evaluation Process
-  :Traditional Metrics: text similarity, execution time, task success;
-  :LLM-as-a-Judge: planning rational, coordination quality, tool efficiency;
-  :Graph Analysis: agent interaction complexity and patterns;
-  :Composite Scoring: weighted final score with config metrics;
+  :Tier 1 — Traditional Metrics: BLEU, ROUGE, BERTScore, execution time;
+  :Tier 2 — LLM-as-a-Judge: planning rationale, coordination quality, tool efficiency;
+  :Tier 3 — Graph Analysis: agent interaction complexity and delegation patterns;
+  :Composite Scoring: weighted final score;
 end group
 
 :User analyzes evaluation results;
 
 if (Evaluation results satisfactory?) then (yes)
-  :Export evaluation data and performance metrics;
+  :Export evaluation data and composite scores;
   :Document agent performance insights;
 else (no)
-  :Adjust agent configuration or model selection;
+  :Adjust composition, provider, or paper selection;
   :Re-run evaluation with different parameters;
+endif
+
+if (Sweep comparison needed?) then (yes)
+  :Run `make run_sweep` across compositions × papers × repetitions;
+  :Review statistical summary in `results/sweeps/<timestamp>/summary.md`;
+else (no)
 endif
 
 :User iterates to improve agent performance;
