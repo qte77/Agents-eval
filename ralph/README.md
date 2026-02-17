@@ -168,6 +168,8 @@ ralph/
 
 - **Intermediate progress visibility**: The `prompt.md` STATUS instructions aren't being followed by Claude in `-p` mode. Worth investigating whether `--output-format stream-json` or a hook could capture intermediate progress during story execution. Currently, only the heartbeat monitor provides coarse visibility (60s intervals, phase detection from git log).
 
+- **Agent Teams for parallel story execution**: Enable `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` so Claude can spawn a team of agents during the Ralph loop. The lead agent would orchestrate teammates, each assigned a specific unrelated story with tailored skills, instructions, and tools. Since sprint stories are already small and self-contained, the benefit over sequential execution needs validation — the main hypothesis is that independent stories (no shared files) could run in parallel while the lead coordinates commits and test validation. See [CC Agent Teams Orchestration](../docs/analysis/CC-agent-teams-orchestration.md) for architecture, limitations, and tracing.
+
 ## Sources
 
 - [Ralph Wiggum technique](https://ghuntley.com/ralph/) - Geoffrey Huntley
