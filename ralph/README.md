@@ -170,6 +170,8 @@ ralph/
 
 - **Agent Teams for parallel story execution**: Enable `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` so Claude can spawn a team of agents during the Ralph loop. The lead agent would orchestrate teammates, each assigned a specific unrelated story with tailored skills, instructions, and tools. Since sprint stories are already small and self-contained, the benefit over sequential execution needs validation — the main hypothesis is that independent stories (no shared files) could run in parallel while the lead coordinates commits and test validation. See [CC Agent Teams Orchestration](../docs/analysis/CC-agent-teams-orchestration.md) for architecture, limitations, and tracing.
 
+- **Scoped reset on red-green validation failure**: When the TDD validation fails (e.g., fewer than 2 commits for RED + GREEN), `ralph.sh` runs `git reset --hard` and `git clean -fd`, which nukes ALL uncommitted changes and untracked files — including unrelated work. The reset must be scoped to only the files the failed story actually touched. Example from `logs/ralph/2026-02-17_19:32:09.log`: validation found 1 commit instead of 2, reset to `2d5bda1`, then `git clean` removed `inline-snapshot-qco44q6h/` (an unrelated temp directory). Fix: track changed files per story (from `git diff --name-only` at story start vs HEAD), reset only those files, and leave untracked files that weren't created by the story.
+
 ## Sources
 
 - [Ralph Wiggum technique](https://ghuntley.com/ralph/) - Geoffrey Huntley
