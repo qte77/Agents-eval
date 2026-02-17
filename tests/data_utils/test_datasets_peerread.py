@@ -5,13 +5,14 @@ Tests for pure dataset functionality including download, loading, and querying
 operations without evaluation logic.
 """
 
+from json import JSONDecodeError
+
 import httpx
 import hypothesis
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
-from json import JSONDecodeError
 
 from app.data_models.peerread_models import (
     PeerReadConfig,
@@ -241,7 +242,7 @@ class TestDownloadErrorHandling:
 
     def test_download_network_error(self):
         """Test handling of network errors during download."""
-        from unittest.mock import Mock, patch
+        from unittest.mock import patch
 
         from app.data_utils.datasets_peerread import PeerReadDownloader
 
@@ -589,15 +590,16 @@ class TestContentExtraction:
 class TestDownloadVenueSplit:
     """Test venue/split download functionality."""
 
-    def test_download_venue_split_success(self):
+    def test_download_venue_split_success(self, tmp_path):
         """Test successful download of venue/split with file discovery."""
-        from unittest.mock import Mock, patch
+        from unittest.mock import patch
 
         from app.data_utils.datasets_peerread import PeerReadDownloader
 
         # Arrange
         config = PeerReadConfig()
         downloader = PeerReadDownloader(config)
+        downloader.cache_dir = tmp_path / "cache"
 
         # Mock file discovery to return paper IDs
         with (
@@ -624,15 +626,16 @@ class TestDownloadVenueSplit:
             assert result.papers_downloaded == 3
             assert result.error_message is None
 
-    def test_download_venue_split_with_max_papers_limit(self):
+    def test_download_venue_split_with_max_papers_limit(self, tmp_path):
         """Test download respects max_papers limit."""
-        from unittest.mock import Mock, patch
+        from unittest.mock import patch
 
         from app.data_utils.datasets_peerread import PeerReadDownloader
 
         # Arrange
         config = PeerReadConfig()
         downloader = PeerReadDownloader(config)
+        downloader.cache_dir = tmp_path / "cache"
 
         # Mock file discovery to return many paper IDs
         with (
@@ -654,13 +657,13 @@ class TestDownloadVenueSplit:
             # Act - limit to 2 papers
             result = downloader.download_venue_split("acl_2017", "train", max_papers=2)
 
-            # Assert - should only download 2
-            assert mock_download.call_count == 2
+            # Assert - should only download 2 papers (3 data types each = 6 calls)
+            assert mock_download.call_count == 6
             assert result.papers_downloaded == 2
 
     def test_download_venue_split_handles_partial_failures(self, tmp_path):
         """Test download continues after some failures."""
-        from unittest.mock import Mock, patch
+        from unittest.mock import patch
 
         from app.data_utils.datasets_peerread import PeerReadDownloader
 
@@ -739,7 +742,7 @@ class TestDownloadVenueSplit:
 
     def test_download_venue_split_discovery_failure(self):
         """Test download handles file discovery failure."""
-        from unittest.mock import Mock, patch
+        from unittest.mock import patch
 
         from app.data_utils.datasets_peerread import PeerReadDownloader
 

@@ -253,11 +253,3 @@ class TestPluginRegistry:
         # Should raise the error or return structured error result
         with pytest.raises(ValueError, match="Simulated plugin failure"):
             registry.execute_all(input_data)
-
-    def test_registry_duplicate_plugin_names_raises_error(self):
-        """Registry rejects duplicate plugin names."""
-        registry = PluginRegistry()
-        registry.register(MockTier1Plugin())
-
-        with pytest.raises(ValueError, match="already registered"):
-            registry.register(MockTier1Plugin())

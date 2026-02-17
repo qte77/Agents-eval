@@ -53,17 +53,6 @@ class TestLogfireInitialization:
             # Verify: initialize_logfire_instrumentation_from_settings was NOT called
             mock_init_logfire.assert_not_called()
 
-    def test_logfire_initialization_uses_judge_settings(self):
-        """Logfire initialization MUST use JudgeSettings.logfire_enabled."""
-        # This test will FAIL until implementation uses correct settings source
-        from app.judge.settings import JudgeSettings
-
-        settings = JudgeSettings(logfire_enabled=True)
-
-        # Verify: logfire_enabled exists in JudgeSettings
-        assert hasattr(settings, "logfire_enabled")
-        assert isinstance(settings.logfire_enabled, bool)
-
 
 class TestLogfireGracefulDegradation:
     """Test graceful degradation when Logfire is unavailable."""

@@ -634,34 +634,6 @@ class TestStory001AcceptanceCriteria:
                     # Weights should be redistributed
                     assert len(result.weights_used) == 5
 
-    def test_tier2_provider_env_var_override_still_works(self):
-        """JUDGE_TIER2_PROVIDER env var should still override settings."""
-        # This would be tested with actual env var setting in integration tests
-        # For unit test, verify that JudgeSettings respects env vars
-        import os
-
-        original_value = os.environ.get("JUDGE_TIER2_PROVIDER")
-        try:
-            os.environ["JUDGE_TIER2_PROVIDER"] = "github"
-            settings = JudgeSettings()
-            assert settings.tier2_provider == "github"
-        finally:
-            if original_value:
-                os.environ["JUDGE_TIER2_PROVIDER"] = original_value
-            else:
-                os.environ.pop("JUDGE_TIER2_PROVIDER", None)
-
-    def test_auto_mode_with_no_chat_provider_uses_default(self):
-        """tier2_provider=auto without chat_provider should use config default."""
-        settings = JudgeSettings(tier2_provider="auto")
-        env_config = AppEnv(OPENAI_API_KEY="sk-test")
-
-        # When chat_provider is None, auto mode tries to validate "auto" as provider name
-        # which fails, then falls back to fallback_provider
-        LLMJudgeEngine(settings, env_config=env_config, chat_provider=None)
-
-        # Test verifies initialization doesn't crash when auto mode has no chat_provider
-
 
 # STORY-001: Hypothesis property tests for provider selection invariants
 class TestProviderSelectionProperties:

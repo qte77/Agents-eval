@@ -11,8 +11,6 @@ import json
 import subprocess
 from pathlib import Path
 
-import pytest
-
 
 class TestCollectCCSolo:
     """Tests for scripts/collect-cc-traces/collect-cc-solo.sh."""
@@ -103,17 +101,6 @@ class TestCollectCCSolo:
         for line in lines:
             if line.strip():  # Skip empty lines
                 json.loads(line)  # Will raise if invalid JSON
-
-    def test_validation_failure_returns_exit_code_1(self, tmp_path: Path) -> None:
-        """Script exits with code 1 when jq is not available (validation fails).
-
-        Args:
-            tmp_path: Temporary directory fixture
-        """
-        # ARRANGE - This test verifies validation logic, but requires jq absence
-        # which is hard to mock in bash. Skip for now - validation is tested
-        # indirectly by checking valid JSON output in other tests
-        pytest.skip("Validation failure hard to trigger without breaking jq dependency")
 
 
 class TestCollectCCTeams:

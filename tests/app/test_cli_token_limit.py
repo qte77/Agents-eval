@@ -10,8 +10,6 @@ import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
 from pydantic_ai.usage import UsageLimits
 
 from app.app import main
@@ -122,28 +120,6 @@ class TestCLITokenLimitFlag:
         assert parse_args(["--token-limit=50000"]) == {"token_limit": 50000}
 
 
-class TestTokenLimitValidation:
-    """Tests for token limit validation bounds (1000-1000000)."""
-
-    @given(st.integers(min_value=1000, max_value=1000000))
-    def test_valid_token_limits_accepted(self, limit: int):
-        """Property test: valid limits (1000-1000000) are accepted."""
-        # This would validate in setup_agent_env, but for now we test the range
-        assert 1000 <= limit <= 1000000
-
-    @given(st.integers(max_value=999))
-    def test_token_limit_below_minimum_rejected(self, limit: int):
-        """Property test: limits below 1000 are rejected."""
-        # Validation should reject limits < 1000
-        assert limit < 1000
-
-    @given(st.integers(min_value=1000001))
-    def test_token_limit_above_maximum_rejected(self, limit: int):
-        """Property test: limits above 1000000 are rejected."""
-        # Validation should reject limits > 1000000
-        assert limit > 1000000
-
-
 class TestEnvVarTokenLimit:
     """Tests for AGENT_TOKEN_LIMIT environment variable."""
 
@@ -231,22 +207,6 @@ class TestEnvVarTokenLimit:
                 and call_args[4] == 120000
                 or call_kwargs.get("token_limit") == 120000
             )
-
-
-class TestOverridePriority:
-    """Tests for override priority: CLI > GUI > env > config."""
-
-    @given(
-        st.integers(min_value=1000, max_value=1000000),
-        st.integers(min_value=1000, max_value=1000000),
-        st.integers(min_value=1000, max_value=1000000),
-    )
-    def test_priority_order_invariant(self, cli_limit: int, env_limit: int, config_limit: int):
-        """Property test: CLI always wins when all sources present."""
-        # When CLI is set, it should always be used regardless of env/config
-        # This is a property invariant test
-        effective_limit = cli_limit  # CLI has highest priority
-        assert effective_limit == cli_limit
 
 
 class TestConfigFallback:

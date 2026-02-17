@@ -5,7 +5,6 @@ Tests for model creation with different providers, error handling,
 and configuration validation.
 """
 
-import pytest
 from pydantic_ai.models.openai import OpenAIChatModel
 
 from app.data_models.app_models import EndpointConfig, ProviderConfig

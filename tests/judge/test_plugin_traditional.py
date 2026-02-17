@@ -160,18 +160,6 @@ class TestTraditionalMetricsPlugin:
         result = plugin.evaluate(sample_input, context=context)
         assert isinstance(result, Tier1Result)
 
-    def test_existing_engine_tests_still_pass(self):
-        """Given existing TraditionalMetricsEngine tests, they should all still pass.
-
-        This is a placeholder to ensure we run the full existing test suite.
-        The actual tests are in tests/evals/test_traditional_metrics.py.
-        """
-        # This test passes if we can import the module without breaking existing functionality
-        from app.judge.traditional_metrics import TraditionalMetricsEngine
-
-        engine = TraditionalMetricsEngine()
-        assert engine is not None
-
 
 class TestTraditionalMetricsPluginIntegration:
     """Integration tests for TraditionalMetricsPlugin with real engine."""

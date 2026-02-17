@@ -154,27 +154,3 @@ class TestJudgeAgentPerformanceMonitoring:
 
         stats = agent.get_execution_stats()
         assert "bottlenecks_detected" in stats
-
-
-class TestJudgeAgentBackwardCompatibility:
-    """Test JudgeAgent maintains backward compatibility."""
-
-    def test_judge_agent_has_same_interface_as_pipeline(self):
-        """JudgeAgent exposes same interface as EvaluationPipeline."""
-        # This will fail until JudgeAgent is implemented
-        agent = JudgeAgent()
-
-        # Should have same methods as EvaluationPipeline
-        assert hasattr(agent, "evaluate_comprehensive")
-        assert hasattr(agent, "get_execution_stats")
-        assert hasattr(agent, "enabled_tiers")
-        assert hasattr(agent, "performance_targets")
-
-    def test_evaluation_pipeline_re_export_works(self):
-        """EvaluationPipeline re-export from evals module works."""
-        # This will fail until re-export shim is implemented
-        from app.judge.evaluation_pipeline import EvaluationPipeline
-
-        # Should be able to import and use EvaluationPipeline
-        pipeline = EvaluationPipeline()
-        assert pipeline is not None

@@ -8,11 +8,11 @@ Tests target critical untested functions identified in Sprint 5 MAESTRO review:
 """
 
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
-from app.data_models.peerread_models import GeneratedReview, PeerReadPaper, PeerReadReview
+from app.data_models.peerread_models import PeerReadPaper
 
 
 class TestReadPaperPdf:

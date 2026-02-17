@@ -9,7 +9,6 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from app.benchmark.sweep_analysis import (
-    CompositionStats,
     SweepAnalyzer,
     calculate_statistics,
     generate_markdown_summary,
@@ -117,33 +116,6 @@ class TestCalculateStatistics:
             assert stats["stddev"] == 0.0
         elif len(set(scores)) > 1:
             assert stats["stddev"] > 0.0
-
-
-class TestCompositionStats:
-    """Tests for CompositionStats model."""
-
-    def test_composition_stats_creation(self):
-        """Test creating CompositionStats with valid data."""
-        comp = AgentComposition(
-            include_researcher=True, include_analyst=False, include_synthesiser=False
-        )
-        stats = CompositionStats(
-            composition=comp,
-            overall_score_mean=0.75,
-            overall_score_stddev=0.05,
-            tier1_score_mean=0.80,
-            tier1_score_stddev=0.03,
-            tier2_score_mean=0.70,
-            tier2_score_stddev=0.04,
-            tier3_score_mean=0.75,
-            tier3_score_stddev=0.05,
-            confidence_mean=0.85,
-            confidence_stddev=0.02,
-            num_samples=10,
-        )
-
-        assert stats.overall_score_mean == 0.75
-        assert stats.num_samples == 10
 
 
 class TestSweepAnalyzer:

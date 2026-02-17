@@ -10,7 +10,6 @@ Tests target critical untested functions identified in Sprint 5 MAESTRO review:
 from unittest.mock import Mock, patch
 
 import pytest
-from pydantic_ai import Agent
 
 from app.data_models.app_models import EndpointConfig, ModelDict, ProviderConfig
 
@@ -131,7 +130,7 @@ class TestAgentFactoryModelCaching:
             mock_create.return_value = mock_models
 
             # Act
-            models = factory.get_models(include_researcher=True)
+            factory.get_models(include_researcher=True)
 
             # Assert
             mock_create.assert_called_once_with(

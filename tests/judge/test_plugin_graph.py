@@ -165,20 +165,6 @@ class TestGraphEvaluatorPlugin:
         result = plugin.evaluate(sample_input, context=context)
         assert isinstance(result, Tier3Result)
 
-    def test_existing_engine_tests_still_pass(self):
-        """Given existing GraphAnalysisEngine tests, they should all still pass.
-
-        This is a placeholder to ensure we run the full existing test suite.
-        The actual tests are in tests/evals/test_graph_analysis.py.
-        """
-        # This test passes if we can import the module without breaking existing functionality
-        from app.judge.graph_analysis import GraphAnalysisEngine
-        from app.judge.settings import JudgeSettings
-
-        settings = JudgeSettings()
-        engine = GraphAnalysisEngine(settings)
-        assert engine is not None
-
 
 class TestGraphEvaluatorPluginIntegration:
     """Integration tests for GraphEvaluatorPlugin with real engine."""

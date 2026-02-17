@@ -122,5 +122,3 @@ class TestTraceStoreContextManager:
             # Should not raise any exceptions
         # Store should still be accessible after context exit
         assert len(store.get_all_traces()) == 1
-
-

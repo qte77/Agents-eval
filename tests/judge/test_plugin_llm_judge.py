@@ -220,19 +220,3 @@ class TestLLMJudgePlugin:
 
         assert context["tier2_model_used"] == "openai/gpt-4o-mini"
         assert context["tier2_fallback_used"] is True
-
-    def test_existing_engine_tests_still_pass(self):
-        """Given existing LLMJudgeEngine tests, they should all still pass.
-
-        This is a placeholder to ensure we run the full existing test suite.
-        The actual tests are in tests/evals/test_llm_evaluation_managers.py.
-        """
-        # This test passes if we can import the module without breaking existing functionality
-        from app.judge.llm_evaluation_managers import LLMJudgeEngine
-
-        # Basic instantiation test
-        from app.judge.settings import JudgeSettings
-
-        settings = JudgeSettings()
-        engine = LLMJudgeEngine(settings)
-        assert engine is not None

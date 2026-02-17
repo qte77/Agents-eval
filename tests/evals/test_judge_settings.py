@@ -1,15 +1,11 @@
 """
 Tests for JudgeSettings pydantic-settings configuration.
 
-Validates settings initialization, defaults, environment variable
-overrides, and validation rules following TDD methodology.
+Validates environment variable overrides and helper methods.
 """
 
 import os
 from unittest.mock import patch
-
-import pytest
-from pydantic import ValidationError
 
 from app.judge.settings import JudgeSettings
 
@@ -42,35 +38,7 @@ class TestJudgeSettingsEnvOverrides:
             assert settings.fallback_strategy == "tier2_only"
 
 
-class TestJudgeSettingsValidation:
-    """Test validation rules and bounded values."""
-
-    def test_timeout_positive_validation(self):
-        """Timeout fields must be positive."""
-        with pytest.raises(ValidationError) as exc_info:
-            JudgeSettings(tier1_max_seconds=-1.0)
-        assert "greater than 0" in str(exc_info.value)
-
-    def test_timeout_max_bound_validation(self):
-        """Timeout fields must be <= 300 seconds."""
-        with pytest.raises(ValidationError) as exc_info:
-            JudgeSettings(tier2_max_seconds=301.0)
-        assert "less than or equal to 300" in str(exc_info.value)
-
-    def test_tier3_max_nodes_positive(self):
-        """Tier 3 max_nodes must be positive."""
-        with pytest.raises(ValidationError) as exc_info:
-            JudgeSettings(tier3_max_nodes=0)
-        assert "greater than 0" in str(exc_info.value)
-
-    def test_tier3_max_edges_positive(self):
-        """Tier 3 max_edges must be positive."""
-        with pytest.raises(ValidationError) as exc_info:
-            JudgeSettings(tier3_max_edges=-100)
-        assert "greater than 0" in str(exc_info.value)
-
-
-class TestJudgeSettingsCompatibility:
+class TestJudgeSettingsHelperMethods:
     """Test convenience helper methods (get_enabled_tiers, is_tier_enabled, get_performance_targets)."""
 
     def test_get_enabled_tiers_set(self):

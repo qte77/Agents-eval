@@ -5,8 +5,9 @@ Tests for agent creation with various configurations, toggle combinations,
 and system prompt construction.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 from pydantic_ai import Agent
 
 from app.agents.agent_factories import AgentFactory
@@ -232,19 +233,3 @@ class TestAgentFactoryWithoutConfig:
         assert models.model_researcher is None
         assert models.model_analyst is None
         assert models.model_synthesiser is None
-
-
-class TestEvaluationAgentCreation:
-    """Test evaluation agent creation with different configurations."""
-
-    # Tests removed due to logfire instrumentation side effects that change
-    # system_prompt attribute access. The functions are tested via integration tests.
-    pass
-
-
-class TestSimpleAgentCreation:
-    """Test simple agent creation utility."""
-
-    # Tests removed due to logfire instrumentation side effects that change
-    # system_prompt attribute access. The functions are tested via integration tests.
-    pass

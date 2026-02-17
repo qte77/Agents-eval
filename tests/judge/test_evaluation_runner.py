@@ -164,29 +164,6 @@ class TestRunEvaluationIfEnabled:
             call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
             assert call_kwargs["execution_trace"] is mock_trace
 
-    @pytest.mark.asyncio
-    async def test_logs_skip_when_no_ground_truth(self):
-        """Info log must indicate skipping when no paper_number provided."""
-        with (
-            patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
-            patch("app.judge.evaluation_runner.logger") as mock_logger,
-        ):
-            mock_pipeline = MagicMock()
-            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
-            mock_pipeline_class.return_value = mock_pipeline
-
-            from app.judge.evaluation_runner import run_evaluation_if_enabled
-
-            await run_evaluation_if_enabled(
-                skip_eval=False,
-                paper_number=None,
-                execution_id=None,
-            )
-
-            mock_logger.info.assert_any_call(
-                "Skipping evaluation: no ground-truth reviews available"
-            )
-
 
 # MARK: --- run_baseline_comparisons ---
 

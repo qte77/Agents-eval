@@ -80,70 +80,6 @@ async def test_trace_execution_started_for_each_run():
 
 
 @pytest.mark.asyncio
-async def test_agent_interaction_logged_on_delegation():
-    """Test that agent-to-agent delegations are logged via trace_collector."""
-    with (
-        patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
-    ):
-        mock_collector = MagicMock()
-        mock_get_collector.return_value = mock_collector
-
-        from pydantic_ai import Agent
-
-        from app.agents.agent_system import _add_research_tool
-
-        # Create mock agents
-        manager_agent = Agent(model="test", output_type=str)
-        research_agent = MagicMock()
-        research_agent.run = AsyncMock(return_value=MagicMock(output="test result"))
-
-        # Add research tool (which should include trace logging)
-        from app.data_models.app_models import ResearchResult
-
-        _add_research_tool(manager_agent, research_agent, ResearchResult)
-
-        # Simulate delegation by calling the tool
-        # Note: This test will fail initially because trace logging isn't implemented yet
-        # When implemented, we expect log_agent_interaction to be called
-
-        # Verify log_agent_interaction would be called during delegation
-        # This assertion will fail until implementation is complete
-        assert hasattr(mock_collector, "log_agent_interaction"), (
-            "TraceCollector should have log_agent_interaction method"
-        )
-
-
-@pytest.mark.asyncio
-async def test_tool_call_logging_during_delegation():
-    """Test that tool calls are logged via trace_collector.log_tool_call."""
-    with (
-        patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
-    ):
-        mock_collector = MagicMock()
-        mock_get_collector.return_value = mock_collector
-
-        from pydantic_ai import Agent
-
-        from app.agents.agent_system import _add_research_tool
-
-        # Create mock agents
-        manager_agent = Agent(model="test", output_type=str)
-        research_agent = MagicMock()
-        research_agent.run = AsyncMock(return_value=MagicMock(output="test result"))
-
-        # Add research tool
-        from app.data_models.app_models import ResearchResult
-
-        _add_research_tool(manager_agent, research_agent, ResearchResult)
-
-        # Verify log_tool_call method exists on collector
-        # This assertion will fail until implementation is complete
-        assert hasattr(mock_collector, "log_tool_call"), (
-            "TraceCollector should have log_tool_call method"
-        )
-
-
-@pytest.mark.asyncio
 async def test_timing_data_captured_during_execution():
     """Test that timing data is captured for each delegation step."""
     with (
@@ -279,33 +215,3 @@ async def test_graph_trace_data_constructed_via_model_validate():
         assert result.execution_id == "test_123"
         assert len(result.agent_interactions) == 1
         assert len(result.tool_calls) == 1
-
-
-@pytest.mark.asyncio
-async def test_delegation_logs_interaction_with_timing():
-    """Test that delegation tools log agent interactions with timing data."""
-    # This test will fail until trace logging is added to delegation tools
-    # Expected behavior: each delegate_* function should call:
-    # trace_collector.log_agent_interaction(from_agent, to_agent, interaction_type, data)
-
-    with (
-        patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
-    ):
-        mock_collector = MagicMock()
-        mock_get_collector.return_value = mock_collector
-
-        from pydantic_ai import Agent
-
-        from app.agents.agent_system import _add_research_tool
-
-        manager_agent = Agent(model="test", output_type=str)
-        research_agent = MagicMock()
-        research_agent.run = AsyncMock(return_value=MagicMock(output="test"))
-
-        from app.data_models.app_models import ResearchResult
-
-        _add_research_tool(manager_agent, research_agent, ResearchResult)
-
-        # When implemented, this should verify that trace logging happens
-        # For now, this test documents the expected behavior
-        assert hasattr(mock_collector, "log_agent_interaction")

@@ -4,15 +4,15 @@ Test cases for agent system orchestration.
 Tests for delegation flow, usage limit enforcement, and single-agent fallback.
 """
 
-import pytest
 from unittest.mock import AsyncMock, Mock, patch
-from pydantic_ai.usage import UsageLimits
+
+import pytest
 
 from app.agents.agent_system import (
-    initialize_logfire_instrumentation_from_settings,
     _validate_model_return,
+    initialize_logfire_instrumentation_from_settings,
 )
-from app.data_models.app_models import ResearchResult, ResearchSummary
+from app.data_models.app_models import ResearchResult
 from app.judge.settings import JudgeSettings
 
 
@@ -116,24 +116,6 @@ class TestDelegationFlow:
             assert mock_manager_agent.tool.call_count >= 1
 
 
-class TestUsageLimitEnforcement:
-    """Test usage limit enforcement."""
-
-    def test_usage_limits_configured(self):
-        """Test that usage limits can be configured."""
-        limits = UsageLimits(
-            request_limit=100,
-            request_tokens_limit=10000,
-            response_tokens_limit=5000,
-            total_tokens_limit=15000,
-        )
-
-        assert limits.request_limit == 100
-        assert limits.request_tokens_limit == 10000
-        assert limits.response_tokens_limit == 5000
-        assert limits.total_tokens_limit == 15000
-
-
 class TestSingleAgentFallback:
     """Test single-agent mode fallback behavior."""
 
@@ -156,8 +138,9 @@ class TestSingleAgentFallback:
         """Test that single-agent mode doesn't add delegation tools."""
         # In single-agent mode, manager should not have delegation tools
         # This is tested by verifying tool registration when include_researcher=False
-        from app.agents.agent_system import get_manager
         from pydantic_ai.models import Model
+
+        from app.agents.agent_system import get_manager
 
         with (
             patch("app.agents.agent_system.create_agent_models") as mock_create_models,
@@ -185,22 +168,6 @@ class TestSingleAgentFallback:
 
             # Manager should be created
             assert manager is not None
-
-
-class TestAgentSystemEdgeCases:
-    """Test edge cases in agent system."""
-
-    def test_empty_query_handling(self):
-        """Test handling of empty query."""
-        # Agent system should handle empty queries gracefully
-        # This is tested at the integration level
-        pass
-
-    def test_concurrent_agent_requests(self):
-        """Test handling of concurrent agent requests."""
-        # Agent system should handle concurrent requests safely
-        # This is tested at the integration level
-        pass
 
 
 class TestResultTypeSelection:
@@ -251,15 +218,6 @@ class TestResultTypeSelection:
         assert result_type == ResearchResultSimple
 
 
-class TestAgentCreation:
-    """Test agent creation utility functions."""
-
-    # Tests removed due to logfire instrumentation side effects that change
-    # system_prompt attribute access and tool validation complexity.
-    # The functions are tested via integration tests.
-    pass
-
-
 class TestDelegationToolAddition:
     """Test delegation tool addition functions."""
 
@@ -269,7 +227,7 @@ class TestDelegationToolAddition:
         from unittest.mock import AsyncMock, Mock, patch
 
         from app.agents.agent_system import _add_tools_to_manager_agent
-        from app.data_models.app_models import ResearchResult, ResearchSummary
+        from app.data_models.app_models import ResearchResult
 
         # Arrange
         manager = Mock()
@@ -301,32 +259,6 @@ class TestDelegationToolAddition:
     # AnalysisResult. The delegation flow is tested via the researcher-only test
     # and integration tests.
     pass
-
-
-class TestErrorHandling:
-    """Test error handling in agent system."""
-
-    def test_model_http_error_handling(self):
-        """Test handling of HTTP errors from model."""
-        # Agent system should handle ModelHTTPError gracefully
-        from pydantic_ai.exceptions import ModelHTTPError
-
-        # Error handling is done at the calling code level
-        # This test verifies the error can be caught
-        try:
-            raise ModelHTTPError("Test error", None)
-        except ModelHTTPError as e:
-            assert "Test error" in str(e)
-
-    def test_usage_limit_exceeded_handling(self):
-        """Test handling of usage limit exceeded."""
-        from pydantic_ai.exceptions import UsageLimitExceeded
-
-        # Error handling is done at the calling code level
-        try:
-            raise UsageLimitExceeded("Usage limit exceeded")
-        except UsageLimitExceeded as e:
-            assert "exceeded" in str(e).lower()
 
 
 class TestTraceCollection:

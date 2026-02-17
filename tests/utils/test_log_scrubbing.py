@@ -161,37 +161,3 @@ class TestLogfireScrubbingPatterns:
             assert any(
                 key in patterns for key in ["callback", "extra", "patterns", "redaction_text"]
             )
-
-
-class TestLoguruIntegration:
-    """Test Loguru filter integration with scrubbing."""
-
-    def test_loguru_sink_configured_with_filter(self):
-        """Loguru sinks should be configured with scrubbing filter."""
-        # This will be verified during implementation
-        # Check that log.py and common/log.py have filter parameter
-        from app.common import log as common_log
-        from app.utils import log
-
-        # Both modules should have logger.add calls with filter
-        # We'll verify this by checking the source or runtime state
-        assert hasattr(log, "logger")
-        assert hasattr(common_log, "logger")
-
-
-class TestProviderLoggingLevel:
-    """Test that setup_llm_environment logs at DEBUG level."""
-
-    def test_setup_llm_environment_uses_debug_level(self):
-        """setup_llm_environment should log at DEBUG, not INFO."""
-        import inspect
-
-        from app.llms.providers import setup_llm_environment
-
-        # Check source code for logger.debug instead of logger.info
-        source = inspect.getsource(setup_llm_environment)
-
-        # Should use logger.debug for env var logging
-        assert "logger.debug" in source or "DEBUG" in source
-        # Should not use logger.info for sensitive env var names
-        # (Note: may still use info for other non-sensitive messages)

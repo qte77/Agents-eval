@@ -162,26 +162,6 @@ class TestUnauthorizedToolRegistration:
         assert agent2_tool_count == 0  # No tool bleed between agents
 
 
-class TestToolRegistrationAuditTrail:
-    """Test tool registration leaves audit trail."""
-
-    def test_tool_registration_logged(self, caplog):
-        """Tool registration should be logged for audit purposes."""
-        agent: Agent[None, BaseModel] = Agent(TestModel())
-
-        # Clear any existing logs
-        caplog.clear()
-
-        # Register tools
-        add_peerread_tools_to_agent(agent, agent_id="audit-test")
-
-        # Check if registration was logged (depends on implementation)
-        # This test may need adjustment based on actual logging behavior
-        # May or may not log registration (implementation-dependent)
-        # If logged, should contain agent_id or tool names in log records
-        # This is a best-practice test rather than strict requirement
-
-
 class TestToolIsolation:
     """Test tools are isolated per agent instance."""
 

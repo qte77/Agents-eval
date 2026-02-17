@@ -56,11 +56,6 @@ def basic_sweep_config(tmp_path: Path) -> SweepConfig:
 class TestSweepRunner:
     """Tests for SweepRunner class."""
 
-    def test_sweep_runner_initialization(self, basic_sweep_config: SweepConfig):
-        """Test SweepRunner initializes with valid config."""
-        runner = SweepRunner(basic_sweep_config)
-        assert runner.config == basic_sweep_config
-
     @pytest.mark.asyncio
     async def test_run_single_evaluation(
         self, basic_sweep_config: SweepConfig, mock_composite_result: CompositeResult

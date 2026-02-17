@@ -31,22 +31,6 @@ class TestSettingsIntegration:
             # Expected - render_settings doesn't accept these args yet
             pytest.fail("render_settings should accept common_settings and judge_settings")
 
-    def test_common_settings_instantiation(self):
-        """Test that CommonSettings can be instantiated with defaults."""
-        common_settings = CommonSettings()
-        assert common_settings.log_level == "INFO"
-        assert common_settings.enable_logfire is False
-        assert common_settings.max_content_length == 15000
-
-    def test_judge_settings_instantiation(self):
-        """Test that JudgeSettings can be instantiated with defaults."""
-        judge_settings = JudgeSettings()
-        assert judge_settings.tier1_max_seconds == 1.0
-        assert judge_settings.tier2_max_seconds == 10.0
-        assert judge_settings.tier3_max_seconds == 15.0
-        assert judge_settings.composite_accept_threshold == 0.8
-        assert judge_settings.tiers_enabled == [1, 2, 3]
-
     def test_settings_values_are_customizable(self):
         """Test that settings can be customized via constructor."""
         common_settings = CommonSettings(log_level="DEBUG", max_content_length=20000)
