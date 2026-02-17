@@ -13,6 +13,7 @@ end box
 box "Tools" #LightGreen
     participant "DuckDuckGo Search" as DDG
     participant "PeerRead Tools" as PeerRead
+    participant "Exa / Tavily" as WebSearch
 end box
 
 box "Data Storage" #LightYellow
@@ -20,67 +21,53 @@ box "Data Storage" #LightYellow
     participant "Review Storage" as Reviews
 end box
 
-User -> Manager: Request task\n(e.g., paper review)
+User -> Manager: Request task\n(e.g., paper review via --paper-id)
 activate Manager
 
-Manager -> Dataset: get_peerread_paper(paper_id)
-activate Dataset
-Dataset --> Manager: PeerReadPaper
-deactivate Dataset
-
-Manager -> Dataset: query_peerread_papers(venue, min_reviews)
-activate Dataset
-Dataset --> Manager: List[PeerReadPaper]
-deactivate Dataset
-
 note right of Manager
-  Manager can generate review templates
-  and save reviews using PeerRead tools
+  Manager orchestrates agents.
+  PeerRead tools are on Researcher
+  (Sprint 5: separation of concerns).
 end note
 
-Manager -> PeerRead: generate_paper_review_content_from_template()
+Manager -> Researcher: delegate_research(query)
+activate Researcher
+
+Researcher -> PeerRead: get_peerread_paper(paper_id)
 activate PeerRead
-PeerRead --> Manager: Review template
+PeerRead -> Dataset: Load paper
+activate Dataset
+Dataset --> PeerRead: PeerReadPaper
+deactivate Dataset
+PeerRead --> Researcher: PeerReadPaper
 deactivate PeerRead
 
-Manager -> PeerRead: save_paper_review()
-activate PeerRead
-PeerRead -> Reviews: Save review to JSON file
-activate Reviews
-Reviews --> PeerRead: Confirm save
-deactivate Reviews
-PeerRead --> Manager: File path
-deactivate PeerRead
+Researcher -> DDG: duckduckgo_search_tool()
+activate DDG
+DDG --> Researcher: Search results
+deactivate DDG
+
+Researcher --> Manager: ResearchResult
+deactivate Researcher
+
+Manager -> Analyst: delegate_analysis(query)
+activate Analyst
+Analyst --> Manager: AnalysisResult
+deactivate Analyst
+
+Manager -> Synthesizer: delegate_synthesis(query)
+activate Synthesizer
+Synthesizer --> Manager: ResearchSummary
+deactivate Synthesizer
 
 Manager -> PeerRead: save_structured_review()
 activate PeerRead
-PeerRead -> Reviews: Save structured review
+PeerRead -> Reviews: Save review JSON
 activate Reviews
-Reviews --> PeerRead: Confirm save
+Reviews --> PeerRead: File path
 deactivate Reviews
 PeerRead --> Manager: File path
 deactivate PeerRead
-
-group Optional Delegation
-    Manager -> Researcher: delegate_research(query)
-    activate Researcher
-    Researcher -> DDG: duckduckgo_search_tool()
-    activate DDG
-    DDG --> Researcher: Search results
-    deactivate DDG
-    Researcher --> Manager: ResearchResult
-    deactivate Researcher
-    
-    Manager -> Analyst: delegate_analysis(query)
-    activate Analyst
-    Analyst --> Manager: AnalysisResult
-    deactivate Analyst
-    
-    Manager -> Synthesizer: delegate_synthesis(query)
-    activate Synthesizer
-    Synthesizer --> Manager: ResearchSummary
-    deactivate Synthesizer
-end group
 
 Manager --> User: Return result
 deactivate Manager

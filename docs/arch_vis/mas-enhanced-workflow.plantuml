@@ -35,7 +35,7 @@ deactivate Storage
 Manager --> MainApp: Return result
 deactivate Manager
 
-MainApp -> Evaluator: Evaluate review quality
+MainApp -> Evaluator: Evaluate review quality (three-tier pipeline)
 activate Evaluator
 
 Evaluator -> Loader: get_peerread_paper(paper_id)
@@ -43,10 +43,15 @@ activate Loader
 Loader --> Evaluator: PeerReadPaper with reviews
 deactivate Loader
 
-Evaluator -> Evaluator: calculate_similarity_metrics()
-Evaluator -> Evaluator: create_evaluation_result()
+Evaluator -> Evaluator: Tier 1 — Traditional Metrics\n(BLEU, ROUGE, BERTScore)
+Evaluator -> LLM: Tier 2 — LLM-as-a-Judge\n(quality assessment)
+activate LLM
+LLM --> Evaluator: Judge scores
+deactivate LLM
+Evaluator -> Evaluator: Tier 3 — Graph Analysis\n(delegation patterns, tool usage)
+Evaluator -> Evaluator: Composite Score\n(weighted tier results)
 
-Evaluator --> MainApp: Evaluation results
+Evaluator --> MainApp: CompositeResult
 deactivate Evaluator
 
 MainApp --> User: Display results
@@ -58,8 +63,9 @@ note right of Loader
 end note
 
 note right of Evaluator
-  SRP: Only responsible for evaluation metrics
-  SoC: Separated from data loading and agent execution
+  SRP: Three-tier evaluation pipeline
+  SoC: Plugin architecture (EvaluatorPlugin)
+  Judge provider independently configurable
 end note
 
 note right of Manager
