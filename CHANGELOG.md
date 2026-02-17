@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `README.md`: version badge updated to 4.0.0; Current Release reflects Sprint 6 deliverables (benchmarking, CC baseline, security, examples); Next section updated to Sprint 7 scope; Examples section added referencing `src/examples/README.md` (STORY-003)
 - `docs/roadmap.md`: Sprint 7 status updated from Active to In Progress (STORY-004)
+- `docs/architecture.md`: new Benchmarking Infrastructure (Sprint 6) section with SweepConfig/SweepRunner/SweepAnalysis modules, CC headless path, results.json/summary.md output; new Security Framework (Sprint 6) section with MAESTRO mitigations and security-advisories reference (STORY-005)
+- `docs/analysis/CC-agent-teams-orchestration.md`: approach table corrected — added Trace spans row showing OTel provides no trace spans (upstream limitation); added artifact collection column; recommendation section updated with observability strategy (STORY-005)
+- `AGENT_LEARNINGS.md`: CC OTel limitation documented — exports metrics/logs only, no trace spans; artifact collection is primary for evaluation; upstream issues #9584/#2090 referenced (STORY-005)
 
 ### Removed
 
