@@ -461,6 +461,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC comparison engine infrastruc
 - [ ] Test verifies log entries are captured and rendered incrementally (mock execution with timed log emissions)
 - [ ] Streamlit >= 1.33 confirmed in `pyproject.toml` (required for `st.fragment`)
 - [ ] PeerRead debug log noise reduced: `_create_review_from_dict` aggregates missing optional fields into one line per review instead of one line per field (e.g., `"Paper 306: 9 optional fields missing (IMPACT, SUBSTANCE, ...), using UNKNOWN"`)
+- [ ] Fix `st.text()` rendering raw Markdown: `run_app.py:235-238` uses `text()` (plain monospace) for strings containing `**bold**` markdown — replace with `st.markdown()` so formatting renders correctly. Audit other `st.text()` calls in GUI pages for same issue.
 - [ ] `make validate` passes
 
 **Technical Requirements**:
