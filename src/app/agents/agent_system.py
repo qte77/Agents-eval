@@ -550,7 +550,7 @@ async def run_manager(
         trace_collector.end_execution()
         logger.info(f"Trace collection completed for execution: {execution_id}")
 
-        return execution_id, result.data
+        return execution_id, result.output
 
     except ModelHTTPError as e:
         trace_collector.end_execution()
