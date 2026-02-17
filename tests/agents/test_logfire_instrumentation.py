@@ -315,6 +315,55 @@ def test_send_to_cloud_skips_connection_check():
         mock_logfire.configure.assert_called_once()
 
 
+def test_log_says_phoenix_when_send_to_cloud_false():
+    """Test that init log says 'Phoenix' when send_to_cloud=False."""
+    config = LogfireConfig(
+        enabled=True,
+        send_to_cloud=False,
+        phoenix_endpoint="http://localhost:6006",
+        service_name="test-service",
+    )
+
+    with (
+        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("requests.head") as mock_head,
+        patch("app.agents.logfire_instrumentation.logger") as mock_logger,
+    ):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_head.return_value = mock_response
+
+        LogfireInstrumentationManager(config)
+
+        # Find the info call that contains the initialization message
+        info_calls = [str(c) for c in mock_logger.info.call_args_list]
+        init_msg = [c for c in info_calls if "tracing initialized" in c]
+        assert len(init_msg) == 1, f"Expected 1 init log, got: {info_calls}"
+        assert "Phoenix" in init_msg[0]
+        assert "Logfire" not in init_msg[0]
+
+
+def test_log_says_logfire_when_send_to_cloud_true():
+    """Test that init log says 'Logfire' when send_to_cloud=True."""
+    config = LogfireConfig(
+        enabled=True,
+        send_to_cloud=True,
+        phoenix_endpoint="http://localhost:6006",
+        service_name="test-service",
+    )
+
+    with (
+        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("app.agents.logfire_instrumentation.logger") as mock_logger,
+    ):
+        LogfireInstrumentationManager(config)
+
+        info_calls = [str(c) for c in mock_logger.info.call_args_list]
+        init_msg = [c for c in info_calls if "tracing initialized" in c]
+        assert len(init_msg) == 1, f"Expected 1 init log, got: {info_calls}"
+        assert "Logfire" in init_msg[0]
+
+
 def test_multiple_connection_failures_single_warning():
     """Test that multiple connection failures result in single warning.
 
