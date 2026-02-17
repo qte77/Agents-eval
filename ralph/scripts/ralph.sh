@@ -109,10 +109,10 @@ get_next_story() {
     local completed=$(jq -r '[.stories[] | select(.passes == true) | .id] | @json' "$PRD_JSON")
 
     # Find first incomplete story where all depends_on are satisfied
-    jq -r --argjson done "$completed" '
+    jq -r --argjson completed "$completed" '
       .stories[]
       | select(.passes == false)
-      | select((.depends_on // []) - $done | length == 0)
+      | select((.depends_on // []) - $completed | length == 0)
       | .id
     ' "$PRD_JSON" | sed -n '1p'
 }
@@ -121,10 +121,10 @@ get_next_story() {
 get_unblocked_stories() {
     local completed=$(jq -r '[.stories[] | select(.passes == true) | .id] | @json' "$PRD_JSON")
 
-    jq -r --argjson done "$completed" '
+    jq -r --argjson completed "$completed" '
       .stories[]
       | select(.passes == false)
-      | select((.depends_on // []) - $done | length == 0)
+      | select((.depends_on // []) - $completed | length == 0)
       | .id
     ' "$PRD_JSON"
 }

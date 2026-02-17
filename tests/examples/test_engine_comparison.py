@@ -68,7 +68,7 @@ class TestCCTraceAdapterIntegration:
         (artifacts_dir / "metadata.json").write_text(json.dumps(metadata))
 
         tool_calls = [
-            {"tool": "Read", "input": {"file_path": "/tmp/test.py"}, "output": "content", "timestamp": 0.0},
+            {"tool": "Read", "input": {"file_path": str(tmp_path / "test.py")}, "output": "content", "timestamp": 0.0},
             {"tool": "Bash", "input": {"command": "ls"}, "output": "file.py", "timestamp": 1.0},
         ]
         tool_calls_text = "\n".join(json.dumps(tc) for tc in tool_calls)

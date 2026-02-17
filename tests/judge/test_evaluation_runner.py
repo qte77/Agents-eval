@@ -182,7 +182,7 @@ class TestRunBaselineComparisons:
             mock_compare.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_evaluates_solo_baseline(self):
+    async def test_evaluates_solo_baseline(self, tmp_path):
         """Solo baseline must be evaluated when cc_solo_dir is provided."""
         mock_result = CompositeResult(
             composite_score=0.7,
@@ -207,13 +207,13 @@ class TestRunBaselineComparisons:
             pipeline = MagicMock()
             pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
 
-            await run_baseline_comparisons(pipeline, None, "/tmp/solo", None, None)
+            await run_baseline_comparisons(pipeline, None, str(tmp_path / "solo"), None, None)
 
             mock_adapter_class.assert_called_once()
             assert pipeline.evaluate_comprehensive.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_handles_solo_baseline_exception_gracefully(self):
+    async def test_handles_solo_baseline_exception_gracefully(self, tmp_path):
         """Exceptions from solo baseline evaluation must be caught and logged."""
         with (
             patch(
@@ -225,7 +225,7 @@ class TestRunBaselineComparisons:
             from app.judge.evaluation_runner import run_baseline_comparisons
 
             pipeline = MagicMock()
-            await run_baseline_comparisons(pipeline, None, "/tmp/solo", None, None)
+            await run_baseline_comparisons(pipeline, None, str(tmp_path / "solo"), None, None)
 
             mock_logger.warning.assert_called_once()
             assert "parse error" in str(mock_logger.warning.call_args)

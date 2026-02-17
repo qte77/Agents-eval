@@ -147,6 +147,7 @@ updated: 2026-02-16
 - **Solution**: Always redirect `cache_dir` or any write-target path to `tmp_path` in tests that trigger file writes, even when the download itself is mocked.
 - **Example**: `downloader.cache_dir = tmp_path / "cache"` before calling `download_venue_split()`
 - **Anti-pattern**: Only mocking the network layer and assuming no disk side-effects. If the code has `mkdir` + `open()` + `write()`, those still execute against real paths.
+- **Also applies to**: Mock data strings containing `/tmp` paths (Bandit B108 flags even non-filesystem string literals). Use `str(tmp_path / "name")` in fixture data to avoid false positives.
 - **References**: `tests/data_utils/test_datasets_peerread.py:601`, `src/app/data_utils/datasets_peerread.py:468`
 
 ### CC Teams Artifacts Ephemeral in Print Mode
@@ -173,3 +174,11 @@ updated: 2026-02-16
 - **Solution**: Use separate variables for user-facing defaults and internal fallbacks. Or use `ifdef`/`ifndef` guards instead of `$(or)` when the variable has a `?=` default.
 - **Example**: Instead of `TIMEOUT := $(or $(CC_TEAMS_TIMEOUT),600)`, use `CC_TEAMS_TIMEOUT ?= 600` directly — the `?=` already provides the default.
 - **References**: `Makefile` (cc_run_solo, cc_run_teams recipes)
+
+### Shell Keyword Collision in jq Arguments (SC1010)
+
+- **Context**: Bash scripts calling `jq` with `--argjson` or `--arg`
+- **Problem**: `jq -r --argjson done "$var" '...$done...'` triggers ShellCheck SC1010 because `done` is a shell keyword. ShellCheck can't distinguish jq argument names from shell syntax.
+- **Solution**: Avoid shell keywords (`done`, `then`, `fi`, `do`, `esac`) as jq variable names. Use descriptive names matching the bash variable feeding them.
+- **Example**: `--argjson completed "$completed"` instead of `--argjson done "$completed"`
+- **References**: `ralph/scripts/ralph.sh` (`get_next_story`, `get_unblocked_stories`)

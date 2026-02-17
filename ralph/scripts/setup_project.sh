@@ -89,8 +89,6 @@ if [ -z "$PROJECT" ]; then
 	if [ -z "$PROJECT" ]; then
 		read -p "Project name (kebab-case, e.g., my-app): " PROJECT
 	fi
-else
-	PROJECT="$PROJECT"
 fi
 
 # Derive default app name from PROJECT
@@ -103,8 +101,6 @@ APP_NAME=${APP_NAME:-$PROJECT_SNAKE}
 # Get DESCRIPTION (prompt if empty)
 if [ -z "$DESCRIPTION" ]; then
 	read -p "Project description: " DESCRIPTION
-else
-	DESCRIPTION="$DESCRIPTION"
 fi
 
 # Get AUTHOR (auto-detect from org, user can override)
