@@ -554,82 +554,152 @@ class TestBasicScoring:
         scenarios = {
             "high_quality_fast": EvaluationResults(
                 tier1=Tier1Result(
-                    cosine_score=0.82, jaccard_score=0.78, semantic_score=0.85,
-                    execution_time=0.7, time_score=0.95, task_success=1.0, overall_score=0.85,
+                    cosine_score=0.82,
+                    jaccard_score=0.78,
+                    semantic_score=0.85,
+                    execution_time=0.7,
+                    time_score=0.95,
+                    task_success=1.0,
+                    overall_score=0.85,
                 ),
                 tier2=Tier2Result(
-                    technical_accuracy=0.88, constructiveness=0.85, clarity=0.86,
-                    planning_rationality=0.87, overall_score=0.87,
-                    model_used="gpt-4o-mini", api_cost=0.02, fallback_used=False,
+                    technical_accuracy=0.88,
+                    constructiveness=0.85,
+                    clarity=0.86,
+                    planning_rationality=0.87,
+                    overall_score=0.87,
+                    model_used="gpt-4o-mini",
+                    api_cost=0.02,
+                    fallback_used=False,
                 ),
                 tier3=Tier3Result(
-                    coordination_centrality=0.89, tool_selection_accuracy=0.86,
-                    communication_overhead=0.82, path_convergence=0.84,
-                    task_distribution_balance=0.88, overall_score=0.86, graph_complexity=12,
+                    coordination_centrality=0.89,
+                    tool_selection_accuracy=0.86,
+                    communication_overhead=0.82,
+                    path_convergence=0.84,
+                    task_distribution_balance=0.88,
+                    overall_score=0.86,
+                    graph_complexity=12,
                 ),
             ),
             "high_quality_slow": EvaluationResults(
                 tier1=Tier1Result(
-                    cosine_score=0.84, jaccard_score=0.81, semantic_score=0.87,
-                    execution_time=2.8, time_score=0.55, task_success=1.0, overall_score=0.84,
+                    cosine_score=0.84,
+                    jaccard_score=0.81,
+                    semantic_score=0.87,
+                    execution_time=2.8,
+                    time_score=0.55,
+                    task_success=1.0,
+                    overall_score=0.84,
                 ),
                 tier2=Tier2Result(
-                    technical_accuracy=0.91, constructiveness=0.89, clarity=0.88,
-                    planning_rationality=0.92, overall_score=0.91,
-                    model_used="gpt-4o-mini", api_cost=0.04, fallback_used=False,
+                    technical_accuracy=0.91,
+                    constructiveness=0.89,
+                    clarity=0.88,
+                    planning_rationality=0.92,
+                    overall_score=0.91,
+                    model_used="gpt-4o-mini",
+                    api_cost=0.04,
+                    fallback_used=False,
                 ),
                 tier3=Tier3Result(
-                    coordination_centrality=0.73, tool_selection_accuracy=0.68,
-                    communication_overhead=0.65, path_convergence=0.71,
-                    task_distribution_balance=0.75, overall_score=0.70, graph_complexity=45,
+                    coordination_centrality=0.73,
+                    tool_selection_accuracy=0.68,
+                    communication_overhead=0.65,
+                    path_convergence=0.71,
+                    task_distribution_balance=0.75,
+                    overall_score=0.70,
+                    graph_complexity=45,
                 ),
             ),
             "low_quality_fast": EvaluationResults(
                 tier1=Tier1Result(
-                    cosine_score=0.29, jaccard_score=0.27, semantic_score=0.32,
-                    execution_time=0.4, time_score=0.92, task_success=0.0, overall_score=0.30,
+                    cosine_score=0.29,
+                    jaccard_score=0.27,
+                    semantic_score=0.32,
+                    execution_time=0.4,
+                    time_score=0.92,
+                    task_success=0.0,
+                    overall_score=0.30,
                 ),
                 tier2=Tier2Result(
-                    technical_accuracy=0.35, constructiveness=0.31, clarity=0.33,
-                    planning_rationality=0.28, overall_score=0.31,
-                    model_used="gpt-4o-mini", api_cost=0.01, fallback_used=False,
+                    technical_accuracy=0.35,
+                    constructiveness=0.31,
+                    clarity=0.33,
+                    planning_rationality=0.28,
+                    overall_score=0.31,
+                    model_used="gpt-4o-mini",
+                    api_cost=0.01,
+                    fallback_used=False,
                 ),
                 tier3=Tier3Result(
-                    coordination_centrality=0.22, tool_selection_accuracy=0.25,
-                    communication_overhead=0.20, path_convergence=0.19,
-                    task_distribution_balance=0.24, overall_score=0.22, graph_complexity=4,
+                    coordination_centrality=0.22,
+                    tool_selection_accuracy=0.25,
+                    communication_overhead=0.20,
+                    path_convergence=0.19,
+                    task_distribution_balance=0.24,
+                    overall_score=0.22,
+                    graph_complexity=4,
                 ),
             ),
             "low_quality_slow": EvaluationResults(
                 tier1=Tier1Result(
-                    cosine_score=0.25, jaccard_score=0.23, semantic_score=0.28,
-                    execution_time=3.2, time_score=0.15, task_success=0.0, overall_score=0.24,
+                    cosine_score=0.25,
+                    jaccard_score=0.23,
+                    semantic_score=0.28,
+                    execution_time=3.2,
+                    time_score=0.15,
+                    task_success=0.0,
+                    overall_score=0.24,
                 ),
                 tier2=Tier2Result(
-                    technical_accuracy=0.29, constructiveness=0.26, clarity=0.27,
-                    planning_rationality=0.22, overall_score=0.26,
-                    model_used="gpt-4o-mini", api_cost=0.04, fallback_used=False,
+                    technical_accuracy=0.29,
+                    constructiveness=0.26,
+                    clarity=0.27,
+                    planning_rationality=0.22,
+                    overall_score=0.26,
+                    model_used="gpt-4o-mini",
+                    api_cost=0.04,
+                    fallback_used=False,
                 ),
                 tier3=Tier3Result(
-                    coordination_centrality=0.18, tool_selection_accuracy=0.15,
-                    communication_overhead=0.12, path_convergence=0.14,
-                    task_distribution_balance=0.17, overall_score=0.15, graph_complexity=28,
+                    coordination_centrality=0.18,
+                    tool_selection_accuracy=0.15,
+                    communication_overhead=0.12,
+                    path_convergence=0.14,
+                    task_distribution_balance=0.17,
+                    overall_score=0.15,
+                    graph_complexity=28,
                 ),
             ),
             "mixed_performance": EvaluationResults(
                 tier1=Tier1Result(
-                    cosine_score=0.58, jaccard_score=0.61, semantic_score=0.64,
-                    execution_time=1.8, time_score=0.70, task_success=1.0, overall_score=0.62,
+                    cosine_score=0.58,
+                    jaccard_score=0.61,
+                    semantic_score=0.64,
+                    execution_time=1.8,
+                    time_score=0.70,
+                    task_success=1.0,
+                    overall_score=0.62,
                 ),
                 tier2=Tier2Result(
-                    technical_accuracy=0.52, constructiveness=0.67, clarity=0.60,
-                    planning_rationality=0.59, overall_score=0.59,
-                    model_used="gpt-4o-mini", api_cost=0.03, fallback_used=False,
+                    technical_accuracy=0.52,
+                    constructiveness=0.67,
+                    clarity=0.60,
+                    planning_rationality=0.59,
+                    overall_score=0.59,
+                    model_used="gpt-4o-mini",
+                    api_cost=0.03,
+                    fallback_used=False,
                 ),
                 tier3=Tier3Result(
-                    coordination_centrality=0.48, tool_selection_accuracy=0.71,
-                    communication_overhead=0.55, path_convergence=0.55,
-                    task_distribution_balance=0.62, overall_score=0.58, graph_complexity=19,
+                    coordination_centrality=0.48,
+                    tool_selection_accuracy=0.71,
+                    communication_overhead=0.55,
+                    path_convergence=0.55,
+                    task_distribution_balance=0.62,
+                    overall_score=0.58,
+                    graph_complexity=19,
                 ),
             ),
         }
@@ -665,9 +735,7 @@ class TestBasicScoring:
             # Act
             actual = composite_scorer.map_to_recommendation(score)
             # Assert
-            assert actual == expected, (
-                f"Score {score} should map to '{expected}', got '{actual}'"
-            )
+            assert actual == expected, f"Score {score} should map to '{expected}', got '{actual}'"
 
     def test_quality_outweighs_speed(self, composite_scorer):
         """High quality slow execution should outscore low quality fast execution.
@@ -679,34 +747,62 @@ class TestBasicScoring:
         # Arrange
         high_quality_slow = EvaluationResults(
             tier1=Tier1Result(
-                cosine_score=0.84, jaccard_score=0.81, semantic_score=0.87,
-                execution_time=2.8, time_score=0.55, task_success=1.0, overall_score=0.84,
+                cosine_score=0.84,
+                jaccard_score=0.81,
+                semantic_score=0.87,
+                execution_time=2.8,
+                time_score=0.55,
+                task_success=1.0,
+                overall_score=0.84,
             ),
             tier2=Tier2Result(
-                technical_accuracy=0.91, constructiveness=0.89, clarity=0.88,
-                planning_rationality=0.92, overall_score=0.91,
-                model_used="gpt-4o-mini", api_cost=0.04, fallback_used=False,
+                technical_accuracy=0.91,
+                constructiveness=0.89,
+                clarity=0.88,
+                planning_rationality=0.92,
+                overall_score=0.91,
+                model_used="gpt-4o-mini",
+                api_cost=0.04,
+                fallback_used=False,
             ),
             tier3=Tier3Result(
-                coordination_centrality=0.73, tool_selection_accuracy=0.68,
-                communication_overhead=0.65, path_convergence=0.71,
-                task_distribution_balance=0.75, overall_score=0.70, graph_complexity=45,
+                coordination_centrality=0.73,
+                tool_selection_accuracy=0.68,
+                communication_overhead=0.65,
+                path_convergence=0.71,
+                task_distribution_balance=0.75,
+                overall_score=0.70,
+                graph_complexity=45,
             ),
         )
         low_quality_fast = EvaluationResults(
             tier1=Tier1Result(
-                cosine_score=0.29, jaccard_score=0.27, semantic_score=0.32,
-                execution_time=0.4, time_score=0.92, task_success=0.0, overall_score=0.30,
+                cosine_score=0.29,
+                jaccard_score=0.27,
+                semantic_score=0.32,
+                execution_time=0.4,
+                time_score=0.92,
+                task_success=0.0,
+                overall_score=0.30,
             ),
             tier2=Tier2Result(
-                technical_accuracy=0.35, constructiveness=0.31, clarity=0.33,
-                planning_rationality=0.28, overall_score=0.31,
-                model_used="gpt-4o-mini", api_cost=0.01, fallback_used=False,
+                technical_accuracy=0.35,
+                constructiveness=0.31,
+                clarity=0.33,
+                planning_rationality=0.28,
+                overall_score=0.31,
+                model_used="gpt-4o-mini",
+                api_cost=0.01,
+                fallback_used=False,
             ),
             tier3=Tier3Result(
-                coordination_centrality=0.22, tool_selection_accuracy=0.25,
-                communication_overhead=0.20, path_convergence=0.19,
-                task_distribution_balance=0.24, overall_score=0.22, graph_complexity=4,
+                coordination_centrality=0.22,
+                tool_selection_accuracy=0.25,
+                communication_overhead=0.20,
+                path_convergence=0.19,
+                task_distribution_balance=0.24,
+                overall_score=0.22,
+                graph_complexity=4,
             ),
         )
         # Act
@@ -803,23 +899,32 @@ class TestWeightRedistribution:
 
             return EvaluationResults(
                 tier1=Tier1Result(
-                    cosine_score=tier1_overall, jaccard_score=tier1_overall,
-                    semantic_score=tier1_overall, execution_time=1.0,
+                    cosine_score=tier1_overall,
+                    jaccard_score=tier1_overall,
+                    semantic_score=tier1_overall,
+                    execution_time=1.0,
                     time_score=0.9 if dominant == "similarity" else base,
                     task_success=1.0 if dominant == "similarity" else 0.0,
                     overall_score=tier1_overall,
                 ),
                 tier2=Tier2Result(
-                    technical_accuracy=tier2_overall, constructiveness=tier2_overall,
+                    technical_accuracy=tier2_overall,
+                    constructiveness=tier2_overall,
                     clarity=tier2_overall,
                     planning_rationality=high if dominant == "planning" else base,
                     overall_score=tier2_overall,
-                    model_used="gpt-4o-mini", api_cost=0.02, fallback_used=False,
+                    model_used="gpt-4o-mini",
+                    api_cost=0.02,
+                    fallback_used=False,
                 ),
                 tier3=Tier3Result(
-                    coordination_centrality=tier3_coord, tool_selection_accuracy=tier3_tool,
-                    communication_overhead=base, path_convergence=base,
-                    task_distribution_balance=base, overall_score=base, graph_complexity=8,
+                    coordination_centrality=tier3_coord,
+                    tool_selection_accuracy=tier3_tool,
+                    communication_overhead=base,
+                    path_convergence=base,
+                    task_distribution_balance=base,
+                    overall_score=base,
+                    graph_complexity=8,
                 ),
             )
 
@@ -853,8 +958,13 @@ class TestEdgeCases:
     def _make_tier1(**overrides: object) -> Tier1Result:
         """Create Tier1Result with defaults, applying overrides."""
         defaults: dict[str, object] = {
-            "cosine_score": 0.72, "jaccard_score": 0.68, "semantic_score": 0.75,
-            "execution_time": 1.2, "time_score": 0.85, "task_success": 1.0, "overall_score": 0.74,
+            "cosine_score": 0.72,
+            "jaccard_score": 0.68,
+            "semantic_score": 0.75,
+            "execution_time": 1.2,
+            "time_score": 0.85,
+            "task_success": 1.0,
+            "overall_score": 0.74,
         }
         defaults.update(overrides)
         return Tier1Result(**defaults)  # type: ignore[arg-type]
@@ -863,9 +973,14 @@ class TestEdgeCases:
     def _make_tier2(**overrides: object) -> Tier2Result:
         """Create Tier2Result with defaults, applying overrides."""
         defaults: dict[str, object] = {
-            "technical_accuracy": 0.78, "constructiveness": 0.73, "clarity": 0.75,
-            "planning_rationality": 0.76, "overall_score": 0.76,
-            "model_used": "gpt-4o-mini", "api_cost": 0.025, "fallback_used": False,
+            "technical_accuracy": 0.78,
+            "constructiveness": 0.73,
+            "clarity": 0.75,
+            "planning_rationality": 0.76,
+            "overall_score": 0.76,
+            "model_used": "gpt-4o-mini",
+            "api_cost": 0.025,
+            "fallback_used": False,
         }
         defaults.update(overrides)
         return Tier2Result(**defaults)  # type: ignore[arg-type]
@@ -874,9 +989,13 @@ class TestEdgeCases:
     def _make_tier3(**overrides: object) -> Tier3Result:
         """Create Tier3Result with defaults, applying overrides."""
         defaults: dict[str, object] = {
-            "coordination_centrality": 0.74, "tool_selection_accuracy": 0.71,
-            "communication_overhead": 0.70, "path_convergence": 0.69,
-            "task_distribution_balance": 0.73, "overall_score": 0.72, "graph_complexity": 15,
+            "coordination_centrality": 0.74,
+            "tool_selection_accuracy": 0.71,
+            "communication_overhead": 0.70,
+            "path_convergence": 0.69,
+            "task_distribution_balance": 0.73,
+            "overall_score": 0.72,
+            "graph_complexity": 15,
         }
         defaults.update(overrides)
         return Tier3Result(**defaults)  # type: ignore[arg-type]
@@ -908,17 +1027,29 @@ class TestEdgeCases:
         # Arrange
         evaluation = EvaluationResults(
             tier1=self._make_tier1(
-                cosine_score=0.0, jaccard_score=0.0, semantic_score=0.0,
-                time_score=0.1, task_success=0.0, overall_score=0.0, execution_time=0.1,
+                cosine_score=0.0,
+                jaccard_score=0.0,
+                semantic_score=0.0,
+                time_score=0.1,
+                task_success=0.0,
+                overall_score=0.0,
+                execution_time=0.1,
             ),
             tier2=self._make_tier2(
-                technical_accuracy=0.0, constructiveness=0.0, clarity=0.0,
-                planning_rationality=0.0, overall_score=0.0,
+                technical_accuracy=0.0,
+                constructiveness=0.0,
+                clarity=0.0,
+                planning_rationality=0.0,
+                overall_score=0.0,
             ),
             tier3=self._make_tier3(
-                coordination_centrality=0.1, tool_selection_accuracy=0.1,
-                communication_overhead=0.0, path_convergence=0.0,
-                task_distribution_balance=0.0, overall_score=0.0, graph_complexity=0,
+                coordination_centrality=0.1,
+                tool_selection_accuracy=0.1,
+                communication_overhead=0.0,
+                path_convergence=0.0,
+                task_distribution_balance=0.0,
+                overall_score=0.0,
+                graph_complexity=0,
             ),
         )
         # Act
