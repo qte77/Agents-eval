@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui sweep cc_run_solo cc_collect_teams cc_run_teams run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint writeup run_cli run_gui sweep cc_run_solo cc_collect_teams cc_run_teams run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -21,8 +21,6 @@ PLANTUML_CONTAINER := plantuml/plantuml:latest
 PLANTUML_SCRIPT := scripts/writeup/generate-plantuml-png.sh
 PANDOC_SCRIPT := scripts/writeup/run-pandoc.sh
 PDF_CONVERTER_SCRIPT := scripts/writeup/setup-pdf-converter.sh
-PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex
-PANDOC_TITLE_FILE := 01_titel_abstrakt.md
 RALPH_TIMEOUT ?=
 PHOENIX_CONTAINER_NAME := phoenix-tracing
 PHOENIX_PORT := 6006
@@ -41,6 +39,12 @@ CC_TEAMS_OUTPUT := logs/cc/teams
 CC_TIMEOUT ?= 300
 CC_TEAMS_TIMEOUT ?= 600
 CC_MODEL ?=
+# writeup
+WRITEUP_DIR ?= docs/write-up
+WRITEUP_OUTPUT ?= $(WRITEUP_DIR)/writeup.pdf
+WRITEUP_BIB ?= $(WRITEUP_DIR)/09a_bibliography.bib
+WRITEUP_PUML_DIR := docs/arch_vis
+SKIP_PUML ?=
 
 
 # MARK: setup
@@ -211,6 +215,29 @@ run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_p
 			"$(BIBLIOGRAPHY)" "$(CSL)" \
 			"$(LIST_OF_FIGURES)" "$(LIST_OF_TABLES)" "$(UNNUMBERED_TITLE)"
 	fi
+
+
+# Convenience wrapper around run_pandoc: adds PlantUML regen + writeup-specific defaults.
+# TODO: review whether this recipe violates DRY/KISS vs just calling run_pandoc directly.
+writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs-new [LANGUAGE=en-EN] [SKIP_PUML=1]
+	if [ -z "$(SKIP_PUML)" ]; then
+		echo "=== Regenerating PlantUML diagrams ==="
+		for f in $(WRITEUP_PUML_DIR)/*.plantuml $(WRITEUP_PUML_DIR)/*.puml; do
+			[ -f "$$f" ] || continue
+			echo "  Processing $$f ..."
+			$(MAKE) -s run_puml_single INPUT_FILE="$$f" STYLE="light" OUTPUT_PATH="assets/images"
+		done
+	fi
+	echo "=== Building writeup PDF ==="
+	$(MAKE) -s run_pandoc \
+		INPUT_FILES="$$(printf '%s\036' $(WRITEUP_DIR)/01_*.md $(WRITEUP_DIR)/0[2-8]_*.md $(WRITEUP_DIR)/09b_*.md $(WRITEUP_DIR)/10_*.md $(WRITEUP_DIR)/11_*.md)" \
+		OUTPUT_FILE="$(WRITEUP_OUTPUT)" \
+		BIBLIOGRAPHY="$(WRITEUP_BIB)" \
+		CSL="scripts/writeup/citation-styles/ieee.csl" \
+		LIST_OF_FIGURES="true" \
+		LIST_OF_TABLES="true" \
+		UNNUMBERED_TITLE="true"
+	echo "=== Writeup PDF: $(WRITEUP_OUTPUT) ==="
 
 
 # MARK: run markdownlint
