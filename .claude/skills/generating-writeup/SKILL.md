@@ -63,10 +63,23 @@ make run_pandoc \
   CSL="scripts/writeup/citation-styles/apa.csl"
 ```
 
+## Section Numbering (MANDATORY)
+
+**NEVER add manual section numbers to headings.** Pandoc `--number-sections`
+handles all numbering automatically.
+
+- **Wrong**: `# 2. Projektvorstellung`, `## 2.1 Motivation`, `### 2.1.1 Details`
+- **Correct**: `# Projektvorstellung`, `## Motivation`, `### Details`
+
+The `NUMBER_SECTIONS` parameter in the Makefile `writeup` recipe controls this.
+Manual numbers in markdown headings conflict with pandoc auto-numbering and
+produce duplicated numbers in the PDF output.
+
 ## Quality Checks
 
 Before completing:
 
-1. **Markdownlint** - `make run_markdownlint INPUT_FILES="docs/write-up/<topic>/*.md"`
-2. **Citation validation** - Verify all `[@key]` references exist in `.bib` file
-3. **PDF generation** - Run pandoc command above and confirm output
+1. **No manual section numbers** - Headings must not contain `N.`, `N.N`, `N.N.N` prefixes
+2. **Markdownlint** - `make run_markdownlint INPUT_FILES="docs/write-up/<topic>/*.md"`
+3. **Citation validation** - Verify all `[@key]` references exist in `.bib` file
+4. **PDF generation** - Run pandoc command above and confirm output

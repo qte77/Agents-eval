@@ -54,7 +54,8 @@ wandb/
 data/
 test_data/
 datasets/
-write-up/
+docs/write-up/
+!docs/write-up/en/
 results/sweeps/
 
 # Ralph state

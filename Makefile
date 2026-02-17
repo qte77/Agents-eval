@@ -241,6 +241,7 @@ writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs
 		BIBLIOGRAPHY="$(WRITEUP_BIB)" \
 		CSL="$(WRITEUP_CSL)" \
 		LANGUAGE="$(LANGUAGE)" \
+		NUMBER_SECTIONS="true" \
 		LIST_OF_FIGURES="true" \
 		LIST_OF_TABLES="true" \
 		UNNUMBERED_TITLE="true"
