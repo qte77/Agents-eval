@@ -64,6 +64,7 @@ PRD_JSON="ralph/docs/prd.json"
 PROGRESS_FILE="ralph/docs/progress.txt"
 PROMPT_FILE="ralph/docs/templates/prompt.md"
 MAX_RETRIES=3
+RALPH_TEAMS=${RALPH_TEAMS:-false}
 RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
 BASELINE_FILE="/tmp/claude/ralph_baseline_failures.txt"
 RETRY_CONTEXT_FILE="/tmp/claude/ralph_retry_context.txt"
@@ -114,6 +115,18 @@ get_next_story() {
       | select((.depends_on // []) - $done | length == 0)
       | .id
     ' "$PRD_JSON" | sed -n '1p'
+}
+
+# Get all unblocked incomplete story IDs (for teams mode delegation)
+get_unblocked_stories() {
+    local completed=$(jq -r '[.stories[] | select(.passes == true) | .id] | @json' "$PRD_JSON")
+
+    jq -r --argjson done "$completed" '
+      .stories[]
+      | select(.passes == false)
+      | select((.depends_on // []) - $done | length == 0)
+      | .id
+    ' "$PRD_JSON"
 }
 
 # Get story details
@@ -225,6 +238,39 @@ execute_story() {
         log_info "Retry context appended to prompt (failed check: $failed_check)"
     fi
 
+    # Teams mode: append independent stories for delegation
+    if [ "$RALPH_TEAMS" = "true" ]; then
+        local other_stories
+        other_stories=$(get_unblocked_stories | grep -v "^${story_id}$" || true)
+        if [ -n "$other_stories" ]; then
+            {
+                echo ""
+                echo "## Team Mode: Delegate Independent Stories"
+                echo "Spawn one teammate per story using the Task tool."
+                echo "Each follows TDD: RED [RED] → GREEN [GREEN] → REFACTOR [REFACTOR]."
+                echo "Skills: \`testing-python\`, \`implementing-python\`, \`reviewing-code\`."
+                echo ""
+            } >> "$iteration_prompt"
+            local sid
+            for sid in $other_stories; do
+                local sdetails
+                sdetails=$(get_story_details "$sid")
+                local stitle
+                stitle=$(echo "$sdetails" | cut -d'|' -f1)
+                local sdesc
+                sdesc=$(echo "$sdetails" | cut -d'|' -f2)
+                {
+                    echo "### $sid: $stitle"
+                    echo "$sdesc"
+                    echo ""
+                } >> "$iteration_prompt"
+            done
+            local delegate_count
+            delegate_count=$(echo "$other_stories" | wc -l)
+            log_info "Team mode: delegating $delegate_count additional story(ies)"
+        fi
+    fi
+
     # Mark log position before agent execution
     local log_start=$(wc -l < "$LOG_FILE" 2>/dev/null || echo "0")
 
@@ -328,6 +374,17 @@ check_tdd_commits() {
     fi
 
     local recent_commits=$(git log --oneline -n $new_commits)
+
+    # Teams mode: filter commits to only those for current story ID
+    if [ "$RALPH_TEAMS" = "true" ]; then
+        recent_commits=$(echo "$recent_commits" | grep "$story_id" || true)
+        new_commits=$(echo "$recent_commits" | grep -c . || true)
+        if [ "$new_commits" -eq 0 ]; then
+            log_error "No commits for $story_id in team batch"
+            return 1
+        fi
+    fi
+
     log_info "Found $new_commits new commit(s) for $story_id:"
 
     # Report detected phases with their commits
@@ -429,7 +486,7 @@ print_progress() {
 # Main loop
 main() {
     log_info "Starting Ralph Loop"
-    log_info "Configuration: MAX_ITERATIONS=$MAX_ITERATIONS, RALPH_MODEL=$RALPH_MODEL, REQUIRE_REFACTOR=$REQUIRE_REFACTOR, RALPH_BASELINE_MODE=$RALPH_BASELINE_MODE"
+    log_info "Configuration: MAX_ITERATIONS=$MAX_ITERATIONS, RALPH_MODEL=$RALPH_MODEL, REQUIRE_REFACTOR=$REQUIRE_REFACTOR, RALPH_BASELINE_MODE=$RALPH_BASELINE_MODE, RALPH_TEAMS=$RALPH_TEAMS"
     log_info "Log file: $LOG_FILE"
 
     validate_environment

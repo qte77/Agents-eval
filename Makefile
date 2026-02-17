@@ -22,6 +22,7 @@ PLANTUML_SCRIPT := scripts/writeup/generate-plantuml-png.sh
 PANDOC_SCRIPT := scripts/writeup/run-pandoc.sh
 PDF_CONVERTER_SCRIPT := scripts/writeup/setup-pdf-converter.sh
 RALPH_TIMEOUT ?=
+TEAMS ?= false
 PHOENIX_CONTAINER_NAME := phoenix-tracing
 PHOENIX_PORT := 6006
 PHOENIX_GRPC_PORT := 4317
@@ -447,10 +448,13 @@ ralph_init:  ## Initialize Ralph loop environment
 	echo "Initializing Ralph loop environment ..."
 	bash ralph/scripts/init.sh
 
-ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds)
+ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false)
 	echo "Starting Ralph loop ..."
 	$(if $(RALPH_TIMEOUT),timeout $(RALPH_TIMEOUT)) \
-		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) bash ralph/scripts/ralph.sh \
+		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) \
+		RALPH_TEAMS=$(TEAMS) \
+		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \
+		bash ralph/scripts/ralph.sh \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph loop timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
 
 ralph_stop:  ## Stop all running Ralph loops (keeps state and data)

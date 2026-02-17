@@ -30,8 +30,9 @@ while stories remain:
 **Usage:**
 
 ```bash
-make ralph_run MAX_ITERATIONS=25    # Run autonomous development
-make ralph_status                   # Check progress
+make ralph_run MAX_ITERATIONS=25              # Run autonomous development
+make ralph_run MAX_ITERATIONS=25 TEAMS=true   # Run with parallel story delegation
+make ralph_status                             # Check progress
 ```
 
 **Configuration** (environment variables):
@@ -39,6 +40,7 @@ make ralph_status                   # Check progress
 - `RALPH_MODEL` - Model selection: sonnet (default), opus, haiku
 - `MAX_ITERATIONS` - Loop limit (default: 25)
 - `REQUIRE_REFACTOR` - Enforce REFACTOR phase (default: false)
+- `TEAMS` - Enable parallel story delegation via agent teams (default: false)
 
 ## Design Principles
 
@@ -168,7 +170,9 @@ ralph/
 
 - ~~**Intermediate progress visibility**~~: **DONE** — Monitor now tails agent log output at 30s intervals with `[CC]` (magenta) prefix for agent activity and red for agent errors, alongside existing phase detection from git log.
 
-- **Agent Teams for parallel story execution**: Enable `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` so Claude can spawn a team of agents during the Ralph loop. The lead agent would orchestrate teammates, each assigned a specific unrelated story with tailored skills, instructions, and tools. Since sprint stories are already small and self-contained, the benefit over sequential execution needs validation — the main hypothesis is that independent stories (no shared files) could run in parallel while the lead coordinates commits and test validation. See [CC Agent Teams Orchestration](../docs/analysis/CC-agent-teams-orchestration.md) for architecture, limitations, and tracing.
+- **Agent Teams for parallel story execution**: Enable with `make ralph_run TEAMS=true` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`). Lead agent orchestrates teammates with skill-specific delegation. See [CC Agent Teams Orchestration](../docs/analysis/CC-agent-teams-orchestration.md) for architecture and tracing.
+  - ~~**Inter-story**~~: **DONE** — `ralph.sh` appends unblocked independent stories to the prompt; `check_tdd_commits` filters by story ID in teams mode to prevent cross-story marker false positives. Completed stories caught by existing `detect_already_complete` path.
+  - **Intra-story** (**TODO**): Multiple agents on one story (e.g., test writer + implementer). Requires shared-file coordination, merge conflict handling, and split TDD ownership. Deferred until inter-story mode is validated.
 
 - ~~**Scoped reset on red-green validation failure**~~: **DONE** — Untracked files are snapshot before story execution; on TDD failure, only story-created files are removed. Additionally, quality-failure retries skip TDD verification entirely (prior RED+GREEN already verified), and `check_tdd_commits` has a fallback that detects `refactor(` prefix when `[REFACTOR]` bracket marker is missing.
 

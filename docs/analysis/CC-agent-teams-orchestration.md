@@ -3,7 +3,7 @@ title: CC Agent Teams Orchestration
 source: https://code.claude.com/docs/en/agent-teams
 purpose: Analysis of Claude Code Agent Teams for parallel code review, cross-layer implementation, and adversarial debugging within Agents-eval.
 created: 2026-02-08
-updated: 2026-02-12
+updated: 2026-02-17
 test_run: 2026-02-11 (parallel code review with 3 teammates)
 ---
 
@@ -19,7 +19,7 @@ Coordinates multiple independent CC sessions with:
 - **Task dependency management** with automatic unblocking
 - **Quality gates** via `TeammateIdle` and `TaskCompleted` hooks
 - **Delegate mode** — restricts lead to coordination only
-- **Plan approval** — teammates must get lead sign-off before implementing
+- **Plan approval** — teammates plan in read-only mode; lead approves/rejects autonomously
 
 ### How It Works
 
@@ -37,7 +37,7 @@ Coordinates multiple independent CC sessions with:
 
 ### Delegate Mode
 
-Restricts lead to coordination-only (spawn, assign, synthesize). Blocks direct implementation.
+Restricts lead to coordination-only (spawn, assign, synthesize). Blocks direct implementation. Toggle with **Shift+Tab** after starting a team.
 
 **Use when**: Lead keeps implementing instead of delegating; 3+ teammates. **Skip when**: Task is already pure coordination; small teams.
 
@@ -63,18 +63,20 @@ Restricts lead to coordination-only (spawn, assign, synthesize). Blocks direct i
 | Cross-layer feature implementation (backend + tests) | Strong | Enforces role separation (architect/developer/reviewer) |
 | Research + competing hypotheses debugging | Strong | Adversarial debate addresses anchoring bias |
 
-**Overlaps**: Subagents for fire-and-forget work (replace only when inter-agent communication needed). Ralph loop is sequential (complementary, not competing). Skills load automatically in teammates.
+**Overlaps**: Subagents for fire-and-forget work (replace only when inter-agent communication needed). Ralph loop now supports teams mode (`make ralph_run TEAMS=true`) for inter-story parallelism. Skills load automatically in teammates.
 
 ## Key Limitations
 
-1. **No session resumption** — teammates lost on `/resume`
-2. **Task status can lag** — teammates sometimes don't mark tasks complete
-3. **No nested teams** — teammates can't spawn their own teams
-4. **One team per session**
-5. **Permissions set at spawn** — can't differentiate read-only vs write per teammate
-6. **Linear token cost** — each teammate is a separate Claude instance
-7. **Experimental, disabled by default**
-8. **Split panes require tmux or iTerm2**
+1. **No session resumption (in-process)** — `/resume` and `/rewind` do not restore in-process teammates; lead may message non-existent agents
+2. **Task status can lag** — teammates sometimes don't mark tasks complete, blocking dependents
+3. **No nested teams** — teammates can't spawn their own teams or teammates
+4. **One team per session** — clean up current team before starting a new one
+5. **Lead is fixed** — session that creates the team is lead for its lifetime; no promotion or transfer
+6. **Permissions set at spawn** — all teammates inherit lead's mode; can change individually after spawn but not at spawn time
+7. **Shutdown can be slow** — teammates finish current request/tool call before exiting
+8. **Linear token cost** — each teammate is a separate Claude instance
+9. **Experimental, disabled by default**
+10. **Split panes require tmux or iTerm2** — not supported in VS Code terminal, Windows Terminal, or Ghostty
 
 ## When to Use Each Mode
 
