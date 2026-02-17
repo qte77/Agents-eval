@@ -55,13 +55,16 @@ These are reference-quality test files:
 ### 1. `tests/judge/` — MOSTLY GOOD
 
 **DELETE (1 file, 5 tests)**:
+
 - `test_trace_store.py` — All 5 tests are unimplemented placeholders for `TraceStore`. `test_audit_refactoring_verification.py` already verifies the correct behavioral tests remain (`TestTraceStoreThreadSafety`, `TestTraceStoreContextManager`). This file is dead code.
 
 **REFACTOR (2 files, 7 tests)**:
+
 - `test_trace_storage_logging.py` (3 tests) — Mocks `logger.info` and checks message text. Should test state changes (trace file exists at path) instead of log calls.
 - `test_trace_skip_warning.py` (4 tests) — Same anti-pattern: mocks `logger.warning`. Should test skip conditions via return values or observable state.
 
 **REMOVE (4 files, 8 tests)**:
+
 - `test_judge_agent.py`: `test_judge_agent_has_same_interface_as_pipeline` (hasattr), `test_evaluation_pipeline_re_export_works` (import shim test)
 - `test_llm_evaluation_managers.py`: `test_auto_mode_with_no_chat_provider_uses_default` (no assertion), `test_tier2_provider_env_var_override_still_works` (env var override = Pydantic framework behavior)
 - `test_plugin_base.py`: `test_registry_duplicate_plugin_names_raises_error` (not critical path)
@@ -69,6 +72,7 @@ These are reference-quality test files:
 - `test_evaluation_runner.py`: `test_logs_skip_when_no_ground_truth` (tests log message text, not behavior)
 
 **COVERAGE GAPS**:
+
 1. No integration smoke test hitting real LLM API (even one `@pytest.mark.integration` test)
 2. `test_graph_builder.py` has no malformed trace data tests (missing keys, wrong types)
 3. No test for complete pipeline failure (all tiers None)
@@ -78,12 +82,14 @@ These are reference-quality test files:
 ### 2. `tests/evals/` + `tests/benchmark*/` — GOOD
 
 **SIMPLIFY (3 files, remove ~12 tests)**:
+
 - `test_judge_settings.py` (lines 20–71): Tests `BaseSettings` env var parsing and Pydantic validation — this is framework behavior, not our code. Remove `TestJudgeSettingsDefaults` and `TestJudgeSettingsValidation` classes. Keep `TestJudgeSettingsEnvOverrides` and helper method tests.
 - `test_sweep_config.py` (lines 23–142): Tests Pydantic model construction and default values. Remove these, keep `test_generates_8_compositions`, `test_all_combinations_unique`, `test_includes_all_agents_*`.
 - `test_sweep_analysis.py` (line 125–146): `test_composition_stats_creation` tests Pydantic model construction. Remove.
 - `test_sweep_runner.py` (lines 59–62): `test_sweep_runner_initialization` tests constructor field assignment. Remove.
 
 **PRODUCTION BUG (1 test needs enabling)**:
+
 - `test_traditional_metrics.py` (lines 706–741): Skipped property test discovered `cosine_score` can be `1.0000000000000002` (floating-point precision). The test is *correct* — the production code needs clamping. Fix is: clamp scores to `[0.0, 1.0]` in `traditional_metrics.py`, then enable the test. This is a next-sprint item.
 
 **COVERAGE GAPS**: None. Strong behavioral coverage including fallback policies, scoring edge cases, and integration flows.
@@ -93,16 +99,19 @@ These are reference-quality test files:
 ### 3. `tests/agents/` + `tests/tools/` + `tests/llms/` + `tests/data_*/` — GOOD WITH ISSUES
 
 **REMOVE (3 files, ~17 tests)**:
+
 - `test_trace_collection_integration.py` (7 tests): `hasattr`-only checks without behavioral assertion — `test_agent_interaction_logged_on_delegation`, `test_tool_call_logging_during_delegation`, `test_delegation_logs_interaction_with_timing`, and 4 similar.
 - `test_agent_system.py` (8 tests): Empty stubs (`"tested at integration level"`), tests for PydanticAI exception construction (library behavior, not our code), `TestAgentCreation` (empty, logfire side effects).
 - `test_agent_factories.py` (2 empty classes): `TestEvaluationAgentCreation` and `TestSimpleAgentCreation` — explicitly commented out due to logfire side effects.
 
 **REFACTOR (2 files, ~10 tests)**:
+
 - `test_trace_collection_integration.py`: 1 test checks only `call_count >= 1` — should assert trace data content.
 - `test_agent_system.py`: 2 tests check `mock.called` without verifying arguments — should verify delegation semantics.
 - `test_agent_factories.py`: 4 tests verify only `isinstance(agent, Agent)` — should verify agent configuration (tools, model, system prompt).
 
 **COVERAGE GAPS**:
+
 1. Agent delegation logic: tools registered but actual delegation calls with correct arguments not verified
 2. Agent prompt configuration not testable due to logfire instrumentation side effects — document this limitation
 3. Trace data content validation: tests verify logging happens but not trace data structure
@@ -112,6 +121,7 @@ These are reference-quality test files:
 ### 4. `tests/security/` — EXCELLENT, KEEP ALL
 
 All 5 files are exemplary. Parametrized attacks + Hypothesis properties. Each maps to a MAESTRO layer:
+
 - `test_ssrf_prevention.py` — IP blocking, scheme enforcement, IDN homograph attacks (Hypothesis)
 - `test_prompt_injection.py` — XML wrapping, length limits, format string injection (Hypothesis)
 - `test_sensitive_data_filtering.py` — API key / password / token redaction (Hypothesis)
@@ -119,6 +129,7 @@ All 5 files are exemplary. Parametrized attacks + Hypothesis properties. Each ma
 - `test_tool_registration.py` — Tool scope validation, isolation between agents
 
 **Minor issue** in `test_tool_registration.py`:
+
 - `test_peerread_tools_registration_succeeds` only checks `hasattr(agent, "_function_toolset")` — not a real registration check. Relies on PydanticAI internals but no better alternative exists. KEEP with note.
 - `test_tool_registration_logged` (line 168) has no assertion — it's a best-practice test. REMOVE.
 
@@ -127,10 +138,12 @@ All 5 files are exemplary. Parametrized attacks + Hypothesis properties. Each ma
 ### 5. `tests/utils/` — MOSTLY GOOD
 
 **REMOVE (2 tests)**:
+
 - `test_log_scrubbing.py`: `TestLoguruIntegration.test_loguru_sink_configured_with_filter` (lines 169–179) — checks `hasattr(log, "logger")`, no actual filtering behavior tested.
 - `test_log_scrubbing.py`: `test_setup_llm_environment_uses_debug_level` (lines 185–196) — inspects source code (`inspect.getsource`) to check for `logger.debug`. This tests implementation text, not behavior.
 
 **KEEP ALL OTHERS**:
+
 - `test_url_validation.py` — behavioral + Hypothesis. Excellent.
 - `test_prompt_sanitization.py` — behavioral + Hypothesis. Good duplicate of security tests but at lower level.
 - `test_weave_optional.py` — behavioral guard tests for wandb/weave import.
@@ -145,6 +158,7 @@ All 5 files are exemplary. Parametrized attacks + Hypothesis properties. Each ma
 ### 6. `tests/app/` — KEEP ALL, MINOR ISSUES
 
 **KEEP ALL**:
+
 - `test_app.py` — behavioral: graph built/not built based on execution_id
 - `test_evaluation_wiring.py` — behavioral: skip_eval flag, ground truth handling, Hypothesis property + snapshot
 - `test_cli_token_limit.py` — behavioral: priority order CLI > env > config. BUT: lines 131–144 contain trivial property tests that just assert `limit < 1000` / `limit > 1000000` (tautologies — no production code called). **REMOVE these 3 pseudo-property tests**.
@@ -156,11 +170,13 @@ All 5 files are exemplary. Parametrized attacks + Hypothesis properties. Each ma
 ### 7. `tests/gui/` + `tests/test_gui/` — NEEDS CLEANUP
 
 **REMOVE (Pydantic framework tests in `test_settings_integration.py`)**:
+
 - `test_common_settings_instantiation` — tests default field values (Pydantic behavior)
 - `test_judge_settings_instantiation` — same, tests default field values
 - These should be in `test_common_settings.py` and `test_judge_settings.py` if anywhere, but reviewer-evals already flagged those as framework tests too.
 
 **KEEP**:
+
 - `test_settings_integration.py`: `test_render_settings_accepts_*` (behavioral), `test_settings_values_are_customizable` (behavioral)
 - `test_session_state.py` — snapshot + behavioral, tests defaults structure and provider registry membership
 - `test_prompts_integration.py` — tests that dead code (`PROMPTS_DEFAULT`) was removed. Valid cleanup verification.
@@ -201,6 +217,7 @@ These fail silently if the document is updated and sections renamed. **DELETE th
 `test_collect_cc_scripts.py` — tests shell scripts via `subprocess.run`. Behavioral (exit codes, file creation, JSON validity).
 
 **REMOVE (1 test)**:
+
 - `test_validation_failure_returns_exit_code_1` (line 107 in TestCollectCCSolo) — explicitly `pytest.skip`ped with comment "hard to trigger without breaking jq dependency". Should be deleted, not skipped.
 
 ---
@@ -228,31 +245,37 @@ All 3 integration test files test real PeerRead dataset formats and evaluation p
 ## Anti-Patterns Found (Cross-Cutting)
 
 ### 1. Logger-mocking anti-pattern (7 tests)
+
 **Files**: `test_trace_storage_logging.py`, `test_trace_skip_warning.py`
 **Issue**: Mock `logger.warning` / `logger.info` and assert on message text. Brittle (text changes break tests) and tests implementation not behavior.
 **Fix**: Test observable state or return values. For storage: assert file exists. For skip: assert return value is None/empty.
 
 ### 2. `hasattr`-only checks (8 tests)
+
 **Files**: `test_trace_collection_integration.py`, `test_tool_registration.py`, `test_judge_agent.py`
 **Issue**: `assert hasattr(obj, "method")` — only checks interface existence, catches nothing useful.
 **Fix**: Call the method and assert the result.
 
 ### 3. Pydantic framework tests (12 tests)
+
 **Files**: `test_judge_settings.py`, `test_sweep_config.py`, `test_sweep_analysis.py`, `test_settings_integration.py`
 **Issue**: Tests that `BaseSettings` loads from env vars or that Pydantic validates types. These test the library, not our code.
 **Fix**: Remove. Keep env-override tests only when they test *our* configuration logic (e.g., what happens at thresholds, not that the env var mechanism works).
 
 ### 4. Empty test classes (2 classes)
+
 **Files**: `test_agent_factories.py`
 **Issue**: `TestEvaluationAgentCreation` and `TestSimpleAgentCreation` have no test methods — commented out due to logfire side effects.
 **Fix**: Delete the empty classes. Document the limitation in `AGENT_LEARNINGS.md`.
 
 ### 5. Source-code inspection tests (2 tests)
+
 **Files**: `test_log_scrubbing.py`, `test_cli_baseline.py`
 **Issue**: `inspect.getsource(fn)` to check for `"logger.debug"` or specific flag strings. Tests implementation text.
 **Fix**: For logging level: test observable behavior (no INFO log appears, DEBUG log appears with appropriate level). For flag: keep the `parse_args` test which actually calls the function.
 
 ### 6. Tautological property tests (3 tests)
+
 **File**: `test_cli_token_limit.py`
 **Issue**: Property tests that assert `limit < 1000` on inputs constrained to `max_value=999` — the assertion is always true and no production code is exercised.
 **Fix**: Remove. Replace with actual validation tests calling `setup_agent_env` with out-of-range values.
@@ -318,13 +341,13 @@ All 3 integration test files test real PeerRead dataset formats and evaluation p
 
 ### MEDIUM Priority
 
-4. **Complete pipeline failure** — No test for all tiers returning None (catastrophic failure path).
+1. **Complete pipeline failure** — No test for all tiers returning None (catastrophic failure path).
 
-5. **Malformed trace data in graph_builder** — `test_graph_builder.py` covers valid inputs; no tests for missing keys / wrong types.
+2. **Malformed trace data in graph_builder** — `test_graph_builder.py` covers valid inputs; no tests for missing keys / wrong types.
 
-6. **GUI error states** — No tests for what happens when evaluation fails mid-render in Streamlit pages.
+3. **GUI error states** — No tests for what happens when evaluation fails mid-render in Streamlit pages.
 
-7. **Token limit validation** — `test_cli_token_limit.py` has tautological tests instead of real boundary validation calls through `setup_agent_env`.
+4. **Token limit validation** — `test_cli_token_limit.py` has tautological tests instead of real boundary validation calls through `setup_agent_env`.
 
 ---
 
@@ -345,6 +368,7 @@ The following patterns appear consistently in the best test files and should be 
 **Net change**: Remove ~58 low-value tests, refactor ~20 tests = ~78 changes total.
 
 **Safe ordering** (avoids coverage valleys):
+
 1. Refactor logger-mocking tests FIRST (replace with behavioral equivalents before removing)
 2. Remove tautological / empty / placeholder tests
 3. Remove Pydantic framework tests

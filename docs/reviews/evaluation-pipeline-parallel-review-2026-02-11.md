@@ -38,6 +38,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: User content flows directly into LLM prompts without sanitization or validation beyond truncation.
 
 **Fix**:
+
 1. Input sanitization (special chars, formatting)
 2. Prompt injection detection patterns
 3. Structured prompting (XML delimiters)
@@ -57,6 +58,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: Errors expose metadata (paper/trace sizes); Opik failures logged at debug only.
 
 **Fix**:
+
 1. Sanitize error messages (remove lengths/sizes)
 2. Upgrade Opik errors to warning (lines 408-430)
 3. Structured logging with verbosity levels
@@ -72,6 +74,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: Bottlenecks detected but no automated adjustment or remediation.
 
 **Fix**:
+
 1. Auto-adjust timeouts from historical data
 2. Structured remediation suggestions
 3. Self-tuning configuration
@@ -87,6 +90,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: Keys in env vars without encryption; logged during setup; no rotation.
 
 **Fix**:
+
 1. Remove API key logging
 2. Secret management service (keyring, AWS Secrets Manager, Vault)
 3. Key rotation policies
@@ -104,6 +108,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: Only "tier1_only" implemented despite config accepting strategy parameter.
 
 **Fix**:
+
 1. Implement additional strategies (tier1_tier2, degraded_all) OR validate config
 2. Add partial tier success tests
 3. Document supported strategies
@@ -117,6 +122,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: Missing tests for rate limits, auth failures, connection errors, memory exhaustion, graph construction failures.
 
 **Fix**:
+
 1. Tier 2: rate limit/auth/connection error tests
 2. Tier 3: memory/graph construction error tests
 3. Empty input validation tests
@@ -134,6 +140,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: Tier 1 tracks `start_time` + `start_evaluation` separately; Tier 2/3 only `start_time`.
 
 **Fix**:
+
 1. Standardize pattern across all tiers
 2. Remove redundant timestamp
 3. Document timing conventions
@@ -147,6 +154,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: Manual `.get()` extraction duplicates Pydantic validation logic.
 
 **Fix**:
+
 1. Use `GraphTraceData.model_validate(execution_trace)` directly
 2. Remove manual extraction
 3. Let Pydantic handle validation
@@ -162,6 +170,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: User-configurable timeouts without min/max bounds; no rate limiting; no concurrent exhaustion protection.
 
 **Fix**:
+
 1. Enforce timeout bounds (e.g., 1s-300s)
 2. Rate limiting per client/session
 3. Request queuing with backpressure
@@ -176,6 +185,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: Config path accepted without validation; attack vector: `../../etc/passwd`.
 
 **Fix**:
+
 1. Validate path within expected directory
 2. Resolve absolute path, check allowlist
 3. Reject paths with ".." patterns
@@ -190,6 +200,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: Raw error strings recorded without sanitization.
 
 **Fix**:
+
 1. Sanitize error messages before recording
 2. Validate metadata values
 3. Enhance existing try-catch
@@ -203,6 +214,7 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 **Issue**: Missing user workflow tests (pipeline continues on tier failure, clear LLM quota errors, performance metrics, timeout handling).
 
 **Fix**:
+
 1. BDD tests for user workflows
 2. Integration tests with real API calls
 3. Different tier enable combinations
@@ -234,22 +246,25 @@ Three independent reviewers (security, quality, coverage) analyzed `evaluation_p
 ## Recommended Sprint Plan
 
 ### Sprint 1 (Critical + High Priority): 8-12 days
+
 1. Prompt injection defenses + input validation (#1)
 2. Error message sanitization + Opik logging (#2)
 3. Performance bottleneck automation (#3)
 4. API key management hardening (#4)
 
 ### Sprint 2 (Medium Priority): 5-8 days
-5. Fallback strategy implementation (#5)
-6. Error path test coverage (#6)
-7. Time tracking consistency (#7)
-8. GraphTraceData simplification (#8)
+
+1. Fallback strategy implementation (#5)
+2. Error path test coverage (#6)
+3. Time tracking consistency (#7)
+4. GraphTraceData simplification (#8)
 
 ### Sprint 3 (Low Priority / Technical Debt): 4-6 days
-9. Timeout bounds enforcement (#9)
-10. Config path traversal protection (#10)
-11. Opik metadata sanitization (#11)
-12. BDD scenario tests (#12)
+
+1. Timeout bounds enforcement (#9)
+2. Config path traversal protection (#10)
+3. Opik metadata sanitization (#11)
+4. BDD scenario tests (#12)
 
 **Total Estimated Effort**: 17-26 days for all items
 

@@ -242,6 +242,7 @@ Contains complete team orchestration metadata:
 ```
 
 **Key fields**:
+
 - `members[]`: Complete roster with prompts, models, colors, join timestamps
 - `model`: Shows which model each teammate uses (Opus 4.6 for teammates, Sonnet 4.5 for lead)
 - `prompt`: Full prompt given to each teammate at spawn time
@@ -275,12 +276,14 @@ Each agent has its own mailbox file containing all messages received:
 ```
 
 **Message types captured**:
+
 - **Review findings**: Full markdown-formatted reports
 - **Idle notifications**: JSON structured `{"type":"idle_notification",...}`
 - **Task assignments**: JSON structured `{"type":"task_assignment",...}`
 - **Peer DM summaries**: Brief snippets when teammates message each other
 
 **Practical example from test run**:
+
 - `team-lead.json`: Received 3 complete review reports + idle notifications
 - `security-reviewer.json`: Received task assignments from lead
 - `quality-reviewer.json`: Received task assignments from lead

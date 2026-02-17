@@ -560,6 +560,7 @@ Sprint 5 addresses runtime bugs, GUI enhancements, architectural improvements, c
 **Technical Requirements**:
 
 - Replace unconditional `from wandb import login as wandb_login` (line 9) with guarded import:
+
   ```python
   try:
       from wandb import login as wandb_login
@@ -567,6 +568,7 @@ Sprint 5 addresses runtime bugs, GUI enhancements, architectural improvements, c
   except ImportError:
       _wandb_available = False
   ```
+
 - Add `os.environ.setdefault("WANDB_ERROR_REPORTING", "false")` before the wandb import
 - In `login()`: guard `wandb_login()` and `weave_init()` calls with `if _wandb_available`
 - Log `logger.debug("wandb not installed, skipping wandb/weave initialization")` when unavailable

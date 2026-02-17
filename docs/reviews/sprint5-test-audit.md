@@ -10,6 +10,7 @@
 Systematic audit of all test files to identify and remove implementation-detail tests while preserving behavioral coverage. The audit applies the testing strategy principle: **"If the test wouldn't catch a real bug, remove it."**
 
 **Results**:
+
 - **Analyzed**: 64 test files (~500 total tests)
 - **Keep as-is**: 35 files (behavioral/integration focus)
 - **Delete entirely**: 4 files (migration artifacts)
@@ -239,11 +240,13 @@ Mix of behavioral and implementation-detail tests.
 ### 1. tests/common/test_common_settings.py - REFACTOR
 
 **KEEP** (3 tests):
+
 - `test_common_settings_env_prefix` - Tests env var override behavior
 - `test_common_settings_env_file_loading` - Tests .env file loading behavior
 - `test_common_settings_env_override_defaults` - Tests override behavior
 
 **DELETE** (2 tests):
+
 - `test_common_settings_defaults` - Tests default constants (`DEFAULT == "INFO"`)
 - `test_common_settings_type_validation` - Pydantic validates types
 
@@ -252,11 +255,13 @@ Mix of behavioral and implementation-detail tests.
 ### 2. tests/evals/test_judge_settings.py - REFACTOR
 
 **KEEP** (13 tests):
+
 - All `TestJudgeSettingsEnvOverrides` tests (env var override behavior)
 - All `TestJudgeSettingsValidation` tests (business rules: positive values, bounds)
 - All `TestJudgeSettingsCompatibility` tests (backward compatibility behavior)
 
 **DELETE** (13 tests):
+
 - Entire `TestJudgeSettingsDefaults` class (lines 17-72)
   - `test_tier1_max_seconds_default` - Tests `1.0 == 1.0`
   - `test_tier2_model_default` - Tests `"gpt-4o-mini" == "gpt-4o-mini"`
@@ -277,12 +282,14 @@ Mix of behavioral and implementation-detail tests.
 ### 3. tests/utils/test_logfire_config.py - REFACTOR
 
 **KEEP** (4 tests):
+
 - `test_logfire_config_from_settings_custom` - Tests custom values behavior
 - `test_logfire_config_env_file_loading` - Tests .env loading behavior
 - `test_logfire_config_env_override_defaults` - Tests override behavior
 - `test_logfire_config_otlp_endpoint_computed` - Tests computed property behavior
 
 **DELETE** (3 tests):
+
 - `test_logfire_config_from_settings_defaults` - Tests default values
 - `test_logfire_config_direct_instantiation` - Tests constructor with literals
 - `test_logfire_config_type_validation` - Pydantic validates types
@@ -292,10 +299,12 @@ Mix of behavioral and implementation-detail tests.
 ### 4. tests/cc_otel/test_cc_otel_config.py - REFACTOR
 
 **KEEP** (remaining behavioral tests):
+
 - All env override tests
 - All computed property tests
 
 **DELETE** (2 tests):
+
 - `test_cc_otel_config_defaults` (lines 14-22) - Tests default constants
 - `test_cc_otel_config_type_validation` (lines 63-72) - Pydantic validates
 
@@ -304,11 +313,13 @@ Mix of behavioral and implementation-detail tests.
 ### 5. tests/judge/test_plugin_base.py - REFACTOR
 
 **KEEP** (all registry tests):
+
 - `test_registry_execute_all_in_order` - Tests execution order behavior
 - All context passing tests
 - All error handling tests
 
 **DELETE** (4 tests from `TestEvaluatorPluginABC` class, lines 112-138):
+
 - `test_plugin_has_name_property` - Tests property existence
 - `test_plugin_has_tier_property` - Tests property existence
 - `test_plugin_has_evaluate_method` - Tests method existence
@@ -319,10 +330,12 @@ Mix of behavioral and implementation-detail tests.
 ### 6. tests/judge/test_trace_store.py - REFACTOR
 
 **KEEP**:
+
 - All thread-safety tests (tests concurrency behavior)
 - All context manager tests (tests resource cleanup behavior)
 
 **DELETE** (lines 18-78 + lines 195-228):
+
 - `TestTraceStore` class basic CRUD tests (dict-like behavior assumed)
 - Metadata tracking tests (field existence checks)
 
@@ -331,11 +344,13 @@ Mix of behavioral and implementation-detail tests.
 ### 7. tests/judge/test_plugin_llm_judge.py - REFACTOR
 
 **KEEP**:
+
 - All integration tests with mocked engine
 - All context passing tests
 - All timeout configuration tests
 
 **DELETE** (lines 63-73, 3 tests):
+
 - `test_plugin_implements_evaluator_interface` - isinstance check
 - `test_plugin_name_property` - Tests property value
 - `test_plugin_tier_property` - Tests constant value
@@ -345,11 +360,13 @@ Mix of behavioral and implementation-detail tests.
 ### 8. tests/judge/test_plugin_traditional.py - REFACTOR
 
 **KEEP**:
+
 - All delegation tests
 - All timeout tests
 - All integration tests
 
 **DELETE** (lines 52-62, 3 tests):
+
 - `test_plugin_implements_evaluator_interface`
 - `test_plugin_name_property`
 - `test_plugin_tier_property`
@@ -359,10 +376,12 @@ Mix of behavioral and implementation-detail tests.
 ### 9. tests/judge/test_plugin_graph.py - REFACTOR
 
 **KEEP**:
+
 - All delegation tests
 - All integration tests
 
 **DELETE** (lines 53-63, 3 tests):
+
 - `test_plugin_implements_evaluator_interface`
 - `test_plugin_name_property`
 - `test_plugin_tier_property`
@@ -372,6 +391,7 @@ Mix of behavioral and implementation-detail tests.
 ### 10. tests/evals/test_graph_analysis.py - REFACTOR
 
 **KEEP**:
+
 - All algorithm tests (graph construction, metric calculation)
 - All edge case tests (empty graphs, single nodes)
 
@@ -415,6 +435,7 @@ make test_all
 ```
 
 Expected outcome:
+
 - All remaining tests pass
 - No reduction in behavioral coverage
 - 16-20% reduction in test suite size
@@ -425,10 +446,12 @@ Expected outcome:
 ## Impact Analysis
 
 **Before**:
+
 - ~500 total tests across 64 files
 - ~80-100 implementation-detail tests
 
 **After**:
+
 - ~400-420 behavioral tests across 60 files
 - 0 implementation-detail tests
 - No loss of bug-catching capability

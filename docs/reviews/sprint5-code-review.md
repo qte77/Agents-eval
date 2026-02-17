@@ -13,12 +13,14 @@
 **Overall Security Assessment:** **CRITICAL** - Active CVEs detected requiring immediate patching
 
 **Comprehensive MAESTRO Coverage:**
+
 - ✅ All 7 security layers analyzed (Model, Agent Logic, Integration, Monitoring, Execution, Environment, Orchestration)
 - ✅ Context7 verification of PydanticAI, Logfire, Streamlit security patterns
 - ✅ Exa CVE database check - **2 CRITICAL vulnerabilities found** in PydanticAI
 - ✅ Code quality audit against AGENTS.md compliance standards
 
 **Critical Findings Requiring Immediate Action:**
+
 1. **CVE-2026-25580 (CRITICAL)**: PydanticAI SSRF vulnerability - information disclosure via malicious URLs in message history
 2. **CVE-2026-25640 (HIGH)**: PydanticAI Stored XSS via path traversal in Web UI CDN URL
 3. **Prompt Injection Risk (HIGH)**: No sanitization of user input before LLM prompts
@@ -28,6 +30,7 @@
 **Risk Level:** **CRITICAL** - Active CVEs with public exploits + architectural security gaps
 
 **Recommended Actions:**
+
 1. **Immediate**: Upgrade PydanticAI to patched version (if available) or disable web UI features
 2. **Sprint 5**: Implement prompt sanitization, API key scrubbing, log redaction
 3. **Sprint 6**: Add comprehensive security tests, increase coverage on critical modules
@@ -75,6 +78,7 @@ Abstract: {paper.abstract}
 ```
 
 **Risk:**
+
 - **Prompt injection attacks** - malicious paper titles could contain instructions like "Ignore previous instructions and..."
 - **Data exfiltration** - attacker-controlled prompts could extract sensitive system context
 - **Unauthorized actions** - injected prompts could trigger unauthorized tool calls
@@ -118,6 +122,7 @@ formatted_content = template.format(
 ```
 
 **Risk:**
+
 - If `paper.title` contains format string syntax like `{__import__('os').system('ls')}`, could trigger code execution
 - Unlikely but possible with malicious dataset
 
@@ -146,6 +151,7 @@ formatted = safe_template.safe_substitute(
 **Status:** COMPLIANT
 
 **Analysis:**
+
 - All agent outputs use Pydantic models: `ResearchResult`, `AnalysisResult`, `Tier2Result`
 - Automatic validation with retry on `ValidationError`
 - Prevents model output injection attacks
@@ -164,6 +170,7 @@ formatted = safe_template.safe_substitute(
 LLM outputs (scores, feedback, recommendations) are not checked for potential leakage of training data or API keys from prompts.
 
 **Risk:**
+
 - LLM could echo back API keys if accidentally included in context
 - Model could leak sensitive paper content in feedback messages
 
@@ -199,12 +206,14 @@ async def scrub_sensitive_data(ctx: RunContext, output: str) -> str:
 **Status:** COMPLIANT
 
 **Analysis:**
+
 - All external data validated through Pydantic models
 - Field constraints enforced: `ge=1, le=5`, `min_length=100`, `HttpUrl`
 - `validation_alias` for external key mapping (e.g., `IMPACT` → `impact`)
 - `populate_by_name=True` allows both alias and field names
 
 **Code Example:**
+
 ```python
 class PeerReadReview(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
@@ -232,6 +241,7 @@ def evaluate(self, input_data: BaseModel, context=None):
 ```
 
 **Risk:**
+
 - DoS via extremely large `agent_output` strings (megabytes of text)
 - Memory exhaustion from unbounded `reference_texts` arrays
 
@@ -264,6 +274,7 @@ def evaluate(self, input_data: BaseModel, context=None):
 **Status:** COMPLIANT
 
 **Analysis:**
+
 - Type hints used consistently across all functions
 - Pydantic models enforce runtime type validation
 - `pyright` type checking passes (required by `make validate`)
@@ -291,6 +302,7 @@ with httpx.Client(timeout=download_timeout) as client:
 ```
 
 **Risk:**
+
 - MITM attacks on `raw.githubusercontent.com` downloads if default changes
 - No hash verification of downloaded files
 
@@ -318,6 +330,7 @@ with httpx.Client(timeout=download_timeout, verify=True) as client:
 **Status:** COMPLIANT
 
 **Analysis:**
+
 - HTTP 429 handling with retry backoff
 - Configurable `max_retries` (default: 5)
 - Timeout enforcement (default: 30s)
@@ -341,6 +354,7 @@ os.environ[env_key] = api_key  # Exposes key to all child processes
 ```
 
 **Risk:**
+
 - Environment dumped in crash reports could leak keys
 - Subprocess inherits environment variables
 - Logging libraries may capture `os.environ` state
@@ -384,6 +398,7 @@ def get_api_key(provider_name: str) -> str | Literal[False]:
 ```
 
 **Risk:**
+
 - Exception handlers that log full `os.environ` expose keys
 - Loguru's `logger.exception()` includes local variables in traces
 
@@ -419,6 +434,7 @@ logger.add(
 **Status:** COMPLIANT
 
 **Analysis:**
+
 - Comprehensive timeout configs for all tiers (1s, 10s, 15s, 25s, 30s)
 - All async operations wrapped in `asyncio.wait_for()`
 - Tier fallback strategy on timeout
@@ -440,14 +456,17 @@ logger.add(
 **Status:** MIXED
 
 **Good:**
+
 - Uses `loguru` with structured logging
 - Log rotation (1 MB), retention (7 days), compression (zip)
 
 **Bad:**
+
 - No scrubbing of sensitive data before logging
 - Exception traces may contain API keys from local variables
 
 **Risk:**
+
 - Log injection if user input contains newlines or ANSI codes
 - Sensitive data (queries, API keys, paper content) in logs
 
@@ -492,6 +511,7 @@ trace_data = {
 ```
 
 **Risk:**
+
 - Traces exported to Logfire/Phoenix/Opik cloud contain unredacted sensitive data
 - GDPR/compliance violations if PII in traces
 
@@ -530,6 +550,7 @@ logfire.instrument_pydantic_ai(
 Trace data stored in mutable dictionaries, could be tampered with before export.
 
 **Risk:**
+
 - Malicious code could modify traces to hide unauthorized actions
 - No append-only guarantee for audit trails
 
@@ -551,6 +572,7 @@ Use immutable data structures or sign traces before export (low priority).
 **Status:** COMPLIANT
 
 **Analysis:**
+
 - Per-tier timeouts configured: `tier1_max_seconds`, `tier2_max_seconds`, `tier3_max_seconds`
 - Total execution timeout: `total_max_seconds` (default: 25s)
 - Download timeout: `download_timeout` (default: 30s)
@@ -566,6 +588,7 @@ Use immutable data structures or sign traces before export (low priority).
 **Status:** COMPLIANT
 
 **Analysis:**
+
 - `UsageLimits` with `request_limit=10`, `total_tokens_limit` (configurable 1000-1000000)
 - `UsageLimitExceeded` exception raised when exceeded
 - Content truncation for papers: `max_content_length=15000`
@@ -587,6 +610,7 @@ content = result.text_content  # Could be gigabytes
 ```
 
 **Risk:**
+
 - Malicious PDF could exhaust memory
 - No protection against PDF bombs
 
@@ -612,6 +636,7 @@ if pdf_size > MAX_PDF_SIZE_MB:
 **Status:** COMPLIANT
 
 **Analysis:**
+
 - Agent system uses dependency injection, no global state
 - Evaluation pipeline is stateless, results returned not stored
 - Thread-safe trace collection via singleton pattern
@@ -633,6 +658,7 @@ if pdf_size > MAX_PDF_SIZE_MB:
 **Status:** COMPLIANT
 
 **Analysis:**
+
 - `.env` file excluded from version control
 - API keys loaded from environment variables via Pydantic `BaseSettings`
 
@@ -644,6 +670,7 @@ if pdf_size > MAX_PDF_SIZE_MB:
 
 **Analysis:**
 Searched for hardcoded API keys/passwords:
+
 - No hardcoded `sk-`, `Bearer`, `password=` strings found
 - All secrets loaded from `AppEnv` Pydantic model
 
@@ -658,6 +685,7 @@ Searched for hardcoded API keys/passwords:
 **Status:** Not applicable - no Dockerfile or container deployment reviewed.
 
 **Recommendation:** If deploying to containers, follow MAESTRO Layer 6 best practices:
+
 - Non-root user execution
 - Read-only filesystem where possible
 - Network segmentation via Docker networks
@@ -686,6 +714,7 @@ def register(self, plugin: EvaluatorPlugin) -> None:
 ```
 
 **Risk:**
+
 - Plugin name squatting (register malicious plugin before legitimate one)
 - Tier mismatch could break execution order assumptions
 
@@ -731,6 +760,7 @@ def add_peerread_tools_to_manager(manager_agent: Agent):
 ```
 
 **Risk:**
+
 - Any code with agent reference can add tools
 - No audit trail of tool registration
 - Tools execute with full agent permissions
@@ -751,6 +781,7 @@ Implement tool registry with module allowlist (see earlier recommendation in Lay
 **Status:** COMPLIANT
 
 **Analysis:**
+
 - Searched for `import_module`, `__import__`, `eval`, `exec`
 - Result: No dynamic imports found
 - All plugins statically imported in `src/app/judge/plugins/__init__.py`
@@ -807,6 +838,7 @@ Implement tool registry with module allowlist (see earlier recommendation in Lay
 
 **Analysis:**
 Zero security-focused tests for:
+
 - Plugin authorization
 - Tool access control
 - Input validation boundaries
@@ -831,15 +863,18 @@ Zero security-focused tests for:
 Information disclosure via Server-Side Request Forgery (SSRF) through malicious URLs in PydanticAI message history. Attackers can craft URLs that cause the agent to make unauthorized HTTP requests to internal or external systems.
 
 **Impact:**
-- Agents could be tricked into accessing internal AWS metadata (http://169.254.169.254/latest/meta-data/)
+
+- Agents could be tricked into accessing internal AWS metadata (<http://169.254.169.254/latest/meta-data/>)
 - External service enumeration and port scanning
 - Bypass of network access controls
 
 **Affected Code:**
+
 - `src/app/agents/agent_system.py` - Agent creation and message handling
 - `src/app/tools/peerread_tools.py` - Tool implementations that may process URLs
 
 **Mitigation:**
+
 1. **Immediate:** Validate all URLs before processing in agent tools
 2. **Upgrade:** Monitor PydanticAI releases for patched version
 3. **Workaround:** Implement URL allowlist for external requests
@@ -856,8 +891,9 @@ def validate_url(url: str) -> str:
 ```
 
 **References:**
-- https://bugzilla.redhat.com/show_bug.cgi?id=2437781
-- https://www.sentinelone.com/vulnerability-database/cve-2026-25580/
+
+- <https://bugzilla.redhat.com/show_bug.cgi?id=2437781>
+- <https://www.sentinelone.com/vulnerability-database/cve-2026-25580/>
 
 ---
 
@@ -871,22 +907,26 @@ def validate_url(url: str) -> str:
 Path Traversal vulnerability in PydanticAI web UI allows attackers to serve arbitrary JavaScript in the application context by crafting malicious CDN URLs. Affects `clai web` CLI command and `Agent.to_web()` method.
 
 **Impact:**
+
 - Stored XSS attacks on web interface users
 - Theft of chat history and session data
 - Client-side code execution in victim browsers
 
 **Affected Code:**
+
 - This project **does not** currently use `clai web` or `Agent.to_web()`
 - **Risk:** LOW unless web UI features are added in future sprints
 
 **Mitigation:**
+
 1. **Avoid** using PydanticAI web UI features until patched
 2. If web UI needed, implement Content Security Policy (CSP)
 3. Validate and sanitize all CDN URLs before rendering
 
 **References:**
-- https://advisories.gitlab.com/pkg/pypi/pydantic-ai/CVE-2026-25640/
-- https://github.com/pydantic/pydantic-ai/security/advisories/GHSA-wjp5-868j-wqv7
+
+- <https://advisories.gitlab.com/pkg/pypi/pydantic-ai/CVE-2026-25640/>
+- <https://github.com/pydantic/pydantic-ai/security/advisories/GHSA-wjp5-868j-wqv7>
 
 ---
 
@@ -900,20 +940,24 @@ Path Traversal vulnerability in PydanticAI web UI allows attackers to serve arbi
 TfidfVectorizer in scikit-learn ≤1.4.1.post1 unexpectedly stores all tokens from training data in `stop_words_` attribute, including passwords/keys.
 
 **Impact:**
+
 - Sensitive tokens (if present in training text) leaked via model inspection
 - Affects any code using TfidfVectorizer for text processing
 
 **Affected Code:**
+
 - `src/app/judge/traditional_metrics.py` - Uses TF-IDF for similarity scoring
 - Check scikit-learn version in `pyproject.toml`
 
 **Mitigation:**
+
 1. **Upgrade** scikit-learn to ≥1.5.0
 2. **Verify** no sensitive data in training texts used for TF-IDF
 
 **References:**
-- https://vulert.com/vuln-db/CVE-2024-5206
-- https://www.ibm.com/support/pages/node/7233502
+
+- <https://vulert.com/vuln-db/CVE-2024-5206>
+- <https://www.ibm.com/support/pages/node/7233502>
 
 ---
 
@@ -924,11 +968,13 @@ TfidfVectorizer in scikit-learn ≤1.4.1.post1 unexpectedly stores all tokens fr
 **Verified Against:** `/pydantic/pydantic-ai` (Context7)
 
 ✅ **COMPLIANT:**
+
 - Dependency injection pattern used correctly (`RunContext[MyDeps]`)
 - Structured outputs with Pydantic models
 - Tool definitions with type-safe parameters
 
 ⚠️ **GAPS:**
+
 - No API key protection in deps (should scrub from logs)
 - Missing output validators for sensitive data scrubbing
 - No URL validation in tools (SSRF vulnerability - see CVE-2026-25580)
@@ -950,10 +996,12 @@ async def validate_no_secrets(ctx: RunContext, output: str) -> str:
 **Verified Against:** `/pydantic/logfire` (Context7)
 
 ✅ **COMPLIANT:**
+
 - OTLP endpoint configuration via environment variables
 - Logfire token stored in `LOGFIRE_TOKEN` env var
 
 ⚠️ **GAPS:**
+
 - **CRITICAL:** No scrubbing patterns configured (default patterns not applied)
 - Missing `url_filter` for sensitive query parameter redaction
 - No custom scrubbing for API keys in trace data
@@ -981,15 +1029,18 @@ logfire.configure(
 **Verified Against:** `/websites/streamlit_io` (Context7)
 
 ✅ **COMPLIANT:**
+
 - Secrets management via `st.secrets` TOML file
 - File uploader widget used correctly
 
 ⚠️ **GAPS:**
+
 - No session state security validation (users can manipulate state)
 - API keys not stored in `secrets.toml` (using `.env` instead)
 - No input sanitization before displaying user content
 
 **Recommendation:** Per Context7 Streamlit docs:
+
 1. Store API keys in `.streamlit/secrets.toml` instead of `.env`
 2. Validate session state before use
 3. Sanitize file uploads to prevent XSS
@@ -1046,6 +1097,7 @@ logfire.configure(
 **Priority 1: CVE Mitigation (CRITICAL)**
 
 1. **CVE-2026-25580 (SSRF):** Add URL validation to all agent tools
+
    ```python
    ALLOWED_DOMAINS = ['raw.githubusercontent.com', 'arxiv.org', 'api.openai.com']
 
@@ -1058,6 +1110,7 @@ logfire.configure(
            raise ValueError("Only HTTPS URLs allowed")
        return url
    ```
+
    **Files:** `src/app/tools/peerread_tools.py`, `src/app/agents/agent_system.py`
    **Effort:** 2 hours
 
@@ -1067,6 +1120,7 @@ logfire.configure(
    **Effort:** 30 minutes
 
 3. **CVE-2024-5206 (scikit-learn):** Upgrade to scikit-learn ≥1.5.0
+
    ```bash
    # Check current version
    uv run python -c "import sklearn; print(sklearn.__version__)"
@@ -1074,11 +1128,12 @@ logfire.configure(
    # Update pyproject.toml
    # scikit-learn = "^1.5.0"
    ```
+
    **Effort:** 1 hour (includes regression testing)
 
 **Priority 2: Prompt Injection Prevention (HIGH)**
 
-4. **Implement input sanitization for LLM prompts**
+1. **Implement input sanitization for LLM prompts**
    - Add Pydantic schema validation for paper titles/abstracts (max lengths)
    - Replace f-string interpolation with structured inputs
    **Files:** `src/app/judge/llm_evaluation_managers.py`, `src/app/tools/peerread_tools.py`
@@ -1086,13 +1141,14 @@ logfire.configure(
 
 **Priority 3: API Key Protection (HIGH)**
 
-5. **Remove API keys from os.environ and logs**
+1. **Remove API keys from os.environ and logs**
    - Refactor to use dependency injection pattern (Context7 best practice)
    - Add log scrubbing for API key patterns
    **Files:** `src/app/llms/providers.py`, `src/app/utils/login.py`, `src/app/common/log.py`
    **Effort:** 6 hours
 
-6. **Implement Logfire scrubbing patterns**
+2. **Implement Logfire scrubbing patterns**
+
    ```python
    logfire.configure(
        scrubbing_patterns=[
@@ -1100,6 +1156,7 @@ logfire.configure(
        ],
    )
    ```
+
    **File:** `src/app/agents/logfire_instrumentation.py`
    **Effort:** 2 hours
 
@@ -1109,7 +1166,7 @@ logfire.configure(
 
 **Priority 4: Security Testing (HIGH)**
 
-7. **Add comprehensive security test suite**
+1. **Add comprehensive security test suite**
    - Test plugin tier validation (L7.1)
    - Test tool registration authorization (L7.2)
    - Test input size limits (L2.2)
@@ -1117,6 +1174,7 @@ logfire.configure(
    - Test API key scrubbing in logs (L3.2, L4.1)
 
    **Example:**
+
    ```python
    # tests/security/test_prompt_injection.py
    def test_prompt_injection_blocked():
@@ -1127,11 +1185,12 @@ logfire.configure(
        with pytest.raises(ValidationError):
            review_agent.run(paper)
    ```
+
    **Effort:** 16 hours
 
 **Priority 5: Increase Test Coverage (HIGH)**
 
-8. **Increase coverage for critical modules**
+1. **Increase coverage for critical modules**
    - `datasets_peerread.py`: 27% → 70% (download errors, validation)
    - `peerread_tools.py`: 22% → 70% (tool registration, PDF extraction)
    - `agent_system.py`: 47% → 70% (delegation, usage limits)
@@ -1139,13 +1198,13 @@ logfire.configure(
 
 **Priority 6: Input Validation Hardening (MEDIUM)**
 
-9. **Add plugin input size limits**
+1. **Add plugin input size limits**
    - Implement `Tier1Input`, `Tier2Input`, `Tier3Input` schemas
    - Validate before passing to evaluation engines
    **File:** `src/app/judge/plugins/traditional.py`, `src/app/judge/plugins/llm.py`, `src/app/judge/plugins/graph.py`
    **Effort:** 4 hours
 
-10. **Add memory limits for PDF extraction**
+2. **Add memory limits for PDF extraction**
     - Validate file size before MarkItDown processing
     - Set max content length after extraction
     **File:** `src/app/tools/peerread_tools.py`
@@ -1157,22 +1216,22 @@ logfire.configure(
 
 **Priority 7: Architecture Improvements (MEDIUM)**
 
-11. **Implement centralized tool registry with authorization**
+1. **Implement centralized tool registry with authorization**
     - Module allowlist for tool registration
     - Audit logging for all tool additions
     **Effort:** 8 hours
 
-12. **Add plugin tier validation**
+2. **Add plugin tier validation**
     - Validate tier matches expected plugin type
     - Prevent plugin name squatting
     **Effort:** 2 hours
 
-13. **Add trace data scrubbing**
+3. **Add trace data scrubbing**
     - Implement custom span processor to redact sensitive fields
     - Configure allowlist of safe attributes
     **Effort:** 6 hours
 
-14. **Complete docstring coverage**
+4. **Complete docstring coverage**
     - Add Google-style docstrings to all functions in `llms/`, `data_utils/`
     **Effort:** 12 hours
 
@@ -1193,6 +1252,7 @@ This comprehensive MAESTRO security review identified **2 critical CVEs**, **7 h
 **Overall Security Posture:** The codebase demonstrates strong architectural patterns (Pydantic validation, structured outputs, timeout enforcement) but has critical vulnerabilities in input sanitization, secret management, and active CVEs in dependencies.
 
 **Priority Ranking:**
+
 1. **Immediate** (Sprint 5): CVE patches, prompt sanitization, API key protection (15 hours)
 2. **Short-term** (Sprint 6): Security tests, coverage improvements (40 hours)
 3. **Long-term** (Sprint 7+): Architecture hardening, trace scrubbing (28 hours)
