@@ -161,13 +161,9 @@ setup_dataset_full:  ## Download full PeerRead dataset
 	$(MAKE) -s run_cli ARGS=--download-peerread-full-only
 	$(MAKE) -s dataset_get_smallest
 
-_find_smallest_papers:  ## Internal: Find N smallest papers. Usage: make _find_smallest_papers N=10
+dataset_get_smallest:  ## Show N smallest papers by file size. Usage: make dataset_get_smallest N=5
 	@find datasets/peerread -path "*/parsed_pdfs/*.json" \
 		-type f -printf '%s %p\n' 2>/dev/null | sort -n | head -$(or $(N),10)
-
-dataset_get_smallest:  ## Show 10 smallest papers by file size
-	echo "Finding smallest 10 parsed PDFs in datasets/peerread..."
-	$(MAKE) -s _find_smallest_papers N=10
 
 
 # MARK: run ollama
@@ -231,7 +227,7 @@ quick_start:  ## Download sample data and run evaluation on smallest paper
 	else
 		echo "PeerRead dataset already present, skipping download."
 	fi
-	PAPER_ID=$$($(MAKE) -s _find_smallest_papers N=1 \
+	PAPER_ID=$$($(MAKE) -s dataset_get_smallest N=1 \
 		| awk '{print $$2}' | sed 's|.*/parsed_pdfs/||;s|\.pdf\.json||')
 	if [ -z "$$PAPER_ID" ]; then
 		echo "ERROR: No papers found. Run 'make setup_dataset_sample' first."
@@ -267,8 +263,6 @@ ruff_tests:  ## Lint: Format and fix tests with ruff
 	uv run ruff format tests
 	uv run ruff check tests --fix
 
-
-
 complexity:  ## Check cognitive complexity with complexipy
 	uv run complexipy
 
@@ -277,7 +271,6 @@ test_all:  ## Run all tests
 
 test_quick:  ## Quick test - rerun only failed tests (use during fix iterations)
 	uv run pytest --lf -x
-
 
 test_coverage:  ## Run tests with coverage threshold (configured in pyproject.toml)
 	echo "Running tests with coverage gate (fail_under% defined in pyproject.toml)..."
