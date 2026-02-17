@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `README.md`: version badge updated to 4.0.0; Current Release reflects Sprint 6 deliverables (benchmarking, CC baseline, security, examples); Next section updated to Sprint 7 scope; Examples section added referencing `src/examples/README.md` (STORY-003)
+- `docs/roadmap.md`: Sprint 7 status updated from Active to In Progress (STORY-004)
 
 ### Removed
 
