@@ -27,7 +27,7 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 
 ## Success Criteria
 
-1. `make run_cli ARGS="--paper-number=ID"` generates a review AND evaluates it automatically.
+1. `make run_cli ARGS="--paper-id=ID"` generates a review AND evaluates it automatically.
 2. GraphTraceData contains real agent delegations, tool calls, and timing data from MAS execution.
 3. Logs show Tier 1 (text) vs Tier 3 (graph) scores side by side with individual metric breakdowns.
 4. `--skip-eval` flag skips evaluation when only generation is needed.
@@ -39,7 +39,7 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 ## Constraints
 
 - Python 3.13 with pydantic-ai framework.
-- Must use existing `EvaluationPipeline` API (no restructure to plugin architecture in Sprint 2).
+- Must use `EvaluationPipeline` plugin API (`EvaluatorPlugin` interface, delivered Sprint 3).
 - Must use existing `TraceCollector` API for graph data capture.
 - Settings via pydantic-settings (`JudgeSettings` with `JUDGE_` prefix), consistent with `CommonSettings` (`EVAL_` prefix). No JSON config files at runtime.
 - Tracing via Logfire SDK + Arize Phoenix (zero Docker containers). `logfire.instrument_pydantic_ai()` auto-instruments all PydanticAI agents.
@@ -47,9 +47,13 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 
 ## Current Sprint Status
 
-**Sprint 2-4 Success Criteria**: ✅ All delivered (automatic evaluation, real traces, graph metrics, Logfire+Phoenix, Streamlit dashboard, Claude Code baseline comparison)
+**Sprint 2-4**: ✅ All delivered (automatic evaluation, real traces, graph metrics, Logfire+Phoenix, Streamlit dashboard, Claude Code baseline comparison)
 
-**Sprint 5 Active**: Runtime fixes (judge provider fallback, token limits, score fairness, dataset validation), GUI enhancements (background execution, debug logs, editable settings), architecture improvements (OTLP endpoint, graph analysis accuracy, tool delegation), code quality review, and test suite audit. See [PRD-Sprint5-Ralph.md](PRD-Sprint5-Ralph.md) for detailed scope.
+**Sprint 5**: ✅ Delivered — Runtime fixes (judge provider fallback, token limits, score fairness, dataset validation), GUI enhancements (background execution, debug logs, editable settings), architecture improvements (OTLP endpoint, graph analysis accuracy, tool delegation), code quality review, and test suite audit. See [PRD-Sprint5-Ralph.md](PRD-Sprint5-Ralph.md).
+
+**Sprint 6**: ✅ Delivered — Benchmarking infrastructure (MAS composition sweep with statistical analysis), CC baseline completion (artifact collection scripts, adapter path fixes), security hardening (CVE mitigations, prompt sanitization, log/trace scrubbing), test quality improvements. See [PRD-Sprint6-Ralph.md](PRD-Sprint6-Ralph.md).
+
+**Sprint 7 Active**: Documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings), unified provider configuration, Claude Code engine option. See [PRD-Sprint7-Ralph.md](PRD-Sprint7-Ralph.md).
 
 ## Out of Scope
 
