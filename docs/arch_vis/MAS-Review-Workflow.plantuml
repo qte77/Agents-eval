@@ -9,7 +9,7 @@ actor User
 participant "Manager Agent" as Manager
 participant "Researcher Agent" as Researcher
 database "PeerRead Dataset" as DB
-participant "Large Context LLM" as LLM
+participant "LLM Provider\n(chat + judge)" as LLM
 entity "Evaluation System" as EvalSystem
 entity "ReviewPersistence" as Persistence
 
@@ -22,8 +22,8 @@ DB --> Manager: Return full paper content
 deactivate DB
 
 note right of Manager
-  Large context models (Claude 4, Gemini 2.5, ...)
-  process full papers without chunking.
+  Configurable provider via --chat-provider.
+  Full papers processed without chunking.
   Execution is traced for evaluation.
 end note
 

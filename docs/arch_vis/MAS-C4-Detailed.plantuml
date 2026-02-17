@@ -23,9 +23,12 @@ System_Boundary(agents_eval, "Agents-eval Platform") {
     }
 
 
-    Container(agent_system, "Agent System", "Python/PydanticAI", "Multi-agent orchestration (Manager/Researcher/Analyst/Synthesizer)")
+    Container(agent_system, "Agent System", "Python/PydanticAI", "Multi-agent orchestration (Manager/Researcher/Analyst/Synthesizer)\nor Claude Code headless (--engine=cc)")
+
+    Container(benchmark, "Benchmark", "Python", "SweepRunner: compositions × papers × repetitions\nSweepAnalyzer: mean/stddev per composition\nresults.json + summary.md")
 
     Container(datasets, "Dataset Integration", "Python+JSON", "Loads and provides access to benchmark datasets (e.g., PeerRead)")
+    Container(security, "Security", "Python", "URL validation (SSRF), prompt sanitization,\nlog/trace scrubbing, input size limits")
 
     Container(review_storage, "Review Storage", "File System", "Persistent storage for generated reviews (JSON files)")
     Container(dataset_storage, "Dataset Storage", "File System", "Persistent storage for downloaded datasets (JSON+PDF)")
@@ -33,18 +36,18 @@ System_Boundary(agents_eval, "Agents-eval Platform") {
     ' Enforce vertical stacking:
     main_app -[hidden]-> eval_components
     main_app -[hidden]-> agent_system
+    main_app -[hidden]-> benchmark
 
     agent_system -[hidden]-> datasets
     eval_components -[hidden]-> datasets
+    benchmark -[hidden]-> security
 
     datasets -[hidden]-> review_storage
     datasets -[hidden]-> dataset_storage
-
-    ' Optional: keep review_storage and dataset_storage side-by-side by not linking them vertically
 }
 
 System_Boundary(external_providers, "External Providers") {
-    System_Ext(llm_providers, "LLM Providers", "Anthropic, Gemini, Ollama, OpenRouter, HuggingFace, etc.")
+    System_Ext(llm_providers, "LLM Providers", "Anthropic, Cerebras, Groq, Gemini, Ollama, OpenRouter")
     System_Ext(tools, "Tools/Search APIs", "DuckDuckGo, Tavily, etc.")
     System_Ext(obs, "Observability", "WandB, Logfire, AgentOps")
     System_Ext(dataset_ext, "Dataset", "PeerRead")
@@ -60,10 +63,14 @@ Rel(user, config, "Adjusts for tasks", "CLI/Streamlit")
 Rel(config, main_app, "Provides runtime settings", "JSON")
 Rel(main_app, agent_system, "Initiates agent tasks", "PydanticAI")
 Rel(main_app, eval_components, "Initiates evaluation tasks", "PydanticAI")
+Rel(main_app, benchmark, "Run sweep", "SweepConfig")
+Rel(benchmark, agent_system, "Run composition", "compositions × papers × repetitions")
+Rel(benchmark, eval_components, "Collect CompositeResult", "per run")
 Rel(agent_system, datasets, "Provides papers/data", "Dataset API")
 Rel(eval_components, datasets, "Provides papers/data", "Dataset API")
 Rel(datasets, review_storage, "Saves reviews", "File I/O")
 Rel(datasets, dataset_storage, "Saves datasets", "File I/O")
+Rel(main_app, security, "Validates", "URLs, prompts, inputs")
 
 ' Three tiered eval system
 Rel(composite_scorer, traditional_eval, "Traditional scores", "Data")
