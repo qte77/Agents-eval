@@ -11,7 +11,7 @@ PROJECT_NAME = "rd-mas-example"
 
 # MARK: paths, files
 CHAT_CONFIG_FILE = "config_chat.json"
-LOGS_PATH = "logs"
+LOGS_PATH = "logs/Agent_evals"
 CONFIGS_PATH = "config"
 DATASETS_PATH = "datasets"
 DATASETS_CONFIG_FILE = "config_datasets.json"

@@ -95,7 +95,7 @@ class JudgeSettings(BaseSettings):
 
     # Observability
     trace_collection: bool = Field(default=True)
-    trace_storage_path: str = Field(default="./logs/traces/")
+    trace_storage_path: str = Field(default="./logs/Agent_evals/traces/")
     logfire_enabled: bool = Field(default=True)
     logfire_send_to_cloud: bool = Field(default=False)
     phoenix_endpoint: str = Field(default="http://localhost:6006")
