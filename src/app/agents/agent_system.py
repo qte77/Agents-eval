@@ -172,8 +172,12 @@ def _add_research_tool(
     ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
         """Delegate research task to ResearchAgent."""
         result = await _execute_traced_delegation(
-            research_agent, ctx, query,
-            to_agent="researcher", tool_name="delegate_research", task_type="research",
+            research_agent,
+            ctx,
+            query,
+            to_agent="researcher",
+            tool_name="delegate_research",
+            task_type="research",
         )
         if isinstance(
             result.output,
@@ -198,8 +202,12 @@ def _add_analysis_tool(
     ) -> AnalysisResult:
         """Delegate analysis task to AnalysisAgent."""
         result = await _execute_traced_delegation(
-            analysis_agent, ctx, query,
-            to_agent="analyst", tool_name="delegate_analysis", task_type="analysis",
+            analysis_agent,
+            ctx,
+            query,
+            to_agent="analyst",
+            tool_name="delegate_analysis",
+            task_type="analysis",
         )
         if isinstance(result.output, AnalysisResult):
             return result.output
@@ -221,8 +229,12 @@ def _add_synthesis_tool(
     ) -> ResearchSummary:
         """Delegate synthesis task to SynthesisAgent."""
         result = await _execute_traced_delegation(
-            synthesis_agent, ctx, query,
-            to_agent="synthesizer", tool_name="delegate_synthesis", task_type="synthesis",
+            synthesis_agent,
+            ctx,
+            query,
+            to_agent="synthesizer",
+            tool_name="delegate_synthesis",
+            task_type="synthesis",
         )
         if isinstance(result.output, ResearchSummary):
             return result.output
@@ -385,16 +397,19 @@ def _create_manager(
     # Reason: prompt lookup guarded by model presence to match original behavior —
     # tests may omit sub-agent prompt keys when model is None.
     researcher = _create_optional_agent(
-        models.model_researcher, result_type,
+        models.model_researcher,
+        result_type,
         prompts["system_prompt_researcher"] if models.model_researcher else "",
         tools=[duckduckgo_search_tool()],
     )
     analyst = _create_optional_agent(
-        models.model_analyst, AnalysisResult,
+        models.model_analyst,
+        AnalysisResult,
         prompts["system_prompt_analyst"] if models.model_analyst else "",
     )
     synthesiser = _create_optional_agent(
-        models.model_synthesiser, AnalysisResult,
+        models.model_synthesiser,
+        AnalysisResult,
         prompts["system_prompt_synthesiser"] if models.model_synthesiser else "",
     )
 

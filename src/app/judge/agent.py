@@ -337,22 +337,7 @@ class JudgeAgent:
             logger.info("Executing Tier 3: Graph Analysis")
 
             # Create trace data
-            if execution_trace:
-                trace_data = GraphTraceData(
-                    execution_id=execution_trace.get("execution_id", "judge_exec"),
-                    agent_interactions=execution_trace.get("agent_interactions", []),
-                    tool_calls=execution_trace.get("tool_calls", []),
-                    timing_data=execution_trace.get("timing_data", {}),
-                    coordination_events=execution_trace.get("coordination_events", []),
-                )
-            else:
-                trace_data = GraphTraceData(
-                    execution_id="judge_minimal",
-                    agent_interactions=[],
-                    tool_calls=[],
-                    timing_data={},
-                    coordination_events=[],
-                )
+            trace_data = GraphTraceData.from_trace_dict(execution_trace, fallback_id="judge_exec")
 
             # Create input for plugin
             from pydantic import BaseModel

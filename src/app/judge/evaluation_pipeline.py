@@ -254,21 +254,7 @@ class EvaluationPipeline:
 
     def _create_trace_data(self, execution_trace: dict[str, Any] | None) -> GraphTraceData:
         """Convert execution trace to GraphTraceData."""
-        if execution_trace:
-            return GraphTraceData(
-                execution_id=execution_trace.get("execution_id", "pipeline_exec"),
-                agent_interactions=execution_trace.get("agent_interactions", []),
-                tool_calls=execution_trace.get("tool_calls", []),
-                timing_data=execution_trace.get("timing_data", {}),
-                coordination_events=execution_trace.get("coordination_events", []),
-            )
-        return GraphTraceData(
-            execution_id="pipeline_minimal",
-            agent_interactions=[],
-            tool_calls=[],
-            timing_data={},
-            coordination_events=[],
-        )
+        return GraphTraceData.from_trace_dict(execution_trace, fallback_id="pipeline_exec")
 
     def _should_apply_fallback(self, results: EvaluationResults) -> bool:
         """Check if fallback strategy should be applied.

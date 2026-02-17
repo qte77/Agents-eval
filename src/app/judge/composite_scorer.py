@@ -221,6 +221,24 @@ class CompositeScorer:
         """
         return self.recommendation_weights.get(recommendation, 0.0)
 
+    def _score_and_recommend(
+        self, metrics: dict[str, float], weights: dict[str, float]
+    ) -> tuple[float, str, float]:
+        """Calculate clamped composite score and map to recommendation.
+
+        Args:
+            metrics: Metric name to value mapping.
+            weights: Metric name to weight mapping (must share keys with metrics).
+
+        Returns:
+            Tuple of (composite_score, recommendation, recommendation_weight).
+        """
+        composite_score = sum(metrics[m] * w for m, w in weights.items())
+        composite_score = max(0.0, min(1.0, composite_score))
+        recommendation = self.map_to_recommendation(composite_score)
+        recommendation_weight = self.get_recommendation_weight(recommendation)
+        return composite_score, recommendation, recommendation_weight
+
     def _detect_single_agent_mode(self, trace_data: GraphTraceData) -> bool:
         """Detect if execution was single-agent (no multi-agent delegation).
 
@@ -511,24 +529,17 @@ class CompositeScorer:
         if missing_metrics:
             raise ValueError(f"Missing required metrics after exclusion: {missing_metrics}")
 
-        # Calculate composite score with adjusted weights
-        composite_score = sum(
-            metrics[metric] * weight for metric, weight in adjusted_weights.items()
-        )
-        composite_score = max(0.0, min(1.0, composite_score))
-
-        recommendation = self.map_to_recommendation(composite_score)
-        recommendation_weight = self.get_recommendation_weight(recommendation)
+        score, rec, rec_weight = self._score_and_recommend(metrics, adjusted_weights)
 
         logger.info(
-            f"Composite score with redistributed weights: {composite_score:.3f} "
+            f"Composite score with redistributed weights: {score:.3f} "
             f"(excluded: {excluded_metrics})"
         )
 
         return CompositeResult(
-            composite_score=composite_score,
-            recommendation=recommendation,
-            recommendation_weight=recommendation_weight,
+            composite_score=score,
+            recommendation=rec,
+            recommendation_weight=rec_weight,
             metric_scores=metrics,
             tier1_score=results.tier1.overall_score if results.tier1 else 0.0,
             tier2_score=results.tier2.overall_score if results.tier2 else None,
@@ -577,19 +588,12 @@ class CompositeScorer:
                 "tool_efficiency": results.tier3.tool_selection_accuracy,
             }
 
-            # Calculate composite score with adjusted weights
-            composite_score = sum(
-                metrics[metric] * weight for metric, weight in adjusted_weights.items()
-            )
-            composite_score = max(0.0, min(1.0, composite_score))
-
-            recommendation = self.map_to_recommendation(composite_score)
-            recommendation_weight = self.get_recommendation_weight(recommendation)
+            score, rec, rec_weight = self._score_and_recommend(metrics, adjusted_weights)
 
             return CompositeResult(
-                composite_score=composite_score,
-                recommendation=recommendation,
-                recommendation_weight=recommendation_weight,
+                composite_score=score,
+                recommendation=rec,
+                recommendation_weight=rec_weight,
                 metric_scores=metrics,
                 tier1_score=results.tier1.overall_score,
                 tier2_score=None,  # Tier 2 skipped

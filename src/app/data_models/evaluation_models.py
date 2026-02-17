@@ -186,6 +186,29 @@ class GraphTraceData(BaseModel):
         description="Manager delegation patterns", default_factory=list
     )
 
+    @classmethod
+    def from_trace_dict(
+        cls, trace: dict[str, Any] | None, fallback_id: str = "minimal"
+    ) -> "GraphTraceData":
+        """Create GraphTraceData from an execution trace dict, with safe defaults.
+
+        Args:
+            trace: Raw execution trace dict, or None for a minimal empty instance.
+            fallback_id: Execution ID to use when trace is None.
+
+        Returns:
+            GraphTraceData populated from dict or with empty defaults.
+        """
+        if trace:
+            return cls(
+                execution_id=trace.get("execution_id", fallback_id),
+                agent_interactions=trace.get("agent_interactions", []),
+                tool_calls=trace.get("tool_calls", []),
+                timing_data=trace.get("timing_data", {}),
+                coordination_events=trace.get("coordination_events", []),
+            )
+        return cls(execution_id=fallback_id)
+
 
 class PeerReadEvalResult(BaseModel):
     """Result of evaluating agent review against PeerRead ground truth."""
