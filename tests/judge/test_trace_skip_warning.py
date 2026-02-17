@@ -65,12 +65,12 @@ class TestTraceSkipWarning:
 
         assert result is None
 
-    def test_warns_when_no_active_execution(self, tmp_path: Path):
-        """MUST warn with reason 'no active execution' when called without start.
+    def test_silent_when_no_active_execution(self, tmp_path: Path):
+        """MUST silently return None when called without start_execution().
 
-        Logger mocking is required here: the only observable difference between
-        the three skip conditions is the warning message. All three return None,
-        and none create files. The message text is the sole behavioral signal.
+        Idempotent guard: end_execution() may be called multiple times
+        (e.g. run_manager happy path + trace_execution decorator). The second
+        call finds current_execution_id=None and returns silently — no warning.
         """
         settings = JudgeSettings(
             trace_collection=True,
@@ -83,9 +83,7 @@ class TestTraceSkipWarning:
             result = collector.end_execution()
 
             assert result is None
-            mock_logger.warning.assert_called_once()
-            warning_msg = str(mock_logger.warning.call_args)
-            assert "no active execution" in warning_msg
+            mock_logger.warning.assert_not_called()
 
     def test_returns_none_when_no_events_collected(self, tmp_path: Path):
         """end_execution() MUST return None when execution has no logged events."""
@@ -101,12 +99,12 @@ class TestTraceSkipWarning:
 
         assert result is None
 
-    def test_warns_otlp_when_no_events_collected(self, tmp_path: Path):
-        """MUST warn about OTLP endpoint when execution has no events.
+    def test_warns_when_no_events_collected(self, tmp_path: Path):
+        """MUST warn 'no events collected' when execution has no logged events.
 
-        Logger mocking is required to verify message content: the no-events case
-        must include an actionable hint about the OTLP endpoint, which is only
-        observable via the warning message text.
+        Logger mocking is required: the only observable difference between
+        skip conditions is the warning message. All return None, none create files.
+        Note: no OTLP hint — TraceCollector uses manual log_tool_call(), not OTEL spans.
         """
         settings = JudgeSettings(
             trace_collection=True,
@@ -123,7 +121,6 @@ class TestTraceSkipWarning:
             mock_logger.warning.assert_called_once()
             warning_msg = str(mock_logger.warning.call_args)
             assert "no events collected" in warning_msg
-            assert "OTLP" in warning_msg
 
     def test_returns_trace_on_successful_storage(self, tmp_path: Path):
         """end_execution() MUST return a ProcessedTrace when events are present."""

@@ -229,12 +229,13 @@ class TraceCollector:
         Returns:
             ProcessedTrace object with patterns, or None if no execution active
         """
-        # Idempotent: silently return None if no active execution
-        if not self.current_execution_id:
-            return None
-
+        # Reason: check trace_enabled first so callers get an explicit warning,
+        # then idempotent guard for double-call safety (silent return)
         if not self.trace_enabled:
             logger.warning("Trace storage skipped: tracing disabled")
+            return None
+
+        if not self.current_execution_id:
             return None
 
         if not self.current_events:
