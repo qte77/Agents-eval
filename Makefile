@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint writeup writeup_generate run_cli run_gui sweep cc_run_solo cc_collect_teams cc_run_teams run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_jscpd setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint writeup writeup_generate run_cli run_gui sweep cc_run_solo cc_collect_teams cc_run_teams run_profile ruff ruff_tests complexity duplication test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -59,7 +59,7 @@ setup_prod:  ## Install uv and deps
 	pip install uv -q
 	uv sync --frozen
 
-setup_dev:  ## Install uv and deps, claude code, mdlint, plantuml
+setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, plantuml
 	echo "Setting up dev environment ..."
 	# sudo apt-get install -y gh
 	pip install uv -q
@@ -67,6 +67,7 @@ setup_dev:  ## Install uv and deps, claude code, mdlint, plantuml
 	echo "npm version: $$(npm --version)"
 	$(MAKE) -s setup_claude_code
 	$(MAKE) -s setup_markdownlint
+	$(MAKE) -s setup_jscpd
 	$(MAKE) -s setup_plantuml
 
 setup_devc:  ## Setup dev environment with sandbox
@@ -141,11 +142,16 @@ setup_pdf_converter:  ## Setup PDF converter tools. Usage: make setup_pdf_conver
 		$(PDF_CONVERTER_SCRIPT) "$(CONVERTER)"
 	fi
 
+# TODO: evaluate Python-native alternative to markdownlint (pymarkdownlnt, mdformat) to reduce npm dependency
 setup_markdownlint:  ## Setup markdownlint CLI, node.js and npm have to be present
 	echo "Setting up markdownlint CLI ..."
 	npm install -gs markdownlint-cli
 	echo "markdownlint version: $$(markdownlint --version)"
 
+setup_jscpd:  ## Setup jscpd copy-paste detector, node.js and npm have to be present
+	echo "Setting up jscpd ..."
+	npm install -gs jscpd
+	echo "jscpd version: $$(jscpd --version)"
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin 
 setup_ollama:  ## Download Ollama, script does start local Ollama server
 	echo "Downloading Ollama binary ... Using '$(OLLAMA_SETUP_URL)'."
@@ -244,7 +250,7 @@ writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs
 		LANGUAGE="$(LANGUAGE)" \
 		NUMBER_SECTIONS="true" \
 		LIST_OF_FIGURES="true" \
-		LIST_OF_TABLES="true" \
+		LIST_OF_TABLES="false" \
 		UNNUMBERED_TITLE="true"
 	echo "=== Writeup PDF: $(WRITEUP_OUTPUT) ==="
 
@@ -361,6 +367,14 @@ ruff_tests:  ## Lint: Format and fix tests with ruff
 complexity:  ## Check cognitive complexity with complexipy
 	uv run complexipy
 
+# TODO: evaluate Python-native alternative to jscpd (pylint R0801, PMD CPD) to reduce npm dependency
+duplication:  ## Detect copy-paste duplication with jscpd
+	if command -v jscpd > /dev/null 2>&1; then
+		jscpd src/ --min-lines 5 --min-tokens 50 --reporters console
+	else
+		echo "jscpd not installed — skipping duplication check (run 'make setup_jscpd' to enable)"
+	fi
+
 test_all:  ## Run all tests
 	uv run pytest
 
@@ -381,6 +395,7 @@ validate:  ## Complete pre-commit validation sequence
 	$(MAKE) -s ruff_tests
 	$(MAKE) -s type_check
 	$(MAKE) -s complexity
+	$(MAKE) -s duplication
 	$(MAKE) -s test_coverage
 	echo "Validation completed successfully"
 
@@ -389,6 +404,7 @@ quick_validate:  ## Fast development cycle validation
 	$(MAKE) -s ruff
 	$(MAKE) -s type_check
 	$(MAKE) -s complexity
+	$(MAKE) -s duplication
 	echo "Quick validation completed (check output for any failures)"
 
 output_unset_app_env_sh:  ## Unset app environment variables

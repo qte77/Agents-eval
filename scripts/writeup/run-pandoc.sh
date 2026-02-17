@@ -51,7 +51,7 @@ EOF
 fi
 
 # Resolve project root to absolute path (before any cd)
-PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 # Setup temp directory (writable in sandbox)
 TEMP_DIR="$PROJECT_ROOT/.tmp"
@@ -90,10 +90,9 @@ fi
 
 # Build base command with language metadata
 set -- --toc --toc-depth=2 \
-       -V geometry:margin=1in \
+       -V geometry:"margin=1in,footskip=35pt" \
        -V documentclass=report \
        --pdf-engine=xelatex \
-       -M protrusion \
        --from markdown+smart \
        -V pagestyle=plain \
        --metadata lang="$language"
@@ -144,6 +143,35 @@ cleanup_header=1
 
 # Always add figure placement controls and spacing adjustments
 cat > "$header_temp" << EOF
+% Unicode-complete fonts (TeX Gyre: POSIX standard equivalents)
+% Fallback chain: TeX Gyre -> Latin Modern (XeLaTeX default)
+\\usepackage{fontspec}
+\\IfFontExistsTF{TeX Gyre Termes}{%
+  \\setmainfont{TeX Gyre Termes}%
+  \\setsansfont{TeX Gyre Heros}%
+  \\setmonofont[HyphenChar="002D,Scale=MatchLowercase]{TeX Gyre Cursor}%
+}{}
+
+% Typography: protrusion + narrower word spacing
+\\PassOptionsToPackage{protrusion=true,expansion=false}{microtype}
+\\spaceskip=0.33em plus 0.15em minus 0.12em
+\\emergencystretch=3em
+
+% Fix monospace overflow: wrap long lines in code blocks and inline code
+\\usepackage{fvextra}
+\\fvset{breaklines=true,breakanywhere=true}
+\\usepackage[htt]{hyphenat}
+\\usepackage{xurl}
+
+% Landscape pages for wide figures (auto-scale images to fit)
+\\usepackage{pdflscape}
+\\AtBeginEnvironment{landscape}{\\setkeys{Gin}{width=\\linewidth,keepaspectratio}}
+
+% Prevent oversized images from overflowing page height
+\\usepackage[export]{adjustbox}
+\\let\\oldincludegraphics\\includegraphics
+\\renewcommand{\\includegraphics}[2][]{\\adjustimage{max width=\\linewidth,max height=0.85\\textheight,keepaspectratio,#1}{#2}}
+
 \\usepackage{float}
 \\floatplacement{figure}{!tb}
 \\renewcommand{\\topfraction}{0.9}
@@ -162,48 +190,66 @@ case "$language" in
         table_name="Tabelle"
         contents_name="Inhaltsverzeichnis"
         bibliography_name="Literaturverzeichnis"
+        list_of_figures_name="Abbildungsverzeichnis"
+        list_of_tables_name="Tabellenverzeichnis"
+        chapter_name="Kapitel"
+        abstract_name="Abstrakt"
         ;;
     es-ES|es)
         figure_name="Figura"
         table_name="Tabla"
         contents_name="Índice"
         bibliography_name="Bibliografía"
+        list_of_figures_name="Índice de figuras"
+        list_of_tables_name="Índice de tablas"
+        chapter_name="Capítulo"
+        abstract_name="Resumen"
         ;;
     fr-FR|fr)
         figure_name="Figure"
         table_name="Tableau"
         contents_name="Table des matières"
         bibliography_name="Bibliographie"
+        list_of_figures_name="Table des figures"
+        list_of_tables_name="Liste des tableaux"
+        chapter_name="Chapitre"
+        abstract_name="Résumé"
         ;;
     it-IT|it)
         figure_name="Figura"
         table_name="Tabella"
         contents_name="Indice"
         bibliography_name="Bibliografia"
+        list_of_figures_name="Elenco delle figure"
+        list_of_tables_name="Elenco delle tabelle"
+        chapter_name="Capitolo"
+        abstract_name="Sommario"
         ;;
     *)
         figure_name="Figure"
         table_name="Table"
         contents_name=""
         bibliography_name=""
+        list_of_figures_name=""
+        list_of_tables_name=""
+        chapter_name=""
+        abstract_name=""
         ;;
 esac
 
-# Apply language settings
+# Apply language settings (deferred to \AtBeginDocument to override polyglossia/babel)
+lang_renames="\\renewcommand{\\figurename}{$figure_name}\\renewcommand{\\tablename}{$table_name}"
+[ -n "$list_of_figures_name" ] && lang_renames="$lang_renames\\renewcommand{\\listfigurename}{$list_of_figures_name}"
+[ -n "$list_of_tables_name" ] && lang_renames="$lang_renames\\renewcommand{\\listtablename}{$list_of_tables_name}"
+[ -n "$chapter_name" ] && lang_renames="$lang_renames\\renewcommand{\\chaptername}{$chapter_name}"
+[ -n "$contents_name" ] && lang_renames="$lang_renames\\renewcommand{\\contentsname}{$contents_name}"
+[ -n "$abstract_name" ] && lang_renames="$lang_renames\\renewcommand{\\abstractname}{$abstract_name}"
+if [ -n "$bibliography_name" ]; then
+    lang_renames="$lang_renames\\renewcommand{\\bibname}{$bibliography_name}"
+    lang_renames="$lang_renames\\makeatletter\\@ifundefined{refname}{}{\\renewcommand{\\refname}{$bibliography_name}}\\makeatother"
+fi
 cat >> "$header_temp" << EOF
-\\renewcommand{\\figurename}{$figure_name}
-\\renewcommand{\\tablename}{$table_name}
-EOF
-
-# Add contents name only if specified (non-English languages)
-[ -n "$contents_name" ] && cat >> "$header_temp" << EOF
-\\renewcommand{\\contentsname}{$contents_name}
-EOF
-
-# Add bibliography name only if specified (non-English languages)
-[ -n "$bibliography_name" ] && cat >> "$header_temp" << EOF
-\\renewcommand{\\bibname}{$bibliography_name}
-\\makeatletter\\@ifundefined{refname}{}{\\renewcommand{\\refname}{$bibliography_name}}\\makeatother
+\\AtBeginDocument{$lang_renames}
 EOF
 
 # Override TOC title if explicitly provided
@@ -218,13 +264,12 @@ cat >> "$header_temp" << EOF
 \\renewcommand{\\@makechapterhead}[1]{%
   \\vspace*{20\\p@}%
   {\\parindent \\z@ \\raggedright \\normalfont
-    \\ifnum \\c@secnumdepth >\\m@ne
-        \\huge\\bfseries \\@chapapp\\space \\thechapter
-        \\par\\nobreak
-        \\vskip 20\\p@
-    \\fi
     \\interlinepenalty\\@M
-    \\Huge \\bfseries #1\\par\\nobreak
+    \\Huge \\bfseries
+    \\ifnum \\c@secnumdepth >\\m@ne
+        \\thechapter\\quad
+    \\fi
+    #1\\par\\nobreak
     \\vskip 20\\p@
   }}
 \\renewcommand{\\@makeschapterhead}[1]{%
