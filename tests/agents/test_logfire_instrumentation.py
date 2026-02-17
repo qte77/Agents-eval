@@ -325,7 +325,7 @@ def test_log_says_phoenix_when_send_to_cloud_false():
     )
 
     with (
-        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("app.agents.logfire_instrumentation.logfire"),
         patch("requests.head") as mock_head,
         patch("app.agents.logfire_instrumentation.logger") as mock_logger,
     ):
@@ -353,7 +353,7 @@ def test_log_says_logfire_when_send_to_cloud_true():
     )
 
     with (
-        patch("app.agents.logfire_instrumentation.logfire") as mock_logfire,
+        patch("app.agents.logfire_instrumentation.logfire"),
         patch("app.agents.logfire_instrumentation.logger") as mock_logger,
     ):
         LogfireInstrumentationManager(config)

@@ -217,6 +217,11 @@ async def test_order_service_saves_to_database(db_session):
 - `responses` - Mock HTTP requests
 - `freezegun` - Mock time/dates
 
+**Mock safety rules**:
+
+- Use `spec=RealClass` or `spec_set=RealClass` when mocking third-party return types
+- Bare `MagicMock()` accepts any attribute name silently — use `spec=` to constrain to the real interface
+
 ```python
 # MOCK external API
 from unittest.mock import patch

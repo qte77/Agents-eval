@@ -13,6 +13,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `agent_system.py`: use `result.output` instead of `result.data` (`AgentRunResult` API)
+- `trace_processors.py`: `end_execution()` now idempotent — second call returns `None` silently (no misleading "no active execution" warning)
+- `logfire_instrumentation.py`: log says "Phoenix tracing initialized" when `send_to_cloud=False`, "Logfire" only when sending to cloud
+- `review_persistence.py`: reviews now saved under project root (`datasets/peerread/MAS_reviews/`) not `src/app/`
+- `config_app.py`: `LOGS_PATH` changed from `"logs"` to `"logs/Agent_evals"`
+- `judge/settings.py`: `trace_storage_path` aligned to `./logs/Agent_evals/traces/`
+
+### Added
+
+- `tests/agents/test_trace_collection_integration.py`: spec-constrained mocks catch API drift; `end_execution` idempotency test
+- `tests/data_utils/test_review_persistence.py`: new — validates reviews dir resolves to project root
+- `tests/utils/test_log_config.py`: new — validates `LOGS_PATH` and `trace_storage_path` are under `Agent_evals`
+- `tests/agents/test_logfire_instrumentation.py`: Phoenix vs Logfire init log assertions
+
+### Changed
+
+- `docs/best-practices/testing-strategy.md`: added mock safety rules (`spec=RealClass`)
+- `docs/best-practices/tdd-best-practices.md`: added unspec'd mock anti-pattern with example
+- `.claude/skills/testing-python/SKILL.md`: added quality gate for third-party mock specs
+
 - Ralph: baseline log formatting — `grep -c . || echo 0` produced `"0\n0"` on zero matches, splitting the log line; changed to `|| true` (3 locations in `baseline.sh`)
 - Ralph: persisted baseline staleness detection — added `# Base-commit:` metadata to baselines; on reuse, invalidates if codebase HEAD diverged from stored commit (prevents stale baselines after external changes); backward compatible with old baselines missing metadata
 - Ralph: monitor phase detection — default changed from `WORKING` to `RED`; commit scan now scoped to current story ID + current sprint (`--since` from `prd.json.generated`) instead of global last 3 commits

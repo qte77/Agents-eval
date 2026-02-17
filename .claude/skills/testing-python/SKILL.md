@@ -92,3 +92,4 @@ pytest -k test_user_   # Filter by name
 - [ ] Naming convention followed
 - [ ] Behavior-focused (not implementation)
 - [ ] No library behavior tested
+- [ ] Mocks for third-party types use spec=RealClass

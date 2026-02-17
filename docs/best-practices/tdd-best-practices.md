@@ -112,6 +112,19 @@ def test_service_fetches_data():
     assert service.fetch("key") == expected_value
 ```
 
+**Unspec'd mocks on third-party types**: `MagicMock()` silently accepts any
+attribute, masking API drift bugs until runtime.
+
+```python
+# BAD - mock.data always succeeds even if AgentRunResult has no .data
+mock_result = MagicMock()
+result = await run_manager(...)  # passes, but crashes at runtime
+
+# GOOD - spec= constrains to real interface
+mock_result = MagicMock(spec=AgentRunResult)
+mock_result.output = MagicMock()  # must explicitly set dataclass fields
+```
+
 **Overly complex tests**: If test setup is harder to understand than
 the code, simplify. Avoid excessive mocking.
 
