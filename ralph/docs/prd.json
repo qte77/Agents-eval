@@ -70,8 +70,8 @@
         "tests/examples/test_engine_comparison.py",
         "src/examples/README.md"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-17T19:47:31Z",
       "content_hash": "62adae279bdc82fb2708802e849f2e004f26704f28aad752a18726a06cd99d5e",
       "depends_on": [
         "STORY-001"
