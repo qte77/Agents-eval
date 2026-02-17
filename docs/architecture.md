@@ -206,6 +206,56 @@ The evaluation framework is built around large context window models capable of 
 - **Transparency**: `CompositeResult` includes `single_agent_mode: bool` flag to indicate when redistribution occurred
 - **Compound Redistribution**: When both Tier 2 is skipped (no valid provider) AND single-agent mode is detected, weights are redistributed across the remaining available metrics to always sum to ~1.0
 
+## Benchmarking Infrastructure (Sprint 6)
+
+The benchmarking pipeline enables systematic comparison of MAS compositions with statistical rigor.
+
+### Architecture
+
+```text
+SweepConfig → SweepRunner → (compositions × papers × repetitions) → SweepAnalysis → output files
+```
+
+- **`SweepConfig`** (`src/app/benchmark/sweep_config.py`): Declares sweep parameters — agent compositions (2³ = 8 default), paper IDs, repetitions per combination, provider settings
+- **`SweepRunner`** (`src/app/benchmark/sweep_runner.py`): Executes the sweep matrix, calls `evaluation_pipeline.evaluate_comprehensive()` for each cell, aggregates raw results
+- **`SweepAnalysis`** / `SweepAnalyzer` (`src/app/benchmark/sweep_analysis.py`): Computes mean, stddev, min, max per metric per composition across repetitions
+
+### CC Headless Integration
+
+An optional CC path feeds real Claude Code agent artifacts into the same evaluation pipeline:
+
+```text
+claude -p "prompt" → artifacts (raw_stream.jsonl) → CCTraceAdapter → GraphTraceData → evaluation
+```
+
+`shutil.which("claude")` validates CC availability at startup; missing CLI raises a clear error.
+
+### Output Files
+
+- `results.json` — raw per-evaluation scores (composition × paper × repetition)
+- `summary.md` — Markdown table with mean/stddev per metric per composition
+
+## Security Framework (Sprint 6)
+
+The security hardening sprint applied the OWASP MAESTRO 7-layer model (Model, Agent Logic, Integration, Monitoring, Execution, Orchestration) to the evaluation framework.
+
+### Key Mitigations
+
+- **SSRF prevention**: URL validation with domain allowlisting (`src/app/utils/url_validation.py`). Allowlist derived from actual `validate_url()` call sites, not conceptual dependencies.
+- **Input sanitization**: Prompt injection resistance via length limits and XML delimiter wrapping before LLM calls
+- **Log scrubbing**: Sensitive data filtering (API keys, tokens, passwords) before trace export (`src/app/utils/log_scrubbing.py`)
+- **Input size limits**: DoS prevention through maximum payload sizes at system boundaries
+
+### CVE Status
+
+See [security-advisories.md](security-advisories.md) for all known advisories and their mitigation status. All Sprint 6 CVEs were either already mitigated by existing version pins or patched during this sprint.
+
+### References
+
+- Security tests: `tests/security/` (SSRF, prompt injection, sensitive data filtering)
+- MAESTRO review findings: `docs/reviews/sprint5-code-review.md`
+- Design principles: [best-practices/mas-security.md](best-practices/mas-security.md)
+
 ## Implementation Status
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.

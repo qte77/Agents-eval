@@ -112,15 +112,18 @@ Compare MAS (Manager -> Researcher -> Analyst -> Synthesizer) against simpler pa
 
 <!-- markdownlint-disable MD013 -->
 
-| Dimension | OTel -> Phoenix (recommended) | Hooks -> Phoenix | Langfuse |
-| --------- | ----------------------------- | ---------------- | -------- |
-| Same Phoenix instance | Yes | Yes | No |
-| Token/cost tracking | Yes | No | Yes |
-| Tool-level traces | Yes | Yes | Yes |
-| LLM-call traces | Yes | No | Yes |
-| Setup complexity | Medium (Collector) | Low (script) | Low (npm) |
+| Dimension | OTel -> Phoenix (recommended) | Hooks -> Phoenix | Artifact collection |
+| --------- | ----------------------------- | ---------------- | ------------------- |
+| Same Phoenix instance | Yes | Yes | No (file-based) |
+| Token/cost tracking | Yes | No | No |
+| Tool-level traces | Yes | Yes | Yes (via CCTraceAdapter) |
+| LLM-call traces | Yes | No | No |
+| Trace spans | No — upstream limitation | No | Yes — via CCTraceAdapter |
+| Setup complexity | Medium (Collector) | Low (script) | Low (parse files) |
 | Unified dashboard | Yes | Yes | No |
-| In settings.json | Yes (vars exist) | No | No |
+| In settings.json | Yes (vars exist, currently disabled) | No | No |
+
+**Upstream limitation**: CC OTel exports metrics and logs only — no trace spans. This is a known limitation tracked in [anthropics/claude-code#9584](https://github.com/anthropics/claude-code/issues/9584) and [#2090](https://github.com/anthropics/claude-code/issues/2090). Until resolved, trace-level execution analysis requires artifact collection via `CCTraceAdapter`.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -186,6 +189,12 @@ CC OTel is infrastructure-level (env vars + Phoenix endpoint), separate from app
 **Wait on**: Replacing Ralph loop or subagent architecture. Limitations (no resumption, task lag, no nested teams) make it unreliable.
 
 **When ready**: Enable in `settings.json`, start with review/research tasks, pre-approve common operations, use delegate mode for 3+ teammates.
+
+### Observability Strategy for CC Evaluation
+
+- **Artifact collection is primary** for evaluation: `CCTraceAdapter` parses `raw_stream.jsonl` for `TeamCreate`, `Task`, `TodoWrite` events → `GraphTraceData` → three-tier evaluation pipeline
+- **OTel is supplementary** for cost/token dashboards only (metrics + logs, no trace spans due to upstream limitation)
+- **Settings.json OTel vars** (`OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_LOGS_EXPORTER`, `OTEL_EXPORTER_OTLP_METRICS_PROTOCOL`) are currently disabled (empty string values). Enable to collect cost/token metrics in Phoenix; does not provide trace spans.
 
 ## Trace & Communication Storage
 

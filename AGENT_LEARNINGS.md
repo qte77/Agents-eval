@@ -157,6 +157,15 @@ updated: 2026-02-16
 - **Anti-pattern**: Assuming `~/.claude/teams/` persists after headless invocation. It doesn't — only interactive sessions leave persistent team state.
 - **References**: `scripts/collect-cc-traces/run-cc.sh`, ADR-008
 
+### CC OTel Exports Metrics/Logs Only — No Trace Spans
+
+- **Context**: Configuring `OTEL_*` env vars in `.claude/settings.json` for CC observability
+- **Problem**: CC OTel integration was described as providing "Tool-level traces" and "LLM-call traces", implying trace spans. In practice, CC OTel exports only metrics and logs — no distributed trace spans. This is an upstream limitation in the CC instrumentation layer.
+- **Solution**: For trace-level execution analysis (required for evaluation), use artifact collection (`CCTraceAdapter` parses `raw_stream.jsonl`). OTel is supplementary for cost/token dashboards only.
+- **Key distinction**: metrics/logs → OTel → Phoenix dashboards; trace spans → artifact collection → `CCTraceAdapter` → `GraphTraceData`
+- **Upstream issues**: [anthropics/claude-code#9584](https://github.com/anthropics/claude-code/issues/9584), [#2090](https://github.com/anthropics/claude-code/issues/2090)
+- **References**: `docs/analysis/CC-agent-teams-orchestration.md`, `.claude/settings.json` (OTel vars currently disabled)
+
 ### Makefile $(or) Does Not Override ?= Defaults
 
 - **Context**: Makefile variable defaults with `?=` and `$(or $(VAR),fallback)` pattern
