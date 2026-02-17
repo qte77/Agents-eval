@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui sweep cc_solo cc_teams_collect cc_teams_run run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -250,6 +250,51 @@ run_profile:  ## Profile app with scalene
 	uv run scalene --outfile \
 		"$(APP_PATH)/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
 		"$(APP_PATH)/main.py"
+
+
+# MARK: CC baselines
+
+
+CC_TRACES_SCRIPT := scripts/collect-cc-traces
+CC_SOLO_OUTPUT := logs/cc/solo
+CC_TEAMS_OUTPUT := logs/cc/teams
+CC_TIMEOUT ?= 300
+CC_MODEL ?=
+
+cc_solo:  ## Run CC solo review + collect artifacts. Usage: make cc_solo PAPER_ID=1105.1072 [CC_TIMEOUT=300] [CC_MODEL=sonnet]
+	if [ -z "$(PAPER_ID)" ]; then
+		echo "Error: PAPER_ID required. Usage: make cc_solo PAPER_ID=1105.1072"
+		exit 1
+	fi
+	chmod +x $(CC_TRACES_SCRIPT)/collect-cc-solo.sh
+	$(CC_TRACES_SCRIPT)/collect-cc-solo.sh \
+		--paper-id "$(PAPER_ID)" \
+		--output-dir "$(CC_SOLO_OUTPUT)/$(PAPER_ID)_$$(date +%Y%m%d_%H%M%S)" \
+		--timeout "$(CC_TIMEOUT)" \
+		$(if $(CC_MODEL),--model "$(CC_MODEL)")
+
+cc_teams_collect:  ## Collect existing CC teams artifacts. Usage: make cc_teams_collect TEAM_NAME=my-team
+	if [ -z "$(TEAM_NAME)" ]; then
+		echo "Error: TEAM_NAME required. Usage: make cc_teams_collect TEAM_NAME=my-team"
+		exit 1
+	fi
+	chmod +x $(CC_TRACES_SCRIPT)/collect-cc-teams.sh
+	$(CC_TRACES_SCRIPT)/collect-cc-teams.sh \
+		--name "$(TEAM_NAME)" \
+		--output-dir "$(CC_TEAMS_OUTPUT)/$(TEAM_NAME)_$$(date +%Y%m%d_%H%M%S)"
+
+cc_teams_run:  ## Run CC teams review + collect artifacts. Usage: make cc_teams_run PAPER_ID=1105.1072 [CC_TIMEOUT=600] [CC_MODEL=opus]
+	if [ -z "$(PAPER_ID)" ]; then
+		echo "Error: PAPER_ID required. Usage: make cc_teams_run PAPER_ID=1105.1072"
+		exit 1
+	fi
+	chmod +x $(CC_TRACES_SCRIPT)/collect-cc-solo.sh
+	$(CC_TRACES_SCRIPT)/collect-cc-solo.sh \
+		--paper-id "$(PAPER_ID)" \
+		--output-dir "$(CC_TEAMS_OUTPUT)/$(PAPER_ID)_$$(date +%Y%m%d_%H%M%S)" \
+		--timeout "$(or $(CC_TIMEOUT),600)" \
+		--teams \
+		$(if $(CC_MODEL),--model "$(CC_MODEL)")
 
 
 # MARK: Sanity
