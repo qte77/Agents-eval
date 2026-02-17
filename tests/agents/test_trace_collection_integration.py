@@ -125,6 +125,29 @@ async def test_timing_data_captured_during_execution():
         mock_collector.end_execution.assert_called_once()
 
 
+def test_end_execution_idempotent_no_warning():
+    """Test that calling end_execution twice does not log a warning on the second call.
+
+    Simulates the double-call pattern: run_manager calls end_execution(),
+    then the trace_execution decorator calls it again. The second call
+    should be a silent no-op, not a misleading warning.
+    """
+    from app.judge.settings import JudgeSettings
+    from app.judge.trace_processors import TraceCollector
+
+    collector = TraceCollector(JudgeSettings())
+    collector.trace_enabled = True
+    # Simulate state after a successful first end_execution
+    collector.current_execution_id = None
+    collector.current_events = []
+
+    with patch("app.judge.trace_processors.logger") as mock_logger:
+        result = collector.end_execution()
+
+        assert result is None
+        mock_logger.warning.assert_not_called()
+
+
 @pytest.mark.asyncio
 async def test_graph_trace_data_passed_to_evaluation():
     """Test that GraphTraceData is constructed and passed to evaluate_comprehensive."""
