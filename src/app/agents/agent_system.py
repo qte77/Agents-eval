@@ -1,11 +1,6 @@
 """
 Agent system utilities for orchestrating multi-agent workflows.
 
-# TODO: Highest churn in codebase (churn=5, CodeFactor Sprint 7). Complexity 37
-#   is manageable, but frequent modifications suggest this module absorbs changes
-#   that may belong in adjacent modules (feature envy). Evaluate extracting
-#   responsibilities in Sprint 8.
-
 This module provides functions and helpers to create, configure, and run agent
 systems using Pydantic AI. It supports delegation of tasks to research, analysis, and
 synthesis agents, and manages agent configuration, environment setup, and execution.
@@ -112,6 +107,55 @@ def _validate_model_return(
         raise Exception(msg)
 
 
+async def _execute_traced_delegation(
+    sub_agent: Agent[None, BaseModel],
+    ctx: RunContext[None],
+    query: str,
+    *,
+    to_agent: str,
+    tool_name: str,
+    task_type: str,
+) -> Any:
+    """Execute a sub-agent delegation with trace collection.
+
+    Centralizes the tracing pattern shared by all delegation tools:
+    log interaction, run sub-agent, log tool call with timing.
+
+    Args:
+        sub_agent: The sub-agent to delegate to.
+        ctx: The run context from the manager agent.
+        query: The query string to delegate.
+        to_agent: Target agent name for trace logging.
+        tool_name: Tool name for trace logging.
+        task_type: Task type for trace logging.
+
+    Returns:
+        The AgentRunResult from the sub-agent execution.
+    """
+    trace_collector = get_trace_collector()
+    start_time = time.perf_counter()
+
+    trace_collector.log_agent_interaction(
+        from_agent="manager",
+        to_agent=to_agent,
+        interaction_type="delegation",
+        data={"query": query, "task_type": task_type},
+    )
+
+    result = await sub_agent.run(query, usage=ctx.usage)
+
+    duration = time.perf_counter() - start_time
+    trace_collector.log_tool_call(
+        agent_id="manager",
+        tool_name=tool_name,
+        success=True,
+        duration=duration,
+        context=f"{task_type}_delegation",
+    )
+
+    return result
+
+
 def _add_research_tool(
     manager_agent: Agent[None, BaseModel],
     research_agent: Agent[None, BaseModel],
@@ -127,31 +171,10 @@ def _add_research_tool(
         ctx: RunContext[None], query: str
     ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
         """Delegate research task to ResearchAgent."""
-        # Capture trace data for delegation
-        trace_collector = get_trace_collector()
-        start_time = time.perf_counter()
-
-        # Log agent-to-agent interaction
-        trace_collector.log_agent_interaction(
-            from_agent="manager",
-            to_agent="researcher",
-            interaction_type="delegation",
-            data={"query": query, "task_type": "research"},
+        result = await _execute_traced_delegation(
+            research_agent, ctx, query,
+            to_agent="researcher", tool_name="delegate_research", task_type="research",
         )
-
-        # Execute delegation
-        result = await research_agent.run(query, usage=ctx.usage)
-
-        # Log tool call with timing
-        duration = time.perf_counter() - start_time
-        trace_collector.log_tool_call(
-            agent_id="manager",
-            tool_name="delegate_research",
-            success=True,
-            duration=duration,
-            context="research_delegation",
-        )
-
         if isinstance(
             result.output,
             ResearchResult | ResearchResultSimple | ReviewGenerationResult,
@@ -174,31 +197,10 @@ def _add_analysis_tool(
         ctx: RunContext[None], query: str
     ) -> AnalysisResult:
         """Delegate analysis task to AnalysisAgent."""
-        # Capture trace data for delegation
-        trace_collector = get_trace_collector()
-        start_time = time.perf_counter()
-
-        # Log agent-to-agent interaction
-        trace_collector.log_agent_interaction(
-            from_agent="manager",
-            to_agent="analyst",
-            interaction_type="delegation",
-            data={"query": query, "task_type": "analysis"},
+        result = await _execute_traced_delegation(
+            analysis_agent, ctx, query,
+            to_agent="analyst", tool_name="delegate_analysis", task_type="analysis",
         )
-
-        # Execute delegation
-        result = await analysis_agent.run(query, usage=ctx.usage)
-
-        # Log tool call with timing
-        duration = time.perf_counter() - start_time
-        trace_collector.log_tool_call(
-            agent_id="manager",
-            tool_name="delegate_analysis",
-            success=True,
-            duration=duration,
-            context="analysis_delegation",
-        )
-
         if isinstance(result.output, AnalysisResult):
             return result.output
         return _validate_model_return(str(result.output), AnalysisResult)
@@ -217,32 +219,11 @@ def _add_synthesis_tool(
     async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], query: str
     ) -> ResearchSummary:
-        """Delegate synthesis task to AnalysisAgent."""
-        # Capture trace data for delegation
-        trace_collector = get_trace_collector()
-        start_time = time.perf_counter()
-
-        # Log agent-to-agent interaction
-        trace_collector.log_agent_interaction(
-            from_agent="manager",
-            to_agent="synthesizer",
-            interaction_type="delegation",
-            data={"query": query, "task_type": "synthesis"},
+        """Delegate synthesis task to SynthesisAgent."""
+        result = await _execute_traced_delegation(
+            synthesis_agent, ctx, query,
+            to_agent="synthesizer", tool_name="delegate_synthesis", task_type="synthesis",
         )
-
-        # Execute delegation
-        result = await synthesis_agent.run(query, usage=ctx.usage)
-
-        # Log tool call with timing
-        duration = time.perf_counter() - start_time
-        trace_collector.log_tool_call(
-            agent_id="manager",
-            tool_name="delegate_synthesis",
-            success=True,
-            duration=duration,
-            context="synthesis_delegation",
-        )
-
         if isinstance(result.output, ResearchSummary):
             return result.output
         return _validate_model_return(str(result.output), ResearchSummary)
@@ -281,8 +262,7 @@ def _add_tools_to_manager_agent(
 
 
 def _create_agent(agent_config: AgentConfig) -> Agent[None, BaseModel]:
-    """Factory for creating configured agents"""
-
+    """Factory for creating configured agents."""
     return Agent(
         model=agent_config.model,
         output_type=agent_config.output_type,
@@ -290,6 +270,35 @@ def _create_agent(agent_config: AgentConfig) -> Agent[None, BaseModel]:
         tools=agent_config.tools,
         retries=agent_config.retries,
     )
+
+
+def _create_optional_agent(
+    model: Any,
+    output_type: type[BaseModel],
+    system_prompt: str,
+    tools: list[Any] | None = None,
+) -> Agent[None, BaseModel] | None:
+    """Create an agent if model is provided, otherwise return None.
+
+    Args:
+        model: The model instance, or None to skip creation.
+        output_type: Pydantic model type for agent output.
+        system_prompt: System prompt string for the agent.
+        tools: Optional list of tools to register on the agent.
+
+    Returns:
+        Configured Agent instance, or None if model is None.
+    """
+    if model is None:
+        return None
+    config: dict[str, Any] = {
+        "model": model,
+        "output_type": output_type,
+        "system_prompt": system_prompt,
+    }
+    if tools:
+        config["tools"] = tools
+    return _create_agent(AgentConfig.model_validate(config))
 
 
 def _get_result_type(
@@ -373,45 +382,21 @@ def _create_manager(
         )
     )
 
-    if models.model_researcher is None:
-        researcher = None
-    else:
-        researcher = _create_agent(
-            AgentConfig.model_validate(
-                {
-                    "model": models.model_researcher,
-                    "output_type": result_type,
-                    "system_prompt": prompts["system_prompt_researcher"],
-                    "tools": [duckduckgo_search_tool()],
-                }
-            )
-        )
-
-    if models.model_analyst is None:
-        analyst = None
-    else:
-        analyst = _create_agent(
-            AgentConfig.model_validate(
-                {
-                    "model": models.model_analyst,
-                    "output_type": AnalysisResult,
-                    "system_prompt": prompts["system_prompt_analyst"],
-                }
-            )
-        )
-
-    if models.model_synthesiser is None:
-        synthesiser = None
-    else:
-        synthesiser = _create_agent(
-            AgentConfig.model_validate(
-                {
-                    "model": models.model_synthesiser,
-                    "output_type": AnalysisResult,
-                    "system_prompt": prompts["system_prompt_synthesiser"],
-                }
-            )
-        )
+    # Reason: prompt lookup guarded by model presence to match original behavior —
+    # tests may omit sub-agent prompt keys when model is None.
+    researcher = _create_optional_agent(
+        models.model_researcher, result_type,
+        prompts["system_prompt_researcher"] if models.model_researcher else "",
+        tools=[duckduckgo_search_tool()],
+    )
+    analyst = _create_optional_agent(
+        models.model_analyst, AnalysisResult,
+        prompts["system_prompt_analyst"] if models.model_analyst else "",
+    )
+    synthesiser = _create_optional_agent(
+        models.model_synthesiser, AnalysisResult,
+        prompts["system_prompt_synthesiser"] if models.model_synthesiser else "",
+    )
 
     _add_tools_to_manager_agent(manager, researcher, analyst, synthesiser, result_type)
 
