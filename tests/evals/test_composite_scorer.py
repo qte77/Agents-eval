@@ -3,7 +3,17 @@ Tests for composite scoring system.
 
 Validates the CompositeScorer class integration of all three evaluation tiers,
 mathematical formulas, recommendation mapping, and configuration handling.
+
+Consolidated from:
+- test_composite_scoring_scenarios.py
+- test_composite_scoring_interpretability.py
+- test_composite_scoring_edge_cases.py
+
+Mock strategy: No external mocking needed — CompositeScorer uses pure math,
+no network or filesystem access.
 """
+
+from pathlib import Path
 
 import pytest
 from hypothesis import given
@@ -502,4 +512,120 @@ class TestCompositeResultStructure:
                 "tiers_enabled": [1, 2, 3],
                 "agent_assessment_scores": None,
             }
+        )
+
+
+# MARK: Consolidated tests from scenario, interpretability, and edge case files
+
+
+class TestBasicScoring:
+    """Basic scoring and scenario validation tests.
+
+    Consolidated from test_composite_scoring_scenarios.py.
+    Tests all 5 core performance scenarios and threshold boundaries.
+    """
+
+    @pytest.fixture
+    def composite_scorer(self) -> CompositeScorer:
+        """Fixture providing initialized composite scorer."""
+        return CompositeScorer()
+
+    def test_placeholder_basic_scoring(self) -> None:
+        """Placeholder — replaced by merged content in GREEN phase.
+
+        This test is intentionally minimal. Full scenario tests from
+        test_composite_scoring_scenarios.py are merged in GREEN.
+        """
+        # Arrange
+        scorer = CompositeScorer()
+        # Assert scorer is initialized correctly
+        assert scorer is not None
+
+
+class TestWeightRedistribution:
+    """Weight redistribution and interpretability tests.
+
+    Consolidated from test_composite_scoring_interpretability.py.
+    Tests score consistency, metric contribution, and threshold boundaries.
+    """
+
+    @pytest.fixture
+    def composite_scorer(self) -> CompositeScorer:
+        """Fixture providing initialized composite scorer."""
+        return CompositeScorer()
+
+    def test_placeholder_weight_redistribution(self) -> None:
+        """Placeholder — replaced by merged content in GREEN phase.
+
+        This test is intentionally minimal. Full interpretability tests from
+        test_composite_scoring_interpretability.py are merged in GREEN.
+        """
+        # Arrange
+        scorer = CompositeScorer()
+        # Assert weights sum to ~1.0
+        weight_sum = sum(scorer.weights.values())
+        assert abs(weight_sum - 1.0) < 0.01
+
+
+class TestEdgeCases:
+    """Edge case and error condition tests.
+
+    Consolidated from test_composite_scoring_edge_cases.py.
+    Tests missing tiers, extreme values, and error conditions.
+    """
+
+    @pytest.fixture
+    def composite_scorer(self) -> CompositeScorer:
+        """Fixture providing initialized composite scorer."""
+        return CompositeScorer()
+
+    def test_placeholder_edge_cases(self) -> None:
+        """Placeholder — replaced by merged content in GREEN phase.
+
+        This test is intentionally minimal. Full edge case tests from
+        test_composite_scoring_edge_cases.py are merged in GREEN.
+        """
+        # Arrange
+        scorer = CompositeScorer()
+        # Assert scorer handles valid inputs
+        assert scorer.thresholds is not None
+
+
+class TestConsolidationStructure:
+    """Structural tests verifying consolidation is complete.
+
+    These tests verify that the old split files have been deleted
+    and that consolidation into test_composite_scorer.py is done.
+    """
+
+    TESTS_EVALS_DIR = Path(__file__).parent
+
+    def test_old_scenarios_file_deleted(self) -> None:
+        """The scenarios file should be deleted after consolidation."""
+        # Arrange/Act
+        old_file = self.TESTS_EVALS_DIR / "test_composite_scoring_scenarios.py"
+        # Assert: file must not exist after consolidation
+        assert not old_file.exists(), (
+            "test_composite_scoring_scenarios.py must be deleted after consolidation into "
+            "test_composite_scorer.py"
+        )
+
+    def test_old_interpretability_file_deleted(self) -> None:
+        """The interpretability file should be deleted after consolidation."""
+        # Arrange/Act
+        old_file = self.TESTS_EVALS_DIR / "test_composite_scoring_interpretability.py"
+        # Assert: file must not exist after consolidation
+        assert not old_file.exists(), (
+            "test_composite_scoring_interpretability.py must be deleted after consolidation "
+            "into test_composite_scorer.py"
+        )
+
+    def test_old_edge_cases_file_deleted(self) -> None:
+        """The edge cases file should be deleted after consolidation."""
+        # Arrange/Act
+        old_file = self.TESTS_EVALS_DIR / "test_composite_scoring_edge_cases.py"
+        # Assert: file must not exist after consolidation
+        assert not old_file.exists(), (
+            "test_composite_scoring_edge_cases.py must be deleted after consolidation into "
+            "test_composite_scorer.py"
         )
