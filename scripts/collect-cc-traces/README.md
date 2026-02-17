@@ -5,14 +5,14 @@ Scripts for collecting Claude Code execution artifacts into `CCTraceAdapter`-com
 ## Quick Start
 
 ```bash
-# CC Solo: run CC and collect artifacts
-make cc_solo PAPER_ID=1105.1072
+# Run CC solo + collect artifacts
+make cc_run_solo PAPER_ID=1105.1072
 
-# CC Teams: run CC with Agent Teams orchestration
-make cc_teams_run PAPER_ID=1105.1072 CC_TIMEOUT=600
+# Run CC with Agent Teams orchestration + collect artifacts
+make cc_run_teams PAPER_ID=1105.1072
 
-# CC Teams: collect artifacts from an existing team
-make cc_teams_collect TEAM_NAME=my-review-team
+# Collect artifacts from an existing team (no CC invocation)
+make cc_collect_teams TEAM_NAME=my-review-team
 
 # Then compare against MAS
 make run_cli ARGS="--paper-number=1105.1072 --cc-solo-dir=logs/cc/solo/1105.1072_<timestamp>"
@@ -38,21 +38,21 @@ Claude Code writes artifacts to these paths automatically:
 
 ## Scripts
 
-### `collect-cc-solo.sh`
+### `run-cc.sh`
 
-Runs Claude Code and collects artifacts into CCTraceAdapter format. Supports both solo and teams mode via `--teams` flag.
+Invokes Claude Code and collects artifacts into CCTraceAdapter format. Supports both solo and teams mode via `--teams` flag.
 
 **Usage:**
 
 ```bash
 # Solo mode (default)
-./scripts/collect-cc-traces/collect-cc-solo.sh --paper-id 1105.1072
+./scripts/collect-cc-traces/run-cc.sh --paper-id 1105.1072
 
 # Teams mode
-./scripts/collect-cc-traces/collect-cc-solo.sh --paper-id 1105.1072 --teams
+./scripts/collect-cc-traces/run-cc.sh --paper-id 1105.1072 --teams
 
 # With options
-./scripts/collect-cc-traces/collect-cc-solo.sh \
+./scripts/collect-cc-traces/run-cc.sh \
   --paper-id 1105.1072 \
   --output-dir ./artifacts/solo-run \
   --timeout 300 \
@@ -73,20 +73,20 @@ Runs Claude Code and collects artifacts into CCTraceAdapter format. Supports bot
 
 **How it works:**
 
-1. Invokes `claude -p "<review prompt>" --output-format stream-json`
+1. Invokes `claude -p "<review prompt>" --output-format stream-json --verbose`
 2. Captures raw JSONL output (init, assistant, tool_use, result messages)
 3. Extracts `metadata.json` from init + result messages (session_id, model, duration, cost)
 4. Extracts `tool_calls.jsonl` from tool_use content blocks in assistant messages
 5. (Teams mode) Copies `config.json`, `inboxes/`, `tasks/` from `~/.claude/`
 
-### `collect-cc-teams.sh`
+### `collect-team-artifacts.sh`
 
 Collects existing Claude Code teams artifacts from `~/.claude/teams/` and `~/.claude/tasks/` (no CC invocation).
 
 **Usage:**
 
 ```bash
-./scripts/collect-cc-traces/collect-cc-teams.sh --name review-team --output-dir ./artifacts/teams-run
+./scripts/collect-cc-traces/collect-team-artifacts.sh --name review-team --output-dir ./artifacts/teams-run
 ```
 
 **Arguments:**
