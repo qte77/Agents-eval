@@ -10,7 +10,7 @@ Mock strategy: patch LLMJudgeEngine to skip Tier 2 LLM calls; Tier 1 and Tier 3
 """
 
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -64,7 +64,6 @@ class TestBasicEvaluationRuns:
         """Example runs end-to-end with mocked LLM provider for Tier 2."""
         # Arrange: mock the LLM judge engine so no API key is required
         from app.data_models.evaluation_models import Tier2Result
-        from app.judge.settings import JudgeSettings
 
         mock_tier2 = Tier2Result(
             technical_accuracy=0.8,

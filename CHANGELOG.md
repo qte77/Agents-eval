@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `src/examples/basic_evaluation.py`: minimal example demonstrating `EvaluationPipeline` with synthetic `GraphTraceData` and `PeerReadPaper` (STORY-002)
+- `src/examples/judge_settings_customization.py`: demonstrates `JudgeSettings` configuration patterns — env var overrides, timeout adjustment, tier selection, provider switching (STORY-002)
+- `src/examples/engine_comparison.py`: demonstrates comparing MAS multi-agent vs single-agent vs CC evaluation scores using `CCTraceAdapter` (STORY-002)
+- `src/examples/README.md`: usage instructions and CLI/GUI integration guide for all examples (STORY-002)
 - CC baseline collection: Makefile recipes (`cc_run_solo`, `cc_run_teams`, `cc_collect_teams`) with `CC_TEAMS_TIMEOUT` parameter for Claude Code artifact collection
 - CC baseline collection: `--verbose` flag for `claude -p` required for `--output-format stream-json` in print mode
 

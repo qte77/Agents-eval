@@ -13,8 +13,6 @@ from pathlib import Path
 import importlib.util
 import sys
 
-import pytest
-
 from app.judge.settings import JudgeSettings
 
 
@@ -51,17 +49,18 @@ class TestJudgeSettingsModifications:
         assert settings.tier1_max_seconds == 2.0
         assert settings.tier2_max_seconds == 20.0
 
-    def test_tier_weight_customization(self) -> None:
-        """Tier weights can be customized and sum correctly."""
+    def test_composite_threshold_customization(self) -> None:
+        """Composite score thresholds can be customized via JudgeSettings."""
         # Arrange / Act
         settings = JudgeSettings(
-            tier1_weight=0.5,
-            tier2_weight=0.3,
-            tier3_weight=0.2,
+            composite_accept_threshold=0.85,
+            composite_weak_accept_threshold=0.65,
+            composite_weak_reject_threshold=0.35,
         )
         # Assert
-        total = settings.tier1_weight + settings.tier2_weight + settings.tier3_weight
-        assert abs(total - 1.0) < 1e-9, f"Weights must sum to 1.0, got {total}"
+        assert settings.composite_accept_threshold == 0.85
+        assert settings.composite_weak_accept_threshold == 0.65
+        assert settings.composite_weak_reject_threshold == 0.35
 
     def test_provider_selection(self) -> None:
         """Provider selection via JudgeSettings works correctly."""
