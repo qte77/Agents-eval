@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `src/gui/pages/run_app.py`: added paper selection mode — radio toggle between "Free-form query" and "Select a paper"; paper dropdown lists locally downloaded PeerRead papers by ID and title; abstract displayed below dropdown on selection; `_execute_query_background` accepts `paper_id` kwarg forwarded to `main(paper_number=...)` (STORY-009)
+- `src/app/data_models/peerread_models.py`: added `_ScoreStr = Annotated[str, BeforeValidator(str)]` type alias; applied to all numeric PeerRead review score fields (`IMPACT`, `SUBSTANCE`, `APPROPRIATENESS`, `MEANINGFUL_COMPARISON`, `SOUNDNESS_CORRECTNESS`, `ORIGINALITY`, `RECOMMENDATION`, `CLARITY`, `REVIEWER_CONFIDENCE`) to coerce integer values from raw JSON to str instead of failing validation (STORY-009)
 - `src/gui/utils/log_capture.py`: added `get_new_logs_since(index)` for incremental polling and `log_count()` method; wrapped `_buffer` access with `threading.Lock` for thread-safe concurrent access from worker and Streamlit render threads (STORY-008)
 - `src/gui/pages/run_app.py`: replaced `st.text()` with `st.markdown()` in `_display_configuration` so **bold** Markdown renders correctly instead of as raw text (STORY-008)
 - `src/app/data_utils/datasets_peerread.py`: `_create_review_from_dict` aggregates all missing optional fields into a single debug log line instead of one line per field (STORY-008)

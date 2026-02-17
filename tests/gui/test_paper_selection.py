@@ -146,12 +146,8 @@ class TestLoadAvailablePapers:
         """Papers loaded from multiple venue/split combos are deduplicated by paper_id."""
         from gui.pages.run_app import _load_available_papers
 
-        paper_a = PeerReadPaper(
-            paper_id="1", title="Paper A", abstract="Abstract A.", reviews=[]
-        )
-        paper_b = PeerReadPaper(
-            paper_id="2", title="Paper B", abstract="Abstract B.", reviews=[]
-        )
+        paper_a = PeerReadPaper(paper_id="1", title="Paper A", abstract="Abstract A.", reviews=[])
+        paper_b = PeerReadPaper(paper_id="2", title="Paper B", abstract="Abstract B.", reviews=[])
 
         with patch("gui.pages.run_app.PeerReadLoader") as mock_loader_cls:
             mock_loader = mock_loader_cls.return_value
