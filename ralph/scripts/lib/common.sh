@@ -22,8 +22,8 @@ log_info() { echo -e "${BLUE}[INFO]${NC} $(_ts) $1" >&2; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $(_ts) $1" >&2; }
 log_error() { echo -e "${RED}[ERROR]${NC} $(_ts) $1" >&2; }
 log_success() { echo -e "${GREEN}[SUCCESS]${NC} $(_ts) $1" >&2; }
-log_cc() { echo -e "${BLUE}[INFO]${NC} $(_ts) ${MAGENTA}[CC]${NC} $1" >&2; }
-log_cc_error() { echo -e "${RED}[ERROR]${NC} $(_ts) ${RED}[CC]${NC} $1" >&2; }
+log_cc() { log_info "${MAGENTA}[CC]${NC} $1"; }
+log_cc_error() { log_error "${MAGENTA}[CC]${NC} $1"; }
 
 # Check if command exists
 require_command() {
