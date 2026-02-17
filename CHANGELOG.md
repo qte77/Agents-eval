@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- `src/examples/run_evaluation_example.py` and `run_evaluation_example_simple.py`: deprecated dict-based `execution_trace` API examples (STORY-001)
+- `src/examples/run_simple_agent_no_tools.py`, `run_simple_agent_system.py`, `run_simple_agent_tools.py`: generic PydanticAI tutorials with no project value (STORY-001)
+- `src/examples/utils/` directory and `src/examples/config.json`: supporting files for deleted examples (STORY-001)
+
 ### Added
 
 - CC baseline collection: Makefile recipes (`cc_run_solo`, `cc_run_teams`, `cc_collect_teams`) with `CC_TEAMS_TIMEOUT` parameter for Claude Code artifact collection
