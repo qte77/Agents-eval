@@ -39,6 +39,34 @@ from gui.config.text import (
 from gui.utils.log_capture import LogCapture
 
 
+def _collect_unique_papers(
+    loader: PeerReadLoader,
+    venue: str,
+    split: str,
+    seen_ids: set[str],
+    papers: list[PeerReadPaper],
+) -> None:
+    """Collect unique papers from a single venue/split combination.
+
+    Appends papers not already in seen_ids. Silently skips when the
+    venue/split data has not been downloaded (FileNotFoundError).
+
+    Args:
+        loader: PeerReadLoader instance to load papers from.
+        venue: Venue name (e.g. "acl_2017").
+        split: Data split name (e.g. "train").
+        seen_ids: Mutable set tracking already-collected paper IDs.
+        papers: Mutable list to append new papers to.
+    """
+    try:
+        for paper in loader.load_papers(venue, split):
+            if paper.paper_id not in seen_ids:
+                seen_ids.add(paper.paper_id)
+                papers.append(paper)
+    except FileNotFoundError:
+        pass
+
+
 def _load_available_papers() -> list[PeerReadPaper]:
     """Load all locally downloaded PeerRead papers across configured venues and splits.
 
@@ -54,13 +82,7 @@ def _load_available_papers() -> list[PeerReadPaper]:
 
     for venue in loader.config.venues:
         for split in loader.config.splits:
-            try:
-                for paper in loader.load_papers(venue, split):
-                    if paper.paper_id not in seen_ids:
-                        seen_ids.add(paper.paper_id)
-                        papers.append(paper)
-            except FileNotFoundError:
-                continue
+            _collect_unique_papers(loader, venue, split, seen_ids, papers)
 
     return papers
 
@@ -311,9 +333,92 @@ def _display_execution_result(execution_state: str) -> None:
         render_output(RUN_APP_OUTPUT_PLACEHOLDER)
 
 
-async def render_app(provider: str | None = None, chat_config_file: str | Path | None = None):
+def _render_paper_selection_input() -> tuple[str, str | None]:
+    """Render paper selection UI and return the user's query and selected paper ID.
+
+    Loads available papers from session state (or fetches on first render),
+    then renders a selectbox with abstract preview. Falls back to free-form
+    text input when no papers are downloaded.
+
+    Returns:
+        Tuple of (query, selected_paper_id). selected_paper_id is None when
+        no paper is selected or papers are unavailable.
     """
-    Render the main app interface for running agentic queries via Streamlit.
+    available_papers: list[PeerReadPaper] = st.session_state.get("available_papers", [])
+    if not available_papers:
+        available_papers = _load_available_papers()
+        st.session_state.available_papers = available_papers
+
+    if not available_papers:
+        st.info("No papers downloaded yet. Use the Downloads page to fetch the PeerRead dataset.")
+        return text_input(RUN_APP_QUERY_PLACEHOLDER), None
+
+    selected_paper: PeerReadPaper = st.selectbox(
+        "Select a paper",
+        options=available_papers,
+        format_func=_format_paper_option,
+        key="selected_paper",
+    )
+    selected_paper_id = selected_paper.paper_id if selected_paper else None
+
+    if selected_paper and selected_paper.abstract:
+        st.markdown(f"> {selected_paper.abstract}")
+
+    query = text_input(
+        "Custom query (optional — leave blank to use default review template)",
+        key="paper_mode_query",
+    )
+    return query, selected_paper_id
+
+
+async def _handle_query_submission(
+    query: str,
+    selected_paper_id: str | None,
+    provider: str,
+    include_researcher: bool,
+    include_analyst: bool,
+    include_synthesiser: bool,
+    chat_config_file: str | Path | None,
+    token_limit: int | None,
+) -> None:
+    """Validate input and execute the agent query in background.
+
+    Does nothing when both query and selected_paper_id are empty (shows warning).
+    Otherwise builds judge settings from session state, starts background execution,
+    and triggers a Streamlit rerun to reflect updated state.
+
+    Args:
+        query: User query string (may be empty).
+        selected_paper_id: Selected PeerRead paper ID, or None.
+        provider: LLM provider name.
+        include_researcher: Whether to include researcher agent.
+        include_analyst: Whether to include analyst agent.
+        include_synthesiser: Whether to include synthesiser agent.
+        chat_config_file: Path to chat configuration file.
+        token_limit: Optional token limit override from GUI.
+    """
+    if not (query or selected_paper_id):
+        warning(RUN_APP_QUERY_WARNING)
+        return
+
+    judge_settings = _build_judge_settings_from_session()
+    info(f"{RUN_APP_QUERY_RUN_INFO} {query or f'paper {selected_paper_id}'}")
+    await _execute_query_background(
+        query,
+        provider,
+        include_researcher,
+        include_analyst,
+        include_synthesiser,
+        chat_config_file,
+        token_limit,
+        judge_settings,
+        paper_id=selected_paper_id,
+    )
+    st.rerun()
+
+
+async def render_app(provider: str | None = None, chat_config_file: str | Path | None = None):
+    """Render the main app interface for running agentic queries via Streamlit.
 
     Displays input fields for provider and query, a button to trigger execution,
     and an area for output or error messages. Handles async invocation of the
@@ -324,21 +429,16 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     to session state, allowing navigation across tabs without losing progress.
     """
     header(RUN_APP_HEADER)
-
-    # Initialize execution state
     _initialize_execution_state()
 
-    # Read configuration from session state
     provider_from_state, include_researcher, include_analyst, include_synthesiser = (
         _get_session_config(provider)
     )
     token_limit: int | None = st.session_state.get("token_limit")
 
-    # Display current configuration
     agents_text = _format_enabled_agents(include_researcher, include_analyst, include_synthesiser)
     _display_configuration(provider_from_state, token_limit, agents_text)
 
-    # Input mode toggle
     input_mode = st.radio(
         "Input mode",
         ["Free-form query", "Select a paper"],
@@ -346,71 +446,25 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
         horizontal=True,
     )
 
-    selected_paper_id: str | None = None
-
     if input_mode == "Free-form query":
         query = text_input(RUN_APP_QUERY_PLACEHOLDER)
+        selected_paper_id: str | None = None
     else:
-        # Paper selection mode
-        available_papers: list[PeerReadPaper] = st.session_state.get("available_papers", [])
-        if not available_papers:
-            # Attempt to load on first render; cache in session state
-            available_papers = _load_available_papers()
-            st.session_state.available_papers = available_papers
-
-        if not available_papers:
-            st.info(
-                "No papers downloaded yet. Use the Downloads page to fetch the PeerRead dataset."
-            )
-            query = text_input(RUN_APP_QUERY_PLACEHOLDER)
-        else:
-            selected_paper: PeerReadPaper = st.selectbox(
-                "Select a paper",
-                options=available_papers,
-                format_func=_format_paper_option,
-                key="selected_paper",
-            )
-            selected_paper_id = selected_paper.paper_id if selected_paper else None
-
-            # Abstract preview
-            if selected_paper and selected_paper.abstract:
-                st.markdown(f"> {selected_paper.abstract}")
-
-            # Optional query override
-            query = text_input(
-                "Custom query (optional — leave blank to use default review template)",
-                key="paper_mode_query",
-            )
+        query, selected_paper_id = _render_paper_selection_input()
 
     subheader(OUTPUT_SUBHEADER)
 
-    # Handle button click - start new execution
     if button(RUN_APP_BUTTON):
-        if query or selected_paper_id:
-            # Build judge settings from session state
-            judge_settings = _build_judge_settings_from_session()
+        await _handle_query_submission(
+            query,
+            selected_paper_id,
+            provider_from_state,
+            include_researcher,
+            include_analyst,
+            include_synthesiser,
+            chat_config_file,
+            token_limit,
+        )
 
-            # Start background execution
-            info(f"{RUN_APP_QUERY_RUN_INFO} {query or f'paper {selected_paper_id}'}")
-            await _execute_query_background(
-                query,
-                provider_from_state,
-                include_researcher,
-                include_analyst,
-                include_synthesiser,
-                chat_config_file,
-                token_limit,
-                judge_settings,
-                paper_id=selected_paper_id,
-            )
-            # Force rerun to show updated state
-            st.rerun()
-        else:
-            warning(RUN_APP_QUERY_WARNING)
-
-    # Display execution status based on state
-    execution_state = _get_execution_state()
-    _display_execution_result(execution_state)
-
-    # Render debug log panel
+    _display_execution_result(_get_execution_state())
     _render_debug_log_panel()
