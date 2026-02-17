@@ -17,5 +17,5 @@ Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for tech
 | **Sprint 4** | Delivered | Operational resilience, Claude Code baseline comparison (solo + teams) | [PRD Sprint 4](PRD-Sprint4-Ralph.md) |
 | **Sprint 5** | Delivered | Runtime fixes, GUI enhancements, architecture improvements, code quality review | [PRD Sprint 5](PRD-Sprint5-Ralph.md) |
 | **Sprint 6** | Delivered | Benchmarking infrastructure, CC baseline completion, security hardening, test quality | [PRD Sprint 6](PRD-Sprint6-Ralph.md) |
-| **Sprint 7** | Active | Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine | [PRD Sprint 7](PRD-Sprint7-Ralph.md) |
+| **Sprint 7** | In Progress | Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine | [PRD Sprint 7](PRD-Sprint7-Ralph.md) |
 | **Sprint 8** | Draft | Report generation, graph alignment, MAESTRO hardening, code quality, PydanticAI streaming | [PRD Sprint 8](PRD-Sprint8-Ralph.md) |
