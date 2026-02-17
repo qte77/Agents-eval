@@ -9,7 +9,7 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 **I am a:** [**User/Researcher**](#userresearcher) | [**Human Developer**](#human-developer) | [**AI Agent**](#ai-agent)
 
 [![License](https://img.shields.io/badge/license-BSD3Clause-58f4c2.svg)](LICENSE.md)
-![Version](https://img.shields.io/badge/version-3.3.0-58f4c2.svg)
+![Version](https://img.shields.io/badge/version-4.0.0-58f4c2.svg)
 [![CodeQL](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml)
 [![CodeFactor](https://www.codefactor.io/repository/github/qte77/Agents-eval/badge)](https://www.codefactor.io/repository/github/qte77/Agents-eval)
 [![ruff](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml)
@@ -57,13 +57,14 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 
 (DRAFT) (WIP) ----> Not fully implemented yet
 
-**Current Release**: Version 3.3.0 - Sprint 5 (Delivered)
-- Runtime fixes (judge provider fallback, token limits, PeerRead validation)
-- GUI enhancements (background execution, debug logs, live results)
-- Architecture improvements (single-agent scoring, tool delegation)
-- Code quality review (MAESTRO security audit, test suite refactoring)
+**Current Release**: Version 4.0.0 - Sprint 6 (Delivered)
+- Benchmarking infrastructure: `SweepRunner`, `SweepConfig`, `SweepAnalysis` for composition sweeps
+- Claude Code baseline: headless `claude -p` integration, `CCTraceAdapter`, collection scripts
+- Security hardening: MAESTRO audit fixes, SSRF allowlist, prompt sanitization, log scrubbing
+- Test quality improvements: spec-constrained mocks, coverage expansion, BDD consolidation
+- Examples modernized: `basic_evaluation.py`, `judge_settings_customization.py`, `engine_comparison.py`
 
-**Next**: Sprint 6 (Planned) — Benchmarking infrastructure, CC baseline completion, security hardening, test quality ([PRD](docs/PRD-Sprint6-Ralph.md))
+**Next**: Sprint 7 (In Progress) — GUI improvements (real-time debug log, paper selection, editable settings, engine selector), unified provider config, CC engine option ([PRD](docs/PRD-Sprint7-Ralph.md))
 
 For version history see the [CHANGELOG](CHANGELOG.md).
 
@@ -100,6 +101,11 @@ Note: Chat configuration uses free inference endpoints and models which are subj
   <img src="assets/images/metrics-eval-sweep-light.png#gh-light-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
   <img src="assets/images/metrics-eval-sweep-dark.png#gh-dark-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
 </details>
+
+## Examples
+
+See [src/examples/README.md](src/examples/README.md) for self-contained demonstrations of Sprint 5-6 features:
+`basic_evaluation.py`, `judge_settings_customization.py`, `engine_comparison.py`.
 
 ## References
 
