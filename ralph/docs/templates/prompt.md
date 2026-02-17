@@ -91,6 +91,8 @@ and you must start over.
 failed, your prior `[RED]` and `[GREEN]` commits still exist. You only need a
 `[REFACTOR]` commit to fix the remaining issues — do NOT recreate `[RED]` or
 `[GREEN]`. Check git log to confirm they exist before deciding your approach.
+**The `[REFACTOR]` marker in square brackets is REQUIRED in the commit message:**
+`git commit -m "refactor(STORY-XXX): fix quality issue [REFACTOR]"`
 
 ## Quality Gates
 

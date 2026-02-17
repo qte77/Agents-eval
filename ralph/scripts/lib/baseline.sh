@@ -339,6 +339,7 @@ run_quality_checks_baseline() {
     for check in ruff type_check complexity; do
         if ! make --no-print-directory "$check" 2>&1; then
             log_error "$check failed"
+            echo "$check" > "${RETRY_CONTEXT_FILE:-/dev/null}"
             return 1
         fi
     done
@@ -374,6 +375,7 @@ run_quality_checks_baseline() {
         return 0
     else
         # New failures detected
+        echo "test regressions" > "${RETRY_CONTEXT_FILE:-/dev/null}"
         return 1
     fi
 }

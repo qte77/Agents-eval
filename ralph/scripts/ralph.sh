@@ -66,6 +66,7 @@ PROMPT_FILE="ralph/docs/templates/prompt.md"
 MAX_RETRIES=3
 RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
 BASELINE_FILE="/tmp/claude/ralph_baseline_failures.txt"
+RETRY_CONTEXT_FILE="/tmp/claude/ralph_retry_context.txt"
 
 # Set up logging
 LOG_DIR="logs/ralph"
@@ -153,9 +154,9 @@ log_progress() {
     } >> "$PROGRESS_FILE"
 }
 
-# Log heartbeat with phase detection while story executes in background.
-# Scans commits for the current story within the current sprint only
-# (using prd.json generated timestamp as sprint boundary).
+# Log heartbeat with phase detection and agent activity while story executes
+# in background. Scans commits for phase and tails log file for recent output
+# (agent output streams to LOG_FILE via tee on line 76).
 # Args:
 #   $1 - story ID
 monitor_story_progress() {
@@ -163,7 +164,7 @@ monitor_story_progress() {
     local sprint_start
     sprint_start=$(jq -r '.generated' "$PRD_JSON")
 
-    while sleep 60; do
+    while sleep 30; do
         local elapsed=$(($(date +%s) - RALPH_STORY_START))
         local phase="RED"
         local story_commits
@@ -174,7 +175,18 @@ monitor_story_progress() {
             elif echo "$story_commits" | grep -q "\[RED\]"; then phase="GREEN"
             fi
         fi
+
         log_info "  >> [$story_id] phase: $phase | elapsed: $(fmt_elapsed $elapsed)"
+        # Show recent agent activity from log (last non-empty line, truncated)
+        local activity
+        activity=$(tail -5 "$LOG_FILE" 2>/dev/null | grep -v "^$\|^\[" | tail -1 | cut -c1-120)
+        if [ -n "$activity" ]; then
+            if echo "$activity" | grep -qi "error\|fail\|traceback"; then
+                log_cc_error "$activity"
+            else
+                log_cc "$activity"
+            fi
+        fi
     done
 }
 
@@ -199,6 +211,19 @@ execute_story() {
         echo ""
         echo "Read prd.json for full acceptance criteria and expected files."
     } >> "$iteration_prompt"
+
+    # Append retry context if retrying after quality failure (#4: pass failure reason)
+    if [ -f "$RETRY_CONTEXT_FILE" ]; then
+        local failed_check
+        failed_check=$(cat "$RETRY_CONTEXT_FILE")
+        {
+            echo ""
+            echo "## RETRY: Previous quality check failed"
+            echo "The \`$failed_check\` check failed on the previous attempt."
+            echo "Your prior [RED] and [GREEN] commits already exist. Fix the issue and commit with \`[REFACTOR]\` marker."
+        } >> "$iteration_prompt"
+        log_info "Retry context appended to prompt (failed check: $failed_check)"
+    fi
 
     # Mark log position before agent execution
     local log_start=$(wc -l < "$LOG_FILE" 2>/dev/null || echo "0")
@@ -309,6 +334,11 @@ check_tdd_commits() {
     local red_commit=$(echo "$recent_commits" | grep "\[RED\]" | sed -n '1p')
     local green_commit=$(echo "$recent_commits" | grep "\[GREEN\]" | sed -n '1p')
     local refactor_commit=$(echo "$recent_commits" | grep -E "\[REFACTOR\]|\[BLUE\]" | sed -n '1p')
+    # Fallback: detect conventional commit prefix "refactor(" when bracket marker is missing
+    if [ -z "$refactor_commit" ]; then
+        refactor_commit=$(echo "$recent_commits" | grep -E "^[a-f0-9]+ refactor\(" | sed -n '1p')
+        [ -n "$refactor_commit" ] && log_warn "  [REFACTOR] detected via prefix fallback: $refactor_commit"
+    fi
 
     [ -n "$red_commit" ] && log_info "  [RED]      $red_commit" || log_warn "  [RED]      not found"
     [ -n "$green_commit" ] && log_info "  [GREEN]    $green_commit" || log_warn "  [GREEN]    not found"
@@ -430,6 +460,7 @@ main() {
         if [ "$story_id" != "${last_story_id:-}" ]; then
             retry_count=0
             last_story_id="$story_id"
+            rm -f "$RETRY_CONTEXT_FILE"
         fi
 
         # Capture per-story baseline (persisted to prevent absorption on restart)
@@ -437,8 +468,11 @@ main() {
             capture_test_baseline "$BASELINE_FILE" "$story_id"
         fi
 
-        # Record commit count before execution
+        # Record commit count and untracked files before execution
         local commits_before=$(commit_count)
+        local untracked_before
+        untracked_before=$(mktemp /tmp/claude/ralph_untracked.XXXXXX)
+        git ls-files --others --exclude-standard | sort > "$untracked_before"
 
         print_progress
 
@@ -473,8 +507,11 @@ main() {
             # Normal execution - verify TDD commits
             log_info "Story execution completed"
 
-            # Verify TDD commits were made
-            if ! check_tdd_commits "$story_id" "$commits_before"; then
+            # Skip TDD verification on quality retry (prior RED+GREEN already verified)
+            if [ -f "$RETRY_CONTEXT_FILE" ]; then
+                log_info "Quality retry — skipping TDD verification (prior RED+GREEN exist)"
+                rm -f "$RETRY_CONTEXT_FILE"
+            elif ! check_tdd_commits "$story_id" "$commits_before"; then
                 # Clean up invalid commits and files before retry
                 local commits_after=$(commit_count)
                 local new_commits=$((commits_after - commits_before))
@@ -482,8 +519,21 @@ main() {
                     log_warn "Resetting $new_commits invalid commit(s)"
                     git reset --hard HEAD~$new_commits
                 fi
-                log_warn "Cleaning up untracked files"
-                git clean -fd
+                # Scoped clean: only remove files created during story execution
+                local untracked_after
+                untracked_after=$(mktemp /tmp/claude/ralph_untracked.XXXXXX)
+                git ls-files --others --exclude-standard | sort > "$untracked_after"
+                local story_untracked
+                story_untracked=$(comm -13 "$untracked_before" "$untracked_after")
+                if [ -n "$story_untracked" ]; then
+                    local file_count
+                    file_count=$(echo "$story_untracked" | wc -l)
+                    log_warn "Cleaning $file_count story-created file(s)"
+                    echo "$story_untracked" | xargs rm -f
+                else
+                    log_info "No story-created untracked files to clean"
+                fi
+                rm -f "$untracked_after"
 
                 retry_count=$((retry_count + 1))
                 log_error "TDD verification failed (attempt $retry_count/$MAX_RETRIES)"
@@ -502,6 +552,7 @@ main() {
                 update_story_status "$story_id" "true"
                 log_progress "$iteration" "$story_id" "PASS" "Completed successfully with TDD commits"
                 log_info "Story $story_id marked as PASSING"
+                rm -f "$RETRY_CONTEXT_FILE"
 
                 commit_state_files "chore: Update Ralph state after completing $story_id"
                 print_progress
@@ -524,6 +575,7 @@ main() {
             log_progress "$iteration" "$story_id" "FAIL" "Execution error"
         fi
 
+        rm -f "$untracked_before"
         echo ""
     done
 
