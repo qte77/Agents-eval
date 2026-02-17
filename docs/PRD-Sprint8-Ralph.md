@@ -235,6 +235,41 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 
 ---
 
+#### Feature 8: PlantUML Diagram Audit
+
+**Description**: Review all PlantUML diagrams in `docs/arch_vis/` for necessity, accuracy, and coherence. Sprint 7 updated content but did not audit whether each diagram is still needed, whether overlapping diagrams should be consolidated, or whether naming/titles are consistent.
+
+##### 8.1 Necessity Review
+
+**Acceptance Criteria**:
+- [ ] Each diagram in `docs/arch_vis/` justified as serving a distinct purpose (architecture, workflow, journey, landscape) — or marked for deletion/consolidation
+- [ ] Overlapping diagrams identified (e.g., `mas-workflow` vs `mas-enhanced-workflow` vs `MAS-Review-Workflow` all depict agent interaction sequences) — consolidate or document why each is needed
+- [ ] `AI-agent-landscape-visualization.puml` assessed: still useful as informational snapshot or stale enough to remove?
+
+##### 8.2 Accuracy Review
+
+**Acceptance Criteria**:
+- [ ] Each diagram verified against current source code (Sprint 7 state): components, data flows, participants, and relationships match implementation
+- [ ] C4 diagrams (`MAS-C4-Overview`, `MAS-C4-Detailed`) verified against `architecture.md` — no containers missing or stale
+- [ ] Sequence diagrams verified against actual call chains in `agent_system.py`, `sweep_runner.py`, `evaluation_pipeline.py`
+
+##### 8.3 Coherence Review
+
+**Acceptance Criteria**:
+- [ ] File names match diagram titles (e.g., `mas-workflow.plantuml` title is "MAS Workflow - Agent Interactions and Tool Usage" — do these align?)
+- [ ] Naming convention consistent across files: some use `PascalCase` (`MAS-C4-Overview`), others `kebab-case` (`mas-workflow`) — standardize
+- [ ] Diagram titles are concise and accurately describe content (not aspirational)
+- [ ] Cross-references between diagrams and docs verified (architecture.md, README.md diagram links)
+
+**Files**:
+- `docs/arch_vis/*.plantuml` (audit, potentially edit/delete/consolidate)
+- `docs/arch_vis/*.puml` (audit)
+- `assets/images/` (sync after any changes)
+- `docs/architecture.md` (edit — update diagram references if names change)
+- `README.md` (edit — update diagram references if names change)
+
+---
+
 ## Non-Functional Requirements
 
 - TBD (pending Sprint 7 completion and Feature 1 design phase)
@@ -262,5 +297,6 @@ Story Breakdown - Phase 1 (TBD stories total):
 **New in Sprint 8:**
 - Feature 1 (report generation) — new requirement
 - Feature 7 (structured output streaming) — AGENT_REQUESTS.md open item
+- Feature 8 (PlantUML audit) — necessity, accuracy, coherence review
 
 Story breakdown TBD after Sprint 7 completion and Feature 1 design phase.
