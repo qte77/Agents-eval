@@ -34,6 +34,10 @@ def login(project_name: str, chat_env_config: AppEnv):
         if is_api_key:
             try:
                 os.environ.setdefault("WANDB_ERROR_REPORTING", "false")
+                # Reason: Weave initializes sentry_sdk.Hub at import time.
+                # Disable weave by default to prevent sentry telemetry.
+                # Set WEAVE_DISABLED=false to enable weave tracing.
+                os.environ.setdefault("WEAVE_DISABLED", "true")
                 from wandb import login as wandb_login  # type: ignore[reportMissingImports]
                 from weave import init as weave_init  # type: ignore[reportMissingImports]
 
