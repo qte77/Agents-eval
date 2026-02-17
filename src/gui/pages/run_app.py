@@ -10,6 +10,9 @@ to configure these settings on the Settings page before running queries.
 
 Background execution support allows queries to continue running even when users
 navigate to other tabs, with results persisted in session state.
+
+Input mode supports both free-form text queries and paper selection from
+downloaded PeerRead papers via a dropdown with abstract preview.
 """
 
 from pathlib import Path
@@ -19,6 +22,8 @@ from streamlit import button, exception, header, info, spinner, subheader, text_
 
 from app.app import main
 from app.config.config_app import CHAT_DEFAULT_PROVIDER
+from app.data_models.peerread_models import PeerReadPaper
+from app.data_utils.datasets_peerread import PeerReadLoader
 from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 from gui.components.output import render_output
@@ -32,6 +37,44 @@ from gui.config.text import (
     RUN_APP_QUERY_WARNING,
 )
 from gui.utils.log_capture import LogCapture
+
+
+def _load_available_papers() -> list[PeerReadPaper]:
+    """Load all locally downloaded PeerRead papers across configured venues and splits.
+
+    Iterates all configured venues and splits, collecting unique papers by paper_id.
+    Returns an empty list when the dataset has not been downloaded yet.
+
+    Returns:
+        Deduplicated list of PeerReadPaper objects available locally.
+    """
+    loader = PeerReadLoader()
+    seen_ids: set[str] = set()
+    papers: list[PeerReadPaper] = []
+
+    for venue in loader.config.venues:
+        for split in loader.config.splits:
+            try:
+                for paper in loader.load_papers(venue, split):
+                    if paper.paper_id not in seen_ids:
+                        seen_ids.add(paper.paper_id)
+                        papers.append(paper)
+            except FileNotFoundError:
+                continue
+
+    return papers
+
+
+def _format_paper_option(paper: PeerReadPaper) -> str:
+    """Format a PeerReadPaper as a dropdown display string.
+
+    Args:
+        paper: PeerReadPaper to format.
+
+    Returns:
+        String in the form "<paper_id> \u2014 <title>".
+    """
+    return f"{paper.paper_id} \u2014 {paper.title}"
 
 
 def _get_session_config(provider: str | None) -> tuple[str, bool, bool, bool]:
@@ -150,6 +193,7 @@ async def _execute_query_background(
     chat_config_file: str | Path | None,
     token_limit: int | None = None,
     judge_settings: JudgeSettings | None = None,
+    paper_id: str | None = None,
 ) -> None:
     """Execute agent query in background with session state persistence.
 
@@ -165,6 +209,7 @@ async def _execute_query_background(
         chat_config_file: Path to chat configuration file
         token_limit: Optional token limit override from GUI
         judge_settings: Optional JudgeSettings override from GUI settings page
+        paper_id: Optional PeerRead paper ID for paper selection mode
     """
     # Set running state
     st.session_state.execution_state = "running"
@@ -186,6 +231,7 @@ async def _execute_query_background(
             chat_config_file=chat_config_file,
             token_limit=token_limit,
             judge_settings=judge_settings,
+            paper_number=paper_id,
         )
 
         # Store result and transition to completed
@@ -292,18 +338,60 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     agents_text = _format_enabled_agents(include_researcher, include_analyst, include_synthesiser)
     _display_configuration(provider_from_state, token_limit, agents_text)
 
-    query = text_input(RUN_APP_QUERY_PLACEHOLDER)
+    # Input mode toggle
+    input_mode = st.radio(
+        "Input mode",
+        ["Free-form query", "Select a paper"],
+        key="input_mode",
+        horizontal=True,
+    )
+
+    selected_paper_id: str | None = None
+
+    if input_mode == "Free-form query":
+        query = text_input(RUN_APP_QUERY_PLACEHOLDER)
+    else:
+        # Paper selection mode
+        available_papers: list[PeerReadPaper] = st.session_state.get("available_papers", [])
+        if not available_papers:
+            # Attempt to load on first render; cache in session state
+            available_papers = _load_available_papers()
+            st.session_state.available_papers = available_papers
+
+        if not available_papers:
+            st.info(
+                "No papers downloaded yet. Use the Downloads page to fetch the PeerRead dataset."
+            )
+            query = text_input(RUN_APP_QUERY_PLACEHOLDER)
+        else:
+            selected_paper: PeerReadPaper = st.selectbox(
+                "Select a paper",
+                options=available_papers,
+                format_func=_format_paper_option,
+                key="selected_paper",
+            )
+            selected_paper_id = selected_paper.paper_id if selected_paper else None
+
+            # Abstract preview
+            if selected_paper and selected_paper.abstract:
+                st.markdown(f"> {selected_paper.abstract}")
+
+            # Optional query override
+            query = text_input(
+                "Custom query (optional — leave blank to use default review template)",
+                key="paper_mode_query",
+            )
 
     subheader(OUTPUT_SUBHEADER)
 
     # Handle button click - start new execution
     if button(RUN_APP_BUTTON):
-        if query:
+        if query or selected_paper_id:
             # Build judge settings from session state
             judge_settings = _build_judge_settings_from_session()
 
             # Start background execution
-            info(f"{RUN_APP_QUERY_RUN_INFO} {query}")
+            info(f"{RUN_APP_QUERY_RUN_INFO} {query or f'paper {selected_paper_id}'}")
             await _execute_query_background(
                 query,
                 provider_from_state,
@@ -313,6 +401,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
                 chat_config_file,
                 token_limit,
                 judge_settings,
+                paper_id=selected_paper_id,
             )
             # Force rerun to show updated state
             st.rerun()

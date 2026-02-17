@@ -13,7 +13,7 @@ Mock strategy:
 - No real LLM or filesystem calls
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -178,17 +178,20 @@ class TestExecuteQueryBackgroundWithPaperId:
     @pytest.mark.asyncio
     async def test_paper_id_passed_to_main(self) -> None:
         """paper_id passed to _execute_query_background is forwarded to main()."""
+        from unittest.mock import MagicMock
+
         from gui.pages.run_app import _execute_query_background
 
-        mock_session = MagicMock()
-        mock_session.__setattr__ = MagicMock()
+        # Reason: st.session_state must support attribute assignment (setattr).
+        # Using MagicMock() provides a flexible object that accepts arbitrary attrs.
+        mock_session_state = MagicMock()
 
         with (
             patch("gui.pages.run_app.main") as mock_main,
             patch("gui.pages.run_app.st") as mock_st,
             patch("gui.pages.run_app.LogCapture") as mock_capture_cls,
         ):
-            mock_st.session_state = {}
+            mock_st.session_state = mock_session_state
             mock_main.return_value = None
 
             mock_capture = mock_capture_cls.return_value
@@ -212,14 +215,18 @@ class TestExecuteQueryBackgroundWithPaperId:
     @pytest.mark.asyncio
     async def test_no_paper_id_passes_none_to_main(self) -> None:
         """When paper_id is None, main() is called with paper_number=None."""
+        from unittest.mock import MagicMock
+
         from gui.pages.run_app import _execute_query_background
+
+        mock_session_state = MagicMock()
 
         with (
             patch("gui.pages.run_app.main") as mock_main,
             patch("gui.pages.run_app.st") as mock_st,
             patch("gui.pages.run_app.LogCapture") as mock_capture_cls,
         ):
-            mock_st.session_state = {}
+            mock_st.session_state = mock_session_state
             mock_main.return_value = None
 
             mock_capture = mock_capture_cls.return_value

@@ -12,11 +12,16 @@ This module also includes structured data models for LLM-generated reviews,
 ensuring consistency and validation against the PeerRead format.
 """
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator
 
 from app.config.config_app import DATASETS_PEERREAD_PATH
+
+# Coerce numeric score values from raw PeerRead JSON (int) to str.
+# Reason: Some PeerRead JSON files store scores as integers (e.g., "SOUNDNESS_CORRECTNESS": 3)
+# which fail str validation without coercion.
+_ScoreStr = Annotated[str, BeforeValidator(str)]
 
 
 class PeerReadReview(BaseModel):
@@ -26,23 +31,24 @@ class PeerReadReview(BaseModel):
     Defaults to "UNKNOWN" for missing review criteria fields.
 
     Accepts both PeerRead uppercase keys (IMPACT) and model lowercase keys
-    (impact) via populate_by_name with aliases.
+    (impact) via populate_by_name with aliases. Numeric score fields are
+    coerced to str to handle raw PeerRead JSON integer values.
     """
 
     model_config = ConfigDict(populate_by_name=True)
 
-    impact: str = Field(
+    impact: _ScoreStr = Field(
         default="UNKNOWN", validation_alias="IMPACT", description="Impact score (1-5)"
     )
-    substance: str = Field(
+    substance: _ScoreStr = Field(
         default="UNKNOWN", validation_alias="SUBSTANCE", description="Substance score (1-5)"
     )
-    appropriateness: str = Field(
+    appropriateness: _ScoreStr = Field(
         default="UNKNOWN",
         validation_alias="APPROPRIATENESS",
         description="Appropriateness score (1-5)",
     )
-    meaningful_comparison: str = Field(
+    meaningful_comparison: _ScoreStr = Field(
         default="UNKNOWN",
         validation_alias="MEANINGFUL_COMPARISON",
         description="Meaningful comparison score (1-5)",
@@ -53,23 +59,23 @@ class PeerReadReview(BaseModel):
         description="Presentation format (Poster/Oral)",
     )
     comments: str = Field(default="", description="Detailed review comments")
-    soundness_correctness: str = Field(
+    soundness_correctness: _ScoreStr = Field(
         default="UNKNOWN",
         validation_alias="SOUNDNESS_CORRECTNESS",
         description="Soundness/correctness score (1-5)",
     )
-    originality: str = Field(
+    originality: _ScoreStr = Field(
         default="UNKNOWN", validation_alias="ORIGINALITY", description="Originality score (1-5)"
     )
-    recommendation: str = Field(
+    recommendation: _ScoreStr = Field(
         default="UNKNOWN",
         validation_alias="RECOMMENDATION",
         description="Overall recommendation score (1-5)",
     )
-    clarity: str = Field(
+    clarity: _ScoreStr = Field(
         default="UNKNOWN", validation_alias="CLARITY", description="Clarity score (1-5)"
     )
-    reviewer_confidence: str = Field(
+    reviewer_confidence: _ScoreStr = Field(
         default="UNKNOWN",
         validation_alias="REVIEWER_CONFIDENCE",
         description="Reviewer confidence score (1-5)",
