@@ -45,6 +45,7 @@ running commands.
 | Default constants | Testing `300 == 300` | `assert DEFAULT == 300` |
 | Over-granular | Consolidate to schema | 8 tests for one model |
 | Type checks | pyright handles | `assert isinstance(r, dict)` |
+| Filesystem leak | Writes mock data to real paths | `cache_dir` not redirected to `tmp_path` |
 
 **Rule**: If the test wouldn't catch a real bug, remove it.
 

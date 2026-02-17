@@ -139,3 +139,12 @@ updated: 2026-02-16
 - **Solution**: Grep for `validate_url(` calls, trace each URL back to its domain. Only list domains that actually pass through the validation function.
 - **Anti-pattern**: Listing domains based on "what services does the project talk to" instead of "what domains flow through this specific validation gate."
 - **References**: `src/app/utils/url_validation.py`, `src/app/data_utils/datasets_peerread.py:300`
+
+### Test Filesystem Isolation (tmp_path)
+
+- **Context**: Tests that mock network calls but call real write paths (e.g., `_save_file_data`, `_download_single_data_type`)
+- **Problem**: Mocking `download_file` prevents network access but unmocked methods still write to real project directories (e.g., `datasets/peerread/`). Mock data pollutes the source tree and breaks subsequent app runs.
+- **Solution**: Always redirect `cache_dir` or any write-target path to `tmp_path` in tests that trigger file writes, even when the download itself is mocked.
+- **Example**: `downloader.cache_dir = tmp_path / "cache"` before calling `download_venue_split()`
+- **Anti-pattern**: Only mocking the network layer and assuming no disk side-effects. If the code has `mkdir` + `open()` + `write()`, those still execute against real paths.
+- **References**: `tests/data_utils/test_datasets_peerread.py:601`, `src/app/data_utils/datasets_peerread.py:468`
