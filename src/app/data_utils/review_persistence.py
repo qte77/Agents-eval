@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 from app.config.config_app import MAS_REVIEWS_PATH
 from app.data_models.peerread_models import PeerReadReview
-from app.utils.paths import resolve_app_path
+from app.utils.paths import resolve_project_path
 
 
 class ReviewPersistence:
@@ -17,8 +17,8 @@ class ReviewPersistence:
         Args:
             reviews_dir: Directory to store review files
         """
-        # Resolve reviews directory relative to src/app
-        self.reviews_dir = resolve_app_path(reviews_dir)
+        # Resolve reviews directory relative to project root
+        self.reviews_dir = resolve_project_path(reviews_dir)
         self.reviews_dir.mkdir(parents=True, exist_ok=True)
 
     def save_review(
