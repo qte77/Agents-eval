@@ -109,7 +109,8 @@ technical assessment, clarity, and a recommendation score (1-5)."
 fi
 
 # Build claude command
-CLAUDE_CMD=(claude -p "$PROMPT" --output-format stream-json)
+# Reason: stream-json requires --verbose in print mode
+CLAUDE_CMD=(claude -p "$PROMPT" --output-format stream-json --verbose)
 if [[ -n "$CC_MODEL" ]]; then
     CLAUDE_CMD+=(--model "$CC_MODEL")
 fi
