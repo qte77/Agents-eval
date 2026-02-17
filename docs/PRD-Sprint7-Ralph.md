@@ -9,7 +9,7 @@ version: 1.0
 
 Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, security hardening (CVE mitigations, input sanitization, log scrubbing), test quality improvements.
 
-**Sprint 7 Focus**: Documentation alignment, example modernization, test suite refinement.
+**Sprint 7 Focus**: Documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings).
 
 **Development Approach**: TDD workflow (RED → GREEN → REFACTOR). All code changes require tests first. Use `testing-python` skill for test creation, `implementing-python` for implementation. Run `make validate` before completing any story.
 
@@ -400,6 +400,146 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 
 ---
 
+#### Feature 8: Real-Time Debug Log in GUI App Page
+
+**Description**: The App page debug log (`st.expander("Debug Log")`) currently collects log entries via `LogCapture` during agent execution but only renders them after completion (in the `finally` block). During execution the panel shows stale content. Replace the post-hoc rendering with a real-time streaming approach so users can monitor agent progress as it happens.
+
+**Acceptance Criteria**:
+- [ ] Debug log panel updates with new entries while agent execution is in progress
+- [ ] Log entries appear within ~1 second of being emitted by `app.*` modules
+- [ ] Color-coded level formatting (existing `format_logs_as_html` behavior) preserved
+- [ ] Panel auto-scrolls to latest entry during streaming
+- [ ] After execution completes, full log remains visible (no truncation)
+- [ ] No performance degradation: Streamlit reruns kept to minimum (use `st.fragment` or container-based approach)
+- [ ] Test verifies log entries are captured and rendered incrementally (mock execution with timed log emissions)
+- [ ] `make validate` passes
+
+**Technical Requirements**:
+- **Prerequisite — background thread execution**: Streamlit cannot update UI while Python is blocked on `await main(...)`. Execution must move to `threading.Thread` so the render loop stays free. See AGENT_LEARNINGS.md "Streamlit Background Execution Strategy" for the established pattern (`threading.Thread` + synchronized session state writes for page-level survival)
+- Modify `LogCapture` to support a polling interface (e.g., `get_new_logs_since(index)` returning only entries added since last read). `LogCapture._buffer` is written from the worker thread, read from the Streamlit thread — use `threading.Lock` for safe access
+- Use `st.fragment` (Streamlit 1.33+) with a polling loop (`time.sleep(1)` + `st.rerun()` scoped to the fragment) to re-render the log panel independently of the main page
+- Preserve existing `_capture_execution_logs` for final state persistence (session survives page navigation)
+- **Convergence note**: `_execute_query_background` is also modified by Feature 9 (`paper_number` param) and Feature 10 (`CommonSettings` overrides). Coordinate signature changes across all three features
+
+**Files**:
+- `src/gui/utils/log_capture.py` (edit — add incremental read support)
+- `src/gui/pages/run_app.py` (edit — streaming log render during execution)
+- `tests/gui/test_realtime_debug_log.py` (new)
+
+---
+
+#### Feature 9: Paper Selection Mode in GUI App Page
+
+**Description**: The App page currently only offers a free-text query input. Users should be able to choose between free-form text input and selecting a pre-downloaded PeerRead paper from a dropdown — mirroring the CLI `--paper-number` flag. When a paper is selected, its abstract is displayed for confirmation before running.
+
+##### 9.1 Input Mode Toggle
+
+**Acceptance Criteria**:
+- [ ] Radio button or toggle: "Free-form query" vs "Select a paper"
+- [ ] Free-form mode: existing text input field (unchanged behavior)
+- [ ] Paper mode: dropdown replaces text input; optional query override text field shown below (pre-filled with default review template, editable)
+- [ ] Switching modes preserves state (query text survives toggle back)
+- [ ] `paper_number` is passed to `main()` when in paper mode (enables `enable_review_tools=True` and evaluation pipeline)
+
+**Technical Requirements**:
+- Add `st.radio` with options `["Free-form query", "Select a paper"]`
+- Store selection in `st.session_state.input_mode`
+- When paper mode: pass `paper_number` to `_execute_query_background` → `main(paper_number=...)`. If user also provides a custom query, pass both (mirrors CLI behavior where `--paper-number` + query are independent)
+- When free-form mode: pass `query` only (existing behavior, `paper_number=None`)
+- `_execute_query_background` signature must add `paper_number: str | None = None` parameter (convergence point with Features 8 and 10)
+
+**Files**:
+- `src/gui/pages/run_app.py` (edit — add input mode toggle and conditional rendering)
+
+##### 9.2 Paper Dropdown with Available Papers
+
+**Acceptance Criteria**:
+- [ ] Dropdown lists all locally downloaded PeerRead papers
+- [ ] Each option displays: paper ID and title (e.g., `"42 — Attention Is All You Need"`)
+- [ ] Papers loaded via `PeerReadLoader.load_papers()` across configured venues/splits
+- [ ] If no papers are downloaded, dropdown shows helpful message with download instructions
+- [ ] Selecting a paper stores `paper_number` in session state
+
+**Technical Requirements**:
+- Use `PeerReadLoader` to enumerate available papers: iterate `load_papers(venue, split)` for all configured venues/splits, collect `(paper_id, title)` pairs
+- Cache paper list in `st.session_state.available_papers` (refresh on page load or via button)
+- `st.selectbox` with `format_func` to display `f"{paper.paper_id} — {paper.title}"`
+- Handle `FileNotFoundError` from `load_papers()` gracefully (dataset not downloaded yet)
+
+**Files**:
+- `src/gui/pages/run_app.py` (edit — add paper dropdown)
+
+##### 9.3 Abstract Preview on Paper Selection
+
+**Acceptance Criteria**:
+- [ ] When a paper is selected in the dropdown, its abstract is displayed below
+- [ ] Abstract shown in a styled container (e.g., `st.info` or `st.markdown` with blockquote)
+- [ ] Abstract updates immediately on dropdown selection change
+- [ ] No abstract shown when in free-form mode or no paper selected
+
+**Technical Requirements**:
+- Read `paper.abstract` from the selected `PeerReadPaper` object (already loaded for dropdown)
+- Display via `st.markdown(f"> {abstract}")` or `st.info(abstract)` below the dropdown
+- No additional data loading needed — abstract is a field on `PeerReadPaper`
+
+**Files**:
+- `src/gui/pages/run_app.py` (edit — add abstract preview)
+- `tests/gui/test_paper_selection.py` (new — test dropdown population, paper_number passthrough, abstract display)
+
+---
+
+#### Feature 10: Editable Common Settings with Tooltips in GUI Settings Page
+
+**Description**: The Settings page displays `CommonSettings` (log level, enable logfire, max content length) as read-only text. Make these editable with session state persistence and add tooltip descriptions (question-mark icon) for each setting explaining what it controls.
+
+##### 10.1 Editable Common Settings Fields
+
+**Acceptance Criteria**:
+- [ ] Log Level: dropdown with options `["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]`
+- [ ] Enable Logfire: checkbox (boolean toggle)
+- [ ] Max Content Length: number input with min=1000, max=100000, step=1000
+- [ ] Edited values stored in session state with `common_` prefix (e.g., `common_log_level`)
+- [ ] Edited values passed to application execution (override `CommonSettings` defaults)
+- [ ] Reset to Defaults button also resets common settings to `CommonSettings()` defaults
+- [ ] `make validate` passes
+
+**Technical Requirements**:
+- Replace `st.text(f"Log Level: {common_settings.log_level}")` with `st.selectbox`
+- Replace `st.text(f"Enable Logfire: ...")` with `st.checkbox`
+- Replace `st.text(f"Max Content Length: ...")` with `st.number_input`
+- Store overrides in session state with `common_` prefix; in the App page, build a `_build_common_settings_from_session()` helper (mirrors existing `_build_judge_settings_from_session()` pattern)
+- **Runtime application**: `log_level` change → call `logger.remove()`/`logger.add()` with new level before execution. `max_content_length` → pass to `main()` via `token_limit` or a new param. `enable_logfire` → gate `logfire.configure()` call. Note: `CommonSettings` is instantiated once at module level in `run_gui.py:48` — session state overrides must be applied at execution time, not by mutating the module-level instance
+- **Logfire setting consolidation**: `CommonSettings.enable_logfire` and `JudgeSettings.logfire_enabled` control overlapping behavior. Consolidate to a single `logfire_enabled` in `JudgeSettings` (which already has the setting) and deprecate `CommonSettings.enable_logfire`. Tooltip should explain: "Enables Logfire instrumentation for both logging transport and evaluation observability"
+- Update `_render_reset_button` to also clear `common_*` session state keys
+
+**Files**:
+- `src/gui/pages/settings.py` (edit — replace read-only display with editable widgets)
+- `src/gui/pages/run_app.py` (edit — read `common_*` session state and apply overrides before execution)
+
+##### 10.2 Tooltip Descriptions for All Settings
+
+**Acceptance Criteria**:
+- [ ] Each setting field has a help icon (question mark) that shows a description on hover
+- [ ] Tooltips are concise (1-2 sentences) and explain: what the setting controls, valid values, and effect
+- [ ] Tooltips applied to both Common Settings and existing Judge Settings fields
+- [ ] Streamlit native `help` parameter used (available on `st.selectbox`, `st.checkbox`, `st.number_input`, `st.text_input`, `st.slider`)
+
+**Technical Requirements**:
+- Use Streamlit's built-in `help` parameter on input widgets: `st.selectbox("Log Level", ..., help="Controls verbosity...")`
+- Tooltip text for Common Settings:
+  - Log Level: `"Controls logging verbosity for app.* modules. DEBUG shows all messages, ERROR shows only errors. Env var: EVAL_LOG_LEVEL"`
+  - Enable Logfire: `"Enables Logfire observability transport for loguru logs. Requires Logfire credentials. Env var: EVAL_ENABLE_LOGFIRE"`
+  - Max Content Length: `"Maximum character length for paper content passed to LLM agents. Longer papers are truncated. Env var: EVAL_MAX_CONTENT_LENGTH"`
+- Add `help` parameter to existing Judge Settings widgets (tier timeouts, composite thresholds, Tier 2 model fields)
+- [ ] `make validate` passes
+- [ ] CHANGELOG.md updated
+
+**Files**:
+- `src/gui/pages/settings.py` (edit — add `help=` parameter to all input widgets)
+- `tests/gui/test_editable_common_settings.py` (new — test widget rendering, session state persistence, reset behavior)
+
+---
+
 ## Non-Functional Requirements
 
 - All examples run successfully with minimal setup (API key in `.env`)
@@ -407,12 +547,13 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - PlantUML diagrams render without errors using project scripts
 - Test refactoring maintains or improves coverage percentages
 - No new pip dependencies
+- Streamlit >= 1.33 required (for `st.fragment` in Feature 8) — verify pinned version in `pyproject.toml`
 
 ## Out of Scope
 
 - Rewriting evaluation pipeline
 - Adding new evaluation metrics
-- GUI redesign or new Streamlit pages
+- New Streamlit pages or full GUI redesigns (Features 8-10 enhance existing pages only)
 - Test framework migration (pytest/Hypothesis stays)
 - Comprehensive docstring coverage for all modules
 - Updating UserStory.md
@@ -428,6 +569,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 **Priority Order:**
 - **P0**: STORY-001 (remove examples), STORY-002 (create examples)
 - **P1**: STORY-003 (README), STORY-004 (roadmap), STORY-005 (architecture)
+- **P1**: STORY-008 (real-time debug log), STORY-009 (paper selection), STORY-010 (editable settings)
 - **P2**: STORY-006 (diagrams)
 - **P3**: STORY-007 (test refactoring)
 
@@ -435,10 +577,11 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - STORY-002 depends on STORY-001 (clean slate before building)
 - STORY-006 should follow STORY-005 (diagrams illustrate text)
 - STORY-007 independent (can run parallel with docs)
+- STORY-008, STORY-009, STORY-010 independent of each other (can run parallel)
 
 <!-- PARSER REQUIREMENT: Include story count in parentheses -->
 <!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
-Story Breakdown - Phase 1 (7 stories total):
+Story Breakdown - Phase 1 (10 stories total):
 
 - **Feature 1 (Remove Outdated Examples)** → STORY-001: Delete Sprint 1-era examples and generic PydanticAI tutorials
 - **Feature 2 (Create Modern Examples)** → STORY-002: Build evaluation/settings/CC examples with tests and README (depends: STORY-001)
@@ -447,3 +590,6 @@ Story Breakdown - Phase 1 (7 stories total):
 - **Feature 5 (Update Architecture)** → STORY-005: Add benchmarking/security sections, correct CC OTel analysis doc, update status
 - **Feature 6 (Update Diagrams)** → STORY-006: Create sweep diagram, update workflow with security (depends: STORY-005)
 - **Feature 7 (Test Refactoring)** → STORY-007: Delete cc_otel tests, consolidate composite tests, remove implementation tests, add BDD template
+- **Feature 8 (Real-Time Debug Log)** → STORY-008: Stream debug log entries during agent execution instead of post-completion dump
+- **Feature 9 (Paper Selection Mode)** → STORY-009: Add paper dropdown with ID/title display and abstract preview alongside free-form input
+- **Feature 10 (Editable Common Settings)** → STORY-010: Make log level, logfire, max content length editable with tooltip descriptions
