@@ -439,9 +439,8 @@ ralph_prd_md:  ## [Optional] Generate PRD.md from UserStory.md
 	echo "Generating PRD.md from UserStory.md ..."
 	claude -p "/generating-prd-md-from-userstory-md"
 
-ralph_prd_json:  ## [Optional] Generate PRD.json from PRD.md
-	echo "Generating PRD.json from PRD.md ..."
-	claude -p "/generating-prd-json-from-prd-md"
+ralph_prd_json:  ## [Optional] Generate PRD.json from PRD.md (DRY_RUN=1 for parse-only)
+	$(if $(DRY_RUN),python ralph/scripts/generate_prd_json.py --dry-run,echo "Generating PRD.json from PRD.md ..." && claude -p "/generating-prd-json-from-prd-md")
 
 ralph_init:  ## Initialize Ralph loop environment
 	echo "Initializing Ralph loop environment ..."

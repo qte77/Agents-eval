@@ -184,6 +184,9 @@ def _extract_files(content: str) -> list[str]:
 def _extract_tech_requirements(content: str) -> list[str]:
     """Extract Technical Requirements items from a feature section.
 
+    Stops at code fences (```) to avoid truncating items that precede
+    fenced blocks (e.g. ``- Update table:\\n```markdown``).
+
     Args:
         content: Markdown content of a feature section.
 
@@ -191,6 +194,7 @@ def _extract_tech_requirements(content: str) -> list[str]:
         List of requirement strings.
     """
     requirements: list[str] = []
+    # Reason: Match consecutive "- " lines, stopping at code fences or non-list lines
     match = re.search(
         r"\*\*Technical Requirements\*\*:\s*\n((?:- [^\n]+\n)+)",
         content,
@@ -199,9 +203,14 @@ def _extract_tech_requirements(content: str) -> list[str]:
     if not match:
         return requirements
     for line in match.group(1).split("\n"):
+        # Reason: Stop before code fences that break the list pattern
+        if line.strip().startswith("```"):
+            break
         if line.strip().startswith("- "):
             req = line.strip()[2:].strip()
-            if req:
+            # Reason: Skip items ending with ":" that introduce a code block —
+            # the content is in the fence, not the list item
+            if req and not req.endswith(":"):
                 requirements.append(req)
     return requirements
 
@@ -360,8 +369,9 @@ def parse_story_breakdown(prd_content: str) -> list[StorySpec]:
     print(f"Found {len(breakdown_matches)} Story Breakdown section(s)")
 
     all_specs: list[StorySpec] = []
+    # Reason: Dotted IDs like "11.1", "12.2" require (?:\.\d+)? extension
     feature_pattern = (
-        r"\*\*Feature (\d+[a-z]?)"
+        r"\*\*Feature (\d+[a-z]?(?:\.\d+)?)"
         r"(?:\s*\(([^)]+)\))?"
         r"\*\*\s*"
         r"[^\S\n]*\u2192\s*"
@@ -444,17 +454,16 @@ def _resolve_acceptance_and_files(
     """
     sub_features: dict[str, SubFeature] | None = feature.get("sub_features")  # type: ignore[typeddict-item]
 
-    # Try label-based sub-feature match
-    if sub_features and spec["label"]:
-        matched = _match_label_to_subfeature(spec["label"], sub_features)
-        if matched:
-            return matched["acceptance"], matched["files"]
-
-    # Single story for a feature with sub-features: merge all
     if sub_features:
         same_feature_count = sum(1 for s in specs if s["feature_id"] == spec["feature_id"])
+        # Reason: Single story covering a multi-sub-feature parent must merge all;
+        # label matching only makes sense when multiple stories split sub-features
         if same_feature_count == 1:
             return _merge_subfeature_data(feature, sub_features)
+        if spec["label"]:
+            matched = _match_label_to_subfeature(spec["label"], sub_features)
+            if matched:
+                return matched["acceptance"], matched["files"]
 
     # Fallback to feature-level data
     return feature["acceptance"], feature["files"]
@@ -474,11 +483,31 @@ def resolve_stories(specs: list[StorySpec], features: dict[str, Feature]) -> lis
 
     for spec in specs:
         feature = features.get(spec["feature_id"])
+        # Reason: Dotted IDs like "11.1" reference sub-features under parent "11"
+        sub_number: str | None = None
+        if not feature and "." in spec["feature_id"]:
+            parent_id, _ = spec["feature_id"].split(".", 1)
+            feature = features.get(parent_id)
+            sub_number = spec["feature_id"]
         if not feature:
             print(f"Warning: Feature {spec['feature_id']} not found for {spec['id']}")
             continue
 
-        acceptance, files = _resolve_acceptance_and_files(spec, feature, specs)
+        # Reason: When breakdown uses dotted ID, match the specific sub-feature
+        # by number instead of relying on label-based fuzzy matching
+        if sub_number:
+            sub_features: dict[str, SubFeature] | None = feature.get("sub_features")  # type: ignore[typeddict-item]
+            if sub_features:
+                for _, sf_data in sub_features.items():
+                    if sf_data["number"] == sub_number:
+                        acceptance, files = sf_data["acceptance"], sf_data["files"]
+                        break
+                else:
+                    acceptance, files = _resolve_acceptance_and_files(spec, feature, specs)
+            else:
+                acceptance, files = _resolve_acceptance_and_files(spec, feature, specs)
+        else:
+            acceptance, files = _resolve_acceptance_and_files(spec, feature, specs)
         description = feature["description"]
 
         stories.append(
@@ -496,27 +525,6 @@ def resolve_stories(specs: list[StorySpec], features: dict[str, Feature]) -> lis
         )
 
     return stories
-
-
-def _resolve_prd_path(project_root: Path, argv: list[str]) -> Path:
-    """Determine the PRD file path from CLI args or defaults.
-
-    Args:
-        project_root: Project root directory.
-        argv: Command-line arguments (sys.argv).
-
-    Returns:
-        Path to the PRD markdown file.
-    """
-    if len(argv) > 1:
-        return project_root / argv[1]
-
-    prd_path = project_root / "docs" / "PRD.md"
-    if not prd_path.exists():
-        sprint_prds = sorted((project_root / "docs").glob("PRD-Sprint*.md"), reverse=True)
-        if sprint_prds:
-            return sprint_prds[0]
-    return prd_path
 
 
 def _backfill_existing_stories(existing_stories: list[Story]) -> tuple[int, int]:
@@ -548,17 +556,46 @@ def _backfill_existing_stories(existing_stories: list[Story]) -> tuple[int, int]
     return passed_count, updated_count
 
 
+def _parse_args(argv: list[str]) -> tuple[Path, bool]:
+    """Parse CLI arguments for PRD path and dry-run flag.
+
+    Args:
+        argv: Command-line arguments (sys.argv).
+
+    Returns:
+        Tuple of (prd_path, dry_run).
+    """
+    project_root = Path(__file__).parent.parent.parent
+    dry_run = "--dry-run" in argv
+    # Reason: Filter out flags before resolving positional PRD path arg
+    positional = [a for a in argv[1:] if not a.startswith("--")]
+    if positional:
+        prd_path = project_root / positional[0]
+    else:
+        prd_path = project_root / "docs" / "PRD.md"
+        if not prd_path.exists():
+            sprint_prds = sorted((project_root / "docs").glob("PRD-Sprint*.md"), reverse=True)
+            if sprint_prds:
+                prd_path = sprint_prds[0]
+    return prd_path, dry_run
+
+
 def main() -> int:
     """Parse PRD markdown and generate ralph/docs/prd.json.
+
+    Supports ``--dry-run`` flag for parse-only validation (no file write).
 
     Returns:
         Exit code (0 for success, 1 for failure).
     """
     import sys
 
+    prd_path, dry_run = _parse_args(sys.argv)
     project_root = Path(__file__).parent.parent.parent
-    prd_path = _resolve_prd_path(project_root, sys.argv)
     output_path = project_root / "ralph" / "docs" / "prd.json"
+
+    if dry_run:
+        print("DRY RUN — parse only, no file write")
 
     if not prd_path.exists():
         print(f"ERROR: PRD file not found at {prd_path}")
@@ -581,9 +618,23 @@ def main() -> int:
     specs = parse_story_breakdown(prd_content)
     print(f"Found {len(specs)} story specs")
 
+    # Reason: Cross-check declared story count against parsed count
+    declared_match = re.search(r"Story Breakdown[^\n]*\((\d+) stories", prd_content)
+    if declared_match:
+        declared = int(declared_match.group(1))
+        if declared != len(specs):
+            print(f"WARNING: PRD declares {declared} stories but parser found {len(specs)}")
+
     print("Resolving stories...")
     new_parsed_stories = resolve_stories(specs, features)
     print(f"Resolved {len(new_parsed_stories)} stories")
+
+    if dry_run:
+        for story in new_parsed_stories:
+            ac_count = len(story["acceptance"])
+            files_count = len(story["files"])
+            print(f"  {story['id']}: {story['title'][:60]} (AC: {ac_count}, files: {files_count})")
+        return 0
 
     # Load existing prd.json (safety: preserve passed stories)
     existing_stories: list[Story] = []
