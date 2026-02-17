@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- CC baseline collection: Makefile recipes (`cc_run_solo`, `cc_run_teams`, `cc_collect_teams`) with `CC_TEAMS_TIMEOUT` parameter for Claude Code artifact collection
+- CC baseline collection: `--verbose` flag for `claude -p` required for `--output-format stream-json` in print mode
+
+### Changed
+
+- CC baseline scripts renamed for clarity: `collect-cc-solo.sh` → `run-cc.sh`, `collect-cc-teams.sh` → `collect-team-artifacts.sh`; Makefile recipes and README updated to match
+- `docs/architecture.md`: ADR-008 (CC baseline engine: subprocess vs SDK decision)
+- `docs/PRD-Sprint8-Ralph.md`: Feature 9 removed (SDK migration needs research); remaining sub-items can be scoped independently
+
 ### Fixed
 
 - `agent_system.py`: use `result.output` instead of `result.data` (`AgentRunResult` API)

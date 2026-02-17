@@ -577,6 +577,23 @@ Each architectural decision includes:
   - Prerequisite: FastAPI API stability
 - **Status**: Proposed (deferred, unscheduled)
 
+#### ADR-008: CC Baseline Engine — subprocess vs SDK
+
+- **Date**: 2026-02-17
+- **Decision**: Keep `subprocess.run([claude, "-p"])` for Sprint 7 STORY-013; evaluate SDK migration for Sprint 8
+- **Context**: `--engine=cc` invokes Claude Code headless to compare CC's agentic approach against PydanticAI MAS. Three implementation options exist.
+- **Alternatives**:
+  - `subprocess.run([claude, "-p"])` (Sprint 7) — full CC tool use, external CLI dependency, correct agentic semantics
+  - `anthropic` SDK (`messages.create`) — pure Python, no CLI, but **no tool use** — reduces CC to a raw LLM call, not a valid agentic baseline
+  - `claude-agent-sdk` — wraps CLI in Python package, full CC tools, bundles CLI (~100MB), proprietary license
+- **Rationale**:
+  - The CC baseline measures **orchestration approach** (CC agents vs PydanticAI agents), not model quality
+  - CC solo used 19 tool calls (Task, Bash, Glob, Grep, Read) — removing tools changes what's being measured
+  - `subprocess.run` is the simplest correct approach (KISS); `shutil.which("claude")` provides fail-fast validation
+  - `anthropic` SDK is valid as a **separate** `--engine=claude-api` mode for model-vs-model comparison, not as a CC replacement
+  - `claude-agent-sdk` is a valid Sprint 8 refinement if subprocess proves brittle
+- **Status**: Active (subprocess); SDK migration deferred pending research
+
 ## Agentic System Architecture
 
 **PlantUML Source**: [arch_vis/MAS-C4-Overview.plantuml](arch_vis/MAS-C4-Overview.plantuml) | [arch_vis/MAS-C4-Detailed.plantuml](arch_vis/MAS-C4-Detailed.plantuml)

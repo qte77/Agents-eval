@@ -298,5 +298,6 @@ Story Breakdown - Phase 1 (TBD stories total):
 - Feature 1 (report generation) — new requirement
 - Feature 7 (structured output streaming) — AGENT_REQUESTS.md open item
 - Feature 8 (PlantUML audit) — necessity, accuracy, coherence review
+- ~~Feature 9 (CC engine: SDK migration)~~ — **Removed.** Needs thorough research first (e.g., are CC teams possible via `anthropic` SDK?). Keeping `subprocess.run([claude, "-p"])` per ADR-008. Remaining sub-items (`CC_SOLO_OUTPUT_PATH`/`CC_TEAMS_OUTPUT_PATH` in `config_app.py`, `raw_stream.jsonl` parsing) can be scoped independently if needed
 
 Story breakdown TBD after Sprint 7 completion and Feature 1 design phase.

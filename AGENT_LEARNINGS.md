@@ -148,3 +148,19 @@ updated: 2026-02-16
 - **Example**: `downloader.cache_dir = tmp_path / "cache"` before calling `download_venue_split()`
 - **Anti-pattern**: Only mocking the network layer and assuming no disk side-effects. If the code has `mkdir` + `open()` + `write()`, those still execute against real paths.
 - **References**: `tests/data_utils/test_datasets_peerread.py:601`, `src/app/data_utils/datasets_peerread.py:468`
+
+### CC Teams Artifacts Ephemeral in Print Mode
+
+- **Context**: Running `claude -p` (headless/print mode) for CC baseline collection
+- **Problem**: `~/.claude/teams/` and `~/.claude/tasks/` are empty after `claude -p` completes. `CCTraceAdapter` teams parser finds no artifacts to parse.
+- **Solution**: Teams artifacts are ephemeral in print mode — they exist only during execution. For teams trace data, parse `raw_stream.jsonl` for `TeamCreate`, `Task`, `TodoWrite` events instead of relying on filesystem artifacts.
+- **Anti-pattern**: Assuming `~/.claude/teams/` persists after headless invocation. It doesn't — only interactive sessions leave persistent team state.
+- **References**: `scripts/collect-cc-traces/run-cc.sh`, ADR-008
+
+### Makefile $(or) Does Not Override ?= Defaults
+
+- **Context**: Makefile variable defaults with `?=` and `$(or $(VAR),fallback)` pattern
+- **Problem**: `CC_MODEL ?= sonnet` sets `CC_MODEL` to `"sonnet"` at parse time. `$(or $(CC_MODEL),fallback)` always sees `CC_MODEL` as truthy (non-empty), so the fallback never triggers — even when the user hasn't explicitly set the variable.
+- **Solution**: Use separate variables for user-facing defaults and internal fallbacks. Or use `ifdef`/`ifndef` guards instead of `$(or)` when the variable has a `?=` default.
+- **Example**: Instead of `TIMEOUT := $(or $(CC_TEAMS_TIMEOUT),600)`, use `CC_TEAMS_TIMEOUT ?= 600` directly — the `?=` already provides the default.
+- **References**: `Makefile` (cc_run_solo, cc_run_teams recipes)

@@ -6,7 +6,7 @@
 #   Teams mode (--teams): CC with Agent Teams orchestration enabled
 #
 # Usage:
-#   ./collect-cc-solo.sh --paper-id <id> [--output-dir <path>] [--timeout <s>] [--model <m>] [--teams]
+#   ./run-cc.sh --paper-id <id> [--output-dir <path>] [--timeout <s>] [--model <m>] [--teams]
 #
 # Output (solo):
 #   <output-dir>/metadata.json      - Session ID, timestamps, model, cost
