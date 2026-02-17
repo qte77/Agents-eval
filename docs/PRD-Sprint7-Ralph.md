@@ -1,6 +1,9 @@
 ---
-title: Product Requirements Document: Agents-eval Sprint 7
-version: 1.0
+title: Product Requirements Document - Agents-eval Sprint 7
+description: Documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings), unified provider configuration, and Claude Code engine option for the Agents-eval MAS evaluation framework.
+version: 1.1
+created: 2026-02-17
+updated: 2026-02-17
 ---
 
 ## Project Overview
@@ -11,7 +14,49 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 
 **Sprint 7 Focus**: Documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings), unified provider configuration, Claude Code engine option.
 
-**Development Approach**: TDD workflow (RED → GREEN → REFACTOR). All code changes require tests first. Use `testing-python` skill for test creation, `implementing-python` for implementation. Run `make validate` before completing any story.
+---
+
+## Development Methodology
+
+**All implementation stories MUST follow these practices. Ralph Loop enforces this order.**
+
+### TDD Workflow (Mandatory for all features)
+
+1. **RED**: Write failing tests first using `testing-python` skill. Tests define expected behavior before any implementation code exists.
+2. **GREEN**: Implement minimal code to pass tests using `implementing-python` skill. No extra functionality.
+3. **REFACTOR**: Clean up while keeping tests green. Run `make validate` before marking complete.
+
+### Test Tool Selection
+
+| Tool | Use for | NOT for |
+|------|---------|------------|
+| **pytest** | Core logic, unit tests, known edge cases (primary TDD tool) | Random inputs |
+| **Hypothesis** | Property invariants, bounds, all-input guarantees | Snapshots, known cases |
+| **inline-snapshot** | Regression, model dumps, complex structures | TDD red-green, ranges |
+
+**Decision rule**: If the test wouldn't catch a real bug, don't write it. Test behavior, not implementation.
+
+### Mandatory Practices
+
+- **Mock external dependencies** (HTTP, LLM providers, file systems, subprocess) using `@patch`. Never call real APIs in unit tests.
+- **Test behavior, not implementation** — test observable outcomes (return values, side effects, error messages), not internal structure (isinstance checks, property existence, default constants).
+- **Google-style docstrings** for every new file, function, class, and method. Auto-generated documentation depends on this.
+- **`# Reason:` comments** for non-obvious logic (e.g., regex patterns, XML delimiter choices, fallback order).
+- **`make validate` MUST pass** before any story is marked complete. No exceptions.
+
+### Core Principles
+
+- **KISS**: Simplest solution that passes tests. Clear > clever.
+- **DRY**: Reuse existing patterns (`CompositeResult`, `EvaluationPipeline`, `CCTraceAdapter`). Don't rebuild.
+- **YAGNI**: Implement only what acceptance criteria require. No speculative features.
+
+### Skills Usage
+
+| Story type | Skills to invoke |
+|------------|-----------------|
+| Implementation (1-6, 8-14) | `testing-python` (RED) → `implementing-python` (GREEN) |
+| Test refactoring (7) | `testing-python` (for validation after changes) |
+| Codebase research | `researching-codebase` (before non-trivial implementation) |
 
 ---
 
@@ -35,7 +80,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - Delete files: `run_evaluation_example.py`, `run_evaluation_example_simple.py`, `run_simple_agent_no_tools.py`, `run_simple_agent_system.py`, `run_simple_agent_tools.py`
 - Delete directory: `src/examples/utils/` (contains 5 files)
 - Delete config: `src/examples/config.json`
-- Keep: `src/examples/__init__.py` (Python module structure)
+- Note: `src/examples/__init__.py` does not currently exist — create it only if needed by Feature 2 examples
 
 **Files**:
 - `src/examples/run_evaluation_example.py` (delete)
@@ -311,20 +356,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 
 **Description**: Execute strategic test refactoring aligned with TDD principles — remove tests that don't prevent regressions, consolidate duplicates, ensure BDD structure.
 
-##### 7.1 Remove Orphaned Tests
-
-**Acceptance Criteria**:
-- [ ] `tests/cc_otel/` directory deleted (module removed Sprint 6 STORY-006)
-- [ ] No remaining references to cc_otel tests
-- [ ] `make test_all` passes
-
-**Technical Requirements**:
-- Delete: `tests/cc_otel/test_cc_otel_config.py`, `tests/cc_otel/test_cc_otel_instrumentation.py`
-
-**Files**:
-- `tests/cc_otel/` (delete directory)
-
-##### 7.2 Consolidate Duplicate Tests
+##### 7.1 Consolidate Duplicate Tests
 
 **Acceptance Criteria**:
 - [ ] Composite scoring tests merged: 3 files → 1 (`test_composite_scorer.py`)
@@ -346,19 +378,21 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - `tests/evals/test_composite_scoring_interpretability.py` (delete)
 - `tests/evals/test_composite_scoring_edge_cases.py` (delete)
 
-##### 7.3 Remove Implementation-Detail Tests
+##### 7.2 Remove Remaining Implementation-Detail Tests
+
+**Description**: Sprint 6 STORY-015 (Test Audit Execution) deleted ~55 implementation-detail tests from 9 files. These three plugin test files were in scope but may retain residual isinstance/property tests that survived the audit. This sub-feature completes the cleanup for plugin test files specifically.
 
 **Acceptance Criteria**:
-- [ ] Plugin implementation tests removed from `test_plugin_*.py` files
-- [ ] Deleted: isinstance checks, property existence tests, default constant verifications
+- [ ] Plugin implementation tests removed from `test_plugin_*.py` files (any isinstance checks, property existence tests, default constant verifications remaining after Sprint 6 audit)
 - [ ] Kept: behavioral tests (evaluate returns correct structure, error handling)
 - [ ] `make coverage_all` shows no reduction in critical module coverage
+- [ ] If no implementation-detail tests remain (Sprint 6 fully cleaned these), mark as verified-complete with no changes
 
 **Technical Requirements**:
-- Review and edit:
-  - `tests/judge/test_plugin_llm_judge.py` — remove property/isinstance tests
-  - `tests/judge/test_plugin_traditional.py` — remove property/isinstance tests
-  - `tests/judge/test_plugin_graph.py` — remove property/isinstance tests
+- Review and edit (verify Sprint 6 audit completeness, remove any residual):
+  - `tests/judge/test_plugin_llm_judge.py` — remove property/isinstance tests if any remain
+  - `tests/judge/test_plugin_traditional.py` — remove property/isinstance tests if any remain
+  - `tests/judge/test_plugin_graph.py` — remove property/isinstance tests if any remain
 - Keep: tests verifying `evaluate()` behavior, error handling, data flow
 
 **Files**:
@@ -366,7 +400,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - `tests/judge/test_plugin_traditional.py` (edit)
 - `tests/judge/test_plugin_graph.py` (edit)
 
-##### 7.4 Add BDD Structure Documentation
+##### 7.3 Add BDD Structure Documentation
 
 **Acceptance Criteria**:
 - [ ] Test structure template added to `tests/conftest.py`
@@ -420,7 +454,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - Modify `LogCapture` to support a polling interface (e.g., `get_new_logs_since(index)` returning only entries added since last read). `LogCapture._buffer` is written from the worker thread, read from the Streamlit thread — use `threading.Lock` for safe access
 - Use `st.fragment` (Streamlit 1.33+) with a polling loop (`time.sleep(1)` + `st.rerun()` scoped to the fragment) to re-render the log panel independently of the main page
 - Preserve existing `_capture_execution_logs` for final state persistence (session survives page navigation)
-- **Convergence note**: `_execute_query_background` is also modified by Feature 9 (`paper_number` param) and Feature 10 (`CommonSettings` overrides). Coordinate signature changes across all three features
+- See **`_execute_query_background` Signature Convergence** in Notes for Ralph Loop — Features 8, 9, and 10 all modify this function
 
 **Files**:
 - `src/gui/utils/log_capture.py` (edit — add incremental read support)
@@ -447,7 +481,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - Store selection in `st.session_state.input_mode`
 - When paper mode: pass `paper_number` to `_execute_query_background` → `main(paper_number=...)`. If user also provides a custom query, pass both (mirrors CLI behavior where `--paper-number` + query are independent)
 - When free-form mode: pass `query` only (existing behavior, `paper_number=None`)
-- `_execute_query_background` signature must add `paper_number: str | None = None` parameter (**convergence point with Features 8 and 10** — coordinate all signature changes together)
+- `_execute_query_background` signature must add `paper_number: str | None = None` parameter (see **Signature Convergence** in Notes for Ralph Loop)
 
 ##### 9.2 Paper Dropdown with Available Papers
 
@@ -508,7 +542,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
   - `max_content_length` → pass as a dedicated `max_content_length: int | None` kwarg to `main()` (distinct from `token_limit` which controls agent token budget, not content truncation); `main()` must thread it through to `_truncate_paper_content()` in `peerread_tools.py`
   - `enable_logfire` → gate `logfire.configure()` call (see Logfire consolidation below)
   - Note: `CommonSettings` is instantiated once at module level in `run_gui.py:48` — session state overrides must be applied at execution time, not by mutating the module-level instance
-- `_execute_query_background` signature must also receive `common_*` overrides (**convergence point with Features 8 and 9** — coordinate all signature changes together)
+- `_execute_query_background` signature must also receive `common_*` overrides (see **Signature Convergence** in Notes for Ralph Loop)
 - **Logfire setting consolidation**: `CommonSettings.enable_logfire` and `JudgeSettings.logfire_enabled` control overlapping behavior. Consolidate to a single `logfire_enabled` in `JudgeSettings` (which already has the setting) and deprecate `CommonSettings.enable_logfire`. Tooltip should explain: "Enables Logfire instrumentation for both logging transport and evaluation observability"
 - Update `_render_reset_button` to also clear `common_*` session state keys
 
@@ -614,19 +648,24 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 
 ##### 12.1 `--engine` Flag in CLI and Sweep
 
+**⚠️ Breaking change**: `--cc-baseline` flag removed from `run_sweep.py` and `cc_baseline_enabled` removed from `SweepConfig`. Users of `--cc-baseline` must switch to `--engine=cc`. This was an internal CLI with no stable contract, but existing sweep configs referencing `cc_baseline_enabled` will need updating.
+
 **Acceptance Criteria**:
 - [ ] `run_cli.py` accepts `--engine=mas` (default) or `--engine=cc`
-- [ ] `run_sweep.py` accepts `--engine=mas` (default) or `--engine=cc`; `--cc-baseline` removed (replaced by `--engine=cc` — internal CLI, no stable contract to preserve)
+- [ ] `run_sweep.py` accepts `--engine=mas` (default) or `--engine=cc`; `--cc-baseline` removed (replaced by `--engine=cc`)
 - [ ] `--engine=mas`: existing MAS execution path (unchanged)
 - [ ] `--engine=cc`: invokes CC headless (`claude -p "..."`) via `subprocess.run()`, collects artifacts, passes artifact dirs to `main(cc_solo_dir=..., cc_teams_dir=..., cc_teams_tasks_dir=...)` for evaluation
+- [ ] `--engine=cc` with `claude` CLI not found: raises clear error at arg-parse time (`shutil.which("claude")` check)
+- [ ] `--engine=cc` subprocess failure handling: non-zero exit code raises `RuntimeError` with stderr content; `subprocess.TimeoutExpired` caught and re-raised with context; malformed JSON output from `claude -p --output-format json` raises `ValueError` with parsing details
 - [ ] `--engine` documented in `--help` output for both entry points
 - [ ] Mutual exclusivity enforced: `--engine=cc` with MAS-specific flags (e.g., `--include-researcher`) raises a clear error
 - [ ] `make validate` passes
 
 **Technical Requirements**:
-- `run_cli.py`: add `--engine` with `choices=["mas", "cc"]`, `default="mas"`. When `cc`: check `shutil.which("claude")` at arg-parse time and fail fast; invoke `claude -p "{query}" --output-format json` via `subprocess.run()`; store artifacts under `--output-dir` (not `tempfile`) so CLI users can inspect them after the run
+- `run_cli.py`: add `--engine` with `choices=["mas", "cc"]`, `default="mas"`. When `cc`: check `shutil.which("claude")` at arg-parse time and fail fast; invoke `claude -p "{query}" --output-format json` via `subprocess.run(timeout=300)`; store artifacts under `--output-dir` (not `tempfile`) so CLI users can inspect them after the run
 - `run_sweep.py`: same `--engine` flag; `SweepConfig` adds `engine: str = Field(default="mas")`; sweep CC artifacts stored under `config.output_dir / "cc_artifacts" / f"{paper_number}_{repetition}"` and cleaned up after all repetitions (high volume)
 - Delete `--cc-baseline` from `run_sweep.py` and `cc_baseline_enabled` from `SweepConfig` (replaced entirely by `--engine=cc`)
+- Subprocess error handling: wrap `subprocess.run()` in try/except — catch `TimeoutExpired` (re-raise with context), check `returncode != 0` (raise `RuntimeError` with stderr), parse JSON output with `json.loads()` in try/except `JSONDecodeError` (raise `ValueError` with raw output snippet)
 - Reuse existing `CCTraceAdapter` for artifact parsing — no new adapter code
 
 **Files**:
@@ -678,9 +717,25 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - Comprehensive docstring coverage for all modules
 - Updating UserStory.md
 - Sprint 6 feature implementation (assumes delivered)
-- BDD scenario tests (pytest with arrange/act/assert is sufficient)
 - Live CC OTel trace piping to Phoenix — CC exports metrics/logs only, not trace spans (upstream limitation: anthropics/claude-code#9584, #2090). Artifact collection via `claude -p --output-format json` + `CCTraceAdapter` remains the evaluation approach. Revisit if Anthropic ships `OTEL_TRACES_EXPORTER` support.
 - Enabling CC OTel metrics in `.claude/settings.json` — supplementary cost/token data only, does not feed evaluation pipeline metrics. Enable manually if Phoenix cost dashboard desired.
+
+**Deferred from Sprint 6 "Out of Scope → Sprint 7+" (explicitly deferred to Sprint 8+):**
+
+- Centralized tool registry with module allowlist (MAESTRO L7.2) — architectural improvement, lower priority than current feature work
+- Plugin tier validation at registration (MAESTRO L7.1) — prevents tier mismatch, deferred pending plugin system stabilization
+- Error message sanitization / information leakage prevention — low-risk given log scrubbing already active (Sprint 6 Feature 12)
+- GraphTraceData construction simplification (replace manual `.get()` with `model_validate()`) — code quality improvement, no user impact
+- Timeout bounds enforcement (min/max limits on user-configurable timeouts) — low risk, current validation via Pydantic Field constraints is sufficient
+- Configuration path traversal protection (validate config paths against allowlist) — low risk in current deployment (local-only CLI/GUI)
+- BDD scenario tests for evaluation pipeline (end-to-end user workflow tests) — deferred; pytest with arrange/act/assert is sufficient for Sprint 7
+- Time tracking consistency across tiers (standardize timing pattern) — cosmetic improvement, no functional impact
+- Hardcoded settings audit (module-level constants → Pydantic BaseSettings) — deferred pending Feature 10 completion, which addresses the highest-value settings first
+
+**Deferred from Sprint 5 "Out of Scope" (explicitly deferred to Sprint 8+):**
+
+- Tier 1 reference comparison fix (all-1.0 self-comparison scores) — requires ground-truth review integration, separate feature
+- Cerebras-specific prompt optimization for structured output validation retries — provider-specific, low priority
 
 ---
 
@@ -704,6 +759,15 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - STORY-013 independent of STORY-011/012 (engine selection orthogonal to provider config)
 - STORY-014 depends on STORY-013 (GUI reuses CLI engine logic)
 
+**`_execute_query_background` Signature Convergence:**
+Features 8, 9, and 10 all modify `_execute_query_background()` in `src/gui/pages/run_app.py`. Coordinate signature changes to avoid merge conflicts:
+- Feature 8 adds threading/streaming support (return type, callback pattern)
+- Feature 9 adds `paper_number: str | None = None`
+- Feature 10 adds `common_*` override kwargs (`log_level`, `max_content_length`, `logfire_enabled`)
+Recommended approach: implement Feature 8's signature first (includes threading refactor), then Features 9 and 10 add parameters on top. If executing in parallel, agree on final signature upfront.
+
+**Mandatory Practices:** See Development Methodology section above. TDD workflow, `make validate`, mocking, behavioral testing, and docstrings are non-negotiable for all stories.
+
 <!-- PARSER REQUIREMENT: Include story count in parentheses -->
 <!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
 Story Breakdown - Phase 1 (14 stories total):
@@ -714,7 +778,7 @@ Story Breakdown - Phase 1 (14 stories total):
 - **Feature 4 (Update Roadmap)** → STORY-004: Mark Sprint 6 delivered, add Sprint 7 row
 - **Feature 5 (Update Architecture)** → STORY-005: Add benchmarking/security sections, correct CC OTel analysis doc, update status
 - **Feature 6 (Update Diagrams)** → STORY-006: Create sweep diagram, update workflow with security (depends: STORY-005)
-- **Feature 7 (Test Refactoring)** → STORY-007: Delete cc_otel tests, consolidate composite tests, remove implementation tests, add BDD template
+- **Feature 7 (Test Refactoring)** → STORY-007: Consolidate composite tests, remove residual implementation-detail tests, add BDD template
 - **Feature 8 (Real-Time Debug Log)** → STORY-008: Stream debug log entries during agent execution instead of post-completion dump
 - **Feature 9 (Paper Selection Mode)** → STORY-009: Add paper dropdown with ID/title display and abstract preview alongside free-form input
 - **Feature 10 (Editable Common Settings)** → STORY-010: Make log level, logfire, max content length editable with tooltip descriptions
