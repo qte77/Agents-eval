@@ -9,9 +9,9 @@ Expected behavior: Example demonstrates timeout adjustment, tier weight customiz
 Mock strategy: No mocking needed; JudgeSettings is local configuration only.
 """
 
-from pathlib import Path
 import importlib.util
 import sys
+from pathlib import Path
 
 from app.judge.settings import JudgeSettings
 

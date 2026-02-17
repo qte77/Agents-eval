@@ -17,7 +17,6 @@ import time
 from unittest.mock import MagicMock, patch
 
 
-
 class TestLogCapturePollingInterface:
     """Tests for LogCapture.get_new_logs_since() incremental polling.
 
@@ -269,9 +268,7 @@ class TestIncrementalLogStreaming:
 
         def emit_logs() -> None:
             for i in range(3):
-                capture.add_log_entry(
-                    f"2026-01-01 00:00:{i:02d}", "INFO", "app.agent", f"step {i}"
-                )
+                capture.add_log_entry(f"2026-01-01 00:00:{i:02d}", "INFO", "app.agent", f"step {i}")
                 time.sleep(0.05)
 
         t = threading.Thread(target=emit_logs)

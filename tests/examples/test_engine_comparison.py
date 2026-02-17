@@ -9,10 +9,10 @@ Mock strategy: Create minimal CC artifact directory structure in tmp_path;
                patch EvaluationPipeline LLM calls.
 """
 
-import json
-from pathlib import Path
 import importlib.util
+import json
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -37,9 +37,9 @@ class TestEngineComparisonExists:
         examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
         content = (examples_dir / "engine_comparison.py").read_text()
         # Assert
-        assert "collect-cc" in content or "scripts" in content or "Prerequisites" in content.lower(), (
-            "Example must document prerequisites for CC artifact collection"
-        )
+        assert (
+            "collect-cc" in content or "scripts" in content or "Prerequisites" in content.lower()
+        ), "Example must document prerequisites for CC artifact collection"
 
     def test_example_uses_cc_trace_adapter(self) -> None:
         """Example must use CCTraceAdapter for loading CC artifacts."""
@@ -68,7 +68,12 @@ class TestCCTraceAdapterIntegration:
         (artifacts_dir / "metadata.json").write_text(json.dumps(metadata))
 
         tool_calls = [
-            {"tool": "Read", "input": {"file_path": str(tmp_path / "test.py")}, "output": "content", "timestamp": 0.0},
+            {
+                "tool": "Read",
+                "input": {"file_path": str(tmp_path / "test.py")},
+                "output": "content",
+                "timestamp": 0.0,
+            },
             {"tool": "Bash", "input": {"command": "ls"}, "output": "file.py", "timestamp": 1.0},
         ]
         tool_calls_text = "\n".join(json.dumps(tc) for tc in tool_calls)
@@ -105,9 +110,7 @@ class TestCCTraceAdapterIntegration:
         # Act
         trace: GraphTraceData = adapter.parse()
         # Assert
-        assert isinstance(trace, GraphTraceData), (
-            f"Expected GraphTraceData, got {type(trace)}"
-        )
+        assert isinstance(trace, GraphTraceData), f"Expected GraphTraceData, got {type(trace)}"
         assert trace.execution_id, "GraphTraceData must have a non-empty execution_id"
 
     def test_teams_adapter_parses_to_graph_trace_data(self, teams_artifacts_dir: Path) -> None:
@@ -117,9 +120,7 @@ class TestCCTraceAdapterIntegration:
         # Act
         trace: GraphTraceData = adapter.parse()
         # Assert
-        assert isinstance(trace, GraphTraceData), (
-            f"Expected GraphTraceData, got {type(trace)}"
-        )
+        assert isinstance(trace, GraphTraceData), f"Expected GraphTraceData, got {type(trace)}"
         assert trace.execution_id, "GraphTraceData must have a non-empty execution_id"
 
     def test_adapter_mode_detection(

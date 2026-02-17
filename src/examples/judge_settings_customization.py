@@ -33,7 +33,7 @@ def example_timeout_adjustment() -> JudgeSettings:
         JudgeSettings with increased timeouts suitable for larger models.
     """
     settings = JudgeSettings(
-        tier1_max_seconds=2.0,   # allow more time for BERTScore on long abstracts
+        tier1_max_seconds=2.0,  # allow more time for BERTScore on long abstracts
         tier2_max_seconds=30.0,  # allow slow LLM providers
         tier3_max_seconds=20.0,  # allow larger graphs
         total_max_seconds=60.0,
@@ -84,7 +84,7 @@ def example_composite_thresholds() -> JudgeSettings:
         JudgeSettings with raised acceptance thresholds.
     """
     settings = JudgeSettings(
-        composite_accept_threshold=0.85,       # raise bar for "accept"
+        composite_accept_threshold=0.85,  # raise bar for "accept"
         composite_weak_accept_threshold=0.65,  # raise bar for "weak_accept"
         composite_weak_reject_threshold=0.35,  # lower bar for "weak_reject"
         fallback_strategy="tier1_only",

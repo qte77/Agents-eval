@@ -12,10 +12,7 @@ from pathlib import Path
 
 ARCH = Path(__file__).parent.parent.parent / "docs" / "architecture.md"
 CC_ORCH = (
-    Path(__file__).parent.parent.parent
-    / "docs"
-    / "analysis"
-    / "CC-agent-teams-orchestration.md"
+    Path(__file__).parent.parent.parent / "docs" / "analysis" / "CC-agent-teams-orchestration.md"
 )
 LEARNINGS = Path(__file__).parent.parent.parent / "AGENT_LEARNINGS.md"
 SETTINGS = Path(__file__).parent.parent.parent / ".claude" / "settings.json"
@@ -41,18 +38,14 @@ class TestBenchmarkingSection:
         # Arrange
         content = ARCH.read_text()
         # Act / Assert
-        assert "SweepConfig" in content, (
-            "docs/architecture.md must document SweepConfig module"
-        )
+        assert "SweepConfig" in content, "docs/architecture.md must document SweepConfig module"
 
     def test_sweeprunner_documented(self) -> None:
         """architecture.md must document SweepRunner module."""
         # Arrange
         content = ARCH.read_text()
         # Act / Assert
-        assert "SweepRunner" in content, (
-            "docs/architecture.md must document SweepRunner module"
-        )
+        assert "SweepRunner" in content, "docs/architecture.md must document SweepRunner module"
 
     def test_sweep_analysis_documented(self) -> None:
         """architecture.md must document sweep analysis/SweepAnalysis module."""
@@ -77,9 +70,7 @@ class TestBenchmarkingSection:
         # Arrange
         content = ARCH.read_text()
         # Act / Assert
-        assert "results.json" in content, (
-            "docs/architecture.md must document results.json output"
-        )
+        assert "results.json" in content, "docs/architecture.md must document results.json output"
 
 
 class TestSecuritySection:
@@ -145,7 +136,11 @@ class TestCCOTelDocCorrection:
         # Arrange
         content = CC_ORCH.read_text()
         # Act / Assert
-        assert "upstream limitation" in content.lower() or "No — upstream" in content or "no trace" in content.lower(), (
+        assert (
+            "upstream limitation" in content.lower()
+            or "No — upstream" in content
+            or "no trace" in content.lower()
+        ), (
             "CC-agent-teams-orchestration.md must document OTel has no trace spans (upstream limitation)"
         )
 
@@ -191,9 +186,7 @@ class TestAgentLearningsOTelEntry:
         # Act / Assert
         assert "OTel" in content and (
             "trace" in content.lower() or "limitation" in content.lower()
-        ), (
-            "AGENT_LEARNINGS.md must document CC OTel trace spans upstream limitation"
-        )
+        ), "AGENT_LEARNINGS.md must document CC OTel trace spans upstream limitation"
 
     def test_cc_otel_github_issues_referenced(self) -> None:
         """AGENT_LEARNINGS.md OTel learning must reference upstream GitHub issues."""

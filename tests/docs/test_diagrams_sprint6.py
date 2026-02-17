@@ -27,9 +27,7 @@ class TestSweepDiagram:
         Story: STORY-006 — PlantUML diagrams don't reflect Sprint 6 changes.
         """
         # Arrange / Act / Assert
-        assert SWEEP_DIAGRAM.exists(), (
-            "docs/arch_vis/metrics-eval-sweep.plantuml must exist"
-        )
+        assert SWEEP_DIAGRAM.exists(), "docs/arch_vis/metrics-eval-sweep.plantuml must exist"
 
     def test_sweep_diagram_has_sweep_config(self) -> None:
         """Sweep diagram must document SweepConfig.
@@ -113,9 +111,7 @@ class TestWorkflowDiagramSecurity:
         Story: STORY-006 — Updated diagram: MAS-Review-Workflow.plantuml includes security boundaries.
         """
         # Arrange / Act / Assert
-        assert WORKFLOW_DIAGRAM.exists(), (
-            "docs/arch_vis/MAS-Review-Workflow.plantuml must exist"
-        )
+        assert WORKFLOW_DIAGRAM.exists(), "docs/arch_vis/MAS-Review-Workflow.plantuml must exist"
 
     def test_workflow_has_url_validation(self) -> None:
         """Workflow diagram must show URL validation checkpoint.
@@ -202,10 +198,10 @@ class TestArchVisReadme:
         content = README.read_text()
         # Act / Assert
         assert "sweep" in content.lower() and (
-            "composition" in content.lower() or "benchmark" in content.lower() or "SweepRunner" in content
-        ), (
-            "docs/arch_vis/README.md must describe sweep diagram with composition/benchmark content"
-        )
+            "composition" in content.lower()
+            or "benchmark" in content.lower()
+            or "SweepRunner" in content
+        ), "docs/arch_vis/README.md must describe sweep diagram with composition/benchmark content"
 
     def test_readme_mentions_workflow_security(self) -> None:
         """README.md must note that MAS-Review-Workflow includes security boundaries.

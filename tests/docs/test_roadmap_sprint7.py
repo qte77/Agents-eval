@@ -57,9 +57,7 @@ class TestSprint7InProgress:
         # Arrange
         content = ROADMAP.read_text()
         # Act / Assert
-        assert "Sprint 7" in content, (
-            "docs/roadmap.md must include a Sprint 7 row"
-        )
+        assert "Sprint 7" in content, "docs/roadmap.md must include a Sprint 7 row"
 
     def test_sprint7_status_is_in_progress(self) -> None:
         """Sprint 7 row must show 'In Progress' status.
@@ -94,9 +92,7 @@ class TestRoadmapChronology:
         content = ROADMAP.read_text()
         # Act / Assert
         for i in range(1, 7):
-            assert f"Sprint {i}" in content, (
-                f"docs/roadmap.md must include Sprint {i} row"
-            )
+            assert f"Sprint {i}" in content, f"docs/roadmap.md must include Sprint {i} row"
         assert content.count("Delivered") >= 6, (
             "docs/roadmap.md must show at least 6 sprints as Delivered (Sprints 1-6)"
         )

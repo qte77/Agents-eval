@@ -75,7 +75,9 @@ class TestBasicEvaluationRuns:
             api_cost=None,
         )
 
-        with patch("app.judge.llm_evaluation_managers.LLMJudgeEngine.evaluate_comprehensive") as mock_eval:
+        with patch(
+            "app.judge.llm_evaluation_managers.LLMJudgeEngine.evaluate_comprehensive"
+        ) as mock_eval:
             mock_eval.return_value = mock_tier2
 
             # Act: import and call the example's main function
@@ -112,7 +114,9 @@ class TestBasicEvaluationRuns:
             api_cost=None,
         )
 
-        with patch("app.judge.llm_evaluation_managers.LLMJudgeEngine.evaluate_comprehensive") as mock_eval:
+        with patch(
+            "app.judge.llm_evaluation_managers.LLMJudgeEngine.evaluate_comprehensive"
+        ) as mock_eval:
             mock_eval.return_value = mock_tier2
 
             import importlib.util
@@ -134,9 +138,7 @@ class TestBasicEvaluationRuns:
             result = await run_fn()
 
         # Assert
-        assert isinstance(result, CompositeResult), (
-            f"Expected CompositeResult, got {type(result)}"
-        )
+        assert isinstance(result, CompositeResult), f"Expected CompositeResult, got {type(result)}"
         assert 0.0 <= result.composite_score <= 1.0, "Composite score must be in [0, 1]"
         assert result.recommendation in {"accept", "weak_accept", "weak_reject", "reject"}, (
             f"Unexpected recommendation: {result.recommendation}"

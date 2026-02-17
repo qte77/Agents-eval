@@ -33,9 +33,7 @@ class TestReadmeVersionBadge:
         # Arrange
         content = README.read_text()
         # Act / Assert
-        assert "version-3.3.0" not in content, (
-            "README.md must not reference old version 3.3.0"
-        )
+        assert "version-3.3.0" not in content, "README.md must not reference old version 3.3.0"
 
 
 class TestReadmeCurrentRelease:
@@ -68,9 +66,7 @@ class TestReadmeNextSection:
         # Arrange
         content = README.read_text()
         # Act / Assert
-        assert "Sprint 7" in content, (
-            "README.md Next section must reference Sprint 7"
-        )
+        assert "Sprint 7" in content, "README.md Next section must reference Sprint 7"
 
     def test_next_section_not_planned_sprint6(self) -> None:
         """Next section must not say Sprint 6 is Planned."""

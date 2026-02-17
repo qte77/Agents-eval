@@ -20,18 +20,14 @@ class TestDeprecatedEvaluationExamplesDeleted:
         # Arrange
         target = EXAMPLES_DIR / "run_evaluation_example.py"
         # Act / Assert
-        assert not target.exists(), (
-            f"Deprecated file must be deleted: {target}"
-        )
+        assert not target.exists(), f"Deprecated file must be deleted: {target}"
 
     def test_run_evaluation_example_simple_deleted(self) -> None:
         """run_evaluation_example_simple.py uses deprecated dict-based execution_trace API."""
         # Arrange
         target = EXAMPLES_DIR / "run_evaluation_example_simple.py"
         # Act / Assert
-        assert not target.exists(), (
-            f"Deprecated file must be deleted: {target}"
-        )
+        assert not target.exists(), f"Deprecated file must be deleted: {target}"
 
 
 class TestGenericAgentExamplesDeleted:
@@ -42,27 +38,21 @@ class TestGenericAgentExamplesDeleted:
         # Arrange
         target = EXAMPLES_DIR / "run_simple_agent_no_tools.py"
         # Act / Assert
-        assert not target.exists(), (
-            f"Generic tutorial must be deleted: {target}"
-        )
+        assert not target.exists(), f"Generic tutorial must be deleted: {target}"
 
     def test_run_simple_agent_system_deleted(self) -> None:
         """run_simple_agent_system.py is a generic PydanticAI tutorial."""
         # Arrange
         target = EXAMPLES_DIR / "run_simple_agent_system.py"
         # Act / Assert
-        assert not target.exists(), (
-            f"Generic tutorial must be deleted: {target}"
-        )
+        assert not target.exists(), f"Generic tutorial must be deleted: {target}"
 
     def test_run_simple_agent_tools_deleted(self) -> None:
         """run_simple_agent_tools.py is a generic PydanticAI tutorial."""
         # Arrange
         target = EXAMPLES_DIR / "run_simple_agent_tools.py"
         # Act / Assert
-        assert not target.exists(), (
-            f"Generic tutorial must be deleted: {target}"
-        )
+        assert not target.exists(), f"Generic tutorial must be deleted: {target}"
 
 
 class TestSupportingFilesDeleted:
@@ -73,18 +63,14 @@ class TestSupportingFilesDeleted:
         # Arrange
         target = EXAMPLES_DIR / "utils"
         # Act / Assert
-        assert not target.exists(), (
-            f"Utils directory must be deleted: {target}"
-        )
+        assert not target.exists(), f"Utils directory must be deleted: {target}"
 
     def test_config_json_deleted(self) -> None:
         """config.json is a supporting configuration file for deleted examples."""
         # Arrange
         target = EXAMPLES_DIR / "config.json"
         # Act / Assert
-        assert not target.exists(), (
-            f"Config file must be deleted: {target}"
-        )
+        assert not target.exists(), f"Config file must be deleted: {target}"
 
 
 class TestNoRemainingImports:
@@ -114,6 +100,4 @@ class TestNoRemainingImports:
                     violations.append(f"{py_file}: references {module}")
 
         # Assert
-        assert not violations, (
-            "Found imports of deleted example modules:\n" + "\n".join(violations)
-        )
+        assert not violations, "Found imports of deleted example modules:\n" + "\n".join(violations)
