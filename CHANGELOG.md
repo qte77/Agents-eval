@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `docs/arch_vis/metrics-eval-sweep.plantuml`: updated with SweepConfig → SweepRunner → compositions × papers × repetitions → SweepAnalysis → output files workflow; added optional CC headless path (claude -p → CCTraceAdapter) (STORY-006)
+- `docs/arch_vis/MAS-Review-Workflow.plantuml`: added security boundaries with MAESTRO layer annotations — URL validation (L1/SSRF), prompt sanitization (L3), log scrubbing (L5) (STORY-006)
+- `docs/arch_vis/README.md`: updated diagram descriptions for metrics-eval-sweep and MAS-Review-Workflow (STORY-006)
 - `README.md`: version badge updated to 4.0.0; Current Release reflects Sprint 6 deliverables (benchmarking, CC baseline, security, examples); Next section updated to Sprint 7 scope; Examples section added referencing `src/examples/README.md` (STORY-003)
 - `docs/roadmap.md`: Sprint 7 status updated from Active to In Progress (STORY-004)
 - `docs/architecture.md`: new Benchmarking Infrastructure (Sprint 6) section with SweepConfig/SweepRunner/SweepAnalysis modules, CC headless path, results.json/summary.md output; new Security Framework (Sprint 6) section with MAESTRO mitigations and security-advisories reference (STORY-005)
