@@ -523,6 +523,9 @@ class TestBasicScoring:
 
     Consolidated from test_composite_scoring_scenarios.py.
     Tests all 5 core performance scenarios and threshold boundaries.
+
+    Setup: Synthetic tier results for high/low quality × fast/slow execution.
+    Expected behavior: Recommendations correlate with actual quality/speed profiles.
     """
 
     @pytest.fixture
@@ -530,16 +533,187 @@ class TestBasicScoring:
         """Fixture providing initialized composite scorer."""
         return CompositeScorer()
 
-    def test_placeholder_basic_scoring(self) -> None:
-        """Placeholder — replaced by merged content in GREEN phase.
+    @pytest.mark.parametrize(
+        "scenario_name,expected_recommendations",
+        [
+            ("high_quality_fast", ["accept"]),
+            ("high_quality_slow", ["accept", "weak_accept"]),
+            ("low_quality_fast", ["weak_reject", "reject"]),
+            ("low_quality_slow", ["reject"]),
+            ("mixed_performance", ["weak_accept", "weak_reject"]),
+        ],
+    )
+    def test_scoring_scenarios(self, composite_scorer, scenario_name, expected_recommendations):
+        """Each performance scenario produces a recommendation in the expected set.
 
-        This test is intentionally minimal. Full scenario tests from
-        test_composite_scoring_scenarios.py are merged in GREEN.
+        Arrange: Create tier results matching the named scenario's quality/speed profile.
+        Act: Evaluate with CompositeScorer.
+        Assert: Recommendation falls within the expected set for that scenario.
         """
         # Arrange
-        scorer = CompositeScorer()
-        # Assert scorer is initialized correctly
-        assert scorer is not None
+        scenarios = {
+            "high_quality_fast": EvaluationResults(
+                tier1=Tier1Result(
+                    cosine_score=0.82, jaccard_score=0.78, semantic_score=0.85,
+                    execution_time=0.7, time_score=0.95, task_success=1.0, overall_score=0.85,
+                ),
+                tier2=Tier2Result(
+                    technical_accuracy=0.88, constructiveness=0.85, clarity=0.86,
+                    planning_rationality=0.87, overall_score=0.87,
+                    model_used="gpt-4o-mini", api_cost=0.02, fallback_used=False,
+                ),
+                tier3=Tier3Result(
+                    coordination_centrality=0.89, tool_selection_accuracy=0.86,
+                    communication_overhead=0.82, path_convergence=0.84,
+                    task_distribution_balance=0.88, overall_score=0.86, graph_complexity=12,
+                ),
+            ),
+            "high_quality_slow": EvaluationResults(
+                tier1=Tier1Result(
+                    cosine_score=0.84, jaccard_score=0.81, semantic_score=0.87,
+                    execution_time=2.8, time_score=0.55, task_success=1.0, overall_score=0.84,
+                ),
+                tier2=Tier2Result(
+                    technical_accuracy=0.91, constructiveness=0.89, clarity=0.88,
+                    planning_rationality=0.92, overall_score=0.91,
+                    model_used="gpt-4o-mini", api_cost=0.04, fallback_used=False,
+                ),
+                tier3=Tier3Result(
+                    coordination_centrality=0.73, tool_selection_accuracy=0.68,
+                    communication_overhead=0.65, path_convergence=0.71,
+                    task_distribution_balance=0.75, overall_score=0.70, graph_complexity=45,
+                ),
+            ),
+            "low_quality_fast": EvaluationResults(
+                tier1=Tier1Result(
+                    cosine_score=0.29, jaccard_score=0.27, semantic_score=0.32,
+                    execution_time=0.4, time_score=0.92, task_success=0.0, overall_score=0.30,
+                ),
+                tier2=Tier2Result(
+                    technical_accuracy=0.35, constructiveness=0.31, clarity=0.33,
+                    planning_rationality=0.28, overall_score=0.31,
+                    model_used="gpt-4o-mini", api_cost=0.01, fallback_used=False,
+                ),
+                tier3=Tier3Result(
+                    coordination_centrality=0.22, tool_selection_accuracy=0.25,
+                    communication_overhead=0.20, path_convergence=0.19,
+                    task_distribution_balance=0.24, overall_score=0.22, graph_complexity=4,
+                ),
+            ),
+            "low_quality_slow": EvaluationResults(
+                tier1=Tier1Result(
+                    cosine_score=0.25, jaccard_score=0.23, semantic_score=0.28,
+                    execution_time=3.2, time_score=0.15, task_success=0.0, overall_score=0.24,
+                ),
+                tier2=Tier2Result(
+                    technical_accuracy=0.29, constructiveness=0.26, clarity=0.27,
+                    planning_rationality=0.22, overall_score=0.26,
+                    model_used="gpt-4o-mini", api_cost=0.04, fallback_used=False,
+                ),
+                tier3=Tier3Result(
+                    coordination_centrality=0.18, tool_selection_accuracy=0.15,
+                    communication_overhead=0.12, path_convergence=0.14,
+                    task_distribution_balance=0.17, overall_score=0.15, graph_complexity=28,
+                ),
+            ),
+            "mixed_performance": EvaluationResults(
+                tier1=Tier1Result(
+                    cosine_score=0.58, jaccard_score=0.61, semantic_score=0.64,
+                    execution_time=1.8, time_score=0.70, task_success=1.0, overall_score=0.62,
+                ),
+                tier2=Tier2Result(
+                    technical_accuracy=0.52, constructiveness=0.67, clarity=0.60,
+                    planning_rationality=0.59, overall_score=0.59,
+                    model_used="gpt-4o-mini", api_cost=0.03, fallback_used=False,
+                ),
+                tier3=Tier3Result(
+                    coordination_centrality=0.48, tool_selection_accuracy=0.71,
+                    communication_overhead=0.55, path_convergence=0.55,
+                    task_distribution_balance=0.62, overall_score=0.58, graph_complexity=19,
+                ),
+            ),
+        }
+        # Act
+        result = composite_scorer.evaluate_composite(scenarios[scenario_name])
+        # Assert
+        assert result is not None
+        assert 0.0 <= result.composite_score <= 1.0
+        assert result.recommendation in expected_recommendations, (
+            f"Recommendation '{result.recommendation}' not in expected "
+            f"{expected_recommendations} for {scenario_name} "
+            f"(score={result.composite_score:.3f})"
+        )
+
+    def test_recommendation_boundary_conditions(self, composite_scorer):
+        """Threshold boundary values produce correct recommendations.
+
+        Arrange: Use exact threshold values and values just below thresholds.
+        Act: Map score to recommendation.
+        Assert: Boundary conditions handled correctly (at/just-below thresholds).
+        """
+        # Arrange
+        thresholds = composite_scorer.thresholds
+        boundary_cases = [
+            (thresholds["accept"], "accept"),
+            (thresholds["accept"] - 0.001, "weak_accept"),
+            (thresholds["weak_accept"], "weak_accept"),
+            (thresholds["weak_accept"] - 0.001, "weak_reject"),
+            (thresholds["weak_reject"], "weak_reject"),
+            (thresholds["weak_reject"] - 0.001, "reject"),
+        ]
+        for score, expected in boundary_cases:
+            # Act
+            actual = composite_scorer.map_to_recommendation(score)
+            # Assert
+            assert actual == expected, (
+                f"Score {score} should map to '{expected}', got '{actual}'"
+            )
+
+    def test_quality_outweighs_speed(self, composite_scorer):
+        """High quality slow execution should outscore low quality fast execution.
+
+        Arrange: Two evaluations — high quality/slow vs low quality/fast.
+        Act: Evaluate both.
+        Assert: High quality result has higher composite score.
+        """
+        # Arrange
+        high_quality_slow = EvaluationResults(
+            tier1=Tier1Result(
+                cosine_score=0.84, jaccard_score=0.81, semantic_score=0.87,
+                execution_time=2.8, time_score=0.55, task_success=1.0, overall_score=0.84,
+            ),
+            tier2=Tier2Result(
+                technical_accuracy=0.91, constructiveness=0.89, clarity=0.88,
+                planning_rationality=0.92, overall_score=0.91,
+                model_used="gpt-4o-mini", api_cost=0.04, fallback_used=False,
+            ),
+            tier3=Tier3Result(
+                coordination_centrality=0.73, tool_selection_accuracy=0.68,
+                communication_overhead=0.65, path_convergence=0.71,
+                task_distribution_balance=0.75, overall_score=0.70, graph_complexity=45,
+            ),
+        )
+        low_quality_fast = EvaluationResults(
+            tier1=Tier1Result(
+                cosine_score=0.29, jaccard_score=0.27, semantic_score=0.32,
+                execution_time=0.4, time_score=0.92, task_success=0.0, overall_score=0.30,
+            ),
+            tier2=Tier2Result(
+                technical_accuracy=0.35, constructiveness=0.31, clarity=0.33,
+                planning_rationality=0.28, overall_score=0.31,
+                model_used="gpt-4o-mini", api_cost=0.01, fallback_used=False,
+            ),
+            tier3=Tier3Result(
+                coordination_centrality=0.22, tool_selection_accuracy=0.25,
+                communication_overhead=0.20, path_convergence=0.19,
+                task_distribution_balance=0.24, overall_score=0.22, graph_complexity=4,
+            ),
+        )
+        # Act
+        slow_result = composite_scorer.evaluate_composite(high_quality_slow)
+        fast_result = composite_scorer.evaluate_composite(low_quality_fast)
+        # Assert
+        assert slow_result.composite_score > fast_result.composite_score
 
 
 class TestWeightRedistribution:
@@ -547,6 +721,9 @@ class TestWeightRedistribution:
 
     Consolidated from test_composite_scoring_interpretability.py.
     Tests score consistency, metric contribution, and threshold boundaries.
+
+    Setup: Scaled evaluation results and dominant-metric evaluations.
+    Expected behavior: Different dominant metrics produce different scores.
     """
 
     @pytest.fixture
@@ -554,17 +731,107 @@ class TestWeightRedistribution:
         """Fixture providing initialized composite scorer."""
         return CompositeScorer()
 
-    def test_placeholder_weight_redistribution(self) -> None:
-        """Placeholder — replaced by merged content in GREEN phase.
+    def test_weights_sum_to_one(self, composite_scorer):
+        """Configured weights must sum to approximately 1.0.
 
-        This test is intentionally minimal. Full interpretability tests from
-        test_composite_scoring_interpretability.py are merged in GREEN.
+        Arrange: Initialized CompositeScorer with default settings.
+        Act: Sum all metric weights.
+        Assert: Sum is within 0.01 of 1.0 (floating-point tolerance).
+        """
+        # Act
+        weight_sum = sum(composite_scorer.weights.values())
+        # Assert
+        assert abs(weight_sum - 1.0) < 0.01, f"Weights sum to {weight_sum}, not ~1.0"
+
+    def test_recommendation_boundaries_complete(self, composite_scorer):
+        """All threshold boundaries map to correct recommendations.
+
+        Arrange: Exact threshold values and just-below values.
+        Act: Map each to recommendation.
+        Assert: All 9 boundary cases map correctly including 0.0 and 1.0.
         """
         # Arrange
-        scorer = CompositeScorer()
-        # Assert weights sum to ~1.0
-        weight_sum = sum(scorer.weights.values())
-        assert abs(weight_sum - 1.0) < 0.01
+        thresholds = composite_scorer.thresholds
+        boundary_cases = [
+            (thresholds["accept"], "accept"),
+            (thresholds["weak_accept"], "weak_accept"),
+            (thresholds["weak_reject"], "weak_reject"),
+            (thresholds["reject"], "reject"),
+            (thresholds["accept"] - 0.001, "weak_accept"),
+            (thresholds["weak_accept"] - 0.001, "weak_reject"),
+            (thresholds["weak_reject"] - 0.001, "reject"),
+            (1.0, "accept"),
+            (0.0, "reject"),
+        ]
+        for score, expected_rec in boundary_cases:
+            # Act
+            actual_rec = composite_scorer.map_to_recommendation(score)
+            # Assert
+            assert actual_rec == expected_rec, (
+                f"Score {score:.3f} should map to '{expected_rec}', got '{actual_rec}'"
+            )
+
+    def test_dominant_metric_produces_different_scores(self, composite_scorer):
+        """Different dominant metrics produce different composite scores.
+
+        Arrange: Three evaluations each with a different dominant metric (similarity,
+        planning, coordination) and low base values for other metrics.
+        Act: Evaluate all three.
+        Assert: Composite scores are distinct (not all equal).
+        """
+        # Arrange
+        base = 0.3
+        high = 0.95
+
+        def _make_dominant(dominant: str) -> EvaluationResults:
+            """Create evaluation where one metric group dominates."""
+            if dominant == "similarity":
+                tier1_overall = high
+                tier2_overall = base
+                tier3_coord = base
+                tier3_tool = base
+            elif dominant == "planning":
+                tier1_overall = base
+                tier2_overall = base
+                tier3_coord = base
+                tier3_tool = base
+            else:  # coordination
+                tier1_overall = base
+                tier2_overall = base
+                tier3_coord = high
+                tier3_tool = base
+
+            return EvaluationResults(
+                tier1=Tier1Result(
+                    cosine_score=tier1_overall, jaccard_score=tier1_overall,
+                    semantic_score=tier1_overall, execution_time=1.0,
+                    time_score=0.9 if dominant == "similarity" else base,
+                    task_success=1.0 if dominant == "similarity" else 0.0,
+                    overall_score=tier1_overall,
+                ),
+                tier2=Tier2Result(
+                    technical_accuracy=tier2_overall, constructiveness=tier2_overall,
+                    clarity=tier2_overall,
+                    planning_rationality=high if dominant == "planning" else base,
+                    overall_score=tier2_overall,
+                    model_used="gpt-4o-mini", api_cost=0.02, fallback_used=False,
+                ),
+                tier3=Tier3Result(
+                    coordination_centrality=tier3_coord, tool_selection_accuracy=tier3_tool,
+                    communication_overhead=base, path_convergence=base,
+                    task_distribution_balance=base, overall_score=base, graph_complexity=8,
+                ),
+            )
+
+        # Act
+        scores = {
+            m: composite_scorer.evaluate_composite(_make_dominant(m)).composite_score
+            for m in ["similarity", "planning", "coordination"]
+        }
+        # Assert: distinct scores produced
+        assert len(set(round(s, 6) for s in scores.values())) > 1, (
+            "Different dominant metrics should produce different scores"
+        )
 
 
 class TestEdgeCases:
@@ -572,6 +839,9 @@ class TestEdgeCases:
 
     Consolidated from test_composite_scoring_edge_cases.py.
     Tests missing tiers, extreme values, and error conditions.
+
+    Setup: Helper factories for Tier1/2/3 results with sensible defaults.
+    Expected behavior: Robust error handling and predictable extremes.
     """
 
     @pytest.fixture
@@ -579,16 +849,102 @@ class TestEdgeCases:
         """Fixture providing initialized composite scorer."""
         return CompositeScorer()
 
-    def test_placeholder_edge_cases(self) -> None:
-        """Placeholder — replaced by merged content in GREEN phase.
+    @staticmethod
+    def _make_tier1(**overrides: object) -> Tier1Result:
+        """Create Tier1Result with defaults, applying overrides."""
+        defaults: dict[str, object] = {
+            "cosine_score": 0.72, "jaccard_score": 0.68, "semantic_score": 0.75,
+            "execution_time": 1.2, "time_score": 0.85, "task_success": 1.0, "overall_score": 0.74,
+        }
+        defaults.update(overrides)
+        return Tier1Result(**defaults)  # type: ignore[arg-type]
 
-        This test is intentionally minimal. Full edge case tests from
-        test_composite_scoring_edge_cases.py are merged in GREEN.
+    @staticmethod
+    def _make_tier2(**overrides: object) -> Tier2Result:
+        """Create Tier2Result with defaults, applying overrides."""
+        defaults: dict[str, object] = {
+            "technical_accuracy": 0.78, "constructiveness": 0.73, "clarity": 0.75,
+            "planning_rationality": 0.76, "overall_score": 0.76,
+            "model_used": "gpt-4o-mini", "api_cost": 0.025, "fallback_used": False,
+        }
+        defaults.update(overrides)
+        return Tier2Result(**defaults)  # type: ignore[arg-type]
+
+    @staticmethod
+    def _make_tier3(**overrides: object) -> Tier3Result:
+        """Create Tier3Result with defaults, applying overrides."""
+        defaults: dict[str, object] = {
+            "coordination_centrality": 0.74, "tool_selection_accuracy": 0.71,
+            "communication_overhead": 0.70, "path_convergence": 0.69,
+            "task_distribution_balance": 0.73, "overall_score": 0.72, "graph_complexity": 15,
+        }
+        defaults.update(overrides)
+        return Tier3Result(**defaults)  # type: ignore[arg-type]
+
+    @pytest.mark.parametrize("missing_tier", ["tier1", "tier2", "tier3", "all"])
+    def test_missing_tiers_raise_error(self, composite_scorer, missing_tier):
+        """Missing tier results should raise ValueError with descriptive message.
+
+        Arrange: EvaluationResults with specified tier(s) set to None.
+        Act: Call extract_metric_values.
+        Assert: ValueError raised with 'Missing required tier results' message.
         """
         # Arrange
-        scorer = CompositeScorer()
-        # Assert scorer handles valid inputs
-        assert scorer.thresholds is not None
+        tier1 = None if missing_tier in ["tier1", "all"] else self._make_tier1()
+        tier2 = None if missing_tier in ["tier2", "all"] else self._make_tier2()
+        tier3 = None if missing_tier in ["tier3", "all"] else self._make_tier3()
+        evaluation = EvaluationResults(tier1=tier1, tier2=tier2, tier3=tier3)
+        # Act & Assert
+        with pytest.raises(ValueError, match="Missing required tier results"):
+            composite_scorer.extract_metric_values(evaluation)
+
+    def test_zero_scores_produce_low_result(self, composite_scorer):
+        """All-zero scores result in low composite score and reject/weak_reject recommendation.
+
+        Arrange: EvaluationResults with near-zero values across all tiers.
+        Act: Evaluate composite.
+        Assert: Score below 0.4 and recommendation is reject or weak_reject.
+        """
+        # Arrange
+        evaluation = EvaluationResults(
+            tier1=self._make_tier1(
+                cosine_score=0.0, jaccard_score=0.0, semantic_score=0.0,
+                time_score=0.1, task_success=0.0, overall_score=0.0, execution_time=0.1,
+            ),
+            tier2=self._make_tier2(
+                technical_accuracy=0.0, constructiveness=0.0, clarity=0.0,
+                planning_rationality=0.0, overall_score=0.0,
+            ),
+            tier3=self._make_tier3(
+                coordination_centrality=0.1, tool_selection_accuracy=0.1,
+                communication_overhead=0.0, path_convergence=0.0,
+                task_distribution_balance=0.0, overall_score=0.0, graph_complexity=0,
+            ),
+        )
+        # Act
+        result = composite_scorer.evaluate_composite(evaluation)
+        # Assert
+        assert result.composite_score < 0.4
+        assert result.recommendation in ["weak_reject", "reject"]
+
+    def test_zero_execution_time_no_error(self, composite_scorer):
+        """Zero execution time should not cause errors or invalid scores.
+
+        Arrange: Tier1Result with execution_time=0.0.
+        Act: Evaluate composite.
+        Assert: Result is valid and score is in [0.0, 1.0].
+        """
+        # Arrange
+        evaluation = EvaluationResults(
+            tier1=self._make_tier1(execution_time=0.0, time_score=1.0),
+            tier2=self._make_tier2(),
+            tier3=self._make_tier3(),
+        )
+        # Act
+        result = composite_scorer.evaluate_composite(evaluation)
+        # Assert
+        assert result is not None
+        assert 0.0 <= result.composite_score <= 1.0
 
 
 class TestConsolidationStructure:

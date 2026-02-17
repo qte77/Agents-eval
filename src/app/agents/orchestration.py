@@ -260,8 +260,6 @@ async def run_manager_orchestrated(
     orchestrator = AgentOrchestrator()
     orchestrator.log_step("starting_manager_execution")
 
-    # FIXME context manager try-catch
-    # with error_handling_context("run_manager()"):
     model_name = getattr(manager, "model")._model_name
     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
 

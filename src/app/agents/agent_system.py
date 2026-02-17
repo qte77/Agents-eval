@@ -456,8 +456,6 @@ def get_manager(
         Agent: The initialized Agent manager.
     """
 
-    # FIXME context manager try-catch
-    # with error_handling_context("get_manager()"):
     model_config = EndpointConfig.model_validate(
         {
             "provider": provider,
@@ -515,8 +513,6 @@ async def run_manager(
     execution_id = f"exec_{uuid.uuid4().hex[:12]}"
     trace_collector.start_execution(execution_id)
 
-    # FIXME context manager try-catch
-    # with out ? error_handling_context("run_manager()"):
     model_name = getattr(manager, "model")._model_name
     mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")

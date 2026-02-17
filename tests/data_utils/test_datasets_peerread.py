@@ -6,6 +6,7 @@ operations without evaluation logic.
 """
 
 from json import JSONDecodeError
+from unittest.mock import patch
 
 import httpx
 import hypothesis
@@ -32,36 +33,41 @@ OPTIONAL_REVIEW_FIELDS = [
 class TestPeerReadDownloader:
     """Test PeerRead dataset downloading functionality."""
 
-    # FIXME FAILED test_download_success_mocked - AttributeError: module
-    # 'app.data_utils.datasets_peerread' has no attribute 'httpx'
-    # @patch("app.data_utils.datasets_peerread.httpx.Client.get")
-    # def test_download_success_mocked(self, mock_get):
-    #     """Test successful dataset download with mocked requests."""
-    #     # Import here to avoid import errors if module doesn't exist yet
-    #     from app.data_utils.datasets_peerread import PeerReadDownloader
+    @patch("app.data_utils.datasets_peerread.Client")
+    def test_download_success_mocked(self, mock_client_class):
+        """Test successful dataset download with mocked HTTP client.
 
-    #     # Arrange
-    #     mock_response = Mock()
-    #     mock_response.status_code = 200
-    #     mock_response.json.return_value = {
-    #         "id": "test",
-    #         "title": "Test Paper",
-    #         "abstract": "Test abstract",
-    #         "reviews": [],
-    #         "histories": [],
-    #     }
-    #     mock_response.raise_for_status.return_value = None
-    #     mock_get.return_value = mock_response
+        Arrange: Mock the httpx Client to return a successful JSON response.
+        Act: Call download_file for a known venue/split/type/id.
+        Assert: Result contains the mocked JSON data and client.get was called.
+        """
+        from unittest.mock import MagicMock
 
-    #     config = PeerReadConfig()
-    #     downloader = PeerReadDownloader(config)
+        from app.data_utils.datasets_peerread import PeerReadDownloader
 
-    #     # Act
-    #     result = downloader.download_file("acl_2017", "train", "reviews", "test")
+        # Arrange
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "id": "test",
+            "title": "Test Paper",
+            "abstract": "Test abstract",
+            "reviews": [],
+            "histories": [],
+        }
+        mock_response.raise_for_status.return_value = None
+        mock_client_instance = MagicMock()
+        mock_client_instance.get.return_value = mock_response
+        mock_client_class.return_value = mock_client_instance
 
-    #     # Assert
-    #     assert result is not None
-    #     mock_get.assert_called_once()
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        # Act
+        result = downloader.download_file("acl_2017", "train", "reviews", "104")
+
+        # Assert
+        assert result is not None
+        mock_client_instance.get.assert_called_once()
 
     def test_download_url_construction(self):
         """Test proper URL construction for downloads."""

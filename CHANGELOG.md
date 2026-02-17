@@ -13,6 +13,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `tests/evals/test_composite_scorer.py`: consolidated composite scoring tests — merged `TestBasicScoring` (5 scenarios, boundary conditions), `TestWeightRedistribution` (weights, interpretability), `TestEdgeCases` (missing tiers, zero scores, zero execution time) into a single file; structural tests verify old files are deleted (STORY-007)
+- `tests/conftest.py`: added BDD test structure template as module docstring — documents Arrange/Act/Assert pattern, test class/method structure, mock strategy guidelines (STORY-007)
+- `src/app/agents/agent_system.py`: removed 2 FIXME commented-out `error_handling_context` dead code blocks (STORY-007)
+- `src/app/agents/orchestration.py`: removed FIXME commented-out `error_handling_context` dead code block (STORY-007)
+
+### Removed
+
+- `tests/evals/test_composite_scoring_scenarios.py`: merged into `test_composite_scorer.py::TestBasicScoring` (STORY-007)
+- `tests/evals/test_composite_scoring_interpretability.py`: merged into `test_composite_scorer.py::TestWeightRedistribution` (STORY-007)
+- `tests/evals/test_composite_scoring_edge_cases.py`: merged into `test_composite_scorer.py::TestEdgeCases` (STORY-007)
+
+### Fixed
+
+- `tests/data_utils/test_datasets_peerread.py`: restored `test_download_success_mocked` — fixed AttributeError by patching `app.data_utils.datasets_peerread.Client` (not `httpx.Client.get`) to match actual import style (STORY-007)
+
+### Changed
+
 - `docs/arch_vis/metrics-eval-sweep.plantuml`: updated with SweepConfig → SweepRunner → compositions × papers × repetitions → SweepAnalysis → output files workflow; added optional CC headless path (claude -p → CCTraceAdapter) (STORY-006)
 - `docs/arch_vis/MAS-Review-Workflow.plantuml`: added security boundaries with MAESTRO layer annotations — URL validation (L1/SSRF), prompt sanitization (L3), log scrubbing (L5) (STORY-006)
 - `docs/arch_vis/README.md`: updated diagram descriptions for metrics-eval-sweep and MAS-Review-Workflow (STORY-006)
