@@ -9,7 +9,7 @@ version: 1.0
 
 Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, security hardening (CVE mitigations, input sanitization, log scrubbing), test quality improvements.
 
-**Sprint 7 Focus**: Documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings).
+**Sprint 7 Focus**: Documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings), unified provider configuration, Claude Code engine option.
 
 **Development Approach**: TDD workflow (RED → GREEN → REFACTOR). All code changes require tests first. Use `testing-python` skill for test creation, `implementing-python` for implementation. Run `make validate` before completing any story.
 
@@ -412,6 +412,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - [ ] After execution completes, full log remains visible (no truncation)
 - [ ] No performance degradation: Streamlit reruns kept to minimum (use `st.fragment` or container-based approach)
 - [ ] Test verifies log entries are captured and rendered incrementally (mock execution with timed log emissions)
+- [ ] Streamlit >= 1.33 confirmed in `pyproject.toml` (required for `st.fragment`)
 - [ ] `make validate` passes
 
 **Technical Requirements**:
@@ -446,10 +447,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - Store selection in `st.session_state.input_mode`
 - When paper mode: pass `paper_number` to `_execute_query_background` → `main(paper_number=...)`. If user also provides a custom query, pass both (mirrors CLI behavior where `--paper-number` + query are independent)
 - When free-form mode: pass `query` only (existing behavior, `paper_number=None`)
-- `_execute_query_background` signature must add `paper_number: str | None = None` parameter (convergence point with Features 8 and 10)
-
-**Files**:
-- `src/gui/pages/run_app.py` (edit — add input mode toggle and conditional rendering)
+- `_execute_query_background` signature must add `paper_number: str | None = None` parameter (**convergence point with Features 8 and 10** — coordinate all signature changes together)
 
 ##### 9.2 Paper Dropdown with Available Papers
 
@@ -457,7 +455,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - [ ] Dropdown lists all locally downloaded PeerRead papers
 - [ ] Each option displays: paper ID and title (e.g., `"42 — Attention Is All You Need"`)
 - [ ] Papers loaded via `PeerReadLoader.load_papers()` across configured venues/splits
-- [ ] If no papers are downloaded, dropdown shows helpful message with download instructions
+- [ ] If no papers are downloaded, show: `"No papers downloaded yet. Use the Downloads page to fetch the PeerRead dataset."` with a button linking to the Downloads tab
 - [ ] Selecting a paper stores `paper_number` in session state
 
 **Technical Requirements**:
@@ -465,9 +463,6 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - Cache paper list in `st.session_state.available_papers` (refresh on page load or via button)
 - `st.selectbox` with `format_func` to display `f"{paper.paper_id} — {paper.title}"`
 - Handle `FileNotFoundError` from `load_papers()` gracefully (dataset not downloaded yet)
-
-**Files**:
-- `src/gui/pages/run_app.py` (edit — add paper dropdown)
 
 ##### 9.3 Abstract Preview on Paper Selection
 
@@ -483,7 +478,7 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - No additional data loading needed — abstract is a field on `PeerReadPaper`
 
 **Files**:
-- `src/gui/pages/run_app.py` (edit — add abstract preview)
+- `src/gui/pages/run_app.py` (edit — input mode toggle, paper dropdown, abstract preview)
 - `tests/gui/test_paper_selection.py` (new — test dropdown population, paper_number passthrough, abstract display)
 
 ---
@@ -508,7 +503,12 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - Replace `st.text(f"Enable Logfire: ...")` with `st.checkbox`
 - Replace `st.text(f"Max Content Length: ...")` with `st.number_input`
 - Store overrides in session state with `common_` prefix; in the App page, build a `_build_common_settings_from_session()` helper (mirrors existing `_build_judge_settings_from_session()` pattern)
-- **Runtime application**: `log_level` change → call `logger.remove()`/`logger.add()` with new level before execution. `max_content_length` → pass to `main()` via `token_limit` or a new param. `enable_logfire` → gate `logfire.configure()` call. Note: `CommonSettings` is instantiated once at module level in `run_gui.py:48` — session state overrides must be applied at execution time, not by mutating the module-level instance
+- **Runtime application** (three distinct mechanisms — do not conflate):
+  - `log_level` → call `logger.remove()`/`logger.add()` with new level before execution
+  - `max_content_length` → pass as a dedicated `max_content_length: int | None` kwarg to `main()` (distinct from `token_limit` which controls agent token budget, not content truncation); `main()` must thread it through to `_truncate_paper_content()` in `peerread_tools.py`
+  - `enable_logfire` → gate `logfire.configure()` call (see Logfire consolidation below)
+  - Note: `CommonSettings` is instantiated once at module level in `run_gui.py:48` — session state overrides must be applied at execution time, not by mutating the module-level instance
+- `_execute_query_background` signature must also receive `common_*` overrides (**convergence point with Features 8 and 9** — coordinate all signature changes together)
 - **Logfire setting consolidation**: `CommonSettings.enable_logfire` and `JudgeSettings.logfire_enabled` control overlapping behavior. Consolidate to a single `logfire_enabled` in `JudgeSettings` (which already has the setting) and deprecate `CommonSettings.enable_logfire`. Tooltip should explain: "Enables Logfire instrumentation for both logging transport and evaluation observability"
 - Update `_render_reset_button` to also clear `common_*` session state keys
 
@@ -531,12 +531,132 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
   - Enable Logfire: `"Enables Logfire observability transport for loguru logs. Requires Logfire credentials. Env var: EVAL_ENABLE_LOGFIRE"`
   - Max Content Length: `"Maximum character length for paper content passed to LLM agents. Longer papers are truncated. Env var: EVAL_MAX_CONTENT_LENGTH"`
 - Add `help` parameter to existing Judge Settings widgets (tier timeouts, composite thresholds, Tier 2 model fields)
-- [ ] `make validate` passes
-- [ ] CHANGELOG.md updated
+- `make validate` passes (covered by Feature 10.1 AC)
+- CHANGELOG.md updated (covered by Feature 10.1 AC)
 
 **Files**:
 - `src/gui/pages/settings.py` (edit — add `help=` parameter to all input widgets)
 - `tests/gui/test_editable_common_settings.py` (new — test widget rendering, session state persistence, reset behavior)
+
+---
+
+#### Feature 11: Unified Provider Configuration for MAS and Judge
+
+**Description**: The MAS chat provider and judge (Tier 2) provider are currently configured through different mechanisms with inconsistent naming. The judge defaults to `"openai"` regardless of the MAS provider. Unify provider configuration so the judge defaults to the MAS provider, both can be independently overridden, and naming is consistent across CLI, sweep, and GUI.
+
+**Current state**:
+- `run_cli.py`: `--chat-provider` (MAS only; no judge override)
+- `run_sweep.py`: `--provider` (MAS only; inconsistent name; no judge override)
+- `JudgeSettings.tier2_provider` defaults to `"openai"` — independent from MAS provider
+- `"auto"` special value already exists in `LLMJudgeEngine` to inherit MAS provider, but is not the default
+
+##### 11.1 Judge Defaults to MAS Chat Provider
+
+**⚠️ Breaking change**: Users relying on the previous default (`openai/gpt-4o-mini` with `OPENAI_API_KEY`) will silently switch to their MAS provider (default: `github/gpt-4o-mini`) after this change. Same model family, different API endpoint and billing. To retain previous behavior, set `JUDGE_TIER2_PROVIDER=openai` explicitly.
+
+**Acceptance Criteria**:
+- [ ] `JudgeSettings.tier2_provider` default changed from `"openai"` to `"auto"`
+- [ ] When `tier2_provider="auto"`, judge inherits the MAS `chat_provider` at runtime (existing `LLMJudgeEngine` logic — no new code required)
+- [ ] `JUDGE_TIER2_PROVIDER` env var still overrides the default
+- [ ] Migration log emitted at startup when `"auto"` resolves to a different provider than `"openai"`: `logger.info("Judge provider: auto → {resolved}")`
+- [ ] Existing tests updated to reflect new default
+- [ ] `make validate` passes
+
+**Technical Requirements**:
+- Edit `src/app/judge/settings.py` line 74: `tier2_provider: str = Field(default="auto")`
+- No changes to `LLMJudgeEngine` — the `"auto"` path already exists
+- `tier2_fallback_provider` default remains `"github"` (unchanged)
+
+**Files**:
+- `src/app/judge/settings.py` (edit — change `tier2_provider` default to `"auto"`)
+- `tests/judge/` (edit — update any tests asserting `tier2_provider == "openai"`)
+
+##### 11.2 Consistent Naming: `--chat-provider` and `--judge-provider`
+
+**Acceptance Criteria**:
+- [ ] `run_cli.py`: existing `--chat-provider` unchanged; new `--judge-provider` and `--judge-model` args added
+- [ ] `run_sweep.py`: `--provider` renamed to `--chat-provider` for consistency; new `--judge-provider` and `--judge-model` args added
+- [ ] Both args documented in `--help` output for both entry points
+- [ ] `SweepConfig` adds `judge_provider: str` and `judge_model: str | None` fields
+- [ ] JSON sweep config accepts `"chat_provider"` key (rename from `"provider"` for consistency)
+- [ ] `make sweep ARGS="--help"` shows all new args (Makefile `$(ARGS)` passthrough already exists — no Makefile change needed)
+- [ ] `make validate` passes
+
+**Note — partial implementation already staged**: `run_sweep.py` and `SweepConfig` already have `--provider`/`chat_provider` staged. STORY-012 must build on top: rename `--provider` → `--chat-provider`, add `--judge-provider`/`--judge-model`. Do not treat staged code as complete.
+
+**Technical Requirements**:
+- `run_cli.py`: add `--judge-provider` with `choices=["auto"] + list(PROVIDER_REGISTRY.keys())` (exposing `"auto"` makes inheritance discoverable) and `--judge-model`; construct `JudgeSettings(tier2_provider=judge_provider, tier2_model=judge_model)` when provided and pass as `judge_settings=` to `main()`
+- `run_sweep.py`: rename argparse `--provider` → `--chat-provider` (keep `dest="chat_provider"`); add `--judge-provider` with same `choices` as above, and `--judge-model`
+- `SweepConfig`: add `judge_provider: str = Field(default="auto")` and `judge_model: str | None = Field(default=None)`; `SweepRunner._run_single_evaluation()` must build `JudgeSettings` from these fields
+- JSON config key rename: `"provider"` → `"chat_provider"` (backward-compat read of old key with deprecation log)
+- GUI judge provider: already covered by Feature 10.1 (`tier2_provider` is an editable `JudgeSettings` field in the Settings page) — no separate GUI story needed
+
+**Files**:
+- `src/run_cli.py` (edit — add `--judge-provider`, `--judge-model`)
+- `src/run_sweep.py` (edit — rename `--provider` to `--chat-provider`, add `--judge-provider`, `--judge-model`)
+- `src/app/benchmark/sweep_config.py` (edit — add `judge_provider`, `judge_model` fields)
+- `src/app/benchmark/sweep_runner.py` (edit — thread `judge_provider`/`judge_model` into `JudgeSettings`)
+- `tests/benchmark/test_sweep_config.py` (edit — new fields)
+- `tests/benchmark/test_sweep_runner.py` (edit — judge_settings passthrough)
+- `tests/cli/test_run_cli.py` (edit or new — `--judge-provider` arg parsing)
+
+---
+
+#### Feature 12: Claude Code Engine as Execution Option
+
+**Description**: The CC headless execution path (`claude -p`, artifact collection via `CCTraceAdapter`) already exists in `main()` via `cc_solo_dir`/`cc_teams_dir`/`cc_teams_tasks_dir` params and `--cc-baseline` in the sweep. However it is not a first-class selectable option in the CLI, sweep, or GUI. Add an `--engine` flag so users can choose between the MAS (PydanticAI agents) and Claude Code as the execution engine, mutually exclusively, across all entry points.
+
+**Current state**:
+- `main()` has `cc_solo_dir`, `cc_teams_dir`, `cc_teams_tasks_dir` — used to load pre-collected CC artifacts
+- `run_sweep.py` has `--cc-baseline` flag (loads artifacts from default paths)
+- No CLI flag to run CC headless inline (invoke `claude -p` and capture output)
+- No GUI option to switch engine
+
+##### 12.1 `--engine` Flag in CLI and Sweep
+
+**Acceptance Criteria**:
+- [ ] `run_cli.py` accepts `--engine=mas` (default) or `--engine=cc`
+- [ ] `run_sweep.py` accepts `--engine=mas` (default) or `--engine=cc`; `--cc-baseline` removed (replaced by `--engine=cc` — internal CLI, no stable contract to preserve)
+- [ ] `--engine=mas`: existing MAS execution path (unchanged)
+- [ ] `--engine=cc`: invokes CC headless (`claude -p "..."`) via `subprocess.run()`, collects artifacts, passes artifact dirs to `main(cc_solo_dir=..., cc_teams_dir=..., cc_teams_tasks_dir=...)` for evaluation
+- [ ] `--engine` documented in `--help` output for both entry points
+- [ ] Mutual exclusivity enforced: `--engine=cc` with MAS-specific flags (e.g., `--include-researcher`) raises a clear error
+- [ ] `make validate` passes
+
+**Technical Requirements**:
+- `run_cli.py`: add `--engine` with `choices=["mas", "cc"]`, `default="mas"`. When `cc`: check `shutil.which("claude")` at arg-parse time and fail fast; invoke `claude -p "{query}" --output-format json` via `subprocess.run()`; store artifacts under `--output-dir` (not `tempfile`) so CLI users can inspect them after the run
+- `run_sweep.py`: same `--engine` flag; `SweepConfig` adds `engine: str = Field(default="mas")`; sweep CC artifacts stored under `config.output_dir / "cc_artifacts" / f"{paper_number}_{repetition}"` and cleaned up after all repetitions (high volume)
+- Delete `--cc-baseline` from `run_sweep.py` and `cc_baseline_enabled` from `SweepConfig` (replaced entirely by `--engine=cc`)
+- Reuse existing `CCTraceAdapter` for artifact parsing — no new adapter code
+
+**Files**:
+- `src/run_cli.py` (edit — add `--engine` flag)
+- `src/run_sweep.py` (edit — add `--engine` flag, remove `--cc-baseline`)
+- `src/app/benchmark/sweep_config.py` (edit — add `engine` field, remove `cc_baseline_enabled`)
+- `src/app/benchmark/sweep_runner.py` (edit — branch on `engine`, remove cc_baseline path)
+- `tests/cli/test_run_cli_engine.py` (new — `--engine` arg parsing, CC unavailable error)
+- `tests/benchmark/test_sweep_runner.py` (edit — engine branching, remove cc_baseline tests)
+
+##### 12.2 Engine Selector in GUI
+
+**Acceptance Criteria**:
+- [ ] Engine selector placed on **App page** (not Settings): radio with `["MAS (PydanticAI)", "Claude Code"]` — engine choice is per-run, not persistent config; it directly controls which controls are visible on the same page
+- [ ] When CC selected: MAS-specific agent toggles (Researcher, Analyst, Synthesiser) are hidden or disabled with a note
+- [ ] When CC selected: CC availability warning shown if `claude` CLI not found
+- [ ] Engine selection stored in `st.session_state.engine`
+- [ ] App page passes `engine` to execution; when `cc`, invokes CC headless path (same subprocess approach as 12.1)
+- [ ] `make validate` passes
+- [ ] CHANGELOG.md updated
+
+**Technical Requirements**:
+- Engine selector on App page: `st.radio("Execution Engine", ["MAS (PydanticAI)", "Claude Code"], help="...")`
+- CC availability: compute once via `st.session_state.setdefault("cc_available", shutil.which("claude") is not None)` — do not call `shutil.which()` on every re-render; display `st.warning(...)` when `not st.session_state.cc_available`
+- Disable MAS agent toggles with `st.checkbox(..., disabled=(engine == "cc"))` when CC selected
+- App page execution: same subprocess + artifact path pattern as 12.1
+
+**Files**:
+- `src/gui/pages/run_app.py` (edit — engine selector, CC availability cache, branch execution)
+- `tests/gui/test_engine_selector.py` (new)
 
 ---
 
@@ -569,7 +689,9 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 **Priority Order:**
 - **P0**: STORY-001 (remove examples), STORY-002 (create examples)
 - **P1**: STORY-003 (README), STORY-004 (roadmap), STORY-005 (architecture)
+- **P1**: STORY-011 (judge defaults), STORY-012 (provider naming + args)
 - **P1**: STORY-008 (real-time debug log), STORY-009 (paper selection), STORY-010 (editable settings)
+- **P1**: STORY-013 (CC engine CLI/sweep), STORY-014 (CC engine GUI)
 - **P2**: STORY-006 (diagrams)
 - **P3**: STORY-007 (test refactoring)
 
@@ -578,10 +700,13 @@ Sprint 6 delivered: benchmarking infrastructure, CC baseline completion, securit
 - STORY-006 should follow STORY-005 (diagrams illustrate text)
 - STORY-007 independent (can run parallel with docs)
 - STORY-008, STORY-009, STORY-010 independent of each other (can run parallel)
+- STORY-012 depends on STORY-011 (rename args after default is settled)
+- STORY-013 independent of STORY-011/012 (engine selection orthogonal to provider config)
+- STORY-014 depends on STORY-013 (GUI reuses CLI engine logic)
 
 <!-- PARSER REQUIREMENT: Include story count in parentheses -->
 <!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
-Story Breakdown - Phase 1 (10 stories total):
+Story Breakdown - Phase 1 (14 stories total):
 
 - **Feature 1 (Remove Outdated Examples)** → STORY-001: Delete Sprint 1-era examples and generic PydanticAI tutorials
 - **Feature 2 (Create Modern Examples)** → STORY-002: Build evaluation/settings/CC examples with tests and README (depends: STORY-001)
@@ -593,3 +718,7 @@ Story Breakdown - Phase 1 (10 stories total):
 - **Feature 8 (Real-Time Debug Log)** → STORY-008: Stream debug log entries during agent execution instead of post-completion dump
 - **Feature 9 (Paper Selection Mode)** → STORY-009: Add paper dropdown with ID/title display and abstract preview alongside free-form input
 - **Feature 10 (Editable Common Settings)** → STORY-010: Make log level, logfire, max content length editable with tooltip descriptions
+- **Feature 11.1 (Judge Default Provider)** → STORY-011: Change `tier2_provider` default to `"auto"` to inherit MAS chat provider
+- **Feature 11.2 (Provider Naming + Args)** → STORY-012: Rename sweep `--provider` to `--chat-provider`, add `--judge-provider`/`--judge-model` to CLI and sweep (depends: STORY-011)
+- **Feature 12.1 (CC Engine CLI/Sweep)** → STORY-013: Add `--engine=mas|cc` flag to `run_cli.py` and `run_sweep.py`
+- **Feature 12.2 (CC Engine GUI)** → STORY-014: Add engine selector to GUI, CC availability check, disable MAS-specific controls (depends: STORY-013)

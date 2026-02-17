@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `docs/PRD-Sprint7-Ralph.md`: Features 8-10 — GUI improvements (real-time debug log streaming, paper selection dropdown with abstract preview, editable common settings with tooltips); includes threading prerequisite, convergence point coordination, logfire consolidation, and Streamlit >= 1.33 version constraint
+- `docs/PRD-Sprint7-Ralph.md`: Features 8-14 — GUI improvements (real-time debug log, paper selection, editable settings, engine selector); unified provider config (judge defaults to MAS via "auto", --judge-provider/--judge-model args); CC engine option (--engine=mas|cc for CLI, sweep, and GUI); replaces --cc-baseline with --engine=cc
 
 - `run_sweep.py`: `--provider` CLI flag to select LLM provider for sweep evaluations (choices from `PROVIDER_REGISTRY`, defaults to `CHAT_DEFAULT_PROVIDER`); threaded through `SweepConfig.chat_provider` to every `main()` call
 - `tests/agents/test_trace_collection_integration.py`: spec-constrained mocks catch API drift; `end_execution` idempotency test
