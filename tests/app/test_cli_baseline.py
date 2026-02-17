@@ -16,7 +16,7 @@ from app.judge.baseline_comparison import BaselineComparison
 
 
 @pytest.mark.asyncio
-async def test_cli_accepts_cc_solo_dir_flag():
+async def test_cli_accepts_cc_solo_dir_flag(tmp_path):
     """Test that CLI accepts --cc-solo-dir flag and passes it to main()."""
     with (
         patch("app.app.setup_agent_env") as mock_setup,
@@ -68,7 +68,7 @@ async def test_cli_accepts_cc_solo_dir_flag():
         await main(
             chat_provider="test_provider",
             query="test query",
-            cc_solo_dir="/tmp/cc-solo-artifacts",
+            cc_solo_dir=str(tmp_path / "cc-solo-artifacts"),
         )
 
         # Verify CCTraceAdapter was called with solo directory
@@ -76,7 +76,7 @@ async def test_cli_accepts_cc_solo_dir_flag():
 
 
 @pytest.mark.asyncio
-async def test_cli_accepts_cc_teams_dir_flag():
+async def test_cli_accepts_cc_teams_dir_flag(tmp_path):
     """Test that CLI accepts --cc-teams-dir flag and passes it to main()."""
     with (
         patch("app.app.setup_agent_env") as mock_setup,
@@ -128,7 +128,7 @@ async def test_cli_accepts_cc_teams_dir_flag():
         await main(
             chat_provider="test_provider",
             query="test query",
-            cc_teams_dir="/tmp/cc-teams-artifacts",
+            cc_teams_dir=str(tmp_path / "cc-teams-artifacts"),
         )
 
         # Verify CCTraceAdapter was called
@@ -136,7 +136,7 @@ async def test_cli_accepts_cc_teams_dir_flag():
 
 
 @pytest.mark.asyncio
-async def test_three_way_comparison_with_both_cc_baselines():
+async def test_three_way_comparison_with_both_cc_baselines(tmp_path):
     """Test three-way comparison when both CC baselines are provided."""
     with (
         patch("app.app.setup_agent_env") as mock_setup,
@@ -200,8 +200,8 @@ async def test_three_way_comparison_with_both_cc_baselines():
         await main(
             chat_provider="test_provider",
             query="test query",
-            cc_solo_dir="/tmp/cc-solo-artifacts",
-            cc_teams_dir="/tmp/cc-teams-artifacts",
+            cc_solo_dir=str(tmp_path / "cc-solo-artifacts"),
+            cc_teams_dir=str(tmp_path / "cc-teams-artifacts"),
         )
 
         # Verify compare_all was called with 3 results
@@ -212,7 +212,7 @@ async def test_three_way_comparison_with_both_cc_baselines():
 
 
 @pytest.mark.asyncio
-async def test_baseline_comparison_printed_to_console():
+async def test_baseline_comparison_printed_to_console(tmp_path):
     """Test that baseline comparison summary is printed to console."""
     with (
         patch("app.app.setup_agent_env") as mock_setup,
@@ -277,7 +277,7 @@ async def test_baseline_comparison_printed_to_console():
         await main(
             chat_provider="test_provider",
             query="test query",
-            cc_solo_dir="/tmp/cc-solo-artifacts",
+            cc_solo_dir=str(tmp_path / "cc-solo-artifacts"),
         )
 
         # Verify summary was logged
