@@ -92,7 +92,7 @@ fi
 set -- --toc --toc-depth=2 \
        -V geometry:margin=1in \
        -V documentclass=report \
-       --pdf-engine=pdflatex \
+       --pdf-engine=xelatex \
        -M protrusion \
        --from markdown+smart \
        -V pagestyle=plain \
@@ -203,7 +203,7 @@ EOF
 # Add bibliography name only if specified (non-English languages)
 [ -n "$bibliography_name" ] && cat >> "$header_temp" << EOF
 \\renewcommand{\\bibname}{$bibliography_name}
-\\renewcommand{\\refname}{$bibliography_name}
+\\makeatletter\\@ifundefined{refname}{}{\\renewcommand{\\refname}{$bibliography_name}}\\makeatother
 EOF
 
 # Override TOC title if explicitly provided
