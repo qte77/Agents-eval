@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `src/gui/utils/log_capture.py`: added `get_new_logs_since(index)` for incremental polling and `log_count()` method; wrapped `_buffer` access with `threading.Lock` for thread-safe concurrent access from worker and Streamlit render threads (STORY-008)
+- `src/gui/pages/run_app.py`: replaced `st.text()` with `st.markdown()` in `_display_configuration` so **bold** Markdown renders correctly instead of as raw text (STORY-008)
+- `src/app/data_utils/datasets_peerread.py`: `_create_review_from_dict` aggregates all missing optional fields into a single debug log line instead of one line per field (STORY-008)
 - `tests/evals/test_composite_scorer.py`: consolidated composite scoring tests — merged `TestBasicScoring` (5 scenarios, boundary conditions), `TestWeightRedistribution` (weights, interpretability), `TestEdgeCases` (missing tiers, zero scores, zero execution time) into a single file; structural tests verify old files are deleted (STORY-007)
 - `tests/conftest.py`: added BDD test structure template as module docstring — documents Arrange/Act/Assert pattern, test class/method structure, mock strategy guidelines (STORY-007)
 - `src/app/agents/agent_system.py`: removed 2 FIXME commented-out `error_handling_context` dead code blocks (STORY-007)

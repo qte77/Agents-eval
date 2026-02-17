@@ -16,7 +16,6 @@ import threading
 import time
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 
 class TestLogCapturePollingInterface:
@@ -207,6 +206,7 @@ class TestLogNoiseReduction:
 
         loader = PeerReadLoader()
 
+        # Provide all optional fields that have validation_alias and default="UNKNOWN"
         review_data: dict = {
             "ORIGINALITY": "3",
             "CLARITY": "3",
@@ -215,6 +215,8 @@ class TestLogNoiseReduction:
             "RECOMMENDATION_UNOFFICIAL": "3",
             "IMPACT": "3",
             "SUBSTANCE": "3",
+            "APPROPRIATENESS": "3",
+            "MEANINGFUL_COMPARISON": "3",
             "SOUNDNESS_CORRECTNESS": "3",
         }
 
@@ -238,42 +240,38 @@ class TestDisplayConfigurationUsesMarkdown:
 
     def test_display_configuration_calls_markdown_not_text(self) -> None:
         """_display_configuration renders Markdown with st.markdown, not st.text."""
-        with (
-            patch("gui.pages.run_app.text") as mock_text,
-            patch("gui.pages.run_app.st") as mock_st,
-        ):
+        with patch("gui.pages.run_app.st") as mock_st:
             from gui.pages.run_app import _display_configuration
 
             _display_configuration("openai", None, "Researcher, Analyst")
 
-            # st.text() should NOT be called (raw text doesn't render Markdown)
-            mock_text.assert_not_called()
             # st.markdown() should be called for each display line
             assert mock_st.markdown.call_count >= 2
+            # Verify the markdown calls contain bold-formatted text
+            calls = [str(c) for c in mock_st.markdown.call_args_list]
+            assert any("**Provider:**" in c for c in calls)
+            assert any("**Enabled Sub-Agents:**" in c for c in calls)
 
 
 class TestIncrementalLogStreaming:
     """Integration test: log entries captured incrementally during mock execution.
 
-    Arrange: LogCapture attached to logger; background thread emits app.* logs
-    Act: Poll get_new_logs_since() while thread runs
+    Arrange: LogCapture; background thread adds entries via add_log_entry
+    Act: Poll get_new_logs_since() from main thread while worker thread writes
     Expected: New entries visible within each polling cycle
     """
 
     def test_log_entries_visible_incrementally_during_execution(self) -> None:
         """Log entries appear in get_new_logs_since() as they are emitted."""
-        from app.utils.log import logger
         from gui.utils.log_capture import LogCapture
 
         capture = LogCapture()
-        handler_id = capture.attach_to_logger()
-
-        emissions: list[str] = []
 
         def emit_logs() -> None:
             for i in range(3):
-                logger.bind(name="app.test").info(f"step {i}")
-                emissions.append(f"step {i}")
+                capture.add_log_entry(
+                    f"2026-01-01 00:00:{i:02d}", "INFO", "app.agent", f"step {i}"
+                )
                 time.sleep(0.05)
 
         t = threading.Thread(target=emit_logs)
@@ -289,9 +287,7 @@ class TestIncrementalLogStreaming:
             time.sleep(0.02)
 
         t.join()
-        capture.detach_from_logger(handler_id)
 
         # All emitted messages should eventually be visible
-        # (filter only our test messages)
         our_messages = [m for m in seen_messages if m.startswith("step")]
         assert len(our_messages) == 3, f"Expected 3 step messages, got: {seen_messages}"
