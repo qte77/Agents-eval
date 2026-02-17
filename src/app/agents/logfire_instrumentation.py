@@ -118,16 +118,17 @@ class LogfireInstrumentationManager:
             )
 
     def _log_initialization_info(self) -> None:
-        """Log Logfire initialization info with endpoint details."""
+        """Log tracing initialization info with endpoint details."""
         import os
 
         if self.config.send_to_cloud:
-            endpoint_info = "Logfire cloud"
+            logger.info("Logfire tracing initialized: Logfire cloud")
         else:
             base_url = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "not set")
             metrics_exp = os.environ.get("OTEL_METRICS_EXPORTER", "default")
-            endpoint_info = f"endpoint={base_url}, metrics_exporter={metrics_exp}"
-        logger.info(f"Logfire tracing initialized: {endpoint_info}")
+            logger.info(
+                f"Phoenix tracing initialized: endpoint={base_url}, metrics_exporter={metrics_exp}"
+            )
 
 
 # Global instrumentation manager
