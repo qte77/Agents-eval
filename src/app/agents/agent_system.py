@@ -1,6 +1,11 @@
 """
 Agent system utilities for orchestrating multi-agent workflows.
 
+# TODO: Highest churn in codebase (churn=5, CodeFactor Sprint 7). Complexity 37
+#   is manageable, but frequent modifications suggest this module absorbs changes
+#   that may belong in adjacent modules (feature envy). Evaluate extracting
+#   responsibilities in Sprint 8.
+
 This module provides functions and helpers to create, configure, and run agent
 systems using Pydantic AI. It supports delegation of tasks to research, analysis, and
 synthesis agents, and manages agent configuration, environment setup, and execution.

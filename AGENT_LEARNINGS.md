@@ -175,6 +175,14 @@ updated: 2026-02-16
 - **Example**: Instead of `TIMEOUT := $(or $(CC_TEAMS_TIMEOUT),600)`, use `CC_TEAMS_TIMEOUT ?= 600` directly — the `?=` already provides the default.
 - **References**: `Makefile` (cc_run_solo, cc_run_teams recipes)
 
+### Repeated Dispatch Chains Inflate File Complexity
+
+- **Context**: Multiple methods in a module dispatch on the same enum/string value
+- **Problem**: `datasets_peerread.py` has 4 methods each with `if/elif/else` over `data_type` ("reviews"/"parsed_pdfs"/"pdfs"). Each chain adds 3 CC points = 12 total from one repeated pattern.
+- **Solution**: Replace with a registry dict (`DATA_TYPE_SPECS`). Dispatch becomes a single lookup. Validates once at entry point.
+- **Anti-pattern**: Copy-pasting dispatch logic into each method that needs type-specific behavior.
+- **References**: `src/app/data_utils/datasets_peerread.py`, CodeFactor Sprint 7 review
+
 ### Shell Keyword Collision in jq Arguments (SC1010)
 
 - **Context**: Bash scripts calling `jq` with `--argjson` or `--arg`
