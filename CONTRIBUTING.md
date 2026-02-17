@@ -13,7 +13,7 @@ updated: 2026-02-16
 **Development Workflow:**
 
 - `make setup_dev` → Setup development environment  
-- `make quick_validate` → Fast validation during development (ruff + type checking + complexity)
+- `make quick_validate` → Fast validation during development (ruff + type checking + complexity + duplication)
 - `make validate` → Complete pre-commit validation (ruff + type check + test_all)
 
 **Testing:**
@@ -41,9 +41,11 @@ updated: 2026-02-16
 | `make ruff` | Format code and fix linting | Ruff installed | Try `uv run ruff format . && uv run ruff check . --fix` |
 | `make type_check` | Run pyright static type checking | pyright installed | Try `uv run pyright` |
 | `make test_all` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
-| `make coverage_all` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
+| `make test_coverage` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
 | `make validate` | Complete pre-commit validation | Above dependencies | Run individual commands manually |
-| `make quick_validate` | Fast development validation | Ruff, pyright, complexipy installed | Run `make ruff && make type_check && make complexity` |
+| `make quick_validate` | Fast development validation | Ruff, pyright, complexipy, jscpd installed | Run `make ruff && make type_check && make complexity && make duplication` |
+| `make duplication` | Detect copy-paste duplication in src/ | jscpd installed | Try `jscpd src/ --min-lines 5 --min-tokens 50` |
+| `make setup_jscpd` | Setup jscpd copy-paste detector | Node.js and npm installed | Try `npm install -gs jscpd` |
 | `make setup_markdownlint` | Setup markdownlint CLI | Node.js and npm installed | Try `npm install -gs markdownlint-cli` |
 | `make run_markdownlint INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
 | `make run_pandoc` | Convert MD to PDF with citations. See `make run_pandoc HELP=1` | pandoc + texlive installed | Try `make setup_pdf_converter CONVERTER=pandoc` |
