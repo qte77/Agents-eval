@@ -1,5 +1,5 @@
 @startuml MAS-Review-Workflow
-title PeerRead Evaluation Workflow
+title PeerRead Evaluation Workflow (with Security Boundaries)
 
 !log Current 'STYLE' dvar: STYLE
 !log About to include: styles/github-STYLE.puml
@@ -16,23 +16,35 @@ entity "ReviewPersistence" as Persistence
 User -> Manager: Request to evaluate paper "X"
 activate Manager
 
-Manager -> DB: Get paper content for "X"
+note right of Manager
+  MAESTRO L1 (Foundation Model):
+  URL validation via validate_url().
+  Only allowlisted domains accepted.
+end note
+
+Manager -> DB: Get paper content for "X"\n[URL validated — SSRF prevention]
 activate DB
 DB --> Manager: Return full paper content
 deactivate DB
 
 note right of Manager
-  Configurable provider via --chat-provider.
-  Full papers processed without chunking.
-  Execution is traced for evaluation.
+  MAESTRO L3 (Agent Cognitive):
+  Prompt sanitization before LLM call.
+  Length limits + XML delimiter wrapping.
 end note
 
-Manager -> LLM: Generate review using large context
+Manager -> LLM: Generate review using large context\n[Input sanitized]
 activate LLM
 LLM --> Manager: Return comprehensive review + traces
 deactivate LLM
 
-Manager -> Persistence: Save review + execution traces
+note right of Manager
+  MAESTRO L5 (Secure Vault):
+  API keys never logged.
+  Sensitive data filtered pre-export.
+end note
+
+Manager -> Persistence: Save review + execution traces\n[Log scrubbing applied]
 activate Persistence
 Persistence -> Persistence: Create timestamped JSON file with metadata
 Persistence --> Manager: Confirm save

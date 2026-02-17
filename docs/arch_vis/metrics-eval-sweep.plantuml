@@ -1,17 +1,19 @@
 @startuml metrics-eval-sweep
-title Metrics Eval Sweep
+title Benchmarking Sweep Workflow
 
 !log Current 'STYLE' dvar: STYLE
 !log About to include: styles/github-STYLE.puml
 !include styles/github-STYLE.puml
 
-participant "Sweep Engine\n(SweepRunner)" as SE
+participant "SweepConfig\n(Configuration)" as SC
+participant "SweepRunner\n(Orchestrator)" as SR
 participant "Agentic System\n(app.main)" as AS
-participant "Evaluation Engine\n(EvaluationPipeline)" as EE
+participant "EvaluationPipeline\n(3-tier eval)" as EP
+participant "SweepAnalysis\n(Statistics)" as SA
 participant "Result Store\n(results.json)" as RS
 
-SE -> SE: Validate prerequisites\n(claude CLI if --engine=cc)
-SE -> RS: Initialize empty results.json
+SC -> SR: Initialize sweep\n(compositions, paper_ids, repetitions)
+SR -> RS: Create empty results.json
 
 group Composition Sweep [compositions × papers × repetitions]
 
@@ -19,20 +21,34 @@ group Composition Sweep [compositions × papers × repetitions]
         loop for each paper_id
             loop for each repetition
 
-                SE -> AS: run(composition, paper_id, engine)
+                SR -> AS: run(composition, paper_id, engine)
 
-                group Rate-Limit Retry [max 3 attempts, exponential backoff]
-                    AS -> EE: Execute evaluation
-                    alt Success
-                        EE --> AS: CompositeResult\n(tier1/2/3 scores, composite)
-                        AS --> SE: CompositeResult
-                        SE -> RS: Append result\n(incremental save)
-                    else HTTP 429 / Rate Limit
-                        AS -> AS: Wait (retry_delay * 2^attempt)
-                        AS -> EE: Retry
-                    else Max retries exceeded
-                        AS --> SE: None (skip, log error)
+                alt engine = "mas" (default)
+
+                    group Rate-Limit Retry [max 3 attempts, exponential backoff]
+                        AS -> EP: Execute evaluation\n(Tier 1/2/3)
+                        alt Success
+                            EP --> AS: CompositeResult\n(tier1/2/3 scores, composite)
+                            AS --> SR: CompositeResult
+                            SR -> RS: Append result\n(incremental save)
+                        else HTTP 429 / Rate Limit
+                            AS -> AS: Wait (retry_delay * 2^attempt)
+                            AS -> EP: Retry
+                        else Max retries exceeded
+                            AS --> SR: None (skip, log error)
+                        end
                     end
+
+                else engine = "cc" (Claude Code headless)
+
+                    SR -> SR: Verify: shutil.which("claude")
+                    SR -> AS: claude -p "prompt" (subprocess)
+                    AS -> AS: Collect artifacts\n(~/.claude/teams/, raw_stream.jsonl)
+                    AS -> EP: CCTraceAdapter.parse(artifacts)\n→ GraphTraceData → evaluation
+                    EP --> AS: CompositeResult
+                    AS --> SR: CompositeResult
+                    SR -> RS: Append result\n(incremental save)
+
                 end
 
             end
@@ -41,8 +57,8 @@ group Composition Sweep [compositions × papers × repetitions]
 
 end
 
-SE -> SE: Run SweepAnalyzer\n(mean, stddev per composition)
-SE -> RS: Write final results.json
-SE -> RS: Write summary.md\n(Markdown table per composition)
+SR -> SA: Aggregate results\n(mean, stddev per composition)
+SA -> RS: Write final results.json
+SA -> RS: Write summary.md\n(Markdown table per composition)
 
 @enduml

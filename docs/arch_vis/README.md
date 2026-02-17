@@ -15,10 +15,10 @@ This directory contains PlantUML source files for the project's architecture dia
 |---|---|---|
 | `MAS-C4-Overview.plantuml` | C4 | High-level architecture: MAS, Benchmark, Evaluation boundaries |
 | `MAS-C4-Detailed.plantuml` | C4 | All containers: agents, evaluation tiers, benchmark, security, providers |
-| `MAS-Review-Workflow.plantuml` | Sequence | Full evaluation workflow: paper → review → three-tier evaluation |
+| `MAS-Review-Workflow.plantuml` | Sequence | Full evaluation workflow with security boundaries: URL validation (SSRF), prompt sanitization (MAESTRO L3), log scrubbing (MAESTRO L5) |
 | `mas-workflow.plantuml` | Sequence | Agent tool usage: Manager → Researcher/Analyst/Synthesizer delegation |
 | `mas-enhanced-workflow.plantuml` | Sequence | Separation of concerns: Loader, Evaluator, Manager (SRP/SoC) |
-| `metrics-eval-sweep.plantuml` | Sequence | Sweep: compositions × papers × repetitions, rate-limit retry |
+| `metrics-eval-sweep.plantuml` | Sequence | Benchmarking sweep: SweepConfig → SweepRunner → compositions × papers × repetitions → SweepAnalysis → results.json/summary.md; optional CC headless path (CCTraceAdapter) |
 | `customer-journey-activity.plantuml` | Activity | End-to-end user journey: CLI/GUI → evaluation → sweep |
 | `documentation-hierarchy.plantuml` | Component | Doc authority hierarchy: agent vs human flows |
 | `AI-agent-landscape-visualization.puml` | Landscape | AI agent ecosystem snapshot (informational) |
