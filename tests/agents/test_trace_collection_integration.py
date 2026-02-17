@@ -9,6 +9,7 @@ and GraphTraceData is properly constructed and passed to evaluation.
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pydantic_ai import AgentRunResult
 
 from app.data_models.evaluation_models import GraphTraceData
 
@@ -29,11 +30,12 @@ async def test_trace_collector_initialized_in_run_manager():
         # Mock the manager and its run method
         mock_manager = MagicMock()
         mock_manager.model._model_name = "test-model"
-        mock_result = MagicMock()
+        mock_result = MagicMock(spec=AgentRunResult)
+        mock_result.output = MagicMock()
         mock_result.usage = MagicMock(return_value={})
         mock_manager.run = AsyncMock(return_value=mock_result)
 
-        await run_manager(
+        execution_id, manager_output = await run_manager(
             manager=mock_manager,
             query="test query",
             provider="test_provider",
@@ -42,6 +44,9 @@ async def test_trace_collector_initialized_in_run_manager():
 
         # Verify trace collector was initialized
         mock_get_collector.assert_called()
+        # Verify return values
+        assert isinstance(execution_id, str)
+        assert manager_output is mock_result.output
 
 
 @pytest.mark.asyncio
@@ -60,7 +65,8 @@ async def test_trace_execution_started_for_each_run():
         # Mock the manager and its run method
         mock_manager = MagicMock()
         mock_manager.model._model_name = "test-model"
-        mock_result = MagicMock()
+        mock_result = MagicMock(spec=AgentRunResult)
+        mock_result.output = MagicMock()
         mock_result.usage = MagicMock(return_value={})
         mock_manager.run = AsyncMock(return_value=mock_result)
 
@@ -103,7 +109,8 @@ async def test_timing_data_captured_during_execution():
         # Mock the manager and its run method
         mock_manager = MagicMock()
         mock_manager.model._model_name = "test-model"
-        mock_result = MagicMock()
+        mock_result = MagicMock(spec=AgentRunResult)
+        mock_result.output = MagicMock()
         mock_result.usage = MagicMock(return_value={})
         mock_manager.run = AsyncMock(return_value=mock_result)
 
