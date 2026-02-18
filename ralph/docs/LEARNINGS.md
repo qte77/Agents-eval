@@ -40,3 +40,21 @@ Study the target platform's reference implementation BEFORE coding.
 - [ ] Extract exact interface contract (CLI args, ports, response format)
 - [ ] Add explicit integration story to verify against platform tooling
 - [ ] Test with platform's orchestration tools, not local equivalents
+
+## 4. Worktree Branch Merge Strategy
+
+Ralph runs on a worktree branch. Merge back with **squash merge**.
+
+```bash
+# After Ralph completes (from main repo)
+git merge --squash ralph/<branch>
+git commit -m "feat(sprintN): implement stories via Ralph"
+git worktree remove ../<worktree-dir>
+git branch -d ralph/<branch>
+```
+
+**Why squash**: RED/GREEN/REFACTOR commits (~3 per story) are implementation noise. Final state per story is what matters. Single commit is easy to revert. Full TDD history preserved on the branch until deletion.
+
+**Conflict prevention**: Don't edit files listed in `prd.json` stories on the source branch while Ralph runs. The `files` arrays are the off-limits list.
+
+**If conflicts occur**: Resolve manually (small conflicts), rebase worktree first (large conflicts), or `git merge --squash -X theirs` (accept Ralph's version wholesale).

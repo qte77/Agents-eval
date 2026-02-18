@@ -47,32 +47,17 @@ In `docs/PRD.md` story breakdown, use `(depends: STORY-XXX)` syntax:
 
 The parser generates `prd.json` with dependency tracking. Ralph skips stories with unmet dependencies until prerequisites complete.
 
-### Phase-Specific PRD Management
+### Sprint-Specific PRD Management
 
-**This project uses phase-specific PRDs:**
-
-- `docs/GreenAgent-PRD.md` - Phase 1 (Green Agent benchmark)
-- `docs/PurpleAgent-PRD.md` - Phase 2 (Purple Agent competition)
-
-**Ralph expects `docs/PRD.md`:**
-
-- `docs/PRD.md` is a **symlink** to the currently active phase
-- `generate_prd_json.py` parses only `PRD.md` (no multi-file parsing needed)
-
-**To switch phases:**
+Each sprint gets its own PRD file. The parser reads `docs/PRD.md`, which symlinks to the active sprint:
 
 ```bash
-# Phase 1 (Green Agent benchmark)
-cd docs && ln -sf GreenAgent-PRD.md PRD.md && cd ..
-
-# Phase 2 (Purple Agent competition)
-cd docs && ln -sf PurpleAgent-PRD.md PRD.md && cd ..
-
-# Regenerate prd.json after switching
+# Switch to a new sprint
+cd docs && ln -sf sprints/PRD-SprintN.md PRD.md && cd ..
 make ralph_prd_json
 ```
 
-**Current active phase:** Phase 1 (`PRD.md` → `GreenAgent-PRD.md`)
+Ralph reads only `prd.json` — the symlink and PRD.md are human-facing. See `ralph/README.md` for full workflow.
 
 ### Monitoring
 
@@ -97,9 +82,9 @@ make ralph_reorganize NEW_PRD=docs/PRD-v2.md VERSION=2  # Archive and iterate
 | `make ralph_prd_json` | Generate `ralph/docs/prd.json` from PRD.md |
 | `make ralph_init` | Validate Ralph environment and dependencies |
 | `make ralph_run MAX_ITERATIONS=N` | Run autonomous development (default: 25) |
+| `make ralph_worktree BRANCH=name` | Run Ralph in a git worktree branch |
 | `make ralph_status` | Show progress from `ralph/docs/progress.txt` |
 | `make ralph_clean` | Reset state (removes prd.json, progress.txt) |
-| `make ralph_reorganize NEW_PRD=path VERSION=N` | Archive current PRD and start new iteration |
 | `make validate` | Run quality checks (ruff, pyright, pytest) |
 
 ## Configuration
@@ -131,18 +116,23 @@ your-project/
 ├── ralph/
 │   ├── CHANGELOG.md            # Ralph Loop version history
 │   ├── README.md               # Methodology overview
-│   ├── TEMPLATE_USAGE.md       # This file
 │   ├── docs/
+│   │   ├── TEMPLATE_USAGE.md  # This file
 │   │   ├── LEARNINGS.md        # Patterns and lessons
 │   │   ├── prd.json            # Parsed stories (gitignored)
 │   │   ├── progress.txt        # Execution log (gitignored)
 │   │   └── templates/          # Project templates
 │   └── scripts/
-│       ├── ralph.sh            # Main orchestration
-│       ├── generate_prd_json.py
-│       ├── init.sh
-│       ├── setup_project.sh
-│       └── lib/common.sh
+│       ├── ralph.sh               # Main orchestration
+│       ├── ralph-in-worktree.sh   # Git worktree launcher
+│       ├── generate_prd_json.py   # PRD.md → prd.json parser
+│       ├── init.sh                # Environment validation
+│       ├── setup_project.sh       # Interactive setup
+│       ├── watch.sh               # Live progress watcher
+│       └── lib/
+│           ├── common.sh              # Shared utilities
+│           ├── baseline.sh            # Baseline-aware test validation
+│           └── stop_ralph_processes.sh # Process cleanup
 ├── src/                        # Source code
 ├── tests/                      # Tests
 ├── logs/ralph/                 # Execution logs (gitignored)

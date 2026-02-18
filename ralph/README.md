@@ -86,27 +86,30 @@ PRD.md → prd.json → Ralph Loop → src/ + tests/ → progress.txt
 
 ### Sprint-Specific PRD Management
 
-Each sprint gets its own PRD file. Ralph reads `docs/PRD.md`, which
-symlinks to the active sprint:
+Each sprint gets its own PRD file. Ralph reads only `prd.json` —
+the PRD markdown is human-facing input to `generate_prd_json.py`.
 
 ```
-docs/
-├── PRD.md → PRD-Sprint2.md   # Symlink (active)
-├── PRD-Sprint1.md             # Completed
-├── PRD-Sprint2.md             # Active
-└── PRD-Sprint3.md             # Planned
+docs/PRD.md                    # Parser input (or symlink to active sprint)
+ralph/docs/prd.json            # Ralph reads this
+```
+
+Optionally, symlink `docs/PRD.md` to the active sprint file so the
+parser always reads the right one without arguments:
+
+```bash
+cd docs && ln -sf sprints/PRD-SprintN.md PRD.md
 ```
 
 **Switching sprints:**
 
 ```bash
 # Archive current sprint
-git tag sprint-2-complete -a -m "Sprint 2 complete"
-mkdir -p docs/archive/sprint2/
-cp ralph/docs/{prd.json,progress.txt} ralph/archive/sprint2/
+git tag sprint-N-complete -a -m "Sprint N complete"
+mkdir -p ralph/archive/sprintN/
+cp ralph/docs/{prd.json,progress.txt} ralph/archive/sprintN/
 
-# Activate next sprint
-cd docs && ln -sf PRD-Sprint3.md PRD.md
+# Point parser at next sprint and regenerate
 make ralph_prd_json
 make ralph_run MAX_ITERATIONS=25
 ```

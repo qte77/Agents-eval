@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Worktree Launcher**: `ralph-in-worktree.sh` + `make ralph_worktree` — create branch, setup git worktree, run Ralph (same env var contract as `ralph_run`)
+- **PRD Parser Constraints**: Documented 4 parser gotchas in `LEARNINGS.md` (table) and `prd.md.template` (inline comments)
+- **Merge Strategy**: Squash merge pattern and conflict prevention rule in `LEARNINGS.md`
+- **Wave Terminology**: Defined "wave" (dependency graph frontier) in `ralph.sh` and `README.md`
+- **Sprint 8 prd.json**: 14 stories with file-conflict peer deps for teams mode (Wave 4a/4b/4c)
 - **CC Agent Teams as alternative orchestrator**: PRD dual-mode support (Ralph loop + CC Teams), file-conflict dependencies, orchestration waves, teammate prompt template
 - **Known Failure Mode #5**: File-conflict dependencies not tracked in `get_unblocked_stories`
 - **Agent Activity Monitor**: Heartbeat now tails agent log output at 30s intervals with `[CC]` (magenta) prefix for agent activity and red for agent errors (`common.sh`: `log_cc`, `log_cc_error`)
@@ -23,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **LEARNINGS.md**: Condensed from 114 to ~55 lines, added frontmatter, replaced verbose prose with actionable table and checklists
+- **PRD-Sprint8**: Flattened AC sub-items, added sub-feature Files sections, merged compound sub-features, added file-conflict peer deps
 - **Documentation Structure**: Reorganized ralph/ directory structure and moved TEMPLATE_USAGE.md to ralph root
 - **Skill System**: Relocated commands to skills structure (`.claude/skills/`)
 - **Default Configuration**: Increased max iterations to 25, set REQUIRE_REFACTOR to false by default
