@@ -424,8 +424,8 @@
         "tests/cli/test_run_cli_engine.py",
         "tests/benchmark/test_sweep_runner.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T10:29:18Z",
       "content_hash": "fd84e1fcacd6b29a6a40f3bc6755c615df853fc82d1c4e9bdb000f3c8333b4f6",
       "depends_on": []
     },
