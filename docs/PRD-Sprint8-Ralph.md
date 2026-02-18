@@ -1,7 +1,7 @@
 ---
 title: Product Requirements Document - Agents-eval Sprint 8
-description: PeerRead tool fix, API key sentinel removal, CC engine consolidation, graph alignment, streaming check, report generation.
-version: 0.3
+description: PeerRead tool fix, "not-required" fallback key removal, judge auto-mode model inheritance, CC engine consolidation, graph alignment, streaming check, report generation.
+version: 0.4
 created: 2026-02-17
 updated: 2026-02-18
 status: draft
@@ -13,7 +13,7 @@ status: draft
 
 Sprint 7 delivered: documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings), unified provider configuration, Claude Code engine option.
 
-**Sprint 8 Focus**: Fix sweep-crashing tool bug, remove API key sentinel, consolidate CC engine logic, graph attribute alignment, streaming decision, report generation.
+**Sprint 8 Focus**: Fix sweep-crashing tool bug, remove `"not-required"` fallback key + fix judge auto-mode model inheritance, consolidate CC engine logic, graph attribute alignment, streaming decision, report generation.
 
 ---
 
@@ -50,9 +50,20 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 
 ---
 
-#### Feature 2: Remove `"not-required"` API Key Sentinel from `create_llm_model`
+#### Feature 2: Remove `"not-required"` Fallback Key + Fix Judge Auto-Mode Model Inheritance
 
-**Description**: `create_llm_model()` in `models.py` uses `api_key or "not-required"` at 5 call sites (lines 78, 87, 98, 119, 128). This prevents the OpenAI SDK from falling back to environment variables (`OPENAI_API_KEY`, `GITHUB_TOKEN`, etc.) because the SDK receives a non-empty string and uses it as-is. Sprint 8 commit `9e14931` fixed this in `create_simple_model()` (judge path) by passing `api_key` directly. The same fix is needed in `create_llm_model()` for the main agent creation path.
+**Description**: Three related issues in API key and model resolution:
+
+1. **`"not-required"` fallback key in `create_llm_model()`** (`src/app/llms/models.py`): Uses `api_key or "not-required"` at 5 call sites (lines 78, 87, 98, 119, 128). When `api_key` is `None`, the expression evaluates to the string `"not-required"`, which the OpenAI SDK sends as a real API key — resulting in 401. It also prevents the SDK's built-in env var fallback (`OPENAI_API_KEY`, etc.), because the SDK only checks env vars when `api_key` is `None`. Sprint 8 commit `9e14931` fixed this in `create_simple_model()` (judge path). The same fix is needed in `create_llm_model()` for the main agent creation path.
+
+2. **Auto-mode inherits provider but not model** (`src/app/judge/llm_evaluation_managers.py:58-66`): `LLMJudgeEngine.__init__()` accepts `chat_provider` but has no `chat_model` parameter. When `tier2_provider="auto"`, the constructor sets `self.provider = chat_provider` (line 60) but `self.model` always stays `settings.tier2_model` (line 66), which defaults to `"gpt-4o-mini"` (`src/app/judge/settings.py:75`). If the chat provider is cerebras with model `llama-4-scout-17b-16e-instruct`, the judge would use the combination `cerebras/gpt-4o-mini` — a model that doesn't exist on Cerebras, causing a 404 and unnecessary fallback. This is a design gap in the engine, not a test bug: auto-mode needs `chat_model` passed alongside `chat_provider` to inherit the correct model.
+
+3. **Cross-provider key mismatch untested** (`tests/judge/test_llm_evaluation_managers.py`): Three existing tests cover auto-mode but all seed the env with the *same* provider's key, so a cross-provider mismatch never surfaces:
+   - `test_tier2_provider_auto_inherits_from_chat_provider` (line 427): sets `chat_provider="github"` with `GITHUB_API_KEY="ghp-test"` — key matches provider.
+   - `test_auto_mode_inherits_chat_provider_correctly` (line 746): sets `chat_provider="github"` with `GITHUB_API_KEY="ghp-test"` — key matches provider.
+   - `test_auto_mode_inherits_chat_provider` (line 684, Hypothesis property test): generates random `chat_provider` values from `["openai", "github", "cerebras", "grok"]` but always seeds `env_config` with that same provider's key (line 699: `env_kwargs = {env_keys[chat_provider]: "test-key"}`).
+
+   None of these tests cover the scenario where `chat_provider="cerebras"` but only `GITHUB_API_KEY` is set (not `CEREBRAS_API_KEY`). In that case, auto resolves to cerebras, `_resolve_provider_key("cerebras", env_config)` fails (no key), and the engine falls back to `tier2_fallback_provider="github"`. The fallback chain works correctly, but this path is never exercised.
 
 **Note**: Line 70 (`ollama` provider) legitimately uses `"not-required"` as a literal — Ollama doesn't need auth. This should remain hardcoded.
 
@@ -60,54 +71,88 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] `create_llm_model()` passes `api_key` directly to `OpenAIProvider` for all providers except `ollama` (5 sites: lines 78, 87, 98, 119, 128)
 - [ ] Ollama provider retains `api_key="not-required"` (no auth needed)
 - [ ] When `api_key=None`, OpenAI SDK falls back to `OPENAI_API_KEY` env var (verified by test)
+- [ ] `LLMJudgeEngine.__init__` accepts `chat_model: str | None` parameter alongside `chat_provider`
+- [ ] When `tier2_provider="auto"` and `chat_model` is provided, `self.model` inherits `chat_model` (not hardcoded `tier2_model`)
+- [ ] When `tier2_provider="auto"` and `chat_model` is `None`, `self.model` falls back to `tier2_model` (current behavior preserved)
+- [ ] Cross-provider mismatch test: `chat_provider="cerebras"` with only `GITHUB_API_KEY` set → engine falls back to github provider and github-compatible model
+- [ ] `EvaluationPipeline` passes `chat_model` through to `LLMJudgeEngine` (caller must supply it)
 - [ ] Existing tests pass — no behavioral change when API key is provided explicitly
 - [ ] `make validate` passes
 
 **Technical Requirements**:
-- Replace `api_key=api_key or "not-required"` with `api_key=api_key` at 5 call sites
+- Replace `api_key=api_key or "not-required"` with `api_key=api_key` at 5 call sites in `create_llm_model()`
+- Add `chat_model: str | None = None` parameter to `LLMJudgeEngine.__init__`; when `resolved_provider != settings.tier2_provider` and `chat_model` is provided, set `self.model = chat_model`
+- Update `EvaluationPipeline.__init__` to accept and forward `chat_model`
 - Add test: `create_llm_model(provider="openai", ..., api_key=None)` results in `OpenAIProvider(api_key=None)`, not `"not-required"`
+- Add test: `LLMJudgeEngine(settings, chat_provider="cerebras", chat_model="llama-4-scout-17b-16e-instruct")` → `engine.model == "llama-4-scout-17b-16e-instruct"`
+- Add test: `chat_provider="cerebras"` with only `GITHUB_API_KEY` → falls back to github with `tier2_fallback_model`
 
 **Files**:
-- `src/app/llms/models.py` (edit — 5 lines)
+- `src/app/llms/models.py` (edit — 5 lines, sentinel removal)
+- `src/app/judge/llm_evaluation_managers.py` (edit — add `chat_model` parameter, inherit model in auto-mode)
+- `src/app/judge/evaluation_pipeline.py` (edit — forward `chat_model` to `LLMJudgeEngine`)
 - `tests/llms/test_models.py` (edit — add sentinel removal test)
+- `tests/judge/test_llm_evaluation_managers.py` (edit — add model inheritance and cross-provider tests)
 
 ---
 
-#### Feature 3: Extract CC Engine Logic into `src/app/engines/cc_engine.py`
+#### Feature 3: Consolidate CC Engine into `src/app/engines/cc_engine.py` with Teams Support
 
-**Description**: CC (Claude Code) engine logic is scattered across `run_cli.py`, `sweep_runner.py`, and `run_app.py` with duplicated subprocess invocation, inconsistent error handling, and incomplete wiring. The `subprocess.run(["claude", "-p", ...])` pattern is copy-pasted between CLI and sweep. The GUI accepts the engine selection but silently ignores it (`engine` parameter never reaches `main()`). `_run_cc_baselines()` in `sweep_runner.py` invokes CC but does not feed results into evaluation. `CCTraceAdapter` (the artifact parser) is not connected to any subprocess invocation path.
+**Description**: CC (Claude Code) engine logic is scattered across `run_cli.py`, `sweep_runner.py`, `run_app.py`, and `scripts/collect-cc-traces/*.sh` with duplicated subprocess invocation, inconsistent error handling, and incomplete wiring. The `subprocess.run(["claude", "-p", ...])` pattern is copy-pasted between CLI and sweep. The GUI accepts the engine selection but silently ignores it. `_run_cc_baselines()` in `sweep_runner.py` is a stub. Additionally, `--engine=cc` only supports solo mode — there is no way to invoke CC with Agent Teams orchestration. The shell scripts under `scripts/collect-cc-traces/` duplicate logic that should live in Python (DRY violation; they will inevitably diverge).
+
+**Critical constraint**: CC teams artifacts (`~/.claude/teams/`, `~/.claude/tasks/`) are ephemeral in `claude -p` print mode — cleaned up after exit (see AGENT_LEARNINGS.md). The existing `run-cc.sh` works around this by copying artifacts during execution. The Python implementation uses `--output-format stream-json` with `Popen` to parse `TeamCreate`, `Task`, and inbox events from the live output stream, eliminating the need for filesystem artifact collection.
 
 **Current state:**
-- `run_cli.py:169-214` — subprocess invocation + engine dispatch (30 lines inline)
-- `sweep_runner.py:143-232` — duplicate subprocess invocation + stub baseline loop
-- `run_app.py:471-532` — engine selector UI, but `engine` param silently dropped in `_execute_query_background()`
-- `cc_trace_adapter.py` — artifact parser, only called from `evaluation_runner.py` baseline comparisons (not from subprocess paths)
+- `run_cli.py:108-126` — inline `subprocess.run()`, solo only, captures `session_dir`
+- `sweep_runner.py:143-185` — duplicate `subprocess.run()`, solo only, stub baseline loop
+- `run_app.py:481-532` — engine selector UI, `engine` param silently dropped
+- `scripts/collect-cc-traces/run-cc.sh` — shell implementation with teams artifact collection (260 lines)
+- `scripts/collect-cc-traces/collect-team-artifacts.sh` — standalone teams artifact collector
+- `scripts/collect-cc-traces/lib/collect-common.sh` — shared shell helpers
+- `cc_trace_adapter.py` — artifact parser, only called from `evaluation_runner.py` (not from subprocess paths)
 
 **Acceptance Criteria**:
 - [ ] New module `src/app/engines/cc_engine.py` with:
   - `check_cc_available() -> bool` — `shutil.which("claude")` (replaces 3 inline checks)
-  - `run_cc_headless(query: str, timeout: int = 600) -> CCResult` — subprocess invocation with error handling (replaces 2 duplicate implementations)
-  - `CCResult` Pydantic model: `session_dir`, `output_data`, `execution_id`
-- [ ] `run_cli.py` CC branch delegates to `cc_engine.run_cc_headless()` — no inline subprocess code
-- [ ] `sweep_runner.py._invoke_cc_comparison()` delegates to `cc_engine.run_cc_headless()` — no inline subprocess code
+  - `run_cc_solo(query: str, timeout: int = 600) -> CCResult` — solo subprocess with `--output-format json`
+  - `run_cc_teams(query: str, timeout: int = 600) -> CCResult` — teams subprocess with `--output-format stream-json` + `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env var, parses team events from live stream via `Popen`
+  - `CCResult` Pydantic model: `execution_id`, `output_data`, `session_dir` (solo), `team_artifacts` (teams: parsed from stream events)
+  - `parse_stream_json(stream) -> CCResult` — JSONL line parser extracting `init`, `result`, `TeamCreate`, `Task` events
+- [ ] `--cc-teams` boolean flag added to CLI (`run_cli.py`), sweep (`run_sweep.py`), and GUI (`run_app.py`)
+- [ ] `--engine=cc` without `--cc-teams`: calls `run_cc_solo()` (current behavior, consolidated)
+- [ ] `--engine=cc --cc-teams`: calls `run_cc_teams()` with teams env var and stream-json parsing
+- [ ] `run_cli.py` CC branch delegates to `cc_engine` — no inline subprocess code
+- [ ] `sweep_runner.py._invoke_cc_comparison()` delegates to `cc_engine` — no inline subprocess code
 - [ ] `run_app.py._execute_query_background()` passes `engine` to `main()` when `engine == "cc"` (currently silently dropped)
 - [ ] `_run_cc_baselines()` wires CC results through `CCTraceAdapter` → evaluation (not a stub)
+- [ ] `scripts/collect-cc-traces/` directory removed (replaced by Python implementation)
+- [ ] Makefile recipes `cc_run_solo`, `cc_run_teams`, `cc_collect_teams` updated to use Python entry point instead of shell scripts
 - [ ] `src/app/engines/__init__.py` created
 - [ ] `make validate` passes
 
 **Technical Requirements**:
-- Extract `subprocess.run(["claude", "-p", ...])` into single `run_cc_headless()` function
-- Error handling consolidated: `RuntimeError` for non-zero exit, `ValueError` for JSON parse failure, `RuntimeError` for timeout
-- `check_cc_available()` replaces `shutil.which("claude")` in `run_cli.py:170`, `sweep_runner.py:189`, `run_app.py:471`
-- Wire `CCTraceAdapter` into the subprocess result flow: `run_cc_headless()` → `CCResult.session_dir` → `CCTraceAdapter(session_dir).parse()` → `GraphTraceData`
+- **Solo path**: `subprocess.run(["claude", "-p", query, "--output-format", "json"], ...)` — blocking, parse JSON stdout (same as current, consolidated)
+- **Teams path**: `subprocess.Popen(["claude", "-p", query, "--output-format", "stream-json", "--verbose"], env={..., "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"})` — stream stdout line-by-line, parse JSONL events:
+  - `type=system, subtype=init` → `session_id`, `model`
+  - `type=assistant` → tool_use content blocks → `tool_calls`
+  - `type=result` → `duration_ms`, `total_cost_usd`, `num_turns`
+  - Team-related events (from CC's internal orchestration) → `team_artifacts`
+- Error handling consolidated: `RuntimeError` for non-zero exit/timeout, `ValueError` for JSON parse failure
+- `check_cc_available()` replaces `shutil.which("claude")` in `run_cli.py:94`, `sweep_runner.py:189`, `run_app.py:472`
+- Wire `CCTraceAdapter` into the result flow: `CCResult` → `CCTraceAdapter` → `GraphTraceData` → evaluation pipeline
+- Teams prompt uses orchestration-specific wording (from `run-cc.sh:100-104`): assigns researcher, analyst, synthesizer roles
 
 **Files**:
 - `src/app/engines/__init__.py` (new)
-- `src/app/engines/cc_engine.py` (new — extracted CC logic)
-- `src/run_cli.py` (edit — delegate to `cc_engine`)
+- `src/app/engines/cc_engine.py` (new — consolidated CC logic, solo + teams)
+- `src/run_cli.py` (edit — add `--cc-teams` flag, delegate to `cc_engine`)
+- `src/run_sweep.py` (edit — add `--cc-teams` flag)
 - `src/app/benchmark/sweep_runner.py` (edit — delegate to `cc_engine`, wire adapter)
-- `src/gui/pages/run_app.py` (edit — pass `engine` through, wire CC path)
-- `tests/engines/test_cc_engine.py` (new — subprocess mock tests)
+- `src/app/benchmark/sweep_config.py` (edit — add `cc_teams: bool` field)
+- `src/gui/pages/run_app.py` (edit — add teams toggle, pass `engine` through, wire CC path)
+- `tests/engines/test_cc_engine.py` (new — subprocess mock tests, stream-json parsing tests)
+- `scripts/collect-cc-traces/` (delete — replaced by Python)
+- `Makefile` (edit — update `cc_run_solo`, `cc_run_teams`, `cc_collect_teams` recipes)
 
 ---
 
@@ -140,8 +185,22 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] Update `AGENT_REQUESTS.md` entry (close or revise)
 - [ ] `make validate` passes
 
+**Caller chain** (all sites that pass `pydantic_ai_stream`):
+- `src/app/app.py:79` — `run_pipeline()` accepts `pydantic_ai_stream: bool` parameter
+- `src/app/app.py:117` — `run_pipeline()` passes it to `run_orchestration()`
+- `src/app/app.py:200` — `run_query()` accepts `pydantic_ai_stream: bool = False`
+- `src/app/app.py:251` — `run_query()` passes it to `run_pipeline()`
+- `src/app/agents/orchestration.py:248` — `run_orchestration()` accepts `pydantic_ai_stream: bool = False`
+- `src/app/agents/orchestration.py:267` — `run_orchestration()` guards with `if pydantic_ai_stream: raise NotImplementedError`
+- `src/app/agents/agent_system.py:517` — `run_manager()` accepts `pydantic_ai_stream: bool = False`
+- `src/app/agents/agent_system.py:546` — `run_manager()` guards with `if pydantic_ai_stream: raise NotImplementedError`
+
+If not supported upstream: remove the parameter from all 8 sites above plus the module docstring at `agent_system.py:18`.
+
 **Files**:
-- `src/app/agents/agent_system.py` (edit)
+- `src/app/agents/agent_system.py` (edit — remove parameter + dead code block)
+- `src/app/agents/orchestration.py` (edit — remove parameter + guard)
+- `src/app/app.py` (edit — remove parameter from `run_pipeline()` and `run_query()`)
 
 ---
 
@@ -216,7 +275,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - Tier 1 Reference Comparison Fix — requires ground-truth review integration
 - Cerebras Structured Output Validation Retries — provider-specific edge case
 - PlantUML Diagram Audit — cosmetic, no user impact
-- Unify API Key Resolution Across Agent and Judge Paths — YAGNI after Feature 2 removes sentinel
+- Unify API Key Resolution Across Agent and Judge Paths — partially addressed by Feature 2 auto-mode fix; full unification deferred
 - ~~CC engine SDK migration~~ — **Removed.** Keeping `subprocess.run([claude, "-p"])` per ADR-008.
 
 **Already completed (Sprint 8 pre-work, commits a5ac5c9→9e14931→9329fc3):**
@@ -234,8 +293,8 @@ Story Breakdown - Phase 1 (TBD stories total):
 
 **Sprint 8 scope (in priority order):**
 - Feature 1 (replace `read_paper_pdf_tool` with `get_paper_content`) — fixes sweep crash
-- Feature 2 (remove `"not-required"` from `create_llm_model`) — small fix, 5 call sites
-- Feature 3 (extract CC engine into `cc_engine.py`) — consolidate scattered subprocess logic, fix GUI silent drop
+- Feature 2 (remove `"not-required"` fallback key + fix judge auto-mode model inheritance) — replace `api_key or "not-required"` with `api_key` (5 call sites) + auto-mode `chat_model` pass-through + cross-provider fallback test
+- Feature 3 (consolidate CC engine into `cc_engine.py` with teams support) — consolidate scattered subprocess + shell scripts into Python, add `--cc-teams` flag, stream-json parsing for teams artifacts, retire `scripts/collect-cc-traces/`
 - Feature 4 (graph alignment) — small fix, 2 files
 - Feature 5 (structured output streaming) — binary check, AGENT_REQUESTS.md item
 - Feature 6 (report generation) — flagship feature, needs design phase first
