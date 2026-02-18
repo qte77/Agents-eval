@@ -2,11 +2,15 @@
 Tests for STORY-012: Standalone a11y/usability fixes for the GUI.
 
 Covers:
-- styling.py: CSS radio button circle hiding hack removed
-- log_capture.py: text-prefix badges ([WARN], [ERR], etc.) added
-- log_capture.py: module text color #999999 -> #696969 (contrast fix)
+- styling.py: CSS radio button circle hiding hack removed (WCAG 1.3.3, 1.4.1)
+- log_capture.py: text-prefix badges ([WARN], [ERR], [INFO], [DBG]) added (WCAG 1.4.1)
+- log_capture.py: module text color #999999 -> #696969 contrast fix (WCAG 1.4.3)
 - run_gui.py: include_researcher and include_analyst default to True
-- sidebar.py: radio label is "Navigation" not " "
+- sidebar.py: radio label is "Navigation" not " " (WCAG 1.3.1, 2.4.6)
+- sidebar.py: Phoenix link includes "(opens in new tab)" warning (WCAG 3.2.5)
+- text.py: HOME_INFO mentions Settings before App (correct onboarding order)
+- text.py: RUN_APP_QUERY_PLACEHOLDER is domain-specific
+- prompts.py: display-only warning is shown prominently
 
 Mock strategy:
 - No real Streamlit runtime needed
