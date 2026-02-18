@@ -314,6 +314,53 @@ compare_test_failures() {
     return 0
 }
 
+# Run complexity check scoped to story files only (Solution 3B).
+# In teams mode, cross-story changes can trigger false complexity failures.
+# This runs complexipy only on files listed in the story's prd.json entry.
+# Falls back to full `make complexity` if no story files or not in teams mode.
+#
+# Args:
+#   $1 - Story ID
+#   $2 - Path to prd.json
+run_complexity_scoped() {
+    local story_id="$1"
+    local prd_json="$2"
+
+    # Extract src/ files from story's files array
+    local src_files
+    src_files=$(jq -r --arg id "$story_id" \
+        '.stories[] | select(.id == $id) | .files // [] | .[] | select(startswith("src/"))' \
+        "$prd_json" 2>/dev/null || true)
+
+    if [ -z "$src_files" ]; then
+        log_warn "No src/ files for $story_id — falling back to full complexity check"
+        make --no-print-directory complexity 2>&1
+        return $?
+    fi
+
+    # Filter to files that actually exist
+    local existing_files=""
+    local sf
+    while IFS= read -r sf; do
+        if [ -f "$sf" ]; then
+            existing_files="${existing_files:+$existing_files }$sf"
+        fi
+    done <<< "$src_files"
+
+    if [ -z "$existing_files" ]; then
+        log_info "No existing src/ files for $story_id — complexity check skipped"
+        return 0
+    fi
+
+    local file_count
+    file_count=$(echo "$existing_files" | wc -w)
+    log_info "Running scoped complexity on $file_count file(s) for $story_id"
+
+    # Reason: complexipy accepts positional [PATHS]... arguments
+    # shellcheck disable=SC2086
+    uv run complexipy $existing_files 2>&1
+}
+
 # Run quality checks with baseline-aware test comparison.
 # Lint/type/complexity checks fail-fast. Test failures are compared
 # against the baseline to distinguish regressions from pre-existing issues.
@@ -324,9 +371,11 @@ compare_test_failures() {
 # Args:
 #   $1 - Path to baseline file
 #   $2 - Optional story ID (for baseline refresh metadata)
+#   $3 - Optional path to prd.json (for scoped complexity in teams mode)
 run_quality_checks_baseline() {
     local baseline_file="$1"
     local story_id="${2:-unknown}"
+    local prd_json="${3:-}"
     local current_log="/tmp/claude/ralph_current_tests.log"
 
     log_info "Running quality checks (baseline-aware)..."
@@ -336,13 +385,28 @@ run_quality_checks_baseline() {
     # Phase 1: Lint/type/complexity (fail-fast)
     log_info "Phase 1: Lint/type/complexity checks..."
 
-    for check in ruff type_check complexity; do
+    for check in ruff type_check; do
         if ! make --no-print-directory "$check" 2>&1; then
             log_error "$check failed"
             echo "$check" > "${RETRY_CONTEXT_FILE:-/dev/null}"
             return 1
         fi
     done
+
+    # Complexity: scoped in teams mode, full otherwise
+    if [ "${RALPH_TEAMS:-false}" = "true" ] && [ -n "$prd_json" ]; then
+        if ! run_complexity_scoped "$story_id" "$prd_json"; then
+            log_error "complexity failed (scoped)"
+            echo "complexity" > "${RETRY_CONTEXT_FILE:-/dev/null}"
+            return 1
+        fi
+    else
+        if ! make --no-print-directory complexity 2>&1; then
+            log_error "complexity failed"
+            echo "complexity" > "${RETRY_CONTEXT_FILE:-/dev/null}"
+            return 1
+        fi
+    fi
 
     log_info "Phase 1 passed"
 
