@@ -176,6 +176,10 @@ ralph/
 
 - ~~**Scoped reset on red-green validation failure**~~: **DONE** — Untracked files are snapshot before story execution; on TDD failure, only story-created files are removed. Additionally, quality-failure retries skip TDD verification entirely (prior RED+GREEN already verified), and `check_tdd_commits` has a fallback that detects `refactor(` prefix when `[REFACTOR]` bracket marker is missing.
 
+- **Ad-hoc steering instructions** (**TODO**): Accept a free-text `INSTRUCTION` parameter via CLI/Make to inject user guidance into the prompt without editing PRD or progress files. Usage: `make ralph_run INSTRUCTION="focus on error handling"`. The instruction would be appended to the story prompt so the agent factors it in during implementation. Useful for nudging behavior (e.g., "prefer small commits", "skip Tier 2 tests") without modifying tracked files.
+
+- **Deduplicate log level in CC monitor output** (**TODO**): The `[CC]` monitor lines show a redundant log level — e.g., `[INFO] 2026-02-18T00:01:57Z [CC] [INFO]`. The outer `[INFO]` is from ralph's own `log_info`/`log_cc_info`, and the inner `[INFO]` is from the captured CC agent output. Strip the inner level prefix when wrapping with `log_cc_*` to avoid `[INFO] ... [CC] [INFO]` duplication.
+
 ## Sources
 
 - [Ralph Wiggum technique](https://ghuntley.com/ralph/) - Geoffrey Huntley
