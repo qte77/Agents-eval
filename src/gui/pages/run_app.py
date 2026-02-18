@@ -294,11 +294,14 @@ async def _execute_query_background(
             st.session_state.execution_graph = result.get("graph")
             # Keep legacy execution_result for backward compatibility
             st.session_state.execution_result = result.get("composite_result")
+            # S8-F8.2: store execution_id for Evaluation Results page display
+            st.session_state["execution_id"] = result.get("execution_id")
         else:
             # No evaluation result (e.g., skip_eval=True)
             st.session_state.execution_composite_result = None
             st.session_state.execution_graph = None
             st.session_state.execution_result = None
+            st.session_state["execution_id"] = None
 
         # Clear error if previously set
         if hasattr(st.session_state, "execution_error"):
@@ -522,15 +525,15 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
             "Install it to use the CC engine: https://docs.anthropic.com/en/docs/claude-code"
         )
 
-    mas_disabled = engine == "cc"
-    if mas_disabled:
+    if engine == "cc":
+        # S8-F8.2: hide MAS controls entirely when CC engine selected (not just disabled)
         st.info(
             "MAS agent controls (Researcher, Analyst, Synthesiser) are not applicable "
             "when using the Claude Code engine."
         )
-
-    agents_text = _format_enabled_agents(include_researcher, include_analyst, include_synthesiser)
-    _display_configuration(provider_from_state, token_limit, agents_text)
+    else:
+        agents_text = _format_enabled_agents(include_researcher, include_analyst, include_synthesiser)
+        _display_configuration(provider_from_state, token_limit, agents_text)
 
     input_mode = st.radio(
         "Input mode",

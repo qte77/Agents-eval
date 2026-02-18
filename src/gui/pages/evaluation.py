@@ -6,6 +6,8 @@ LLM-as-Judge scores (Tier 2), and graph analysis metrics (Tier 3).
 Provides comparative visualization of graph-based vs text-based metrics.
 """
 
+from pathlib import Path
+
 import streamlit as st
 
 from app.data_models.evaluation_models import CompositeResult
@@ -101,6 +103,11 @@ def _render_overall_results(
             f"{abs(result.recommendation_weight):.2f}",
             help="Confidence in recommendation based on score magnitude",
         )
+
+    # S8-F8.2: display shortened run ID below score metrics
+    execution_id: str | None = st.session_state.get("execution_id")
+    if execution_id:
+        st.caption(f"Run: {execution_id}")
 
 
 def _render_tier_scores(result: CompositeResult) -> None:
@@ -285,16 +292,27 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
                 "Provide directory paths to Claude Code artifact exports to enable "
                 "comparative evaluation against MAS results."
             )
-            st.text_input(
+            # S8-F8.2: auto-populate from known CC artifact location if it exists
+            default_traces_dir = "logs/Agent_evals/traces/"
+            default_value = default_traces_dir if Path(default_traces_dir).is_dir() else ""
+            cc_solo_dir = st.text_input(
                 "Claude Code Solo Directory",
                 key="cc_solo_dir_input",
+                value=default_value,
                 help="Path to Claude Code solo session export directory",
             )
-            st.text_input(
+            # S8-F8.2: validate entered path exists on disk
+            if cc_solo_dir and not Path(cc_solo_dir).is_dir():
+                st.error(f"Directory not found: {cc_solo_dir}")
+
+            cc_teams_dir = st.text_input(
                 "Claude Code Teams Directory",
                 key="cc_teams_dir_input",
                 help="Path to Claude Code Agent Teams artifacts directory",
             )
+            # S8-F8.2: validate entered path exists on disk
+            if cc_teams_dir and not Path(cc_teams_dir).is_dir():
+                st.error(f"Directory not found: {cc_teams_dir}")
         return
 
     _render_overall_results(result)
@@ -307,6 +325,10 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
 
     # Evaluation metadata
     with st.expander("Evaluation Details"):
+        # S8-F8.2: show full execution_id in details expander
+        full_execution_id: str | None = st.session_state.get("execution_id")
+        if full_execution_id:
+            st.text(f"Execution ID: {full_execution_id}")
         st.text(f"Timestamp: {result.timestamp}")
         st.text(f"Config Version: {result.config_version}")
         if result.weights_used:
