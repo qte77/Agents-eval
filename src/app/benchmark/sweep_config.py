@@ -53,7 +53,7 @@ class SweepConfig(BaseModel):
 
     Defines the sweep parameters including which compositions to test,
     how many repetitions per composition, which papers to evaluate,
-    and whether to include Claude Code baseline comparison.
+    and which execution engine to use (MAS pipeline or Claude Code headless).
     """
 
     compositions: list[AgentComposition] = Field(
@@ -67,9 +67,11 @@ class SweepConfig(BaseModel):
         default=CHAT_DEFAULT_PROVIDER, description="LLM provider to use for evaluations"
     )
 
-    cc_baseline_enabled: bool = Field(
-        default=False, description="Whether to run Claude Code baseline comparison"
+    engine: str = Field(
+        default="mas",
+        description="Execution engine: 'mas' for MAS pipeline, 'cc' for Claude Code headless",
     )
+
     cc_artifact_dirs: list[Path] | None = Field(
         default=None,
         description="Pre-collected CC artifact directories (skips re-running CC)",

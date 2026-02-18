@@ -64,9 +64,11 @@ def parse_args() -> argparse.Namespace:
         help=f"LLM provider to use (default: {CHAT_DEFAULT_PROVIDER})",
     )
     parser.add_argument(
-        "--cc-baseline",
-        action="store_true",
-        help="Enable Claude Code baseline comparison",
+        "--engine",
+        type=str,
+        choices=["mas", "cc"],
+        default="mas",
+        help="Execution engine: 'mas' for MAS pipeline (default), 'cc' for Claude Code headless",
     )
 
     return parser.parse_args()
@@ -89,7 +91,7 @@ def _load_config_from_file(config_path: Path) -> SweepConfig | None:
         paper_numbers=config_data["paper_numbers"],
         output_dir=Path(config_data["output_dir"]),
         chat_provider=config_data.get("provider", CHAT_DEFAULT_PROVIDER),
-        cc_baseline_enabled=config_data.get("cc_baseline_enabled", False),
+        engine=config_data.get("engine", "mas"),
     )
 
 
@@ -123,7 +125,7 @@ def _build_config_from_args(args: argparse.Namespace) -> SweepConfig | None:
         paper_numbers=paper_numbers,
         output_dir=output_dir,
         chat_provider=args.provider,
-        cc_baseline_enabled=args.cc_baseline,
+        engine=args.engine,
     )
 
 

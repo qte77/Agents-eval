@@ -39,7 +39,7 @@ class TestBuildConfigFromArgs:
             output_dir=tmp_path / "results",
             all_compositions=False,
             provider="cerebras",
-            cc_baseline=False,
+            engine="mas",
         )
 
         config = _build_config_from_args(args)

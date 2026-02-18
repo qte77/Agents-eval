@@ -78,7 +78,7 @@ class SweepRunner:
             )
             return None
 
-    async def _invoke_cc_baseline(self, paper_number: int) -> tuple[str, dict[str, Any]] | None:
+    async def _invoke_cc_comparison(self, paper_number: int) -> tuple[str, dict[str, Any]] | None:
         """Invoke Claude Code in headless mode for baseline comparison.
 
         Args:
@@ -86,13 +86,15 @@ class SweepRunner:
 
         Returns:
             Tuple of (execution_id, result_data) if successful, None otherwise.
+
+        Raises:
+            RuntimeError: If claude CLI not found, subprocess fails, or times out.
+            ValueError: If CC output is not valid JSON.
         """
         # Check if claude CLI is available
         claude_path = shutil.which("claude")
         if not claude_path:
-            raise RuntimeError(
-                "claude CLI not found. Install Claude Code or disable cc_baseline_enabled."
-            )
+            raise RuntimeError("claude CLI not found. Install Claude Code or use --engine=mas.")
 
         prompt = f"Review paper {paper_number} from the PeerRead dataset"
 
@@ -101,32 +103,30 @@ class SweepRunner:
                 [claude_path, "-p", prompt, "--output-format", "json"],
                 capture_output=True,
                 text=True,
-                check=True,
                 timeout=600,  # 10 minute timeout
             )
 
-            output_data = json.loads(result.stdout)
+            if result.returncode != 0:
+                raise RuntimeError(f"CC failed: {result.stderr}")
+
+            try:
+                output_data = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"CC output not valid JSON: {e}") from e
+
             execution_id = output_data.get("execution_id", "unknown")
 
-            logger.info(f"CC baseline completed: execution_id={execution_id}")
+            logger.info(f"CC comparison completed: execution_id={execution_id}")
             return (execution_id, output_data)
 
-        except subprocess.CalledProcessError as e:
-            logger.error(f"CC baseline invocation failed: {e}")
-            return None
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse CC output: {e}")
-            return None
-        except subprocess.TimeoutExpired:
-            logger.error("CC baseline timed out after 10 minutes")
-            return None
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"CC timed out after {e.timeout}s") from e
 
     async def _validate_prerequisites(self) -> None:
         """Validate sweep prerequisites."""
-        if self.config.cc_baseline_enabled and not shutil.which("claude"):
+        if self.config.engine == "cc" and not shutil.which("claude"):
             raise RuntimeError(
-                "CC baseline enabled but claude CLI not found. "
-                "Install Claude Code or set cc_baseline_enabled=False."
+                "engine=cc requires claude CLI. Install Claude Code or use --engine=mas."
             )
 
     async def _run_mas_evaluations(self) -> None:
@@ -141,14 +141,14 @@ class SweepRunner:
                         self.results.append((composition, result))
 
     async def _run_cc_baselines(self) -> None:
-        """Run CC baseline evaluations if enabled."""
-        if not self.config.cc_baseline_enabled:
+        """Run CC comparison evaluations if engine=cc."""
+        if self.config.engine != "cc":
             return
 
         for paper_number in self.config.paper_numbers:
-            cc_result = await self._invoke_cc_baseline(paper_number)
+            cc_result = await self._invoke_cc_comparison(paper_number)
             if cc_result:
-                logger.info(f"CC baseline completed for paper {paper_number}")
+                logger.info(f"CC comparison completed for paper {paper_number}")
                 # CC evaluation integration would go here
                 # For now, just log that CC was invoked
 
@@ -159,7 +159,7 @@ class SweepRunner:
             list[tuple[AgentComposition, CompositeResult]]: All evaluation results.
 
         Raises:
-            RuntimeError: If cc_baseline_enabled but claude CLI not found.
+            RuntimeError: If engine=cc but claude CLI not found.
         """
         await self._validate_prerequisites()
         self.config.output_dir.mkdir(parents=True, exist_ok=True)

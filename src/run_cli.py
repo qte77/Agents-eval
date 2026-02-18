@@ -6,8 +6,12 @@ loading heavy dependencies. It only imports the main application
 when actual processing is needed.
 """
 
+import shutil
 from sys import argv, exit
 from typing import Any
+
+# Valid engine choices
+_ENGINE_CHOICES = {"mas", "cc"}
 
 
 def _convert_value(key: str, value: str | bool) -> str | bool | int:
@@ -75,6 +79,9 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
             "Path to Claude Code Agent Teams tasks directory "
             "(optional, auto-discovered if not specified)"
         ),
+        "--engine": (
+            "Execution engine: 'mas' for MAS pipeline (default), 'cc' for Claude Code headless"
+        ),
     }
 
     # output help and exit
@@ -98,6 +105,10 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
         parsed_args["enable_review_tools"] = False
         del parsed_args["no_review_tools"]
 
+    # Set default engine to 'mas' if not specified
+    if "engine" not in parsed_args:
+        parsed_args["engine"] = "mas"
+
     return parsed_args
 
 
@@ -105,6 +116,9 @@ if __name__ == "__main__":
     """
     CLI entry point that handles help quickly, then imports main app.
     """
+    import json
+    import subprocess
+    import sys
 
     if "--help" in argv[1:]:
         parse_args(["--help"])
@@ -115,6 +129,45 @@ if __name__ == "__main__":
     from app.utils.log import logger
 
     args = parse_args(argv[1:])
+
+    # Validate --engine=cc requires claude CLI at arg-parse time
+    engine = args.get("engine", "mas")
+    if engine == "cc" and not shutil.which("claude"):
+        print(
+            "error: --engine=cc requires the 'claude' CLI to be installed and on PATH",
+            file=sys.stderr,
+        )
+        exit(1)
+
     if args:
         logger.info(f"Used arguments: {args}")
-    run(main(**args))
+
+    if engine == "cc":
+        # Invoke CC headless and pass artifact dirs to main for evaluation
+        query = args.get("query", "")
+        try:
+            result = subprocess.run(
+                ["claude", "-p", query, "--output-format", "json"],
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"CC failed: {result.stderr}")
+            try:
+                data = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"CC output not valid JSON: {e}") from e
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"CC timed out after {e.timeout}s") from e
+
+        # Extract artifact dirs from CC output and pass to main for evaluation
+        cc_solo_dir = data.get("session_dir")
+        run(
+            main(
+                cc_solo_dir=cc_solo_dir,
+                **{k: v for k, v in args.items() if k != "engine"},
+            )
+        )
+    else:
+        run(main(**{k: v for k, v in args.items() if k != "engine"}))
