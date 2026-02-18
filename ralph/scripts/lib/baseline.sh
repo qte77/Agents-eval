@@ -131,12 +131,13 @@ capture_test_baseline() {
     local test_output
     test_output=$(uv run pytest --tb=no -q 2>&1) || true
 
-    # Extract FAILED lines, strip "FAILED " prefix, sort
+    # Extract FAILED and ERROR lines, strip prefix, sort
     # Reason: grep returns 1 when no matches; || true prevents set -e abort
     local failures_temp=$(mktemp)
     echo "$test_output" \
-        | { grep "^FAILED " || true; } \
+        | { grep -E "^(FAILED |ERROR )" || true; } \
         | sed 's/^FAILED //' \
+        | sed 's/^ERROR //' \
         | sort > "$failures_temp"
 
     # Add metadata header
@@ -255,12 +256,13 @@ compare_test_failures() {
     baseline_failures=$(mktemp /tmp/claude/ralph_baseline_failures.XXXXXX)
     grep -v "^#" "$baseline_file" | sort > "$baseline_failures"
 
-    # Extract current FAILED lines into sorted temp file
+    # Extract current FAILED and ERROR lines into sorted temp file
     local current_failures
     current_failures=$(mktemp /tmp/claude/ralph_current_failures.XXXXXX)
     # Reason: grep returns 1 when no matches; || true prevents set -e abort
-    { grep "^FAILED " "$current_log" || true; } \
+    { grep -E "^(FAILED |ERROR )" "$current_log" || true; } \
         | sed 's/^FAILED //' \
+        | sed 's/^ERROR //' \
         | sort > "$current_failures"
 
     # Find new failures (in current but not in baseline)
@@ -361,6 +363,126 @@ run_complexity_scoped() {
     uv run complexipy $existing_files 2>&1
 }
 
+# Run ruff scoped to story files only.
+# In teams mode, cross-story changes can trigger false lint failures.
+# This runs ruff only on files listed in the story's prd.json entry.
+# Falls back to full `make ruff` + `make ruff_tests` if no story files.
+#
+# Args:
+#   $1 - Story ID
+#   $2 - Path to prd.json
+run_ruff_scoped() {
+    local story_id="$1"
+    local prd_json="$2"
+
+    # Extract files from story's files array, split into src/ and tests/
+    local src_files test_files
+    src_files=$(jq -r --arg id "$story_id" \
+        '.stories[] | select(.id == $id) | .files // [] | .[] | select(startswith("src/"))' \
+        "$prd_json" 2>/dev/null || true)
+    test_files=$(jq -r --arg id "$story_id" \
+        '.stories[] | select(.id == $id) | .files // [] | .[] | select(startswith("tests/"))' \
+        "$prd_json" 2>/dev/null || true)
+
+    if [ -z "$src_files" ] && [ -z "$test_files" ]; then
+        log_warn "No files for $story_id — falling back to full ruff"
+        make --no-print-directory ruff 2>&1 || return $?
+        make --no-print-directory ruff_tests 2>&1
+        return $?
+    fi
+
+    # Filter to existing files and run ruff on each set
+    local existing_src="" existing_tests=""
+    local f
+    while IFS= read -r f; do
+        [ -f "$f" ] && existing_src="${existing_src:+$existing_src }$f"
+    done <<< "$src_files"
+    while IFS= read -r f; do
+        [ -f "$f" ] && existing_tests="${existing_tests:+$existing_tests }$f"
+    done <<< "$test_files"
+
+    if [ -n "$existing_src" ]; then
+        local src_count
+        src_count=$(echo "$existing_src" | wc -w)
+        log_info "Running scoped ruff on $src_count src file(s) for $story_id"
+        # shellcheck disable=SC2086
+        uv run ruff format $existing_src 2>&1 || return $?
+        # shellcheck disable=SC2086
+        uv run ruff check --fix $existing_src 2>&1 || return $?
+    fi
+
+    if [ -n "$existing_tests" ]; then
+        local test_count
+        test_count=$(echo "$existing_tests" | wc -w)
+        log_info "Running scoped ruff on $test_count test file(s) for $story_id"
+        # shellcheck disable=SC2086
+        uv run ruff format $existing_tests 2>&1 || return $?
+        # shellcheck disable=SC2086
+        uv run ruff check --fix $existing_tests 2>&1 || return $?
+    fi
+
+    if [ -z "$existing_src" ] && [ -z "$existing_tests" ]; then
+        log_info "No existing files for $story_id — ruff check skipped"
+    fi
+
+    return 0
+}
+
+# Run tests scoped to story files only.
+# In teams mode, cross-story changes can trigger false test failures.
+# This runs pytest only on test files listed in the story's prd.json entry.
+# Falls back to full pytest if no test files found.
+#
+# Args:
+#   $1 - Story ID
+#   $2 - Path to prd.json
+#   $3 - Path to output log file
+run_tests_scoped() {
+    local story_id="$1"
+    local prd_json="$2"
+    local output_log="$3"
+
+    # Extract test files from story's files array
+    local test_files
+    test_files=$(jq -r --arg id "$story_id" \
+        '.stories[] | select(.id == $id) | .files // [] | .[] | select(startswith("tests/"))' \
+        "$prd_json" 2>/dev/null || true)
+
+    if [ -z "$test_files" ]; then
+        log_warn "No test files for $story_id — falling back to full pytest"
+        uv run pytest --tb=no -q 2>&1 | tee "$output_log"
+        return "${PIPESTATUS[0]}"
+    fi
+
+    # Filter to existing files
+    local existing_tests=""
+    local f
+    while IFS= read -r f; do
+        [ -f "$f" ] && existing_tests="${existing_tests:+$existing_tests }$f"
+    done <<< "$test_files"
+
+    if [ -z "$existing_tests" ]; then
+        log_warn "No existing test files for $story_id — falling back to full pytest"
+        uv run pytest --tb=no -q 2>&1 | tee "$output_log"
+        return "${PIPESTATUS[0]}"
+    fi
+
+    local test_count
+    test_count=$(echo "$existing_tests" | wc -w)
+    log_info "Running scoped pytest on $test_count test file(s) for $story_id"
+
+    # shellcheck disable=SC2086
+    uv run pytest --tb=no -q $existing_tests 2>&1 | tee "$output_log"
+    return "${PIPESTATUS[0]}"
+}
+
+# Clean pytest __pycache__ under tests/ to prevent stale .pyc interference.
+# Cheap insurance — always run before test execution.
+clean_test_pycache() {
+    find tests/ -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+    find tests/ -name "*.pyc" -delete 2>/dev/null || true
+}
+
 # Run quality checks with baseline-aware test comparison.
 # Lint/type/complexity checks fail-fast. Test failures are compared
 # against the baseline to distinguish regressions from pre-existing issues.
@@ -385,13 +507,32 @@ run_quality_checks_baseline() {
     # Phase 1: Lint/type/complexity (fail-fast)
     log_info "Phase 1: Lint/type/complexity checks..."
 
-    for check in ruff type_check; do
-        if ! make --no-print-directory "$check" 2>&1; then
-            log_error "$check failed"
-            echo "$check" > "${RETRY_CONTEXT_FILE:-/dev/null}"
+    # Ruff: teams → scoped to story files; solo → make ruff + make ruff_tests
+    if [ "${RALPH_TEAMS:-false}" = "true" ] && [ -n "$prd_json" ]; then
+        if ! run_ruff_scoped "$story_id" "$prd_json"; then
+            log_error "ruff failed (scoped)"
+            echo "ruff" > "${RETRY_CONTEXT_FILE:-/dev/null}"
             return 1
         fi
-    done
+    else
+        if ! make --no-print-directory ruff 2>&1; then
+            log_error "ruff failed"
+            echo "ruff" > "${RETRY_CONTEXT_FILE:-/dev/null}"
+            return 1
+        fi
+        if ! make --no-print-directory ruff_tests 2>&1; then
+            log_error "ruff_tests failed"
+            echo "ruff_tests" > "${RETRY_CONTEXT_FILE:-/dev/null}"
+            return 1
+        fi
+    fi
+
+    # Type check: always full (pyright needs project context)
+    if ! make --no-print-directory type_check 2>&1; then
+        log_error "type_check failed"
+        echo "type_check" > "${RETRY_CONTEXT_FILE:-/dev/null}"
+        return 1
+    fi
 
     # Complexity: scoped in teams mode, full otherwise
     if [ "${RALPH_TEAMS:-false}" = "true" ] && [ -n "$prd_json" ]; then
@@ -413,8 +554,23 @@ run_quality_checks_baseline() {
     # Phase 2: Tests with baseline comparison
     log_info "Phase 2: Tests with baseline comparison..."
 
+    # Clean pycache before test runs (cheap insurance against stale .pyc)
+    clean_test_pycache
+
+    # Tests: teams → scoped to story test files; solo → full pytest
     local test_exit=0
-    uv run pytest --tb=no -q 2>&1 | tee "$current_log" || test_exit=$?
+    if [ "${RALPH_TEAMS:-false}" = "true" ] && [ -n "$prd_json" ]; then
+        run_tests_scoped "$story_id" "$prd_json" "$current_log" || test_exit=$?
+    else
+        uv run pytest --tb=no -q 2>&1 | tee "$current_log" || test_exit=$?
+    fi
+
+    # Killed process = inconclusive. Cannot trust partial results.
+    if [ "$test_exit" -eq 137 ] || [ "$test_exit" -eq 143 ]; then
+        log_error "Test process killed (exit $test_exit) — result inconclusive, cannot record PASS"
+        echo "pytest killed (exit $test_exit)" > "${RETRY_CONTEXT_FILE:-/dev/null}"
+        return 1
+    fi
 
     if [ "$test_exit" -eq 0 ]; then
         log_info "All tests passed"

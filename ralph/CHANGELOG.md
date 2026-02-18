@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Scoped Ruff Checks**: `run_ruff_scoped()` in teams mode — only lint story files from prd.json, preventing cross-story lint false positives
+- **Scoped Test Execution**: `run_tests_scoped()` in teams mode — only run story's test files from prd.json
+- **Wave Checkpoint Validation**: `run_wave_checkpoint()` — full `make validate` at wave boundaries in teams mode to catch cross-story breakage
+- **Impact Scan Prompt**: Agent instruction in `prompt.md` to grep test tree for consumers before implementing renames
+- **Pycache Cleanup**: `clean_test_pycache()` — removes `__pycache__` dirs and `.pyc` files under `tests/` before test runs
+- **Known Failure Mode #6**: Incomplete PRD file lists causing stale tests (Sprint 8 post-mortem)
 - **Worktree Launcher**: `ralph-in-worktree.sh` + `make ralph_worktree` — create branch, setup git worktree, run Ralph (same env var contract as `ralph_run`)
 - **PRD Parser Constraints**: Documented 4 parser gotchas in `LEARNINGS.md` (table) and `prd.md.template` (inline comments)
 - **Merge Strategy**: Squash merge pattern and conflict prevention rule in `LEARNINGS.md`
@@ -38,6 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Pytest Collection ERRORs**: `compare_test_failures` and `capture_test_baseline` now detect `ERROR` lines in addition to `FAILED` lines — collection errors no longer invisible to baseline comparison
+- **Missing ruff_tests in Baseline**: Solo mode baseline pipeline now runs `make ruff` + `make ruff_tests` (previously only `make ruff`)
+- **Killed Pytest Detection**: Exit 137/143 (OOM/SIGTERM) now returns hard failure with retry context — no longer treated as valid test result with partial output
 - **CC Monitor Log Nesting**: Replace `tail -5` with byte offset tracking (`wc -c`) so monitor reads only new log content per 30s cycle, preventing `[CC] [INFO] [CC] [INFO] ...` chains
 - **Worktree VIRTUAL_ENV Mismatch**: Launch `ralph.sh` via `env -u VIRTUAL_ENV` so uv discovers `.venv` via symlink without devcontainer mismatch warnings; capture `SOURCE_VENV=$PWD` before `cd` (replaces `git rev-parse`)
 - **Worktree Phantom chmod**: Replace `make_executable()` with `check_executable()` in `init.sh` — warn instead of writing, preventing phantom permission changes on read-only worktree filesystems

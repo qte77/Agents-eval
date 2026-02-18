@@ -56,6 +56,17 @@ Follow the project's testing best practices. Tests MUST be written and
 - Understand existing patterns before writing any code
 - **STATUS**: Output "Reading story files for STORY-XXX"
 
+### Before RED: Impact scan for renames and behavior changes
+
+- If your story renames a function, tool, class, or changes observable output
+  (HTML, colors, widget types), grep the full test tree for the old value:
+  `grep -r "old_name" tests/`
+- Any test file that asserts on the old value is in scope for your story,
+  even if not listed in the PRD `files` array
+- Update those tests alongside your implementation
+- **STATUS**: Output "Impact scan: N additional test file(s) in scope" or
+  "Impact scan: no cross-references found"
+
 ### RED: Write failing tests
 
 - **STATUS**: Output "Starting RED phase: writing tests for ..."

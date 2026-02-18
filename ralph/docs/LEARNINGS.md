@@ -58,3 +58,17 @@ git branch -d ralph/<branch>
 **Conflict prevention**: Don't edit files listed in `prd.json` stories on the source branch while Ralph runs. The `files` arrays are the off-limits list.
 
 **If conflicts occur**: Resolve manually (small conflicts), rebase worktree first (large conflicts), or `git merge --squash -X theirs` (accept Ralph's version wholesale).
+
+## 5. Story Scope Must Include All Consumers of Changed Interfaces
+
+PRD `files` lists are authored manually and often miss pre-existing tests that assert on renamed symbols, changed output formats, or widget counts.
+
+**Sprint 8 incident**: Three stories (STORY-001, STORY-011, STORY-012) each passed `make validate` but left stale tests in `tests/security/` and `tests/test_gui/` because those files weren't in the PRD `files` list. The OOM-hanging test masked the failures by killing the process before reaching them.
+
+**Mitigations:**
+
+- [x] **Impact grep before implementation**: When a story renames a symbol or changes observable behavior, grep the full test tree for the old value. Add any consuming test file to the story scope, even if not in the PRD `files` list. Implemented as prompt instruction in `prompt.md` (impact scan section).
+- [x] **Distinguish killed vs failed validation**: Exit codes 137/143 (SIGTERM/OOM) mean `make validate` was killed -- result is inconclusive, not PASS. Ralph should retry or flag, never record PASS. Implemented as inline check in `baseline.sh:run_quality_checks_baseline()`.
+- [ ] **Snapshot drift detection**: After each story, run `uv run pytest --inline-snapshot=review` to surface stale inline snapshots that normal assertions may not catch quickly.
+- [ ] **Cross-directory test discovery**: Flag when a source file has tests in multiple directories (e.g., `tests/gui/` and `tests/test_gui/`). Consolidating split test directories prevents this class of oversight entirely.
+- [ ] **Post-story targeted regression**: After completing a story, run tests that import or reference the changed modules specifically, in addition to the full suite. Faster, more targeted, and not masked by unrelated hangs.

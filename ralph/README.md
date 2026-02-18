@@ -382,6 +382,20 @@ arrays both appear unblocked and get delegated to different teammates.
   story shares files. Skip overlapping stories until the conflicting story completes.
   Requires tracking which stories are currently being executed (new state in ralph.sh).
 
+### 6. Incomplete PRD file lists (Sprint 8 post-mortem)
+
+Three stories passed quality checks but left stale tests because the PRD `files`
+arrays missed secondary consumers of renamed interfaces. All three failures were
+from tests *outside* the story's scope.
+
+**Mitigations implemented:**
+
+- Impact scan prompt instruction: agent greps test tree for old symbol names before implementation
+- Wave checkpoint: full `make validate` runs at wave boundaries to catch cross-story breakage
+- Killed-process detection: exit 137/143 is a hard failure, not a silent pass
+- Scoped ruff/tests: teams mode only checks story files, preventing cross-story false positives
+- Pycache cleanup: removes stale `.pyc` files before test runs
+
 ### Key Structural Issue
 
 The fundamental problem is **cross-story interference in teams mode**: quality gates for
@@ -409,6 +423,16 @@ All five are backward-compatible with single-story mode (`TEAMS=false`).
   - **CC Agent Teams as alternative orchestrator** (**TODO**): Instead of Ralph's bash loop driving `claude -p` with bolted-on teams support, the CC main orchestrator agent directly spawns a team via `TeamCreate` + `Task` tool. Each story becomes a `TaskCreate` entry with `blockedBy` dependencies (both logical and file-conflict). Addresses Ralph failure modes structurally: isolated teammate contexts prevent cross-contamination (#2), `blockedBy` prevents stale snapshots (#4), no external reset eliminates Sisyphean loops (#1), lead-scoped validation prevents cross-story complexity failures (#3), and file-conflict deps in `blockedBy` prevent parallel edits to the same file (#5). Requires self-contained story descriptions in the PRD Story Breakdown (usable as `TaskCreate(description=...)`). See Sprint 8 PRD "Notes for CC Agent Teams" section for orchestration waves, file-conflict dependency table, and teammate prompt template.
 
 - ~~**Scoped reset on red-green validation failure**~~: **DONE** — Untracked files are snapshot before story execution; on TDD failure, only story-created files are removed. Additionally, quality-failure retries skip TDD verification entirely (prior RED+GREEN already verified), and `check_tdd_commits` has a fallback that detects `refactor(` prefix when `[REFACTOR]` bracket marker is missing.
+
+- **Git worktrees for teams isolation** (**TODO**): True filesystem isolation eliminates all cross-contamination (`__pycache__`, ruff/test cross-pollution). Each story in a wave gets its own `git worktree`. Merge at wave boundaries via `git merge --squash`. Deferred until scoped checks + wave checkpoints are validated.
+
+- **Consolidate split test directories** (**TODO**): `tests/gui/` vs `tests/test_gui/` directly caused 2 of 3 Sprint 8 failures. Story authors found and updated tests in one directory but missed the other. Merging into a single `tests/gui/` eliminates the ambiguity. Independent of ralph — codebase hygiene.
+
+- **Automated impact-scope analysis** (**TODO**): Post-story function that diffs removed identifiers in `src/`, filters to renamed-only (removed but not re-added), and greps `tests/` for out-of-scope consumers. Currently handled by the agent via prompt instruction. Automate if a second incident occurs where the prompt instruction is insufficient.
+
+- **Inline snapshot drift detection** (**TODO**): Run `uv run pytest --inline-snapshot=review` after clean test passes to surface stale snapshots. Deferred until `--inline-snapshot=review` output format is confirmed stable for non-interactive use. Snapshot mismatches already show up as normal test failures.
+
+- **Cross-directory test warning** (**TODO**): Flag when a source module has tests in multiple directories (e.g., `tests/gui/` and `tests/test_gui/`). Symptom of poor test directory hygiene — consolidating test dirs (above) is the structural fix. Deferred as YAGNI.
 
 - **Ad-hoc steering instructions** (**TODO**): Accept a free-text `INSTRUCTION` parameter via CLI/Make to inject user guidance into the prompt without editing PRD or progress files. Usage: `make ralph_run INSTRUCTION="focus on error handling"`. The instruction would be appended to the story prompt so the agent factors it in during implementation. Useful for nudging behavior (e.g., "prefer small commits", "skip Tier 2 tests") without modifying tracked files.
 

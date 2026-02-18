@@ -100,6 +100,9 @@ MAX_ITERATIONS=50 make ralph_run      # Override default (25)
 
 # TDD enforcement
 REQUIRE_REFACTOR=true make ralph_run  # Require [REFACTOR] commit (default: false)
+
+# Teams mode (experimental)
+TEAMS=true make ralph_run             # Enable parallel story delegation
 ```
 
 ## Directory Structure
@@ -164,6 +167,17 @@ Ralph enforces Test-Driven Development with commit markers:
    - Controlled by `REQUIRE_REFACTOR` environment variable (default: false)
 
 Ralph verifies commits are made chronologically in the correct order.
+
+## Quality Checks (Baseline-Aware)
+
+Ralph uses baseline-aware validation to avoid blocking stories on pre-existing failures:
+
+- **Baseline capture**: Test failures are snapshot before each story starts
+- **Regression detection**: Only NEW failures block progress; pre-existing ones are tolerated
+- **Teams scoping**: In teams mode, ruff/tests are scoped to story files to prevent cross-contamination
+- **Wave checkpoints**: Full `make validate` runs at wave boundaries (teams mode only)
+- **Impact diagnostics**: Prompt instructs agent to grep for consumers before implementing renames
+- **Killed-process detection**: Exit 137/143 (OOM/SIGTERM) is a hard failure, never treated as PASS
 
 ## Troubleshooting
 

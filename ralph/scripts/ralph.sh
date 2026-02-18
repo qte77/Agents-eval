@@ -301,6 +301,20 @@ print_dependency_tree() {
     } >> "$PROGRESS_FILE"
 }
 
+# Run full validation at wave boundaries (teams mode only).
+# Non-blocking: cross-story issues are logged but don't halt the pipeline.
+# The next wave's stories will address any issues found here.
+run_wave_checkpoint() {
+    log_info "===== Wave Checkpoint: Full Validation ====="
+    if make --no-print-directory validate 2>&1 | tee /tmp/claude/ralph_wave_checkpoint.log; then
+        log_info "Wave checkpoint PASSED"
+        return 0
+    else
+        log_warn "Wave checkpoint found cross-story issues (non-blocking, logged for next wave)"
+        return 0  # Non-blocking — issues logged, next wave's stories will fix them
+    fi
+}
+
 # Get story details
 get_story_details() {
     local story_id="$1"
@@ -725,6 +739,10 @@ main() {
 
     local iteration=0
 
+    # Wave tracking for teams mode checkpoint validation
+    local last_wave_stories
+    last_wave_stories=$(get_unblocked_stories)
+
     while [ $iteration -lt $MAX_ITERATIONS ]; do
         iteration=$((iteration + 1))
         log_info "===== Iteration $iteration/$MAX_ITERATIONS ====="
@@ -767,6 +785,8 @@ main() {
         local exec_status=0
         execute_story "$story_id" "$details" || exec_status=$?
 
+        local story_passed=false
+
         if [ $exec_status -eq 2 ]; then
             # Story already complete - skip TDD verification, just run quality checks
             log_info "Story already complete - verifying with quality checks"
@@ -778,6 +798,7 @@ main() {
                 log_info "Story $story_id marked as PASSING (pre-existing implementation)"
 
                 commit_state_files "chore: Update Ralph state after verifying $story_id (already complete)"
+                story_passed=true
                 print_progress
             else
                 log_error "Story reported as complete but quality checks failed"
@@ -853,6 +874,7 @@ main() {
                 clear_tdd_verified "$story_id"
 
                 commit_state_files "chore: Update Ralph state after completing $story_id"
+                story_passed=true
                 print_progress
             else
                 # Keep commits (RED+GREEN are valid) so next iteration can REFACTOR
@@ -871,6 +893,16 @@ main() {
             # Execution failed
             log_error "Story execution failed"
             log_progress "$iteration" "$story_id" "FAIL" "Execution error"
+        fi
+
+        # Wave boundary detection (teams mode only)
+        if [ "$story_passed" = "true" ] && [ "$RALPH_TEAMS" = "true" ]; then
+            local next_story
+            next_story=$(get_next_story)
+            if [ -n "$next_story" ] && ! echo "$last_wave_stories" | grep -qx "$next_story"; then
+                run_wave_checkpoint
+                last_wave_stories=$(get_unblocked_stories)
+            fi
         fi
 
         rm -f "$untracked_before"
