@@ -21,10 +21,10 @@ import streamlit as st
 from streamlit import button, exception, header, info, spinner, subheader, text_input, warning
 
 from app.app import main
+from app.common.settings import CommonSettings
 from app.config.config_app import CHAT_DEFAULT_PROVIDER
 from app.data_models.peerread_models import PeerReadPaper
 from app.data_utils.datasets_peerread import PeerReadLoader
-from app.common.settings import CommonSettings
 from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 from gui.components.output import render_output
@@ -239,6 +239,7 @@ async def _execute_query_background(
     token_limit: int | None = None,
     judge_settings: JudgeSettings | None = None,
     paper_id: str | None = None,
+    common_settings: CommonSettings | None = None,
 ) -> None:
     """Execute agent query in background with session state persistence.
 
@@ -255,6 +256,7 @@ async def _execute_query_background(
         token_limit: Optional token limit override from GUI
         judge_settings: Optional JudgeSettings override from GUI settings page
         paper_id: Optional PeerRead paper ID for paper selection mode
+        common_settings: Optional CommonSettings override from GUI settings page
     """
     # Set running state
     st.session_state.execution_state = "running"
@@ -425,6 +427,7 @@ async def _handle_query_submission(
         return
 
     judge_settings = _build_judge_settings_from_session()
+    common_settings = _build_common_settings_from_session()
     info(f"{RUN_APP_QUERY_RUN_INFO} {query or f'paper {selected_paper_id}'}")
     await _execute_query_background(
         query,
@@ -436,6 +439,7 @@ async def _handle_query_submission(
         token_limit,
         judge_settings,
         paper_id=selected_paper_id,
+        common_settings=common_settings,
     )
     st.rerun()
 
