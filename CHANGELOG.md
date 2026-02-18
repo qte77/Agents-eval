@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Engine selector radio (`MAS (PydanticAI)` / `Claude Code`) on App page; engine stored in `st.session_state.engine` (STORY-014)
+- CC availability check via `shutil.which("claude")` cached in `st.session_state.cc_available`; warning shown when CC engine selected but CLI not found (STORY-014)
+- `engine: str = "mas"` parameter added to `_execute_query_background()` and `_handle_query_submission()` in `run_app.py` (STORY-014)
 - `SweepConfig.retry_delay_seconds: float = Field(default=5.0)`: initial retry delay for rate-limit backoff in sweep evaluations (STORY-013b)
 - `SweepRunner._save_results_json()`: incremental JSON persistence after each successful evaluation for crash resilience (STORY-013b)
 - `SweepRunner._handle_rate_limit()`: exponential backoff helper for 429 retries (STORY-013b)
@@ -25,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SweepRunner._save_results()`: now delegates JSON write to `_save_results_json()` then writes `summary.md`; writes incrementally after each evaluation (STORY-013b)
 - `_handle_model_http_error()` in `agent_system.py`: re-raises `ModelHTTPError` instead of `SystemExit(1)` for 429, enabling callers to implement retry logic (STORY-013b)
 - `run_manager()` in `agent_system.py`: catches `ModelHTTPError` with status 429 and raises `SystemExit(1)` directly, preserving CLI behavior (STORY-013b)
+- `src/gui/pages/run_app.py`: MAS agent toggles shown with info note and logically disabled when CC engine selected (STORY-014)
+
+### Fixed
+
+- `CCTraceAdapter._extract_coordination_events()`: was a stub returning `[]`; now parses `inboxes/*.json` messages in teams mode and returns them as coordination events (STORY-014)
 
 - `tests/gui/test_editable_common_settings.py`: new test module for editable common settings — covers log level selectbox options/tooltip, max content length range/tooltip, logfire consolidation to JudgeSettings, reset button clearing common_* keys, and _build_common_settings_from_session() helper (STORY-010)
 
