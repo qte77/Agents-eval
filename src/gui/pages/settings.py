@@ -233,14 +233,55 @@ def _render_observability_settings(judge_settings: JudgeSettings) -> None:
         )
 
 
+def _render_common_settings(common_settings: CommonSettings) -> None:
+    """Render editable Common Settings section with tooltips.
+
+    Displays log level selectbox and max content length number input,
+    storing selections to session state with the 'common_' prefix.
+    Logfire is consolidated to JudgeSettings (not shown here).
+
+    Args:
+        common_settings: CommonSettings instance with default values.
+    """
+    with expander("Common Settings", expanded=True):
+        st.session_state["common_log_level"] = selectbox(
+            "Log Level",
+            options=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            index=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"].index(
+                st.session_state.get("common_log_level", common_settings.log_level)
+            ),
+            key="common_log_level_selectbox",
+            help=(
+                "Controls application logging verbosity. "
+                "DEBUG shows all messages; CRITICAL shows only fatal errors."
+            ),
+        )
+        st.session_state["common_max_content_length"] = number_input(
+            "Max Content Length",
+            min_value=1000,
+            max_value=100000,
+            value=st.session_state.get(
+                "common_max_content_length", common_settings.max_content_length
+            ),
+            step=1000,
+            key="common_max_content_length_input",
+            help=(
+                "Maximum number of characters for paper content passed to agents. "
+                "Valid range: 1000–100000."
+            ),
+        )
+
+
 def _render_reset_button() -> None:
     """Render reset to defaults button and handle reset logic."""
     if button("Reset to Defaults"):
-        # Clear all judge settings from session state
-        judge_keys = [
-            k for k in st.session_state.keys() if isinstance(k, str) and k.startswith("judge_")
+        # Clear all judge and common settings from session state
+        keys_to_clear = [
+            k
+            for k in st.session_state.keys()
+            if isinstance(k, str) and (k.startswith("judge_") or k.startswith("common_"))
         ]
-        for key in judge_keys:
+        for key in keys_to_clear:
             del st.session_state[key]
         st.rerun()
 
@@ -267,11 +308,8 @@ def render_settings(common_settings: CommonSettings, judge_settings: JudgeSettin
     # Agent Configuration Section
     _render_agent_configuration()
 
-    # Common Settings Section (read-only for now)
-    with expander("Common Settings", expanded=True):
-        text(f"Log Level: {common_settings.log_level}")
-        text(f"Enable Logfire: {common_settings.enable_logfire}")
-        text(f"Max Content Length: {common_settings.max_content_length}")
+    # Common Settings Section (editable)
+    _render_common_settings(common_settings)
 
     # Judge Settings - Editable Sections
     _render_tier_configuration(judge_settings)

@@ -12,10 +12,23 @@ Verifies that:
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from app.common.settings import CommonSettings
 from app.judge.settings import JudgeSettings
+
+
+def _make_session_state_mock(initial: dict | None = None) -> MagicMock:
+    """Create a MagicMock that behaves like st.session_state for dict-like access."""
+    data = dict(initial or {})
+    mock = MagicMock()
+    mock.__getitem__ = lambda self, k: data[k]
+    mock.__setitem__ = lambda self, k, v: data.__setitem__(k, v)
+    mock.__delitem__ = lambda self, k: data.__delitem__(k)
+    mock.__contains__ = lambda self, k: k in data
+    mock.keys = lambda: data.keys()
+    mock.items = lambda: data.items()
+    mock.get = lambda k, default=None: data.get(k, default)
+    mock._data = data
+    return mock
 
 
 class TestEditableCommonSettingsWidgets:
@@ -23,28 +36,26 @@ class TestEditableCommonSettingsWidgets:
 
     def test_log_level_selectbox_stores_to_session_state(self):
         """Test that log level selectbox stores selection to common_log_level in session state."""
-        # Arrange
-        mock_session_state: dict = {}
+        # Arrange — patch at the import location used by settings.py
+        mock_session = _make_session_state_mock()
         mock_selectbox = MagicMock(return_value="DEBUG")
 
         with (
-            patch("streamlit.session_state", mock_session_state),
-            patch("streamlit.selectbox", mock_selectbox),
-            patch("streamlit.expander"),
-            patch("streamlit.header"),
-            patch("streamlit.text"),
-            patch("streamlit.checkbox", return_value=False),
-            patch("streamlit.number_input", return_value=15000),
-            patch("streamlit.button", return_value=False),
-            patch("streamlit.text_input", return_value=""),
+            patch("gui.pages.settings.selectbox", mock_selectbox),
+            patch("streamlit.session_state", mock_session),
+            patch("gui.pages.settings.st.session_state", mock_session),
+            patch("gui.pages.settings.expander"),
+            patch("gui.pages.settings.header"),
+            patch("gui.pages.settings.text"),
+            patch("gui.pages.settings.checkbox", return_value=False),
+            patch("gui.pages.settings.number_input", return_value=15000),
+            patch("gui.pages.settings.button", return_value=False),
+            patch("gui.pages.settings.text_input", return_value=""),
             patch("gui.pages.settings._render_agent_configuration"),
         ):
-            common_settings = CommonSettings()
-            judge_settings = JudgeSettings()
-
             from gui.pages.settings import render_settings
 
-            render_settings(common_settings, judge_settings)
+            render_settings(CommonSettings(), JudgeSettings())
 
         # Assert - selectbox called for log level with correct options
         log_level_calls = [
@@ -59,19 +70,20 @@ class TestEditableCommonSettingsWidgets:
 
     def test_log_level_selectbox_has_help_tooltip(self):
         """Test that log level selectbox has a help tooltip."""
-        # Arrange
+        mock_session = _make_session_state_mock()
         mock_selectbox = MagicMock(return_value="INFO")
 
         with (
-            patch("streamlit.selectbox", mock_selectbox),
-            patch("streamlit.session_state", {}),
-            patch("streamlit.expander"),
-            patch("streamlit.header"),
-            patch("streamlit.text"),
-            patch("streamlit.checkbox", return_value=False),
-            patch("streamlit.number_input", return_value=15000),
-            patch("streamlit.button", return_value=False),
-            patch("streamlit.text_input", return_value=""),
+            patch("gui.pages.settings.selectbox", mock_selectbox),
+            patch("streamlit.session_state", mock_session),
+            patch("gui.pages.settings.st.session_state", mock_session),
+            patch("gui.pages.settings.expander"),
+            patch("gui.pages.settings.header"),
+            patch("gui.pages.settings.text"),
+            patch("gui.pages.settings.checkbox", return_value=False),
+            patch("gui.pages.settings.number_input", return_value=15000),
+            patch("gui.pages.settings.button", return_value=False),
+            patch("gui.pages.settings.text_input", return_value=""),
             patch("gui.pages.settings._render_agent_configuration"),
         ):
             from gui.pages.settings import render_settings
@@ -89,19 +101,20 @@ class TestEditableCommonSettingsWidgets:
 
     def test_max_content_length_number_input_range(self):
         """Test that max content length number input has correct min/max/step values."""
-        # Arrange
+        mock_session = _make_session_state_mock()
         mock_number_input = MagicMock(return_value=15000)
 
         with (
-            patch("streamlit.number_input", mock_number_input),
-            patch("streamlit.session_state", {}),
-            patch("streamlit.selectbox", return_value="INFO"),
-            patch("streamlit.expander"),
-            patch("streamlit.header"),
-            patch("streamlit.text"),
-            patch("streamlit.checkbox", return_value=False),
-            patch("streamlit.button", return_value=False),
-            patch("streamlit.text_input", return_value=""),
+            patch("gui.pages.settings.number_input", mock_number_input),
+            patch("streamlit.session_state", mock_session),
+            patch("gui.pages.settings.st.session_state", mock_session),
+            patch("gui.pages.settings.selectbox", return_value="INFO"),
+            patch("gui.pages.settings.expander"),
+            patch("gui.pages.settings.header"),
+            patch("gui.pages.settings.text"),
+            patch("gui.pages.settings.checkbox", return_value=False),
+            patch("gui.pages.settings.button", return_value=False),
+            patch("gui.pages.settings.text_input", return_value=""),
             patch("gui.pages.settings._render_agent_configuration"),
         ):
             from gui.pages.settings import render_settings
@@ -121,18 +134,20 @@ class TestEditableCommonSettingsWidgets:
 
     def test_max_content_length_has_help_tooltip(self):
         """Test that max content length number input has a help tooltip."""
+        mock_session = _make_session_state_mock()
         mock_number_input = MagicMock(return_value=15000)
 
         with (
-            patch("streamlit.number_input", mock_number_input),
-            patch("streamlit.session_state", {}),
-            patch("streamlit.selectbox", return_value="INFO"),
-            patch("streamlit.expander"),
-            patch("streamlit.header"),
-            patch("streamlit.text"),
-            patch("streamlit.checkbox", return_value=False),
-            patch("streamlit.button", return_value=False),
-            patch("streamlit.text_input", return_value=""),
+            patch("gui.pages.settings.number_input", mock_number_input),
+            patch("streamlit.session_state", mock_session),
+            patch("gui.pages.settings.st.session_state", mock_session),
+            patch("gui.pages.settings.selectbox", return_value="INFO"),
+            patch("gui.pages.settings.expander"),
+            patch("gui.pages.settings.header"),
+            patch("gui.pages.settings.text"),
+            patch("gui.pages.settings.checkbox", return_value=False),
+            patch("gui.pages.settings.button", return_value=False),
+            patch("gui.pages.settings.text_input", return_value=""),
             patch("gui.pages.settings._render_agent_configuration"),
         ):
             from gui.pages.settings import render_settings
@@ -153,26 +168,27 @@ class TestEditableCommonSettingsWidgets:
     def test_no_separate_logfire_toggle_in_common_settings(self):
         """Test that common settings does not show a separate logfire checkbox (consolidated)."""
         # Logfire is consolidated to JudgeSettings only
+        mock_session = _make_session_state_mock()
         mock_checkbox = MagicMock(return_value=False)
 
         with (
-            patch("streamlit.checkbox", mock_checkbox),
-            patch("streamlit.session_state", {}),
-            patch("streamlit.selectbox", return_value="INFO"),
-            patch("streamlit.number_input", return_value=15000),
-            patch("streamlit.expander"),
-            patch("streamlit.header"),
-            patch("streamlit.text"),
-            patch("streamlit.button", return_value=False),
-            patch("streamlit.text_input", return_value=""),
+            patch("gui.pages.settings.checkbox", mock_checkbox),
+            patch("streamlit.session_state", mock_session),
+            patch("gui.pages.settings.st.session_state", mock_session),
+            patch("gui.pages.settings.selectbox", return_value="INFO"),
+            patch("gui.pages.settings.number_input", return_value=15000),
+            patch("gui.pages.settings.expander"),
+            patch("gui.pages.settings.header"),
+            patch("gui.pages.settings.text"),
+            patch("gui.pages.settings.button", return_value=False),
+            patch("gui.pages.settings.text_input", return_value=""),
             patch("gui.pages.settings._render_agent_configuration"),
         ):
             from gui.pages.settings import render_settings
 
             render_settings(CommonSettings(), JudgeSettings())
 
-        # There should be no checkbox with "Enable Logfire" or "enable_logfire" label
-        # from common settings section
+        # There should be no checkbox with "Enable Logfire" label from common settings section
         logfire_common_calls = [
             call
             for call in mock_checkbox.call_args_list
@@ -185,38 +201,43 @@ class TestEditableCommonSettingsWidgets:
 
     def test_common_settings_stored_with_common_prefix(self):
         """Test that common settings values are stored in session state with common_ prefix."""
-        session_state: dict = {}
+        session_data: dict = {}
+        mock_session = _make_session_state_mock()
 
         def fake_selectbox(label, **kwargs):
             if "Log Level" in label:
-                session_state["common_log_level"] = "WARNING"
+                mock_session["common_log_level"] = "WARNING"
+                session_data["common_log_level"] = "WARNING"
                 return "WARNING"
-            return kwargs.get("options", [""])[0] if kwargs.get("options") else ""
+            options = kwargs.get("options", [""])
+            return options[0] if options else ""
 
         def fake_number_input(label, **kwargs):
             if "Max Content Length" in label:
-                session_state["common_max_content_length"] = 20000
+                mock_session["common_max_content_length"] = 20000
+                session_data["common_max_content_length"] = 20000
                 return 20000
             return kwargs.get("value", 0)
 
         with (
-            patch("streamlit.selectbox", side_effect=fake_selectbox),
-            patch("streamlit.number_input", side_effect=fake_number_input),
-            patch("streamlit.session_state", session_state),
-            patch("streamlit.expander"),
-            patch("streamlit.header"),
-            patch("streamlit.text"),
-            patch("streamlit.checkbox", return_value=False),
-            patch("streamlit.button", return_value=False),
-            patch("streamlit.text_input", return_value=""),
+            patch("gui.pages.settings.selectbox", side_effect=fake_selectbox),
+            patch("gui.pages.settings.number_input", side_effect=fake_number_input),
+            patch("streamlit.session_state", mock_session),
+            patch("gui.pages.settings.st.session_state", mock_session),
+            patch("gui.pages.settings.expander"),
+            patch("gui.pages.settings.header"),
+            patch("gui.pages.settings.text"),
+            patch("gui.pages.settings.checkbox", return_value=False),
+            patch("gui.pages.settings.button", return_value=False),
+            patch("gui.pages.settings.text_input", return_value=""),
             patch("gui.pages.settings._render_agent_configuration"),
         ):
             from gui.pages.settings import render_settings
 
             render_settings(CommonSettings(), JudgeSettings())
 
-        assert "common_log_level" in session_state
-        assert "common_max_content_length" in session_state
+        assert "common_log_level" in session_data
+        assert "common_max_content_length" in session_data
 
 
 class TestResetButtonClearsCommonSettings:
@@ -224,44 +245,46 @@ class TestResetButtonClearsCommonSettings:
 
     def test_reset_button_clears_common_keys(self):
         """Test that _render_reset_button clears common_* keys from session state."""
-        # Arrange - session state with common_ and judge_ keys
-        mock_session_state = {
+        # Arrange - use real session state mock dict
+        session_data = {
             "common_log_level": "DEBUG",
             "common_max_content_length": 20000,
             "judge_tier1_max_seconds": 2.0,
         }
+        mock_session = _make_session_state_mock(session_data)
 
         with (
-            patch("streamlit.session_state", mock_session_state),
-            patch("streamlit.button", return_value=True),
-            patch("streamlit.rerun"),
+            patch("gui.pages.settings.st.session_state", mock_session),
+            patch("gui.pages.settings.button", return_value=True),
+            patch("gui.pages.settings.st.rerun"),
         ):
             from gui.pages.settings import _render_reset_button
 
             _render_reset_button()
 
-        assert "common_log_level" not in mock_session_state
-        assert "common_max_content_length" not in mock_session_state
+        assert "common_log_level" not in mock_session._data
+        assert "common_max_content_length" not in mock_session._data
 
     def test_reset_button_clears_judge_keys_too(self):
         """Test that _render_reset_button still clears judge_* keys."""
-        mock_session_state = {
+        session_data = {
             "common_log_level": "DEBUG",
             "judge_tier1_max_seconds": 2.0,
             "judge_composite_accept_threshold": 0.9,
         }
+        mock_session = _make_session_state_mock(session_data)
 
         with (
-            patch("streamlit.session_state", mock_session_state),
-            patch("streamlit.button", return_value=True),
-            patch("streamlit.rerun"),
+            patch("gui.pages.settings.st.session_state", mock_session),
+            patch("gui.pages.settings.button", return_value=True),
+            patch("gui.pages.settings.st.rerun"),
         ):
             from gui.pages.settings import _render_reset_button
 
             _render_reset_button()
 
-        assert "judge_tier1_max_seconds" not in mock_session_state
-        assert "judge_composite_accept_threshold" not in mock_session_state
+        assert "judge_tier1_max_seconds" not in mock_session._data
+        assert "judge_composite_accept_threshold" not in mock_session._data
 
 
 class TestBuildCommonSettingsFromSession:
@@ -269,9 +292,9 @@ class TestBuildCommonSettingsFromSession:
 
     def test_returns_none_when_no_common_overrides(self):
         """Test that _build_common_settings_from_session returns None when no common_ keys exist."""
-        mock_session_state = {}
+        mock_session = _make_session_state_mock({})
 
-        with patch("streamlit.session_state", mock_session_state):
+        with patch("gui.pages.run_app.st.session_state", mock_session):
             from gui.pages.run_app import _build_common_settings_from_session
 
             result = _build_common_settings_from_session()
@@ -280,9 +303,9 @@ class TestBuildCommonSettingsFromSession:
 
     def test_returns_common_settings_with_log_level_override(self):
         """Test that _build_common_settings_from_session returns CommonSettings with overrides."""
-        mock_session_state = {"common_log_level": "DEBUG"}
+        mock_session = _make_session_state_mock({"common_log_level": "DEBUG"})
 
-        with patch("streamlit.session_state", mock_session_state):
+        with patch("gui.pages.run_app.st.session_state", mock_session):
             from gui.pages.run_app import _build_common_settings_from_session
 
             result = _build_common_settings_from_session()
@@ -293,9 +316,9 @@ class TestBuildCommonSettingsFromSession:
 
     def test_returns_common_settings_with_max_content_length_override(self):
         """Test that max_content_length override is applied correctly."""
-        mock_session_state = {"common_max_content_length": 50000}
+        mock_session = _make_session_state_mock({"common_max_content_length": 50000})
 
-        with patch("streamlit.session_state", mock_session_state):
+        with patch("gui.pages.run_app.st.session_state", mock_session):
             from gui.pages.run_app import _build_common_settings_from_session
 
             result = _build_common_settings_from_session()
@@ -305,12 +328,11 @@ class TestBuildCommonSettingsFromSession:
 
     def test_returns_common_settings_with_multiple_overrides(self):
         """Test that multiple common_ overrides are all applied."""
-        mock_session_state = {
-            "common_log_level": "WARNING",
-            "common_max_content_length": 30000,
-        }
+        mock_session = _make_session_state_mock(
+            {"common_log_level": "WARNING", "common_max_content_length": 30000}
+        )
 
-        with patch("streamlit.session_state", mock_session_state):
+        with patch("gui.pages.run_app.st.session_state", mock_session):
             from gui.pages.run_app import _build_common_settings_from_session
 
             result = _build_common_settings_from_session()
@@ -321,11 +343,9 @@ class TestBuildCommonSettingsFromSession:
 
     def test_does_not_include_judge_keys_in_common_settings(self):
         """Test that judge_ prefixed keys are not included in CommonSettings build."""
-        mock_session_state = {
-            "judge_tier1_max_seconds": 2.0,
-        }
+        mock_session = _make_session_state_mock({"judge_tier1_max_seconds": 2.0})
 
-        with patch("streamlit.session_state", mock_session_state):
+        with patch("gui.pages.run_app.st.session_state", mock_session):
             from gui.pages.run_app import _build_common_settings_from_session
 
             result = _build_common_settings_from_session()
@@ -334,12 +354,11 @@ class TestBuildCommonSettingsFromSession:
 
     def test_ignores_extra_common_keys_gracefully(self):
         """Test that unknown common_ keys are handled without error (CommonSettings uses extra=ignore)."""
-        mock_session_state = {
-            "common_log_level": "ERROR",
-            "common_unknown_setting": "some_value",
-        }
+        mock_session = _make_session_state_mock(
+            {"common_log_level": "ERROR", "common_unknown_setting": "some_value"}
+        )
 
-        with patch("streamlit.session_state", mock_session_state):
+        with patch("gui.pages.run_app.st.session_state", mock_session):
             from gui.pages.run_app import _build_common_settings_from_session
 
             result = _build_common_settings_from_session()

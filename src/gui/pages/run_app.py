@@ -24,6 +24,7 @@ from app.app import main
 from app.config.config_app import CHAT_DEFAULT_PROVIDER
 from app.data_models.peerread_models import PeerReadPaper
 from app.data_utils.datasets_peerread import PeerReadLoader
+from app.common.settings import CommonSettings
 from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 from gui.components.output import render_output
@@ -139,6 +140,28 @@ def _build_judge_settings_from_session() -> JudgeSettings | None:
 
     # Build JudgeSettings with overrides
     return JudgeSettings(**judge_overrides)
+
+
+def _build_common_settings_from_session() -> CommonSettings | None:
+    """Build CommonSettings from session state overrides.
+
+    Checks session state for common settings overrides (prefixed with 'common_')
+    and constructs a CommonSettings instance if any are found. If no overrides
+    exist, returns None to use defaults.
+
+    Returns:
+        CommonSettings instance with session state overrides, or None if no overrides.
+    """
+    common_overrides = {
+        k.replace("common_", ""): v
+        for k, v in st.session_state.items()
+        if isinstance(k, str) and k.startswith("common_")
+    }
+
+    if not common_overrides:
+        return None
+
+    return CommonSettings(**common_overrides)
 
 
 def _format_enabled_agents(
