@@ -219,7 +219,24 @@ class TestCCTraceAdapterTeamsMode:
                     ]
                 ),
                 "timing_data": snapshot({"start_time": 1708000000.0, "end_time": 1708000100.0}),
-                "coordination_events": snapshot([]),
+                "coordination_events": snapshot(
+                    [
+                        {
+                            "from": "leader",
+                            "to": "worker",
+                            "type": "task_assignment",
+                            "content": "Process dataset",
+                            "timestamp": 1708000000.0,
+                        },
+                        {
+                            "from": "worker",
+                            "to": "leader",
+                            "type": "task_complete",
+                            "content": "Dataset processed",
+                            "timestamp": 1708000100.0,
+                        },
+                    ]
+                ),
             }
         )
 
