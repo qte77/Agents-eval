@@ -89,8 +89,8 @@ def parse_args() -> argparse.Namespace:
 def _load_config_from_file(config_path: Path) -> SweepConfig | None:
     """Load sweep config from JSON file.
 
-    Supports both new ('paper_ids', 'chat_provider') and legacy ('paper_numbers', 'provider') keys.
-    Legacy keys are accepted with a deprecation log for backward compatibility.
+    Requires 'paper_ids' and optionally 'chat_provider' keys.
+    Legacy keys ('paper_numbers', 'provider') are no longer accepted.
     """
     if not config_path.exists():
         logger.error(f"Config file not found: {config_path}")
@@ -101,24 +101,12 @@ def _load_config_from_file(config_path: Path) -> SweepConfig | None:
 
     compositions = [AgentComposition(**comp) for comp in config_data.get("compositions", [])]
 
-    # Backward compat: accept 'paper_numbers' (old) or 'paper_ids' (new)
-    if "paper_ids" in config_data:
-        paper_ids = [str(p) for p in config_data["paper_ids"]]
-    elif "paper_numbers" in config_data:
-        logger.warning("Config key 'paper_numbers' is deprecated, use 'paper_ids' instead")
-        paper_ids = [str(p) for p in config_data["paper_numbers"]]
-    else:
+    if "paper_ids" not in config_data:
         logger.error("Config file missing required key 'paper_ids'")
         return None
+    paper_ids = [str(p) for p in config_data["paper_ids"]]
 
-    # Backward compat: accept 'provider' (old) or 'chat_provider' (new)
-    if "chat_provider" in config_data:
-        chat_provider = config_data["chat_provider"]
-    elif "provider" in config_data:
-        logger.warning("Config key 'provider' is deprecated, use 'chat_provider' instead")
-        chat_provider = config_data["provider"]
-    else:
-        chat_provider = CHAT_DEFAULT_PROVIDER
+    chat_provider = config_data.get("chat_provider", CHAT_DEFAULT_PROVIDER)
 
     return SweepConfig(
         compositions=compositions,

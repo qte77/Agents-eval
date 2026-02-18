@@ -68,9 +68,10 @@ class LLMJudgeEngine:
         self.fallback_model = settings.tier2_fallback_model
 
         # Call select_available_provider to validate and fallback if needed
+        self._api_key: str | None = None
         selected = self.select_available_provider(env_config)
         if selected:
-            self.provider, self.model = selected
+            self.provider, self.model, self._api_key = selected
             self.tier2_available = True
         else:
             # No providers available - mark Tier 2 as unavailable
@@ -93,42 +94,47 @@ class LLMJudgeEngine:
         # Track auth failures for fallback_used flag
         self._auth_failure_count = 0
 
-    def validate_provider_api_key(self, provider: str, env_config: AppEnv) -> bool:
-        """Validate API key availability for a provider.
+    def _resolve_provider_key(self, provider: str, env_config: AppEnv) -> tuple[bool, str | None]:
+        """Resolve API key for a provider.
 
         Args:
-            provider: Provider name to validate
+            provider: Provider name to resolve
             env_config: Application environment configuration
 
         Returns:
-            True if API key is available and valid, False otherwise
+            Tuple of (is_valid, api_key). api_key is the actual key string on success, None on failure.
         """
-        is_valid, message = get_api_key(provider, env_config)
+        is_valid, key_or_message = get_api_key(provider, env_config)
         if not is_valid:
-            logger.debug(f"API key validation failed for {provider}: {message}")
-        return is_valid
+            logger.debug(f"API key validation failed for {provider}: {key_or_message}")
+            return (False, None)
+        return (True, key_or_message)
 
-    def select_available_provider(self, env_config: AppEnv) -> tuple[str, str] | None:
+    def select_available_provider(
+        self, env_config: AppEnv
+    ) -> tuple[str, str, str | None] | None:
         """Select available provider with fallback chain.
 
         Args:
             env_config: Application environment configuration
 
         Returns:
-            Tuple of (provider, model) if available, None if no providers available
+            Tuple of (provider, model, api_key) if available, None if no providers available.
         """
         # Try primary provider first
-        if self.validate_provider_api_key(self.provider, env_config):
+        is_valid, api_key = self._resolve_provider_key(self.provider, env_config)
+        if is_valid:
             logger.info(f"Using primary provider: {self.provider}/{self.model}")
-            return (self.provider, self.model)
+            return (self.provider, self.model, api_key)
 
         # Try fallback provider
-        if self.validate_provider_api_key(self.fallback_provider, env_config):
+        is_valid, api_key = self._resolve_provider_key(self.fallback_provider, env_config)
+        if is_valid:
             logger.info(
                 f"Primary provider unavailable, using fallback: "
                 f"{self.fallback_provider}/{self.fallback_model}"
             )
-            return (self.fallback_provider, self.fallback_model)
+            return (self.fallback_provider, self.fallback_model, api_key)
 
         # No providers available
         logger.warning(
@@ -157,7 +163,10 @@ class LLMJudgeEngine:
             model = self.model
 
         return create_evaluation_agent(
-            provider=provider, model_name=model, assessment_type=assessment_type
+            provider=provider,
+            model_name=model,
+            assessment_type=assessment_type,
+            api_key=self._api_key,
         )
 
     async def assess_technical_accuracy(self, paper: str, review: str) -> float:

@@ -175,19 +175,19 @@ def create_simple_model(provider: str, model_name: str, api_key: str | None = No
     if provider.lower() == "openai":
         return OpenAIChatModel(
             model_name=model_name,
-            provider=OpenAIProvider(api_key=api_key or "not-required"),
+            provider=OpenAIProvider(api_key=api_key),
         )
     elif provider.lower() == "github":
         return OpenAIChatModel(
             model_name=model_name,
             provider=OpenAIProvider(
                 base_url="https://models.inference.ai.azure.com",
-                api_key=api_key or "not-required",
+                api_key=api_key,
             ),
         )
     else:
         # Generic OpenAI-compatible format
         return OpenAIChatModel(
             model_name=model_name,
-            provider=OpenAIProvider(api_key=api_key or "not-required"),
+            provider=OpenAIProvider(api_key=api_key),
         )

@@ -323,38 +323,43 @@ class TestLLMJudgeEngine:
 class TestProviderSelection:
     """Test suite for provider selection with fallback chain (STORY-001)."""
 
-    def test_validate_provider_api_key_with_valid_key(self):
-        """Should return True when provider has valid API key."""
+    def test_resolve_provider_key_with_valid_key(self):
+        """Should return (True, key) when provider has valid API key."""
         settings = JudgeSettings(tier2_provider="openai")
         engine = LLMJudgeEngine(settings)
         env_config = AppEnv(OPENAI_API_KEY="sk-test-key-123")
 
-        is_valid = engine.validate_provider_api_key("openai", env_config)
+        is_valid, api_key = engine._resolve_provider_key("openai", env_config)
 
         assert is_valid is True
+        assert api_key == "sk-test-key-123"
 
-    def test_validate_provider_api_key_with_missing_key(self):
-        """Should return False when provider API key is missing."""
+    def test_resolve_provider_key_with_missing_key(self):
+        """Should return (False, None) when provider API key is missing."""
         settings = JudgeSettings(tier2_provider="openai")
         engine = LLMJudgeEngine(settings)
         env_config = AppEnv(OPENAI_API_KEY="")
 
-        is_valid = engine.validate_provider_api_key("openai", env_config)
+        is_valid, api_key = engine._resolve_provider_key("openai", env_config)
 
         assert is_valid is False
+        assert api_key is None
 
     def test_select_available_provider_primary_available(self):
-        """Should select primary provider when API key is available."""
+        """Should select primary provider with API key when available."""
         settings = JudgeSettings(tier2_provider="openai", tier2_model="gpt-4o-mini")
         env_config = AppEnv(OPENAI_API_KEY="sk-test-key", GITHUB_API_KEY="")
         engine = LLMJudgeEngine(settings, env_config=env_config)
 
         result = engine.select_available_provider(env_config)
 
-        assert result == ("openai", "gpt-4o-mini")
+        assert result is not None
+        provider, model, api_key = result
+        assert (provider, model) == ("openai", "gpt-4o-mini")
+        assert api_key == "sk-test-key"
 
     def test_select_available_provider_fallback_when_primary_unavailable(self):
-        """Should select fallback provider when primary API key is missing."""
+        """Should select fallback provider with API key when primary unavailable."""
         settings = JudgeSettings(
             tier2_provider="openai",
             tier2_model="gpt-4o-mini",
@@ -366,7 +371,10 @@ class TestProviderSelection:
 
         result = engine.select_available_provider(env_config)
 
-        assert result == ("github", "gpt-4o-mini")
+        assert result is not None
+        provider, model, api_key = result
+        assert (provider, model) == ("github", "gpt-4o-mini")
+        assert api_key == "ghp-test-key"
 
     def test_select_available_provider_none_when_both_unavailable(self):
         """Should return None when both primary and fallback providers unavailable."""
@@ -663,10 +671,12 @@ class TestProviderSelectionProperties:
         # Invariants
         if primary_has_key:
             # Primary available -> should select primary, never fallback
-            assert result == ("openai", "gpt-4o-mini")
+            assert result is not None
+            assert (result[0], result[1]) == ("openai", "gpt-4o-mini")
         elif fallback_has_key:
             # Primary unavailable, fallback available -> should select fallback
-            assert result == ("github", "gpt-4o-mini")
+            assert result is not None
+            assert (result[0], result[1]) == ("github", "gpt-4o-mini")
         else:
             # Both unavailable -> should return None
             assert result is None
