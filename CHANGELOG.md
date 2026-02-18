@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `src/run_cli.py`: `--paper-number` renamed to `--paper-id` (string, supports arxiv IDs); `--judge-provider` and `--judge-model` args added for Tier 2 judge override (STORY-012)
+- `src/run_sweep.py`: `--paper-numbers` renamed to `--paper-ids` (string, no int cast); `--provider` renamed to `--chat-provider`; `--judge-provider` and `--judge-model` args added; JSON config backward-compat reads old keys with deprecation warning (STORY-012)
+- `src/app/app.py`: `main()` and `_prepare_query()` parameter `paper_number` renamed to `paper_id` (STORY-012)
+- `src/app/judge/evaluation_runner.py`: `run_evaluation_if_enabled()` parameter `paper_number` renamed to `paper_id` (STORY-012)
+- `src/app/benchmark/sweep_config.py`: `SweepConfig.paper_numbers: list[int]` renamed to `paper_ids: list[str]`; `judge_provider: str` and `judge_model: str | None` fields added (STORY-012)
+- `src/app/benchmark/sweep_runner.py`: `_run_single_evaluation()` updated to use `paper_id: str`; `_build_judge_settings()` helper constructs `JudgeSettings` from `judge_provider`/`judge_model`; `paper_id` threaded to `main()` call (STORY-012)
+- `src/gui/pages/run_app.py`: `main(paper_number=...)` call updated to `main(paper_id=...)` (STORY-012)
+- `src/app/config/config_chat.json`: `paper_review_query` template updated from `{paper_number}` to `{paper_id}` (STORY-012)
+
 - `src/gui/pages/settings.py`: replaced read-only Common Settings text display with editable widgets — `st.selectbox` for Log Level (DEBUG/INFO/WARNING/ERROR/CRITICAL with help tooltip), `st.number_input` for Max Content Length (min=1000, max=100000, step=1000 with help tooltip); removed duplicate Enable Logfire toggle (consolidated to JudgeSettings); added `_render_common_settings()` helper; updated `_render_reset_button()` to also clear `common_*` session state keys (STORY-010)
 - `src/gui/pages/run_app.py`: added `_build_common_settings_from_session()` helper mirroring `_build_judge_settings_from_session()` — reads `common_*` session state keys and constructs `CommonSettings` override; added `common_settings` parameter to `_execute_query_background`; wired helper into `_handle_query_submission`; added `CommonSettings` import (STORY-010)
 - `src/gui/pages/run_app.py`: added paper selection mode — radio toggle between "Free-form query" and "Select a paper"; paper dropdown lists locally downloaded PeerRead papers by ID and title; abstract displayed below dropdown on selection; `_execute_query_background` accepts `paper_id` kwarg forwarded to `main(paper_id=...)` (STORY-009)
