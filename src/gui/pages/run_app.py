@@ -282,6 +282,7 @@ async def _execute_query_background(
             token_limit=token_limit,
             judge_settings=judge_settings,
             paper_id=paper_id,
+            engine=engine,
         )
 
         # Store result and transition to completed

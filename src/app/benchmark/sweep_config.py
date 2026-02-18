@@ -82,6 +82,11 @@ class SweepConfig(BaseModel):
         description="LLM model for Tier 2 judge (default: None uses JudgeSettings default)",
     )
 
+    cc_teams: bool = Field(
+        default=False,
+        description="Use Claude Code Agent Teams mode (requires engine='cc')",
+    )
+
     cc_artifact_dirs: list[Path] | None = Field(
         default=None,
         description="Pre-collected CC artifact directories (skips re-running CC)",

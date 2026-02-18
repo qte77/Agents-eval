@@ -82,6 +82,12 @@ def parse_args() -> argparse.Namespace:
         default="mas",
         help="Execution engine: 'mas' for MAS pipeline (default), 'cc' for Claude Code headless",
     )
+    parser.add_argument(
+        "--cc-teams",
+        action="store_true",
+        default=False,
+        help="Use Claude Code Agent Teams mode (requires --engine=cc)",
+    )
 
     return parser.parse_args()
 
@@ -115,6 +121,7 @@ def _load_config_from_file(config_path: Path) -> SweepConfig | None:
         output_dir=Path(config_data["output_dir"]),
         chat_provider=chat_provider,
         engine=config_data.get("engine", "mas"),
+        cc_teams=config_data.get("cc_teams", False),
         judge_provider=config_data.get("judge_provider", "auto"),
         judge_model=config_data.get("judge_model"),
     )
@@ -151,6 +158,7 @@ def _build_config_from_args(args: argparse.Namespace) -> SweepConfig | None:
         output_dir=output_dir,
         chat_provider=args.chat_provider,
         engine=args.engine,
+        cc_teams=args.cc_teams,
         judge_provider=args.judge_provider,
         judge_model=args.judge_model,
     )

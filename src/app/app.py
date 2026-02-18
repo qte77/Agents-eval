@@ -207,6 +207,7 @@ async def main(
     cc_teams_tasks_dir: str | None = None,
     token_limit: int | None = None,
     judge_settings: JudgeSettings | None = None,
+    engine: str = "mas",
 ) -> dict[str, Any] | None:
     """Main entry point for the application.
 
@@ -217,7 +218,7 @@ async def main(
         Dictionary with 'composite_result' (CompositeResult) and 'graph' (nx.DiGraph)
         if evaluation runs successfully, None otherwise (CLI mode or download-only).
     """
-    logger.info(f"Starting app '{PROJECT_NAME}' v{__version__}")
+    logger.info(f"Starting app '{PROJECT_NAME}' v{__version__} (engine={engine})")
 
     # Handle download-only mode (setup phase)
     if _handle_download_mode(

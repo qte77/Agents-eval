@@ -34,7 +34,6 @@ LIST_OF_FIGURES :=
 LIST_OF_TABLES :=
 UNNUMBERED_TITLE :=
 # CC baselines
-CC_TRACES_SCRIPT := scripts/collect-cc-traces
 CC_SOLO_OUTPUT := logs/cc/solo
 CC_TEAMS_OUTPUT := logs/cc/teams
 CC_TIMEOUT ?= 300
@@ -317,40 +316,28 @@ run_profile:  ## Profile app with scalene
 # MARK: CC baselines
 
 
-cc_run_solo:  ## Run CC solo + collect artifacts. Usage: make cc_run_solo PAPER_ID=1105.1072 [CC_TIMEOUT=300] [CC_MODEL=sonnet]
+cc_run_solo:  ## Run CC solo via Python entry point. Usage: make cc_run_solo PAPER_ID=1105.1072 [CC_TIMEOUT=300]
 	if [ -z "$(PAPER_ID)" ]; then
 		echo "Error: PAPER_ID required. Usage: make cc_run_solo PAPER_ID=1105.1072"
 		exit 1
 	fi
-	chmod +x $(CC_TRACES_SCRIPT)/run-cc.sh
-	$(CC_TRACES_SCRIPT)/run-cc.sh \
-		--paper-id "$(PAPER_ID)" \
-		--output-dir "$(CC_SOLO_OUTPUT)/$(PAPER_ID)_$$(date +%Y%m%d_%H%M%S)" \
-		--timeout "$(CC_TIMEOUT)" \
-		$(if $(CC_MODEL),--model "$(CC_MODEL)")
+	uv run python $(CLI_PATH) \
+		--engine cc \
+		--paper-id "$(PAPER_ID)"
 
-cc_collect_teams:  ## Collect existing CC teams artifacts from ~/.claude/. Usage: make cc_collect_teams TEAM_NAME=my-team
-	if [ -z "$(TEAM_NAME)" ]; then
-		echo "Error: TEAM_NAME required. Usage: make cc_collect_teams TEAM_NAME=my-team"
-		exit 1
-	fi
-	chmod +x $(CC_TRACES_SCRIPT)/collect-team-artifacts.sh
-	$(CC_TRACES_SCRIPT)/collect-team-artifacts.sh \
-		--name "$(TEAM_NAME)" \
-		--output-dir "$(CC_TEAMS_OUTPUT)/$(TEAM_NAME)_$$(date +%Y%m%d_%H%M%S)"
+cc_collect_teams:  ## Collect existing CC teams artifacts (stub — use cc_run_teams instead)
+	echo "Note: Use 'make cc_run_teams' to run CC in teams mode via the Python engine."
+	echo "Direct artifact collection is no longer supported (shell scripts removed)."
 
-cc_run_teams:  ## Run CC teams + collect artifacts. Usage: make cc_run_teams PAPER_ID=1105.1072 [CC_TEAMS_TIMEOUT=600] [CC_MODEL=opus]
+cc_run_teams:  ## Run CC teams via Python entry point. Usage: make cc_run_teams PAPER_ID=1105.1072 [CC_TEAMS_TIMEOUT=600]
 	if [ -z "$(PAPER_ID)" ]; then
 		echo "Error: PAPER_ID required. Usage: make cc_run_teams PAPER_ID=1105.1072"
 		exit 1
 	fi
-	chmod +x $(CC_TRACES_SCRIPT)/run-cc.sh
-	$(CC_TRACES_SCRIPT)/run-cc.sh \
-		--paper-id "$(PAPER_ID)" \
-		--output-dir "$(CC_TEAMS_OUTPUT)/$(PAPER_ID)_$$(date +%Y%m%d_%H%M%S)" \
-		--timeout "$(CC_TEAMS_TIMEOUT)" \
-		--teams \
-		$(if $(CC_MODEL),--model "$(CC_MODEL)")
+	uv run python $(CLI_PATH) \
+		--engine cc \
+		--cc-teams \
+		--paper-id "$(PAPER_ID)"
 
 
 # MARK: Sanity

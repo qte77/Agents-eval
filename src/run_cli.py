@@ -22,6 +22,7 @@ for _flag, _help in [
     ("--skip-eval", "Skip evaluation after run_manager completes"),
     ("--download-peerread-full-only", "Download all PeerRead data and exit (setup mode)"),
     ("--download-peerread-samples-only", "Download PeerRead sample and exit (setup mode)"),
+    ("--cc-teams", "Use Claude Code Agent Teams mode (requires --engine=cc)"),
 ]:
     _parser.add_argument(_flag, action="store_true", default=None, help=_help)
 
@@ -84,12 +85,11 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
 
 
 if __name__ == "__main__":
-    import json
-    import subprocess
     import sys
 
     args = parse_args(argv[1:])
     engine = args.pop("engine")
+    cc_teams = args.pop("cc_teams", False) or False
 
     if engine == "cc" and not shutil.which("claude"):
         print(
@@ -106,23 +106,15 @@ if __name__ == "__main__":
     logger.info(f"Used arguments: {args}")
 
     if engine == "cc":
-        query = args.get("query", "")
-        try:
-            result = subprocess.run(
-                ["claude", "-p", query, "--output-format", "json"],
-                capture_output=True,
-                text=True,
-                timeout=600,
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"CC failed: {result.stderr}")
-            try:
-                data = json.loads(result.stdout)
-            except json.JSONDecodeError as e:
-                raise ValueError(f"CC output not valid JSON: {e}") from e
-        except subprocess.TimeoutExpired as e:
-            raise RuntimeError(f"CC timed out after {e.timeout}s") from e
+        from app.engines.cc_engine import run_cc_solo, run_cc_teams
 
-        args["cc_solo_dir"] = data.get("session_dir")
+        query = args.get("query", "")
+        if cc_teams:
+            cc_result = run_cc_teams(query, timeout=600)
+        else:
+            cc_result = run_cc_solo(query, timeout=600)
+
+        if cc_result.session_dir:
+            args["cc_solo_dir"] = cc_result.session_dir
 
     run(main(**args))
