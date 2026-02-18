@@ -545,8 +545,6 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     else:
         query, selected_paper_id = _render_paper_selection_input()
 
-    subheader(OUTPUT_SUBHEADER)
-
     if button(RUN_APP_BUTTON):
         await _handle_query_submission(
             query,
@@ -560,5 +558,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
             engine=engine,
         )
 
+    # S8-F8.1: subheader placed after run button so output section follows user action
+    subheader(OUTPUT_SUBHEADER)
     _display_execution_result(_get_execution_state())
     _render_debug_log_panel()

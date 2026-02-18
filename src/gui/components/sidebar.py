@@ -20,13 +20,15 @@ def render_sidebar(sidebar_title: str, execution_state: str = "idle") -> str:
     if execution_state == "running":
         sidebar.info("⏳ Execution in progress…")
 
-    selected_page = sidebar.radio(" ", PAGES)
+    # S8-F8.1: WCAG 1.3.1, 2.4.6 — meaningful label with visual collapse avoids empty label
+    selected_page = sidebar.radio("Navigation", PAGES, label_visibility="collapsed")
 
     # Phoenix trace viewer link
     sidebar.divider()
     sidebar.markdown("### 🔍 Trace Viewer")
+    # S8-F8.1: "(opens in new tab)" warns users of external navigation
     sidebar.markdown(
-        f"[Open Phoenix Traces]({PHOENIX_DEFAULT_ENDPOINT})",
+        f"[Open Phoenix Traces (opens in new tab)]({PHOENIX_DEFAULT_ENDPOINT})",
         help="View detailed execution traces in Arize Phoenix",
     )
     sidebar.caption("Phoenix must be running locally on port 6006")
