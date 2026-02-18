@@ -6,7 +6,9 @@ Covers:
 - JudgeSettings constructed and passed to main() when judge args provided
 """
 
-from run_cli import _COMMANDS, parse_args
+import pytest
+
+from run_cli import _parser, parse_args
 
 
 class TestPaperIdRename:
@@ -17,13 +19,20 @@ class TestPaperIdRename:
         args = parse_args(["--paper-id=42"])
         assert args.get("paper_id") == "42"
 
-    def test_paper_id_in_commands_registry(self):
-        """Test that --paper-id is documented in _COMMANDS."""
-        assert "--paper-id" in _COMMANDS
+    def test_paper_id_registered_in_parser(self):
+        """Test that --paper-id is a recognized argument."""
+        option_strings = {a for action in _parser._actions for a in action.option_strings}
+        assert "--paper-id" in option_strings
 
-    def test_paper_number_no_longer_accepted(self):
-        """Test that --paper-number is no longer in _COMMANDS (renamed)."""
-        assert "--paper-number" not in _COMMANDS
+    def test_paper_number_not_registered(self):
+        """Test that --paper-number is not a recognized argument (renamed)."""
+        option_strings = {a for action in _parser._actions for a in action.option_strings}
+        assert "--paper-number" not in option_strings
+
+    def test_paper_number_rejected(self):
+        """Test that --paper-number is rejected by argparse."""
+        with pytest.raises(SystemExit):
+            parse_args(["--paper-number=42"])
 
     def test_paper_id_as_string(self):
         """Test that paper_id is a string (supports arxiv IDs like '1105.1072')."""
@@ -45,14 +54,6 @@ class TestJudgeProviderArgs:
         """Test that --judge-model is accepted."""
         args = parse_args(["--judge-model=gpt-4o"])
         assert args.get("judge_model") == "gpt-4o"
-
-    def test_judge_provider_in_commands_registry(self):
-        """Test that --judge-provider is documented in _COMMANDS."""
-        assert "--judge-provider" in _COMMANDS
-
-    def test_judge_model_in_commands_registry(self):
-        """Test that --judge-model is documented in _COMMANDS."""
-        assert "--judge-model" in _COMMANDS
 
     def test_judge_provider_auto_value(self):
         """Test that --judge-provider=auto is accepted."""

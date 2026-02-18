@@ -423,10 +423,11 @@ def test_cli_parse_args_includes_no_review_tools_flag():
 
 def test_cli_help_text_includes_no_review_tools():
     """Snapshot test for CLI help text showing --no-review-tools flag (STORY-009)."""
-    from run_cli import _COMMANDS
+    from run_cli import _parser
 
+    option_strings = {a for action in _parser._actions for a in action.option_strings}
     for expected_flag in ("--no-review-tools", "--enable-review-tools"):
-        assert expected_flag in _COMMANDS, f"Expected {expected_flag} in _COMMANDS dict"
+        assert expected_flag in option_strings, f"Expected {expected_flag} in parser"
 
 
 # STORY-007: Inline-snapshot tests for CLI output with baselines

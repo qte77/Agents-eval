@@ -32,11 +32,12 @@ class TestEngineArgParsing:
         args = parse_args(["--query=test"])
         assert args.get("engine") == "mas"
 
-    def test_engine_in_help_text(self):
-        """Test that --engine is documented in the CLI commands registry."""
-        import run_cli
+    def test_engine_registered_in_parser(self):
+        """Test that --engine is a recognized argument in the parser."""
+        from run_cli import _parser
 
-        assert "--engine" in run_cli._COMMANDS, "--engine must be in _COMMANDS"
+        option_strings = {a for action in _parser._actions for a in action.option_strings}
+        assert "--engine" in option_strings
 
 
 class TestEngineCCClaudioNotFound:

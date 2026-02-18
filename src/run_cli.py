@@ -6,167 +6,94 @@ loading heavy dependencies. It only imports the main application
 when actual processing is needed.
 """
 
+import argparse
 import shutil
 from sys import argv, exit
 from typing import Any
 
+_parser = argparse.ArgumentParser(description="Agents-eval CLI — run MAS evaluation pipeline")
 
-def _convert_value(key: str, value: str | bool) -> str | bool | int:
-    """Convert parsed argument value to appropriate type."""
-    if key == "peerread_max_papers_per_sample_download" and isinstance(value, str):
-        return int(value)
-    if key == "token_limit" and isinstance(value, str):
-        return int(value)
-    return value
+# Boolean flags (default=None so unset flags are stripped, not passed as False)
+for _flag, _help in [
+    ("--version", "Display version information"),
+    ("--include-researcher", "Include the researcher agent"),
+    ("--include-analyst", "Include the analyst agent"),
+    ("--include-synthesiser", "Include the synthesiser agent"),
+    ("--pydantic-ai-stream", "Enable streaming output"),
+    ("--skip-eval", "Skip evaluation after run_manager completes"),
+    ("--download-peerread-full-only", "Download all PeerRead data and exit (setup mode)"),
+    ("--download-peerread-samples-only", "Download PeerRead sample and exit (setup mode)"),
+]:
+    _parser.add_argument(_flag, action="store_true", default=None, help=_help)
 
+# Review tools: mutually exclusive toggle with shared dest
+_review_group = _parser.add_mutually_exclusive_group()
+_review_group.add_argument(
+    "--enable-review-tools",
+    action="store_true",
+    dest="enable_review_tools",
+    default=None,
+    help="Enable PeerRead review generation tools (enabled by default)",
+)
+_review_group.add_argument(
+    "--no-review-tools",
+    action="store_false",
+    dest="enable_review_tools",
+    help="Disable PeerRead review generation tools (opt-out)",
+)
 
-# (description, takes_value) — single source of truth for flag metadata.
-_COMMANDS: dict[str, tuple[str, bool]] = {
-    "--help": ("Display help information", False),
-    "--version": ("Display version information", False),
-    "--chat-provider": ("Specify the chat provider to use", True),
-    "--query": ("Specify the query to process", True),
-    "--include-researcher": ("Include the researcher agent", False),
-    "--include-analyst": ("Include the analyst agent", False),
-    "--include-synthesiser": ("Include the synthesiser agent", False),
-    "--pydantic-ai-stream": ("Enable streaming output", False),
-    "--chat-config-file": ("Specify the path to the chat configuration file", True),
-    "--enable-review-tools": (
-        "Enable PeerRead review generation tools (enabled by default)",
-        False,
-    ),
-    "--no-review-tools": ("Disable PeerRead review generation tools (opt-out)", False),
-    "--paper-id": (
-        "Specify paper ID for PeerRead review (supports arxiv IDs like '1105.1072')",
-        True,
-    ),
-    "--judge-provider": (
-        "Override Tier 2 LLM provider for judge (default: auto, inherits provider)",
-        True,
-    ),
-    "--judge-model": ("Override Tier 2 judge LLM model", True),
-    "--skip-eval": ("Skip evaluation after run_manager completes", False),
-    "--token-limit": (
-        "Override agent token limit (1000-1000000, default from config)",
-        True,
-    ),
-    "--download-peerread-full-only": (
-        "Download all of the PeerRead dataset and exit (setup mode)",
-        False,
-    ),
-    "--download-peerread-samples-only": (
-        "Download a small sample of the PeerRead dataset and exit (setup mode)",
-        False,
-    ),
-    "--peerread-max-papers-per-sample-download": (
-        "Specify max papers to download per split, overrides sample default",
-        True,
-    ),
-    "--cc-solo-dir": (
-        "Path to Claude Code solo session export directory for baseline comparison",
-        True,
-    ),
-    "--cc-teams-dir": (
-        "Path to Claude Code Agent Teams artifacts directory for baseline comparison",
-        True,
-    ),
-    "--cc-teams-tasks-dir": (
-        "Path to Claude Code Agent Teams tasks directory "
-        "(optional, auto-discovered if not specified)",
-        True,
-    ),
-    "--engine": (
-        "Execution engine: 'mas' for MAS pipeline (default), 'cc' for Claude Code headless",
-        True,
-    ),
-}
+# String value flags
+for _flag, _help in [
+    ("--chat-provider", "Specify the chat provider to use"),
+    ("--query", "Specify the query to process"),
+    ("--chat-config-file", "Path to the chat configuration file"),
+    ("--paper-id", "Paper ID for PeerRead review (supports arxiv IDs like '1105.1072')"),
+    ("--judge-provider", "Override Tier 2 LLM provider for judge (default: auto)"),
+    ("--judge-model", "Override Tier 2 judge LLM model"),
+    ("--cc-solo-dir", "Path to CC solo session export directory for baseline comparison"),
+    ("--cc-teams-dir", "Path to CC Agent Teams artifacts directory for baseline comparison"),
+    ("--cc-teams-tasks-dir", "Path to CC Agent Teams tasks directory (auto-discovered if omitted)"),
+]:
+    _parser.add_argument(_flag, help=_help)
 
+# Integer value flags
+_parser.add_argument("--token-limit", type=int, help="Override agent token limit (1000-1000000)")
+_parser.add_argument(
+    "--peerread-max-papers-per-sample-download",
+    type=int,
+    help="Max papers to download per split, overrides sample default",
+)
 
-def _print_help() -> None:
-    """Print available commands and exit."""
-    print("Available commands:")
-    for cmd, (desc, _) in _COMMANDS.items():
-        print(f"{cmd}: {desc}")
-    exit(0)
-
-
-def _parse_single_arg(arg: str) -> tuple[str, str | bool, bool] | None:
-    """Parse one argument into (key, value, takes_value) or None if unrecognized."""
-    flag = arg.split("=", 1)[0]
-    if flag not in _COMMANDS:
-        return None
-    _, takes_value = _COMMANDS[flag]
-    key = flag.lstrip("--").replace("-", "_")
-    value: str | bool = arg.split("=", 1)[1] if "=" in arg else True
-    return key, value, takes_value
-
-
-def _normalize(parsed_args: dict[str, Any]) -> dict[str, Any]:
-    """Apply post-parse normalization rules."""
-    if "no_review_tools" in parsed_args:
-        parsed_args["enable_review_tools"] = False
-        del parsed_args["no_review_tools"]
-    parsed_args.setdefault("engine", "mas")
-    return parsed_args
+# Engine selector
+_parser.add_argument(
+    "--engine",
+    default="mas",
+    choices=["mas", "cc"],
+    help="Execution engine: 'mas' (default) or 'cc' for Claude Code headless",
+)
 
 
 def parse_args(argv: list[str]) -> dict[str, Any]:
-    """
-    Parse command line arguments into a dictionary.
+    """Parse command line arguments into a dictionary.
 
-    This function processes a list of command-line arguments,
-    extracting recognized options and their values.
-    Supported arguments include flags (e.g., --help, --include-researcher
-    and key-value pairs (e.g., `--chat-provider=ollama`).
-    If the `--help` flag is present, a list of available commands and their
-    descriptions is printed, and an empty dictionary is returned.
+    Args:
+        argv: List of CLI argument strings (without the program name).
 
     Returns:
-        `dict[str, Any]`: A dictionary mapping argument names
-        (with leading '--' removed and hyphens replaced by underscores)
-        to their values (`str` for key-value pairs, `bool` for flags, `int`
-        for numeric arguments). Returns an empty dict if `--help` is specified.
+        Dictionary of explicitly-provided arguments (plus engine default).
 
     Example:
-        >>> `parse_args(['--chat-provider=ollama', '--include-researcher'])`
-        returns `{'chat_provider': 'ollama', 'include_researcher': True}`
+        >>> parse_args(["--chat-provider", "ollama", "--include-researcher"])
+        {'chat_provider': 'ollama', 'include_researcher': True, 'engine': 'mas'}
     """
-    if "--help" in argv:
-        _print_help()
-
-    parsed_args: dict[str, Any] = {}
-    i = 0
-    while i < len(argv):
-        arg = argv[i]
-        result = _parse_single_arg(arg)
-        if result is not None:
-            key, value, takes_value = result
-            # Reason: value-taking flags used as `--flag value` (space-separated)
-            # get True from _parse_single_arg; consume next token as the value.
-            if value is True and takes_value and i + 1 < len(argv):
-                i += 1
-                value = argv[i]
-            parsed_args[key] = _convert_value(key, value)
-        i += 1
-
-    return _normalize(parsed_args)
+    return {k: v for k, v in vars(_parser.parse_args(argv)).items() if v is not None}
 
 
 if __name__ == "__main__":
-    """
-    CLI entry point that handles help quickly, then imports main app.
-    """
+    """CLI entry point that handles help quickly, then imports main app."""
     import json
     import subprocess
     import sys
-
-    if "--help" in argv[1:]:
-        parse_args(["--help"])
-
-    from asyncio import run
-
-    from app.app import main
-    from app.utils.log import logger
 
     args = parse_args(argv[1:])
 
@@ -178,6 +105,11 @@ if __name__ == "__main__":
             file=sys.stderr,
         )
         exit(1)
+
+    from asyncio import run
+
+    from app.app import main
+    from app.utils.log import logger
 
     if args:
         logger.info(f"Used arguments: {args}")
