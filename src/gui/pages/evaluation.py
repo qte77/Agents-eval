@@ -268,6 +268,60 @@ def render_baseline_comparison(comparisons: list[BaselineComparison] | None) -> 
         _render_single_comparison(comp)
 
 
+def _render_empty_state() -> None:
+    """Render empty state with baseline configuration inputs.
+
+    Shown when no evaluation result is available. Provides path inputs
+    for Claude Code artifact directories (S8-F3.3, S8-F8.2).
+    """
+    st.info("No evaluation results available. Run an evaluation to see results here.")
+
+    # S8-F3.3: baseline inputs in collapsed expander (progressive disclosure)
+    with st.expander("🔧 Baseline Comparison Configuration", expanded=False):
+        st.markdown(
+            "Provide directory paths to Claude Code artifact exports to enable "
+            "comparative evaluation against MAS results."
+        )
+        # S8-F8.2: auto-populate from known CC artifact location if it exists
+        default_traces_dir = "logs/Agent_evals/traces/"
+        default_value = default_traces_dir if Path(default_traces_dir).is_dir() else ""
+        cc_solo_dir = st.text_input(
+            "Claude Code Solo Directory",
+            key="cc_solo_dir_input",
+            value=default_value,
+            help="Path to Claude Code solo session export directory",
+        )
+        if cc_solo_dir and not Path(cc_solo_dir).is_dir():
+            st.error(f"Directory not found: {cc_solo_dir}")
+
+        cc_teams_dir = st.text_input(
+            "Claude Code Teams Directory",
+            key="cc_teams_dir_input",
+            help="Path to Claude Code Agent Teams artifacts directory",
+        )
+        if cc_teams_dir and not Path(cc_teams_dir).is_dir():
+            st.error(f"Directory not found: {cc_teams_dir}")
+
+
+def _render_evaluation_details(result: CompositeResult) -> None:
+    """Render evaluation metadata expander with execution ID, timestamp, and weights.
+
+    Args:
+        result: CompositeResult with timestamp, config_version, and weights_used.
+    """
+    with st.expander("Evaluation Details"):
+        # S8-F8.2: show full execution_id in details expander
+        full_execution_id: str | None = st.session_state.get("execution_id")
+        if full_execution_id:
+            st.text(f"Execution ID: {full_execution_id}")
+        st.text(f"Timestamp: {result.timestamp}")
+        st.text(f"Config Version: {result.config_version}")
+        if result.weights_used:
+            st.text("Tier Weights:")
+            for tier, weight in result.weights_used.items():
+                st.text(f"  {tier}: {weight}")
+
+
 def render_evaluation(result: CompositeResult | None = None) -> None:
     """Render evaluation results page with tier scores and metric comparisons.
 
@@ -284,35 +338,7 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
     st.header("📊 Evaluation Results")
 
     if result is None:
-        st.info("No evaluation results available. Run an evaluation to see results here.")
-
-        # S8-F3.3: baseline inputs in collapsed expander (progressive disclosure)
-        with st.expander("🔧 Baseline Comparison Configuration", expanded=False):
-            st.markdown(
-                "Provide directory paths to Claude Code artifact exports to enable "
-                "comparative evaluation against MAS results."
-            )
-            # S8-F8.2: auto-populate from known CC artifact location if it exists
-            default_traces_dir = "logs/Agent_evals/traces/"
-            default_value = default_traces_dir if Path(default_traces_dir).is_dir() else ""
-            cc_solo_dir = st.text_input(
-                "Claude Code Solo Directory",
-                key="cc_solo_dir_input",
-                value=default_value,
-                help="Path to Claude Code solo session export directory",
-            )
-            # S8-F8.2: validate entered path exists on disk
-            if cc_solo_dir and not Path(cc_solo_dir).is_dir():
-                st.error(f"Directory not found: {cc_solo_dir}")
-
-            cc_teams_dir = st.text_input(
-                "Claude Code Teams Directory",
-                key="cc_teams_dir_input",
-                help="Path to Claude Code Agent Teams artifacts directory",
-            )
-            # S8-F8.2: validate entered path exists on disk
-            if cc_teams_dir and not Path(cc_teams_dir).is_dir():
-                st.error(f"Directory not found: {cc_teams_dir}")
+        _render_empty_state()
         return
 
     _render_overall_results(result)
@@ -323,15 +349,4 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
     if "baseline_comparisons" in st.session_state:
         render_baseline_comparison(st.session_state["baseline_comparisons"])
 
-    # Evaluation metadata
-    with st.expander("Evaluation Details"):
-        # S8-F8.2: show full execution_id in details expander
-        full_execution_id: str | None = st.session_state.get("execution_id")
-        if full_execution_id:
-            st.text(f"Execution ID: {full_execution_id}")
-        st.text(f"Timestamp: {result.timestamp}")
-        st.text(f"Config Version: {result.config_version}")
-        if result.weights_used:
-            st.text("Tier Weights:")
-            for tier, weight in result.weights_used.items():
-                st.text(f"  {tier}: {weight}")
+    _render_evaluation_details(result)
