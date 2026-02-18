@@ -54,7 +54,7 @@ wandb/
 data/
 test_data/
 datasets/
-docs/write-up/
+docs/write-up/*
 !docs/write-up/en/
 results/sweeps/
 
