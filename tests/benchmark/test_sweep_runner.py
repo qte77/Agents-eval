@@ -197,3 +197,88 @@ class TestCCBaselineIntegration:
 
             # Verify CC was NOT invoked
             mock_subprocess.assert_not_called()
+
+
+class TestStory013EngineRefactor:
+    """Tests for STORY-013: engine field and renamed method in SweepRunner."""
+
+    def test_sweep_config_has_engine_field(self, tmp_path: Path):
+        """Test that SweepConfig has 'engine' field defaulting to 'mas'."""
+        config = SweepConfig(
+            compositions=[
+                AgentComposition(
+                    include_researcher=True,
+                    include_analyst=False,
+                    include_synthesiser=False,
+                )
+            ],
+            repetitions=1,
+            paper_numbers=[1],
+            output_dir=tmp_path / "sweep_results",
+        )
+        assert hasattr(config, "engine"), "SweepConfig must have 'engine' field"
+        assert config.engine == "mas", "engine must default to 'mas'"
+
+    def test_sweep_config_engine_can_be_set_to_cc(self, tmp_path: Path):
+        """Test that SweepConfig engine can be set to 'cc'."""
+        config = SweepConfig(
+            compositions=[
+                AgentComposition(
+                    include_researcher=True,
+                    include_analyst=False,
+                    include_synthesiser=False,
+                )
+            ],
+            repetitions=1,
+            paper_numbers=[1],
+            output_dir=tmp_path / "sweep_results",
+            engine="cc",
+        )
+        assert config.engine == "cc"
+
+    def test_sweep_config_has_no_cc_baseline_enabled_field(self, tmp_path: Path):
+        """Test that SweepConfig no longer has cc_baseline_enabled field."""
+        config = SweepConfig(
+            compositions=[
+                AgentComposition(
+                    include_researcher=True,
+                    include_analyst=False,
+                    include_synthesiser=False,
+                )
+            ],
+            repetitions=1,
+            paper_numbers=[1],
+            output_dir=tmp_path / "sweep_results",
+        )
+        assert not hasattr(
+            config, "cc_baseline_enabled"
+        ), "SweepConfig must NOT have cc_baseline_enabled field (removed in STORY-013)"
+
+    def test_sweep_runner_has_invoke_cc_comparison_method(self, basic_sweep_config: SweepConfig):
+        """Test that SweepRunner has _invoke_cc_comparison() method (renamed from _invoke_cc_baseline)."""
+        runner = SweepRunner(basic_sweep_config)
+        assert hasattr(
+            runner, "_invoke_cc_comparison"
+        ), "SweepRunner must have _invoke_cc_comparison method"
+        assert not hasattr(
+            runner, "_invoke_cc_baseline"
+        ), "SweepRunner must NOT have _invoke_cc_baseline (renamed to _invoke_cc_comparison)"
+
+    def test_run_sweep_no_longer_accepts_cc_baseline_flag_in_config(self, tmp_path: Path):
+        """Test that SweepConfig rejects cc_baseline_enabled kwarg (field removed)."""
+        import pydantic
+
+        with pytest.raises((TypeError, pydantic.ValidationError)):
+            SweepConfig(
+                compositions=[
+                    AgentComposition(
+                        include_researcher=True,
+                        include_analyst=False,
+                        include_synthesiser=False,
+                    )
+                ],
+                repetitions=1,
+                paper_numbers=[1],
+                output_dir=tmp_path / "sweep_results",
+                cc_baseline_enabled=True,  # This field should no longer exist
+            )
