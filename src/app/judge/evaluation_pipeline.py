@@ -40,6 +40,7 @@ class EvaluationPipeline:
         self,
         settings: JudgeSettings | None = None,
         chat_provider: str | None = None,
+        chat_model: str | None = None,
     ):
         """Initialize evaluation pipeline with configuration.
 
@@ -47,6 +48,8 @@ class EvaluationPipeline:
             settings: JudgeSettings instance. If None, uses default JudgeSettings().
             chat_provider: Active chat provider from agent system. Passed to LLMJudgeEngine
                           for tier2_provider=auto mode.
+            chat_model: Active chat model from agent system. Forwarded to LLMJudgeEngine
+                       for model inheritance in auto mode.
 
         Raises:
             ValueError: If configuration is invalid
@@ -57,11 +60,14 @@ class EvaluationPipeline:
 
         self.settings = settings
         self.chat_provider = chat_provider
+        self.chat_model = chat_model
         self.performance_monitor = PerformanceMonitor(settings.get_performance_targets())
 
         # Initialize engines with settings
         self.traditional_engine = TraditionalMetricsEngine()
-        self.llm_engine = LLMJudgeEngine(settings, chat_provider=chat_provider)
+        self.llm_engine = LLMJudgeEngine(
+            settings, chat_provider=chat_provider, chat_model=chat_model
+        )
         self.graph_engine = GraphAnalysisEngine(settings)
         self.composite_scorer = CompositeScorer(settings=settings)
 
