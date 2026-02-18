@@ -76,8 +76,8 @@ class TestTier2ProviderFallbackIntegration:
     @pytest.mark.asyncio
     async def test_tier2_result_includes_fallback_metadata(self):
         """Tier2Result should include fallback_used flag when fallback triggered."""
-        # Arrange: simulate auth failure to trigger fallback
-        settings = JudgeSettings()
+        # Arrange: simulate auth failure to trigger fallback; explicit openai (not default auto)
+        settings = JudgeSettings(tier2_provider="openai")
         env_config = AppEnv(OPENAI_API_KEY="sk-test-key", GITHUB_API_KEY="")
         engine = LLMJudgeEngine(settings, env_config=env_config)
 

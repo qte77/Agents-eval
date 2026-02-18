@@ -71,7 +71,7 @@ class JudgeSettings(BaseSettings):
     tier1_tfidf_max_features: int = Field(default=5000)
 
     # Tier 2: LLM-as-Judge
-    tier2_provider: str = Field(default="openai")
+    tier2_provider: str = Field(default="auto")
     tier2_model: str = Field(default="gpt-4o-mini")
     tier2_fallback_provider: str = Field(default="github")
     tier2_fallback_model: str = Field(default="gpt-4o-mini")
