@@ -47,6 +47,10 @@ def read_paper_pdf(
         FileNotFoundError: If the PDF file doesn't exist.
         ValueError: If the file is not a PDF or conversion fails.
     """
+    # Reason: LLMs hallucinate URLs for paper PDFs; reject them defensively instead of crashing
+    if isinstance(pdf_path, str) and pdf_path.startswith(("http://", "https://")):
+        return f"Error: URLs are not supported. Use paper_id with get_paper_content instead. Received: {pdf_path}"
+
     if isinstance(pdf_path, str):
         pdf_file = Path(pdf_path)
     else:
@@ -160,37 +164,52 @@ def add_peerread_tools_to_agent(agent: Agent[None, BaseModel], agent_id: str = "
             )
 
     @agent.tool
-    async def read_paper_pdf_tool(  # type: ignore[reportUnusedFunction]
+    async def get_paper_content(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None],
-        pdf_path: str,
+        paper_id: str,
     ) -> str:
-        """Read text content from a PDF file using MarkItDown.
+        """Get the full text content of a paper from the local PeerRead dataset.
 
-        Note: MarkItDown extracts the entire PDF content as a single text block.
-        Page-level extraction is not supported by the underlying library.
+        Returns full paper text using a fallback chain: parsed JSON → raw PDF → abstract.
+        Use this tool to read a paper's body text for analysis or review generation.
+
+        Note: Requires `paper_id` (e.g. "1105.1072"), NOT a file path or URL.
 
         Args:
-            pdf_path: Path to the PDF file.
+            paper_id: Unique identifier for the paper (e.g. "1105.1072").
+                      Do NOT pass a URL or file path.
 
         Returns:
-            str: Extracted text content from the entire PDF in Markdown format.
+            str: Full paper text content from the local PeerRead dataset.
         """
         start_time = time.perf_counter()
         trace_collector = get_trace_collector()
         success = False
 
         try:
-            result = read_paper_pdf(ctx, pdf_path)
+            config = load_peerread_config()
+            loader = PeerReadLoader(config)
+            paper = loader.get_paper_by_id(paper_id)
+
+            if not paper:
+                raise ValueError(f"Paper {paper_id} not found in PeerRead dataset")
+
+            content = _load_paper_content_with_fallback(ctx, loader, paper_id, paper.abstract)
+            logger.info(f"Retrieved content for paper {paper_id}")
             success = True
-            return result
+            return content
+
+        except Exception as e:
+            logger.error(f"Error retrieving paper content: {e}")
+            raise ValueError(f"Failed to retrieve paper content: {str(e)}")
         finally:
             duration = time.perf_counter() - start_time
             trace_collector.log_tool_call(
                 agent_id=agent_id,
-                tool_name="read_paper_pdf_tool",
+                tool_name="get_paper_content",
                 success=success,
                 duration=duration,
-                context=f"pdf_path={pdf_path}",
+                context=f"paper_id={paper_id}",
             )
 
 
