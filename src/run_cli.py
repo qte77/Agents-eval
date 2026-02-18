@@ -13,7 +13,6 @@ from typing import Any
 
 _parser = argparse.ArgumentParser(description="Agents-eval CLI — run MAS evaluation pipeline")
 
-# Boolean flags (default=None so unset flags are stripped, not passed as False)
 for _flag, _help in [
     ("--version", "Display version information"),
     ("--include-researcher", "Include the researcher agent"),
@@ -26,13 +25,11 @@ for _flag, _help in [
 ]:
     _parser.add_argument(_flag, action="store_true", default=None, help=_help)
 
-# Review tools: mutually exclusive toggle with shared dest
 _review_group = _parser.add_mutually_exclusive_group()
 _review_group.add_argument(
     "--enable-review-tools",
     action="store_true",
     dest="enable_review_tools",
-    default=None,
     help="Enable PeerRead review generation tools (enabled by default)",
 )
 _review_group.add_argument(
@@ -41,8 +38,8 @@ _review_group.add_argument(
     dest="enable_review_tools",
     help="Disable PeerRead review generation tools (opt-out)",
 )
+_parser.set_defaults(enable_review_tools=None)
 
-# String value flags
 for _flag, _help in [
     ("--chat-provider", "Specify the chat provider to use"),
     ("--query", "Specify the query to process"),
@@ -56,15 +53,12 @@ for _flag, _help in [
 ]:
     _parser.add_argument(_flag, help=_help)
 
-# Integer value flags
 _parser.add_argument("--token-limit", type=int, help="Override agent token limit (1000-1000000)")
 _parser.add_argument(
     "--peerread-max-papers-per-sample-download",
     type=int,
     help="Max papers to download per split, overrides sample default",
 )
-
-# Engine selector
 _parser.add_argument(
     "--engine",
     default="mas",
@@ -90,15 +84,13 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
 
 
 if __name__ == "__main__":
-    """CLI entry point that handles help quickly, then imports main app."""
     import json
     import subprocess
     import sys
 
     args = parse_args(argv[1:])
+    engine = args.pop("engine")
 
-    # Validate --engine=cc requires claude CLI at arg-parse time
-    engine = args.get("engine", "mas")
     if engine == "cc" and not shutil.which("claude"):
         print(
             "error: --engine=cc requires the 'claude' CLI to be installed and on PATH",
@@ -111,11 +103,9 @@ if __name__ == "__main__":
     from app.app import main
     from app.utils.log import logger
 
-    if args:
-        logger.info(f"Used arguments: {args}")
+    logger.info(f"Used arguments: {args}")
 
     if engine == "cc":
-        # Invoke CC headless and pass artifact dirs to main for evaluation
         query = args.get("query", "")
         try:
             result = subprocess.run(
@@ -133,13 +123,6 @@ if __name__ == "__main__":
         except subprocess.TimeoutExpired as e:
             raise RuntimeError(f"CC timed out after {e.timeout}s") from e
 
-        # Extract artifact dirs from CC output and pass to main for evaluation
-        cc_solo_dir = data.get("session_dir")
-        run(
-            main(
-                cc_solo_dir=cc_solo_dir,
-                **{k: v for k, v in args.items() if k != "engine"},
-            )
-        )
-    else:
-        run(main(**{k: v for k, v in args.items() if k != "engine"}))
+        args["cc_solo_dir"] = data.get("session_dir")
+
+    run(main(**args))

@@ -296,7 +296,7 @@ quick_start:  ## Download sample data and run evaluation on smallest paper
 		exit 1
 	fi
 	echo "Selected smallest paper: $$PAPER_ID"
-	$(MAKE) -s run_cli ARGS="--paper-number=$$PAPER_ID"
+	$(MAKE) -s run_cli ARGS="--paper-id=$$PAPER_ID"
 
 
 run_cli:  ## Run app on CLI only. Usage: make run_cli ARGS="--help" or make run_cli ARGS="--download-peerread-samples-only"

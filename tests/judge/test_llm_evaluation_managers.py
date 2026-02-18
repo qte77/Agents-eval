@@ -853,9 +853,7 @@ class TestApiKeyForwarding:
         """When tier2_provider=auto and chat_provider=github, judge uses the GitHub API key."""
         settings = JudgeSettings(tier2_provider="auto")
         env_config = AppEnv(GITHUB_API_KEY="ghp-github-key-456")
-        engine = LLMJudgeEngine(
-            settings, env_config=env_config, chat_provider="github"
-        )
+        engine = LLMJudgeEngine(settings, env_config=env_config, chat_provider="github")
 
         with patch("app.judge.llm_evaluation_managers.create_evaluation_agent") as mock_create:
             mock_create.return_value = Mock(spec=Agent)

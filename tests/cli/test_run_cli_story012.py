@@ -108,3 +108,22 @@ class TestSpaceSeparatedArgs:
         args = parse_args(["--include-researcher", "--paper-id", "42"])
         assert args.get("include_researcher") is True
         assert args.get("paper_id") == "42"
+
+
+class TestReviewToolsDefaultNone:
+    """Tests that enable_review_tools is absent when neither flag is passed."""
+
+    def test_neither_review_flag_strips_key(self):
+        """When neither --enable-review-tools nor --no-review-tools is passed, key is absent."""
+        args = parse_args(["--query=test"])
+        assert "enable_review_tools" not in args
+
+    def test_enable_review_tools_flag_sets_true(self):
+        """--enable-review-tools produces enable_review_tools=True."""
+        args = parse_args(["--enable-review-tools"])
+        assert args.get("enable_review_tools") is True
+
+    def test_no_review_tools_flag_sets_false(self):
+        """--no-review-tools produces enable_review_tools=False."""
+        args = parse_args(["--no-review-tools"])
+        assert args.get("enable_review_tools") is False
