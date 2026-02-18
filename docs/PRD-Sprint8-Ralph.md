@@ -1,7 +1,7 @@
 ---
 title: Product Requirements Document - Agents-eval Sprint 8
-description: Report generation (CLI + GUI), graph attribute alignment, security hardening (MAESTRO), code quality improvements, and deferred fixes.
-version: 0.2
+description: PeerRead tool fix, API key sentinel removal, CC engine consolidation, graph alignment, streaming check, report generation.
+version: 0.3
 created: 2026-02-17
 updated: 2026-02-18
 status: draft
@@ -13,7 +13,7 @@ status: draft
 
 Sprint 7 delivered: documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings), unified provider configuration, Claude Code engine option.
 
-**Sprint 8 Focus**: API key forwarding fixes, legacy config cleanup, report generation with actionable suggestions, graph attribute alignment, security hardening, code quality improvements.
+**Sprint 8 Focus**: Fix sweep-crashing tool bug, remove API key sentinel, consolidate CC engine logic, graph attribute alignment, streaming decision, report generation.
 
 ---
 
@@ -21,65 +21,40 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 
 <!-- PARSER REQUIREMENT: Use exactly "#### Feature N:" format -->
 
-#### Feature 1: Report Generation in CLI and GUI
+#### Feature 1: Replace `read_paper_pdf_tool` with `get_paper_content` Using Parsed JSON Fallback Chain
 
-**Description**: After evaluation completes, users should be able to generate a structured report that summarizes evaluation results and suggests improvements. The report synthesizes Tier 1/2/3 scores, highlights weaknesses (low-scoring dimensions), and proposes actionable content suggestions (e.g., "Tier 1 BLEU score low — review lacks specific technical terminology from the paper abstract"). Available via `--generate-report` in CLI and a "Generate Report" button in the GUI.
+**Description**: `read_paper_pdf_tool` is exposed directly to the LLM and requires a local filesystem path as input. The LLM has no way to discover valid paths, leading to hallucinated URLs (e.g., `https://arxiv.org/pdf/1105.1072`) that crash the agent with `FileNotFoundError`. The correct content-loading logic already exists internally in `_load_paper_content_with_fallback()` (parsed JSON → raw PDF → abstract), but it's private — only called from `generate_paper_review_content_from_template`. Meanwhile, `get_peerread_paper` returns only title/abstract/reviews, no body text, so the LLM naturally reaches for `read_paper_pdf_tool` to get full paper content.
 
-##### 1.1 CLI Report Generation
+**Root cause**: The LLM needs full paper content but only has a raw-PDF-by-path tool with no way to supply a valid path. The parsed JSON data (primary content source) is not accessible via any tool.
 
 **Acceptance Criteria**:
-- [ ] `run_cli.py` accepts `--generate-report` flag (requires evaluation to have run, incompatible with `--skip-eval`)
-- [ ] Report includes: executive summary, per-tier score breakdown, identified weaknesses, actionable suggestions
-- [ ] Suggestions are grounded in evaluation data (reference specific metric scores and thresholds)
-- [ ] Report output as Markdown file in `--output-dir` (default: `results/reports/<timestamp>.md`)
+- [ ] `read_paper_pdf_tool` removed from agent tool registration (no longer LLM-callable)
+- [ ] New tool `get_paper_content(paper_id: str) -> str` registered on the same agent (researcher or manager)
+- [ ] `get_paper_content` internally calls `_load_paper_content_with_fallback()` fallback chain: parsed JSON → raw PDF → abstract
+- [ ] Tool docstring clearly states: returns full paper text from local PeerRead dataset, requires `paper_id` (not a file path or URL)
+- [ ] `read_paper_pdf()` function retained as internal helper (used by fallback chain), just not exposed as a tool
+- [ ] `read_paper_pdf()` rejects URLs with a descriptive return instead of `FileNotFoundError` (defensive guard)
+- [ ] Sweep with `--paper-id=1105.1072` no longer crashes with `FileNotFoundError`
 - [ ] `make validate` passes
 
 **Technical Requirements**:
-- TBD — requires design phase to determine report structure, suggestion generation approach (rule-based vs LLM-assisted), and integration with `CompositeResult`
+- Remove `@agent.tool` decorator from `read_paper_pdf_tool` in `add_peerread_tools_to_agent()`
+- Add new `@agent.tool get_paper_content(ctx, paper_id)` that instantiates `PeerReadLoader`, calls `_load_paper_content_with_fallback(ctx, loader, paper_id, abstract)` where `abstract` is obtained from `loader.get_paper_by_id(paper_id).abstract`
+- Add URL guard in `read_paper_pdf()`: if `pdf_path` starts with `http`, return error string instead of raising
+- `_load_paper_content_with_fallback` already handles all three tiers — no changes needed there
+- Update tool trace logging (`trace_collector.log_tool_call`) for the new tool name
 
 **Files**:
-- `src/run_cli.py` (edit — add `--generate-report` flag)
-- `src/app/reports/` (new — report generation module)
-- TBD
-
-##### 1.2 GUI Report Generation
-
-**Acceptance Criteria**:
-- [ ] "Generate Report" button on App page, enabled after evaluation completes
-- [ ] Report displayed inline (Markdown rendered via `st.markdown`) with download option
-- [ ] Same report content as CLI (shared generation logic)
-- [ ] `make validate` passes
-
-**Technical Requirements**:
-- TBD — reuse CLI report generation module, render in Streamlit
-
-**Files**:
-- `src/gui/pages/run_app.py` (edit — add report button and display)
-- TBD
-
-##### 1.3 Report Content and Suggestion Engine
-
-**Acceptance Criteria**:
-- [ ] Suggestions are specific and actionable (not generic "improve quality")
-- [ ] Each suggestion references the metric/tier that triggered it
-- [ ] Severity levels: critical (score < threshold), warning (below average), info (improvement opportunity)
-- [ ] Optional LLM-assisted suggestions (uses judge provider) for richer content recommendations
-- [ ] Rule-based fallback when LLM is unavailable or `--no-llm-suggestions` is set
-
-**Technical Requirements**:
-- TBD — requires research into what makes suggestions actionable for the PeerRead evaluation context
-
-**Files**:
-- `src/app/reports/` (new — suggestion engine)
-- TBD
+- `src/app/tools/peerread_tools.py` (edit — replace `read_paper_pdf_tool` with `get_paper_content`, add URL guard)
+- `tests/tools/test_peerread_tools.py` (edit — update tool registration tests, add `get_paper_content` test)
 
 ---
 
-#### Feature 9: Remove `"not-required"` API Key Sentinel from `create_llm_model`
+#### Feature 2: Remove `"not-required"` API Key Sentinel from `create_llm_model`
 
-**Description**: `create_llm_model()` in `models.py` uses `api_key or "not-required"` at 5 call sites (lines 70, 78, 87, 98, 119, 128). This prevents the OpenAI SDK from falling back to environment variables (`OPENAI_API_KEY`, `GITHUB_TOKEN`, etc.) because the SDK receives a non-empty string and uses it as-is. Sprint 8 commit `9e14931` fixed this in `create_simple_model()` (judge path) by passing `api_key` directly. The same fix is needed in `create_llm_model()` for the main agent creation path.
+**Description**: `create_llm_model()` in `models.py` uses `api_key or "not-required"` at 5 call sites (lines 78, 87, 98, 119, 128). This prevents the OpenAI SDK from falling back to environment variables (`OPENAI_API_KEY`, `GITHUB_TOKEN`, etc.) because the SDK receives a non-empty string and uses it as-is. Sprint 8 commit `9e14931` fixed this in `create_simple_model()` (judge path) by passing `api_key` directly. The same fix is needed in `create_llm_model()` for the main agent creation path.
 
-**Note**: Line 70 (`ollama` provider) legitimately uses `"not-required"` as a literal — Ollama doesn't need auth. This should remain hardcoded, not use `api_key or "not-required"`.
+**Note**: Line 70 (`ollama` provider) legitimately uses `"not-required"` as a literal — Ollama doesn't need auth. This should remain hardcoded.
 
 **Acceptance Criteria**:
 - [ ] `create_llm_model()` passes `api_key` directly to `OpenAIProvider` for all providers except `ollama` (5 sites: lines 78, 87, 98, 119, 128)
@@ -98,29 +73,45 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 
 ---
 
-#### Feature 10: Unify API Key Resolution Across Agent and Judge Paths
+#### Feature 3: Extract CC Engine Logic into `src/app/engines/cc_engine.py`
 
-**Description**: The codebase has two disconnected API key flows: (1) `get_api_key()` in `providers.py` validates that a key exists (used as a gate), and (2) `create_llm_model()` / `create_simple_model()` in `models.py` creates the model (where the key is actually used). Sprint 8 commit `9e14931` bridged this gap for the judge path (`_resolve_provider_key` → `create_judge_agent` → `create_simple_model`). The main agent path in `agent_system.py` has the same disconnect: `setup_agent_env()` calls `get_api_key()` to validate, but the returned key is not threaded through to `create_llm_model()` — the model relies on SDK env var fallback instead.
+**Description**: CC (Claude Code) engine logic is scattered across `run_cli.py`, `sweep_runner.py`, and `run_app.py` with duplicated subprocess invocation, inconsistent error handling, and incomplete wiring. The `subprocess.run(["claude", "-p", ...])` pattern is copy-pasted between CLI and sweep. The GUI accepts the engine selection but silently ignores it (`engine` parameter never reaches `main()`). `_run_cc_baselines()` in `sweep_runner.py` invokes CC but does not feed results into evaluation. `CCTraceAdapter` (the artifact parser) is not connected to any subprocess invocation path.
+
+**Current state:**
+- `run_cli.py:169-214` — subprocess invocation + engine dispatch (30 lines inline)
+- `sweep_runner.py:143-232` — duplicate subprocess invocation + stub baseline loop
+- `run_app.py:471-532` — engine selector UI, but `engine` param silently dropped in `_execute_query_background()`
+- `cc_trace_adapter.py` — artifact parser, only called from `evaluation_runner.py` baseline comparisons (not from subprocess paths)
 
 **Acceptance Criteria**:
-- [ ] `setup_agent_env()` or `_create_manager()` passes the validated API key to `create_llm_model()` explicitly
-- [ ] Single code path for key resolution: validate once, use the validated key
-- [ ] No behavioral change when env vars are set (SDK would find the same key either way)
-- [ ] Auth failure produces a clear error at setup time, not a 401 at request time
+- [ ] New module `src/app/engines/cc_engine.py` with:
+  - `check_cc_available() -> bool` — `shutil.which("claude")` (replaces 3 inline checks)
+  - `run_cc_headless(query: str, timeout: int = 600) -> CCResult` — subprocess invocation with error handling (replaces 2 duplicate implementations)
+  - `CCResult` Pydantic model: `session_dir`, `output_data`, `execution_id`
+- [ ] `run_cli.py` CC branch delegates to `cc_engine.run_cc_headless()` — no inline subprocess code
+- [ ] `sweep_runner.py._invoke_cc_comparison()` delegates to `cc_engine.run_cc_headless()` — no inline subprocess code
+- [ ] `run_app.py._execute_query_background()` passes `engine` to `main()` when `engine == "cc"` (currently silently dropped)
+- [ ] `_run_cc_baselines()` wires CC results through `CCTraceAdapter` → evaluation (not a stub)
+- [ ] `src/app/engines/__init__.py` created
 - [ ] `make validate` passes
 
 **Technical Requirements**:
-- Thread `api_key` from `get_api_key()` result through `_create_manager()` → `create_llm_model()`
-- Consider extracting a shared `resolve_and_validate_key(provider)` helper used by both agent and judge paths
+- Extract `subprocess.run(["claude", "-p", ...])` into single `run_cc_headless()` function
+- Error handling consolidated: `RuntimeError` for non-zero exit, `ValueError` for JSON parse failure, `RuntimeError` for timeout
+- `check_cc_available()` replaces `shutil.which("claude")` in `run_cli.py:170`, `sweep_runner.py:189`, `run_app.py:471`
+- Wire `CCTraceAdapter` into the subprocess result flow: `run_cc_headless()` → `CCResult.session_dir` → `CCTraceAdapter(session_dir).parse()` → `GraphTraceData`
 
 **Files**:
-- `src/app/agents/agent_system.py` (edit — thread api_key)
-- `src/app/llms/models.py` (edit — ensure `create_llm_model` uses passed key)
-- `tests/agents/test_agent_system.py` (edit — verify key forwarding)
+- `src/app/engines/__init__.py` (new)
+- `src/app/engines/cc_engine.py` (new — extracted CC logic)
+- `src/run_cli.py` (edit — delegate to `cc_engine`)
+- `src/app/benchmark/sweep_runner.py` (edit — delegate to `cc_engine`, wire adapter)
+- `src/gui/pages/run_app.py` (edit — pass `engine` through, wire CC path)
+- `tests/engines/test_cc_engine.py` (new — subprocess mock tests)
 
 ---
 
-#### Feature 2: Graph Node Attribute Alignment
+#### Feature 4: Graph Node Attribute Alignment
 
 **Description**: `graph_analysis.py:export_trace_to_networkx()` uses `type` as node attribute, while `agent_graph.py:render_agent_graph()` expects `node_type`. Direct callers of `export_trace_to_networkx()` get wrong visual node types. Sprint 7 avoided this by routing through `build_interaction_graph()`, but the latent mismatch should be fixed.
 
@@ -138,133 +129,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 
 ---
 
-#### Feature 3: Security Hardening (MAESTRO Deferred Items)
-
-**Description**: Address MAESTRO security findings deferred from Sprint 5-6.
-
-##### 3.1 Centralized Tool Registry with Module Allowlist (MAESTRO L7.2)
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
-##### 3.2 Plugin Tier Validation at Registration (MAESTRO L7.1)
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
-##### 3.3 Error Message Sanitization
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
-##### 3.4 Configuration Path Traversal Protection
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
----
-
-#### Feature 4: Code Quality Improvements
-
-**Description**: Address accumulated code quality debt from Sprint 5-7.
-
-##### 4.1 GraphTraceData Construction Simplification
-
-**Description**: Replace manual `.get()` chains with `model_validate()`.
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
-##### 4.2 Timeout Bounds Enforcement
-
-**Description**: Add min/max limits on user-configurable timeouts.
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
-##### 4.3 Hardcoded Settings Audit
-
-**Description**: Migrate module-level constants to Pydantic BaseSettings (continuation of Sprint 7 Feature 10).
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
-##### 4.4 Time Tracking Consistency Across Tiers
-
-**Description**: Standardize timing pattern across evaluation tiers.
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
----
-
-#### Feature 5: Test Improvements
-
-**Description**: Address testing gaps deferred from Sprint 7.
-
-##### 5.1 BDD Scenario Tests for Evaluation Pipeline
-
-**Description**: End-to-end user workflow tests using pytest.
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
-##### 5.2 Tier 1 Reference Comparison Fix
-
-**Description**: Fix all-1.0 self-comparison scores. Requires ground-truth review integration.
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
----
-
-#### Feature 6: Provider-Specific Optimizations
-
-**Description**: Address provider-specific issues deferred from Sprint 5.
-
-##### 6.1 Cerebras Structured Output Validation Retries
-
-**Description**: Optimize prompt/retry strategy for Cerebras provider structured output failures.
-
-**Acceptance Criteria**:
-- [ ] TBD
-
-**Files**:
-- TBD
-
----
-
-#### Feature 7: PydanticAI Structured Output Streaming
+#### Feature 5: PydanticAI Structured Output Streaming
 
 **Description**: `run_manager()` raises `NotImplementedError` when `pydantic_ai_stream=True` because PydanticAI's `run_stream()` only supports `output_type=str`, not structured `BaseModel` outputs. Check if upstream PydanticAI has resolved this limitation; if so, enable streaming. If not, remove the dead code path and the `pydantic_ai_stream` parameter.
 
@@ -280,58 +145,79 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 
 ---
 
-#### Feature 8: PlantUML Diagram Audit
+#### Feature 6: Report Generation in CLI and GUI
 
-**Description**: Review all PlantUML diagrams in `docs/arch_vis/` for necessity, accuracy, and coherence. Sprint 7 updated content but did not audit whether each diagram is still needed, whether overlapping diagrams should be consolidated, or whether naming/titles are consistent.
+**Description**: After evaluation completes, users should be able to generate a structured report that summarizes evaluation results and suggests improvements. The report synthesizes Tier 1/2/3 scores, highlights weaknesses (low-scoring dimensions), and proposes actionable content suggestions (e.g., "Tier 1 BLEU score low — review lacks specific technical terminology from the paper abstract"). Available via `--generate-report` in CLI and a "Generate Report" button in the GUI.
 
-##### 8.1 Necessity Review
-
-**Acceptance Criteria**:
-- [ ] Each diagram in `docs/arch_vis/` justified as serving a distinct purpose (architecture, workflow, journey, landscape) — or marked for deletion/consolidation
-- [ ] Overlapping diagrams identified (e.g., `mas-workflow` vs `mas-enhanced-workflow` vs `MAS-Review-Workflow` all depict agent interaction sequences) — consolidate or document why each is needed
-- [ ] `AI-agent-landscape-visualization.puml` assessed: still useful as informational snapshot or stale enough to remove?
-
-##### 8.2 Accuracy Review
+##### 6.1 CLI Report Generation
 
 **Acceptance Criteria**:
-- [ ] Each diagram verified against current source code (Sprint 7 state): components, data flows, participants, and relationships match implementation
-- [ ] C4 diagrams (`MAS-C4-Overview`, `MAS-C4-Detailed`) verified against `architecture.md` — no containers missing or stale
-- [ ] Sequence diagrams verified against actual call chains in `agent_system.py`, `sweep_runner.py`, `evaluation_pipeline.py`
+- [ ] `run_cli.py` accepts `--generate-report` flag (requires evaluation to have run, incompatible with `--skip-eval`)
+- [ ] Report includes: executive summary, per-tier score breakdown, identified weaknesses, actionable suggestions
+- [ ] Suggestions are grounded in evaluation data (reference specific metric scores and thresholds)
+- [ ] Report output as Markdown file in `--output-dir` (default: `results/reports/<timestamp>.md`)
+- [ ] `make validate` passes
 
-##### 8.3 Coherence Review
-
-**Acceptance Criteria**:
-- [ ] File names match diagram titles (e.g., `mas-workflow.plantuml` title is "MAS Workflow - Agent Interactions and Tool Usage" — do these align?)
-- [ ] Naming convention consistent across files: some use `PascalCase` (`MAS-C4-Overview`), others `kebab-case` (`mas-workflow`) — standardize
-- [ ] Diagram titles are concise and accurately describe content (not aspirational)
-- [ ] Cross-references between diagrams and docs verified (architecture.md, README.md diagram links)
+**Technical Requirements**:
+- TBD — requires design phase to determine report structure, suggestion generation approach (rule-based vs LLM-assisted), and integration with `CompositeResult`
 
 **Files**:
-- `docs/arch_vis/*.plantuml` (audit, potentially edit/delete/consolidate)
-- `docs/arch_vis/*.puml` (audit)
-- `assets/images/` (sync after any changes)
-- `docs/architecture.md` (edit — update diagram references if names change)
-- `README.md` (edit — update diagram references if names change)
+- `src/run_cli.py` (edit — add `--generate-report` flag)
+- `src/app/reports/` (new — report generation module)
+- TBD
+
+##### 6.2 GUI Report Generation
+
+**Acceptance Criteria**:
+- [ ] "Generate Report" button on App page, enabled after evaluation completes
+- [ ] Report displayed inline (Markdown rendered via `st.markdown`) with download option
+- [ ] Same report content as CLI (shared generation logic)
+- [ ] `make validate` passes
+
+**Files**:
+- `src/gui/pages/run_app.py` (edit — add report button and display)
+- TBD
+
+##### 6.3 Report Content and Suggestion Engine
+
+**Acceptance Criteria**:
+- [ ] Suggestions are specific and actionable (not generic "improve quality")
+- [ ] Each suggestion references the metric/tier that triggered it
+- [ ] Severity levels: critical (score < threshold), warning (below average), info (improvement opportunity)
+- [ ] Optional LLM-assisted suggestions (uses judge provider) for richer content recommendations
+- [ ] Rule-based fallback when LLM is unavailable or `--no-llm-suggestions` is set
+
+**Technical Requirements**:
+- TBD — requires research into what makes suggestions actionable for the PeerRead evaluation context
+
+**Files**:
+- `src/app/reports/` (new — suggestion engine)
+- TBD
 
 ---
 
 ## Non-Functional Requirements
 
-- TBD (pending Sprint 7 completion and Feature 1 design phase)
+- Report generation (Feature 6) latency target: < 5s for rule-based suggestions, < 30s for LLM-assisted
+- No new external dependencies for Features 1-5
 
 ## Out of Scope
 
 **Deferred to Sprint 9 (TBD acceptance criteria, low urgency):**
-- Feature 3.1 Centralized Tool Registry (MAESTRO L7.2) — architectural, needs design
-- Feature 3.2 Plugin Tier Validation (MAESTRO L7.1) — architectural, needs design
-- Feature 4.2 Timeout Bounds Enforcement — low urgency
-- Feature 4.3 Hardcoded Settings Audit — continuation of Sprint 7
-- Feature 4.4 Time Tracking Consistency — low urgency
-- Feature 5.1 BDD Scenario Tests — useful but not blocking
-- Feature 5.2 Tier 1 Reference Comparison Fix — requires ground-truth review integration
-- Feature 6.1 Cerebras Structured Output Retries — provider-specific edge case
-- Feature 8 PlantUML Diagram Audit — cosmetic, no user impact
-- ~~Feature 9 (CC engine: SDK migration)~~ — **Removed.** Needs thorough research first. Keeping `subprocess.run([claude, "-p"])` per ADR-008.
+- Centralized Tool Registry with Module Allowlist (MAESTRO L7.2) — architectural, needs design
+- Plugin Tier Validation at Registration (MAESTRO L7.1) — architectural, needs design
+- Error Message Sanitization (MAESTRO) — TBD acceptance criteria
+- Configuration Path Traversal Protection (MAESTRO) — TBD acceptance criteria
+- GraphTraceData Construction Simplification (`model_validate()`) — TBD acceptance criteria
+- Timeout Bounds Enforcement — low urgency
+- Hardcoded Settings Audit — continuation of Sprint 7
+- Time Tracking Consistency Across Tiers — low urgency
+- BDD Scenario Tests for Evaluation Pipeline — useful but not blocking
+- Tier 1 Reference Comparison Fix — requires ground-truth review integration
+- Cerebras Structured Output Validation Retries — provider-specific edge case
+- PlantUML Diagram Audit — cosmetic, no user impact
+- Unify API Key Resolution Across Agent and Judge Paths — YAGNI after Feature 2 removes sentinel
+- ~~CC engine SDK migration~~ — **Removed.** Keeping `subprocess.run([claude, "-p"])` per ADR-008.
 
 **Already completed (Sprint 8 pre-work, commits a5ac5c9→9e14931→9329fc3):**
 - Legacy config key removal (`paper_numbers`, `provider`) from `run_sweep.py`
@@ -347,13 +233,11 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 Story Breakdown - Phase 1 (TBD stories total):
 
 **Sprint 8 scope (in priority order):**
-- Feature 9 (remove `"not-required"` from `create_llm_model`) — small fix, 5 call sites
-- Feature 10 (unify API key resolution) — thread validated key through agent path (depends: Feature 9)
-- Feature 2 (graph alignment) — small fix, 2 files
-- Feature 7 (structured output streaming) — binary check, AGENT_REQUESTS.md item
-- Feature 1 (report generation) — flagship feature, needs design phase first
-- Feature 3.3 (error message sanitization) — concrete security item
-- Feature 3.4 (path traversal protection) — concrete security item
-- Feature 4.1 (GraphTraceData simplification) — straightforward cleanup
+- Feature 1 (replace `read_paper_pdf_tool` with `get_paper_content`) — fixes sweep crash
+- Feature 2 (remove `"not-required"` from `create_llm_model`) — small fix, 5 call sites
+- Feature 3 (extract CC engine into `cc_engine.py`) — consolidate scattered subprocess logic, fix GUI silent drop
+- Feature 4 (graph alignment) — small fix, 2 files
+- Feature 5 (structured output streaming) — binary check, AGENT_REQUESTS.md item
+- Feature 6 (report generation) — flagship feature, needs design phase first
 
-Story breakdown TBD after Feature 1 design phase.
+Story breakdown TBD after Feature 6 design phase.
