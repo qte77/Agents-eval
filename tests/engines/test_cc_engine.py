@@ -374,7 +374,7 @@ class TestParseStreamJson:
 
     def test_skips_blank_lines(self):
         """parse_stream_json skips empty/whitespace-only lines without error."""
-        from app.engines.cc_engine import parse_stream_json
+        from app.engines.cc_engine import CCResult, parse_stream_json
 
         lines = ["", "  ", "\n", json.dumps({"type": "result", "num_turns": 1})]
         result = parse_stream_json(iter(lines))
@@ -382,7 +382,7 @@ class TestParseStreamJson:
 
     def test_skips_invalid_json_lines(self):
         """parse_stream_json skips malformed JSON lines without raising."""
-        from app.engines.cc_engine import parse_stream_json
+        from app.engines.cc_engine import CCResult, parse_stream_json
 
         lines = ["not valid json {", json.dumps({"type": "result", "num_turns": 2})]
         result = parse_stream_json(iter(lines))
@@ -390,7 +390,7 @@ class TestParseStreamJson:
 
     def test_empty_stream_returns_default_result(self):
         """parse_stream_json returns CCResult with defaults for empty stream."""
-        from app.engines.cc_engine import parse_stream_json
+        from app.engines.cc_engine import CCResult, parse_stream_json
 
         result = parse_stream_json(iter([]))
         assert isinstance(result, CCResult)

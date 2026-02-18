@@ -16,7 +16,8 @@ import json
 import os
 import shutil
 import subprocess
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 from pydantic import BaseModel, Field
 
