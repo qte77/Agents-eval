@@ -12,6 +12,9 @@ if [[ "${1:-}" =~ ^(-h|--help)$ ]]; then
     echo "Env vars (set by Make or caller):"
     echo "  RALPH_MODEL, MAX_ITERATIONS, RALPH_TEAMS, CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"
     echo ""
+    echo "The worktree shares the source repo's .venv via symlink."
+    echo "Changes to .venv (e.g., uv sync) are visible immediately in both."
+    echo ""
     echo "Preferred: make ralph_worktree BRANCH=ralph/sprint8-name TEAMS=true"
     exit 0
 fi
@@ -39,5 +42,12 @@ fi
 
 # Init and run Ralph inside the worktree (env vars inherited from caller)
 cd "$WORKTREE_DIR"
-bash ralph/scripts/init.sh
+
+# Symlink source repo's .venv — both repos share one venv in real time.
+# Ralph should never runs uv sync.
+SOURCE_VENV="$(git rev-parse --path-format=absolute --git-common-dir)/../.venv"
+if [ -d "$SOURCE_VENV" ] && [ ! -e .venv ]; then
+    ln -s "$SOURCE_VENV" .venv
+fi
+export VIRTUAL_ENV="$PWD/.venv"
 bash ralph/scripts/ralph.sh
