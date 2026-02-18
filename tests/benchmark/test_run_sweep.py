@@ -77,14 +77,15 @@ class TestLoadConfigFromFile:
         assert config is not None
         assert config.chat_provider == "cerebras"
 
-    def test_backward_compat_provider_key_in_json(self, tmp_path: Path):
-        """Test that old 'provider' key in config JSON still works (backward compat)."""
+    def test_legacy_provider_key_returns_none(self, tmp_path: Path):
+        """Test that old 'provider' key in config JSON is ignored (legacy key removed)."""
         config_file = self._write_config(tmp_path, {"provider": "cerebras"})
 
         config = _load_config_from_file(config_file)
 
         assert config is not None
-        assert config.chat_provider == "cerebras"
+        # Legacy 'provider' key ignored; falls back to default
+        assert config.chat_provider == CHAT_DEFAULT_PROVIDER
 
     def test_falls_back_to_default_when_provider_absent(self, tmp_path: Path):
         """Test that missing 'chat_provider' key falls back to CHAT_DEFAULT_PROVIDER."""

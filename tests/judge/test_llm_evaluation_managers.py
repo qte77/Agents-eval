@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from pydantic_ai import Agent
 
 from app.data_models.app_models import AppEnv
 from app.data_models.evaluation_models import Tier2Result
@@ -812,3 +813,47 @@ class TestLLMJudgePerformance:
                         sample_data["paper"], sample_data["review"]
                     )
                     assert score == 0.5  # Should use fallback
+
+
+# API key forwarding tests
+class TestApiKeyForwarding:
+    """Test that validated API keys are forwarded through to model creation."""
+
+    @pytest.mark.asyncio
+    async def test_create_judge_agent_forwards_api_key(self):
+        """create_judge_agent should pass the validated api_key to create_evaluation_agent."""
+        settings = JudgeSettings(tier2_provider="openai")
+        env_config = AppEnv(OPENAI_API_KEY="sk-real-key-123")
+        engine = LLMJudgeEngine(settings, env_config=env_config)
+
+        with patch("app.judge.llm_evaluation_managers.create_evaluation_agent") as mock_create:
+            mock_create.return_value = Mock(spec=Agent)
+            await engine.create_judge_agent("technical_accuracy")
+
+            # api_key must be the actual validated key, not None
+            mock_create.assert_called_once_with(
+                provider="openai",
+                model_name="gpt-4o-mini",
+                assessment_type="technical_accuracy",
+                api_key="sk-real-key-123",
+            )
+
+    @pytest.mark.asyncio
+    async def test_judge_inherits_mas_provider_api_key(self):
+        """When tier2_provider=auto and chat_provider=github, judge uses the GitHub API key."""
+        settings = JudgeSettings(tier2_provider="auto")
+        env_config = AppEnv(GITHUB_API_KEY="ghp-github-key-456")
+        engine = LLMJudgeEngine(
+            settings, env_config=env_config, chat_provider="github"
+        )
+
+        with patch("app.judge.llm_evaluation_managers.create_evaluation_agent") as mock_create:
+            mock_create.return_value = Mock(spec=Agent)
+            await engine.create_judge_agent("constructiveness")
+
+            mock_create.assert_called_once_with(
+                provider="github",
+                model_name="gpt-4o-mini",
+                assessment_type="constructiveness",
+                api_key="ghp-github-key-456",
+            )

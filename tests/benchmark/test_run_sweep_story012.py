@@ -337,8 +337,8 @@ class TestLoadConfigFromFileStory012:
         assert config is not None
         assert config.chat_provider == "cerebras"
 
-    def test_backward_compat_paper_numbers_key(self, tmp_path: Path):
-        """Test that old 'paper_numbers' key in JSON is read with deprecation (backward compat)."""
+    def test_paper_numbers_key_returns_none(self, tmp_path: Path):
+        """Test that old 'paper_numbers' key in JSON is rejected (legacy key removed)."""
         config_file = self._write_config(
             tmp_path,
             {
@@ -355,12 +355,11 @@ class TestLoadConfigFromFileStory012:
             },
         )
         config = _load_config_from_file(config_file)
-        # Backward compat: old key should still work
-        assert config is not None
-        assert config.paper_ids == ["1", "2"]
+        # Legacy key removed: missing 'paper_ids' returns None
+        assert config is None
 
-    def test_backward_compat_provider_key(self, tmp_path: Path):
-        """Test that old 'provider' key in JSON is read with deprecation (backward compat)."""
+    def test_provider_key_returns_none(self, tmp_path: Path):
+        """Test that old 'provider' key in JSON is ignored (legacy key removed)."""
         config_file = self._write_config(
             tmp_path,
             {
@@ -379,4 +378,5 @@ class TestLoadConfigFromFileStory012:
         )
         config = _load_config_from_file(config_file)
         assert config is not None
-        assert config.chat_provider == "cerebras"
+        # Legacy 'provider' key ignored; falls back to default
+        assert config.chat_provider == CHAT_DEFAULT_PROVIDER
