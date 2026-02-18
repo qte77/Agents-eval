@@ -291,8 +291,8 @@
         "src/gui/pages/settings.py",
         "tests/gui/test_settings.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T22:05:17Z",
       "content_hash": "fb5c3c9f6ed7f1fba55bc14f02c8a6b065743d41abb679a258d4bfd474f2fe1c",
       "depends_on": []
     },
