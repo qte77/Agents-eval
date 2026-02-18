@@ -17,7 +17,6 @@ Mock strategy:
 import inspect
 from unittest.mock import MagicMock, patch
 
-
 # ---------------------------------------------------------------------------
 # 1. run_app.py — "Generate Report" button exists after evaluation completes
 # ---------------------------------------------------------------------------
@@ -40,9 +39,7 @@ class TestGenerateReportButtonPresence:
         assert hasattr(run_app, "_render_report_section"), (
             "run_app must define _render_report_section for STORY-010"
         )
-        assert callable(run_app._render_report_section), (
-            "_render_report_section must be callable"
-        )
+        assert callable(run_app._render_report_section), "_render_report_section must be callable"
 
     def test_render_report_section_signature(self) -> None:
         """_render_report_section must accept a composite_result parameter."""
@@ -92,7 +89,7 @@ class TestGenerateReportButtonPresence:
 
         with (
             patch("streamlit.button") as mock_button,
-            patch("streamlit.info") as mock_info,
+            patch("streamlit.info"),
             patch("streamlit.markdown"),
             patch("streamlit.session_state", {}),
         ):
@@ -138,9 +135,7 @@ class TestReportInlineDisplay:
 
         # Verify st.markdown was called with the report content
         # Extract actual positional args from each call object
-        markdown_args = [
-            c.args[0] for c in mock_markdown.call_args_list if c.args
-        ]
+        markdown_args = [c.args[0] for c in mock_markdown.call_args_list if c.args]
         assert any(expected_report in arg for arg in markdown_args), (
             "st.markdown must be called with the report content after button click"
         )
@@ -167,8 +162,9 @@ class TestReportInlineDisplay:
 
             run_app._render_report_section(composite_result=mock_result)
 
-        mock_gen.assert_called_once_with(mock_result), (
-            "generate_report must be called with the composite_result"
+        (
+            mock_gen.assert_called_once_with(mock_result),
+            ("generate_report must be called with the composite_result"),
         )
 
 
@@ -202,9 +198,7 @@ class TestReportDownloadButton:
             run_app._render_report_section(composite_result=mock_result)
 
         # download_button must be called
-        assert mock_download.called, (
-            "st.download_button must be rendered after report generation"
-        )
+        assert mock_download.called, "st.download_button must be rendered after report generation"
         # The data parameter should contain the report content
         call_kwargs = mock_download.call_args
         data_arg = None

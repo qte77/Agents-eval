@@ -24,9 +24,11 @@ from streamlit import button, exception, header, info, spinner, subheader, text_
 from app.app import main
 from app.common.settings import CommonSettings
 from app.config.config_app import CHAT_DEFAULT_PROVIDER
+from app.data_models.evaluation_models import CompositeResult
 from app.data_models.peerread_models import PeerReadPaper
 from app.data_utils.datasets_peerread import PeerReadLoader
 from app.judge.settings import JudgeSettings
+from app.reports.report_generator import generate_report
 from app.utils.log import logger
 from gui.components.output import render_output
 from gui.config.text import (
@@ -38,8 +40,6 @@ from gui.config.text import (
     RUN_APP_QUERY_RUN_INFO,
     RUN_APP_QUERY_WARNING,
 )
-from app.data_models.evaluation_models import CompositeResult
-from app.reports.report_generator import generate_report
 from gui.utils.log_capture import LogCapture
 
 

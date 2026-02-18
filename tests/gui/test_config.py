@@ -24,7 +24,9 @@ class TestResolveServiceUrlExplicitOverride:
         """PHOENIX_ENDPOINT env var must override all detection logic."""
         from gui.config.config import resolve_service_url
 
-        with patch.dict(os.environ, {"PHOENIX_ENDPOINT": "https://my-custom-phoenix.example.com"}, clear=False):
+        with patch.dict(
+            os.environ, {"PHOENIX_ENDPOINT": "https://my-custom-phoenix.example.com"}, clear=False
+        ):
             result = resolve_service_url(6006)
         assert result == "https://my-custom-phoenix.example.com", (
             f"Expected PHOENIX_ENDPOINT override, got: {result}"
@@ -150,9 +152,7 @@ class TestResolveServiceUrlFallback:
         with patch.dict(os.environ, {}, clear=True):
             result = resolve_service_url(6006)
 
-        assert result == "http://localhost:6006", (
-            f"Expected fallback localhost URL, got: {result}"
-        )
+        assert result == "http://localhost:6006", f"Expected fallback localhost URL, got: {result}"
 
     def test_fallback_uses_given_port(self) -> None:
         """Fallback URL must embed the given port number."""
@@ -161,9 +161,7 @@ class TestResolveServiceUrlFallback:
         with patch.dict(os.environ, {}, clear=True):
             result = resolve_service_url(8080)
 
-        assert result == "http://localhost:8080", (
-            f"Expected fallback localhost:8080, got: {result}"
-        )
+        assert result == "http://localhost:8080", f"Expected fallback localhost:8080, got: {result}"
 
     def test_fallback_for_gitpod_domain_only_env(self) -> None:
         """GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN alone must NOT trigger Codespaces."""

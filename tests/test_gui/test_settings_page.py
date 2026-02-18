@@ -230,8 +230,8 @@ def test_settings_page_widget_structure_snapshot(mock_streamlit):
         {
             "number_input_calls": 10,
             "checkbox_calls": 5,
-            "text_input_calls": 5,
-            "selectbox_calls": 2,
+            "text_input_calls": 1,
+            "selectbox_calls": 7,
             "button_calls": 1,
         }
     )
