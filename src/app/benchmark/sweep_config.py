@@ -87,6 +87,11 @@ class SweepConfig(BaseModel):
         description="Pre-collected CC artifact directories (skips re-running CC)",
     )
 
+    retry_delay_seconds: float = Field(
+        default=5.0,
+        description="Initial delay in seconds between rate-limit retries (exponential backoff)",
+    )
+
     @field_validator("compositions")
     @classmethod
     def validate_compositions_not_empty(cls, v: list[AgentComposition]) -> list[AgentComposition]:
