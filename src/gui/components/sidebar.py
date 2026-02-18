@@ -3,16 +3,23 @@ from streamlit import sidebar
 from gui.config.config import PAGES, PHOENIX_DEFAULT_ENDPOINT
 
 
-def render_sidebar(sidebar_title: str):
-    """Render sidebar with page navigation and Phoenix trace viewer link.
+def render_sidebar(sidebar_title: str, execution_state: str = "idle") -> str:
+    """Render sidebar with page navigation, Phoenix trace link, and execution indicator.
 
     Args:
         sidebar_title: Title to display in the sidebar.
+        execution_state: Current execution state — 'idle', 'running', 'completed', or 'error'.
+            When 'running', an in-progress indicator is shown at the top of the sidebar.
 
     Returns:
         Selected page name from the radio button selection.
     """
     sidebar.title(sidebar_title)
+
+    # S8-F3.3: execution-in-progress indicator (WCAG 4.1.3)
+    if execution_state == "running":
+        sidebar.info("⏳ Execution in progress…")
+
     selected_page = sidebar.radio(" ", PAGES)
 
     # Phoenix trace viewer link

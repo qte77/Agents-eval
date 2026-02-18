@@ -11,6 +11,31 @@ import streamlit as st
 from app.data_models.evaluation_models import CompositeResult
 from app.judge.baseline_comparison import BaselineComparison
 
+# S8-F3.3: human-readable labels for metric snake_case keys (WCAG display clarity)
+METRIC_LABELS: dict[str, str] = {
+    "cosine_score": "Cosine Similarity",
+    "jaccard_score": "Jaccard Similarity",
+    "semantic_score": "Semantic Similarity",
+    "path_convergence": "Path Convergence",
+    "tool_selection_accuracy": "Tool Selection Accuracy",
+    "coordination_centrality": "Coordination Centrality",
+    "task_distribution_balance": "Task Distribution Balance",
+}
+
+
+def format_metric_label(metric_key: str) -> str:
+    """Return a human-readable label for a metric key.
+
+    Falls back to title-casing the key when no explicit mapping exists.
+
+    Args:
+        metric_key: Snake-case metric name (e.g. "cosine_score").
+
+    Returns:
+        Human-readable label string (e.g. "Cosine Similarity").
+    """
+    return METRIC_LABELS.get(metric_key, metric_key.replace("_", " ").title())
+
 
 def _extract_graph_metrics(metric_scores: dict[str, float]) -> dict[str, float]:
     """Extract graph-specific metrics from metric scores.
@@ -43,18 +68,29 @@ def _extract_text_metrics(metric_scores: dict[str, float]) -> dict[str, float]:
     return {k: v for k, v in metric_scores.items() if k in text_metric_names}
 
 
-def _render_overall_results(result: CompositeResult) -> None:
+def _render_overall_results(
+    result: CompositeResult,
+    baseline_comparison: "BaselineComparison | None" = None,
+) -> None:
     """Render overall results section with composite score and recommendation.
 
     Args:
         result: CompositeResult containing evaluation data.
+        baseline_comparison: Optional baseline for delta indicators in metrics.
     """
     st.subheader("Overall Results")
     col1, col2, col3 = st.columns(3)
+
+    # S8-F3.3: populate delta from baseline tier_deltas when available
+    tier1_delta: float | None = None
+    if baseline_comparison is not None:
+        tier1_delta = baseline_comparison.tier_deltas.get("tier1")
+
     with col1:
         st.metric(
             "Composite Score",
             f"{result.composite_score:.2f}",
+            delta=f"{tier1_delta:.3f}" if tier1_delta is not None else None,
             help="Weighted average across all evaluation tiers",
         )
     with col2:
@@ -129,17 +165,15 @@ def _render_metrics_comparison(result: CompositeResult) -> None:
 
         st.bar_chart(comparison_data)
 
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("**Graph Metrics (Tier 3)**")
-            for metric, value in sorted(graph_metrics.items()):
-                st.text(f"{metric}: {value:.3f}")
-
-        with col2:
-            st.markdown("**Text Metrics (Tier 1)**")
-            for metric, value in sorted(text_metrics.items()):
-                st.text(f"{metric}: {value:.3f}")
+        # S8-F3.3: dataframe alt text for bar chart (WCAG 1.1.1 accessibility)
+        combined_rows = [
+            {"Metric": format_metric_label(k), "Score": round(v, 3), "Category": "Graph (Tier 3)"}
+            for k, v in sorted(graph_metrics.items())
+        ] + [
+            {"Metric": format_metric_label(k), "Score": round(v, 3), "Category": "Text (Tier 1)"}
+            for k, v in sorted(text_metrics.items())
+        ]
+        st.dataframe(combined_rows, use_container_width=True)
     else:
         st.info("Insufficient metric data for comparison visualization.")
 
@@ -245,18 +279,22 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
     if result is None:
         st.info("No evaluation results available. Run an evaluation to see results here.")
 
-        # Show baseline configuration inputs even when no result
-        st.subheader("🔧 Baseline Comparison Configuration")
-        st.text_input(
-            "Claude Code Solo Directory",
-            key="cc_solo_dir_input",
-            help="Path to Claude Code solo session export directory",
-        )
-        st.text_input(
-            "Claude Code Teams Directory",
-            key="cc_teams_dir_input",
-            help="Path to Claude Code Agent Teams artifacts directory",
-        )
+        # S8-F3.3: baseline inputs in collapsed expander (progressive disclosure)
+        with st.expander("🔧 Baseline Comparison Configuration", expanded=False):
+            st.markdown(
+                "Provide directory paths to Claude Code artifact exports to enable "
+                "comparative evaluation against MAS results."
+            )
+            st.text_input(
+                "Claude Code Solo Directory",
+                key="cc_solo_dir_input",
+                help="Path to Claude Code solo session export directory",
+            )
+            st.text_input(
+                "Claude Code Teams Directory",
+                key="cc_teams_dir_input",
+                help="Path to Claude Code Agent Teams artifacts directory",
+            )
         return
 
     _render_overall_results(result)

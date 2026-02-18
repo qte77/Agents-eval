@@ -338,25 +338,43 @@ def _display_configuration(provider: str, token_limit: int | None, agents_text: 
 def _display_execution_result(execution_state: str) -> None:
     """Display execution result based on current state.
 
+    Wraps state transitions in ARIA live regions for screen reader accessibility:
+    - role="status" for running/completed (polite, non-interrupting)
+    - role="alert" for errors (assertive, immediate announcement)
+
     Args:
         execution_state: Current execution state (running/completed/error/idle)
     """
     if execution_state == "running":
+        # S8-F3.3: ARIA role="status" for polite announcement (WCAG 4.1.3)
+        st.markdown('<div role="status" aria-live="polite">', unsafe_allow_html=True)
         with spinner("Query execution in progress..."):
             info(
                 "Execution is running. You can navigate to other tabs and return to see the result."
             )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     elif execution_state == "completed":
         result = getattr(st.session_state, "execution_result", None)
+        # S8-F3.3: ARIA role="status" for completed state + post-run navigation guidance
+        st.markdown('<div role="status" aria-live="polite">', unsafe_allow_html=True)
         if result:
             render_output(result)
         else:
             info("Execution completed but no result was returned.")
+        st.markdown(
+            "Navigate to **Evaluation Results** to view scores, "
+            "or **Agent Graph** to explore agent interactions.",
+            unsafe_allow_html=False,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     elif execution_state == "error":
+        # S8-F3.3: ARIA role="alert" for error state (assertive announcement, WCAG 4.1.3)
+        st.markdown('<div role="alert" aria-live="assertive">', unsafe_allow_html=True)
         error_msg = getattr(st.session_state, "execution_error", "Unknown error")
         exception(Exception(error_msg))
+        st.markdown("</div>", unsafe_allow_html=True)
 
     else:  # idle
         render_output(RUN_APP_OUTPUT_PLACEHOLDER)
@@ -379,7 +397,11 @@ def _render_paper_selection_input() -> tuple[str, str | None]:
         st.session_state.available_papers = available_papers
 
     if not available_papers:
-        st.info("No papers downloaded yet. Use the Downloads page to fetch the PeerRead dataset.")
+        # S8-F3.3: fix dead "Downloads page" reference — provide CLI instructions instead
+        st.info(
+            "No papers downloaded yet. "
+            "Run `make setup_dataset_sample` in your terminal to fetch the PeerRead dataset."
+        )
         return text_input(RUN_APP_QUERY_PLACEHOLDER), None
 
     selected_paper: PeerReadPaper = st.selectbox(
@@ -387,6 +409,7 @@ def _render_paper_selection_input() -> tuple[str, str | None]:
         options=available_papers,
         format_func=_format_paper_option,
         key="selected_paper",
+        help="Choose a PeerRead paper to evaluate. The abstract preview appears below.",
     )
     selected_paper_id = selected_paper.paper_id if selected_paper else None
 
@@ -484,6 +507,11 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
         ["MAS (PydanticAI)", "Claude Code"],
         key="engine_label",
         horizontal=True,
+        # S8-F3.3: help text for engine selector
+        help=(
+            "MAS (PydanticAI): multi-agent pipeline with Researcher, Analyst, and Synthesiser. "
+            "Claude Code: single-model execution via the `claude` CLI."
+        ),
     )
     engine = "cc" if engine_label == "Claude Code" else "mas"
     st.session_state.engine = engine
