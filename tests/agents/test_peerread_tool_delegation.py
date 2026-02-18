@@ -103,7 +103,7 @@ def test_single_agent_peerread_tools_on_manager(
     manager_tool_names = _get_tool_names(manager)
 
     # Verify PeerRead tools are on manager in single-agent mode
-    peerread_base_tools = ["get_peerread_paper", "query_peerread_papers", "read_paper_pdf_tool"]
+    peerread_base_tools = ["get_peerread_paper", "query_peerread_papers", "get_paper_content"]
 
     for tool_name in peerread_base_tools:
         assert tool_name in manager_tool_names, (
@@ -195,7 +195,7 @@ def test_single_agent_review_tools_on_manager(
         )
 
     # Verify PeerRead base tools also on manager in single-agent mode
-    peerread_base_tools = ["get_peerread_paper", "query_peerread_papers", "read_paper_pdf_tool"]
+    peerread_base_tools = ["get_peerread_paper", "query_peerread_papers", "get_paper_content"]
     for tool_name in peerread_base_tools:
         assert tool_name in manager_tool_names, (
             f"PeerRead tool '{tool_name}' should be on manager in single-agent mode"

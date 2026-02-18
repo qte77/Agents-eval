@@ -20,8 +20,7 @@ Mock strategy:
 """
 
 import inspect
-from unittest.mock import MagicMock, call, patch
-
+from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
 # 1. ARIA live regions in run_app.py
@@ -40,9 +39,11 @@ class TestRunAppARIALiveRegions:
         """Running state wraps output in ARIA role='status' region."""
         from gui.pages.run_app import _display_execution_result
 
-        with patch("streamlit.markdown") as mock_md, patch(
-            "streamlit.spinner"
-        ) as mock_spinner, patch("streamlit.info") as mock_info:
+        with (
+            patch("streamlit.markdown") as mock_md,
+            patch("streamlit.spinner") as mock_spinner,
+            patch("streamlit.info"),
+        ):
             mock_spinner.return_value.__enter__ = MagicMock(return_value=None)
             mock_spinner.return_value.__exit__ = MagicMock(return_value=False)
 
@@ -50,7 +51,7 @@ class TestRunAppARIALiveRegions:
 
         # Check that ARIA role="status" appears in any markdown call
         all_md_calls = [str(c) for c in mock_md.call_args_list]
-        assert any("role=\"status\"" in c or "role='status'" in c for c in all_md_calls), (
+        assert any('role="status"' in c or "role='status'" in c for c in all_md_calls), (
             "Expected ARIA role='status' in markdown output for running state"
         )
 
@@ -58,13 +59,15 @@ class TestRunAppARIALiveRegions:
         """Error state wraps output in ARIA role='alert' region."""
         from gui.pages.run_app import _display_execution_result
 
-        with patch("streamlit.markdown") as mock_md, patch("streamlit.exception"), patch(
-            "streamlit.session_state", {"execution_error": "Something failed"}
+        with (
+            patch("streamlit.markdown") as mock_md,
+            patch("streamlit.exception"),
+            patch("streamlit.session_state", {"execution_error": "Something failed"}),
         ):
             _display_execution_result("error")
 
         all_md_calls = [str(c) for c in mock_md.call_args_list]
-        assert any("role=\"alert\"" in c or "role='alert'" in c for c in all_md_calls), (
+        assert any('role="alert"' in c or "role='alert'" in c for c in all_md_calls), (
             "Expected ARIA role='alert' in markdown output for error state"
         )
 
@@ -72,13 +75,15 @@ class TestRunAppARIALiveRegions:
         """Completed state wraps output in ARIA role='status' region."""
         from gui.pages.run_app import _display_execution_result
 
-        with patch("streamlit.markdown") as mock_md, patch(
-            "streamlit.info"
-        ) as mock_info, patch("streamlit.session_state", {}):
+        with (
+            patch("streamlit.markdown") as mock_md,
+            patch("streamlit.info"),
+            patch("streamlit.session_state", {}),
+        ):
             _display_execution_result("completed")
 
         all_md_calls = [str(c) for c in mock_md.call_args_list]
-        assert any("role=\"status\"" in c or "role='status'" in c for c in all_md_calls), (
+        assert any('role="status"' in c or "role='status'" in c for c in all_md_calls), (
             "Expected ARIA role='status' in markdown output for completed state"
         )
 
@@ -108,9 +113,12 @@ class TestRunAppDeadReferenceFixed:
         mock_session_state = MagicMock()
         mock_session_state.get = MagicMock(return_value=[])
 
-        with patch("gui.pages.run_app._load_available_papers", return_value=[]), patch.object(
-            st, "session_state", mock_session_state
-        ), patch("streamlit.info") as mock_info, patch("streamlit.text_input", return_value=""):
+        with (
+            patch("gui.pages.run_app._load_available_papers", return_value=[]),
+            patch.object(st, "session_state", mock_session_state),
+            patch("streamlit.info") as mock_info,
+            patch("streamlit.text_input", return_value=""),
+        ):
             _render_paper_selection_input()
 
         # Gather all info messages
@@ -177,8 +185,10 @@ class TestRunAppHelpText:
             if isinstance(node, ast.Call):
                 func = node.func
                 is_selectbox = (
-                    isinstance(func, ast.Attribute) and func.attr == "selectbox"
-                    or isinstance(func, ast.Name) and func.id == "selectbox"
+                    isinstance(func, ast.Attribute)
+                    and func.attr == "selectbox"
+                    or isinstance(func, ast.Name)
+                    and func.id == "selectbox"
                 )
                 if is_selectbox:
                     kwarg_names = [kw.arg for kw in node.keywords]
@@ -206,14 +216,15 @@ class TestRunAppPostRunNavigationGuidance:
         """Completed state includes navigation hint to Evaluation Results page."""
         from gui.pages.run_app import _display_execution_result
 
-        with patch("streamlit.markdown") as mock_md, patch(
-            "streamlit.info"
-        ) as mock_info, patch("streamlit.session_state", {}):
+        with (
+            patch("streamlit.markdown") as mock_md,
+            patch("streamlit.info") as mock_info,
+            patch("streamlit.session_state", {}),
+        ):
             _display_execution_result("completed")
 
         all_output = " ".join(
-            [str(c) for c in mock_md.call_args_list]
-            + [str(c) for c in mock_info.call_args_list]
+            [str(c) for c in mock_md.call_args_list] + [str(c) for c in mock_info.call_args_list]
         )
         assert "Evaluation Results" in all_output, (
             "Post-completion guidance must reference 'Evaluation Results' page"
@@ -223,14 +234,15 @@ class TestRunAppPostRunNavigationGuidance:
         """Completed state includes navigation hint to Agent Graph page."""
         from gui.pages.run_app import _display_execution_result
 
-        with patch("streamlit.markdown") as mock_md, patch(
-            "streamlit.info"
-        ) as mock_info, patch("streamlit.session_state", {}):
+        with (
+            patch("streamlit.markdown") as mock_md,
+            patch("streamlit.info") as mock_info,
+            patch("streamlit.session_state", {}),
+        ):
             _display_execution_result("completed")
 
         all_output = " ".join(
-            [str(c) for c in mock_md.call_args_list]
-            + [str(c) for c in mock_info.call_args_list]
+            [str(c) for c in mock_md.call_args_list] + [str(c) for c in mock_info.call_args_list]
         )
         assert "Agent Graph" in all_output, (
             "Post-completion guidance must reference 'Agent Graph' page"
@@ -386,7 +398,6 @@ class TestEvaluationBaselineExpander:
 
     def test_baseline_inputs_rendered_inside_expander(self) -> None:
         """Baseline comparison text_inputs are wrapped in a collapsed st.expander."""
-        import streamlit as st
 
         from gui.pages.evaluation import render_evaluation
 
@@ -404,10 +415,12 @@ class TestEvaluationBaselineExpander:
             call_order.append("text_input")
             return ""
 
-        with patch("streamlit.header"), patch("streamlit.info"), patch(
-            "streamlit.subheader"
-        ), patch("streamlit.expander", side_effect=track_expander), patch(
-            "streamlit.text_input", side_effect=track_text_input
+        with (
+            patch("streamlit.header"),
+            patch("streamlit.info"),
+            patch("streamlit.subheader"),
+            patch("streamlit.expander", side_effect=track_expander),
+            patch("streamlit.text_input", side_effect=track_text_input),
         ):
             render_evaluation(result=None)
 
@@ -433,8 +446,10 @@ class TestEvaluationBaselineExpander:
             if isinstance(node, ast.Call):
                 func = node.func
                 is_expander = (
-                    isinstance(func, ast.Attribute) and func.attr == "expander"
-                    or isinstance(func, ast.Name) and func.id == "expander"
+                    isinstance(func, ast.Attribute)
+                    and func.attr == "expander"
+                    or isinstance(func, ast.Name)
+                    and func.id == "expander"
                 )
                 if is_expander:
                     for kw in node.keywords:
@@ -464,7 +479,6 @@ class TestEvaluationDataframeAltText:
     def test_metrics_comparison_calls_dataframe_after_bar_chart(self) -> None:
         """st.dataframe called after st.bar_chart for accessible table alternative."""
         from app.data_models.evaluation_models import CompositeResult
-
         from gui.pages.evaluation import _render_metrics_comparison
 
         result = MagicMock(spec=CompositeResult)
@@ -486,12 +500,13 @@ class TestEvaluationDataframeAltText:
         def track_dataframe(*args, **kwargs):
             call_order.append("dataframe")
 
-        with patch("streamlit.subheader"), patch("streamlit.columns") as mock_cols, patch(
-            "streamlit.markdown"
-        ), patch("streamlit.text"), patch(
-            "streamlit.bar_chart", side_effect=track_bar_chart
-        ), patch(
-            "streamlit.dataframe", side_effect=track_dataframe
+        with (
+            patch("streamlit.subheader"),
+            patch("streamlit.columns") as mock_cols,
+            patch("streamlit.markdown"),
+            patch("streamlit.text"),
+            patch("streamlit.bar_chart", side_effect=track_bar_chart),
+            patch("streamlit.dataframe", side_effect=track_dataframe),
         ):
             # Mock columns context manager
             col_ctx = MagicMock()
@@ -527,7 +542,6 @@ class TestEvaluationDeltaIndicators:
         """Composite score metric has delta populated from BaselineComparison.tier_deltas."""
         from app.data_models.evaluation_models import CompositeResult
         from app.judge.baseline_comparison import BaselineComparison
-
         from gui.pages.evaluation import _render_overall_results
 
         result = MagicMock(spec=CompositeResult)
@@ -543,8 +557,10 @@ class TestEvaluationDeltaIndicators:
         def track_metric(*args, **kwargs):
             metric_calls.append({"args": args, "kwargs": kwargs})
 
-        with patch("streamlit.subheader"), patch("streamlit.columns") as mock_cols, patch(
-            "streamlit.metric", side_effect=track_metric
+        with (
+            patch("streamlit.subheader"),
+            patch("streamlit.columns") as mock_cols,
+            patch("streamlit.metric", side_effect=track_metric),
         ):
             col_ctx = MagicMock()
             col_ctx.__enter__ = MagicMock(return_value=col_ctx)
@@ -562,7 +578,6 @@ class TestEvaluationDeltaIndicators:
     def test_overall_results_metric_no_delta_when_no_baseline(self) -> None:
         """Composite score metric has no delta when baseline_comparison is None."""
         from app.data_models.evaluation_models import CompositeResult
-
         from gui.pages.evaluation import _render_overall_results
 
         result = MagicMock(spec=CompositeResult)
@@ -575,8 +590,10 @@ class TestEvaluationDeltaIndicators:
         def track_metric(*args, **kwargs):
             metric_calls.append({"args": args, "kwargs": kwargs})
 
-        with patch("streamlit.subheader"), patch("streamlit.columns") as mock_cols, patch(
-            "streamlit.metric", side_effect=track_metric
+        with (
+            patch("streamlit.subheader"),
+            patch("streamlit.columns") as mock_cols,
+            patch("streamlit.metric", side_effect=track_metric),
         ):
             col_ctx = MagicMock()
             col_ctx.__enter__ = MagicMock(return_value=col_ctx)
@@ -629,8 +646,10 @@ class TestEvaluationTabularDisplay:
             if isinstance(node, ast.Call):
                 func = node.func
                 is_text = (
-                    isinstance(func, ast.Attribute) and func.attr == "text"
-                    or isinstance(func, ast.Name) and func.id == "text"
+                    isinstance(func, ast.Attribute)
+                    and func.attr == "text"
+                    or isinstance(func, ast.Name)
+                    and func.id == "text"
                 )
                 if is_text:
                     has_st_text = True

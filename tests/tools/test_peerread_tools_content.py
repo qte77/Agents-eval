@@ -238,6 +238,7 @@ class TestGetPaperContent:
             call_kwargs = mock_collector.log_tool_call.call_args
             # Tool name should be "get_paper_content"
             assert call_kwargs.kwargs.get("tool_name") == "get_paper_content" or (
-                len(call_kwargs.args) > 1 and call_kwargs.args[1] == "get_paper_content"
+                len(call_kwargs.args) > 1
+                and call_kwargs.args[1] == "get_paper_content"
                 or "get_paper_content" in str(call_kwargs)
             )

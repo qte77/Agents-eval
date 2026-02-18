@@ -150,7 +150,9 @@ class TestCCBaselineIntegration:
 
         with (
             patch("app.benchmark.sweep_runner.main") as mock_main,
-            patch("app.benchmark.sweep_runner.run_cc_solo", return_value=mock_cc_result) as mock_cc_solo,
+            patch(
+                "app.benchmark.sweep_runner.run_cc_solo", return_value=mock_cc_result
+            ) as mock_cc_solo,
             patch("app.benchmark.sweep_runner.check_cc_available", return_value=True),
         ):
             mock_main.return_value = {"composite_result": mock_composite_result}

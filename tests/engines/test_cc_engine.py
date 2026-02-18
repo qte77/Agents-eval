@@ -10,7 +10,6 @@ Covers:
 
 import json
 import subprocess
-from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -365,9 +364,7 @@ class TestParseStreamJson:
         """parse_stream_json adds Task events to team_artifacts."""
         from app.engines.cc_engine import parse_stream_json
 
-        lines = [
-            json.dumps({"type": "Task", "id": "task-001", "subject": "Review paper 1234"})
-        ]
+        lines = [json.dumps({"type": "Task", "id": "task-001", "subject": "Review paper 1234"})]
         result = parse_stream_json(iter(lines))
         assert len(result.team_artifacts) == 1
         assert result.team_artifacts[0]["type"] == "Task"

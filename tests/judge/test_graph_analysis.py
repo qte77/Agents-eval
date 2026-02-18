@@ -11,7 +11,6 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import networkx as nx
-import pytest
 
 from app.data_models.evaluation_models import GraphTraceData
 from app.judge.graph_analysis import GraphAnalysisEngine
@@ -41,9 +40,7 @@ class TestExportTraceNodeAttributeNames:
     def test_agent_nodes_use_type_attribute(self) -> None:
         """Agent nodes exported by export_trace_to_networkx() have `type` key, not `node_type`."""
         # Arrange
-        trace_data = _make_trace_data(
-            agent_interactions=[{"from": "manager", "to": "researcher"}]
-        )
+        trace_data = _make_trace_data(agent_interactions=[{"from": "manager", "to": "researcher"}])
 
         # Act
         graph = self.engine.export_trace_to_networkx(trace_data)
@@ -78,9 +75,7 @@ class TestExportTraceNodeAttributeNames:
     def test_agent_node_type_value_is_agent(self) -> None:
         """Agent nodes have type='agent'."""
         # Arrange
-        trace_data = _make_trace_data(
-            agent_interactions=[{"from": "manager", "to": "researcher"}]
-        )
+        trace_data = _make_trace_data(agent_interactions=[{"from": "manager", "to": "researcher"}])
 
         # Act
         graph = self.engine.export_trace_to_networkx(trace_data)
@@ -271,9 +266,7 @@ class TestAttributeNameRoundTrip:
 
         # Simulate what render_agent_graph() does at line 101 — AFTER the fix
         # (reading `type`, not `node_type`)
-        agent_count_correct = sum(
-            1 for n in graph.nodes() if graph.nodes[n].get("type") == "agent"
-        )
+        agent_count_correct = sum(1 for n in graph.nodes() if graph.nodes[n].get("type") == "agent")
         agent_count_buggy = sum(
             1 for n in graph.nodes() if graph.nodes[n].get("node_type") == "agent"
         )

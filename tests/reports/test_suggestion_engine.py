@@ -4,7 +4,7 @@ Tests cover: Suggestion model, SuggestionEngine rule-based generation,
 severity levels, metric/tier references, and optional LLM path.
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -16,7 +16,6 @@ from app.data_models.evaluation_models import (
 )
 from app.data_models.report_models import Suggestion, SuggestionSeverity
 from app.reports.suggestion_engine import SuggestionEngine
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -225,9 +224,7 @@ class TestSuggestionEngineRuleBased:
         for suggestion in suggestions:
             assert suggestion.metric != ""
 
-    def test_suggestions_reference_tier(
-        self, composite_result_low: CompositeResult
-    ) -> None:
+    def test_suggestions_reference_tier(self, composite_result_low: CompositeResult) -> None:
         """Each suggestion identifies the tier it belongs to."""
         engine = SuggestionEngine()
         suggestions = engine.generate(composite_result_low)
@@ -244,9 +241,7 @@ class TestSuggestionEngineRuleBased:
         severities = {s.severity for s in suggestions}
         assert SuggestionSeverity.WARNING in severities or SuggestionSeverity.CRITICAL in severities
 
-    def test_no_llm_suggestions_flag(
-        self, composite_result_moderate: CompositeResult
-    ) -> None:
+    def test_no_llm_suggestions_flag(self, composite_result_moderate: CompositeResult) -> None:
         """Engine respects no_llm_suggestions=True by returning only rule-based."""
         engine = SuggestionEngine(no_llm_suggestions=True)
         suggestions = engine.generate(composite_result_moderate)
@@ -274,18 +269,14 @@ class TestSuggestionEngineRuleBased:
         task_sugg = [s for s in suggestions if s.metric == "task_success"]
         assert any(s.severity == SuggestionSeverity.CRITICAL for s in task_sugg)
 
-    def test_tier2_missing_produces_info(
-        self, composite_result_low: CompositeResult
-    ) -> None:
+    def test_tier2_missing_produces_info(self, composite_result_low: CompositeResult) -> None:
         """When tier2_score is None, an info suggestion is produced."""
         engine = SuggestionEngine()
         suggestions = engine.generate(composite_result_low)
         tier2_sugg = [s for s in suggestions if s.tier == 2]
         assert len(tier2_sugg) >= 1
 
-    def test_suggestions_are_actionable(
-        self, composite_result_low: CompositeResult
-    ) -> None:
+    def test_suggestions_are_actionable(self, composite_result_low: CompositeResult) -> None:
         """Each suggestion has a non-empty action field."""
         engine = SuggestionEngine()
         suggestions = engine.generate(composite_result_low)
@@ -338,13 +329,14 @@ class TestSuggestionEngineLLM:
         assert len(suggestions) >= 1
 
     @pytest.mark.asyncio
-    async def test_llm_fallback_on_error(
-        self, composite_result_low: CompositeResult
-    ) -> None:
+    async def test_llm_fallback_on_error(self, composite_result_low: CompositeResult) -> None:
         """On LLM error, generate_async falls back to rule-based suggestions."""
         engine = SuggestionEngine()
         with patch.object(
-            engine, "_generate_llm_suggestions", new_callable=AsyncMock, side_effect=RuntimeError("LLM unavailable")
+            engine,
+            "_generate_llm_suggestions",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("LLM unavailable"),
         ):
             suggestions = await engine.generate_async(composite_result_low)
         # Must still return rule-based suggestions
@@ -352,9 +344,7 @@ class TestSuggestionEngineLLM:
         for s in suggestions:
             assert isinstance(s, Suggestion)
 
-    def test_no_llm_flag_skips_async_llm(
-        self, composite_result_moderate: CompositeResult
-    ) -> None:
+    def test_no_llm_flag_skips_async_llm(self, composite_result_moderate: CompositeResult) -> None:
         """no_llm_suggestions=True causes generate() to skip LLM path entirely."""
         engine = SuggestionEngine(no_llm_suggestions=True)
         with patch.object(engine, "_generate_llm_suggestions") as mock_llm:

@@ -60,8 +60,6 @@ class TestCCTeamsFlagSweep:
     def test_cc_teams_flag_registered_in_sweep_parser(self):
         """--cc-teams is a recognized flag in run_sweep.parse_args."""
         # We validate that parse_args() from run_sweep handles --cc-teams
-        import importlib
-        import sys
 
         # We need to test without actually running main, so check the argparse setup
         # by parsing --cc-teams in isolation
@@ -69,14 +67,15 @@ class TestCCTeamsFlagSweep:
             # Import and check namespace supports cc_teams
             from run_sweep import parse_args as sweep_parse_args
 
-            args = sweep_parse_args.__wrapped__() if hasattr(sweep_parse_args, "__wrapped__") else None
+            _args = (
+                sweep_parse_args.__wrapped__() if hasattr(sweep_parse_args, "__wrapped__") else None
+            )
         except Exception:
-            args = None
+            pass
 
         # The key test: --cc-teams should not cause a parse error when added
         # We simulate this by checking the SweepConfig model accepts cc_teams
-        from app.benchmark.sweep_config import SweepConfig
-        from app.benchmark.sweep_config import AgentComposition
+        from app.benchmark.sweep_config import AgentComposition, SweepConfig
 
         # SweepConfig should have cc_teams field
         config = SweepConfig(
@@ -120,18 +119,18 @@ class TestCLIDelegatesToCCEngine:
     def test_cli_cc_branch_calls_run_cc_solo_not_subprocess(self):
         """When --engine=cc (no --cc-teams), run_cli uses run_cc_solo, not subprocess.run directly."""
         # Verify that the CLI module-level code imports from cc_engine
-        import ast
         import inspect
 
         # The source should NOT have inline subprocess.run for CC anymore
         import run_cli
 
         source = inspect.getsource(run_cli)
-        tree = ast.parse(source)
 
         # Look for calls to run_cc_solo or run_cc_teams in the source
         # The CC branch should delegate to cc_engine, not use subprocess inline
-        has_cc_engine_import = "cc_engine" in source or "run_cc_solo" in source or "run_cc_teams" in source
+        has_cc_engine_import = (
+            "cc_engine" in source or "run_cc_solo" in source or "run_cc_teams" in source
+        )
         assert has_cc_engine_import, (
             "run_cli should import and use cc_engine functions, not inline subprocess for CC"
         )
@@ -208,7 +207,9 @@ class TestSweepRunnerDelegatesToCCEngine:
             session_dir="/tmp/session",
         )
 
-        with patch("app.benchmark.sweep_runner.run_cc_solo", return_value=mock_cc_result) as mock_solo:
+        with patch(
+            "app.benchmark.sweep_runner.run_cc_solo", return_value=mock_cc_result
+        ) as mock_solo:
             result = await runner._invoke_cc_comparison("1105.1072")
 
         mock_solo.assert_called_once()
@@ -237,7 +238,9 @@ class TestSweepRunnerDelegatesToCCEngine:
             team_artifacts=[{"type": "TeamCreate"}],
         )
 
-        with patch("app.benchmark.sweep_runner.run_cc_teams", return_value=mock_cc_result) as mock_teams:
+        with patch(
+            "app.benchmark.sweep_runner.run_cc_teams", return_value=mock_cc_result
+        ) as mock_teams:
             result = await runner._invoke_cc_comparison("1105.1072")
 
         mock_teams.assert_called_once()
@@ -308,7 +311,9 @@ class TestRunCCBaselinesWired:
             session_dir="/tmp/sess",
         )
 
-        with patch.object(runner, "_invoke_cc_comparison", new_callable=AsyncMock, return_value=mock_cc_result):
+        with patch.object(
+            runner, "_invoke_cc_comparison", new_callable=AsyncMock, return_value=mock_cc_result
+        ):
             # CCTraceAdapter should be called somewhere in the implementation
             with patch("app.benchmark.sweep_runner.CCTraceAdapter") as mock_adapter_cls:
                 mock_adapter = MagicMock()

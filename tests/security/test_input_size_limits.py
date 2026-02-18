@@ -102,13 +102,15 @@ class TestMemoryExhaustionPrevention:
     """Test input validation prevents memory exhaustion attacks."""
 
     def test_extremely_large_string_rejected(self):
-        """Extremely large strings should be rejected before processing."""
-        # Attempt to create a 1GB string (would exhaust memory)
-        # ValidationError should be raised before string is fully allocated
+        """Strings well above max_length should be rejected by Pydantic validator.
 
+        Reason: Python allocates the full string *before* Pydantic validates,
+        so truly huge sizes (e.g. 1GB) cause OOM/hang. We use 10x the limit
+        instead -- the boundary case is covered by test_oversized_agent_output_rejected.
+        """
         with pytest.raises(ValidationError):
             MockTier1Input(
-                agent_output="X" * (1024 * 1024 * 1024),  # 1GB string
+                agent_output="X" * 1_000_000,  # 10x max_length (100000)
                 reference_texts=["ref"],
                 start_time=0.0,
                 end_time=1.0,

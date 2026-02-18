@@ -21,7 +21,6 @@ Mock strategy:
 import importlib
 import inspect
 
-
 # ---------------------------------------------------------------------------
 # 1. styling.py — CSS radio button circle hiding hack must be removed
 # ---------------------------------------------------------------------------
@@ -117,9 +116,7 @@ class TestLogCaptureTextBadges:
             }
         ]
         html = LogCapture.format_logs_as_html(logs)
-        assert "[INFO]" in html, (
-            f"HTML must include text badge for INFO level, got: {html[:300]}"
-        )
+        assert "[INFO]" in html, f"HTML must include text badge for INFO level, got: {html[:300]}"
 
     def test_format_logs_as_html_includes_text_badge_for_debug(self) -> None:
         """HTML output for DEBUG level must include a text badge like [DBG] or [DEBUG]."""
@@ -329,9 +326,7 @@ class TestPromptsDisplayOnlyWarning:
 
         source = inspect.getsource(prompts_mod)
         # Check for warning call with display-only messaging
-        assert "warning(" in source, (
-            "prompts.py must call warning() to display a prominent notice."
-        )
+        assert "warning(" in source, "prompts.py must call warning() to display a prominent notice."
         assert "display-only" in source or "not be saved" in source, (
             "prompts.py warning must state edits are display-only or will not be saved."
         )

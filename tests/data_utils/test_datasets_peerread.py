@@ -538,8 +538,13 @@ class TestContentExtraction:
         config = PeerReadConfig()
         loader = PeerReadLoader(config)
 
-        # Act - paper 104 has parsed content
-        result = loader.load_parsed_pdf_content("104")
+        # Act
+        with patch.object(
+            loader,
+            "_find_parsed_pdf_in_split",
+            return_value="Extracted paper text content.",
+        ):
+            result = loader.load_parsed_pdf_content("104")
 
         # Assert
         assert result is not None
