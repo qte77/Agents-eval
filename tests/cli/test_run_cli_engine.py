@@ -11,8 +11,6 @@ import json
 import subprocess
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from run_cli import parse_args
 
 

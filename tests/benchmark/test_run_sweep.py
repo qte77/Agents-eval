@@ -89,18 +89,14 @@ class TestStory013EngineFlagInRunSweep:
 
     def test_engine_flag_accepted_with_mas(self):
         """Test that --engine=mas is accepted by run_sweep parse_args."""
-        with patch.object(
-            sys, "argv", ["run_sweep.py", "--paper-numbers=1", "--engine=mas"]
-        ):
+        with patch.object(sys, "argv", ["run_sweep.py", "--paper-numbers=1", "--engine=mas"]):
             args = parse_args()
 
         assert args.engine == "mas"
 
     def test_engine_flag_accepted_with_cc(self):
         """Test that --engine=cc is accepted by run_sweep parse_args."""
-        with patch.object(
-            sys, "argv", ["run_sweep.py", "--paper-numbers=1", "--engine=cc"]
-        ):
+        with patch.object(sys, "argv", ["run_sweep.py", "--paper-numbers=1", "--engine=cc"]):
             args = parse_args()
 
         assert args.engine == "cc"
@@ -114,9 +110,7 @@ class TestStory013EngineFlagInRunSweep:
 
     def test_cc_baseline_flag_no_longer_accepted(self):
         """Test that --cc-baseline is rejected (removed in STORY-013)."""
-        with patch.object(
-            sys, "argv", ["run_sweep.py", "--paper-numbers=1", "--cc-baseline"]
-        ):
+        with patch.object(sys, "argv", ["run_sweep.py", "--paper-numbers=1", "--cc-baseline"]):
             with pytest.raises(SystemExit):
                 parse_args()
 

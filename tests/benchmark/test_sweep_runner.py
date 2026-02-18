@@ -250,24 +250,24 @@ class TestStory013EngineRefactor:
             paper_numbers=[1],
             output_dir=tmp_path / "sweep_results",
         )
-        assert not hasattr(
-            config, "cc_baseline_enabled"
-        ), "SweepConfig must NOT have cc_baseline_enabled field (removed in STORY-013)"
+        assert not hasattr(config, "cc_baseline_enabled"), (
+            "SweepConfig must NOT have cc_baseline_enabled field (removed in STORY-013)"
+        )
 
     def test_sweep_runner_has_invoke_cc_comparison_method(self, basic_sweep_config: SweepConfig):
         """Test that SweepRunner has _invoke_cc_comparison() method (renamed from _invoke_cc_baseline)."""
         runner = SweepRunner(basic_sweep_config)
-        assert hasattr(
-            runner, "_invoke_cc_comparison"
-        ), "SweepRunner must have _invoke_cc_comparison method"
-        assert not hasattr(
-            runner, "_invoke_cc_baseline"
-        ), "SweepRunner must NOT have _invoke_cc_baseline (renamed to _invoke_cc_comparison)"
+        assert hasattr(runner, "_invoke_cc_comparison"), (
+            "SweepRunner must have _invoke_cc_comparison method"
+        )
+        assert not hasattr(runner, "_invoke_cc_baseline"), (
+            "SweepRunner must NOT have _invoke_cc_baseline (renamed to _invoke_cc_comparison)"
+        )
 
     def test_cc_baseline_enabled_not_in_model_fields(self, tmp_path: Path):
         """Test that cc_baseline_enabled is not a defined field on SweepConfig."""
         # Pydantic silently ignores extra fields by default, but the field must
         # not be declared on the model (i.e., not in model_fields)
-        assert (
-            "cc_baseline_enabled" not in SweepConfig.model_fields
-        ), "cc_baseline_enabled must be removed from SweepConfig.model_fields in STORY-013"
+        assert "cc_baseline_enabled" not in SweepConfig.model_fields, (
+            "cc_baseline_enabled must be removed from SweepConfig.model_fields in STORY-013"
+        )
