@@ -83,8 +83,8 @@ def _render_executive_summary(result: CompositeResult) -> str:
         "",
         "## Executive Summary",
         "",
-        f"| Field | Value |",
-        f"|-------|-------|",
+        "| Field | Value |",
+        "|-------|-------|",
         f"| **Composite Score** | {result.composite_score:.2f} |",
         f"| **Recommendation** | {rec} |",
         f"| **Timestamp** | {timestamp} |",
@@ -121,9 +121,7 @@ def _render_tier_breakdown(result: CompositeResult) -> str:
     t2_weight = weights.get("tier2", weights.get("t2", "—"))
     t2_weight_str = f"{t2_weight:.2f}" if isinstance(t2_weight, float) else str(t2_weight)
     if result.tier2_score is not None:
-        lines.append(
-            f"| Tier 2 — LLM-as-Judge | {result.tier2_score:.2f} | {t2_weight_str} |"
-        )
+        lines.append(f"| Tier 2 — LLM-as-Judge | {result.tier2_score:.2f} | {t2_weight_str} |")
     else:
         lines.append(f"| Tier 2 — LLM-as-Judge | N/A (not run) | {t2_weight_str} |")
 
@@ -154,7 +152,10 @@ def _render_weaknesses(suggestions: list[Suggestion]) -> str:
     infos = [s for s in suggestions if s.severity == SuggestionSeverity.INFO]
 
     if not criticals and not warnings and not infos:
-        lines.append("No significant weaknesses detected. All evaluated metrics are within acceptable bounds.")
+        lines.append(
+            "No significant weaknesses detected. "
+            "All evaluated metrics are within acceptable bounds."
+        )
         return "\n".join(lines)
 
     # Render each severity group

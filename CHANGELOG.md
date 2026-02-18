@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `report_generator.py` in `src/app/reports/`: `generate_report(result, suggestions)` → Markdown report with executive summary, tier breakdown, and weakness/suggestion sections; `save_report(md, path)` with auto-created parent dirs (STORY-009)
+- `--generate-report` CLI flag (mutually exclusive with `--skip-eval`) writes report to `results/reports/<timestamp>.md` after evaluation (STORY-009)
+- `--no-llm-suggestions` CLI flag to disable LLM-assisted suggestions in generated reports (STORY-009)
 - `SuggestionEngine` with rule-based + optional LLM-assisted paths in `src/app/reports/suggestion_engine.py` (STORY-008)
 - `Suggestion` Pydantic model and `SuggestionSeverity` enum (critical/warning/info) in `src/app/data_models/report_models.py` (STORY-008)
 - `METRIC_LABELS` dict and `format_metric_label()` in `evaluation.py` for human-readable metric names (STORY-007)
