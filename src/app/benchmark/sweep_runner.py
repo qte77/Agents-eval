@@ -52,6 +52,59 @@ class SweepRunner:
             return JudgeSettings(**kwargs)
         return None
 
+    async def _handle_rate_limit(self, error: ModelHTTPError, label: str, attempt: int) -> bool:
+        """Handle a 429 rate-limit error, sleeping before retry if retries remain.
+
+        Args:
+            error: The ModelHTTPError with status_code 429.
+            label: Descriptive label for logging (composition/paper context).
+            attempt: Current attempt index (0-based).
+
+        Returns:
+            True if the caller should retry, False if max retries are exhausted.
+        """
+        if attempt < _MAX_RETRIES:
+            delay = self.config.retry_delay_seconds * (2**attempt)
+            logger.warning(
+                f"Rate limit hit for {label} "
+                f"(attempt {attempt + 1}/{_MAX_RETRIES + 1}). "
+                f"Retrying in {delay:.1f}s..."
+            )
+            await asyncio.sleep(delay)
+            return True
+        logger.error(f"Rate limit exhausted for {label}: {error}")
+        return False
+
+    async def _call_main(
+        self, composition: AgentComposition, paper_id: str, judge_settings: JudgeSettings | None
+    ) -> CompositeResult | None:
+        """Call main() and extract CompositeResult from the result dict.
+
+        Args:
+            composition: Agent composition to test.
+            paper_id: Paper ID to evaluate.
+            judge_settings: Optional judge settings.
+
+        Returns:
+            CompositeResult if found, None if result format unexpected.
+        """
+        result = await main(
+            chat_provider=self.config.chat_provider,
+            query=f"Evaluate paper {paper_id}",
+            paper_id=paper_id,
+            include_researcher=composition.include_researcher,
+            include_analyst=composition.include_analyst,
+            include_synthesiser=composition.include_synthesiser,
+            enable_review_tools=True,
+            skip_eval=False,
+            judge_settings=judge_settings,
+        )
+        # Reason: main() returns dict with 'composite_result' key
+        if isinstance(result, dict) and "composite_result" in result:
+            return result["composite_result"]  # type: ignore[return-value]
+        logger.warning(f"Evaluation returned unexpected format: {type(result).__name__}")
+        return None
+
     async def _run_single_evaluation(
         self, composition: AgentComposition, paper_id: str, repetition: int
     ) -> CompositeResult | None:
@@ -72,52 +125,17 @@ class SweepRunner:
             f"Running composition={composition.get_name()}, "
             f"paper={paper_id}, repetition={repetition}"
         )
-
         judge_settings = self._build_judge_settings()
+        label = f"composition={composition.get_name()}, paper={paper_id}"
 
         for attempt in range(_MAX_RETRIES + 1):
             try:
-                # Run evaluation through main() with specified composition
-                result = await main(
-                    chat_provider=self.config.chat_provider,
-                    query=f"Evaluate paper {paper_id}",
-                    paper_id=paper_id,
-                    include_researcher=composition.include_researcher,
-                    include_analyst=composition.include_analyst,
-                    include_synthesiser=composition.include_synthesiser,
-                    enable_review_tools=True,
-                    skip_eval=False,
-                    judge_settings=judge_settings,
-                )
-
-                # Reason: main() returns dict with 'composite_result' key, not CompositeResult directly
-                if isinstance(result, dict) and "composite_result" in result:
-                    return result["composite_result"]
-
-                logger.warning(f"Evaluation returned unexpected format: {type(result).__name__}")
-                return None
-
+                return await self._call_main(composition, paper_id, judge_settings)
             except ModelHTTPError as e:
-                if e.status_code == 429 and attempt < _MAX_RETRIES:
-                    delay = self.config.retry_delay_seconds * (2**attempt)
-                    logger.warning(
-                        f"Rate limit hit for composition={composition.get_name()}, "
-                        f"paper={paper_id} (attempt {attempt + 1}/{_MAX_RETRIES + 1}). "
-                        f"Retrying in {delay:.1f}s..."
-                    )
-                    await asyncio.sleep(delay)
-                else:
-                    logger.error(
-                        f"Rate limit exhausted for composition={composition.get_name()}, "
-                        f"paper={paper_id}: {e}"
-                    )
+                if e.status_code != 429 or not await self._handle_rate_limit(e, label, attempt):
                     return None
-
             except Exception as e:
-                logger.error(
-                    f"Evaluation failed for composition={composition.get_name()}, "
-                    f"paper={paper_id}: {e}"
-                )
+                logger.error(f"Evaluation failed for {label}: {e}")
                 return None
 
         return None

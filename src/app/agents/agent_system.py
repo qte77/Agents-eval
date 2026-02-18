@@ -478,26 +478,34 @@ def get_manager(
     return manager
 
 
-def _handle_model_http_error(error: ModelHTTPError, provider: str, model_name: str) -> NoReturn:
-    """Handle ModelHTTPError with actionable logging. Re-raises ModelHTTPError for all cases.
-
-    For 429 rate-limit errors, callers are responsible for SystemExit if needed.
-    This allows sweep runners to catch ModelHTTPError and apply retry logic.
+def _extract_rate_limit_detail(error: ModelHTTPError) -> str:
+    """Extract a human-readable detail message from a 429 ModelHTTPError body.
 
     Args:
-        error: The ModelHTTPError to handle.
+        error: The 429 ModelHTTPError to extract detail from.
+
+    Returns:
+        str: Detail message from the error body, or string representation of error.
+    """
+    body = error.body if isinstance(error.body, dict) else {}
+    return body.get("message") or body.get("details") or str(error)  # type: ignore[return-value]
+
+
+def _handle_model_http_error(error: ModelHTTPError, provider: str, model_name: str) -> NoReturn:
+    """Handle non-429 ModelHTTPError with actionable logging. Re-raises the error.
+
+    For 429 rate-limit errors, callers should handle logging and SystemExit directly.
+    This allows sweep runners to catch ModelHTTPError for retry logic.
+
+    Args:
+        error: The ModelHTTPError to handle (expected: non-429).
         provider: Provider name for logging context.
         model_name: Model name for logging context.
 
     Raises:
         ModelHTTPError: Always re-raises the original error.
     """
-    if error.status_code == 429:
-        body = error.body if isinstance(error.body, dict) else {}
-        detail = body.get("message") or body.get("details") or str(error)
-        logger.error(f"Rate limit exceeded for {provider}({model_name}): {detail}")
-    else:
-        logger.error(f"HTTP error from model {provider}({model_name}): {error}")
+    logger.error(f"HTTP error from model {provider}({model_name}): {error}")
     raise error
 
 
@@ -568,10 +576,7 @@ async def run_manager(
     except ModelHTTPError as e:
         trace_collector.end_execution()
         if e.status_code == 429:
-            # Reason: Log rate-limit details then exit at CLI boundary; SweepRunner catches
-            # ModelHTTPError from main() before it reaches run_manager for retry logic.
-            body = e.body if isinstance(e.body, dict) else {}
-            detail = body.get("message") or body.get("details") or str(e)
+            detail = _extract_rate_limit_detail(e)
             logger.error(f"Rate limit exceeded for {provider}({model_name}): {detail}")
             raise SystemExit(1) from e
         _handle_model_http_error(e, provider, model_name)

@@ -13,6 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `SweepConfig.retry_delay_seconds: float = Field(default=5.0)`: initial retry delay for rate-limit backoff in sweep evaluations (STORY-013b)
+- `SweepRunner._save_results_json()`: incremental JSON persistence after each successful evaluation for crash resilience (STORY-013b)
+- `SweepRunner._handle_rate_limit()`: exponential backoff helper for 429 retries (STORY-013b)
+- `SweepRunner._call_main()`: extracted evaluation call to reduce `_run_single_evaluation` complexity (STORY-013b)
+- `_extract_rate_limit_detail()` in `agent_system.py`: extracts human-readable detail from 429 error body (STORY-013b)
+
+### Changed
+
+- `SweepRunner._run_single_evaluation()`: retries on HTTP 429 errors with exponential backoff (max 3 retries); continues to next evaluation after exhausting retries (STORY-013b)
+- `SweepRunner._save_results()`: now delegates JSON write to `_save_results_json()` then writes `summary.md`; writes incrementally after each evaluation (STORY-013b)
+- `_handle_model_http_error()` in `agent_system.py`: re-raises `ModelHTTPError` instead of `SystemExit(1)` for 429, enabling callers to implement retry logic (STORY-013b)
+- `run_manager()` in `agent_system.py`: catches `ModelHTTPError` with status 429 and raises `SystemExit(1)` directly, preserving CLI behavior (STORY-013b)
+
 - `tests/gui/test_editable_common_settings.py`: new test module for editable common settings — covers log level selectbox options/tooltip, max content length range/tooltip, logfire consolidation to JudgeSettings, reset button clearing common_* keys, and _build_common_settings_from_session() helper (STORY-010)
 
 ### Changed
