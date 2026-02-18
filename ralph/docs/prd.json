@@ -297,8 +297,8 @@
         "src/app/data_models/peerread_models.py",
         "tests/gui/test_paper_selection.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T09:45:00Z",
       "content_hash": "dedb90b8f3c3800bcb0c664274d609b51143b196297849dba10c3e3096b1b380",
       "depends_on": []
     },
@@ -334,8 +334,8 @@
         "src/gui/pages/run_app.py",
         "tests/gui/test_editable_common_settings.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T09:55:00Z",
       "content_hash": "f65735f76c3465b580dedb14b06f91b126058d4e29a1a6275203dffb88494767",
       "depends_on": []
     },
@@ -360,8 +360,8 @@
         "src/app/judge/llm_evaluation_managers.py",
         "tests/judge/test_judge_settings.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T09:55:00Z",
       "content_hash": "7838098c1e8774fe84c01ad89b258e3dd62221db7a4626b9c82e0e493543b8c5",
       "depends_on": []
     },
