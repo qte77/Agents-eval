@@ -147,7 +147,17 @@ git branch -d ralph/<branch>
 **Protected main with conflicting PR** (only valid when feat branch is the single source of truth and main's conflicting changes are already incorporated or superseded):
 
 ```bash
+# Merge main into feat, resolve conflicts keeping ours
 git fetch origin
+git checkout <branch>
+git merge -X ours origin/main
+git push origin <branch>
+gh pr merge <pr-number> --squash
+```
+
+If the feat branch itself is blocked, create a new one as fallback:
+
+```bash
 git checkout -b <branch>-v2 origin/<branch>
 git merge -X ours origin/main
 git push -u origin <branch>-v2
