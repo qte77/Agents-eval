@@ -1,9 +1,9 @@
 ---
 title: Product Requirements Document - Agents-eval Sprint 8
 description: Report generation (CLI + GUI), graph attribute alignment, security hardening (MAESTRO), code quality improvements, and deferred fixes.
-version: 0.1
+version: 0.2
 created: 2026-02-17
-updated: 2026-02-17
+updated: 2026-02-18
 status: draft
 ---
 
@@ -13,7 +13,7 @@ status: draft
 
 Sprint 7 delivered: documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings), unified provider configuration, Claude Code engine option.
 
-**Sprint 8 Focus**: Report generation with actionable suggestions, graph attribute alignment, security hardening, code quality improvements.
+**Sprint 8 Focus**: API key forwarding fixes, legacy config cleanup, report generation with actionable suggestions, graph attribute alignment, security hardening, code quality improvements.
 
 ---
 
@@ -72,6 +72,51 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 **Files**:
 - `src/app/reports/` (new — suggestion engine)
 - TBD
+
+---
+
+#### Feature 9: Remove `"not-required"` API Key Sentinel from `create_llm_model`
+
+**Description**: `create_llm_model()` in `models.py` uses `api_key or "not-required"` at 5 call sites (lines 70, 78, 87, 98, 119, 128). This prevents the OpenAI SDK from falling back to environment variables (`OPENAI_API_KEY`, `GITHUB_TOKEN`, etc.) because the SDK receives a non-empty string and uses it as-is. Sprint 8 commit `9e14931` fixed this in `create_simple_model()` (judge path) by passing `api_key` directly. The same fix is needed in `create_llm_model()` for the main agent creation path.
+
+**Note**: Line 70 (`ollama` provider) legitimately uses `"not-required"` as a literal — Ollama doesn't need auth. This should remain hardcoded, not use `api_key or "not-required"`.
+
+**Acceptance Criteria**:
+- [ ] `create_llm_model()` passes `api_key` directly to `OpenAIProvider` for all providers except `ollama` (5 sites: lines 78, 87, 98, 119, 128)
+- [ ] Ollama provider retains `api_key="not-required"` (no auth needed)
+- [ ] When `api_key=None`, OpenAI SDK falls back to `OPENAI_API_KEY` env var (verified by test)
+- [ ] Existing tests pass — no behavioral change when API key is provided explicitly
+- [ ] `make validate` passes
+
+**Technical Requirements**:
+- Replace `api_key=api_key or "not-required"` with `api_key=api_key` at 5 call sites
+- Add test: `create_llm_model(provider="openai", ..., api_key=None)` results in `OpenAIProvider(api_key=None)`, not `"not-required"`
+
+**Files**:
+- `src/app/llms/models.py` (edit — 5 lines)
+- `tests/llms/test_models.py` (edit — add sentinel removal test)
+
+---
+
+#### Feature 10: Unify API Key Resolution Across Agent and Judge Paths
+
+**Description**: The codebase has two disconnected API key flows: (1) `get_api_key()` in `providers.py` validates that a key exists (used as a gate), and (2) `create_llm_model()` / `create_simple_model()` in `models.py` creates the model (where the key is actually used). Sprint 8 commit `9e14931` bridged this gap for the judge path (`_resolve_provider_key` → `create_judge_agent` → `create_simple_model`). The main agent path in `agent_system.py` has the same disconnect: `setup_agent_env()` calls `get_api_key()` to validate, but the returned key is not threaded through to `create_llm_model()` — the model relies on SDK env var fallback instead.
+
+**Acceptance Criteria**:
+- [ ] `setup_agent_env()` or `_create_manager()` passes the validated API key to `create_llm_model()` explicitly
+- [ ] Single code path for key resolution: validate once, use the validated key
+- [ ] No behavioral change when env vars are set (SDK would find the same key either way)
+- [ ] Auth failure produces a clear error at setup time, not a 401 at request time
+- [ ] `make validate` passes
+
+**Technical Requirements**:
+- Thread `api_key` from `get_api_key()` result through `_create_manager()` → `create_llm_model()`
+- Consider extracting a shared `resolve_and_validate_key(provider)` helper used by both agent and judge paths
+
+**Files**:
+- `src/app/agents/agent_system.py` (edit — thread api_key)
+- `src/app/llms/models.py` (edit — ensure `create_llm_model` uses passed key)
+- `tests/agents/test_agent_system.py` (edit — verify key forwarding)
 
 ---
 
@@ -276,7 +321,22 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 
 ## Out of Scope
 
-- TBD (pending Sprint 8 scoping)
+**Deferred to Sprint 9 (TBD acceptance criteria, low urgency):**
+- Feature 3.1 Centralized Tool Registry (MAESTRO L7.2) — architectural, needs design
+- Feature 3.2 Plugin Tier Validation (MAESTRO L7.1) — architectural, needs design
+- Feature 4.2 Timeout Bounds Enforcement — low urgency
+- Feature 4.3 Hardcoded Settings Audit — continuation of Sprint 7
+- Feature 4.4 Time Tracking Consistency — low urgency
+- Feature 5.1 BDD Scenario Tests — useful but not blocking
+- Feature 5.2 Tier 1 Reference Comparison Fix — requires ground-truth review integration
+- Feature 6.1 Cerebras Structured Output Retries — provider-specific edge case
+- Feature 8 PlantUML Diagram Audit — cosmetic, no user impact
+- ~~Feature 9 (CC engine: SDK migration)~~ — **Removed.** Needs thorough research first. Keeping `subprocess.run([claude, "-p"])` per ADR-008.
+
+**Already completed (Sprint 8 pre-work, commits a5ac5c9→9e14931→9329fc3):**
+- Legacy config key removal (`paper_numbers`, `provider`) from `run_sweep.py`
+- Judge API key forwarding: `_resolve_provider_key` → `select_available_provider` → `create_judge_agent`
+- `"not-required"` sentinel removed from `create_simple_model()` — `None` lets SDK use env vars
 
 ---
 
@@ -286,18 +346,14 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 <!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
 Story Breakdown - Phase 1 (TBD stories total):
 
-**Carried forward from Sprint 7 Out of Scope:**
-- Feature 2 (graph alignment) — Sprint 7 line 768
-- Feature 3.1-3.4 (MAESTRO) — Sprint 6 deferred
-- Feature 4.1-4.4 (code quality) — Sprint 6-7 deferred
-- Feature 5.1 (BDD tests) — Sprint 7 deferred
-- Feature 5.2 (Tier 1 fix) — Sprint 5 deferred
-- Feature 6.1 (Cerebras) — Sprint 5 deferred
+**Sprint 8 scope (in priority order):**
+- Feature 9 (remove `"not-required"` from `create_llm_model`) — small fix, 5 call sites
+- Feature 10 (unify API key resolution) — thread validated key through agent path (depends: Feature 9)
+- Feature 2 (graph alignment) — small fix, 2 files
+- Feature 7 (structured output streaming) — binary check, AGENT_REQUESTS.md item
+- Feature 1 (report generation) — flagship feature, needs design phase first
+- Feature 3.3 (error message sanitization) — concrete security item
+- Feature 3.4 (path traversal protection) — concrete security item
+- Feature 4.1 (GraphTraceData simplification) — straightforward cleanup
 
-**New in Sprint 8:**
-- Feature 1 (report generation) — new requirement
-- Feature 7 (structured output streaming) — AGENT_REQUESTS.md open item
-- Feature 8 (PlantUML audit) — necessity, accuracy, coherence review
-- ~~Feature 9 (CC engine: SDK migration)~~ — **Removed.** Needs thorough research first (e.g., are CC teams possible via `anthropic` SDK?). Keeping `subprocess.run([claude, "-p"])` per ADR-008. Remaining sub-items (`CC_SOLO_OUTPUT_PATH`/`CC_TEAMS_OUTPUT_PATH` in `config_app.py`, `raw_stream.jsonl` parsing) can be scoped independently if needed
-
-Story breakdown TBD after Sprint 7 completion and Feature 1 design phase.
+Story breakdown TBD after Feature 1 design phase.
