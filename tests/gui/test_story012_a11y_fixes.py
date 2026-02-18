@@ -248,3 +248,86 @@ class TestSidebarRadioLabel:
         assert "label_visibility" in source and "collapsed" in source, (
             "sidebar.py must use label_visibility='collapsed' on the Navigation radio."
         )
+
+    def test_sidebar_phoenix_link_warns_opens_in_new_tab(self) -> None:
+        """sidebar.py Phoenix link must include '(opens in new tab)' text.
+
+        S8-F8.1: Warn users that the link opens in a new tab (WCAG 3.2.5).
+        """
+        import gui.components.sidebar as sidebar_mod
+
+        source = inspect.getsource(sidebar_mod)
+        assert "opens in new tab" in source, (
+            "sidebar.py Phoenix link must include '(opens in new tab)' text for WCAG 3.2.5."
+        )
+
+
+# ---------------------------------------------------------------------------
+# 6. text.py — onboarding order and domain-specific placeholder
+# ---------------------------------------------------------------------------
+
+
+class TestTextOnboardingContent:
+    """Verify text.py contains correct onboarding order and domain-specific placeholder.
+
+    S8-F8.1: Settings must come before App in onboarding instructions.
+    """
+
+    def test_home_info_mentions_settings_before_app(self) -> None:
+        """HOME_INFO must mention 'Settings' before 'App' in the onboarding message."""
+        from gui.config.text import HOME_INFO
+
+        settings_pos = HOME_INFO.find("Settings")
+        app_pos = HOME_INFO.find("App")
+
+        assert settings_pos != -1, "HOME_INFO must mention 'Settings'"
+        assert app_pos != -1, "HOME_INFO must mention 'App'"
+        assert settings_pos < app_pos, (
+            f"HOME_INFO must mention 'Settings' before 'App'. "
+            f"Got: Settings at {settings_pos}, App at {app_pos}. "
+            f"HOME_INFO={HOME_INFO!r}"
+        )
+
+    def test_run_app_query_placeholder_is_domain_specific(self) -> None:
+        """RUN_APP_QUERY_PLACEHOLDER must contain a domain-specific example (not generic).
+
+        S8-F8.1: Placeholder text should guide users with a relevant example.
+        """
+        from gui.config.text import RUN_APP_QUERY_PLACEHOLDER
+
+        # Must be an example query (starts with "e.g." or "e.g,")
+        assert RUN_APP_QUERY_PLACEHOLDER.lower().startswith("e.g"), (
+            f"RUN_APP_QUERY_PLACEHOLDER must start with 'e.g.' to signal it's an example. "
+            f"Got: {RUN_APP_QUERY_PLACEHOLDER!r}"
+        )
+        # Must reference a domain concept (paper, research, methodology, etc.)
+        domain_keywords = ["paper", "research", "methodology", "query", "evaluate"]
+        assert any(kw in RUN_APP_QUERY_PLACEHOLDER.lower() for kw in domain_keywords), (
+            f"RUN_APP_QUERY_PLACEHOLDER must contain a domain-specific term. "
+            f"Got: {RUN_APP_QUERY_PLACEHOLDER!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 7. prompts.py — display-only warning must be present
+# ---------------------------------------------------------------------------
+
+
+class TestPromptsDisplayOnlyWarning:
+    """Verify prompts.py shows a warning that edits are display-only and not saved.
+
+    S8-F8.1: Users must be clearly informed that changes are not persisted.
+    """
+
+    def test_prompts_source_contains_display_only_warning(self) -> None:
+        """prompts.py must include a warning that edits are display-only."""
+        import gui.pages.prompts as prompts_mod
+
+        source = inspect.getsource(prompts_mod)
+        # Check for warning call with display-only messaging
+        assert "warning(" in source, (
+            "prompts.py must call warning() to display a prominent notice."
+        )
+        assert "display-only" in source or "not be saved" in source, (
+            "prompts.py warning must state edits are display-only or will not be saved."
+        )
