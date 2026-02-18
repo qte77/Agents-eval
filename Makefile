@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_jscpd setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint writeup writeup_generate run_cli run_gui sweep cc_run_solo cc_collect_teams cc_run_teams run_profile ruff ruff_tests complexity duplication test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_jscpd setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest quick_start start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint writeup writeup_generate run_cli run_gui sweep cc_run_solo cc_collect_teams cc_run_teams run_profile ruff ruff_tests complexity duplication test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_phoenix start_phoenix stop_phoenix status_phoenix ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_worktree ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -472,6 +472,16 @@ ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_
 		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \
 		bash ralph/scripts/ralph.sh \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph loop timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
+
+ralph_worktree:  ## Run Ralph in a git worktree (BRANCH=required, TEAMS=true|false, MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds)
+	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_worktree BRANCH=ralph/sprint8-name))
+	echo "Starting Ralph in worktree for branch '$(BRANCH)' ..."
+	$(if $(RALPH_TIMEOUT),timeout $(RALPH_TIMEOUT)) \
+		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) \
+		RALPH_TEAMS=$(TEAMS) \
+		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \
+		bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)" \
+		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph worktree timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
 
 ralph_stop:  ## Stop all running Ralph loops (keeps state and data)
 	bash ralph/scripts/lib/stop_ralph_processes.sh

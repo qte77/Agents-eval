@@ -157,6 +157,7 @@ ralph/
 │       └── userstory.md.template
 └── scripts/
     ├── ralph.sh               # Main orchestration
+    ├── ralph-in-worktree.sh   # Git worktree launcher
     ├── generate_prd_json.py   # PRD.md → prd.json parser
     ├── init.sh                # Environment validation
     ├── setup_project.sh       # Interactive setup
