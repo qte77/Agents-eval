@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `resolve_service_url(port)` in `src/gui/config/config.py`: detects GitHub Codespaces, Gitpod, and `PHOENIX_ENDPOINT` override to build correct service URLs in cloud dev environments; `PHOENIX_DEFAULT_ENDPOINT` now uses it (STORY-014)
 - GUI report generation: "Generate Report" button on App page enabled after evaluation completes; report rendered inline as Markdown with a download button; shares `generate_report()` logic with CLI (STORY-010)
 - App page UX: MAS-specific controls (sub-agents, provider, token limit, config summary) hidden entirely when CC engine selected — not just disabled (STORY-013)
 - Evaluation Results page: `execution_id` displayed as caption below composite score; full ID shown in "Evaluation Details" expander (STORY-013)
