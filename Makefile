@@ -464,7 +464,7 @@ ralph_init:  ## Initialize Ralph loop environment
 	echo "Initializing Ralph loop environment ..."
 	bash ralph/scripts/init.sh
 
-ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false)
+ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false EXPERIMENTAL)
 	echo "Starting Ralph loop ..."
 	$(if $(RALPH_TIMEOUT),timeout $(RALPH_TIMEOUT)) \
 		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) \
