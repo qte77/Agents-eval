@@ -49,7 +49,10 @@ def read_paper_pdf(
     """
     # Reason: LLMs hallucinate URLs for paper PDFs; reject them defensively instead of crashing
     if isinstance(pdf_path, str) and pdf_path.startswith(("http://", "https://")):
-        return f"Error: URLs are not supported. Use paper_id with get_paper_content instead. Received: {pdf_path}"
+        return (
+            f"Error: URLs are not supported. "
+            f"Use paper_id with get_paper_content instead. Received: {pdf_path}"
+        )
 
     if isinstance(pdf_path, str):
         pdf_file = Path(pdf_path)

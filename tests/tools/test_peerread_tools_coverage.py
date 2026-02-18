@@ -249,8 +249,8 @@ class TestAddPeerreadToolsToAgent:
             assert result[0].paper_id == "104"
 
     @pytest.mark.asyncio
-    async def test_read_paper_pdf_tool_success(self, tmp_path: Path):
-        """Test read_paper_pdf_tool wrapper function."""
+    async def test_get_paper_content_tool_success(self):
+        """Test get_paper_content tool returns paper body text."""
         from app.tools.peerread_tools import add_peerread_tools_to_agent
 
         # Arrange
@@ -264,17 +264,30 @@ class TestAddPeerreadToolsToAgent:
         mock_agent.tool = capture_tool
         add_peerread_tools_to_agent(mock_agent, agent_id="test_agent")
 
-        pdf_tool = next((t for t in registered_tools if t.__name__ == "read_paper_pdf_tool"), None)
-        assert pdf_tool is not None
+        content_tool = next(
+            (t for t in registered_tools if t.__name__ == "get_paper_content"), None
+        )
+        assert content_tool is not None
 
-        pdf_file = tmp_path / "test.pdf"
-        pdf_file.write_bytes(b"%PDF-1.4 content")
+        test_paper = PeerReadPaper(
+            paper_id="104",
+            title="Test Paper",
+            abstract="Test abstract",
+            reviews=[],
+            review_histories=[],
+        )
 
-        with patch("app.tools.peerread_tools.read_paper_pdf") as mock_read:
-            mock_read.return_value = "Extracted text"
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_loader = Mock()
+            mock_loader.get_paper_by_id.return_value = test_paper
+            mock_loader.load_parsed_pdf_content.return_value = "Full paper body"
+            mock_loader_class.return_value = mock_loader
 
             # Act
-            result = await pdf_tool(None, str(pdf_file))
+            result = await content_tool(None, "104")
 
             # Assert
-            assert result == "Extracted text"
+            assert "Full paper body" in result
