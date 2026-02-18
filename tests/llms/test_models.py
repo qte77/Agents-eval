@@ -5,6 +5,8 @@ Tests for model creation with different providers, error handling,
 and configuration validation.
 """
 
+from unittest.mock import MagicMock, patch
+
 from pydantic_ai.models.openai import OpenAIChatModel
 
 from app.data_models.app_models import EndpointConfig, ProviderConfig
@@ -318,3 +320,124 @@ class TestProviderSpecificBehavior:
 
         # Assert strict tool definition is enabled for OpenAI
         assert model.profile.openai_supports_strict_tool_definition is True
+
+
+# STORY-002: Sentinel removal tests
+class TestSentinelRemoval:
+    """Test that 'not-required' sentinel is removed from all non-ollama providers (STORY-002)."""
+
+    def test_openai_api_key_none_passes_none_not_sentinel(self):
+        """When api_key=None, OpenAIProvider must receive None not 'not-required'."""
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "You are a manager"},
+            provider="openai",
+            api_key=None,
+            provider_config=ProviderConfig(
+                model_name="gpt-4",
+                base_url="https://api.openai.com/v1",
+            ),
+        )
+
+        with patch("app.llms.models.OpenAIProvider") as mock_provider:
+            mock_provider.return_value = MagicMock()
+            create_llm_model(endpoint_config)
+
+        # Must be called with api_key=None (not "not-required")
+        call_kwargs = mock_provider.call_args.kwargs
+        assert call_kwargs.get("api_key") is None
+
+    def test_openrouter_api_key_none_passes_none_not_sentinel(self):
+        """openrouter with api_key=None should pass None to OpenAIProvider."""
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "You are a manager"},
+            provider="openrouter",
+            api_key=None,
+            provider_config=ProviderConfig(
+                model_name="openai/gpt-4",
+                base_url="https://openrouter.ai/api/v1",
+            ),
+        )
+
+        with patch("app.llms.models.OpenAIProvider") as mock_provider:
+            mock_provider.return_value = MagicMock()
+            create_llm_model(endpoint_config)
+
+        call_kwargs = mock_provider.call_args.kwargs
+        assert call_kwargs.get("api_key") is None
+
+    def test_github_api_key_none_passes_none_not_sentinel(self):
+        """github with api_key=None should pass None to OpenAIProvider."""
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "You are a manager"},
+            provider="github",
+            api_key=None,
+            provider_config=ProviderConfig(
+                model_name="gpt-4o",
+                base_url="https://models.inference.ai.azure.com",
+            ),
+        )
+
+        with patch("app.llms.models.OpenAIProvider") as mock_provider:
+            mock_provider.return_value = MagicMock()
+            create_llm_model(endpoint_config)
+
+        call_kwargs = mock_provider.call_args.kwargs
+        assert call_kwargs.get("api_key") is None
+
+    def test_cerebras_api_key_none_passes_none_not_sentinel(self):
+        """cerebras with api_key=None should pass None to OpenAIProvider."""
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "You are a manager"},
+            provider="cerebras",
+            api_key=None,
+            provider_config=ProviderConfig(
+                model_name="llama3-8b",
+                base_url="https://api.cerebras.ai/v1",
+            ),
+        )
+
+        with patch("app.llms.models.OpenAIProvider") as mock_provider:
+            mock_provider.return_value = MagicMock()
+            create_llm_model(endpoint_config)
+
+        call_kwargs = mock_provider.call_args.kwargs
+        assert call_kwargs.get("api_key") is None
+
+    def test_generic_provider_api_key_none_passes_none_not_sentinel(self):
+        """Generic/unknown provider with api_key=None should pass None to OpenAIProvider."""
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "You are a manager"},
+            provider="groq",
+            api_key=None,
+            provider_config=ProviderConfig(
+                model_name="llama-3.1-70b",
+                base_url="https://api.groq.com/openai/v1",
+            ),
+        )
+
+        with patch("app.llms.models.OpenAIProvider") as mock_provider:
+            mock_provider.return_value = MagicMock()
+            create_llm_model(endpoint_config)
+
+        call_kwargs = mock_provider.call_args.kwargs
+        assert call_kwargs.get("api_key") is None
+
+    def test_ollama_retains_not_required_sentinel(self):
+        """Ollama provider must retain 'not-required' api_key (no auth needed)."""
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "You are a manager"},
+            provider="ollama",
+            api_key=None,
+            provider_config=ProviderConfig(
+                model_name="llama3",
+                base_url="http://localhost:11434/v1",
+            ),
+        )
+
+        with patch("app.llms.models.OpenAIProvider") as mock_provider:
+            mock_provider.return_value = MagicMock()
+            create_llm_model(endpoint_config)
+
+        call_kwargs = mock_provider.call_args.kwargs
+        # Ollama must use "not-required" since it has no auth
+        assert call_kwargs.get("api_key") == "not-required"
