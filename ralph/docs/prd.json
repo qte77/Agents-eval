@@ -447,8 +447,8 @@
         "src/app/agents/agent_system.py",
         "tests/benchmark/test_sweep_runner.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T10:41:01Z",
       "content_hash": "629af68b0c746cc9fc048efb609f048c2956b7a42ac0770cf61474582982ed0f",
       "depends_on": [
         "STORY-013"
