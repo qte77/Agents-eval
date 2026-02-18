@@ -12,9 +12,7 @@ Mock strategy:
 import json
 import shutil
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 
 class TestCCAvailabilityCheck:
@@ -95,9 +93,7 @@ class TestCCCoordinationEventsExtraction:
     Expected: Coordination events parsed from inbox messages
     """
 
-    def test_extract_coordination_events_empty_when_no_inboxes(
-        self, tmp_path: Path
-    ) -> None:
+    def test_extract_coordination_events_empty_when_no_inboxes(self, tmp_path: Path) -> None:
         """Returns empty list when no inboxes/ directory exists."""
         from app.judge.cc_trace_adapter import CCTraceAdapter
 
@@ -110,9 +106,7 @@ class TestCCCoordinationEventsExtraction:
 
         assert isinstance(result, list)
 
-    def test_extract_coordination_events_parses_inbox_messages(
-        self, tmp_path: Path
-    ) -> None:
+    def test_extract_coordination_events_parses_inbox_messages(self, tmp_path: Path) -> None:
         """Coordination events populated from inboxes/*.json messages."""
         from app.judge.cc_trace_adapter import CCTraceAdapter
 
@@ -148,9 +142,7 @@ class TestCCCoordinationEventsExtraction:
         assert isinstance(result, list)
         assert len(result) == 2
 
-    def test_extract_coordination_events_single_message(
-        self, tmp_path: Path
-    ) -> None:
+    def test_extract_coordination_events_single_message(self, tmp_path: Path) -> None:
         """Single inbox message yields single coordination event."""
         from app.judge.cc_trace_adapter import CCTraceAdapter
 
@@ -170,9 +162,7 @@ class TestCCCoordinationEventsExtraction:
         assert result[0]["from"] == "lead"
         assert result[0]["to"] == "worker"
 
-    def test_extract_coordination_events_skips_malformed_files(
-        self, tmp_path: Path
-    ) -> None:
+    def test_extract_coordination_events_skips_malformed_files(self, tmp_path: Path) -> None:
         """Malformed inbox JSON files are skipped without raising."""
         from app.judge.cc_trace_adapter import CCTraceAdapter
 

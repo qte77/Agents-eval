@@ -192,7 +192,7 @@ monitor_story_progress() {
         log_info "  >> [$story_id] phase: $phase | elapsed: $(fmt_elapsed $elapsed)"
         # Show recent agent activity from log (last non-empty line, truncated)
         local activity
-        activity=$(tail -5 "$LOG_FILE" 2>/dev/null | grep -v "^$\|^\[" | tail -1 | cut -c1-120)
+        activity=$(tail -5 "$LOG_FILE" 2>/dev/null | grep -v "^$\|^\[\|  >>" | tail -1 | cut -c1-120)
         if [ -n "$activity" ]; then
             if echo "$activity" | grep -qi "error\|fail\|traceback"; then
                 log_cc_error "$activity"

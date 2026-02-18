@@ -7,7 +7,7 @@ invocation.
 
 import json
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pydantic_ai.exceptions import ModelHTTPError
@@ -393,9 +393,7 @@ class TestStory013bRetryAndPersistence:
         assert call_count == 3, f"Expected 3 calls (2 retries + 1 success), got {call_count}"
 
     @pytest.mark.asyncio
-    async def test_run_single_evaluation_returns_none_after_max_retries(
-        self, tmp_path: Path
-    ):
+    async def test_run_single_evaluation_returns_none_after_max_retries(self, tmp_path: Path):
         """Test that _run_single_evaluation returns None after exhausting retries."""
         config = SweepConfig(
             compositions=[AgentComposition(include_researcher=True)],
@@ -415,9 +413,7 @@ class TestStory013bRetryAndPersistence:
         assert result is None, "Should return None after max retries exhausted"
 
     @pytest.mark.asyncio
-    async def test_run_single_evaluation_max_retries_is_three(
-        self, tmp_path: Path
-    ):
+    async def test_run_single_evaluation_max_retries_is_three(self, tmp_path: Path):
         """Test that _run_single_evaluation retries exactly 3 times on rate-limit errors."""
         config = SweepConfig(
             compositions=[AgentComposition(include_researcher=True)],
@@ -533,7 +529,9 @@ class TestStory013bHandleModelHttpError:
         mock_trace_collector.start_execution = MagicMock()
         mock_trace_collector.end_execution = MagicMock()
 
-        with patch("app.agents.agent_system.get_trace_collector", return_value=mock_trace_collector):
+        with patch(
+            "app.agents.agent_system.get_trace_collector", return_value=mock_trace_collector
+        ):
             with pytest.raises(SystemExit) as exc_info:
                 await run_manager(mock_manager, "test query", "test-provider", None)
 

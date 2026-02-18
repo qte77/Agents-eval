@@ -85,7 +85,9 @@ class TestChatProviderRename:
 
     def test_chat_provider_flag_accepted(self):
         """Test that --chat-provider flag is accepted by parse_args."""
-        with patch.object(sys, "argv", ["run_sweep.py", "--paper-ids=1", "--chat-provider=cerebras"]):
+        with patch.object(
+            sys, "argv", ["run_sweep.py", "--paper-ids=1", "--chat-provider=cerebras"]
+        ):
             args = parse_args()
         assert args.chat_provider == "cerebras"
 
@@ -107,7 +109,9 @@ class TestJudgeProviderArgsInSweep:
 
     def test_judge_provider_flag_accepted(self):
         """Test that --judge-provider is accepted."""
-        with patch.object(sys, "argv", ["run_sweep.py", "--paper-ids=1", "--judge-provider=openai"]):
+        with patch.object(
+            sys, "argv", ["run_sweep.py", "--paper-ids=1", "--judge-provider=openai"]
+        ):
             args = parse_args()
         assert args.judge_provider == "openai"
 
@@ -292,37 +296,64 @@ class TestLoadConfigFromFileStory012:
 
     def test_loads_paper_ids_key(self, tmp_path: Path):
         """Test that JSON config with 'paper_ids' key is loaded correctly."""
-        config_file = self._write_config(tmp_path, {
-            "compositions": [{"include_researcher": True, "include_analyst": False, "include_synthesiser": False}],
-            "repetitions": 1,
-            "paper_ids": ["1105.1072"],
-            "output_dir": str(tmp_path / "results"),
-        })
+        config_file = self._write_config(
+            tmp_path,
+            {
+                "compositions": [
+                    {
+                        "include_researcher": True,
+                        "include_analyst": False,
+                        "include_synthesiser": False,
+                    }
+                ],
+                "repetitions": 1,
+                "paper_ids": ["1105.1072"],
+                "output_dir": str(tmp_path / "results"),
+            },
+        )
         config = _load_config_from_file(config_file)
         assert config is not None
         assert config.paper_ids == ["1105.1072"]
 
     def test_loads_chat_provider_key(self, tmp_path: Path):
         """Test that JSON config with 'chat_provider' key is loaded correctly."""
-        config_file = self._write_config(tmp_path, {
-            "compositions": [{"include_researcher": True, "include_analyst": False, "include_synthesiser": False}],
-            "repetitions": 1,
-            "paper_ids": ["1"],
-            "output_dir": str(tmp_path / "results"),
-            "chat_provider": "cerebras",
-        })
+        config_file = self._write_config(
+            tmp_path,
+            {
+                "compositions": [
+                    {
+                        "include_researcher": True,
+                        "include_analyst": False,
+                        "include_synthesiser": False,
+                    }
+                ],
+                "repetitions": 1,
+                "paper_ids": ["1"],
+                "output_dir": str(tmp_path / "results"),
+                "chat_provider": "cerebras",
+            },
+        )
         config = _load_config_from_file(config_file)
         assert config is not None
         assert config.chat_provider == "cerebras"
 
     def test_backward_compat_paper_numbers_key(self, tmp_path: Path):
         """Test that old 'paper_numbers' key in JSON is read with deprecation (backward compat)."""
-        config_file = self._write_config(tmp_path, {
-            "compositions": [{"include_researcher": True, "include_analyst": False, "include_synthesiser": False}],
-            "repetitions": 1,
-            "paper_numbers": ["1", "2"],
-            "output_dir": str(tmp_path / "results"),
-        })
+        config_file = self._write_config(
+            tmp_path,
+            {
+                "compositions": [
+                    {
+                        "include_researcher": True,
+                        "include_analyst": False,
+                        "include_synthesiser": False,
+                    }
+                ],
+                "repetitions": 1,
+                "paper_numbers": ["1", "2"],
+                "output_dir": str(tmp_path / "results"),
+            },
+        )
         config = _load_config_from_file(config_file)
         # Backward compat: old key should still work
         assert config is not None
@@ -330,13 +361,22 @@ class TestLoadConfigFromFileStory012:
 
     def test_backward_compat_provider_key(self, tmp_path: Path):
         """Test that old 'provider' key in JSON is read with deprecation (backward compat)."""
-        config_file = self._write_config(tmp_path, {
-            "compositions": [{"include_researcher": True, "include_analyst": False, "include_synthesiser": False}],
-            "repetitions": 1,
-            "paper_ids": ["1"],
-            "output_dir": str(tmp_path / "results"),
-            "provider": "cerebras",
-        })
+        config_file = self._write_config(
+            tmp_path,
+            {
+                "compositions": [
+                    {
+                        "include_researcher": True,
+                        "include_analyst": False,
+                        "include_synthesiser": False,
+                    }
+                ],
+                "repetitions": 1,
+                "paper_ids": ["1"],
+                "output_dir": str(tmp_path / "results"),
+                "provider": "cerebras",
+            },
+        )
         config = _load_config_from_file(config_file)
         assert config is not None
         assert config.chat_provider == "cerebras"
