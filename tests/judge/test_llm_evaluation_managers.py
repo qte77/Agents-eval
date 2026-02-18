@@ -489,8 +489,10 @@ class TestPipelineIntegration:
 
             pipeline = EvaluationPipeline(settings=settings, chat_provider="github")
 
-            # Verify LLMJudgeEngine was called with chat_provider
-            mock_engine_class.assert_called_once_with(settings, chat_provider="github")
+            # Verify LLMJudgeEngine was called with chat_provider and chat_model=None
+            mock_engine_class.assert_called_once_with(
+                settings, chat_provider="github", chat_model=None
+            )
             assert pipeline.chat_provider == "github"
 
     @pytest.mark.asyncio

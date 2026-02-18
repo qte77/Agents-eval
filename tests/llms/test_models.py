@@ -155,7 +155,7 @@ class TestModelCreationErrorHandling:
     """Test error handling in model creation."""
 
     def test_create_llm_model_missing_api_key_for_cloud_provider(self):
-        """Test that cloud providers work without API key (handled by provider)."""
+        """Test that cloud providers work without API key (SDK reads OPENAI_API_KEY env var)."""
         endpoint_config = EndpointConfig(
             prompts={"manager": "You are a manager"},
             provider="openai",
@@ -166,8 +166,11 @@ class TestModelCreationErrorHandling:
             ),
         )
 
-        # Should not raise error - uses "not-required" fallback
-        model = create_llm_model(endpoint_config)
+        # When api_key=None, OpenAIProvider reads OPENAI_API_KEY env var.
+        # Mock OpenAIProvider to avoid requiring real env var in tests.
+        with patch("app.llms.models.OpenAIProvider") as mock_provider:
+            mock_provider.return_value = MagicMock()
+            model = create_llm_model(endpoint_config)
         assert isinstance(model, OpenAIChatModel)
 
     def test_create_llm_model_empty_model_name(self):
