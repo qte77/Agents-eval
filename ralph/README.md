@@ -126,6 +126,36 @@ STORY-012... in Sprint 3). Unique IDs across project lifetime.
 
 **prd.json**: Fresh start per sprint. Archive before transition.
 
+### Merging Back
+
+Squash merge from source repo (not worktree). TDD commits are implementation noise — final state is what matters.
+
+```bash
+git merge --squash ralph/<branch>
+git commit -m "feat(sprintN): implement stories via Ralph"
+git worktree remove ../<worktree-dir>
+git branch -d ralph/<branch>
+```
+
+**Conflict prevention**: Don't edit files in `prd.json` `files` arrays on the source branch while Ralph runs.
+
+**Conflict resolution**: Especially relevant for worktree branches that diverge from the source branch during long-running Ralph sessions. `-X ours`/`-X theirs` is relative to the checked-out branch (`ours` = branch you're on, `theirs` = branch being merged in):
+
+- On main, merging Ralph in: `-X theirs` keeps Ralph's version
+- On feat branch, merging main in: `-X ours` keeps feat's version
+
+**Protected main with conflicting PR** (only valid when feat branch is the single source of truth and main's conflicting changes are already incorporated or superseded):
+
+```bash
+git fetch origin
+git checkout -b <branch>-v2 origin/<branch>
+git merge -X ours origin/main
+git push -u origin <branch>-v2
+gh pr close <old-number> -c "Superseded by new PR"
+gh pr create --title "feat: ..." --body "Supersedes #<old>."
+gh pr merge --squash
+```
+
 ## Security
 
 **Ralph runs with `--dangerously-skip-permissions`** - all operations
