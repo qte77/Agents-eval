@@ -348,8 +348,8 @@
         "src/gui/components/output.py",
         "tests/gui/test_run_app.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T23:26:04Z",
       "content_hash": "85c5669a5231c52cfa58229c9e7675d432283b15e0472fa32a5505cd72b37821",
       "depends_on": [
         "STORY-007",
