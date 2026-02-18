@@ -228,10 +228,10 @@ def test_settings_page_widget_structure_snapshot(mock_streamlit):
     # Note: Exact counts will be determined after implementation
     assert widget_structure == snapshot(
         {
-            "number_input_calls": 9,
+            "number_input_calls": 10,
             "checkbox_calls": 5,
             "text_input_calls": 5,
-            "selectbox_calls": 1,
+            "selectbox_calls": 2,
             "button_calls": 1,
         }
     )

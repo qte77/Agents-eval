@@ -28,9 +28,7 @@ def engine(settings):
     """Fixture providing LLMJudgeEngine instance with controlled environment."""
     env_config = AppEnv(OPENAI_API_KEY="sk-test-key", GITHUB_API_KEY="")
     # Explicitly set openai to test LLM evaluation behavior; default is now "auto"
-    return LLMJudgeEngine(
-        JudgeSettings(tier2_provider="openai"), env_config=env_config
-    )
+    return LLMJudgeEngine(JudgeSettings(tier2_provider="openai"), env_config=env_config)
 
 
 @pytest.fixture

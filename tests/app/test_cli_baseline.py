@@ -423,24 +423,10 @@ def test_cli_parse_args_includes_no_review_tools_flag():
 
 def test_cli_help_text_includes_no_review_tools():
     """Snapshot test for CLI help text showing --no-review-tools flag (STORY-009)."""
-    # Capture help text by reading the commands dict directly
-    # (we can't actually capture parse_args help output without sys.exit)
-    from run_cli import parse_args
+    from run_cli import _COMMANDS
 
-    # Get the commands from parse_args function's local scope
-    # We'll read the source to verify the flag is documented
-    help_text_should_include = [
-        "--no-review-tools",
-        "--enable-review-tools",
-    ]
-
-    # Read the actual parse_args implementation
-    import inspect
-
-    source = inspect.getsource(parse_args)
-
-    for expected_flag in help_text_should_include:
-        assert expected_flag in source, f"Expected {expected_flag} in parse_args help text"
+    for expected_flag in ("--no-review-tools", "--enable-review-tools"):
+        assert expected_flag in _COMMANDS, f"Expected {expected_flag} in _COMMANDS dict"
 
 
 # STORY-007: Inline-snapshot tests for CLI output with baselines

@@ -7,8 +7,6 @@ STORY-011: Change tier2_provider default to auto, fix fallback chain bug.
 import os
 from unittest.mock import patch
 
-import pytest
-
 from app.data_models.app_models import AppEnv
 from app.judge.llm_evaluation_managers import LLMJudgeEngine
 from app.judge.settings import JudgeSettings
@@ -30,9 +28,7 @@ class TestTier2ProviderDefault:
 
     def test_env_override_restores_default_when_unset(self):
         """Without JUDGE_TIER2_PROVIDER env var, default must remain 'auto'."""
-        env_without_override = {
-            k: v for k, v in os.environ.items() if k != "JUDGE_TIER2_PROVIDER"
-        }
+        env_without_override = {k: v for k, v in os.environ.items() if k != "JUDGE_TIER2_PROVIDER"}
         with patch.dict(os.environ, env_without_override, clear=True):
             settings = JudgeSettings()
             assert settings.tier2_provider == "auto"

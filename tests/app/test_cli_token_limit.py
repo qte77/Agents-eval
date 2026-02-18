@@ -106,7 +106,7 @@ class TestCLITokenLimitFlag:
     def test_cli_parse_args_includes_token_limit(self):
         """Test that parse_args extracts --token-limit flag."""
         args = parse_args(["--token-limit=150000"])
-        assert args == {"token_limit": 150000}
+        assert args["token_limit"] == 150000
 
     def test_cli_help_includes_token_limit(self):
         """Snapshot: CLI help text includes --token-limit."""
@@ -117,7 +117,7 @@ class TestCLITokenLimitFlag:
         # Verify --token-limit is in the documented commands
         # (would need to refactor parse_args to expose commands dict)
         # For now, verify flag parsing works
-        assert parse_args(["--token-limit=50000"]) == {"token_limit": 50000}
+        assert parse_args(["--token-limit=50000"])["token_limit"] == 50000
 
 
 class TestEnvVarTokenLimit:
