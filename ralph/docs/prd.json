@@ -477,8 +477,8 @@
         "src/app/judge/cc_trace_adapter.py",
         "tests/gui/test_engine_selector.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T12:41:56Z",
       "content_hash": "0fb80bbf022c5eeef0fb41a5e756e2fc43cda61bf10d6d48a74da8cac30be538",
       "depends_on": [
         "STORY-013"
