@@ -62,6 +62,55 @@ def check_cc_available() -> bool:
     return shutil.which("claude") is not None
 
 
+def _parse_jsonl_line(line: str) -> dict[str, Any] | None:
+    """Parse a single JSONL line, returning None on blank or malformed input.
+
+    Args:
+        line: Raw line from CC stdout.
+
+    Returns:
+        Parsed dict, or None if the line is blank or invalid JSON.
+    """
+    stripped = line.strip()
+    if not stripped:
+        return None
+    try:
+        return json.loads(stripped)  # type: ignore[no-any-return]
+    except json.JSONDecodeError:
+        logger.debug(f"Skipping malformed JSONL line: {stripped[:80]}")
+        return None
+
+
+_RESULT_KEYS = ("duration_ms", "total_cost_usd", "num_turns")
+
+
+def _apply_event(
+    event: dict[str, Any],
+    state: dict[str, Any],
+) -> None:
+    """Mutate ``state`` in-place based on ``event`` type.
+
+    Recognised events:
+    - ``type=system, subtype=init`` → updates ``execution_id``
+    - ``type=result`` → updates ``output_data`` with timing/cost fields
+    - ``type`` in ``_TEAM_EVENT_TYPES`` → appends to ``team_artifacts``
+
+    Args:
+        event: Parsed JSONL event dict.
+        state: Accumulator dict with keys ``execution_id``, ``output_data``,
+            ``team_artifacts``.
+    """
+    event_type = event.get("type", "")
+    if event_type == "system" and event.get("subtype") == "init":
+        session_id = event.get("session_id")
+        if session_id:
+            state["execution_id"] = session_id
+    elif event_type == "result":
+        state["output_data"].update({k: event[k] for k in _RESULT_KEYS if k in event})
+    elif event_type in _TEAM_EVENT_TYPES:
+        state["team_artifacts"].append(event)
+
+
 def parse_stream_json(stream: Iterator[str]) -> CCResult:
     """Parse a JSONL stream from CC ``--output-format stream-json`` into CCResult.
 
@@ -84,42 +133,21 @@ def parse_stream_json(stream: Iterator[str]) -> CCResult:
         >>> result.output_data["num_turns"]
         3
     """
-    execution_id = "unknown"
-    output_data: dict[str, Any] = {}
-    team_artifacts: list[dict[str, Any]] = []
+    state: dict[str, Any] = {
+        "execution_id": "unknown",
+        "output_data": {},
+        "team_artifacts": [],
+    }
 
     for raw_line in stream:
-        line = raw_line.strip()
-        if not line:
-            continue
-
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError:
-            logger.debug(f"Skipping malformed JSONL line: {line[:80]}")
-            continue
-
-        event_type = event.get("type", "")
-
-        if event_type == "system" and event.get("subtype") == "init":
-            # S8-F3: extract session_id from init event as execution_id
-            session_id = event.get("session_id")
-            if session_id:
-                execution_id = session_id
-
-        elif event_type == "result":
-            # S8-F3: merge result fields into output_data
-            for key in ("duration_ms", "total_cost_usd", "num_turns"):
-                if key in event:
-                    output_data[key] = event[key]
-
-        elif event_type in _TEAM_EVENT_TYPES:
-            team_artifacts.append(event)
+        event = _parse_jsonl_line(raw_line)
+        if event is not None:
+            _apply_event(event, state)
 
     return CCResult(
-        execution_id=execution_id,
-        output_data=output_data,
-        team_artifacts=team_artifacts,
+        execution_id=state["execution_id"],
+        output_data=state["output_data"],
+        team_artifacts=state["team_artifacts"],
     )
 
 
