@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- GUI judge settings: `tier2_provider`, `tier2_model`, `tier2_fallback_provider`, `tier2_fallback_model` replaced with `selectbox` dropdowns populated from `PROVIDER_REGISTRY` and `config_chat.json`; `fallback_strategy` exposed as `selectbox` with "tier1_only"; judge settings expanders set to `expanded=False`; "Advanced Settings" header added (STORY-011)
 - `report_generator.py` in `src/app/reports/`: `generate_report(result, suggestions)` → Markdown report with executive summary, tier breakdown, and weakness/suggestion sections; `save_report(md, path)` with auto-created parent dirs (STORY-009)
 - `--generate-report` CLI flag (mutually exclusive with `--skip-eval`) writes report to `results/reports/<timestamp>.md` after evaluation (STORY-009)
 - `--no-llm-suggestions` CLI flag to disable LLM-assisted suggestions in generated reports (STORY-009)

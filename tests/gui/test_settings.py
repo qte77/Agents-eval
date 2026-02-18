@@ -14,7 +14,6 @@ from unittest.mock import MagicMock, patch
 
 from app.data_models.app_models import PROVIDER_REGISTRY
 from app.judge.settings import JudgeSettings
-from app.common.settings import CommonSettings
 
 
 def _make_session_state_mock(initial: dict | None = None) -> MagicMock:
@@ -62,8 +61,7 @@ class TestTier2ProviderSelectbox:
         provider_selectbox_calls = [
             call
             for call in mock_selectbox.call_args_list
-            if call.args and "Provider" in str(call.args[0])
-            and "Fallback" not in str(call.args[0])
+            if call.args and "Provider" in str(call.args[0]) and "Fallback" not in str(call.args[0])
         ]
         assert len(provider_selectbox_calls) >= 1, (
             "selectbox must be called for tier2_provider (not text_input)"
@@ -75,9 +73,7 @@ class TestTier2ProviderSelectbox:
             for call in mock_text_input.call_args_list
             if call.args and call.args[0] == "Provider"
         ]
-        assert len(provider_text_input_calls) == 0, (
-            "text_input must NOT be used for tier2_provider"
-        )
+        assert len(provider_text_input_calls) == 0, "text_input must NOT be used for tier2_provider"
 
     def test_tier2_provider_selectbox_includes_registry_keys_and_auto(self):
         """Test that tier2_provider selectbox options include all PROVIDER_REGISTRY keys + 'auto'."""
@@ -105,15 +101,16 @@ class TestTier2ProviderSelectbox:
         provider_calls = [
             call
             for call in mock_selectbox.call_args_list
-            if call.args and "Provider" in str(call.args[0])
-            and "Fallback" not in str(call.args[0])
+            if call.args and "Provider" in str(call.args[0]) and "Fallback" not in str(call.args[0])
         ]
         assert len(provider_calls) >= 1, "selectbox must be called for tier2_provider"
         call_kwargs = provider_calls[0].kwargs
         options = call_kwargs.get("options", [])
         expected_keys = list(PROVIDER_REGISTRY.keys())
         for key in expected_keys:
-            assert key in options, f"PROVIDER_REGISTRY key '{key}' missing from tier2_provider options"
+            assert key in options, (
+                f"PROVIDER_REGISTRY key '{key}' missing from tier2_provider options"
+            )
         assert "auto" in options, "'auto' must be in tier2_provider options"
 
 
@@ -228,18 +225,14 @@ class TestTier2ModelSelectbox:
 
         # Model selectbox should be called (not text_input) for "Model" (non-fallback)
         model_selectbox_calls = [
-            call
-            for call in mock_selectbox.call_args_list
-            if call.args and call.args[0] == "Model"
+            call for call in mock_selectbox.call_args_list if call.args and call.args[0] == "Model"
         ]
         assert len(model_selectbox_calls) >= 1, (
             "selectbox must be called for tier2_model (not text_input)"
         )
 
         model_text_input_calls = [
-            call
-            for call in mock_text_input.call_args_list
-            if call.args and call.args[0] == "Model"
+            call for call in mock_text_input.call_args_list if call.args and call.args[0] == "Model"
         ]
         assert len(model_text_input_calls) == 0, "text_input must NOT be used for tier2_model"
 
@@ -315,9 +308,7 @@ class TestFallbackStrategySelectbox:
             for call in mock_selectbox.call_args_list
             if call.args and "Fallback Strategy" in str(call.args[0])
         ]
-        assert len(fallback_strategy_calls) >= 1, (
-            "selectbox must be called for fallback_strategy"
-        )
+        assert len(fallback_strategy_calls) >= 1, "selectbox must be called for fallback_strategy"
         call_kwargs = fallback_strategy_calls[0].kwargs
         options = call_kwargs.get("options", [])
         assert "tier1_only" in options, "'tier1_only' must be in fallback_strategy options"

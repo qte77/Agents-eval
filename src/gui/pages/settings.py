@@ -180,7 +180,9 @@ def _render_tier2_llm_judge(judge_settings: JudgeSettings) -> None:
     fallback_strategies = ["tier1_only"]
 
     with expander("Judge Settings - Tier 2 LLM Judge", expanded=False):
-        current_provider = st.session_state.get("judge_tier2_provider", judge_settings.tier2_provider)
+        current_provider = st.session_state.get(
+            "judge_tier2_provider", judge_settings.tier2_provider
+        )
         current_provider_idx = (
             provider_options.index(current_provider) if current_provider in provider_options else 0
         )
@@ -195,10 +197,16 @@ def _render_tier2_llm_judge(judge_settings: JudgeSettings) -> None:
 
         # Resolve model list for selected provider (excluding "auto")
         provider_for_models = (
-            selected_provider if selected_provider != "auto" else judge_settings.tier2_fallback_provider
+            selected_provider
+            if selected_provider != "auto"
+            else judge_settings.tier2_fallback_provider
         )
         provider_config = chat_config.providers.get(provider_for_models)  # type: ignore[reportAttributeAccessIssue]
-        model_options = [provider_config.model_name] if provider_config else [judge_settings.tier2_model]
+        model_options: list[str] = (
+            [provider_config.model_name]  # type: ignore[reportUnknownMemberType]
+            if provider_config
+            else [judge_settings.tier2_model]
+        )
 
         current_model = st.session_state.get("judge_tier2_model", judge_settings.tier2_model)
         if current_model not in model_options:
@@ -229,8 +237,8 @@ def _render_tier2_llm_judge(judge_settings: JudgeSettings) -> None:
         st.session_state["judge_tier2_fallback_provider"] = selected_fallback_provider
 
         fallback_provider_config = chat_config.providers.get(selected_fallback_provider)  # type: ignore[reportAttributeAccessIssue]
-        fallback_model_options = (
-            [fallback_provider_config.model_name]
+        fallback_model_options: list[str] = (
+            [fallback_provider_config.model_name]  # type: ignore[reportUnknownMemberType]
             if fallback_provider_config
             else [judge_settings.tier2_fallback_model]
         )
