@@ -391,8 +391,8 @@
         "tests/benchmark/test_sweep_runner.py",
         "tests/cli/test_run_cli.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T10:26:19Z",
       "content_hash": "eb3512cdeae50b3c3afdd5bdbcc17ccb62496cb12eb308e256a205cce8b7d090",
       "depends_on": [
         "STORY-011"
