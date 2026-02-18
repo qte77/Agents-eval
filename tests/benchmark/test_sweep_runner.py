@@ -7,9 +7,10 @@ invocation.
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
+from pydantic_ai.exceptions import ModelHTTPError
 
 from app.benchmark.sweep_config import AgentComposition, SweepConfig
 from app.benchmark.sweep_runner import SweepRunner
@@ -271,3 +272,269 @@ class TestStory013EngineRefactor:
         assert "cc_baseline_enabled" not in SweepConfig.model_fields, (
             "cc_baseline_enabled must be removed from SweepConfig.model_fields in STORY-013"
         )
+
+
+class TestStory013bRetryAndPersistence:
+    """Tests for STORY-013b: rate-limit retry, SystemExit fix, incremental persistence."""
+
+    def test_sweep_config_has_retry_delay_seconds_field(self, tmp_path: Path):
+        """Test that SweepConfig has retry_delay_seconds field defaulting to 5.0."""
+        config = SweepConfig(
+            compositions=[AgentComposition(include_researcher=True)],
+            repetitions=1,
+            paper_ids=["1"],
+            output_dir=tmp_path / "sweep_results",
+        )
+        assert hasattr(config, "retry_delay_seconds"), (
+            "SweepConfig must have 'retry_delay_seconds' field"
+        )
+        assert config.retry_delay_seconds == 5.0, "retry_delay_seconds must default to 5.0"
+
+    def test_sweep_config_retry_delay_in_model_fields(self, tmp_path: Path):
+        """Test that retry_delay_seconds is a declared Pydantic field."""
+        assert "retry_delay_seconds" in SweepConfig.model_fields
+
+    def test_sweep_runner_has_save_results_json_method(self, basic_sweep_config: SweepConfig):
+        """Test that SweepRunner has _save_results_json() method (split from _save_results)."""
+        runner = SweepRunner(basic_sweep_config)
+        assert hasattr(runner, "_save_results_json"), (
+            "SweepRunner must have _save_results_json method"
+        )
+
+    @pytest.mark.asyncio
+    async def test_save_results_json_writes_only_results_json(
+        self, basic_sweep_config: SweepConfig, mock_composite_result: CompositeResult
+    ):
+        """Test that _save_results_json() writes only results.json, not summary.md."""
+        basic_sweep_config.output_dir.mkdir(parents=True, exist_ok=True)
+        runner = SweepRunner(basic_sweep_config)
+        comp = basic_sweep_config.compositions[0]
+        runner.results = [(comp, mock_composite_result)]
+
+        await runner._save_results_json()
+
+        results_file = basic_sweep_config.output_dir / "results.json"
+        summary_file = basic_sweep_config.output_dir / "summary.md"
+        assert results_file.exists(), "_save_results_json must write results.json"
+        assert not summary_file.exists(), "_save_results_json must NOT write summary.md"
+
+    @pytest.mark.asyncio
+    async def test_incremental_results_written_after_each_evaluation(
+        self, tmp_path: Path, mock_composite_result: CompositeResult
+    ):
+        """Test that results.json is written after each successful evaluation."""
+        config = SweepConfig(
+            compositions=[
+                AgentComposition(include_researcher=True),
+                AgentComposition(include_analyst=True),
+            ],
+            repetitions=1,
+            paper_ids=["1"],
+            output_dir=tmp_path / "sweep_results",
+            retry_delay_seconds=0.0,
+        )
+        config.output_dir.mkdir(parents=True, exist_ok=True)
+        runner = SweepRunner(config)
+
+        write_counts = []
+
+        original_save_json = runner._save_results_json
+
+        async def counting_save_json():
+            await original_save_json()
+            if (config.output_dir / "results.json").exists():
+                with open(config.output_dir / "results.json") as f:
+                    data = json.load(f)
+                write_counts.append(len(data))
+
+        runner._save_results_json = counting_save_json  # type: ignore[method-assign]
+
+        with patch("app.benchmark.sweep_runner.main") as mock_main:
+            mock_main.return_value = {"composite_result": mock_composite_result}
+            await runner._run_mas_evaluations()
+
+        # Should have been called twice (once per composition), each time with growing data
+        assert len(write_counts) == 2, (
+            "_save_results_json must be called after each successful evaluation"
+        )
+        assert write_counts[0] == 1, "After first eval, results.json should have 1 entry"
+        assert write_counts[1] == 2, "After second eval, results.json should have 2 entries"
+
+    @pytest.mark.asyncio
+    async def test_run_single_evaluation_retries_on_rate_limit(
+        self, tmp_path: Path, mock_composite_result: CompositeResult
+    ):
+        """Test that _run_single_evaluation retries on HTTP 429 errors."""
+        config = SweepConfig(
+            compositions=[AgentComposition(include_researcher=True)],
+            repetitions=1,
+            paper_ids=["1"],
+            output_dir=tmp_path / "sweep_results",
+            retry_delay_seconds=0.0,
+        )
+        runner = SweepRunner(config)
+        comp = config.compositions[0]
+
+        # Raise 429 twice, then succeed
+        rate_limit_error = ModelHTTPError(status_code=429, model_name="test-model", body={})
+        call_count = 0
+
+        async def mock_main_with_retry(**kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                raise rate_limit_error
+            return {"composite_result": mock_composite_result}
+
+        with patch("app.benchmark.sweep_runner.main", side_effect=mock_main_with_retry):
+            result = await runner._run_single_evaluation(comp, "1", 0)
+
+        assert result is not None, "Should succeed after retries"
+        assert call_count == 3, f"Expected 3 calls (2 retries + 1 success), got {call_count}"
+
+    @pytest.mark.asyncio
+    async def test_run_single_evaluation_returns_none_after_max_retries(
+        self, tmp_path: Path
+    ):
+        """Test that _run_single_evaluation returns None after exhausting retries."""
+        config = SweepConfig(
+            compositions=[AgentComposition(include_researcher=True)],
+            repetitions=1,
+            paper_ids=["1"],
+            output_dir=tmp_path / "sweep_results",
+            retry_delay_seconds=0.0,
+        )
+        runner = SweepRunner(config)
+        comp = config.compositions[0]
+
+        rate_limit_error = ModelHTTPError(status_code=429, model_name="test-model", body={})
+
+        with patch("app.benchmark.sweep_runner.main", side_effect=rate_limit_error):
+            result = await runner._run_single_evaluation(comp, "1", 0)
+
+        assert result is None, "Should return None after max retries exhausted"
+
+    @pytest.mark.asyncio
+    async def test_run_single_evaluation_max_retries_is_three(
+        self, tmp_path: Path
+    ):
+        """Test that _run_single_evaluation retries exactly 3 times on rate-limit errors."""
+        config = SweepConfig(
+            compositions=[AgentComposition(include_researcher=True)],
+            repetitions=1,
+            paper_ids=["1"],
+            output_dir=tmp_path / "sweep_results",
+            retry_delay_seconds=0.0,
+        )
+        runner = SweepRunner(config)
+        comp = config.compositions[0]
+
+        rate_limit_error = ModelHTTPError(status_code=429, model_name="test-model", body={})
+        call_count = 0
+
+        async def counting_main(**kwargs):
+            nonlocal call_count
+            call_count += 1
+            raise rate_limit_error
+
+        with patch("app.benchmark.sweep_runner.main", side_effect=counting_main):
+            await runner._run_single_evaluation(comp, "1", 0)
+
+        # initial attempt + 3 retries = 4 total calls
+        assert call_count == 4, f"Expected 4 calls (1 initial + 3 retries), got {call_count}"
+
+    @pytest.mark.asyncio
+    async def test_sweep_continues_after_rate_limit_exhausted(
+        self, tmp_path: Path, mock_composite_result: CompositeResult
+    ):
+        """Test that sweep continues to next evaluation after rate-limit max retries."""
+        config = SweepConfig(
+            compositions=[
+                AgentComposition(include_researcher=True),
+                AgentComposition(include_analyst=True),
+            ],
+            repetitions=1,
+            paper_ids=["1"],
+            output_dir=tmp_path / "sweep_results",
+            retry_delay_seconds=0.0,
+        )
+        runner = SweepRunner(config)
+
+        rate_limit_error = ModelHTTPError(status_code=429, model_name="test-model", body={})
+        call_count = 0
+
+        async def mock_main(**kwargs):
+            nonlocal call_count
+            call_count += 1
+            # First composition (all 4 attempts) fail with rate limit
+            if call_count <= 4:
+                raise rate_limit_error
+            # Second composition succeeds
+            return {"composite_result": mock_composite_result}
+
+        with patch("app.benchmark.sweep_runner.main", side_effect=mock_main):
+            with patch("app.benchmark.sweep_runner.SweepRunner._save_results_json"):
+                await runner._run_mas_evaluations()
+
+        # Only second composition succeeded
+        assert len(runner.results) == 1, (
+            "Only second composition should be in results; first exhausted retries"
+        )
+
+
+class TestStory013bHandleModelHttpError:
+    """Tests for _handle_model_http_error re-raise fix (STORY-013b)."""
+
+    def test_handle_model_http_error_reraises_429_as_model_http_error(self):
+        """Test that _handle_model_http_error raises ModelHTTPError (not SystemExit) for 429."""
+        from app.agents.agent_system import _handle_model_http_error
+
+        error = ModelHTTPError(status_code=429, model_name="test-model", body={})
+
+        with pytest.raises(ModelHTTPError):
+            _handle_model_http_error(error, "test-provider", "test-model")
+
+    def test_handle_model_http_error_does_not_raise_systemexit_for_429(self):
+        """Test that _handle_model_http_error does NOT raise SystemExit for 429."""
+        from app.agents.agent_system import _handle_model_http_error
+
+        error = ModelHTTPError(status_code=429, model_name="test-model", body={})
+
+        try:
+            _handle_model_http_error(error, "test-provider", "test-model")
+        except SystemExit:
+            pytest.fail("_handle_model_http_error must not raise SystemExit for 429")
+        except ModelHTTPError:
+            pass  # Expected
+
+    def test_handle_model_http_error_reraises_non_429_errors(self):
+        """Test that _handle_model_http_error re-raises non-429 errors as-is."""
+        from app.agents.agent_system import _handle_model_http_error
+
+        error = ModelHTTPError(status_code=500, model_name="test-model", body={})
+
+        with pytest.raises(ModelHTTPError) as exc_info:
+            _handle_model_http_error(error, "test-provider", "test-model")
+
+        assert exc_info.value.status_code == 500
+
+    @pytest.mark.asyncio
+    async def test_run_manager_raises_systemexit_on_429(self):
+        """Test that run_manager catches ModelHTTPError 429 and raises SystemExit(1)."""
+        from app.agents.agent_system import run_manager
+
+        rate_limit_error = ModelHTTPError(status_code=429, model_name="test-model", body={})
+
+        mock_manager = MagicMock()
+        mock_manager.model._model_name = "test-model"
+        mock_manager.run = AsyncMock(side_effect=rate_limit_error)
+
+        mock_trace_collector = MagicMock()
+        mock_trace_collector.start_execution = MagicMock()
+        mock_trace_collector.end_execution = MagicMock()
+
+        with patch("app.agents.agent_system.get_trace_collector", return_value=mock_trace_collector):
+            with pytest.raises(SystemExit) as exc_info:
+                await run_manager(mock_manager, "test query", "test-provider", None)
+
+        assert exc_info.value.code == 1, "run_manager must exit with code 1 on rate limit"
