@@ -14,6 +14,15 @@ version: 1.0
 ## Functional Requirements
 
 <!-- PARSER REQUIREMENT: Use exactly "#### Feature N:" format -->
+<!-- PARSER REQUIREMENT: No compound sub-features (e.g., "##### 2.1 + 2.2") — one heading per story -->
+<!-- PARSER REQUIREMENT: Flatten AC items — no indented sub-items under a checkbox -->
+<!--   BAD:  - [ ] Module with:\n         - helper_a()\n         - helper_b()     -->
+<!--   GOOD: - [ ] Module created\n       - [ ] helper_a()\n       - [ ] helper_b() -->
+<!-- PARSER REQUIREMENT: Each sub-feature MUST have its own **Files**: section -->
+<!--   Parser uses re.search (first match) — without sub-feature Files, it finds  -->
+<!--   the parent's (wrong scope) or nothing (empty array)                         -->
+<!-- PARSER LIMITATION: Sub-feature descriptions are NOT extracted — parser always  -->
+<!--   uses the parent #### feature description. Fix manually in prd.json if needed -->
 
 #### Feature 1: {{FEATURE_NAME}}
 
@@ -43,6 +52,7 @@ version: 1.0
 **Acceptance Criteria**:
 - [ ] {{SUB_CRITERION_1}}
 
+<!-- REQUIRED: Each sub-feature needs its own Files section -->
 **Files**:
 - `{{SUB_FILE_PATH}}`
 
