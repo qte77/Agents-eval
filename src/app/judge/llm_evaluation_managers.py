@@ -102,7 +102,7 @@ class LLMJudgeEngine:
             env_config: Application environment configuration
 
         Returns:
-            Tuple of (is_valid, api_key). api_key is the actual key string on success, None on failure.
+            Tuple of (is_valid, api_key). Key string on success, None on failure.
         """
         is_valid, key_or_message = get_api_key(provider, env_config)
         if not is_valid:
@@ -110,9 +110,7 @@ class LLMJudgeEngine:
             return (False, None)
         return (True, key_or_message)
 
-    def select_available_provider(
-        self, env_config: AppEnv
-    ) -> tuple[str, str, str | None] | None:
+    def select_available_provider(self, env_config: AppEnv) -> tuple[str, str, str | None] | None:
         """Select available provider with fallback chain.
 
         Args:

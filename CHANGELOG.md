@@ -49,10 +49,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Legacy config keys `paper_numbers` and `provider` in sweep JSON — use `paper_ids` and `chat_provider`
+- `"not-required"` API key sentinel in `create_simple_model` — `None` lets SDK fall back to env vars
 - 3 composite scoring test files merged into `test_composite_scorer.py` (STORY-007)
 - Deprecated examples: `run_evaluation_example*.py`, `run_simple_agent_*.py`, `utils/`, `config.json` (STORY-001)
 
 ### Fixed
+
+- Judge 401 auth failures: validated API key now forwarded through `_resolve_provider_key` → `select_available_provider` → `create_judge_agent` instead of being discarded
 
 - `CCTraceAdapter._extract_coordination_events()` stub now parses `inboxes/*.json` messages (STORY-014)
 - `test_download_success_mocked` AttributeError — patched correct import path (STORY-007)

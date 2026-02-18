@@ -42,7 +42,7 @@ class TestTier2ProviderFallbackIntegration:
 
         # Assert: Should select fallback
         assert selected is not None
-        assert selected == ("github", "gpt-4o-mini")
+        assert (selected[0], selected[1]) == ("github", "gpt-4o-mini")
 
     @pytest.mark.asyncio
     async def test_neutral_fallback_scores_when_all_providers_unavailable(self):

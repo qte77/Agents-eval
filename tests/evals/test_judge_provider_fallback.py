@@ -20,29 +20,31 @@ from app.judge.settings import JudgeSettings
 class TestProviderAPIKeyValidation:
     """Test API key availability checks for judge providers."""
 
-    def test_validate_primary_provider_api_key_available(self):
-        """Should return True when primary provider API key is available."""
+    def test_resolve_primary_provider_key_available(self):
+        """Should return (True, key) when primary provider API key is available."""
         settings = JudgeSettings(tier2_provider="openai", tier2_model="gpt-4o-mini")
         env_config = AppEnv(OPENAI_API_KEY="test-key-123")
 
         engine = LLMJudgeEngine(settings)
-        is_valid = engine.validate_provider_api_key(settings.tier2_provider, env_config)
+        is_valid, api_key = engine._resolve_provider_key(settings.tier2_provider, env_config)
 
         assert is_valid is True
+        assert api_key == "test-key-123"
 
-    def test_validate_primary_provider_api_key_missing(self):
-        """Should return False when primary provider API key is missing."""
+    def test_resolve_primary_provider_key_missing(self):
+        """Should return (False, None) when primary provider API key is missing."""
         settings = JudgeSettings(tier2_provider="openai", tier2_model="gpt-4o-mini")
         # Explicitly clear key to override env vars (AppEnv is BaseSettings)
         env_config = AppEnv(OPENAI_API_KEY="")
 
         engine = LLMJudgeEngine(settings)
-        is_valid = engine.validate_provider_api_key(settings.tier2_provider, env_config)
+        is_valid, api_key = engine._resolve_provider_key(settings.tier2_provider, env_config)
 
         assert is_valid is False
+        assert api_key is None
 
-    def test_validate_fallback_provider_api_key_available(self):
-        """Should return True when fallback provider API key is available."""
+    def test_resolve_fallback_provider_key_available(self):
+        """Should return (True, key) when fallback provider API key is available."""
         settings = JudgeSettings(
             tier2_provider="openai",
             tier2_fallback_provider="github",
@@ -51,9 +53,12 @@ class TestProviderAPIKeyValidation:
         env_config = AppEnv(GITHUB_API_KEY="github-test-key")
 
         engine = LLMJudgeEngine(settings)
-        is_valid = engine.validate_provider_api_key(settings.tier2_fallback_provider, env_config)
+        is_valid, api_key = engine._resolve_provider_key(
+            settings.tier2_fallback_provider, env_config
+        )
 
         assert is_valid is True
+        assert api_key == "github-test-key"
 
 
 class TestProviderFallbackChain:
@@ -65,9 +70,10 @@ class TestProviderFallbackChain:
         env_config = AppEnv(OPENAI_API_KEY="test-key", GITHUB_API_KEY="")
 
         engine = LLMJudgeEngine(settings, env_config=env_config)
-        selected_provider = engine.select_available_provider(env_config)
+        selected = engine.select_available_provider(env_config)
 
-        assert selected_provider == ("openai", "gpt-4o-mini")
+        assert selected is not None
+        assert (selected[0], selected[1]) == ("openai", "gpt-4o-mini")
 
     def test_should_fallback_when_primary_unavailable(self):
         """Should fallback to tier2_fallback_provider when primary unavailable."""
@@ -79,9 +85,10 @@ class TestProviderFallbackChain:
         env_config = AppEnv(GITHUB_API_KEY="github-key")  # No OPENAI_API_KEY
 
         engine = LLMJudgeEngine(settings)
-        selected_provider = engine.select_available_provider(env_config)
+        selected = engine.select_available_provider(env_config)
 
-        assert selected_provider == ("github", "gpt-4o-mini")
+        assert selected is not None
+        assert (selected[0], selected[1]) == ("github", "gpt-4o-mini")
 
     def test_should_return_none_when_all_unavailable(self):
         """Should return None when both primary and fallback unavailable."""
