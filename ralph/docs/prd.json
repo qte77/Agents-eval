@@ -64,8 +64,8 @@
         "tests/llms/test_models.py",
         "tests/judge/test_llm_evaluation_managers.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T19:50:30Z",
       "content_hash": "7a41488d81c622f46b746374f6821788e19dd94170a8056eae5a9316e1319ebe",
       "depends_on": []
     },
