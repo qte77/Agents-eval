@@ -158,7 +158,7 @@ def _build_config_from_args(args: argparse.Namespace) -> SweepConfig | None:
         output_dir=output_dir,
         chat_provider=args.chat_provider,
         engine=args.engine,
-        cc_teams=args.cc_teams,
+        cc_teams=getattr(args, "cc_teams", False),
         judge_provider=args.judge_provider,
         judge_model=args.judge_model,
     )

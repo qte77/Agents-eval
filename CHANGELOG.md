@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sweep rate-limit resilience: exponential backoff on 429 (max 3 retries), incremental `results.json` persistence (STORY-013b)
 - `--judge-provider` and `--judge-model` CLI/sweep args for Tier 2 judge override (STORY-012)
 - New examples: `basic_evaluation.py`, `judge_settings_customization.py`, `engine_comparison.py` with README (STORY-002)
+- `--cc-teams` boolean flag for CLI (`run_cli.py`), sweep (`run_sweep.py`), and `SweepConfig` model; enables CC Agent Teams mode with `--engine=cc` (STORY-006)
 - CC baseline Makefile recipes (`cc_run_solo`, `cc_run_teams`, `cc_collect_teams`)
 - Test coverage improvements: `datasets_peerread` 27→60%, `models` 24→76%, `agent_factories` 39→75% (STORY-014)
 - Security test suite: 135 tests across 5 modules (SSRF, prompt injection, data filtering, input limits, tool registration) (STORY-013)
@@ -33,7 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `--paper-number` renamed to `--paper-id` (string, supports arxiv IDs); `--provider` renamed to `--chat-provider` across CLI, sweep, config (STORY-012)
-- `SweepConfig.paper_numbers: list[int]` → `paper_ids: list[str]`; added `judge_provider`, `judge_model`, `engine` fields (STORY-012, STORY-013)
+- `SweepConfig.paper_numbers: list[int]` → `paper_ids: list[str]`; added `judge_provider`, `judge_model`, `engine`, `cc_teams` fields (STORY-012, STORY-013, STORY-006)
+- `run_cli.py` CC branch now delegates to `cc_engine.run_cc_solo` / `run_cc_teams` (removes inline subprocess logic) (STORY-006)
+- `sweep_runner._invoke_cc_comparison` delegates to `cc_engine`; `_run_cc_baselines` wires through `CCTraceAdapter` (STORY-006)
+- `app.main()` now accepts `engine` parameter; `run_app._execute_query_background` passes it through (STORY-006)
+- Makefile `cc_run_solo` / `cc_run_teams` recipes use Python CLI entry point instead of shell scripts (STORY-006)
 - `JudgeSettings.tier2_provider` default changed from `"openai"` to `"auto"` — judge inherits MAS chat provider at runtime (STORY-011)
 - 429 errors in `agent_system.py` now re-raise `ModelHTTPError` instead of `SystemExit(1)`, enabling caller retry logic (STORY-013b)
 - PeerRead review score fields coerce int→str via `BeforeValidator(str)` to handle numeric JSON values (STORY-009)
@@ -49,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- `scripts/collect-cc-traces/` shell scripts directory — replaced by `cc_engine.py` Python module (STORY-006)
 - Legacy config keys `paper_numbers` and `provider` in sweep JSON — use `paper_ids` and `chat_provider`
 - `"not-required"` API key sentinel in `create_simple_model` — `None` lets SDK fall back to env vars
 - 3 composite scoring test files merged into `test_composite_scorer.py` (STORY-007)

@@ -144,20 +144,21 @@ class TestCCBaselineIntegration:
         )
         runner = SweepRunner(config)
 
+        from app.engines.cc_engine import CCResult
+
+        mock_cc_result = CCResult(execution_id="exec-001", output_data={})
+
         with (
             patch("app.benchmark.sweep_runner.main") as mock_main,
-            patch("app.benchmark.sweep_runner.subprocess.run") as mock_subprocess,
-            patch("app.benchmark.sweep_runner.shutil.which", return_value="/usr/bin/claude"),
+            patch("app.benchmark.sweep_runner.run_cc_solo", return_value=mock_cc_result) as mock_cc_solo,
+            patch("app.benchmark.sweep_runner.check_cc_available", return_value=True),
         ):
             mock_main.return_value = {"composite_result": mock_composite_result}
-            mock_subprocess.return_value = MagicMock(returncode=0, stdout='{"result": "test"}')
 
             await runner.run()
 
-            # Verify the Claude CLI was invoked (behavioral: CC comparison ran)
-            mock_subprocess.assert_called_once()
-            cmd = mock_subprocess.call_args[0][0]
-            assert any("claude" in arg for arg in cmd)
+            # Verify cc_engine.run_cc_solo was invoked (behavioral: CC comparison ran)
+            mock_cc_solo.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_cc_comparison_error_when_claude_not_found(self, tmp_path: Path):
@@ -177,7 +178,7 @@ class TestCCBaselineIntegration:
         )
         runner = SweepRunner(config)
 
-        with patch("app.benchmark.sweep_runner.shutil.which", return_value=None):
+        with patch("app.benchmark.sweep_runner.check_cc_available", return_value=False):
             with pytest.raises(RuntimeError, match="claude CLI"):
                 await runner.run()
 
@@ -190,14 +191,14 @@ class TestCCBaselineIntegration:
 
         with (
             patch("app.benchmark.sweep_runner.main") as mock_main,
-            patch("app.benchmark.sweep_runner.subprocess.run") as mock_subprocess,
+            patch("app.benchmark.sweep_runner.run_cc_solo") as mock_cc_solo,
         ):
             mock_main.return_value = {"composite_result": mock_composite_result}
 
             await runner.run()
 
-            # Verify CC was NOT invoked
-            mock_subprocess.assert_not_called()
+            # Verify CC was NOT invoked when engine=mas
+            mock_cc_solo.assert_not_called()
 
 
 class TestStory013EngineRefactor:

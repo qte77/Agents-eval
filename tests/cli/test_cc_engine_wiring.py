@@ -247,41 +247,17 @@ class TestSweepRunnerDelegatesToCCEngine:
 class TestRunAppPassesEngine:
     """run_app._execute_query_background passes engine to main()."""
 
-    @pytest.mark.asyncio
-    async def test_execute_query_background_passes_engine_to_main(self):
-        """_execute_query_background passes engine='cc' to main() when engine=cc."""
+    def test_execute_query_background_passes_engine_to_main_via_source(self):
+        """_execute_query_background source passes engine to main() call."""
+        import inspect
+
         from gui.pages.run_app import _execute_query_background
 
-        with patch("gui.pages.run_app.main", new_callable=AsyncMock) as mock_main:
-            mock_main.return_value = {
-                "composite_result": None,
-                "graph": None,
-            }
-            with patch("streamlit.session_state", MagicMock()) as mock_state:
-                mock_state.get = MagicMock(return_value=None)
-                mock_state.__setattr__ = MagicMock()
-                mock_state.__getattr__ = MagicMock(return_value=None)
-
-                # We test the main call receives engine parameter
-                # The function is async so we need to call it
-                try:
-                    await _execute_query_background(
-                        query="test",
-                        provider="openai",
-                        include_researcher=False,
-                        include_analyst=False,
-                        include_synthesiser=False,
-                        chat_config_file=None,
-                        engine="cc",
-                    )
-                except Exception:
-                    pass  # Session state issues in test context are ok
-
-                # Verify main was called with engine parameter somewhere
-                if mock_main.called:
-                    call_kwargs = mock_main.call_args[1] if mock_main.call_args else {}
-                    # engine should be passed through or handled
-                    assert True  # If we reach here without crashing, the function accepts engine
+        source = inspect.getsource(_execute_query_background)
+        # Verify engine is forwarded to main()
+        assert "engine=engine" in source, (
+            "_execute_query_background must pass engine=engine to main()"
+        )
 
     def test_execute_query_background_accepts_engine_parameter(self):
         """_execute_query_background function signature accepts engine parameter."""
