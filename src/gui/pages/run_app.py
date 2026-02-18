@@ -15,6 +15,7 @@ Input mode supports both free-form text queries and paper selection from
 downloaded PeerRead papers via a dropdown with abstract preview.
 """
 
+import shutil
 from pathlib import Path
 
 import streamlit as st
@@ -240,6 +241,7 @@ async def _execute_query_background(
     judge_settings: JudgeSettings | None = None,
     paper_id: str | None = None,
     common_settings: CommonSettings | None = None,
+    engine: str = "mas",
 ) -> None:
     """Execute agent query in background with session state persistence.
 
@@ -257,6 +259,7 @@ async def _execute_query_background(
         judge_settings: Optional JudgeSettings override from GUI settings page
         paper_id: Optional PeerRead paper ID for paper selection mode
         common_settings: Optional CommonSettings override from GUI settings page
+        engine: Execution engine — 'mas' (PydanticAI) or 'cc' (Claude Code)
     """
     # Set running state
     st.session_state.execution_state = "running"
@@ -405,6 +408,7 @@ async def _handle_query_submission(
     include_synthesiser: bool,
     chat_config_file: str | Path | None,
     token_limit: int | None,
+    engine: str = "mas",
 ) -> None:
     """Validate input and execute the agent query in background.
 
@@ -421,6 +425,7 @@ async def _handle_query_submission(
         include_synthesiser: Whether to include synthesiser agent.
         chat_config_file: Path to chat configuration file.
         token_limit: Optional token limit override from GUI.
+        engine: Execution engine — 'mas' (PydanticAI) or 'cc' (Claude Code).
     """
     if not (query or selected_paper_id):
         warning(RUN_APP_QUERY_WARNING)
@@ -440,6 +445,7 @@ async def _handle_query_submission(
         judge_settings,
         paper_id=selected_paper_id,
         common_settings=common_settings,
+        engine=engine,
     )
     st.rerun()
 
@@ -454,14 +460,45 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     Provider and sub-agent configuration are read from session state (configured
     on the Settings page). Execution runs in background with results persisted
     to session state, allowing navigation across tabs without losing progress.
+
+    Engine selection (MAS or Claude Code) is per-run via a radio widget and
+    stored in session state. When CC is selected, MAS-specific controls are
+    disabled and CC availability is checked.
     """
     header(RUN_APP_HEADER)
     _initialize_execution_state()
+
+    # CC availability: compute once and cache in session state
+    st.session_state.setdefault("cc_available", shutil.which("claude") is not None)
+    cc_available: bool = st.session_state.cc_available
 
     provider_from_state, include_researcher, include_analyst, include_synthesiser = (
         _get_session_config(provider)
     )
     token_limit: int | None = st.session_state.get("token_limit")
+
+    # Engine selector — per-run choice, not persistent config
+    engine_label = st.radio(
+        "Execution engine",
+        ["MAS (PydanticAI)", "Claude Code"],
+        key="engine_label",
+        horizontal=True,
+    )
+    engine = "cc" if engine_label == "Claude Code" else "mas"
+    st.session_state.engine = engine
+
+    if engine == "cc" and not cc_available:
+        st.warning(
+            "Claude Code CLI (`claude`) not found on PATH. "
+            "Install it to use the CC engine: https://docs.anthropic.com/en/docs/claude-code"
+        )
+
+    mas_disabled = engine == "cc"
+    if mas_disabled:
+        st.info(
+            "MAS agent controls (Researcher, Analyst, Synthesiser) are not applicable "
+            "when using the Claude Code engine."
+        )
 
     agents_text = _format_enabled_agents(include_researcher, include_analyst, include_synthesiser)
     _display_configuration(provider_from_state, token_limit, agents_text)
@@ -491,6 +528,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
             include_synthesiser,
             chat_config_file,
             token_limit,
+            engine=engine,
         )
 
     _display_execution_result(_get_execution_state())

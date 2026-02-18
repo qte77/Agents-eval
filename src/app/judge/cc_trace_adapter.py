@@ -341,13 +341,27 @@ class CCTraceAdapter:
         return {"start_time": min(all_timestamps), "end_time": max(all_timestamps)}
 
     def _extract_coordination_events(self) -> list[dict[str, Any]]:
-        """Extract coordination events from task assignments.
+        """Extract coordination events from teams mode inboxes/*.json messages.
 
-        In teams mode, task ownership and dependencies indicate coordination patterns.
+        In teams mode, agent-to-agent messages in inboxes/ represent coordination
+        events (task assignments, status updates, completions).
 
         Returns:
-            List of coordination event dictionaries
+            List of coordination event dictionaries parsed from inbox messages.
+            Empty list if no inboxes/ directory or not in teams mode.
         """
-        # Minimal implementation: return empty list
-        # Coordination events are optional for Tier 3 analysis
-        return []
+        inboxes_dir = self.artifacts_dir / "inboxes"
+
+        if not inboxes_dir.exists():
+            return []
+
+        events: list[dict[str, Any]] = []
+
+        for msg_file in sorted(inboxes_dir.glob("*.json")):
+            try:
+                msg_data = json.loads(msg_file.read_text())
+                events.append(msg_data)
+            except Exception as e:
+                logger.warning(f"Failed to parse inbox message {msg_file}: {e}")
+
+        return events
