@@ -48,7 +48,7 @@ def basic_sweep_config(tmp_path: Path) -> SweepConfig:
             ),
         ],
         repetitions=2,
-        paper_numbers=[1],
+        paper_ids=["1"],
         output_dir=tmp_path / "sweep_results",
     )
 
@@ -105,7 +105,7 @@ class TestSweepRunner:
                 )
             ],
             repetitions=1,
-            paper_numbers=[1],
+            paper_ids=["1"],
             output_dir=tmp_path / "sweep_results",
             chat_provider="cerebras",
         )
@@ -137,7 +137,7 @@ class TestCCBaselineIntegration:
                 )
             ],
             repetitions=1,
-            paper_numbers=[1],
+            paper_ids=["1"],
             output_dir=tmp_path / "sweep_results",
             engine="cc",
         )
@@ -170,7 +170,7 @@ class TestCCBaselineIntegration:
                 )
             ],
             repetitions=1,
-            paper_numbers=[1],
+            paper_ids=["1"],
             output_dir=tmp_path / "sweep_results",
             engine="cc",
         )
@@ -213,7 +213,7 @@ class TestStory013EngineRefactor:
                 )
             ],
             repetitions=1,
-            paper_numbers=[1],
+            paper_ids=["1"],
             output_dir=tmp_path / "sweep_results",
         )
         assert hasattr(config, "engine"), "SweepConfig must have 'engine' field"
@@ -230,7 +230,7 @@ class TestStory013EngineRefactor:
                 )
             ],
             repetitions=1,
-            paper_numbers=[1],
+            paper_ids=["1"],
             output_dir=tmp_path / "sweep_results",
             engine="cc",
         )
@@ -247,7 +247,7 @@ class TestStory013EngineRefactor:
                 )
             ],
             repetitions=1,
-            paper_numbers=[1],
+            paper_ids=["1"],
             output_dir=tmp_path / "sweep_results",
         )
         assert not hasattr(config, "cc_baseline_enabled"), (

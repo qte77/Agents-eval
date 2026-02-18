@@ -278,7 +278,7 @@ async def _execute_query_background(
             chat_config_file=chat_config_file,
             token_limit=token_limit,
             judge_settings=judge_settings,
-            paper_number=paper_id,
+            paper_id=paper_id,
         )
 
         # Store result and transition to completed

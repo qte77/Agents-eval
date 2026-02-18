@@ -86,7 +86,7 @@
         "system_prompt_evaluator_constructiveness": "You are an expert at evaluating constructiveness of academic reviews. Focus on actionable feedback and balanced critique.",
         "system_prompt_evaluator_planning_rationality": "You are an expert at evaluating planning quality of agent executions. Focus on logical flow and decision quality.",
         "system_prompt_evaluator_general": "You are an expert evaluator providing structured assessments of text quality and content.",
-        "paper_review_query": "Generate a structured peer review for paper '{paper_number}' from PeerRead dataset. Follow these steps:\\n1. Call get_peerread_paper with paper_id='{paper_number}'\\n2. Call generate_paper_review_content_from_template with paper_id='{paper_number}'\\n3. Call save_structured_review with the generated review\\nUse exact paper_id '{paper_number}' in all tool calls. The review must follow structured format with ratings.",
+        "paper_review_query": "Generate a structured peer review for paper '{paper_id}' from PeerRead dataset. Follow these steps:\\n1. Call get_peerread_paper with paper_id='{paper_id}'\\n2. Call generate_paper_review_content_from_template with paper_id='{paper_id}'\\n3. Call save_structured_review with the generated review\\nUse exact paper_id '{paper_id}' in all tool calls. The review must follow structured format with ratings.",
         "default_query": "What would you like to research today?"
     }
 }

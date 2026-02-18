@@ -14,6 +14,7 @@ from app.app import main
 from app.benchmark.sweep_analysis import SweepAnalyzer, generate_markdown_summary
 from app.benchmark.sweep_config import AgentComposition, SweepConfig
 from app.data_models.evaluation_models import CompositeResult
+from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
 
@@ -33,14 +34,27 @@ class SweepRunner:
         self.config = config
         self.results: list[tuple[AgentComposition, CompositeResult]] = []
 
+    def _build_judge_settings(self) -> JudgeSettings | None:
+        """Build JudgeSettings from sweep config if judge args are configured.
+
+        Returns:
+            JudgeSettings with configured provider/model, or None to use defaults.
+        """
+        if self.config.judge_provider != "auto" or self.config.judge_model is not None:
+            kwargs: dict[str, Any] = {"tier2_provider": self.config.judge_provider}
+            if self.config.judge_model is not None:
+                kwargs["tier2_model"] = self.config.judge_model
+            return JudgeSettings(**kwargs)
+        return None
+
     async def _run_single_evaluation(
-        self, composition: AgentComposition, paper_number: int, repetition: int
+        self, composition: AgentComposition, paper_id: str, repetition: int
     ) -> CompositeResult | None:
         """Run a single evaluation with specified composition.
 
         Args:
             composition: Agent composition to test.
-            paper_number: Paper ID to evaluate.
+            paper_id: Paper ID to evaluate (string, supports arxiv IDs like '1105.1072').
             repetition: Repetition number (for logging).
 
         Returns:
@@ -48,20 +62,23 @@ class SweepRunner:
         """
         logger.info(
             f"Running composition={composition.get_name()}, "
-            f"paper={paper_number}, repetition={repetition}"
+            f"paper={paper_id}, repetition={repetition}"
         )
+
+        judge_settings = self._build_judge_settings()
 
         try:
             # Run evaluation through main() with specified composition
             result = await main(
                 chat_provider=self.config.chat_provider,
-                query=f"Evaluate paper {paper_number}",
-                paper_number=str(paper_number),
+                query=f"Evaluate paper {paper_id}",
+                paper_id=paper_id,
                 include_researcher=composition.include_researcher,
                 include_analyst=composition.include_analyst,
                 include_synthesiser=composition.include_synthesiser,
                 enable_review_tools=True,
                 skip_eval=False,
+                judge_settings=judge_settings,
             )
 
             # Reason: main() returns dict with 'composite_result' key, not CompositeResult directly
@@ -74,15 +91,15 @@ class SweepRunner:
         except Exception as e:
             logger.error(
                 f"Evaluation failed for composition={composition.get_name()}, "
-                f"paper={paper_number}: {e}"
+                f"paper={paper_id}: {e}"
             )
             return None
 
-    async def _invoke_cc_comparison(self, paper_number: int) -> tuple[str, dict[str, Any]] | None:
+    async def _invoke_cc_comparison(self, paper_id: str) -> tuple[str, dict[str, Any]] | None:
         """Invoke Claude Code in headless mode for baseline comparison.
 
         Args:
-            paper_number: Paper ID to evaluate.
+            paper_id: Paper ID to evaluate (string, supports arxiv IDs).
 
         Returns:
             Tuple of (execution_id, result_data) if successful, None otherwise.
@@ -96,7 +113,7 @@ class SweepRunner:
         if not claude_path:
             raise RuntimeError("claude CLI not found. Install Claude Code or use --engine=mas.")
 
-        prompt = f"Review paper {paper_number} from the PeerRead dataset"
+        prompt = f"Review paper {paper_id} from the PeerRead dataset"
 
         try:
             result = subprocess.run(
@@ -132,10 +149,10 @@ class SweepRunner:
     async def _run_mas_evaluations(self) -> None:
         """Run MAS evaluations for all compositions, papers, and repetitions."""
         for composition in self.config.compositions:
-            for paper_number in self.config.paper_numbers:
+            for paper_id in self.config.paper_ids:
                 for repetition in range(self.config.repetitions):
                     result = await self._run_single_evaluation(
-                        composition, paper_number, repetition
+                        composition, paper_id, repetition
                     )
                     if result:
                         self.results.append((composition, result))
@@ -145,10 +162,10 @@ class SweepRunner:
         if self.config.engine != "cc":
             return
 
-        for paper_number in self.config.paper_numbers:
-            cc_result = await self._invoke_cc_comparison(paper_number)
+        for paper_id in self.config.paper_ids:
+            cc_result = await self._invoke_cc_comparison(paper_id)
             if cc_result:
-                logger.info(f"CC comparison completed for paper {paper_number}")
+                logger.info(f"CC comparison completed for paper {paper_id}")
                 # CC evaluation integration would go here
                 # For now, just log that CC was invoked
 

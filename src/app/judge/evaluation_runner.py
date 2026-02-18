@@ -92,7 +92,7 @@ def build_graph_from_trace(execution_id: str | None) -> nx.DiGraph[str] | None:
 
 async def run_evaluation_if_enabled(
     skip_eval: bool,
-    paper_number: str | None,
+    paper_id: str | None,
     execution_id: str | None,
     cc_solo_dir: str | None = None,
     cc_teams_dir: str | None = None,
@@ -105,7 +105,7 @@ async def run_evaluation_if_enabled(
 
     Args:
         skip_eval: Whether to skip evaluation via CLI flag.
-        paper_number: Paper number for PeerRead review (indicates ground truth availability).
+        paper_id: Paper ID for PeerRead review (indicates ground truth availability).
         execution_id: Execution ID for trace retrieval.
         cc_solo_dir: Path to Claude Code solo artifacts directory for baseline comparison.
         cc_teams_dir: Path to Claude Code teams artifacts directory for baseline comparison.
@@ -125,7 +125,7 @@ async def run_evaluation_if_enabled(
     logger.info("Running evaluation pipeline...")
     pipeline = EvaluationPipeline(settings=judge_settings, chat_provider=chat_provider)
 
-    if not paper_number:
+    if not paper_id:
         logger.info("Skipping evaluation: no ground-truth reviews available")
 
     # Retrieve GraphTraceData from trace collector

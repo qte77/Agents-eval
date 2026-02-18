@@ -71,7 +71,7 @@ async def _run_agent_execution(
     chat_config_file: str | Path,
     chat_provider: str,
     query: str,
-    paper_number: str | None,
+    paper_id: str | None,
     enable_review_tools: bool,
     include_researcher: bool,
     include_analyst: bool,
@@ -90,7 +90,7 @@ async def _run_agent_execution(
     chat_config = load_config(chat_config_file, ChatConfig)
     prompts: dict[str, str] = cast(dict[str, str], chat_config.prompts)  # type: ignore[reportUnknownMemberType,reportAttributeAccessIssue]
 
-    query, review_tools_enabled = _prepare_query(paper_number, query, prompts)
+    query, review_tools_enabled = _prepare_query(paper_id, query, prompts)
     enable_review_tools = enable_review_tools or review_tools_enabled
 
     chat_env_config = AppEnv()
@@ -155,15 +155,15 @@ def _initialize_instrumentation() -> None:
 
 
 def _prepare_query(
-    paper_number: str | None, query: str, prompts: dict[str, str]
+    paper_id: str | None, query: str, prompts: dict[str, str]
 ) -> tuple[str, bool]:
     """Prepare query and determine if review tools should be enabled."""
-    if paper_number:
+    if paper_id:
         if not query:
-            default_tmpl = "Generate a structured peer review for paper '{paper_number}'."
+            default_tmpl = "Generate a structured peer review for paper '{paper_id}'."
             paper_review_template = prompts.get("paper_review_query", default_tmpl)
-            query = paper_review_template.format(paper_number=paper_number)
-        logger.info(f"Paper review mode enabled for paper {paper_number}")
+            query = paper_review_template.format(paper_id=paper_id)
+        logger.info(f"Paper review mode enabled for paper {paper_id}")
         return query, True
 
     if not query:
@@ -202,7 +202,7 @@ async def main(
     pydantic_ai_stream: bool = False,
     chat_config_file: str | Path | None = None,
     enable_review_tools: bool = True,
-    paper_number: str | None = None,
+    paper_id: str | None = None,
     skip_eval: bool = False,
     download_peerread_full_only: bool = False,
     download_peerread_samples_only: bool = False,
@@ -245,7 +245,7 @@ async def main(
                 chat_config_file,
                 chat_provider,
                 query,
-                paper_number,
+                paper_id,
                 enable_review_tools,
                 include_researcher,
                 include_analyst,
@@ -257,7 +257,7 @@ async def main(
             # Run evaluation after manager completes
             composite_result = await _run_evaluation_if_enabled(
                 skip_eval,
-                paper_number,
+                paper_id,
                 execution_id,
                 cc_solo_dir,
                 cc_teams_dir,

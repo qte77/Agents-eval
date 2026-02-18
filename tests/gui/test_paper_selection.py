@@ -168,7 +168,7 @@ class TestExecuteQueryBackgroundWithPaperId:
 
     Arrange: Mock main() and session state
     Act: Call _execute_query_background with paper_id set
-    Expected: main() called with paper_number=paper_id
+    Expected: main() called with paper_id=paper_id
     """
 
     @pytest.mark.asyncio
@@ -206,11 +206,11 @@ class TestExecuteQueryBackgroundWithPaperId:
 
         mock_main.assert_called_once()
         call_kwargs = mock_main.call_args.kwargs
-        assert call_kwargs.get("paper_number") == "42"
+        assert call_kwargs.get("paper_id") == "42"
 
     @pytest.mark.asyncio
     async def test_no_paper_id_passes_none_to_main(self) -> None:
-        """When paper_id is None, main() is called with paper_number=None."""
+        """When paper_id is None, main() is called with paper_id=None."""
         from unittest.mock import MagicMock
 
         from gui.pages.run_app import _execute_query_background
@@ -241,7 +241,7 @@ class TestExecuteQueryBackgroundWithPaperId:
 
         mock_main.assert_called_once()
         call_kwargs = mock_main.call_args.kwargs
-        assert call_kwargs.get("paper_number") is None
+        assert call_kwargs.get("paper_id") is None
 
 
 class TestFormatPaperDropdownOption:

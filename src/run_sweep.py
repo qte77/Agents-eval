@@ -36,9 +36,9 @@ def parse_args() -> argparse.Namespace:
 
     # Individual parameter options (override config file)
     parser.add_argument(
-        "--paper-numbers",
+        "--paper-ids",
         type=str,
-        help="Comma-separated list of paper IDs (e.g., '1,2,3')",
+        help="Comma-separated list of paper IDs (e.g., '1,2,3' or '1105.1072')",
     )
     parser.add_argument(
         "--repetitions",
@@ -57,11 +57,23 @@ def parse_args() -> argparse.Namespace:
         help="Use all 2^3=8 agent compositions (default)",
     )
     parser.add_argument(
-        "--provider",
+        "--chat-provider",
         type=str,
         choices=list(PROVIDER_REGISTRY.keys()),
         default=CHAT_DEFAULT_PROVIDER,
-        help=f"LLM provider to use (default: {CHAT_DEFAULT_PROVIDER})",
+        help=f"LLM provider to use for MAS agents (default: {CHAT_DEFAULT_PROVIDER})",
+    )
+    parser.add_argument(
+        "--judge-provider",
+        type=str,
+        default="auto",
+        help="LLM provider for Tier 2 judge (default: auto, inherits --chat-provider)",
+    )
+    parser.add_argument(
+        "--judge-model",
+        type=str,
+        default=None,
+        help="LLM model for Tier 2 judge (default: uses JudgeSettings default)",
     )
     parser.add_argument(
         "--engine",
@@ -75,7 +87,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def _load_config_from_file(config_path: Path) -> SweepConfig | None:
-    """Load sweep config from JSON file."""
+    """Load sweep config from JSON file.
+
+    Supports both new ('paper_ids', 'chat_provider') and legacy ('paper_numbers', 'provider') keys.
+    Legacy keys are accepted with a deprecation log for backward compatibility.
+    """
     if not config_path.exists():
         logger.error(f"Config file not found: {config_path}")
         return None
@@ -85,23 +101,44 @@ def _load_config_from_file(config_path: Path) -> SweepConfig | None:
 
     compositions = [AgentComposition(**comp) for comp in config_data.get("compositions", [])]
 
+    # Backward compat: accept 'paper_numbers' (old) or 'paper_ids' (new)
+    if "paper_ids" in config_data:
+        paper_ids = [str(p) for p in config_data["paper_ids"]]
+    elif "paper_numbers" in config_data:
+        logger.warning("Config key 'paper_numbers' is deprecated, use 'paper_ids' instead")
+        paper_ids = [str(p) for p in config_data["paper_numbers"]]
+    else:
+        logger.error("Config file missing required key 'paper_ids'")
+        return None
+
+    # Backward compat: accept 'provider' (old) or 'chat_provider' (new)
+    if "chat_provider" in config_data:
+        chat_provider = config_data["chat_provider"]
+    elif "provider" in config_data:
+        logger.warning("Config key 'provider' is deprecated, use 'chat_provider' instead")
+        chat_provider = config_data["provider"]
+    else:
+        chat_provider = CHAT_DEFAULT_PROVIDER
+
     return SweepConfig(
         compositions=compositions,
         repetitions=config_data["repetitions"],
-        paper_numbers=config_data["paper_numbers"],
+        paper_ids=paper_ids,
         output_dir=Path(config_data["output_dir"]),
-        chat_provider=config_data.get("provider", CHAT_DEFAULT_PROVIDER),
+        chat_provider=chat_provider,
         engine=config_data.get("engine", "mas"),
+        judge_provider=config_data.get("judge_provider", "auto"),
+        judge_model=config_data.get("judge_model"),
     )
 
 
 def _build_config_from_args(args: argparse.Namespace) -> SweepConfig | None:
     """Build sweep config from CLI arguments."""
-    if not args.paper_numbers:
-        logger.error("--paper-numbers required when not using --config")
+    if not args.paper_ids:
+        logger.error("--paper-ids required when not using --config")
         return None
 
-    paper_numbers = [int(p.strip()) for p in args.paper_numbers.split(",")]
+    paper_ids = [p.strip() for p in args.paper_ids.split(",")]
 
     compositions = (
         generate_all_compositions()
@@ -122,10 +159,12 @@ def _build_config_from_args(args: argparse.Namespace) -> SweepConfig | None:
     return SweepConfig(
         compositions=compositions,
         repetitions=args.repetitions,
-        paper_numbers=paper_numbers,
+        paper_ids=paper_ids,
         output_dir=output_dir,
-        chat_provider=args.provider,
+        chat_provider=args.chat_provider,
         engine=args.engine,
+        judge_provider=args.judge_provider,
+        judge_model=args.judge_model,
     )
 
 
@@ -148,7 +187,7 @@ async def main_async() -> int:
         # Run sweep
         logger.info(f"Starting sweep with {len(config.compositions)} compositions")
         logger.info(f"Provider: {config.chat_provider}")
-        logger.info(f"Papers: {config.paper_numbers}")
+        logger.info(f"Papers: {config.paper_ids}")
         logger.info(f"Repetitions: {config.repetitions}")
         logger.info(f"Output: {config.output_dir}")
 

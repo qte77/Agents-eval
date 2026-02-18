@@ -195,11 +195,11 @@ async def test_graph_trace_data_passed_to_evaluation():
 
         from app.app import main
 
-        # Run main with paper_number (enables evaluation)
+        # Run main with paper_id (enables evaluation)
         await main(
             chat_provider="test_provider",
             query="test query",
-            paper_number="001",
+            paper_id="001",
         )
 
         # Verify evaluate_comprehensive was called with GraphTraceData

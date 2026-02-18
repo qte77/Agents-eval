@@ -60,7 +60,7 @@ class SweepConfig(BaseModel):
         ..., description="List of agent compositions to test", min_length=1
     )
     repetitions: int = Field(..., description="Number of repetitions per composition", ge=1)
-    paper_numbers: list[int] = Field(..., description="List of paper IDs to evaluate", min_length=1)
+    paper_ids: list[str] = Field(..., description="List of paper IDs to evaluate", min_length=1)
     output_dir: Path = Field(..., description="Directory for sweep results")
 
     chat_provider: str = Field(
@@ -70,6 +70,16 @@ class SweepConfig(BaseModel):
     engine: str = Field(
         default="mas",
         description="Execution engine: 'mas' for MAS pipeline, 'cc' for Claude Code headless",
+    )
+
+    judge_provider: str = Field(
+        default="auto",
+        description="LLM provider for Tier 2 judge (default: 'auto' inherits chat_provider)",
+    )
+
+    judge_model: str | None = Field(
+        default=None,
+        description="LLM model for Tier 2 judge (default: None uses JudgeSettings default)",
     )
 
     cc_artifact_dirs: list[Path] | None = Field(
@@ -113,22 +123,22 @@ class SweepConfig(BaseModel):
             raise ValueError("Repetitions must be positive")
         return v
 
-    @field_validator("paper_numbers")
+    @field_validator("paper_ids")
     @classmethod
-    def validate_paper_numbers_not_empty(cls, v: list[int]) -> list[int]:
-        """Validate that paper_numbers list is not empty.
+    def validate_paper_ids_not_empty(cls, v: list[str]) -> list[str]:
+        """Validate that paper_ids list is not empty.
 
         Args:
-            v: The paper_numbers list to validate.
+            v: The paper_ids list to validate.
 
         Returns:
-            The validated paper_numbers list.
+            The validated paper_ids list.
 
         Raises:
-            ValueError: If paper_numbers list is empty.
+            ValueError: If paper_ids list is empty.
         """
         if not v:
-            raise ValueError("Paper numbers list cannot be empty")
+            raise ValueError("Paper IDs list cannot be empty")
         return v
 
 

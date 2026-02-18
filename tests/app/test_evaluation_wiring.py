@@ -156,7 +156,7 @@ async def test_graceful_skip_without_ground_truth():
 
         from app.app import main
 
-        # Run main without paper_number (no ground truth available)
+        # Run main without paper_id (no ground truth available)
         await main(
             chat_provider="test_provider",
             query="test query",

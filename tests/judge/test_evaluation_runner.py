@@ -80,7 +80,7 @@ class TestRunEvaluationIfEnabled:
 
         result = await run_evaluation_if_enabled(
             skip_eval=True,
-            paper_number=None,
+            paper_id=None,
             execution_id=None,
         )
         assert result is None
@@ -107,7 +107,7 @@ class TestRunEvaluationIfEnabled:
 
             result = await run_evaluation_if_enabled(
                 skip_eval=False,
-                paper_number=None,
+                paper_id=None,
                 execution_id=None,
             )
 
@@ -126,7 +126,7 @@ class TestRunEvaluationIfEnabled:
 
             await run_evaluation_if_enabled(
                 skip_eval=False,
-                paper_number=None,
+                paper_id=None,
                 execution_id=None,
                 chat_provider="cerebras",
             )
@@ -156,7 +156,7 @@ class TestRunEvaluationIfEnabled:
 
             await run_evaluation_if_enabled(
                 skip_eval=False,
-                paper_number="001",
+                paper_id="001",
                 execution_id="exec-123",
             )
 
@@ -278,7 +278,7 @@ class TestPaperAndReviewExtraction:
 
             await run_evaluation_if_enabled(
                 skip_eval=False,
-                paper_number="001",
+                paper_id="001",
                 execution_id="exec-123",
                 manager_output=mock_manager_output,
             )
@@ -334,7 +334,7 @@ class TestPaperAndReviewExtraction:
 
             await run_evaluation_if_enabled(
                 skip_eval=False,
-                paper_number="001",
+                paper_id="001",
                 execution_id="exec-123",
                 manager_output=mock_manager_output,
             )
@@ -394,7 +394,7 @@ class TestPaperAndReviewExtraction:
 
             await run_evaluation_if_enabled(
                 skip_eval=False,
-                paper_number="001",
+                paper_id="001",
                 execution_id="exec-123",
                 manager_output=mock_manager_output,
             )
@@ -422,7 +422,7 @@ class TestPaperAndReviewExtraction:
 
             await run_evaluation_if_enabled(
                 skip_eval=False,
-                paper_number=None,
+                paper_id=None,
                 execution_id="exec-123",
                 manager_output=None,
             )
