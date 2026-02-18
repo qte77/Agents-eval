@@ -291,6 +291,9 @@ if [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ]; then
     fi
 fi
 
+# Add the header to pandoc arguments
+set -- "$@" -H "$header_temp"
+
 # Enable extended globbing
 [ -n "${BASH_VERSION}" ] && shopt -s extglob 2>/dev/null
 
