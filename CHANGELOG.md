@@ -13,150 +13,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Engine selector radio (`MAS (PydanticAI)` / `Claude Code`) on App page; engine stored in `st.session_state.engine` (STORY-014)
-- CC availability check via `shutil.which("claude")` cached in `st.session_state.cc_available`; warning shown when CC engine selected but CLI not found (STORY-014)
-- `engine: str = "mas"` parameter added to `_execute_query_background()` and `_handle_query_submission()` in `run_app.py` (STORY-014)
-- `SweepConfig.retry_delay_seconds: float = Field(default=5.0)`: initial retry delay for rate-limit backoff in sweep evaluations (STORY-013b)
-- `SweepRunner._save_results_json()`: incremental JSON persistence after each successful evaluation for crash resilience (STORY-013b)
-- `SweepRunner._handle_rate_limit()`: exponential backoff helper for 429 retries (STORY-013b)
-- `SweepRunner._call_main()`: extracted evaluation call to reduce `_run_single_evaluation` complexity (STORY-013b)
-- `_extract_rate_limit_detail()` in `agent_system.py`: extracts human-readable detail from 429 error body (STORY-013b)
+- GUI engine selector: radio toggle between MAS (PydanticAI) and Claude Code engines with CC availability check (STORY-014)
+- GUI paper selection: dropdown with ID/title, abstract preview, free-form/paper mode toggle (STORY-009)
+- GUI editable common settings: log level, max content length with tooltips; logfire consolidated to JudgeSettings (STORY-010)
+- GUI real-time debug log: streaming log panel via `st.fragment` + `LogCapture` thread-safe polling (STORY-008)
+- `--engine=mas|cc` flag for CLI and sweep, replacing `--cc-baseline` (STORY-013)
+- Sweep rate-limit resilience: exponential backoff on 429 (max 3 retries), incremental `results.json` persistence (STORY-013b)
+- `--judge-provider` and `--judge-model` CLI/sweep args for Tier 2 judge override (STORY-012)
+- New examples: `basic_evaluation.py`, `judge_settings_customization.py`, `engine_comparison.py` with README (STORY-002)
+- CC baseline Makefile recipes (`cc_run_solo`, `cc_run_teams`, `cc_collect_teams`)
+- Test coverage improvements: `datasets_peerread` 27→60%, `models` 24→76%, `agent_factories` 39→75% (STORY-014)
+- Security test suite: 135 tests across 5 modules (SSRF, prompt injection, data filtering, input limits, tool registration) (STORY-013)
+- MAS composition sweep: `SweepRunner` for N×M×P benchmarking with CC headless baseline, 33 tests (STORY-007)
+- CC artifact collection scripts with docs and tests (STORY-004)
+- Spec-constrained mock tests for trace collection, review persistence, log config, logfire instrumentation
+- PRD-Sprint7-Ralph.md and PRD-Sprint8-Ralph.md
+- Ralph: baseline-aware validation, process management, story-scoped lint, per-story baseline persistence, timeout protection
 
 ### Changed
 
-- `SweepRunner._run_single_evaluation()`: retries on HTTP 429 errors with exponential backoff (max 3 retries); continues to next evaluation after exhausting retries (STORY-013b)
-- `SweepRunner._save_results()`: now delegates JSON write to `_save_results_json()` then writes `summary.md`; writes incrementally after each evaluation (STORY-013b)
-- `_handle_model_http_error()` in `agent_system.py`: re-raises `ModelHTTPError` instead of `SystemExit(1)` for 429, enabling callers to implement retry logic (STORY-013b)
-- `run_manager()` in `agent_system.py`: catches `ModelHTTPError` with status 429 and raises `SystemExit(1)` directly, preserving CLI behavior (STORY-013b)
-- `src/gui/pages/run_app.py`: MAS agent toggles shown with info note and logically disabled when CC engine selected (STORY-014)
-
-### Fixed
-
-- `CCTraceAdapter._extract_coordination_events()`: was a stub returning `[]`; now parses `inboxes/*.json` messages in teams mode and returns them as coordination events (STORY-014)
-
-- `tests/gui/test_editable_common_settings.py`: new test module for editable common settings — covers log level selectbox options/tooltip, max content length range/tooltip, logfire consolidation to JudgeSettings, reset button clearing common_* keys, and _build_common_settings_from_session() helper (STORY-010)
-
-### Changed
-
-- `src/run_cli.py`: `--paper-number` renamed to `--paper-id` (string, supports arxiv IDs); `--judge-provider` and `--judge-model` args added for Tier 2 judge override (STORY-012)
-- `src/run_sweep.py`: `--paper-numbers` renamed to `--paper-ids` (string, no int cast); `--provider` renamed to `--chat-provider`; `--judge-provider` and `--judge-model` args added; JSON config backward-compat reads old keys with deprecation warning (STORY-012)
-- `src/app/app.py`: `main()` and `_prepare_query()` parameter `paper_number` renamed to `paper_id` (STORY-012)
-- `src/app/judge/evaluation_runner.py`: `run_evaluation_if_enabled()` parameter `paper_number` renamed to `paper_id` (STORY-012)
-- `src/app/benchmark/sweep_config.py`: `SweepConfig.paper_numbers: list[int]` renamed to `paper_ids: list[str]`; `judge_provider: str` and `judge_model: str | None` fields added (STORY-012)
-- `src/app/benchmark/sweep_runner.py`: `_run_single_evaluation()` updated to use `paper_id: str`; `_build_judge_settings()` helper constructs `JudgeSettings` from `judge_provider`/`judge_model`; `paper_id` threaded to `main()` call (STORY-012)
-- `src/gui/pages/run_app.py`: `main(paper_number=...)` call updated to `main(paper_id=...)` (STORY-012)
-- `src/app/config/config_chat.json`: `paper_review_query` template updated from `{paper_number}` to `{paper_id}` (STORY-012)
-
-- `src/gui/pages/settings.py`: replaced read-only Common Settings text display with editable widgets — `st.selectbox` for Log Level (DEBUG/INFO/WARNING/ERROR/CRITICAL with help tooltip), `st.number_input` for Max Content Length (min=1000, max=100000, step=1000 with help tooltip); removed duplicate Enable Logfire toggle (consolidated to JudgeSettings); added `_render_common_settings()` helper; updated `_render_reset_button()` to also clear `common_*` session state keys (STORY-010)
-- `src/gui/pages/run_app.py`: added `_build_common_settings_from_session()` helper mirroring `_build_judge_settings_from_session()` — reads `common_*` session state keys and constructs `CommonSettings` override; added `common_settings` parameter to `_execute_query_background`; wired helper into `_handle_query_submission`; added `CommonSettings` import (STORY-010)
-- `src/gui/pages/run_app.py`: added paper selection mode — radio toggle between "Free-form query" and "Select a paper"; paper dropdown lists locally downloaded PeerRead papers by ID and title; abstract displayed below dropdown on selection; `_execute_query_background` accepts `paper_id` kwarg forwarded to `main(paper_id=...)` (STORY-009)
-- `src/app/data_models/peerread_models.py`: added `_ScoreStr = Annotated[str, BeforeValidator(str)]` type alias; applied to all numeric PeerRead review score fields (`IMPACT`, `SUBSTANCE`, `APPROPRIATENESS`, `MEANINGFUL_COMPARISON`, `SOUNDNESS_CORRECTNESS`, `ORIGINALITY`, `RECOMMENDATION`, `CLARITY`, `REVIEWER_CONFIDENCE`) to coerce integer values from raw JSON to str instead of failing validation (STORY-009)
-- `src/gui/utils/log_capture.py`: added `get_new_logs_since(index)` for incremental polling and `log_count()` method; wrapped `_buffer` access with `threading.Lock` for thread-safe concurrent access from worker and Streamlit render threads (STORY-008)
-- `src/gui/pages/run_app.py`: replaced `st.text()` with `st.markdown()` in `_display_configuration` so **bold** Markdown renders correctly instead of as raw text (STORY-008)
-- `src/app/data_utils/datasets_peerread.py`: `_create_review_from_dict` aggregates all missing optional fields into a single debug log line instead of one line per field (STORY-008)
-- `tests/evals/test_composite_scorer.py`: consolidated composite scoring tests — merged `TestBasicScoring` (5 scenarios, boundary conditions), `TestWeightRedistribution` (weights, interpretability), `TestEdgeCases` (missing tiers, zero scores, zero execution time) into a single file; structural tests verify old files are deleted (STORY-007)
-- `tests/conftest.py`: added BDD test structure template as module docstring — documents Arrange/Act/Assert pattern, test class/method structure, mock strategy guidelines (STORY-007)
-- `src/app/agents/agent_system.py`: removed 2 FIXME commented-out `error_handling_context` dead code blocks (STORY-007)
-- `src/app/agents/orchestration.py`: removed FIXME commented-out `error_handling_context` dead code block (STORY-007)
+- `--paper-number` renamed to `--paper-id` (string, supports arxiv IDs); `--provider` renamed to `--chat-provider` across CLI, sweep, config (STORY-012)
+- `SweepConfig.paper_numbers: list[int]` → `paper_ids: list[str]`; added `judge_provider`, `judge_model`, `engine` fields (STORY-012, STORY-013)
+- `JudgeSettings.tier2_provider` default changed from `"openai"` to `"auto"` — judge inherits MAS chat provider at runtime (STORY-011)
+- 429 errors in `agent_system.py` now re-raise `ModelHTTPError` instead of `SystemExit(1)`, enabling caller retry logic (STORY-013b)
+- PeerRead review score fields coerce int→str via `BeforeValidator(str)` to handle numeric JSON values (STORY-009)
+- PeerRead `_create_review_from_dict` aggregates missing optional fields into single debug log line (STORY-008)
+- Composite scoring tests consolidated: 3 files → 1 (`test_composite_scorer.py`) with BDD structure template in conftest (STORY-007)
+- Removed 3 FIXME dead code blocks from `agent_system.py` and `orchestration.py` (STORY-007)
+- PlantUML diagrams updated: `metrics-eval-sweep` (sweep workflow + CC path), `MAS-Review-Workflow` (MAESTRO security boundaries) (STORY-006)
+- Docs updated: README v4.0.0, architecture.md (benchmarking + security sections), roadmap, CC OTel analysis corrected (STORY-003/004/005)
+- CC baseline scripts renamed: `collect-cc-solo.sh` → `run-cc.sh`, `collect-cc-teams.sh` → `collect-team-artifacts.sh`
+- ADR-008: CC baseline engine subprocess vs SDK decision
+- Testing best practices: added mock safety rules (`spec=RealClass`) and unspec'd mock anti-pattern
+- Ralph: staleness detection, story-scoped commit scanning, complexity checks, sandbox compatibility (`sed -n '1p'`)
 
 ### Removed
 
-- `tests/evals/test_composite_scoring_scenarios.py`: merged into `test_composite_scorer.py::TestBasicScoring` (STORY-007)
-- `tests/evals/test_composite_scoring_interpretability.py`: merged into `test_composite_scorer.py::TestWeightRedistribution` (STORY-007)
-- `tests/evals/test_composite_scoring_edge_cases.py`: merged into `test_composite_scorer.py::TestEdgeCases` (STORY-007)
+- 3 composite scoring test files merged into `test_composite_scorer.py` (STORY-007)
+- Deprecated examples: `run_evaluation_example*.py`, `run_simple_agent_*.py`, `utils/`, `config.json` (STORY-001)
 
 ### Fixed
 
-- `tests/data_utils/test_datasets_peerread.py`: restored `test_download_success_mocked` — fixed AttributeError by patching `app.data_utils.datasets_peerread.Client` (not `httpx.Client.get`) to match actual import style (STORY-007)
-
-### Changed
-
-- `docs/arch_vis/metrics-eval-sweep.plantuml`: updated with SweepConfig → SweepRunner → compositions × papers × repetitions → SweepAnalysis → output files workflow; added optional CC headless path (claude -p → CCTraceAdapter) (STORY-006)
-- `docs/arch_vis/MAS-Review-Workflow.plantuml`: added security boundaries with MAESTRO layer annotations — URL validation (L1/SSRF), prompt sanitization (L3), log scrubbing (L5) (STORY-006)
-- `docs/arch_vis/README.md`: updated diagram descriptions for metrics-eval-sweep and MAS-Review-Workflow (STORY-006)
-- `README.md`: version badge updated to 4.0.0; Current Release reflects Sprint 6 deliverables (benchmarking, CC baseline, security, examples); Next section updated to Sprint 7 scope; Examples section added referencing `src/examples/README.md` (STORY-003)
-- `docs/roadmap.md`: Sprint 7 status updated from Active to In Progress (STORY-004)
-- `docs/architecture.md`: new Benchmarking Infrastructure (Sprint 6) section with SweepConfig/SweepRunner/SweepAnalysis modules, CC headless path, results.json/summary.md output; new Security Framework (Sprint 6) section with MAESTRO mitigations and security-advisories reference (STORY-005)
-- `docs/analysis/CC-agent-teams-orchestration.md`: approach table corrected — added Trace spans row showing OTel provides no trace spans (upstream limitation); added artifact collection column; recommendation section updated with observability strategy (STORY-005)
-- `AGENT_LEARNINGS.md`: CC OTel limitation documented — exports metrics/logs only, no trace spans; artifact collection is primary for evaluation; upstream issues #9584/#2090 referenced (STORY-005)
-
-### Removed
-
-- `src/examples/run_evaluation_example.py` and `run_evaluation_example_simple.py`: deprecated dict-based `execution_trace` API examples (STORY-001)
-- `src/examples/run_simple_agent_no_tools.py`, `run_simple_agent_system.py`, `run_simple_agent_tools.py`: generic PydanticAI tutorials with no project value (STORY-001)
-- `src/examples/utils/` directory and `src/examples/config.json`: supporting files for deleted examples (STORY-001)
-
-### Added
-
-- `src/examples/basic_evaluation.py`: minimal example demonstrating `EvaluationPipeline` with synthetic `GraphTraceData` and `PeerReadPaper` (STORY-002)
-- `src/examples/judge_settings_customization.py`: demonstrates `JudgeSettings` configuration patterns — env var overrides, timeout adjustment, tier selection, provider switching (STORY-002)
-- `src/examples/engine_comparison.py`: demonstrates comparing MAS multi-agent vs single-agent vs CC evaluation scores using `CCTraceAdapter` (STORY-002)
-- `src/examples/README.md`: usage instructions and CLI/GUI integration guide for all examples (STORY-002)
-- CC baseline collection: Makefile recipes (`cc_run_solo`, `cc_run_teams`, `cc_collect_teams`) with `CC_TEAMS_TIMEOUT` parameter for Claude Code artifact collection
-- CC baseline collection: `--verbose` flag for `claude -p` required for `--output-format stream-json` in print mode
-
-### Changed
-
-- CC baseline scripts renamed for clarity: `collect-cc-solo.sh` → `run-cc.sh`, `collect-cc-teams.sh` → `collect-team-artifacts.sh`; Makefile recipes and README updated to match
-- `docs/architecture.md`: ADR-008 (CC baseline engine: subprocess vs SDK decision)
-- `docs/PRD-Sprint8-Ralph.md`: Feature 9 removed (SDK migration needs research); remaining sub-items can be scoped independently
-
-### Fixed
-
-- `agent_system.py`: use `result.output` instead of `result.data` (`AgentRunResult` API)
-- `trace_processors.py`: `end_execution()` now idempotent — second call returns `None` silently (no misleading "no active execution" warning)
-- `logfire_instrumentation.py`: log says "Phoenix tracing initialized" when `send_to_cloud=False`, "Logfire" only when sending to cloud
-- `review_persistence.py`: reviews now saved under project root (`datasets/peerread/MAS_reviews/`) not `src/app/`
-- `config_app.py`: `LOGS_PATH` changed from `"logs"` to `"logs/Agent_evals"`
-- `judge/settings.py`: `trace_storage_path` aligned to `./logs/Agent_evals/traces/`
-
-### Added
-
-- `docs/PRD-Sprint7-Ralph.md`: Features 8-14 — GUI improvements (real-time debug log, paper selection, editable settings, engine selector); unified provider config (judge defaults to MAS via "auto", --judge-provider/--judge-model args); CC engine option (--engine=mas|cc for CLI, sweep, and GUI); replaces --cc-baseline with --engine=cc
-
-- `run_sweep.py`: `--provider` CLI flag to select LLM provider for sweep evaluations (choices from `PROVIDER_REGISTRY`, defaults to `CHAT_DEFAULT_PROVIDER`); threaded through `SweepConfig.chat_provider` to every `main()` call
-- `tests/agents/test_trace_collection_integration.py`: spec-constrained mocks catch API drift; `end_execution` idempotency test
-- `tests/data_utils/test_review_persistence.py`: new — validates reviews dir resolves to project root
-- `tests/utils/test_log_config.py`: new — validates `LOGS_PATH` and `trace_storage_path` are under `Agent_evals`
-- `tests/agents/test_logfire_instrumentation.py`: Phoenix vs Logfire init log assertions
-
-### Changed
-
-- `docs/best-practices/testing-strategy.md`: added mock safety rules (`spec=RealClass`)
-- `docs/best-practices/tdd-best-practices.md`: added unspec'd mock anti-pattern with example
-- `.claude/skills/testing-python/SKILL.md`: added quality gate for third-party mock specs
-
-- Ralph: baseline log formatting — `grep -c . || echo 0` produced `"0\n0"` on zero matches, splitting the log line; changed to `|| true` (3 locations in `baseline.sh`)
-- Ralph: persisted baseline staleness detection — added `# Base-commit:` metadata to baselines; on reuse, invalidates if codebase HEAD diverged from stored commit (prevents stale baselines after external changes); backward compatible with old baselines missing metadata
-- Ralph: monitor phase detection — default changed from `WORKING` to `RED`; commit scan now scoped to current story ID + current sprint (`--since` from `prd.json.generated`) instead of global last 3 commits
-- Ralph: added `make complexity` to prompt.md REFACTOR phase checks and `make quick_validate` — prevents wasted iterations from uncaught complexity failures
-- Ralph: sandbox compatibility — replaced all `head -1` with `sed -n '1p'` in `baseline.sh`, `ralph.sh`, `watch.sh` (`head` blocked by `.claude/settings.json` deny list)
-
-### Added
-
-- STORY-014: Increased test coverage for 5 critical low-coverage modules (12 new tests) — behavioral tests targeting error handling, edge cases, and data flow validation
-  - `datasets_peerread.py`: 27% → 60% ✓ (download venue/split, file discovery, paper validation, cache operations - 12 new tests)
-  - `peerread_tools.py`: 22% → 46% (tool tracing, PDF extraction, content truncation - existing tests pass)
-  - `llms/models.py`: 24% → 76% ✓ (provider-specific configurations, model creation - 2 new tests)
-  - `agent_factories.py`: 39% → 75% ✓ (agent creation, model caching - existing tests pass)
-  - `agent_system.py`: 47% → 43% (delegation flows, result type selection - existing tests pass, coverage decreased due to refactoring)
-- Behavioral tests for `datasets_peerread.py`: error handling, retry logic, URL construction, paper validation with missing fields (27% -> 47% coverage)
-- Behavioral tests for `peerread_tools.py`: PDF extraction errors, content truncation, tool registration (22% -> 36% coverage)
-- Edge case tests for `llms/models.py` with EndpointConfig validation (24% -> 80%, above 50% target ✓)
-- Test file `tests/llms/test_models.py` created for model creation tests
-
-- STORY-013: Security test suite (`tests/security/`) — 135 tests across 5 modules (SSRF, prompt injection, data filtering, input limits, tool registration) with Hypothesis property tests
-- STORY-007: MAS composition sweep (`src/app/benchmark/`) — `SweepRunner` for N×M×P benchmarking, CC headless baseline via `claude -p`, statistical analysis, CLI `run_sweep.py` + `make sweep` (33 tests)
-- STORY-004: CC artifact collection scripts (`collect-cc-solo.sh`, `collect-cc-teams.sh`) with docs and tests
-- Ralph: baseline-aware test validation (`RALPH_BASELINE_MODE`), process management (`ralph_stop`, `ralph_watch`, `ralph_get_log`), timeout protection
-- Ralph: story-scoped test lint — Phase 1 only lints test files changed by the current story via `get_story_base_commit()` git diff
-- Ralph: per-story baseline persistence — prevents absorption of a story's own failures into the baseline across restarts
-
-### Fixed
-
-- Ralph: `ruff_tests` in Phase 1 blocked stories on pre-existing lint violations in untouched test files
-- Ralph: baseline captured on restart absorbed failures from prior story attempts, allowing stories to pass with their own regressions
-- Ralph: prompt template instructed Claude to run `make validate` (all-file lint), causing scope creep on pre-existing issues
+- `CCTraceAdapter._extract_coordination_events()` stub now parses `inboxes/*.json` messages (STORY-014)
+- `test_download_success_mocked` AttributeError — patched correct import path (STORY-007)
+- `agent_system.py`: `result.output` instead of deprecated `result.data`
+- `trace_processors.py`: `end_execution()` now idempotent
+- `logfire_instrumentation.py`: correct "Phoenix"/"Logfire" init log messages
+- `review_persistence.py`: reviews saved under project root, not `src/app/`
+- Log paths aligned to `logs/Agent_evals/` (`config_app.py`, `judge/settings.py`)
+- Ralph: story-scoped lint (no pre-existing violations), restart baseline isolation, validate scope
 
 ### Changed (Sprint 6)
 
