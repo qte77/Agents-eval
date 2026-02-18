@@ -76,7 +76,6 @@ async def _run_agent_execution(
     include_researcher: bool,
     include_analyst: bool,
     include_synthesiser: bool,
-    pydantic_ai_stream: bool,
     token_limit: int | None,
 ) -> tuple[str, dict[str, str], Any]:
     """Execute agent system and return execution ID, prompts, and manager output.
@@ -114,7 +113,6 @@ async def _run_agent_execution(
         agent_env.query,
         agent_env.provider,
         agent_env.usage_limits,
-        pydantic_ai_stream,
     )
 
     return execution_id, prompts, manager_output
@@ -197,7 +195,6 @@ async def main(
     include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
-    pydantic_ai_stream: bool = False,
     chat_config_file: str | Path | None = None,
     enable_review_tools: bool = True,
     paper_id: str | None = None,
@@ -248,7 +245,6 @@ async def main(
                 include_researcher,
                 include_analyst,
                 include_synthesiser,
-                pydantic_ai_stream,
                 token_limit,
             )
 
