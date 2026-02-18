@@ -117,7 +117,11 @@ get_next_story() {
     ' "$PRD_JSON" | sed -n '1p'
 }
 
-# Get all unblocked incomplete story IDs (for teams mode delegation)
+# Get all unblocked incomplete story IDs (for teams mode delegation).
+# A "wave" is the set of unblocked stories at a given point — the frontier
+# of the dependency graph defined by each story's depends_on array.
+# Within a wave, stories run in parallel (one teammate each); the next
+# wave starts after the current one completes.
 get_unblocked_stories() {
     local completed=$(jq -r '[.stories[] | select(.passes == true) | .id] | @json' "$PRD_JSON")
 
@@ -240,7 +244,7 @@ execute_story() {
         log_info "Retry context appended to prompt (failed check: $failed_check)"
     fi
 
-    # Teams mode: append independent stories for delegation
+    # Teams mode: append current wave (independent unblocked stories) for delegation
     if [ "$RALPH_TEAMS" = "true" ]; then
         local other_stories
         other_stories=$(get_unblocked_stories | grep -v "^${story_id}$" || true)

@@ -156,15 +156,20 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 ##### 3.1 Core CC Engine Module
 
 **Acceptance Criteria**:
-- [ ] New module `src/app/engines/cc_engine.py` with:
-  - `check_cc_available() -> bool` — `shutil.which("claude")` (replaces 3 inline checks)
-  - `run_cc_solo(query: str, timeout: int = 600) -> CCResult` — solo subprocess with `--output-format json`
-  - `run_cc_teams(query: str, timeout: int = 600) -> CCResult` — teams subprocess with `--output-format stream-json` + `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env var, parses team events from live stream via `Popen`
-  - `CCResult` Pydantic model: `execution_id`, `output_data`, `session_dir` (solo), `team_artifacts` (teams: parsed from stream events)
-  - `parse_stream_json(stream) -> CCResult` — JSONL line parser extracting `init`, `result`, `TeamCreate`, `Task` events
+- [ ] New module `src/app/engines/cc_engine.py` created
+- [ ] `check_cc_available() -> bool` — `shutil.which("claude")` (replaces 3 inline checks)
+- [ ] `run_cc_solo(query: str, timeout: int = 600) -> CCResult` — solo subprocess with `--output-format json`
+- [ ] `run_cc_teams(query: str, timeout: int = 600) -> CCResult` — teams subprocess with `--output-format stream-json` + `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env var, parses team events from live stream via `Popen`
+- [ ] `CCResult` Pydantic model: `execution_id`, `output_data`, `session_dir` (solo), `team_artifacts` (teams: parsed from stream events)
+- [ ] `parse_stream_json(stream) -> CCResult` — JSONL line parser extracting `init`, `result`, `TeamCreate`, `Task` events
 - [ ] `src/app/engines/__init__.py` created
 - [ ] TDD: RED tests first (`tests/engines/test_cc_engine.py`) covering `run_cc_solo`, `run_cc_teams`, `parse_stream_json`, `check_cc_available` with mocked `subprocess`. GREEN: implement `cc_engine.py`. Use `testing-python` skill.
 - [ ] `make validate` passes
+
+**Files**:
+- `src/app/engines/__init__.py` (new)
+- `src/app/engines/cc_engine.py` (new — consolidated CC logic, solo + teams)
+- `tests/engines/test_cc_engine.py` (new — TDD RED: subprocess mock tests)
 
 ##### 3.2 CLI/Sweep/GUI Integration
 
@@ -181,6 +186,15 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] REFACTOR: remove inline subprocess code from callers
 - [ ] `make validate` passes
 
+**Files**:
+- `src/run_cli.py` (edit — add `--cc-teams` flag, delegate to `cc_engine`)
+- `src/run_sweep.py` (edit — add `--cc-teams` flag)
+- `src/app/benchmark/sweep_runner.py` (edit — delegate to `cc_engine`, wire adapter)
+- `src/app/benchmark/sweep_config.py` (edit — add `cc_teams: bool` field)
+- `src/gui/pages/run_app.py` (edit — add teams toggle, pass `engine` through)
+- `scripts/collect-cc-traces/` (delete — replaced by Python)
+- `Makefile` (edit — update CC recipes)
+
 ##### 3.3 GUI Polish (same files as 3.2)
 
 **Acceptance Criteria**:
@@ -196,6 +210,11 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] Populate `st.metric()` `delta` parameter from `BaselineComparison.tier_deltas` when baseline exists (`evaluation.py`)
 - [ ] Replace `st.text()` metric displays with `st.dataframe()` or tabular-nums HTML for decimal alignment (`evaluation.py`)
 
+**Files**:
+- `src/gui/pages/run_app.py` (edit — ARIA, help text, navigation guidance)
+- `src/gui/pages/evaluation.py` (edit — metric labels, baseline expander, delta indicators, dataframe alt)
+- `src/gui/components/sidebar.py` (edit — execution-in-progress indicator)
+
 **Technical Requirements**:
 - **Solo path**: `subprocess.run(["claude", "-p", query, "--output-format", "json"], ...)` — blocking, parse JSON stdout (same as current, consolidated)
 - **Teams path**: `subprocess.Popen(["claude", "-p", query, "--output-format", "stream-json", "--verbose"], env={..., "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"})` — stream stdout line-by-line, parse JSONL events:
@@ -207,20 +226,6 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - `check_cc_available()` replaces `shutil.which("claude")` in `run_cli.py:94`, `sweep_runner.py:189`, `run_app.py:472`
 - Wire `CCTraceAdapter` into the result flow: `CCResult` → `CCTraceAdapter` → `GraphTraceData` → evaluation pipeline
 - Teams prompt uses orchestration-specific wording (from `run-cc.sh:100-104`): assigns researcher, analyst, synthesizer roles
-
-**Files**:
-- `src/app/engines/__init__.py` (new)
-- `src/app/engines/cc_engine.py` (new — consolidated CC logic, solo + teams)
-- `src/run_cli.py` (edit — add `--cc-teams` flag, delegate to `cc_engine`)
-- `src/run_sweep.py` (edit — add `--cc-teams` flag)
-- `src/app/benchmark/sweep_runner.py` (edit — delegate to `cc_engine`, wire adapter)
-- `src/app/benchmark/sweep_config.py` (edit — add `cc_teams: bool` field)
-- `src/gui/pages/run_app.py` (edit — add teams toggle, pass `engine` through, wire CC path, GUI polish)
-- `src/gui/pages/evaluation.py` (edit — metric labels, baseline expander, delta indicators, dataframe alt)
-- `src/gui/components/sidebar.py` (edit — execution-in-progress indicator)
-- `tests/engines/test_cc_engine.py` (new — TDD RED: subprocess mock tests, stream-json parsing tests)
-- `scripts/collect-cc-traces/` (delete — replaced by Python)
-- `Makefile` (edit — update `cc_run_solo`, `cc_run_teams`, `cc_collect_teams` recipes)
 
 ---
 
@@ -394,55 +399,50 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 - [ ] Default sub-agents to True: change `"include_researcher": False` → `True`, `"include_analyst": False` → `True` in `get_session_state_defaults()` (`run_gui.py:63-64`)
 - [ ] Move `subheader(OUTPUT_SUBHEADER)` after the `button(RUN_APP_BUTTON)` call — "Output" header currently appears above the Run button (`run_app.py:519-521`)
 
-##### 8.2 App Page UX (moved from Feature 3 — independent GUI concerns)
+**Files**:
+- `src/gui/config/styling.py` (edit — remove CSS radio hack)
+- `src/gui/config/text.py` (edit — update `HOME_INFO`, query placeholder)
+- `src/gui/pages/home.py` (edit — onboarding order)
+- `src/gui/pages/prompts.py` (edit — display-only warning)
+- `src/gui/pages/run_app.py` (edit — move subheader after run button)
+- `src/gui/components/sidebar.py` (edit — radio label, external link warning)
+- `src/gui/utils/log_capture.py` (edit — text badges, contrast fix)
+- `src/run_gui.py` (edit — default sub-agents to True)
+- `.streamlit/config.toml` (new — theme)
+
+##### 8.2 App Page UX + Evaluation Page UX (moved from Feature 3 — independent GUI concerns)
 
 **Acceptance Criteria**:
 - [ ] `run_app.py`: when `engine == "cc"`, MAS-specific controls are hidden (not just disabled) — sub-agent checkboxes, provider selectbox, token limit, configuration summary (`_display_configuration`). Currently `mas_disabled` (line 496) shows an info banner but all controls remain visible.
 - [ ] `run_app.py`: custom query `text_input` visible in both "Free-form query" and "Select a paper" modes. Currently free-form mode (line 514) renders only the query input, while paper mode renders paper selectbox + custom query inside `_render_paper_selection_input()` (line 395-398). Refactor so the query input is rendered once after the mode-specific controls, visible in both modes — paper mode just adds the paper selectbox above it.
 - [ ] `output.py`: rename `type` parameter to `output_type` in `render_output()` signature — currently shadows Python built-in `type` (`output.py:6`). Update all callers. When reworking `render_output()` to format `CompositeResult` as a summary card (audit item #23), fix the parameter name.
+- [ ] Evaluation Results page displays shortened run ID. The `execution_id` (format `exec_{uuid.hex[:12]}`, generated at `agent_system.py:538`) is returned through `app.py:120` but never stored in session state — the GUI only stores `composite_result` and `graph`. Fix: (1) `run_app.py:_execute_query_background()` stores `execution_id` in `st.session_state`, (2) `evaluation.py:_render_overall_results()` displays it as a metric or caption alongside composite score, (3) "Evaluation Details" expander (line 271) also shows the full `execution_id`.
+- [ ] Evaluation Results page "Baseline Comparison Configuration" (`evaluation.py:249-259`): add path validation and directory picker for CC Solo/Teams directory inputs. Currently only free-text `st.text_input` (lines 250, 255) with no existence check. Fix: (1) validate entered paths exist on disk (`Path.is_dir()`), show `st.error` if not, (2) auto-populate from known CC artifact locations (e.g., `logs/Agent_evals/traces/`) if they exist, (3) optionally add a directory picker widget alongside `text_input` for browsing.
 
 **Technical Requirements**:
 - CC hidden controls: wrap MAS-specific block (`run_app.py:484-515` — sub-agent checkboxes, provider selectbox, token limit slider, `_display_configuration()`) in `if engine != "cc":` guard instead of current `disabled=True` approach
 - Custom query refactor: extract `text_input` from both the free-form branch (line 514) and `_render_paper_selection_input()` (line 395-398) into a single render call placed after mode-specific controls
 - `output.py:6` rename: `type` → `output_type` in `render_output()` signature; grep for `render_output(` to find all callers in `run_app.py`
-
-##### 8.3 Evaluation Results Page UX (moved from Feature 3 — independent GUI concerns)
-
-**Acceptance Criteria**:
-- [ ] Evaluation Results page displays shortened run ID. The `execution_id` (format `exec_{uuid.hex[:12]}`, generated at `agent_system.py:538`) is returned through `app.py:120` but never stored in session state — the GUI only stores `composite_result` and `graph`. Fix: (1) `run_app.py:_execute_query_background()` stores `execution_id` in `st.session_state`, (2) `evaluation.py:_render_overall_results()` displays it as a metric or caption alongside composite score, (3) "Evaluation Details" expander (line 271) also shows the full `execution_id`.
-- [ ] Evaluation Results page "Baseline Comparison Configuration" (`evaluation.py:249-259`): add path validation and directory picker for CC Solo/Teams directory inputs. Currently only free-text `st.text_input` (lines 250, 255) with no existence check. Fix: (1) validate entered paths exist on disk (`Path.is_dir()`), show `st.error` if not, (2) auto-populate from known CC artifact locations (e.g., `logs/Agent_evals/traces/`) if they exist, (3) optionally add a directory picker widget alongside `text_input` for browsing.
-
-**Technical Requirements**:
 - Run ID threading: `_execute_query_background()` stores `execution_id` in session state (`st.session_state["execution_id"] = result.execution_id`) — `main()` already returns it via `app.py:120` but caller discards it
 - Run ID display: `evaluation.py:_render_overall_results()` shows `st.caption(f"Run: {execution_id}")` alongside composite score; "Evaluation Details" expander (line 271) shows full ID
 - Baseline path validation: `Path(path).is_dir()` check on `st.text_input` values (lines 250, 255), `st.error("Directory not found")` when invalid; auto-populate default from `Path("logs/Agent_evals/traces/")` if it exists
 
-##### 8.4 Environment-Aware Service URL Resolution (moved from Feature 7 — infrastructure concern)
+**Files**:
+- `src/gui/pages/run_app.py` (edit — CC MAS hidden, custom query refactor, store `execution_id`)
+- `src/gui/pages/evaluation.py` (edit — display run ID, baseline path validation)
+- `src/gui/components/output.py` (edit — rename `type` → `output_type` parameter)
+- `tests/gui/test_run_app.py` (edit — TDD RED: run ID threading, CC hidden controls)
+
+##### 8.4 Environment-Aware Service URL Resolution + Testing (moved from Feature 7 — infrastructure concern)
 
 **Acceptance Criteria**:
 - [ ] Sidebar "Trace Viewer" link (`src/gui/components/sidebar.py:20-25`) resolves to the correct environment URL, not hardcoded `localhost:6006`. A generalized `resolve_service_url(port: int) -> str` function detects the environment and constructs the correct URL. Detection chain (first match wins): (1) `PHOENIX_ENDPOINT` env var override — explicit user config, (2) GitHub Codespaces — `CODESPACE_NAME` + `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` → `https://{name}-{port}.{domain}/`, (3) Gitpod — `GITPOD_WORKSPACE_URL` → replace scheme with port prefix, (4) fallback — `http://localhost:{port}`. Current state: `PHOENIX_DEFAULT_ENDPOINT` (`src/gui/config/config.py:5`) reads from `JudgeSettings().phoenix_endpoint` which defaults to `http://localhost:6006`.
-
-##### 8.5 Testing
-
-**Acceptance Criteria**:
 - [ ] TDD: RED tests first for `resolve_service_url()` (Codespaces env, Gitpod env, explicit override, fallback). RED tests for run ID threading (session state stores `execution_id`, evaluation page renders it). GREEN: implement. Use `testing-python` skill.
 - [ ] `make validate` passes
 
 **Files**:
-- `src/gui/config/styling.py` (edit — remove CSS radio hack)
-- `src/gui/config/text.py` (edit — update `HOME_INFO`, query placeholder)
 - `src/gui/config/config.py` (edit — add `resolve_service_url()`, use for `PHOENIX_DEFAULT_ENDPOINT`)
-- `src/gui/pages/run_app.py` (edit — CC MAS hidden, custom query refactor, store `execution_id`)
-- `src/gui/pages/evaluation.py` (edit — display run ID, baseline path validation)
-- `src/gui/pages/home.py` (edit — onboarding order)
-- `src/gui/pages/prompts.py` (edit — display-only warning)
-- `src/gui/components/sidebar.py` (edit — radio label, external link warning, resolved URL caption)
-- `src/gui/components/output.py` (edit — rename `type` → `output_type` parameter)
-- `src/gui/utils/log_capture.py` (edit — text badges, contrast fix)
-- `src/run_gui.py` (edit — default sub-agents to True in `get_session_state_defaults()`)
-- `.streamlit/config.toml` (new — theme)
 - `tests/gui/test_config.py` (new — TDD RED: `resolve_service_url` tests)
-- `tests/gui/test_run_app.py` (edit — TDD RED: run ID threading, CC hidden controls)
 
 ---
 
@@ -534,9 +534,9 @@ Beyond logical dependencies (`depends_on` in prd.json), file overlaps require ad
 | STORY-006 | STORY-005 | — | — |
 | STORY-007 | STORY-006 | — | — |
 | STORY-009 | STORY-008 | + STORY-006 | `run_cli.py` |
-| STORY-010 | STORY-009 | + STORY-007 | `run_app.py` |
-| STORY-012 | — | + STORY-007 | `sidebar.py` |
-| STORY-013 | — | + STORY-007 | `run_app.py`, `evaluation.py` |
+| STORY-010 | STORY-009 | + STORY-007, STORY-013 | `run_app.py` |
+| STORY-012 | — | + STORY-007 | `sidebar.py`, `run_app.py` |
+| STORY-013 | — | + STORY-007, STORY-012 | `run_app.py`, `evaluation.py` |
 | STORY-014 | — | + STORY-012 | `config.py` |
 
 <!-- markdownlint-enable MD013 -->
@@ -555,8 +555,14 @@ Wave 2 (after STORY-005):
 Wave 3 (after STORY-006; STORY-009 also waits for STORY-008):
   STORY-007, STORY-009
 
-Wave 4 (after STORY-007; STORY-010 also waits for STORY-009):
-  STORY-010, STORY-012, STORY-013
+Wave 4a (after STORY-007):
+  STORY-012
+
+Wave 4b (after STORY-012 [file: run_app.py]):
+  STORY-013
+
+Wave 4c (after STORY-013 [file: run_app.py]; STORY-010 also waits for STORY-009):
+  STORY-010
 
 Wave 5 (after STORY-012):
   STORY-014
@@ -631,17 +637,17 @@ Story Breakdown - Phase 1 (14 stories total):
 - **Feature 6.1** → STORY-009: CLI report generation (`report_generator.py`, `--generate-report` flag) (depends: STORY-008, STORY-006 [file: run_cli.py])
   New module `report_generator.py`: executive summary, per-tier breakdown, weakness identification, suggestions from STORY-008 engine. `--generate-report` flag added to `run_cli.py` arg parser (shared with STORY-006's `--cc-teams`). Files: `run_cli.py`, `reports/__init__.py`, `report_generator.py`, `test_report_generator.py`.
 
-- **Feature 6.2** → STORY-010: GUI report generation (report button + inline display) (depends: STORY-009, STORY-007 [file: run_app.py])
+- **Feature 6.2** → STORY-010: GUI report generation (report button + inline display) (depends: STORY-009, STORY-007, STORY-013 [file: run_app.py])
   "Generate Report" button on App page, enabled after evaluation. Inline Markdown display with download. Shares `report_generator.py` logic with CLI. Files: `run_app.py`, `report_generator.py`.
 
 - **Feature 7** → STORY-011: Replace 4 free-text inputs with populated `selectbox` in Tier 2 LLM Judge GUI + expander polish
   Replace `text_input` with `selectbox` for provider/model fields. Populate from `PROVIDER_REGISTRY` + `config_chat.json`. No file overlaps with other stories. Files: `settings.py`, `test_settings.py`.
 
 - **Feature 8.1** → STORY-012: Standalone a11y/usability fixes (styling, sidebar, log, home, prompts, theme, defaults) (depends: STORY-007 [file: sidebar.py])
-  Remove CSS radio hack, fix sidebar radio label, add log text badges, fix contrast, update HOME_INFO, add prompts warning, Streamlit theme, default sub-agents to True. Files: `styling.py`, `text.py`, `config.py`, `home.py`, `prompts.py`, `sidebar.py`, `log_capture.py`, `run_gui.py`, `.streamlit/config.toml`.
+  Remove CSS radio hack, fix sidebar radio label, add log text badges, fix contrast, update HOME_INFO, add prompts warning, Streamlit theme, default sub-agents to True. Files: `styling.py`, `text.py`, `run_app.py`, `home.py`, `prompts.py`, `sidebar.py`, `log_capture.py`, `run_gui.py`, `.streamlit/config.toml`.
 
-- **Feature 8.2 + 8.3** → STORY-013: App page UX + Evaluation page UX (depends: STORY-007 [file: run_app.py, evaluation.py])
+- **Feature 8.2** → STORY-013: App page UX + Evaluation page UX (depends: STORY-007, STORY-012 [file: run_app.py, evaluation.py])
   CC hidden controls (hide MAS widgets when engine=cc), custom query refactor, `output.py` type→output_type rename, run ID threading, baseline path validation. Files: `run_app.py`, `evaluation.py`, `output.py`, `test_run_app.py`.
 
-- **Feature 8.4 + 8.5** → STORY-014: Environment-aware `resolve_service_url()` + tests (depends: STORY-012 [file: config.py])
+- **Feature 8.4** → STORY-014: Environment-aware `resolve_service_url()` + tests (depends: STORY-012 [file: config.py])
   New function `resolve_service_url(port)`: PHOENIX_ENDPOINT override → Codespaces → Gitpod → localhost fallback. Tests for all environments. Files: `config.py`, `test_config.py`.
