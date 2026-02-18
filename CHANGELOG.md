@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- GUI a11y/usability: text-prefix badges `[WARN]`/`[ERR]`/`[INFO]`/`[DBG]` in log panel (WCAG 1.4.1); `[CRIT]` for CRITICAL; module text color `#999999`→`#696969` for 5.9:1 contrast (WCAG 1.4.3); `"Navigation"` radio label with `label_visibility="collapsed"` (WCAG 1.3.1, 2.4.6); `"(opens in new tab)"` on Phoenix Traces link (WCAG 3.2.5); CSS radio-circle hiding hack removed (WCAG 1.3.3, 1.4.1); display-only warning on Prompts page; `HOME_INFO` onboarding corrected to Settings-before-App; `RUN_APP_QUERY_PLACEHOLDER` made domain-specific; `include_researcher`/`include_analyst` default to `True`; Streamlit primary color `#4A90E2` (agent graph blue) (STORY-012)
 - GUI judge settings: `tier2_provider`, `tier2_model`, `tier2_fallback_provider`, `tier2_fallback_model` replaced with `selectbox` dropdowns populated from `PROVIDER_REGISTRY` and `config_chat.json`; `fallback_strategy` exposed as `selectbox` with "tier1_only"; judge settings expanders set to `expanded=False`; "Advanced Settings" header added (STORY-011)
 - `report_generator.py` in `src/app/reports/`: `generate_report(result, suggestions)` → Markdown report with executive summary, tier breakdown, and weakness/suggestion sections; `save_report(md, path)` with auto-created parent dirs (STORY-009)
 - `--generate-report` CLI flag (mutually exclusive with `--skip-eval`) writes report to `results/reports/<timestamp>.md` after evaluation (STORY-009)
