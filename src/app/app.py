@@ -154,9 +154,7 @@ def _initialize_instrumentation() -> None:
         initialize_logfire_instrumentation_from_settings(judge_settings)
 
 
-def _prepare_query(
-    paper_id: str | None, query: str, prompts: dict[str, str]
-) -> tuple[str, bool]:
+def _prepare_query(paper_id: str | None, query: str, prompts: dict[str, str]) -> tuple[str, bool]:
     """Prepare query and determine if review tools should be enabled."""
     if paper_id:
         if not query:

@@ -90,8 +90,7 @@ class SweepRunner:
 
         except Exception as e:
             logger.error(
-                f"Evaluation failed for composition={composition.get_name()}, "
-                f"paper={paper_id}: {e}"
+                f"Evaluation failed for composition={composition.get_name()}, paper={paper_id}: {e}"
             )
             return None
 
@@ -151,9 +150,7 @@ class SweepRunner:
         for composition in self.config.compositions:
             for paper_id in self.config.paper_ids:
                 for repetition in range(self.config.repetitions):
-                    result = await self._run_single_evaluation(
-                        composition, paper_id, repetition
-                    )
+                    result = await self._run_single_evaluation(composition, paper_id, repetition)
                     if result:
                         self.results.append((composition, result))
 
