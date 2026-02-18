@@ -137,8 +137,11 @@ class TestReportInlineDisplay:
             run_app._render_report_section(composite_result=mock_result)
 
         # Verify st.markdown was called with the report content
-        markdown_calls = [str(c) for c in mock_markdown.call_args_list]
-        assert any(expected_report in call for call in markdown_calls), (
+        # Extract actual positional args from each call object
+        markdown_args = [
+            c.args[0] for c in mock_markdown.call_args_list if c.args
+        ]
+        assert any(expected_report in arg for arg in markdown_args), (
             "st.markdown must be called with the report content after button click"
         )
 

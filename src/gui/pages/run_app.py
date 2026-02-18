@@ -38,6 +38,8 @@ from gui.config.text import (
     RUN_APP_QUERY_RUN_INFO,
     RUN_APP_QUERY_WARNING,
 )
+from app.data_models.evaluation_models import CompositeResult
+from app.reports.report_generator import generate_report
 from gui.utils.log_capture import LogCapture
 
 
@@ -477,6 +479,34 @@ async def _handle_query_submission(
     st.rerun()
 
 
+def _render_report_section(composite_result: CompositeResult | None) -> None:
+    """Render the report generation section on the App page.
+
+    Displays a "Generate Report" button when a composite_result is available.
+    On click, generates a Markdown report and renders it inline, with a
+    download button for saving to disk.
+
+    Args:
+        composite_result: Evaluation result to generate a report for,
+            or None when evaluation has not yet completed.
+    """
+    # S8-F6.2: report button only enabled after evaluation completes
+    if composite_result is None:
+        return
+
+    # Render the generate button
+    if st.button("Generate Report", key="generate_report_btn"):
+        markdown = generate_report(composite_result)
+        st.markdown(markdown)
+        st.download_button(
+            label="Download Report",
+            data=markdown,
+            file_name="evaluation_report.md",
+            mime="text/markdown",
+            key="download_report_btn",
+        )
+
+
 async def render_app(provider: str | None = None, chat_config_file: str | Path | None = None):
     """Render the main app interface for running agentic queries via Streamlit.
 
@@ -532,7 +562,9 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
             "when using the Claude Code engine."
         )
     else:
-        agents_text = _format_enabled_agents(include_researcher, include_analyst, include_synthesiser)
+        agents_text = _format_enabled_agents(
+            include_researcher, include_analyst, include_synthesiser
+        )
         _display_configuration(provider_from_state, token_limit, agents_text)
 
     input_mode = st.radio(
@@ -565,3 +597,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     subheader(OUTPUT_SUBHEADER)
     _display_execution_result(_get_execution_state())
     _render_debug_log_panel()
+
+    # S8-F6.2: report section — enabled after evaluation completes
+    composite_result = st.session_state.get("execution_composite_result")
+    _render_report_section(composite_result)
