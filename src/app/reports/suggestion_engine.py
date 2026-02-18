@@ -17,7 +17,6 @@ Example:
 """
 
 import logging
-from typing import Sequence
 
 from app.data_models.evaluation_models import CompositeResult
 from app.data_models.report_models import Suggestion, SuggestionSeverity
@@ -30,78 +29,78 @@ _WARNING_THRESHOLD = 0.5
 
 # Rule-based suggestion templates keyed by metric name.
 # Each entry: (tier, message_template, action_template)
-# Templates receive: score (float), threshold label.
+# Templates receive: score (float).
 _TIER1_RULES: dict[str, tuple[int, str, str]] = {
     "cosine_score": (
         1,
-        "Tier 1 cosine similarity score is {score:.2f} — vocabulary overlap with reference reviews is minimal.",
-        "Incorporate domain-specific terminology from the paper abstract and related work section to improve text similarity.",
+        "Tier 1 cosine similarity {score:.2f} — vocabulary overlap is minimal.",
+        "Add domain-specific terminology from the paper abstract to improve text similarity.",
     ),
     "jaccard_score": (
         1,
-        "Tier 1 Jaccard similarity is {score:.2f} — the review shares few common words with reference reviews.",
-        "Expand coverage of key concepts using the same vocabulary as the reference reviews.",
+        "Tier 1 Jaccard similarity {score:.2f} — few common words with reference reviews.",
+        "Expand key-concept coverage using vocabulary aligned with reference reviews.",
     ),
     "semantic_score": (
         1,
-        "Tier 1 semantic similarity is {score:.2f} — the review meaning diverges from reference reviews.",
-        "Ensure the review addresses the same aspects (methodology, novelty, limitations) covered in reference reviews.",
+        "Tier 1 semantic similarity {score:.2f} — review meaning diverges from references.",
+        "Ensure the review covers methodology, novelty, and limitations from reference reviews.",
     ),
     "task_success": (
         1,
-        "Tier 1 task success is {score:.2f} — the review task was not completed successfully.",
-        "Check agent logs for errors during review generation. Verify that all required sections are produced.",
+        "Tier 1 task success {score:.2f} — review task was not completed successfully.",
+        "Check agent logs for errors. Verify all required review sections are produced.",
     ),
     "time_score": (
         1,
-        "Tier 1 time score is {score:.2f} — execution was slower than expected.",
-        "Investigate bottlenecks in agent pipeline (tool calls, LLM latency). Consider caching or reducing redundant steps.",
+        "Tier 1 time score {score:.2f} — execution was slower than expected.",
+        "Investigate pipeline bottlenecks (tool calls, LLM latency). Consider caching.",
     ),
 }
 
 _TIER2_RULES: dict[str, tuple[int, str, str]] = {
     "technical_accuracy": (
         2,
-        "Tier 2 technical accuracy score is {score:.2f} — LLM judge found factual or methodological gaps.",
-        "Strengthen the agent's domain knowledge prompts or provide more context about the paper's methodology.",
+        "Tier 2 technical accuracy {score:.2f} — LLM judge found factual or method gaps.",
+        "Strengthen domain knowledge prompts or provide more paper context to the agent.",
     ),
     "constructiveness": (
         2,
-        "Tier 2 constructiveness score is {score:.2f} — review lacks actionable feedback for the authors.",
+        "Tier 2 constructiveness {score:.2f} — review lacks actionable author feedback.",
         "Guide the agent to provide specific improvement suggestions alongside critiques.",
     ),
     "clarity": (
         2,
-        "Tier 2 clarity score is {score:.2f} — the review may be unclear or poorly structured.",
-        "Add explicit section structure instructions to the agent prompt (e.g., summary, strengths, weaknesses).",
+        "Tier 2 clarity {score:.2f} — review may be unclear or poorly structured.",
+        "Add section structure instructions: summary, strengths, weaknesses, suggestions.",
     ),
     "planning_rationality": (
         2,
-        "Tier 2 planning rationality score is {score:.2f} — agent's decision-making process was suboptimal.",
-        "Review the agent's tool-use sequence and consider adjusting the orchestration strategy.",
+        "Tier 2 planning rationality {score:.2f} — agent decision-making was suboptimal.",
+        "Review agent tool-use sequence and adjust orchestration strategy if needed.",
     ),
 }
 
 _TIER3_RULES: dict[str, tuple[int, str, str]] = {
     "path_convergence": (
         3,
-        "Tier 3 path convergence is {score:.2f} — tool usage efficiency is low.",
-        "Reduce redundant tool calls by refining agent instructions to specify the minimum required information.",
+        "Tier 3 path convergence {score:.2f} — tool usage efficiency is low.",
+        "Reduce redundant tool calls by refining agent instructions for minimal data needs.",
     ),
     "tool_selection_accuracy": (
         3,
-        "Tier 3 tool selection accuracy is {score:.2f} — agents are choosing suboptimal tools.",
-        "Review tool descriptions and ensure they clearly distinguish when each tool should be used.",
+        "Tier 3 tool selection accuracy {score:.2f} — agents choosing suboptimal tools.",
+        "Clarify tool descriptions so each tool's use case is clearly distinguishable.",
     ),
     "coordination_centrality": (
         3,
-        "Tier 3 coordination centrality is {score:.2f} — agent coordination quality needs improvement.",
-        "Evaluate the manager agent's delegation strategy; ensure sub-agents receive clear, scoped tasks.",
+        "Tier 3 coordination centrality {score:.2f} — agent coordination needs improvement.",
+        "Review manager delegation strategy; ensure sub-agents get clear, scoped tasks.",
     ),
     "task_distribution_balance": (
         3,
-        "Tier 3 task distribution balance is {score:.2f} — workload is unevenly distributed across agents.",
-        "Adjust agent roles so tasks are distributed more evenly; avoid single-agent bottlenecks.",
+        "Tier 3 task distribution {score:.2f} — workload unevenly distributed across agents.",
+        "Adjust agent roles so tasks are distributed evenly; avoid single-agent bottlenecks.",
     ),
 }
 
@@ -168,7 +167,6 @@ class SuggestionEngine:
             if score is None:
                 continue
             severity = _classify_severity(score)
-            # Only surface warning/critical in rule-based; info can be surfaced for all
             suggestions.append(
                 Suggestion(
                     metric=metric,
@@ -195,8 +193,8 @@ class SuggestionEngine:
                         metric=metric_name,
                         tier=tier,
                         severity=severity,
-                        message=f"Tier {tier} overall score is {score:.2f} — improvement needed.",
-                        action="Review individual metric scores for this tier to identify specific weaknesses.",
+                        message=f"Tier {tier} overall score {score:.2f} — improvement needed.",
+                        action="Review individual metric scores to identify specific weaknesses.",
                     )
                 )
 
@@ -207,8 +205,8 @@ class SuggestionEngine:
                     metric="tier2_score",
                     tier=2,
                     severity=SuggestionSeverity.INFO,
-                    message="Tier 2 LLM-as-Judge evaluation was not run — quality assessment is incomplete.",
-                    action="Enable Tier 2 by configuring a judge provider in Settings to get LLM-based quality scoring.",
+                    message="Tier 2 LLM-as-Judge was not run — quality assessment incomplete.",
+                    action="Configure a judge provider in Settings to enable Tier 2 scoring.",
                 )
             )
 
@@ -244,17 +242,17 @@ class SuggestionEngine:
 
         return self.generate(result)
 
-    async def _generate_llm_suggestions(self, result: CompositeResult) -> list[Suggestion]:
+    async def _generate_llm_suggestions(self, _result: CompositeResult) -> list[Suggestion]:
         """Generate LLM-assisted suggestions using the judge provider.
 
         Args:
-            result: Composite evaluation result to analyse.
+            _result: Composite evaluation result (reserved for LLM prompt construction).
 
         Returns:
             List of LLM-generated Suggestion objects.
 
         Raises:
-            RuntimeError: When LLM provider is unavailable or call fails.
+            NotImplementedError: When LLM provider is not yet configured.
         """
         # Reason: LLM path is optional; raise to trigger fallback in generate_async
         raise NotImplementedError("LLM suggestion generation requires a configured judge provider.")

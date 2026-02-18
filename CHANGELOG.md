@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `SuggestionEngine` with rule-based + optional LLM-assisted paths in `src/app/reports/suggestion_engine.py` (STORY-008)
+- `Suggestion` Pydantic model and `SuggestionSeverity` enum (critical/warning/info) in `src/app/data_models/report_models.py` (STORY-008)
 - `METRIC_LABELS` dict and `format_metric_label()` in `evaluation.py` for human-readable metric names (STORY-007)
 - ARIA live regions (`role="status"`, `role="alert"`) in `_display_execution_result` for screen reader accessibility (STORY-007)
 - Post-run navigation guidance in completed state ("Evaluation Results", "Agent Graph") (STORY-007)
