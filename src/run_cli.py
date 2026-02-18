@@ -10,9 +10,6 @@ import shutil
 from sys import argv, exit
 from typing import Any
 
-# Valid engine choices
-_ENGINE_CHOICES = {"mas", "cc"}
-
 
 def _convert_value(key: str, value: str | bool) -> str | bool | int:
     """Convert parsed argument value to appropriate type."""
@@ -21,6 +18,69 @@ def _convert_value(key: str, value: str | bool) -> str | bool | int:
     if key == "token_limit" and isinstance(value, str):
         return int(value)
     return value
+
+
+_COMMANDS = {
+    "--help": "Display help information",
+    "--version": "Display version information",
+    "--chat-provider": "Specify the chat provider to use",
+    "--query": "Specify the query to process",
+    "--include-researcher": "Include the researcher agent",
+    "--include-analyst": "Include the analyst agent",
+    "--include-synthesiser": "Include the synthesiser agent",
+    "--pydantic-ai-stream": "Enable streaming output",
+    "--chat-config-file": "Specify the path to the chat configuration file",
+    "--enable-review-tools": "Enable PeerRead review generation tools (enabled by default)",
+    "--no-review-tools": "Disable PeerRead review generation tools (opt-out)",
+    "--paper-number": "Specify paper number for PeerRead review generation",
+    "--skip-eval": "Skip evaluation after run_manager completes",
+    "--token-limit": "Override agent token limit (1000-1000000, default from config)",
+    "--download-peerread-full-only": ("Download all of the PeerRead dataset and exit (setup mode)"),
+    "--download-peerread-samples-only": (
+        "Download a small sample of the PeerRead dataset and exit (setup mode)"
+    ),
+    "--peerread-max-papers-per-sample-download": (
+        "Specify max papers to download per split, overrides sample default"
+    ),
+    "--cc-solo-dir": ("Path to Claude Code solo session export directory for baseline comparison"),
+    "--cc-teams-dir": (
+        "Path to Claude Code Agent Teams artifacts directory for baseline comparison"
+    ),
+    "--cc-teams-tasks-dir": (
+        "Path to Claude Code Agent Teams tasks directory "
+        "(optional, auto-discovered if not specified)"
+    ),
+    "--engine": (
+        "Execution engine: 'mas' for MAS pipeline (default), 'cc' for Claude Code headless"
+    ),
+}
+
+
+def _print_help() -> None:
+    """Print available commands and exit."""
+    print("Available commands:")
+    for cmd, desc in _COMMANDS.items():
+        print(f"{cmd}: {desc}")
+    exit(0)
+
+
+def _parse_single_arg(arg: str) -> tuple[str, str | bool] | None:
+    """Parse one argument into (key, value) or return None if unrecognized."""
+    flag = arg.split("=", 1)[0]
+    if flag not in _COMMANDS:
+        return None
+    key = flag.lstrip("--").replace("-", "_")
+    value: str | bool = arg.split("=", 1)[1] if "=" in arg else True
+    return key, value
+
+
+def _normalize(parsed_args: dict[str, Any]) -> dict[str, Any]:
+    """Apply post-parse normalization rules."""
+    if "no_review_tools" in parsed_args:
+        parsed_args["enable_review_tools"] = False
+        del parsed_args["no_review_tools"]
+    parsed_args.setdefault("engine", "mas")
+    return parsed_args
 
 
 def parse_args(argv: list[str]) -> dict[str, Any]:
@@ -44,72 +104,17 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
         >>> `parse_args(['--chat-provider=ollama', '--include-researcher'])`
         returns `{'chat_provider': 'ollama', 'include_researcher': True}`
     """
-
-    commands = {
-        "--help": "Display help information",
-        "--version": "Display version information",
-        "--chat-provider": "Specify the chat provider to use",
-        "--query": "Specify the query to process",
-        "--include-researcher": "Include the researcher agent",
-        "--include-analyst": "Include the analyst agent",
-        "--include-synthesiser": "Include the synthesiser agent",
-        "--pydantic-ai-stream": "Enable streaming output",
-        "--chat-config-file": "Specify the path to the chat configuration file",
-        "--enable-review-tools": "Enable PeerRead review generation tools (enabled by default)",
-        "--no-review-tools": "Disable PeerRead review generation tools (opt-out)",
-        "--paper-number": "Specify paper number for PeerRead review generation",
-        "--skip-eval": "Skip evaluation after run_manager completes",
-        "--token-limit": "Override agent token limit (1000-1000000, default from config)",
-        "--download-peerread-full-only": (
-            "Download all of the PeerRead dataset and exit (setup mode)"
-        ),
-        "--download-peerread-samples-only": (
-            "Download a small sample of the PeerRead dataset and exit (setup mode)"
-        ),
-        "--peerread-max-papers-per-sample-download": (
-            "Specify max papers to download per split, overrides sample default"
-        ),
-        "--cc-solo-dir": (
-            "Path to Claude Code solo session export directory for baseline comparison"
-        ),
-        "--cc-teams-dir": (
-            "Path to Claude Code Agent Teams artifacts directory for baseline comparison"
-        ),
-        "--cc-teams-tasks-dir": (
-            "Path to Claude Code Agent Teams tasks directory "
-            "(optional, auto-discovered if not specified)"
-        ),
-        "--engine": (
-            "Execution engine: 'mas' for MAS pipeline (default), 'cc' for Claude Code headless"
-        ),
-    }
-
-    # output help and exit
     if "--help" in argv:
-        print("Available commands:")
-        for cmd, desc in commands.items():
-            print(f"{cmd}: {desc}")
-        exit(0)
+        _print_help()
 
     parsed_args: dict[str, Any] = {}
-
-    # parse arguments for key-value pairs and flags
     for arg in argv:
-        if arg.split("=", 1)[0] in commands.keys():
-            key, value = arg.split("=", 1) if "=" in arg else (arg, True)
-            key = key.lstrip("--").replace("-", "_")
+        result = _parse_single_arg(arg)
+        if result is not None:
+            key, value = result
             parsed_args[key] = _convert_value(key, value)
 
-    # Handle --no-review-tools flag (convert to enable_review_tools=False)
-    if "no_review_tools" in parsed_args:
-        parsed_args["enable_review_tools"] = False
-        del parsed_args["no_review_tools"]
-
-    # Set default engine to 'mas' if not specified
-    if "engine" not in parsed_args:
-        parsed_args["engine"] = "mas"
-
-    return parsed_args
+    return _normalize(parsed_args)
 
 
 if __name__ == "__main__":

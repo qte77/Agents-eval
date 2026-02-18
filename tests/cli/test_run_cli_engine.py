@@ -33,11 +33,10 @@ class TestEngineArgParsing:
         assert args.get("engine") == "mas"
 
     def test_engine_in_help_text(self):
-        """Test that --engine is documented in help output."""
-        import inspect
+        """Test that --engine is documented in the CLI commands registry."""
+        import run_cli
 
-        source = inspect.getsource(parse_args)
-        assert "--engine" in source, "--engine must appear in parse_args help text"
+        assert "--engine" in run_cli._COMMANDS, "--engine must be in _COMMANDS"
 
 
 class TestEngineCCClaudioNotFound:
