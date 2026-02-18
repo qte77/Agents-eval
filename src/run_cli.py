@@ -19,12 +19,27 @@ for _flag, _help in [
     ("--include-analyst", "Include the analyst agent"),
     ("--include-synthesiser", "Include the synthesiser agent"),
     ("--pydantic-ai-stream", "Enable streaming output"),
-    ("--skip-eval", "Skip evaluation after run_manager completes"),
     ("--download-peerread-full-only", "Download all PeerRead data and exit (setup mode)"),
     ("--download-peerread-samples-only", "Download PeerRead sample and exit (setup mode)"),
     ("--cc-teams", "Use Claude Code Agent Teams mode (requires --engine=cc)"),
+    ("--no-llm-suggestions", "Disable LLM-assisted suggestions in generated report"),
 ]:
     _parser.add_argument(_flag, action="store_true", default=None, help=_help)
+
+# S8-F6.1: --generate-report and --skip-eval are mutually exclusive
+_eval_group = _parser.add_mutually_exclusive_group()
+_eval_group.add_argument(
+    "--skip-eval",
+    action="store_true",
+    default=None,
+    help="Skip evaluation after run_manager completes",
+)
+_eval_group.add_argument(
+    "--generate-report",
+    action="store_true",
+    default=None,
+    help="Generate a Markdown report after evaluation completes (incompatible with --skip-eval)",
+)
 
 _review_group = _parser.add_mutually_exclusive_group()
 _review_group.add_argument(
@@ -86,10 +101,13 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
 
 if __name__ == "__main__":
     import sys
+    from datetime import datetime
 
     args = parse_args(argv[1:])
     engine = args.pop("engine")
     cc_teams = args.pop("cc_teams", False) or False
+    generate_report_flag = args.pop("generate_report", False) or False
+    no_llm_suggestions = args.pop("no_llm_suggestions", False) or False
 
     if engine == "cc" and not shutil.which("claude"):
         print(
@@ -117,4 +135,25 @@ if __name__ == "__main__":
         if cc_result.session_dir:
             args["cc_solo_dir"] = cc_result.session_dir
 
-    run(main(**args))
+    result_dict = run(main(**args))
+
+    # S8-F6.1: generate report after evaluation if requested
+    if generate_report_flag and result_dict:
+        composite_result = result_dict.get("composite_result")
+        if composite_result is not None:
+            from pathlib import Path
+
+            from app.reports.report_generator import generate_report, save_report
+            from app.reports.suggestion_engine import SuggestionEngine
+
+            engine_obj = SuggestionEngine(no_llm_suggestions=no_llm_suggestions)
+            suggestions = engine_obj.generate(composite_result)
+            md = generate_report(composite_result, suggestions=suggestions)
+
+            timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+            output_path = Path("results") / "reports" / f"{timestamp}.md"
+            save_report(md, output_path)
+            logger.info(f"Report written to {output_path}")
+            print(f"Report saved: {output_path}")
+        else:
+            logger.warning("--generate-report requested but no evaluation result available")
