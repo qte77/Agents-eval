@@ -436,6 +436,12 @@ All five are backward-compatible with single-story mode (`TEAMS=false`).
 
 - **Ad-hoc steering instructions** (**TODO**): Accept a free-text `INSTRUCTION` parameter via CLI/Make to inject user guidance into the prompt without editing PRD or progress files. Usage: `make ralph_run INSTRUCTION="focus on error handling"`. The instruction would be appended to the story prompt so the agent factors it in during implementation. Useful for nudging behavior (e.g., "prefer small commits", "skip Tier 2 tests") without modifying tracked files.
 
+- **Rewrite Ralph engine in Rust or similar** (**TODO**): The bash script engine (`ralph.sh` + `baseline.sh` + `common.sh`) is brittle, hard to test, and growing in complexity. Rewrite the orchestration core in Rust (or another low-weight, testable language) to get proper unit tests, type safety, and maintainable control flow. Keep the Claude Code invocation via subprocess. Shell scripts become a thin CLI wrapper.
+
+- **Multi-instance worktree orchestration** (**TODO**): Run up to N independent Ralph instances (solo or teams) in separate git worktrees simultaneously. Each worktree gets its own branch, prd.json, and progress.txt. Merge results back at completion. See [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) for reference implementation. Supersedes the single-worktree "Git worktrees for teams isolation" TODO above.
+
+- **Merge with ralph-loop template** (**TODO**): Evaluate and port features from [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) into this project, or merge both projects altogether. The template repo has diverged with its own worktree management, kanban tracking, and vibe coding workflow. Consolidate to avoid maintaining two separate Ralph implementations.
+
 - ~~**Deduplicate log level in CC monitor output**~~: **DONE** — `monitor_story_progress` strips leading `[INFO]`/`[WARN]`/`[ERROR]` prefix from CC agent output before wrapping with `log_cc*`, preventing `[INFO] ... [CC] [INFO]` duplication.
 
 ## Sources
