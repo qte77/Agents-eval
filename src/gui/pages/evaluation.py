@@ -70,7 +70,7 @@ def _extract_text_metrics(metric_scores: dict[str, float]) -> dict[str, float]:
 
 def _render_overall_results(
     result: CompositeResult,
-    baseline_comparison: "BaselineComparison | None" = None,
+    baseline_comparison: BaselineComparison | None = None,
 ) -> None:
     """Render overall results section with composite score and recommendation.
 

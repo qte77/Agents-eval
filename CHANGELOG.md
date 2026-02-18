@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `METRIC_LABELS` dict and `format_metric_label()` in `evaluation.py` for human-readable metric names (STORY-007)
+- ARIA live regions (`role="status"`, `role="alert"`) in `_display_execution_result` for screen reader accessibility (STORY-007)
+- Post-run navigation guidance in completed state ("Evaluation Results", "Agent Graph") (STORY-007)
+- Sidebar execution-in-progress indicator (⏳) when `execution_state="running"` (STORY-007)
+- `st.dataframe()` alt text below bar charts in `_render_metrics_comparison` (WCAG 1.1.1) (STORY-007)
+- Baseline comparison inputs wrapped in collapsed expander in `render_evaluation` (STORY-007)
+- Delta indicators in `_render_overall_results` from `BaselineComparison.tier_deltas` (STORY-007)
 - GUI engine selector: radio toggle between MAS (PydanticAI) and Claude Code engines with CC availability check (STORY-014)
 - GUI paper selection: dropdown with ID/title, abstract preview, free-form/paper mode toggle (STORY-009)
 - GUI editable common settings: log level, max content length with tooltips; logfire consolidated to JudgeSettings (STORY-010)
@@ -35,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `--paper-number` renamed to `--paper-id` (string, supports arxiv IDs); `--provider` renamed to `--chat-provider` across CLI, sweep, config (STORY-012)
 - `SweepConfig.paper_numbers: list[int]` → `paper_ids: list[str]`; added `judge_provider`, `judge_model`, `engine`, `cc_teams` fields (STORY-012, STORY-013, STORY-006)
+- `render_sidebar()` accepts `execution_state` parameter; shows in-progress indicator when running (STORY-007)
+- Engine selector `st.radio` now includes `help=` text explaining MAS vs Claude Code (STORY-007)
+- Paper selectbox `st.selectbox` now includes `help=` kwarg (STORY-007)
+- `_render_paper_selection_input` no-papers message changed from "Downloads page" to `make setup_dataset_sample` CLI instruction (STORY-007)
 - `run_cli.py` CC branch now delegates to `cc_engine.run_cc_solo` / `run_cc_teams` (removes inline subprocess logic) (STORY-006)
 - `sweep_runner._invoke_cc_comparison` delegates to `cc_engine`; `_run_cc_baselines` wires through `CCTraceAdapter` (STORY-006)
 - `app.main()` now accepts `engine` parameter; `run_app._execute_query_background` passes it through (STORY-006)

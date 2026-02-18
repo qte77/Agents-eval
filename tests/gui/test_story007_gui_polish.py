@@ -98,13 +98,19 @@ class TestRunAppDeadReferenceFixed:
 
     def test_no_papers_shows_cli_instructions_not_downloads_page(self) -> None:
         """When no papers, message references CLI command, not 'Downloads page'."""
+        from unittest.mock import MagicMock
+
+        import streamlit as st
+
         from gui.pages.run_app import _render_paper_selection_input
 
-        with patch("gui.pages.run_app._load_available_papers", return_value=[]), patch(
-            "streamlit.session_state", {"available_papers": []}
-        ), patch("streamlit.info") as mock_info, patch(
-            "streamlit.text_input", return_value=""
-        ):
+        # Use a MagicMock for session_state so attribute assignment works
+        mock_session_state = MagicMock()
+        mock_session_state.get = MagicMock(return_value=[])
+
+        with patch("gui.pages.run_app._load_available_papers", return_value=[]), patch.object(
+            st, "session_state", mock_session_state
+        ), patch("streamlit.info") as mock_info, patch("streamlit.text_input", return_value=""):
             _render_paper_selection_input()
 
         # Gather all info messages
@@ -257,20 +263,18 @@ class TestSidebarExecutionIndicator:
         """In-progress indicator visible when execution_state='running'."""
         from gui.components.sidebar import render_sidebar
 
-        with patch("streamlit.sidebar") as mock_sidebar:
-            mock_sidebar.title = MagicMock()
-            mock_sidebar.radio = MagicMock(return_value="App")
-            mock_sidebar.divider = MagicMock()
-            mock_sidebar.markdown = MagicMock()
-            mock_sidebar.caption = MagicMock()
-            mock_sidebar.info = MagicMock()
+        mock_sidebar_module = MagicMock()
+        mock_sidebar_module.radio.return_value = "App"
 
+        # Patch the sidebar object imported into gui.components.sidebar module
+        with patch("gui.components.sidebar.sidebar", mock_sidebar_module):
             render_sidebar("Test App", execution_state="running")
 
         all_calls = " ".join(
-            str(c) for c in mock_sidebar.markdown.call_args_list
-            + mock_sidebar.info.call_args_list
-            + mock_sidebar.caption.call_args_list
+            str(c)
+            for c in mock_sidebar_module.markdown.call_args_list
+            + mock_sidebar_module.info.call_args_list
+            + mock_sidebar_module.caption.call_args_list
         )
         assert any(
             keyword in all_calls
@@ -281,18 +285,14 @@ class TestSidebarExecutionIndicator:
         """No in-progress indicator when execution_state='idle'."""
         from gui.components.sidebar import render_sidebar
 
-        with patch("streamlit.sidebar") as mock_sidebar:
-            mock_sidebar.title = MagicMock()
-            mock_sidebar.radio = MagicMock(return_value="App")
-            mock_sidebar.divider = MagicMock()
-            mock_sidebar.markdown = MagicMock()
-            mock_sidebar.caption = MagicMock()
-            mock_sidebar.info = MagicMock()
+        mock_sidebar_module = MagicMock()
+        mock_sidebar_module.radio.return_value = "App"
 
+        with patch("gui.components.sidebar.sidebar", mock_sidebar_module):
             render_sidebar("Test App", execution_state="idle")
 
         # info should NOT be called for idle state (only called for running indicator)
-        info_calls = " ".join(str(c) for c in mock_sidebar.info.call_args_list)
+        info_calls = " ".join(str(c) for c in mock_sidebar_module.info.call_args_list)
         assert "progress" not in info_calls.lower() and "running" not in info_calls.lower(), (
             "No in-progress indicator should be shown when idle"
         )
