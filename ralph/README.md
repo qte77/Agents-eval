@@ -156,6 +156,8 @@ gh pr create --title "feat: ..." --body "Supersedes #<old>."
 gh pr merge --squash
 ```
 
+**`modify/delete` conflicts**: `-X ours` won't auto-resolve when ours deleted a file that theirs modified. Fix with `git rm <files>` then commit — ours (delete) wins. Untracked files blocking merge need `rm -rf` before `git merge`.
+
 ## Security
 
 **Ralph runs with `--dangerously-skip-permissions`** - all operations
