@@ -1,7 +1,7 @@
 ---
 title: Product Requirements Document - Agents-eval Sprint 8
-description: PeerRead tool fix, "not-required" fallback key removal, judge auto-mode model inheritance, CC engine consolidation, graph alignment, streaming check, report generation, GUI quality audit fixes.
-version: 1.0.5
+description: "Fix sweep-crashing tool bug (F1), remove API key sentinel + judge auto-mode model inheritance (F2), consolidate CC engine with teams support (F3), graph attribute alignment (F4), streaming dead code removal (F5), report generation with suggestion engine (F6), judge settings dropdowns (F7), GUI a11y/UX/environment fixes (F8). 14 stories."
+version: 1.1.0
 created: 2026-02-17
 updated: 2026-02-18
 ---
@@ -12,7 +12,54 @@ updated: 2026-02-18
 
 Sprint 7 delivered: documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings), unified provider configuration, Claude Code engine option.
 
-**Sprint 8 Focus**: Fix sweep-crashing tool bug, remove `"not-required"` fallback key + fix judge auto-mode model inheritance, consolidate CC engine logic, graph attribute alignment, streaming decision, report generation, GUI quality audit fixes.
+**Sprint 8 Focus (8 features, 14 stories)**:
+
+1. Fix sweep-crashing `read_paper_pdf_tool` → `get_paper_content` with parsed JSON fallback chain
+2. Remove `"not-required"` API key sentinel (5 call sites) + fix judge auto-mode model inheritance
+3. Consolidate CC engine into `cc_engine.py` with solo + teams support, retire shell scripts
+4. Align graph node attribute (`type` vs `node_type` mismatch)
+5. Remove dead `pydantic_ai_stream` parameter (upstream still unsupported)
+6. Report generation: CLI `--generate-report`, GUI button, rule-based suggestion engine with optional LLM
+7. Replace judge settings free-text inputs with populated dropdowns
+8. GUI standalone fixes: WCAG a11y, App/Evaluation page UX, environment-aware URL resolution
+
+---
+
+## Development Methodology
+
+**All implementation stories MUST follow these practices. Ralph Loop enforces this order.**
+
+### TDD Workflow (Mandatory for all features)
+
+1. **RED**: Write failing tests first using `testing-python` skill. Tests define expected behavior before any implementation code exists.
+2. **GREEN**: Implement minimal code to pass tests using `implementing-python` skill. No extra functionality.
+3. **REFACTOR**: Clean up while keeping tests green. Run `make validate` before marking complete.
+
+### Test Tool Selection
+
+| Tool | Use for | NOT for |
+|------|---------|------------|
+| **pytest** | Core logic, unit tests, known edge cases (primary TDD tool) | Random inputs |
+| **Hypothesis** | Property invariants, bounds, all-input guarantees | Snapshots, known cases |
+| **inline-snapshot** | Regression, model dumps, complex structures | TDD red-green, ranges |
+
+**Decision rule**: If the test wouldn't catch a real bug, don't write it. Test behavior, not implementation.
+
+### Mandatory Practices
+
+- **Mock external dependencies** (HTTP, LLM providers, file systems, subprocess) using `@patch`. Never call real APIs in unit tests.
+- **Test behavior, not implementation** — test observable outcomes (return values, side effects, error messages), not internal structure.
+- **Google-style docstrings** for every new file, function, class, and method.
+- **`# Reason:` comments** for non-obvious logic.
+- **`make validate` MUST pass** before any story is marked complete. No exceptions.
+
+### Skills Usage
+
+| Story type | Skills to invoke |
+|------------|-----------------|
+| Implementation (all features) | `testing-python` (RED) → `implementing-python` (GREEN) |
+| Codebase research | `researching-codebase` (before non-trivial implementation) |
+| Design phase (Feature 6) | `researching-codebase` → `designing-backend` |
 
 ---
 
@@ -58,12 +105,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 
 2. **Auto-mode inherits provider but not model** (`src/app/judge/llm_evaluation_managers.py:58-66`): `LLMJudgeEngine.__init__()` accepts `chat_provider` but has no `chat_model` parameter. When `tier2_provider="auto"`, the constructor sets `self.provider = chat_provider` (line 60) but `self.model` always stays `settings.tier2_model` (line 66), which defaults to `"gpt-4o-mini"` (`src/app/judge/settings.py:75`). If the chat provider is cerebras with model `llama-4-scout-17b-16e-instruct`, the judge would use the combination `cerebras/gpt-4o-mini` — a model that doesn't exist on Cerebras, causing a 404 and unnecessary fallback. This is a design gap in the engine, not a test bug: auto-mode needs `chat_model` passed alongside `chat_provider` to inherit the correct model.
 
-3. **Cross-provider key mismatch untested** (`tests/judge/test_llm_evaluation_managers.py`): Three existing tests cover auto-mode but all seed the env with the *same* provider's key, so a cross-provider mismatch never surfaces:
-   - `test_tier2_provider_auto_inherits_from_chat_provider` (line 427): sets `chat_provider="github"` with `GITHUB_API_KEY="ghp-test"` — key matches provider.
-   - `test_auto_mode_inherits_chat_provider_correctly` (line 746): sets `chat_provider="github"` with `GITHUB_API_KEY="ghp-test"` — key matches provider.
-   - `test_auto_mode_inherits_chat_provider` (line 684, Hypothesis property test): generates random `chat_provider` values from `["openai", "github", "cerebras", "grok"]` but always seeds `env_config` with that same provider's key (line 699: `env_kwargs = {env_keys[chat_provider]: "test-key"}`).
-
-   None of these tests cover the scenario where `chat_provider="cerebras"` but only `GITHUB_API_KEY` is set (not `CEREBRAS_API_KEY`). In that case, auto resolves to cerebras, `_resolve_provider_key("cerebras", env_config)` fails (no key), and the engine falls back to `tier2_fallback_provider="github"`. The fallback chain works correctly, but this path is never exercised.
+3. **Cross-provider key mismatch untested** (`tests/judge/test_llm_evaluation_managers.py`): Three existing auto-mode tests all seed the env with the *same* provider's key, so a cross-provider mismatch (e.g., `chat_provider="cerebras"` with only `GITHUB_API_KEY` set) never surfaces. The fallback chain works correctly but this path is never exercised.
 
 **Note**: Line 70 (`ollama` provider) legitimately uses `"not-required"` as a literal — Ollama doesn't need auth. This should remain hardcoded.
 
@@ -87,6 +129,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - Add test: `create_llm_model(provider="openai", ..., api_key=None)` results in `OpenAIProvider(api_key=None)`, not `"not-required"`
 - Add test: `LLMJudgeEngine(settings, chat_provider="cerebras", chat_model="llama-4-scout-17b-16e-instruct")` → `engine.model == "llama-4-scout-17b-16e-instruct"`
 - Add test: `chat_provider="cerebras"` with only `GITHUB_API_KEY` → falls back to github with `tier2_fallback_model`
+- Existing auto-mode tests to verify still pass (all seed same-provider keys): `test_tier2_provider_auto_inherits_from_chat_provider` (line 427), `test_auto_mode_inherits_chat_provider_correctly` (line 746), `test_auto_mode_inherits_chat_provider` (line 684, Hypothesis)
 
 **Files**:
 - `src/app/llms/models.py` (edit — 5 lines, sentinel removal)
@@ -99,18 +142,18 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 
 #### Feature 3: Consolidate CC Engine into `src/app/engines/cc_engine.py` with Teams Support
 
-**Description**: CC (Claude Code) engine logic is scattered across `run_cli.py`, `sweep_runner.py`, `run_app.py`, and `scripts/collect-cc-traces/*.sh` with duplicated subprocess invocation, inconsistent error handling, and incomplete wiring. The `subprocess.run(["claude", "-p", ...])` pattern is copy-pasted between CLI and sweep. The GUI accepts the engine selection but silently ignores it. `_run_cc_baselines()` in `sweep_runner.py` is a stub. Additionally, `--engine=cc` only supports solo mode — there is no way to invoke CC with Agent Teams orchestration. The shell scripts under `scripts/collect-cc-traces/` duplicate logic that should live in Python (DRY violation; they will inevitably diverge).
+**Description**: CC (Claude Code) engine logic is duplicated across 4 locations with inconsistent error handling and incomplete wiring. Solo mode only — no teams orchestration path. Shell scripts duplicate logic that should live in Python.
 
-**Critical constraint**: CC teams artifacts (`~/.claude/teams/`, `~/.claude/tasks/`) are ephemeral in `claude -p` print mode — cleaned up after exit (see AGENT_LEARNINGS.md). The existing `run-cc.sh` works around this by copying artifacts during execution. The Python implementation uses `--output-format stream-json` with `Popen` to parse `TeamCreate`, `Task`, and inbox events from the live output stream, eliminating the need for filesystem artifact collection.
+**Critical constraint**: CC teams artifacts (`~/.claude/teams/`, `~/.claude/tasks/`) are ephemeral in `claude -p` print mode — cleaned up after exit (see AGENT_LEARNINGS.md). The Python implementation uses `--output-format stream-json` with `Popen` to parse team events from the live stream, eliminating filesystem artifact collection.
 
 **Current state:**
-- `run_cli.py:108-126` — inline `subprocess.run()`, solo only, captures `session_dir`
+- `run_cli.py:108-126` — inline `subprocess.run()`, solo only
 - `sweep_runner.py:143-185` — duplicate `subprocess.run()`, solo only, stub baseline loop
 - `run_app.py:481-532` — engine selector UI, `engine` param silently dropped
-- `scripts/collect-cc-traces/run-cc.sh` — shell implementation with teams artifact collection (260 lines)
-- `scripts/collect-cc-traces/collect-team-artifacts.sh` — standalone teams artifact collector
-- `scripts/collect-cc-traces/lib/collect-common.sh` — shared shell helpers
+- `scripts/collect-cc-traces/` — 3 shell scripts (run-cc.sh, collect-team-artifacts.sh, lib/collect-common.sh) duplicating Python-target logic
 - `cc_trace_adapter.py` — artifact parser, only called from `evaluation_runner.py` (not from subprocess paths)
+
+##### 3.1 Core CC Engine Module
 
 **Acceptance Criteria**:
 - [ ] New module `src/app/engines/cc_engine.py` with:
@@ -119,6 +162,13 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
   - `run_cc_teams(query: str, timeout: int = 600) -> CCResult` — teams subprocess with `--output-format stream-json` + `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env var, parses team events from live stream via `Popen`
   - `CCResult` Pydantic model: `execution_id`, `output_data`, `session_dir` (solo), `team_artifacts` (teams: parsed from stream events)
   - `parse_stream_json(stream) -> CCResult` — JSONL line parser extracting `init`, `result`, `TeamCreate`, `Task` events
+- [ ] `src/app/engines/__init__.py` created
+- [ ] TDD: RED tests first (`tests/engines/test_cc_engine.py`) covering `run_cc_solo`, `run_cc_teams`, `parse_stream_json`, `check_cc_available` with mocked `subprocess`. GREEN: implement `cc_engine.py`. Use `testing-python` skill.
+- [ ] `make validate` passes
+
+##### 3.2 CLI/Sweep/GUI Integration
+
+**Acceptance Criteria**:
 - [ ] `--cc-teams` boolean flag added to CLI (`run_cli.py`), sweep (`run_sweep.py`), and GUI (`run_app.py`)
 - [ ] `--engine=cc` without `--cc-teams`: calls `run_cc_solo()` (current behavior, consolidated)
 - [ ] `--engine=cc --cc-teams`: calls `run_cc_teams()` with teams env var and stream-json parsing
@@ -128,11 +178,12 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] `_run_cc_baselines()` wires CC results through `CCTraceAdapter` → evaluation (not a stub)
 - [ ] `scripts/collect-cc-traces/` directory removed (replaced by Python implementation)
 - [ ] Makefile recipes `cc_run_solo`, `cc_run_teams`, `cc_collect_teams` updated to use Python entry point instead of shell scripts
-- [ ] `src/app/engines/__init__.py` created
-- [ ] TDD: RED tests first (`tests/engines/test_cc_engine.py`) covering `run_cc_solo`, `run_cc_teams`, `parse_stream_json`, `check_cc_available` with mocked `subprocess`. GREEN: implement `cc_engine.py`. REFACTOR: remove inline subprocess code from callers. Use `testing-python` skill.
+- [ ] REFACTOR: remove inline subprocess code from callers
 - [ ] `make validate` passes
 
-*GUI polish (implement alongside core CC work — same files already being edited):*
+##### 3.3 GUI Polish (same files as 3.2)
+
+**Acceptance Criteria**:
 - [ ] Add ARIA live region (`role="status"`) for execution state transitions, `role="alert"` for errors *(WCAG 4.1.3)* (`run_app.py:343-361`)
 - [ ] Fix dead "Downloads page" reference — replace with CLI instructions (`make setup_dataset_sample`) (`run_app.py:381`)
 - [ ] Add `help=` to engine selector explaining MAS vs Claude Code (`run_app.py:481`)
@@ -188,12 +239,13 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] Add graph interaction hints and color legend caption (`agent_graph.py:140`)
 
 **Technical Requirements**:
-- TBD — choose canonical attribute name, update both sides
+- Canonical attribute name: `type` (already used by `graph_analysis.py:export_trace_to_networkx()` at 4 call sites and internally by `_build_tool_graph`/`analyze_tool_usage_patterns`)
+- Fix consumer side: `agent_graph.py:render_agent_graph()` reads `node_data.get("node_type")` at lines 101 and 150 — change to `node_data.get("type")` (2 edits)
+- No changes to `graph_analysis.py` — it already uses the canonical name
 
 **Files**:
-- `src/app/judge/graph_analysis.py` (edit)
-- `src/gui/pages/agent_graph.py` (edit — attribute fix, a11y wrapper, interaction hints)
-- `tests/judge/test_graph_analysis.py` (edit — TDD RED: attribute consistency tests)
+- `src/gui/pages/agent_graph.py` (edit — change `"node_type"` → `"type"` at lines 101, 150; a11y wrapper, interaction hints)
+- `tests/judge/test_graph_analysis.py` (edit — TDD RED: attribute consistency tests verifying `export_trace_to_networkx()` nodes have `"type"` attribute)
 
 ---
 
@@ -209,22 +261,13 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] TDD: If removing dead code, RED test first verifying `pydantic_ai_stream` parameter no longer exists on `run_manager()` signature. GREEN: remove parameter from all 8 call sites. Use `testing-python` skill.
 - [ ] `make validate` passes
 
-**Caller chain** (all sites that pass `pydantic_ai_stream`):
-- `src/app/app.py:79` — `run_pipeline()` accepts `pydantic_ai_stream: bool` parameter
-- `src/app/app.py:117` — `run_pipeline()` passes it to `run_orchestration()`
-- `src/app/app.py:200` — `run_query()` accepts `pydantic_ai_stream: bool = False`
-- `src/app/app.py:251` — `run_query()` passes it to `run_pipeline()`
-- `src/app/agents/orchestration.py:248` — `run_orchestration()` accepts `pydantic_ai_stream: bool = False`
-- `src/app/agents/orchestration.py:267` — `run_orchestration()` guards with `if pydantic_ai_stream: raise NotImplementedError`
-- `src/app/agents/agent_system.py:517` — `run_manager()` accepts `pydantic_ai_stream: bool = False`
-- `src/app/agents/agent_system.py:546` — `run_manager()` guards with `if pydantic_ai_stream: raise NotImplementedError`
-
-If not supported upstream: remove the parameter from all 8 sites above plus the module docstring at `agent_system.py:18`.
+If not supported upstream: remove the parameter from all 8 call sites across `agent_system.py`, `orchestration.py`, and `app.py`, plus the module docstring at `agent_system.py:18`.
 
 **Files**:
 - `src/app/agents/agent_system.py` (edit — remove parameter + dead code block)
 - `src/app/agents/orchestration.py` (edit — remove parameter + guard)
 - `src/app/app.py` (edit — remove parameter from `run_pipeline()` and `run_query()`)
+- `tests/agents/test_agent_system.py` (edit — TDD RED: verify `pydantic_ai_stream` parameter absent from `run_manager()` signature)
 
 ---
 
@@ -242,12 +285,17 @@ If not supported upstream: remove the parameter from all 8 sites above plus the 
 - [ ] `make validate` passes
 
 **Technical Requirements**:
-- TBD — requires design phase to determine report structure, suggestion generation approach (rule-based vs LLM-assisted), and integration with `CompositeResult`
+- New module `src/app/reports/report_generator.py` with `generate_report(result: CompositeResult, settings: JudgeSettings) -> str` returning Markdown
+- Report structure: (1) Executive summary (composite score, recommendation, timestamp), (2) Per-tier breakdown (`tier1_score`, `tier2_score`, `tier3_score` with `weights_used`), (3) Weakness identification (metrics in `metric_scores` below threshold), (4) Actionable suggestions (from suggestion engine, Feature 6.3)
+- Threshold bands from `JudgeSettings`: accept ≥ 0.8, weak_accept 0.6–0.8, weak_reject 0.4–0.6, reject < 0.4
+- Output path: `{output_dir}/reports/{timestamp}.md` (default `results/reports/`)
+- `--generate-report` flag in `run_cli.py`: requires evaluation to have run, incompatible with `--skip-eval`; calls `generate_report()` after `CompositeResult` is returned
 
 **Files**:
 - `src/run_cli.py` (edit — add `--generate-report` flag)
-- `src/app/reports/` (new — report generation module)
-- TBD
+- `src/app/reports/__init__.py` (new)
+- `src/app/reports/report_generator.py` (new — report generation from `CompositeResult`)
+- `tests/reports/test_report_generator.py` (new — TDD RED: report structure, threshold-based suggestions)
 
 ##### 6.2 GUI Report Generation
 
@@ -259,7 +307,7 @@ If not supported upstream: remove the parameter from all 8 sites above plus the 
 
 **Files**:
 - `src/gui/pages/run_app.py` (edit — add report button and display)
-- TBD
+- `src/app/reports/report_generator.py` (shared with 6.1 — same generation logic)
 
 ##### 6.3 Report Content and Suggestion Engine
 
@@ -271,11 +319,17 @@ If not supported upstream: remove the parameter from all 8 sites above plus the 
 - [ ] Rule-based fallback when LLM is unavailable or `--no-llm-suggestions` is set
 
 **Technical Requirements**:
-- TBD — requires research into what makes suggestions actionable for the PeerRead evaluation context
+- New module `src/app/reports/suggestion_engine.py` with `generate_suggestions(result: CompositeResult, settings: JudgeSettings) -> list[Suggestion]`
+- `Suggestion` Pydantic model: `severity` (critical/warning/info), `metric_name`, `tier`, `score`, `threshold`, `message`
+- Rule-based engine: iterate `metric_scores` dict, compare each against tier thresholds from `JudgeSettings` (accept=0.8, weak_accept=0.6, weak_reject=0.4). Severity: critical if score < weak_reject, warning if < weak_accept, info if < accept
+- Suggestion templates keyed by metric name (e.g., BLEU low → "Review lacks specific technical terminology from the paper", coherence low → "Review structure needs clearer logical flow between sections")
+- Optional LLM-assisted: when `--no-llm-suggestions` is not set and judge provider is available, pass rule-based suggestions + `metric_scores` to judge LLM for enrichment. Fallback to rule-based if LLM unavailable or errors
+- `--no-llm-suggestions` flag added to `run_cli.py`
 
 **Files**:
-- `src/app/reports/` (new — suggestion engine)
-- TBD
+- `src/app/reports/suggestion_engine.py` (new — rule-based + optional LLM suggestion generation)
+- `src/app/data_models/report_models.py` (new — `Suggestion` Pydantic model)
+- `tests/reports/test_suggestion_engine.py` (new — TDD RED: severity classification, metric-specific templates, LLM fallback)
 
 ---
 
@@ -345,13 +399,23 @@ If not supported upstream: remove the parameter from all 8 sites above plus the 
 **Acceptance Criteria**:
 - [ ] `run_app.py`: when `engine == "cc"`, MAS-specific controls are hidden (not just disabled) — sub-agent checkboxes, provider selectbox, token limit, configuration summary (`_display_configuration`). Currently `mas_disabled` (line 496) shows an info banner but all controls remain visible.
 - [ ] `run_app.py`: custom query `text_input` visible in both "Free-form query" and "Select a paper" modes. Currently free-form mode (line 514) renders only the query input, while paper mode renders paper selectbox + custom query inside `_render_paper_selection_input()` (line 395-398). Refactor so the query input is rendered once after the mode-specific controls, visible in both modes — paper mode just adds the paper selectbox above it.
-- [ ] `output.py`: rename `type` parameter to `output_type` — currently shadows Python built-in `type` (`output.py:6`). When reworking `render_output()` to format `CompositeResult` as a summary card (audit item #23), fix the parameter name.
+- [ ] `output.py`: rename `type` parameter to `output_type` in `render_output()` signature — currently shadows Python built-in `type` (`output.py:6`). Update all callers. When reworking `render_output()` to format `CompositeResult` as a summary card (audit item #23), fix the parameter name.
+
+**Technical Requirements**:
+- CC hidden controls: wrap MAS-specific block (`run_app.py:484-515` — sub-agent checkboxes, provider selectbox, token limit slider, `_display_configuration()`) in `if engine != "cc":` guard instead of current `disabled=True` approach
+- Custom query refactor: extract `text_input` from both the free-form branch (line 514) and `_render_paper_selection_input()` (line 395-398) into a single render call placed after mode-specific controls
+- `output.py:6` rename: `type` → `output_type` in `render_output()` signature; grep for `render_output(` to find all callers in `run_app.py`
 
 ##### 8.3 Evaluation Results Page UX (moved from Feature 3 — independent GUI concerns)
 
 **Acceptance Criteria**:
 - [ ] Evaluation Results page displays shortened run ID. The `execution_id` (format `exec_{uuid.hex[:12]}`, generated at `agent_system.py:538`) is returned through `app.py:120` but never stored in session state — the GUI only stores `composite_result` and `graph`. Fix: (1) `run_app.py:_execute_query_background()` stores `execution_id` in `st.session_state`, (2) `evaluation.py:_render_overall_results()` displays it as a metric or caption alongside composite score, (3) "Evaluation Details" expander (line 271) also shows the full `execution_id`.
 - [ ] Evaluation Results page "Baseline Comparison Configuration" (`evaluation.py:249-259`): add path validation and directory picker for CC Solo/Teams directory inputs. Currently only free-text `st.text_input` (lines 250, 255) with no existence check. Fix: (1) validate entered paths exist on disk (`Path.is_dir()`), show `st.error` if not, (2) auto-populate from known CC artifact locations (e.g., `logs/Agent_evals/traces/`) if they exist, (3) optionally add a directory picker widget alongside `text_input` for browsing.
+
+**Technical Requirements**:
+- Run ID threading: `_execute_query_background()` stores `execution_id` in session state (`st.session_state["execution_id"] = result.execution_id`) — `main()` already returns it via `app.py:120` but caller discards it
+- Run ID display: `evaluation.py:_render_overall_results()` shows `st.caption(f"Run: {execution_id}")` alongside composite score; "Evaluation Details" expander (line 271) shows full ID
+- Baseline path validation: `Path(path).is_dir()` check on `st.text_input` values (lines 250, 255), `st.error("Directory not found")` when invalid; auto-populate default from `Path("logs/Agent_evals/traces/")` if it exists
 
 ##### 8.4 Environment-Aware Service URL Resolution (moved from Feature 7 — infrastructure concern)
 
@@ -373,7 +437,9 @@ If not supported upstream: remove the parameter from all 8 sites above plus the 
 - `src/gui/pages/home.py` (edit — onboarding order)
 - `src/gui/pages/prompts.py` (edit — display-only warning)
 - `src/gui/components/sidebar.py` (edit — radio label, external link warning, resolved URL caption)
+- `src/gui/components/output.py` (edit — rename `type` → `output_type` parameter)
 - `src/gui/utils/log_capture.py` (edit — text badges, contrast fix)
+- `src/run_gui.py` (edit — default sub-agents to True in `get_session_state_defaults()`)
 - `.streamlit/config.toml` (new — theme)
 - `tests/gui/test_config.py` (new — TDD RED: `resolve_service_url` tests)
 - `tests/gui/test_run_app.py` (edit — TDD RED: run ID threading, CC hidden controls)
@@ -417,18 +483,165 @@ If not supported upstream: remove the parameter from all 8 sites above plus the 
 
 ## Notes for Ralph Loop
 
+### Priority Order
+
+- **P0 (sweep-crashing)**: STORY-001
+- **P1 (correctness)**: STORY-002, STORY-003, STORY-004
+- **P2 (consolidation)**: STORY-005, STORY-006, STORY-007
+- **P3 (new capability)**: STORY-008, STORY-009, STORY-010
+- **P4 (polish)**: STORY-011, STORY-012, STORY-013, STORY-014
+
+STORY-011 has no file overlaps and can run in any wave. STORY-012, STORY-013, and STORY-014 share files with STORY-007 (`sidebar.py`, `run_app.py`, `evaluation.py`, `config.py`) — see File-Conflict Dependencies table below for sequencing.
+
+### Shared File Coordination
+
+Features 3, 7, and 8 all edit `run_app.py`. Features 3 and 8 both edit `evaluation.py` and `sidebar.py`. GUI polish items are folded into their parent features (3.3, 4 GUI polish, 7 GUI polish) to avoid merge conflicts — implementers editing the same file handle both core and polish AC items in one pass.
+
+`output.py` is edited by Feature 8.2 (parameter rename). No other feature touches this file.
+
+### Notes for CC Agent Teams
+
+**Alternative orchestration mode**: Instead of Ralph's bash loop driving `claude -p` iterations, the CC main orchestrator agent spawns a team using `TeamCreate` + `Task` tool. Each story becomes a `TaskCreate` entry with `blockedBy` dependencies. Teammates execute stories in parallel where dependencies allow.
+
+**Why dual-mode**: Ralph's teams mode (`TEAMS=true`) has 4 documented failure modes (see `ralph/README.md`): Sisyphean reset loops, cross-contamination, cross-story complexity gates, stale snapshots. CC Agent Teams avoids these structurally:
+
+<!-- markdownlint-disable MD013 -->
+
+| Ralph Failure Mode | CC Teams Mitigation |
+|---|---|
+| 1. TDD commits don't survive reset | No external reset — teammates self-manage commits |
+| 2. Cross-contamination | Each teammate has isolated context window |
+| 3. Cross-story complexity gate | Lead runs scoped validation per story's changed files |
+| 4. Stale snapshot tests | `blockedBy` ensures sequential stories see predecessor's changes |
+| 5. File-conflict deps not tracked | `blockedBy` includes both logical AND file-overlap deps (see table below) |
+
+<!-- markdownlint-enable MD013 -->
+
+#### Team Structure
+
+- **Lead**: Orchestrator (current CC session). Creates team, assigns stories, validates between waves. Does not implement (use delegate mode for 3+ teammates).
+- **Teammates**: 3–4 max concurrent (token cost scales linearly per CC instance). CLAUDE.md, skills, and MCP servers auto-loaded.
+- **Models**: Teammates inherit lead's model. For cost optimization: `sonnet` for P0–P2 stories, `haiku` for P4 polish.
+
+#### File-Conflict Dependencies
+
+Beyond logical dependencies (`depends_on` in prd.json), file overlaps require additional sequencing. These are only needed for CC Teams parallel execution — Ralph's sequential mode ignores them harmlessly.
+
+<!-- markdownlint-disable MD013 -->
+
+| Story | Logical Dep | + File-Conflict Dep | Shared File |
+|---|---|---|---|
+| STORY-006 | STORY-005 | — | — |
+| STORY-007 | STORY-006 | — | — |
+| STORY-009 | STORY-008 | + STORY-006 | `run_cli.py` |
+| STORY-010 | STORY-009 | + STORY-007 | `run_app.py` |
+| STORY-012 | — | + STORY-007 | `sidebar.py` |
+| STORY-013 | — | + STORY-007 | `run_app.py`, `evaluation.py` |
+| STORY-014 | — | + STORY-012 | `config.py` |
+
+<!-- markdownlint-enable MD013 -->
+
+#### Orchestration Waves
+
+Stories within a wave can run in parallel; waves are sequential.
+
+```text
+Wave 1 (all independent — no blockers):
+  STORY-001, STORY-002, STORY-003, STORY-004, STORY-005, STORY-008, STORY-011
+
+Wave 2 (after STORY-005):
+  STORY-006
+
+Wave 3 (after STORY-006; STORY-009 also waits for STORY-008):
+  STORY-007, STORY-009
+
+Wave 4 (after STORY-007; STORY-010 also waits for STORY-009):
+  STORY-010, STORY-012, STORY-013
+
+Wave 5 (after STORY-012):
+  STORY-014
+```
+
+Wave 1 has 7 stories but 3–4 teammates max. Lead batches: assign 001+002+003+004 first, then 005+008+011 as teammates free up. STORY-011 (`settings.py`, zero overlaps) can start in any wave.
+
+#### Quality Gates
+
+- **Each teammate**: Runs `make quick_validate` before marking task complete
+- **Lead**: Runs `make validate` after each wave completes (catches cross-story regressions)
+- **Final gate**: `make validate` + `make test_all` after all stories complete
+
+#### Teammate Prompt Template
+
+Lead injects this via `Task(prompt=...)` when spawning each teammate:
+
+```text
+MANDATORY: Read AGENTS.md first, then CONTRIBUTING.md for technical standards.
+ROLE: Developer. Follow specifications exactly. Do not make architectural decisions.
+
+## TDD Commit Discipline (ENFORCED)
+
+Make SEPARATE git commits per phase:
+1. `git add tests/ && git commit -m "test(STORY-XXX): ... [RED]"`
+2. `git add src/ && git commit -m "feat(STORY-XXX): ... [GREEN]"`
+3. `git add . && git commit -m "refactor(STORY-XXX): ... [REFACTOR]"` (optional)
+
+DO NOT bundle work into a single commit. DO NOT skip the [RED] or [GREEN] markers.
+
+## Quality
+
+Run `make quick_validate` before marking your task complete.
+During development: `make ruff`, `make type_check`, `uv run pytest <test-file>`.
+
+## Your Story
+
+Read Feature {N} in docs/PRD.md for full acceptance criteria, technical
+requirements, and file list. Story-specific context follows below.
+```
+
+### Story Breakdown
+
 <!-- PARSER REQUIREMENT: Include story count in parentheses -->
 <!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
-Story Breakdown - Phase 1 (TBD stories total):
+Story Breakdown - Phase 1 (14 stories total):
 
-**Sprint 8 scope (in priority order):**
-- Feature 1 (replace `read_paper_pdf_tool` with `get_paper_content`) — fixes sweep crash
-- Feature 2 (remove `"not-required"` fallback key + fix judge auto-mode model inheritance) — replace `api_key or "not-required"` with `api_key` (5 call sites) + auto-mode `chat_model` pass-through + cross-provider fallback test
-- Feature 3 (consolidate CC engine into `cc_engine.py` with teams support) — consolidate scattered subprocess + shell scripts into Python, add `--cc-teams` flag, stream-json parsing for teams artifacts, retire `scripts/collect-cc-traces/`
-- Feature 4 (graph alignment) — small fix, 2 files
-- Feature 5 (structured output streaming) — binary check, AGENT_REQUESTS.md item
-- Feature 6 (report generation) — flagship feature, needs design phase first
-- Feature 7 (judge settings dropdowns) — replace 4 free-text inputs with populated `selectbox` in Tier 2 LLM Judge GUI, reuse `PROVIDER_REGISTRY` pattern from Agent Configuration
-- Feature 8 (GUI standalone fixes) — standalone a11y/usability (styling, sidebar, log, home, prompts, theme), App page UX (CC hidden controls, custom query), Evaluation page UX (run ID, baseline path validation), environment URL resolution. Synergy items folded into Features 3, 4, 7 as GUI polish sub-sections. Can run in parallel with Features 1-5.
+- **Feature 1** → STORY-001: Replace `read_paper_pdf_tool` with `get_paper_content` using parsed JSON fallback chain
+  Remove LLM-callable `read_paper_pdf_tool`, add `get_paper_content(paper_id)` tool that internally uses `_load_paper_content_with_fallback()`. Add URL rejection guard in `read_paper_pdf()`. Files: `peerread_tools.py`, `test_peerread_tools.py`.
 
-Story breakdown TBD after Feature 6 design phase.
+- **Feature 2** → STORY-002: Remove `"not-required"` sentinel (5 call sites) + fix judge auto-mode model inheritance + cross-provider fallback test
+  Replace `api_key or "not-required"` with `api_key` at 5 sites in `create_llm_model()`. Add `chat_model` parameter to `LLMJudgeEngine.__init__` for auto-mode inheritance. Add cross-provider fallback test. Files: `models.py`, `llm_evaluation_managers.py`, `evaluation_pipeline.py`, tests.
+
+- **Feature 4** → STORY-003: Fix graph node attribute alignment (`"node_type"` → `"type"` in `agent_graph.py`) + GUI a11y wrapper
+  Change `node_data.get("node_type")` to `node_data.get("type")` at 2 sites in `render_agent_graph()`. Add ARIA region wrapper + interaction hints. Files: `agent_graph.py`, `test_graph_analysis.py`.
+
+- **Feature 5** → STORY-004: Remove dead `pydantic_ai_stream` parameter from 8 call sites + close `AGENT_REQUESTS.md` entry
+  Check upstream PydanticAI `run_stream()` status. If still unsupported: delete dead code block `agent_system.py:525-536`, remove parameter from `run_manager()` and all 8 callers. Files: `agent_system.py`, `orchestration.py`, `app.py`, `test_agent_system.py`.
+
+- **Feature 3.1** → STORY-005: Create `cc_engine.py` core module (`CCResult`, `run_cc_solo`, `run_cc_teams`, `parse_stream_json`, `check_cc_available`)
+  New module `src/app/engines/cc_engine.py` with Pydantic `CCResult` model, solo subprocess (`--output-format json`), teams subprocess (`--output-format stream-json` + `Popen` JSONL parser). All new files, no overlap. Files: `engines/__init__.py`, `engines/cc_engine.py`, `tests/engines/test_cc_engine.py`.
+
+- **Feature 3.2** → STORY-006: Wire `cc_engine` into CLI/sweep/GUI, add `--cc-teams` flag, retire shell scripts (depends: STORY-005)
+  Replace inline `subprocess.run()` in `run_cli.py`, `sweep_runner.py`, `run_app.py` with `cc_engine` calls. Add `--cc-teams` CLI flag. Delete `scripts/collect-cc-traces/`. Update Makefile. Files: `run_cli.py`, `run_sweep.py`, `sweep_runner.py`, `sweep_config.py`, `run_app.py`, Makefile.
+
+- **Feature 3.3** → STORY-007: GUI polish for `run_app.py`, `evaluation.py`, `sidebar.py` (ARIA, help text, metric labels, delta indicators) (depends: STORY-006)
+  Add ARIA live regions, fix dead "Downloads page" reference, add help text to engine/paper selectors, execution-in-progress indicator, human-readable metric labels, baseline expander, dataframe alt text. Files: `run_app.py`, `evaluation.py`, `sidebar.py`.
+
+- **Feature 6.3** → STORY-008: Suggestion engine (`suggestion_engine.py`, `Suggestion` model, rule-based + optional LLM)
+  New module: iterate `metric_scores`, compare against tier thresholds, assign severity (critical/warning/info). Templates keyed by metric name. Optional LLM enrichment via judge provider. All new files, no overlap. Files: `suggestion_engine.py`, `report_models.py`, `test_suggestion_engine.py`.
+
+- **Feature 6.1** → STORY-009: CLI report generation (`report_generator.py`, `--generate-report` flag) (depends: STORY-008, STORY-006 [file: run_cli.py])
+  New module `report_generator.py`: executive summary, per-tier breakdown, weakness identification, suggestions from STORY-008 engine. `--generate-report` flag added to `run_cli.py` arg parser (shared with STORY-006's `--cc-teams`). Files: `run_cli.py`, `reports/__init__.py`, `report_generator.py`, `test_report_generator.py`.
+
+- **Feature 6.2** → STORY-010: GUI report generation (report button + inline display) (depends: STORY-009, STORY-007 [file: run_app.py])
+  "Generate Report" button on App page, enabled after evaluation. Inline Markdown display with download. Shares `report_generator.py` logic with CLI. Files: `run_app.py`, `report_generator.py`.
+
+- **Feature 7** → STORY-011: Replace 4 free-text inputs with populated `selectbox` in Tier 2 LLM Judge GUI + expander polish
+  Replace `text_input` with `selectbox` for provider/model fields. Populate from `PROVIDER_REGISTRY` + `config_chat.json`. No file overlaps with other stories. Files: `settings.py`, `test_settings.py`.
+
+- **Feature 8.1** → STORY-012: Standalone a11y/usability fixes (styling, sidebar, log, home, prompts, theme, defaults) (depends: STORY-007 [file: sidebar.py])
+  Remove CSS radio hack, fix sidebar radio label, add log text badges, fix contrast, update HOME_INFO, add prompts warning, Streamlit theme, default sub-agents to True. Files: `styling.py`, `text.py`, `config.py`, `home.py`, `prompts.py`, `sidebar.py`, `log_capture.py`, `run_gui.py`, `.streamlit/config.toml`.
+
+- **Feature 8.2 + 8.3** → STORY-013: App page UX + Evaluation page UX (depends: STORY-007 [file: run_app.py, evaluation.py])
+  CC hidden controls (hide MAS widgets when engine=cc), custom query refactor, `output.py` type→output_type rename, run ID threading, baseline path validation. Files: `run_app.py`, `evaluation.py`, `output.py`, `test_run_app.py`.
+
+- **Feature 8.4 + 8.5** → STORY-014: Environment-aware `resolve_service_url()` + tests (depends: STORY-012 [file: config.py])
+  New function `resolve_service_url(port)`: PHOENIX_ENDPOINT override → Codespaces → Gitpod → localhost fallback. Tests for all environments. Files: `config.py`, `test_config.py`.
