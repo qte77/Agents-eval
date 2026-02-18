@@ -51,14 +51,11 @@ case "$CONVERTER_CHOICE" in
         echo "Installing pandoc and LaTeX packages..."
         sudo apt-get install -yqq pandoc
         sudo apt-get install -yqq texlive-latex-recommended texlive-fonts-recommended
-        
+
         # Display version info
         if command -v pandoc &> /dev/null; then
             echo "Successfully installed pandoc:"
             pandoc --version | head -n 1
-            echo ""
-            echo "Usage example:"
-            echo "  pandoc combined.md -o output.pdf"
         else
             echo "Error: pandoc installation may have failed."
             exit 1

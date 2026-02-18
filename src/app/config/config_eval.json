@@ -76,7 +76,7 @@
   
   "observability": {
     "trace_collection": true,
-    "agentneo_enabled": true,
+    "agentneo_enabled": false,
     "opik_enabled": true,
     "opik_log_start_trace_span": true,
     "opik_batch_size": 100,

@@ -8,8 +8,26 @@ agents.** For technical workflows and coding standards, see
 **External References:**
 
 - @CONTRIBUTING.md - Command reference, testing guidelines, code style patterns
-- @AGENT_REQUESTS.md - Escalation and human collaboration  
+- @AGENT_REQUESTS.md - Escalation and human collaboration
 - @AGENT_LEARNINGS.md - Pattern discovery and knowledge sharing
+
+## Claude Code Infrastructure
+
+**Skills** (`.claude/skills/`): Modular capabilities with progressive disclosure
+
+- `core-principles` - MANDATORY for all tasks (KISS, DRY, YAGNI, verification)
+- `designing-backend`, `implementing-python`, `reviewing-code`, `generating-prd`
+- See individual SKILL.md files for usage triggers and instructions
+
+**Ralph Loop** (`.claude/scripts/ralph/`): Autonomous task execution system
+
+- `make ralph_init` - Initialize environment and state files
+- `make ralph ITERATIONS=N` - Run autonomous development loop
+- State tracking: `docs/ralph/prd.json` (tasks), `docs/ralph/progress.txt` (learnings)
+- See `docs/CC-skills-Ralph-adoption-plan.md` for complete documentation
+
+**Integration**: Skills enforce AGENTS.md compliance. Ralph executes stories from PRD.md
+using Skills.
 
 ## Core Rules & AI Behavior
 
@@ -97,7 +115,9 @@ orchestration. For detailed architecture, see
 - **During review**: Check implementation matches original requirements, not assumed
   needs
 
-## Subagent Role Boundaries
+## Agent Role Boundaries
+
+**Note**: This section defines subagent behavior for Task tool invocations. Claude Code Skills (`.claude/skills/`) complement these with progressive disclosure and auto-discovery.
 
 ### MANDATORY Compliance Requirements for All Subagents
 
@@ -224,7 +244,8 @@ Gather more context or escalate to AGENT_REQUESTS.md
 
 **Post-Task:**
 
-- Run `make validate` - must pass all checks
+- Run `make validate` - must pass all checks (code tasks only)
+- Apply core-principles post-task review: Did we forget anything? Beneficial enhancements? Something to delete?
 - Update CHANGELOG.md for non-trivial changes
 - Document new patterns in AGENT_LEARNINGS.md (concise, laser-focused,
   streamlined)

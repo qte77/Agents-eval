@@ -1,5 +1,12 @@
 {
-    "name": "make setup_dev_ollama",
-    "image": "mcr.microsoft.com/vscode/devcontainers/python:3.14",
-    "postCreateCommand": "make setup_dev_ollama"
+    "name": "make setup_devc_ollama",
+    "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {},
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+            "version": "latest",
+            "moby": false
+        }
+    },
+    "postCreateCommand": "make setup_devc_ollama"
 }

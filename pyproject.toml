@@ -31,20 +31,22 @@ dependencies = [
 Documentation = "https://qte77.github.io/Agents-eval/"
 
 [dependency-groups]
-dev = [
-    "pyright>=1.1.403",
-    "ruff>=0.11.12",
-]
 gui = [
     "streamlit>=1.49.1",
 ]
+dev = [
+    "complexipy>=0.6.0",
+    "pymarkdownlnt>=0.9.34",
+    "pyright>=1.1.403",
+    "ruff>=0.11.12",
+]
 test = [
+    "hypothesis>=6.151.4",
     "pytest>=8.3.4",
     "pytest-cov>=6.0.0",
     "pytest-asyncio>=0.25.3",
     "pytest-bdd>=8.1.0",
     "reportlab>=4.4.0",  # for PDF generation
-    "requests>=2.32.3",
     "ruff>=0.9.2",
 ]
 docs = [
@@ -60,52 +62,50 @@ docs = [
 
 [tool.uv]
 # package = true
-exclude-newer = "2025-08-31T00:00:00Z"
+exclude-newer = "2026-01-31T00:00:00Z"
+
+
+# MARK: Logging configurations
+
 
 [tool.logfire]
 ignore_no_config=true
 send_to_logfire="if-token-present"
 
+
+# MARK: Testing and linting configurations
+
+
 [tool.pyright]
-include = ["src/app"]
+pythonVersion = "3.13"
+include = ["src", "tests"]
+typeCheckingMode = "strict"
 extraPaths = ["./venv/lib/python3.13/site-packages"]
 useLibraryCodeForTypes = true
-pythonVersion = "3.13"
-typeCheckingMode = "strict"
-reportMissingTypeStubs = "none"
+reportMissingImports = true
+reportMissingTypeStubs = false
 reportUnknownMemberType = "none"
 reportUnknownVariableType = "none"
 
 [tool.ruff]
 target-version = "py313"
 src = ["src", "tests"]
-line-length = 120
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+# ignore = ["E203"]  # Whitespace before ':'
+unfixable = ["B"]
 
 [tool.ruff.format]
 docstring-code-format = true
-
-[tool.ruff.lint]
-# ignore = ["E203"]  # Whitespace before ':'
-unfixable = ["B"]
-select = [
-    # pycodestyle
-    "E",
-    # Pyflakes
-    "F",
-    # pyupgrade
-    "UP",
-    # isort
-    "I",
-]
-
-[tool.ruff.lint.isort]
-known-first-party = ["src", "tests"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.pytest.ini_options]
-addopts = "--strict-markers"
+addopts = "--strict-markers"  # addopts = "-v --tb=short"
+asyncio_mode = "auto"
 # "function", "class", "module", "package", "session"
 asyncio_default_fixture_loop_scope = "function"
 pythonpath = ["src"]
@@ -116,10 +116,12 @@ markers = [
     "network: marks tests requiring network access",
 ]
 
+
 [tool.coverage]
+
 [tool.coverage.run]
 include = [
-    "tests/**/*.py",
+    "src/**/*.py",
 ]
 # omit = []
 # branch = true
@@ -139,6 +141,35 @@ omit = [
     '*/virtualenvs/*',
     '*/tests/*',
 ]
+
+[tool.pymarkdown]
+# Pymarkdown configuration for markdown linting
+# Rules: https://github.com/jackdewinter/pymarkdown/blob/master/docs/rules.md
+log.level = "CRITICAL"
+# MD013: Line too long
+plugins.md013.enabled = false
+
+# MD025: Multiple top-level headings in the same document
+plugins.md025.enabled = false
+
+# MD032: Lists should be surrounded by blank lines
+# Note: Autofix pending (scheduled after v1.0.0 release
+# violations must be fixed manually before that
+# https://pymarkdown.readthedocs.io/en/stable/plugins/rule_md032/
+plugins.md032.enabled = true
+# frontmatter extension suppresses violations as of v0.9.34
+# the specific rules have toe be disabled instead
+# extensions.front-matter.enabled = true
+# MD041: First line should be a top-level heading
+plugins.md041.enabled = false
+# MD022: Headings need blank lines around
+# plugins.md022.enabled = false
+# MD003: Inconsistent heading styles (setext vs atx)
+plugins.md003.enabled = false
+
+
+# MARK: Version bumping configurations
+
 
 [tool.bumpversion]
 current_version = "3.2.0"

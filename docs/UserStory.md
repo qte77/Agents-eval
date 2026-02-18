@@ -1,9 +1,10 @@
 ---
 title: User Story - AI Agent Evaluation
 description: User story and acceptance criteria for AI researchers evaluating multi-agent systems using PeerRead dataset
-date: 2025-09-01
+created: 2025-09-01
+updated: 2026-01-14
 category: user-story
-version: 1.0.0
+version: 3.2.0
 ---
 
 ## Introduction
@@ -23,13 +24,10 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 ### Steps
 
 1. **Set up the environment:**
-   - Use `make setup_dev` for basic development environment.
-   - Use `make setup_dev_claude` for Claude Code integration.
-   - Use `make setup_dev_ollama` for local Ollama server setup.
+   - See [CONTRIBUTING.md § Complete Command Reference](../CONTRIBUTING.md#complete-command-reference) for setup commands.
    - Configure API keys and variables in `.env.example` and rename to `.env`.
 2. **Run the evaluation pipeline:**
-   - Execute the CLI with `make run_cli` or the GUI with `make run_gui`.
-   - Run code quality checks with `make validate` or `make quick_validate`.
+   - See [CONTRIBUTING.md § Instant Commands](../CONTRIBUTING.md#instant-commands) for execution and validation commands.
 3. **Configure evaluation metrics:**
    - Adjust weights in `src/app/config/config_eval.json`.
    - Configure agent behavior in `src/app/config/config_chat.json`.
@@ -38,7 +36,8 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
    - Monitor agent coordination and tool usage effectiveness.
 5. **Analyze the results:**
    - Review output logs and Streamlit UI to assess agent performance.
-   - Use integrated monitoring tools (AgentOps, Logfire, Weave) for detailed analysis.
+   - Use Opik for execution traces and detailed observability.
+   - Optionally use additional monitoring tools (Weave, Scalene, Logfire) for extended analysis.
 
 ### Expected Outcomes
 
@@ -51,39 +50,37 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 
 ### Acceptance Criteria
 
-1. **Multi-Agent Evaluation Pipeline:**
+1. **Multi-Agent Evaluation Pipeline:** ✅ **Implemented**
    - The system should provide a comprehensive evaluation pipeline supporting Manager, Researcher, Analyst, and Synthesizer agent roles.
    - The pipeline should measure core agentic capabilities: task decomposition, tool integration, delegation effectiveness, and coordination quality.
-   - The pipeline should support multiple agentic AI frameworks (e.g., pydantic-ai, LangChain) with standardized PeerRead dataset benchmarks.
+   - The pipeline should support the pydantic-ai framework with standardized PeerRead dataset benchmarks.
 
-2. **Advanced Metric Development:**
-   - The system should implement core metrics: execution time, output similarity, task completion rates, and resource utilization.
-   - The system should support planned advanced metrics: semantic similarity, tool usage effectiveness, and agent coordination quality.
-   - These metrics should be modular and easily integratable with existing evaluation logic.
+2. **Advanced Metric Development:** 🟡 **Partially Implemented**
+   - ✅ The system implements core metrics: execution time, output similarity, task completion rates, and resource utilization.
+   - 📋 Advanced metrics planned for Sprint 2/3: semantic similarity, tool usage effectiveness, and agent coordination quality.
+   - ✅ Metrics are modular and easily integratable with existing evaluation logic.
 
-3. **Comprehensive Monitoring & Observability:**
-   - The system should integrate AgentOps for real-time agent behavior tracking.
-   - The system should provide Logfire integration for structured logging and debugging.
-   - The system should support Weave integration for ML experiment tracking and evaluation optimization.
-   - Performance profiling should be available through Scalene integration.
+3. **Comprehensive Monitoring & Observability:** 🟡 **Partially Implemented**
+   - 🟡 Opik integration available but optional (full deployment planned for Sprint 3).
+   - ❌ Scalene, Weave, and Logfire integrations not yet implemented (planned).
 
-4. **Enhanced CLI and GUI Interactions:**
-   - The system should offer both Make-based CLI commands and a Streamlit GUI for user interaction.
-   - The Streamlit GUI should display real-time evaluation results, agent coordination patterns, and performance analytics.
-   - The CLI should support multiple environment setups: basic dev, Claude Code integration, and Ollama local hosting.
-   - Optional: The CLI should support streaming output from pydantic-ai models.
+4. **Enhanced CLI and GUI Interactions:** ✅ **Implemented**
+   - ✅ Make-based CLI commands and Streamlit GUI available for user interaction.
+   - ✅ Streamlit GUI displays evaluation results, agent coordination patterns, and performance analytics.
+   - ✅ CLI supports multiple environment setups: basic dev, Claude Code integration, and Ollama local hosting.
+   - 📋 Streaming output from pydantic-ai models (optional feature, not yet implemented).
 
-5. **Documentation and Feedback:**
-   - The system should include comprehensive documentation for setup, usage, and testing with specific PeerRead evaluation examples.
-   - There should be a feedback loop for users to report issues or suggest improvements.
-   - The system should provide detailed agent workflow documentation and best practices.
+5. **Documentation and Feedback:** ✅ **Implemented**
+   - ✅ Comprehensive documentation for setup, usage, and testing with PeerRead evaluation examples.
+   - ✅ Feedback mechanisms available through GitHub issues.
+   - ✅ Detailed agent workflow documentation and best practices provided.
 
 ### Benefits
 
 - **Standardized Agent Evaluation:** Agents-eval provides a structured approach with PeerRead benchmarks for evaluating agentic AI systems, enabling consistent comparison across different implementations.
 - **Multi-Agent System Insights:** The platform offers unique visibility into delegation patterns, coordination effectiveness, and specialization benefits in multi-agent workflows.
-- **Comprehensive Observability:** Integrated monitoring tools (AgentOps, Logfire, Weave, Scalene) provide deep insights into agent behavior, performance bottlenecks, and resource utilization.
-- **Framework Flexibility:** The system supports multiple frameworks (pydantic-ai, future LangChain integration) and allows for custom metric development, making it adaptable to diverse research needs.
+- **Comprehensive Observability:** Opik provides primary tracing and observability for agent execution, with optional monitoring tools (Weave, Scalene, Logfire) for extended insights into agent behavior, performance bottlenecks, and resource utilization.
+- **Framework Flexibility:** The system supports pydantic-ai and allows for custom metric development, making it adaptable to diverse research needs.
 - **Enhanced Developer Experience:** Multiple setup options (Claude Code, Ollama, basic dev) combined with CLI and GUI interfaces cater to different development preferences and workflows.
 - **Production-Ready Tooling:** Built-in code quality checks, testing frameworks, and documentation generation support serious research and development efforts.
 
@@ -115,7 +112,7 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 
 5. **Results Analysis:**
    - User reviews performance metrics: completion time (e.g., 45 seconds), output similarity score (0.87).
-   - User analyzes agent coordination patterns via AgentOps dashboard.
+   - User analyzes agent coordination patterns and execution traces.
    - User compares results against baseline single-agent performance.
 
 6. **Insights & Iteration:**
@@ -130,7 +127,6 @@ Agents-eval is designed to evaluate the effectiveness of open-source agentic AI 
 
 ### Additional Notes
 
-- **Current Status:** The project is under active development with core PeerRead evaluation and multi-agent coordination features implemented (v3.1.0).
 - **Dependencies:** Built on Python 3.13 with pydantic-ai-slim, supporting OpenAI, DuckDuckGo, and Tavily integrations.
 - **Development Tools:** Comprehensive toolchain including pytest for testing, ruff for linting, pyright for type checking, and mkdocs for documentation.
 - **References:**

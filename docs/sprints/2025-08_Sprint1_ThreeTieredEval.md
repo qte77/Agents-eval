@@ -196,11 +196,11 @@ The Sprint 1 implementation follows a progressive three-tier approach, allowing 
 
 ### **Tier 1: Traditional Metrics Engine**
 
-**Status**: Minimal foundation implementation
+**Status**: Minimal foundation implementation (ROUGE/BLEU deferred to Sprint 4)
 **Scope**: Essential text similarity and performance metrics only
-**Tools**: **Lightweight-first stack** - ROUGE-Score, NLTK BLEU, scikit-learn, textdistance (primary); HuggingFace Evaluate as fallback for advanced metrics. See for reference: [Landscape of Traditional Metrics Libraries](../landscape/landscape.md#traditional-metrics-libraries)
-**Sprint Priority**: High - Streamlined foundation  
-**Implementation**: Day 1-2 with **minimal dependencies first**, heavy packages only as fallbacks  
+**Tools**: **Implemented** - TF-IDF cosine similarity, Jaccard similarity, Levenshtein similarity, textdistance (scikit-learn, textdistance). **Deferred to Sprint 4** - ROUGE-Score, NLTK BLEU. See [Sprint 4 details](2025-09_Sprint4_Pipeline-Enhancements.md) for third-party metrics implementation.
+**Sprint Priority**: High - Streamlined foundation
+**Implementation**: Day 1-2 with **minimal dependencies first**, heavy packages only as fallbacks
 **Performance Target**: <1s evaluation time, **<50MB base dependencies** (lightweight stack)
 
 ### **Tier 2: LLM-as-a-Judge Engine**
@@ -243,7 +243,7 @@ The Sprint 1 implementation follows a progressive three-tier approach, allowing 
 
 - **Output Similarity**: Compare generated reviews to PeerRead reference reviews using **lightweight-first approach**:
   - **Primary (lightweight)**: ROUGE-Score (rouge-score ~10MB), NLTK BLEU (nltk minimal ~20MB), scikit-learn (~50MB), textdistance (~5MB)
-  - **Fallback (heavy)**: HuggingFace Evaluate only when lightweight metrics insufficient (BERTScore, semantic similarity)
+  - **Fallback (heavy)**: HuggingFace Evaluate only when lightweight metrics insufficient (semantic similarity)
 - **Time Taken**: Measure agent processing time for paper ingestion and review generation
 - **Task Success**: Assess successful completion of review generation task with confidence threshold (0.8)
 
@@ -268,7 +268,7 @@ Agent Score = (
     task_success * 0.167 + 
     coordination_quality * 0.167 +
     tool_efficiency * 0.167 +
-    planning_rational * 0.167 +
+    planning_rationality * 0.167 +
     output_similarity * 0.167
 )
 ```
@@ -442,6 +442,7 @@ Agent Score = (
     - **Phase 3**: Performance baseline establishment and integration test enhancement
   - **Status**: ✅ COMPLETED - Comprehensive validation framework implemented with 7 test files, performance baselines documented, and production readiness confirmed
 - [ ] **Task 4.4**: Opik tracing integration with ClickHouse analytics & error handling testing
+  - **Status**: MOVED TO SPRINT 3 - See [Sprint 3 details](2025-09_Sprint3_Advanced-Features.md)
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
   - **Requirements**: Deploy local Opik instance as primary tracing solution, instrument PydanticAI agents with `@track` decorators, implement step-level evaluation for Manager/Researcher/Analyst/Synthesizer interactions, leverage ClickHouse for analytical queries, and comprehensive error handling testing
   - **Reference**: docs/landscape/landscape-agent-frameworks-infrastructure.md for Opik integration patterns, existing docker-compose.opik.yaml with ClickHouse backend
@@ -458,6 +459,7 @@ Agent Score = (
     - Graph metrics storage: NetworkX-generated metrics stored in ClickHouse for time-series analysis and performance correlation
   - **Optional Integrations**: Weave and Logfire implementations as secondary/fallback options
 - [ ] **Task 4.5**: Deploy Opik locally using official repository
+  - **Status**: MOVED TO SPRINT 3 - See [Sprint 3 details](2025-09_Sprint3_Advanced-Features.md)
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
   - **Requirements**: Deploy local Opik instance using official documentation and repository, validate deployment with health checks, and integrate with existing docker-compose setup
   - **Reference**:

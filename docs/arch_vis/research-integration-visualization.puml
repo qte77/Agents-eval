@@ -16,7 +16,7 @@ title Agent Evaluation Research Integration & Framework Convergence
 ' Explicit 3x2 matrix layout
 ' Top row
 rectangle "Academic Research Foundation" as research #FFB6C1 {
-  rectangle "Research Evolution (2022-2025):\n100+ papers analyzed\n\nParadigm Shifts:\nSelf-Evolving Agent Systems (2508.07407)\nFramework Architecture Maturation (2508.10146)\nRuntime Governance Protocols (2508.03858)\nIdentity & Self-Assessment (2507.17257)\n\nKey Evaluation Research:\nAgentBench (2308.03688) • AgentQuest (2404.06411)\nWebArena (2307.13854) • ToolLLM (2307.16789)\nEvaluation Survey (2503.16416)" as research_papers
+  rectangle "Research Evolution (2022-2026):\n228+ papers analyzed\n\nParadigm Shifts:\nSelf-Evolving Agent Systems (2508.07407)\nFramework Architecture Maturation (2508.10146)\nRuntime Governance Protocols (2508.03858)\nIdentity & Self-Assessment (2507.17257)\n\nKey Evaluation Research:\nτ-bench (2406.12045) • τ²-bench (2506.07982)\nBenchmark Best Practices (2507.02825)\nAgentBench (2308.03688) • AgentQuest (2404.06411)\nWebArena (2307.13854) • ToolLLM (2307.16789)\nTrust Review (2502.06559)" as research_papers
 }
 
 rectangle "Five-Tier Evaluation Architecture" as architecture #87CEEB {
@@ -34,7 +34,7 @@ rectangle "Implementation Architecture" as implementation #90EE90 {
 
 ' Bottom row
 rectangle "Safety & Governance Research" as safety #DDA0DD {
-  rectangle "Runtime Governance Protocols:\nMI9 Agent Intelligence Protocol\nConstitutional AI (2212.08073)\nTRiSM Framework (2506.04133)\n\nSafety Research Integration:\nHarms Analysis (2302.10329)\nGuardrails Framework (2408.02205)\nMAS Failure Analysis (2503.13657)\n\nCompliance & Control:\nReal-time Behavior Monitoring\nPolicy Enforcement\nRisk Assessment Integration\n\nProduction Security:\n27+ Framework Safety Patterns" as safety_tools
+  rectangle "Runtime Governance Protocols:\nMI9 Agent Intelligence Protocol\nConstitutional AI (2212.08073)\nTRiSM Framework (2506.04133)\n\nSafety Research Integration:\nTrust Review (2502.06559)\nHarms Analysis (2302.10329)\nGuardrails Framework (2408.02205)\nMAS Failure Analysis (2503.13657)\n\nCompliance & Control:\nReal-time Behavior Monitoring\nPolicy Enforcement\nRisk Assessment Integration\n\nProduction Security:\n27+ Framework Safety Patterns" as safety_tools
 }
 
 rectangle "Strategic Positioning & Impact" as strategy #C8A2C8 {
@@ -50,23 +50,13 @@ frameworks -[hidden]down- safety
 implementation -[hidden]down- strategy
 safety -[hidden]right- strategy
 
-' Primary research-to-implementation flow
-research --> architecture : validates & informs
+' Three inputs feed Architecture
+research --> architecture : validates evaluation approach
+frameworks --> architecture : create evaluation needs
+safety --> architecture : define governance requirements
+
+' Core implementation flow
 architecture --> implementation : guides design
-implementation --> strategy : demonstrates value
-
-' Framework integration flows
-frameworks --> architecture : requires evaluation
-frameworks --> implementation : integration patterns
-frameworks --> safety : governance needs
-
-' Safety and governance integration
-safety --> architecture : governance requirements
-safety --> implementation : security patterns
-safety --> strategy : trust & reliability
-
-' Strategic positioning flows
-strategy --> research : drives research priorities
-strategy --> frameworks : influences adoption
+implementation --> strategy : proves strategic value
 
 @enduml

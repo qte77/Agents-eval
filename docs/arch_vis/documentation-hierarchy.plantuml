@@ -1,0 +1,147 @@
+@startuml documentation-hierarchy
+title Agents-eval Documentation Hierarchy - Agent vs Human Flows
+
+!log Current 'STYLE' dvar: STYLE
+!log About to include: styles/github-STYLE.puml
+!include styles/github-STYLE.puml
+
+skinparam component {
+    BackgroundColor<<Entry>> #FFD700
+    BackgroundColor<<Agent>> #FFE0B2
+    BackgroundColor<<Requirements>> #E8F5E9
+    BackgroundColor<<Technical>> #E3F2FD
+    BackgroundColor<<Implementation>> #FFF3E0
+    BackgroundColor<<Research>> #F3E5F5
+}
+
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+' ============================================================
+' LAYER 1: ENTRY POINTS
+' ============================================================
+package "Entry Points" #FFFFFF {
+    component "**CLAUDE.md**\n🤖 AI AGENT" as CLAUDE <<Entry>>
+    component "**README.md**\n👤 HUMAN" as README <<Entry>>
+}
+
+' ============================================================
+' LAYER 2: AGENT FRAMEWORK
+' ============================================================
+package "Agent Framework" #FFE0B2 {
+    component "**AGENTS.md**\nRules • Compliance" as AGENTS <<Agent>>
+    component "**CONTRIBUTING.md**\nStandards • Commands" as CONTRIB <<Agent>>
+
+    component "**AGENT_REQUESTS.md**\nEscalation" as REQUESTS <<Agent>>
+    component "**AGENT_LEARNINGS.md**\nKnowledge Base" as LEARNINGS <<Agent>>
+}
+
+' ============================================================
+' LAYER 3: AUTHORITY CHAIN
+' ============================================================
+package "Requirements & Strategy" #E8F5E9 {
+    component "**PRD.md**\n[PRIMARY]" as PRD <<Requirements>>
+    component "**UserStory.md**\n[AUTHORITY]" as USER <<Requirements>>
+}
+
+package "Technical Design" #E3F2FD {
+    component "**architecture.md**\n[AUTHORITY]" as ARCH <<Technical>>
+}
+
+package "Implementation" #FFF3E0 {
+    component "**Sprint Docs**\n[AUTHORITY]" as SPRINT <<Implementation>>
+    component "**Usage Guides**\n[AUTHORITY]" as USAGE <<Implementation>>
+    component "**CHANGELOG.md**" as CHANGELOG <<Implementation>>
+}
+
+' ============================================================
+' LAYER 4: INFORMATIONAL
+' ============================================================
+package "Research (Informational Only)" #F3E5F5 {
+    component "**Landscape Docs**" as LANDSCAPE <<Research>>
+    component "**Assessment Docs**" as ASSESS <<Research>>
+}
+
+' ============================================================
+' PRIMARY FLOWS
+' ============================================================
+
+' --- AI AGENT FLOW (Orange) ---
+CLAUDE -[#FF6B35,thickness=3]-> AGENTS : **🤖 Step 1**
+AGENTS -[#FF6B35,thickness=3]-> CONTRIB : **🤖 Step 2**
+
+' Agent references to authority docs
+AGENTS -[#FF6B35,dashed]-> PRD
+AGENTS -[#FF6B35,dashed]-> USER
+AGENTS -[#FF6B35,dashed]-> ARCH
+AGENTS -[#FF6B35,dashed]-> SPRINT
+AGENTS -[#FF6B35,dashed]-> USAGE
+AGENTS -[#FF6B35,dashed]-> LANDSCAPE
+
+' Agent side channels
+AGENTS -[#FF6B35,dotted]-> REQUESTS
+AGENTS -[#FF6B35,dotted]-> LEARNINGS
+AGENTS -[#FF6B35,dotted]-> CHANGELOG
+
+' --- HUMAN FLOW (Teal) ---
+README -[#4ECDC4,thickness=3]-> CONTRIB : **👤 Development**
+README -[#4ECDC4,thickness=2]-> PRD : **👤 Requirements**
+README -[#4ECDC4,thickness=2]-> USER : **👤 Workflows**
+README -[#4ECDC4,thickness=2]-> ARCH : **👤 Design**
+README -[#4ECDC4,dashed]-> AGENTS : **👤 AI Behavior**
+
+' Human implementation
+CONTRIB -[#4ECDC4]-> SPRINT
+SPRINT -[#4ECDC4]-> USAGE
+SPRINT -[#4ECDC4]-> CHANGELOG
+
+' Human collaboration channels
+CONTRIB -[#4ECDC4,dashed]-> REQUESTS
+CONTRIB -[#4ECDC4,dashed]-> LEARNINGS
+
+' ============================================================
+' AUTHORITY CHAIN (System Structure)
+' ============================================================
+PRD -[#000000]-> ARCH : informs
+USER -[#000000]-> ARCH : defines
+ARCH -[#000000]-> SPRINT : guides
+SPRINT -[#000000]-> USAGE : enables
+
+' ============================================================
+' INFORMATIONAL INPUT (Not Requirements)
+' ============================================================
+LANDSCAPE .[#9E9E9E].> PRD : informs only
+ASSESS .[#9E9E9E].> SPRINT : gap analysis
+
+legend right
+  |= Symbol |= Meaning |
+  | 🤖 <color:#FF6B35>**Orange**</color> | AI Agent Flow |
+  | 👤 <color:#4ECDC4>**Teal**</color> | Human Flow |
+  | <color:#000000>**Black**</color> | Authority Chain |
+  | --- | Reference |
+  | ··· | Side Channel |
+
+  |= Level |= Authority |
+  | <back:#FFD700>Entry</back> | Start points |
+  | <back:#FFE0B2>Agent</back> | Framework docs |
+  | <back:#E8F5E9>Requirements</back> | PRIMARY/AUTHORITY |
+  | <back:#E3F2FD>Technical</back> | AUTHORITY |
+  | <back:#FFF3E0>Implementation</back> | AUTHORITY |
+  | <back:#F3E5F5>Research</back> | INFORMATIONAL |
+endlegend
+
+note as N1
+**🤖 AI Agent Path:**
+CLAUDE → AGENTS → CONTRIBUTING
+Then reference all authority docs
+
+**👤 Human Path:**
+README → CONTRIBUTING + Authority docs
+Then implement → update docs
+
+**Decision Priority:**
+User instructions → AGENTS.md →
+Doc hierarchy → Project patterns
+end note
+
+@enduml

@@ -11,11 +11,11 @@ features:
   - cross-references
   - relationship-explanations
   - clustering-by-themes
-papers_count: 236+
+papers_count: 253+
 coverage_period: 2020-10 to 2026-01
 created: 2025-08-24
-updated: 2026-01-11
-version: 3.0.0
+updated: 2026-01-13
+version: 3.1.1
 ---
 
 ## Overview
@@ -32,7 +32,7 @@ This document provides a comprehensive, curated collection of research papers on
 
 ### Document Features
 
-- 232+ papers covering 2020-2026 research
+- 250+ papers covering 2020-2026 research
 - 14 thematic tags for categorization
 - Cross-references with relationship explanations
 - Chronological organization preserving research timeline
@@ -73,7 +73,7 @@ This document provides a comprehensive, curated collection of research papers on
 - Gaming/Embodied: 2407.13943 (Werewolf), 2310.08367 (Minecraft), 2010.03768 (ALFWorld), 2407.18416 (PersonaGym)
 - Multi-agent: 2503.01935 (MultiAgentBench), 2512.08296 (scaling agent systems), 2507.05178 (CREW)
 - Safety: 2402.05044 (SALAD-Bench ACL 2024), 2412.14470 (Agent-SafetyBench), 2412.13178 (SafeAgentBench), 2410.09024 (AgentHarm ICLR 2025)
-- Recent 2025-2026: 2510.02271 (InfoMosaic-Bench), 2510.02190 (Deep Research), 2510.01670 (BLIND-ACT), 2512.12791 (assessment framework)
+- Recent 2025-2026: 2510.02271 (InfoMosaic-Bench), 2510.02190 (Deep Research), 2510.01670 (BLIND-ACT), 2512.12791 (assessment framework), TEAM-PHI (de-identification), Behavioral Fingerprinting (LLM profiles), Strategic Reasoning (digital twin)
 - Surveys: 2503.16416 (evaluation survey), 2507.21504 (LLM agents survey), 2411.13768 (evaluation-driven), 2501.11067 (IntellAgent)
 
 **Architecture & System Design** `[ARCH]`:
@@ -87,12 +87,13 @@ This document provides a comprehensive, curated collection of research papers on
 
 - Constitutional AI: 2212.08073 (foundational), 2406.07814 (collective), 2501.17112 (inverse)
 - Core frameworks: 2302.10329 (harms analysis), 2506.04133 (TRiSM), 2408.02205 (guardrails), 2507.06134 (OpenAgentSafety)
-- Security: 2510.23883 (agentic AI security), 2512.06659 (cybersecurity evolution)
+- Security: 2510.23883 (agentic AI security), 2512.06659 (cybersecurity evolution), BadScientist (AI publishing vulnerabilities)
 - Safety benchmarks: 2402.05044 (SALAD-Bench ACL 2024), 2412.14470 (Agent-SafetyBench), 2412.13178 (SafeAgentBench), 2410.09024 (AgentHarm ICLR 2025)
 - Monitoring: 2507.11473 (CoT monitorability), 2512.20798 (constraint violations), 2601.00911 (privacy-preserving)
 - Reports: 2510.13653 (AI safety first update), 2511.19863 (AI safety second update)
 - Recent 2025: 2510.02286 (adversarial dialogue), 2510.01586 (AdvEvo-MARL), 2510.01569 (InvThink), 2510.02204 (reasoning-execution gaps)
-- Multi-agent: 2503.13657 (MAS failures), 2402.04247 (safeguarding over autonomy)
+- Multi-agent: 2503.13657 (MAS failures), 2402.04247 (safeguarding over autonomy), Hierarchical Delegated Oversight (scalable alignment)
+- Self-correction: Architectural Immune System (materials discovery)
 
 **Tool Use & Integration** `[TOOL]`:
 
@@ -106,9 +107,10 @@ This document provides a comprehensive, curated collection of research papers on
 **Multi-Agent Systems** `[MAS]`:
 
 - Collaboration: 2507.05178 (CREW benchmark), 2501.06322 (collaboration mechanisms), 2512.20845 (MAR reflexion)
-- Benchmarks: 2503.01935 (MultiAgentBench), 2512.08296 (scaling agent systems), 2505.12371 (MedAgentBoard)
+- Benchmarks: 2503.01935 (MultiAgentBench), 2512.08296 (scaling agent systems), 2505.12371 (MedAgentBoard), Job Marketplaces (OpenReview)
 - Analysis: 2503.13657 (failure analysis), 2505.21298 (LLMs miss the mark), 2511.02303 (lazy to deliberation)
-- Applications: 2507.02097 (recommender systems), 2512.20618 (LongVideoAgent), 2512.16214 (PDE-Agent)
+- Applications: 2507.02097 (recommender systems), 2512.20618 (LongVideoAgent), 2512.16214 (PDE-Agent), Echo (pharmacovigilance), Drug Discovery (Alzheimer's), PsySpace (space missions), Evolutionary Boids (agent societies)
+- Oversight: Hierarchical Delegated Oversight (scalable alignment)
 - Recent 2026: 2601.03328 (design patterns evaluation)
 
 **Planning & Reasoning** `[PLAN]`:
@@ -122,7 +124,8 @@ This document provides a comprehensive, curated collection of research papers on
 **Scientific Discovery** `[SCI]`:
 
 - Research agents: 2506.18096 (deep research), 2508.00414 (cognitive kernel), 2509.06917 (Paper2Agent)
-- Discovery: 2408.06292 (AI scientist), 2503.08979 (scientific discovery survey)
+- Discovery: 2408.06292 (AI scientist), 2503.08979 (scientific discovery survey), Beyond Adam (symbolic optimization), Architectural Immune System (self-correcting)
+- Domain applications: AlphaGenome (genomics), Drug Discovery (multi-target Alzheimer's)
 
 **Code Generation** `[CODE]`:
 
@@ -138,7 +141,7 @@ This document provides a comprehensive, curated collection of research papers on
 - Surveys: 2512.13564 (memory in AI agents), 2512.23343 (AI meets brain), 2404.13501 (memory mechanisms)
 - Frameworks: 2601.03236 (MAGMA multi-graph), 2601.01885 (agentic memory), 2502.12110 (A-Mem)
 - Learning: 2512.18950 (MACLA hierarchical procedural), 2511.18423 (GAM deep research), 2509.25250 (long-running agents)
-- Applications: 2510.01003 (repository memory), 2508.11120 (marketing MAS)
+- Applications: 2510.01003 (repository memory), 2508.11120 (marketing MAS), 2510.11290 (AI-Agent School dual memory)
 
 **Self-Improvement & Reflection** `[AUTO]`:
 
@@ -276,6 +279,9 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-10
 
+- [[2510.26887] The Denario Project: Deep Knowledge AI Agents for Scientific Discovery](https://arxiv.org/abs/2510.26887) `[SCI]` `[MAS]` `[AUTO]` `cs.AI`
+  - Multi-agent system for scientific research: idea generation, code execution, paper drafting; generated 11 AI-authored papers across disciplines
+  - Cross-ref: 2506.18096 (deep research agents), 2502.14776 (SurveyX)
 - [[2510.25445] Agentic AI: A Comprehensive Survey of Architectures, Applications, and Future Directions](https://arxiv.org/abs/2510.25445) `[SURVEY]` `[ARCH]` `cs.AI`
   - Comprehensive survey of agentic AI covering architectures, diverse applications, and future research directions
   - Cross-ref: 2308.11432 (foundational survey), 2503.21460 (LLM agent survey), 2508.10146 (frameworks)
@@ -289,6 +295,58 @@ Based on current gaps and transformative potential, three areas warrant immediat
   - First key update with capability improvements and implications for biological, cyber, monitoring, and controllability risks
   - Authors: Yoshua Bengio and 72 others
   - Cross-ref: 2511.19863 (second key update), 2302.10329 (harms analysis), 2506.04133 (TRiSM)
+- [[2510.11290] Evolution in Simulation: AI-Agent School with Dual Memory for High-Fidelity Educational Dynamics](https://arxiv.org/abs/2510.11290) `[MAS]` `[MEM]` `[SPEC]` `cs.AI` `cs.CL`
+  - LLM-based agents simulate complex educational dynamics with dual memory (experience/knowledge bases) enabling self-evolving cognitive development
+  - Accepted at EMNLP 2025
+  - Cross-ref: 2512.13564 (memory systems), 2404.13501 (memory mechanisms), 2510.01297 (SimCity urban simulation)
+- [Simulating Two-Sided Job Marketplaces with AI Agents](https://openreview.net/forum?id=pjpkEHH5YS), [gh/upwork/simploy](https://github.com/upwork/simploy) `[MAS]` `[SPEC]` `[BENCH]` `OpenReview`
+  - LLM agents demonstrate reasoning capabilities create fundamentally different market behaviors compared to rule-based simulations; reveals trade-offs between transaction volume and match quality
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2510.01297 (SimCity urban simulation), 2501.06322 (collaboration mechanisms)
+- [Echo: A multi-agent AI system for patient-centered pharmacovigilance](https://openreview.net/forum?id=4nrWtE6oZ9) `[MAS]` `[SPEC]` `OpenReview`
+  - Four specialized agents (Explorer, Analyzer, Verifier, Proposer) mine Reddit health communities identifying 640 drug-symptom associations including novel signals absent from FDA databases
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2507.16940 (AURA medical agent), 2508.21803 (clinical problem detection)
+- [Multi-target Parallel Drug Discovery with Multi-agent Orchestration](https://openreview.net/forum?id=AhFsKmuaCb), [gh/UAB-SPARC/agentic-drug-discovery](https://github.com/UAB-SPARC/agentic-drug-discovery) `[MAS]` `[SCI]` `[SPEC]` `OpenReview`
+  - End-to-end multi-agent framework for Alzheimer's disease drug discovery generating novel compounds with favorable characteristics for four protein targets
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2501.06590 (ChemAgent), 2510.02139 (BioinfoMCP)
+- [PsySpace: Simulating Emergent Psychological Dynamics in Long-Duration Space Missions using Multi-Agent LLMs](https://openreview.net/forum?id=WAbHXkmBIn) `[MAS]` `[SPEC]` `[EVAL]` `OpenReview`
+  - Multi-agent LLM framework simulating astronaut crew psychology with dual-component architecture (static personality profiles + dynamic stress/loneliness vectors) replicating third-quarter effect
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2509.24877 (social science LLMs), 2510.01815 (human-AI teaming)
+- [Simulating Strategic Reasoning: A Digital Twin Approach to AI Advisors in Decision-Making](https://openreview.net/forum?id=L4arZChBJD) `[ARCH]` `[SPEC]` `[EVAL]` `OpenReview`
+  - Digital twin framework modeling senior strategist reasoning revealing LLM performance gap between simple and complex multi-step strategic decision-making
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2510.01815 (human-AI teaming), 2512.14474 (model-first reasoning)
+- [Towards Automatic Evaluation and Selection of PHI De-identification Models via Multi-Agent Collaboration](https://openreview.net/forum?id=MIjY6VNtY0) `[MAS]` `[EVAL]` `[SPEC]` `OpenReview`
+  - TEAM-PHI framework using multiple LLM evaluators with majority voting to automate clinical de-identification model selection without costly expert annotations
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2507.21504 (evaluation survey), 2501.11067 (IntellAgent evaluation)
+- [BadScientist: Can a Research Agent Write Convincing but Unsound Papers that Fool LLM Reviewers?](https://openreview.net/forum?id=7MPstNz66e) `[SAFETY]` `[SCI]` `[EVAL]` `OpenReview`
+  - Exposes critical vulnerability in AI-driven scientific publishing with five manipulation strategies (TooGoodGains, BaselineSelect, StatTheater, CoherencePolish, ProofGap) achieving 67-82% acceptance rates fooling LLM reviewers
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2510.01359 (security assessment code agents), 2502.02649 (autonomy concerns)
+- [Beyond Adam: AI-Authored Discovery of Symbolic Optimization Rules](https://openreview.net/forum?id=vUJOhgV3zh) `[AUTO]` `[SCI]` `[CODE]` `OpenReview`
+  - Algorithmic Greenhouse demonstrates end-to-end autonomous AI authorship discovering interpretable optimization rules competitive with SGD, Momentum, and Adam
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2506.13131 (AlphaEvolve coding agent), 2507.21046 (self-evolving survey)
+- [Behavioral Fingerprinting of Large Language Models](https://openreview.net/forum?id=s4gTj3fOIo) `[EVAL]` `[BENCH]` `[ARCH]` `OpenReview`
+  - Diagnostic Prompt Suite analyzing 18 models revealing behavioral profiles beyond performance metrics; documents ISTJ/ESTJ personality clustering reflecting deliberate alignment choices
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2507.17257 (agent identity evals), 2411.13768 (evaluation-driven approach)
+- [Scalable Oversight in Multi-Agent Systems: Provable Alignment via Delegated Debate and Hierarchical Verification](https://openreview.net/forum?id=l5Wrcgyobp) `[MAS]` `[SAFETY]` `[ARCH]` `OpenReview`
+  - Hierarchical Delegated Oversight (HDO) framework with PAC-Bayesian bounds on misalignment risk enabling weak overseers to delegate verification through structured debates
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2506.04133 (TRiSM safety framework), 2508.03858 (governance protocol)
+- [The Architectural Immune System: A Framework for Correcting Synthetic Fallacies in AI-Driven Science](https://openreview.net/forum?id=ShWjvhAZGs) `[SCI]` `[SAFETY]` `[ARCH]` `OpenReview`
+  - Self-correcting framework for AI-driven materials discovery detecting statistically implausible results; integrates ten tools including adversarial critique and database validation
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2503.08979 (scientific discovery survey), 2408.06292 (AI scientist automation)
+- [Survival of the Useful: Evolutionary Boids as a Sandbox for Agent Societies](https://openreview.net/forum?id=N7Kh0K33Dk) `[MAS]` `[AUTO]` `[ARCH]` `OpenReview`
+  - Combines Boids-style coordination (cohesion, separation, alignment) with evolutionary selection for agent societies; observe-reflect-build cycle generates self-contained tools through decentralized rules
+  - Published: 08 Oct 2025 (Agents4Science 2025 Conference)
+  - Cross-ref: 2505.22954 (Darwin Godel Machine), 2508.07407 (self-evolving survey)
 - [[2510.09721] A Comprehensive Survey on Benchmarks and Solutions in Software Engineering of LLM-Empowered Agentic System](https://arxiv.org/abs/2510.09721) `[SURVEY]` `[CODE]` `[BENCH]` `cs.SE` `cs.AI`
   - Survey analyzing 100 MAS LLMs benchmarks and evaluations papers published 2023-2025
   - Cross-ref: 2508.00083 (code generation), 2503.16416 (evaluation survey), 2507.02825 (benchmark practices)
@@ -572,6 +630,10 @@ Based on current gaps and transformative potential, three areas warrant immediat
 - [[2506.23329] IR3D-Bench: Evaluating Vision-Language Model Scene Understanding as Agentic Inverse Rendering](https://arxiv.org/abs/2506.23329) `[BENCH]` `[EVAL]` `cs.CV`
   - Benchmark challenging vision-language agents to recreate 3D scene structures through tool use
   - Cross-ref: 2408.08632 (multimodal benchmarking), 2510.02271 (InfoMosaic-Bench)
+- [AlphaGenome: advancing regulatory variant effect prediction with a unified DNA sequence model](https://www.biorxiv.org/content/10.1101/2025.06.25.661532v1), [gh/google-deepmind/alphagenome](https://github.com/google-deepmind/alphagenome) `[SCI]` `[SPEC]` `[ARCH]` `bioRxiv`
+  - Google DeepMind's unified DNA sequence model predicting functional genomic tracks at single base pair resolution across diverse modalities; matches or exceeds strongest models on 24/26 variant effect prediction evaluations
+  - Published: 27 Jun 2025 (bioRxiv)
+  - Cross-ref: 2510.01724 (MetaboT domain-specific), 2501.06590 (ChemAgent scientific)
 - [[2506.23306] GATSim: Urban Mobility Simulation with Generative Agents](https://arxiv.org/abs/2506.23306) `[MAS]` `[SPEC]` `cs.AI`
   - Urban mobility simulation framework using generative agents with adaptive behaviors and memory systems
   - Cross-ref: 2510.01297 (SimCity urban simulation), 2404.13501 (memory mechanisms)
@@ -584,6 +646,10 @@ Based on current gaps and transformative potential, three areas warrant immediat
 - [[2506.13131] AlphaEvolve: A coding agent for scientific and algorithmic discovery](https://arxiv.org/abs/2506.13131) `[CODE]` `[SCI]`
   - Evolutionary coding agent for automated scientific discovery and algorithm development
   - Cross-ref: 2507.22414 (code explanation methods), 2408.06292 (scientific discovery automation)
+- [AlphaGenome: advancing regulatory variant effect prediction with a unified DNA sequence model](https://www.biorxiv.org/content/10.1101/2025.06.25.661532v1), [gh/google-deepmind/alphagenome](https://github.com/google-deepmind/alphagenome) `[SCI]` `[SPEC]` `[ARCH]` `bioRxiv` `cs.AI` `q-bio.GN`
+  - Google DeepMind's unified DNA sequence model predicting thousands of functional genomic tracks at single base pair resolution; matches or exceeds 24/26 variant effect prediction benchmarks
+  - Trained on human and mouse genomes; provides API and tools for genome track and variant effect predictions from sequence
+  - Cross-ref: 2510.01724 (MetaboT bioinformatics), 2501.06590 (ChemAgent domain applications)
 - [[2506.04133] TRiSM for Agentic AI: A Review of Trust, Risk, and SecurityManagement in LLM-based Agentic Multi-Agent Systems](https://arxiv.org/abs/2506.04133) `[SAFETY]` `[MAS]`
   - Framework for managing trust, risk, and security in LLM-based multi-agent systems
   - Cross-ref: 2508.03858 (runtime governance approach), 2408.02205 (layered safety model)
@@ -685,6 +751,9 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-02
 
+- [[2502.06559] Can We Trust AI Benchmarks? An Interdisciplinary Review](https://arxiv.org/abs/2502.06559) `[BENCH]` `[EVAL]` `[SURVEY]` `cs.AI`
+  - Interdisciplinary review of ~100 studies on benchmark shortcomings: dataset biases, data contamination, construct validity, and gaming
+  - Cross-ref: 2507.02825 (agentic benchmark checklist), 2308.03688 (AgentBench)
 - [[2502.12110] A-Mem: Agentic Memory for LLM Agents](https://arxiv.org/abs/2502.12110) `[MEM]` `[ARCH]` `cs.AI` `cs.CL`
   - Autonomous memory system with contextual description generation and connection establishment for continuous evolution
   - Cross-ref: 2512.13564 (memory survey), 2601.01885 (agentic memory), 2512.18950 (MACLA)
@@ -850,6 +919,9 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2024-06
 
+- [[2406.12045] τ-bench: A Benchmark for Tool-Agent-User Interaction](https://arxiv.org/abs/2406.12045) `[BENCH]` `[TOOL]` `[EVAL]` `cs.AI` `cs.CL`
+  - Benchmark evaluating agents on tool use, user interaction, and domain-specific rule adherence; introduces pass^k consistency metric
+  - Cross-ref: 2506.07982 (τ²-bench), 2307.16789 (ToolLLM), 2308.03688 (AgentBench)
 - [[2406.01495] Re-ReST: Reflection-Reinforced Self-Training for Language Agents](https://arxiv.org/abs/2406.01495) `[AUTO]` `[ARCH]` `cs.AI` `cs.LG`
   - Reflection-reinforced self-training approach using environmental feedback to enhance sample quality and agent performance
   - Cross-ref: 2303.11366 (Reflexion foundation), 2407.18219 (recursive introspection)

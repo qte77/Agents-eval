@@ -52,6 +52,10 @@ test_data/
 datasets/
 write-up/
 
+# Ralph state files (generated from templates)
+docs/ralph/prd.json
+docs/ralph/progress.txt
+
 # mermaid
 package.json
 package-lock.json

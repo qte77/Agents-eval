@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-01-11
+updated: 2026-01-14
 category: architecture
-version: 1.0.1
+version: 3.2.0
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -27,10 +27,32 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 
 ### Evaluation Pipeline Flow
 
-1. **Traditional Metrics**: Text similarity (BLEU, ROUGE, BERTScore), execution time measurement
+1. **Traditional Metrics**: Text similarity (BLEU, ROUGE), execution time measurement
 2. **LLM-as-a-Judge**: Review quality assessment, agentic execution analysis
 3. **Graph-Based Analysis**: Tool call complexity, agent interaction mapping
 4. **Composite Scoring**: Final score calculation using formula: (Agentic Results / Execution Time / Graph Complexity)
+
+### Three-Tier Validation Strategy
+
+**Core Principle:** Tiers validate and enhance each other for robust evaluation.
+
+| Tier | Role | Focus |
+| ------ | ------ | ------- |
+| Tier 1 (Traditional) | VALIDATOR | Fast, objective text similarity baseline |
+| Tier 2 (LLM-Judge) | VALIDATOR | Semantic quality assessment |
+| Tier 3 (Graph) | PRIMARY | Coordination patterns from Opik traces |
+
+**Validation Logic:**
+
+- **All 3 tiers agree** → High confidence in MAS quality
+- **Tier 3 good, Tier 1/2 fail** → Good coordination, poor output quality
+- **Tier 1/2 good, Tier 3 fail** → Good output, inefficient coordination
+
+**Design Goals:**
+
+- **Graph (Tier 3)**: Rich analysis from Opik traces - PRIMARY innovation
+- **Traditional (Tier 1)**: Keep SIMPLE - lightweight metrics only
+- **LLM-Judge (Tier 2)**: Keep SIMPLE - single LLM call, structured output
 
 ### Evaluation Approach Decision Tree
 
@@ -101,9 +123,9 @@ The evaluation framework is built around large context window models capable of 
 
 #### LLM-as-a-Judge Framework
 
-**Location**: `src/app/evals/llm_judge.py`
+**Location**: `src/app/evals/llm_evaluation_managers.py`
 
-- **Planning Rational Assessment** (config: `planning_rational`):
+- **Planning Rationality Assessment** (config: `planning_rationality`):
   - Decision-making process quality evaluation
   - Reasoning chain coherence analysis
   - Strategic planning effectiveness
@@ -118,14 +140,14 @@ The evaluation framework is built around large context window models capable of 
 
 #### Graph-Based Complexity Analysis
 
-**Location**: `src/app/evals/graph_complexity.py`
+**Location**: `src/app/evals/graph_analysis.py`
 
 **Approach**: Post-execution behavioral analysis where agents autonomously decide tool use during execution, then observability logs are processed to construct behavioral graphs for retrospective evaluation.
 
 ##### Integration Workflow
 
 1. **Agent Execution** → PydanticAI agents (Manager/Researcher/Analyst/Synthesizer) autonomously decide tool use and coordination strategies during PeerRead paper processing
-2. **Observability Logging** → AgentNeo and Comet Opik capture comprehensive execution traces, tool usage patterns, and agent interactions in real-time
+2. **Observability Logging** → Opik captures comprehensive execution traces, tool usage patterns, and agent interactions in real-time
 3. **Graph Construction** → spaCy + NetworkX and Google LangExtract process trace logs to build behavioral graphs showing coordination patterns and decision flows
 4. **Analysis** → NetworkX and NetworKit analyze coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
 
@@ -153,7 +175,7 @@ The evaluation framework is built around large context window models capable of 
   - Node count (discrete actions) → feeds into coordination_quality scoring
   - Edge density (interaction frequency) → affects tool_efficiency evaluation
   - Path optimization → impacts time_taken scoring through coordination analysis
-  - Pattern recognition → influences planning_rational assessment via behavioral analysis
+  - Pattern recognition → influences planning_rationality assessment via behavioral analysis
 
 #### Composite Scoring System
 
@@ -167,20 +189,19 @@ The evaluation framework is built around large context window models capable of 
 - `task_success`: 0.167 (16.7% - review completion and accuracy)
 - `coordination_quality`: 0.167 (16.7% - agent interaction effectiveness)
 - `tool_efficiency`: 0.167 (16.7% - tool usage optimization)
-- `planning_rational`: 0.167 (16.7% - decision-making quality)
+- `planning_rationality`: 0.167 (16.7% - decision-making quality)
 - `output_similarity`: 0.167 (16.7% - similarity to PeerRead ground truth)
 
 **Configuration-Based Output**:
 
-- Final weighted score using six config metrics (0.167 each)
-- Individual metric breakdowns: time_taken, task_success, coordination_quality, tool_efficiency, planning_rational, output_similarity
+- Final weighted score using six metrics above (0.167 each)
 - Similarity metrics selection (cosine, jaccard, semantic) with semantic as default
 - Recommendation scoring with config weights and confidence threshold (0.8)
 - Performance trend analysis with configurable evaluation parameters
 
 ## Implementation Status
 
-**Detailed Timeline**: See [development-timeline.md](development-timeline.md) for comprehensive sprint history, dependencies, and development phases.
+**Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
 ### Current Implementation (Sprint 1 Complete)
 
@@ -190,7 +211,7 @@ The three-tiered evaluation framework is fully operational with the following co
 
 - Cosine similarity using TF-IDF vectorization
 - Jaccard similarity with enhanced textdistance support
-- Semantic similarity (BERTScore fallback to cosine)
+- Semantic similarity using TF-IDF cosine
 - Execution time measurement and normalization
 - Task success assessment with configurable thresholds
 
@@ -201,12 +222,13 @@ The three-tiered evaluation framework is fully operational with the following co
 - Technical accuracy scoring
 - Cost-budgeted evaluation with retry mechanisms
 
-**✅ Tier 3 - Graph Analysis** (`src/app/evals/graph_analysis.py`):
+**✅ Tier 3 - Graph Analysis (PRIMARY)** (`src/app/evals/graph_analysis.py`):
 
-- NetworkX-based behavioral pattern analysis
+- NetworkX-based behavioral pattern analysis **from Opik traces**
 - Agent coordination quality measurement
 - Tool usage effectiveness evaluation
 - Performance bottleneck detection
+- **Primary differentiator** - all other tiers validate this
 
 **✅ Composite Scoring** (`src/app/evals/composite_scorer.py`):
 
@@ -222,11 +244,11 @@ The three-tiered evaluation framework is fully operational with the following co
 
 ### Development Timeline
 
-**Current Phase**: Sprint 3 (Advanced Features) - In Progress
-**Architecture Phase**: Sprint 2 (SoC/SRP Refactoring) - Planned
-**Foundation Phase**: Sprint 1 (Three-tiered Evaluation) - ✅ Complete
+**Foundation Phase**: Sprint 1 (Three-tiered Evaluation) - ✅ Complete (Aug 23-28, 2025)
+**Refactoring Phase**: Sprint 2 (SoC/SRP Refactoring) - 📋 Not Started (Next Priority)
+**Advanced Features Phase**: Sprint 3 - 📋 Blocked (awaiting Sprint 2 completion)
 
-For detailed sprint information, implementation status, and development dependencies, see [development-timeline.md](development-timeline.md).
+For detailed sprint information, implementation status, and development dependencies, see [roadmap.md](roadmap.md).
 
 ### New Metrics for Implementation
 
@@ -238,8 +260,11 @@ Candidate metrics identified from production frameworks and recent research for 
 | `handoff_quality` | Arize Multi-Agent | No inter-agent transition | Medium | High |
 | `fix_rate` | SWE-EVO [2512.18470] | Binary task success only | Low | High |
 | `rubric_alignment` | [2512.23707] | No self-grading assessment | Medium | High |
+| `evaluator_consensus` | TEAM-PHI (Agents4Science) | Single LLM judge | Low | High |
+| `coordination_topology` | Evolutionary Boids (Agents4Science) | No breadth vs depth | Low | Medium |
+| `delegation_depth` | HDO (Agents4Science) | No hierarchy verification | Low | High |
 
-**Integration Priority**: `fix_rate` (immediate value for partial progress) → `path_convergence` (Tier 3 enhancement) → `rubric_alignment` (Tier 2 self-assessment)
+**Integration Priority**: `fix_rate` → `evaluator_consensus` (Tier 2 robustness) → `delegation_depth` (Tier 3 coordination) → `coordination_topology` (Tier 3 pattern detection) → `path_convergence` (Tier 3 efficiency) → `rubric_alignment` (Tier 2 self-assessment)
 
 ## Key Dependencies
 
@@ -247,7 +272,7 @@ The system relies on several key technology categories for implementation and ev
 
 **Core Technologies**: See [Agent Frameworks](landscape-agent-frameworks-infrastructure.md#1-agent-frameworks) for PydanticAI agent orchestration details, [Graph Analysis & Network Tools](landscape-evaluation-data-resources.md#6-graph-analysis--network-tools) for NetworkX complexity analysis capabilities, and [Large Language Models](landscape-agent-frameworks-infrastructure.md#2-large-language-models) for LLM integration approaches.
 
-**Evaluation Tools**: See [Traditional Metrics Libraries](landscape-evaluation-data-resources.md#7-traditional-metrics-libraries) for NLTK, Rouge-Score, and BERTScore implementation details and feasibility assessments.
+**Evaluation Tools**: See [Traditional Metrics Libraries](landscape-evaluation-data-resources.md#7-traditional-metrics-libraries) for NLTK and Rouge-Score implementation details and feasibility assessments.
 
 **Development Infrastructure**: See [Development Infrastructure](landscape-agent-frameworks-infrastructure.md#development-infrastructure) for uv, Streamlit, Ruff, and pyright integration approaches and alternatives.
 
@@ -291,6 +316,43 @@ The system relies on several key technology categories for implementation and ev
   - Outputs a well-formatted scientific report using the provided data.
   - Maintains the original facts, conclusions, and sources.
 - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
+
+### Critic Agent (Planned - Sprint 3)
+
+- **Description**: Dedicated skeptical reviewer that participates in all agent interactions to reduce hallucinations and compounding errors. Based on Stanford Virtual Lab research showing critic agents significantly improve output quality.
+- **Responsibilities**:
+  - Challenge assumptions in Researcher outputs
+  - Question methodology in Analyst assessments
+  - Flag potential hallucinations in Synthesizer reports
+  - Provide conservative feedback to reduce errors
+  - Participate in both group coordination and individual agent assessments
+- **Location**: Planned for `src/app/agents/critic_agent.py` or extension of `agent_system.py`
+- **Research Basis**: Stanford's Virtual Lab demonstrated that dedicated critic agents reduce compounding errors in multi-agent systems
+
+## Research-Validated Evaluation Enhancements (Planned)
+
+Based on Stanford's Agents4Science conference (300+ AI-generated papers analyzed):
+
+### Priority 1: Citation Hallucination Detection
+
+- **Metric**: `reference_accuracy_score`
+- **Finding**: 56% of AI-generated papers contained ≥1 hallucinated reference
+- **Implementation**: Automated web search verification of cited sources
+- **Location**: Planned for `src/app/evals/citation_validator.py`
+
+### Priority 2: Reviewer Calibration
+
+- **Metric**: `reviewer_calibration_score`, `reviewer_consistency_score`
+- **Finding**: Claude most balanced (closest to human experts), GPT most conservative, Gemini most sycophantic
+- **Implementation**: Tune LLM-as-Judge using PeerRead accepted/rejected baseline
+- **Location**: Enhancement to `src/app/evals/llm_evaluation_managers.py`
+
+### Priority 3: Social Dynamics Tracking
+
+- **Metrics**: `agent_dominance_score`, `coordination_balance`
+- **Finding**: Agent speaking order affects outcome quality
+- **Implementation**: Extract from Opik traces - agent invocation order, message frequency/length
+- **Location**: Enhancement to `src/app/evals/graph_analysis.py`
 
 ## Tools Available
 

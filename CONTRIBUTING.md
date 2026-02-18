@@ -39,6 +39,7 @@
 | `make quick_validate` | Fast development validation | Ruff and pyright installed | Run `make ruff && make type_check` |
 | `make setup_markdownlint` | Setup markdownlint CLI | Node.js and npm installed | Try `npm install -gs markdownlint-cli` |
 | `make run_markdownlint INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
+| `make run_pandoc` | Convert MD to PDF with citations. See `make run_pandoc HELP=1` | pandoc + texlive installed | Try `make setup_pdf_converter CONVERTER=pandoc` |
 | `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
 | `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notify user |
 | `make start_opik` | Start local Opik tracing stack | Docker installed | Try `docker-compose -f docker-compose.opik.yaml up -d` |

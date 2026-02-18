@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `generating-writeup` skill: academic/technical writeup generation with pandoc citation support, IEEE `[1]` default style, and `template.md` for document structure
+- Pandoc `--citeproc` integration: `BIBLIOGRAPHY` and `CSL` variables in `make run_pandoc`, auto-resolves IEEE CSL from `scripts/citation-styles/ieee.csl`
+- Claude Code Skills infrastructure (5 skills): core-principles (KISS, DRY, YAGNI), designing-backend, implementing-python, reviewing-code, generating-prd
+- Ralph Loop autonomous execution system (.claude/scripts/ralph/): ralph.sh orchestrator, prompt.md, init.sh
+- Template-based state file management (.claude/templates/ralph/): prd.json.template, progress.txt.template
+- Makefile recipes for Ralph: ralph_init, ralph, ralph_status, ralph_clean
+- AGENTS.md Claude Code Infrastructure section with Skills and Ralph Loop references
 - Comprehensive benchmark catalog expansion: 40+ benchmarks from further_reading.md integrated into landscape-evaluation-data-resources.md across 10 categories (General Agent, Web Agents, Code/SE, Tool Use, Scientific, Enterprise, Multi-Agent, Safety/Security, Planning, Specialized Domains). Key additions: **CORE-Bench** (computational reproducibility - highly relevant for PeerRead), **MultiAgentBench** (multi-agent coordination evaluation), WebArena/VisualWebArena/BrowserGym (web interaction), ToolLLM/MetaTool/StableToolBench (tool usage), CLEAR framework (enterprise metrics with ρ=0.83 production correlation), safety benchmarks (SALAD-Bench, Agent-SafetyBench, SafeAgentBench, AgentHarm, WASP, CyberGym)
 - Research paper expansion: 232+ papers covering 2020-2026 (from 154+)
 - Practitioner resources section in further_reading.md with Anthropic engineering insights
@@ -54,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- AGENTS.md: Added Skills and Ralph infrastructure references, updated Agent Role Boundaries section
+- Ralph scripts location: Moved from scripts/ralph/ to .claude/scripts/ralph/
 - Research integration analysis: Updated to 208+ papers with 2022-2026 coverage (version 3.0.0)
 - Further reading document: Enhanced with 54 new papers including safety benchmarks and memory systems
 - Research validation references: Added CLEAR framework and evaluation taxonomy citations

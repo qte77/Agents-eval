@@ -1,5 +1,5 @@
 @startuml research-chronological-timeline
-title Agent Evaluation Research Evolution Timeline (2022-2025)
+title Agent Evaluation Research Evolution Timeline (2022-2026)
 
 !ifndef STYLE
 !define STYLE light
@@ -16,6 +16,9 @@ participant "May 2025" as may2025 #LightYellow
 participant "Jun 2025" as jun2025 #LightYellow
 participant "Jul 2025" as jul2025 #LightYellow
 participant "Aug 2025" as aug2025 #LightYellow
+participant "Oct 2025" as oct2025 #LightYellow
+participant "Late 2025" as late2025 #LightYellow
+participant "Jan 2026" as jan2026 #Orange
 
 == Foundation Era (Basic agent frameworks emerge) ==
 note over oct2022 #87CEEB
@@ -135,9 +138,32 @@ Runtime governance standards
 [SAFETY]
 end note
 
-note over oct2022, aug2025
+== Enterprise & Memory Era (Production maturation and memory revolution) ==
+
+note over oct2025 #F0E68C
+**Denario Scientific Discovery**
+(2510.26887)
+Multi-agent research system
+[SCI]
+end note
+
+note over late2025 #90EE90
+**CLEAR Enterprise Framework**
+(2511.14136)
+ρ=0.83 production correlation
+[EVAL]
+end note
+
+note over jan2026 #Orange
+**MAGMA Memory Architecture**
+(2601.03236)
+Multi-graph memory system
+[MEM]
+end note
+
+note over oct2022, jan2026
 **Research Evolution Summary:**
-Foundation (2022) → Development (2023) → Systematic Evaluation (2024) → Self-Evolving Intelligence (2025)
+Foundation (2022) → Development (2023) → Systematic Evaluation (2024) → Self-Evolving Intelligence (2025) → Enterprise & Memory (2026)
 end note
 
 legend bottom
@@ -149,6 +175,7 @@ legend bottom
 | <color:#FFB6C1>████</color> | Tool Use & Integration | [TOOL] |
 | <color:#98E4D6>████</color> | Multi-Agent Systems | [MAS] |
 | <color:#F0E68C>████</color> | Scientific Discovery | [SCI] |
+| <color:#Orange>████</color> | Memory Systems | [MEM] |
 
 **Paper Selection Criteria:**
 • Foundational breakthroughs (Constitutional AI, ReAct)

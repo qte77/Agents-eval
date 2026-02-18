@@ -5,7 +5,7 @@
 
 .SILENT:
 .ONESHELL:
-.PHONY: setup_prod setup_dev setup_dev_full setup_prod_ollama setup_dev_ollama setup_claude_code setup_gemini_cli setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff test_all coverage_all type_check validate quick_validate output_unset_app_env_sh setup_opik start_opik stop_opik clean_opik status_opik setup_opik_env help
+.PHONY: setup_prod setup_dev setup_devc setup_devc_full setup_prod_ollama setup_dev_ollama setup_devc_ollama setup_devc_ollama_full setup_claude_code setup_sandbox setup_plantuml setup_pdf_converter setup_markdownlint setup_ollama clean_ollama setup_dataset_sample setup_dataset_full dataset_get_smallest start_ollama stop_ollama run_puml_interactive run_puml_single run_pandoc run_markdownlint run_cli run_gui run_profile ruff ruff_tests complexity test_all test_quick test_coverage type_check validate quick_validate output_unset_app_env_sh setup_opik setup_opik_env start_opik stop_opik clean_opik status_opik ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run ralph_status ralph_clean ralph_reorganize help
 # .DEFAULT: setup_dev_ollama
 .DEFAULT_GOAL := help
 
@@ -23,49 +23,80 @@ PANDOC_SCRIPT := scripts/run-pandoc.sh
 PDF_CONVERTER_SCRIPT := scripts/setup-pdf-converter.sh
 PANDOC_PARAMS := --toc --toc-depth=2 -V geometry:margin=1in -V documentclass=report --pdf-engine=pdflatex
 PANDOC_TITLE_FILE := 01_titel_abstrakt.md
+BIBLIOGRAPHY :=
+CSL :=
 
 
 # MARK: setup
 
 
-setup_prod:  ## Install uv and deps, Download and start Ollama 
+setup_prod:  ## Install uv and deps
 	echo "Setting up prod environment ..."
 	pip install uv -q
 	uv sync --frozen
 
-setup_dev:  ## Install uv and deps, Download and start Ollama 
+setup_dev:  ## Install uv and deps, claude code, mdlint, plantuml
 	echo "Setting up dev environment ..."
 	pip install uv -q
 	uv sync --all-groups
 	echo "npm version: $$(npm --version)"
 	$(MAKE) -s setup_claude_code
-	$(MAKE) -s setup_gemini_cli
 	$(MAKE) -s setup_markdownlint
 	$(MAKE) -s setup_plantuml
-	
-setup_dev_full: ## Complete dev setup including Opik tracing stack
+
+setup_devc:  ## Setup dev environment with sandbox
+	$(MAKE) -s setup_sandbox
 	$(MAKE) -s setup_dev
+	
+setup_devc_full: ## Complete dev setup including sandbox and Opik tracing stack
+	$(MAKE) -s setup_devc
 	$(MAKE) -s setup_opik
 
-setup_prod_ollama:
+setup_prod_ollama:  ## Install uv and deps, Download and start Ollama 
 	$(MAKE) -s setup_prod
 	$(MAKE) -s setup_ollama
 	$(MAKE) -s start_ollama
 
-setup_dev_ollama:
+setup_dev_ollama:  ## Setup dev environment with ollama
 	$(MAKE) -s setup_dev
 	$(MAKE) -s setup_ollama
 	$(MAKE) -s start_ollama
 
-setup_claude_code:  ## Setup claude code CLI, node.js and npm have to be present
+setup_devc_ollama:  ## Setup dev environment with ollama and sandbox
+	$(MAKE) -s setup_devc
+	$(MAKE) -s setup_ollama
+	$(MAKE) -s start_ollama
+
+setup_devc_ollama_full:  ## Complete dev setup including Ollama, sandbox and Opik tracing stack
+	$(MAKE) -s setup_devc
+	$(MAKE) -s setup_ollama
+	$(MAKE) -s setup_opik
+	$(MAKE) -s start_ollama
+
+setup_claude_code:  ## Setup claude code CLI
 	echo "Setting up Claude Code CLI ..."
-	npm install -gs @anthropic-ai/claude-code
+	cp -r .claude/.claude.json ~/.claude.json
+	curl -fsSL https://claude.ai/install.sh | bash
 	echo "Claude Code CLI version: $$(claude --version)"
 
-setup_gemini_cli:  ## Setup Gemini CLI, node.js and npm have to be present
-	echo "Setting up Gemini CLI ..."
-	npm install -gs @google/gemini-cli
-	echo "Gemini CLI version: $$(gemini --version)"
+setup_sandbox:  ## Install sandbox deps (bubblewrap, socat) for Linux/WSL2
+	# Required for Claude Code sandboxing on Linux/WSL2:
+	# - bubblewrap: Provides filesystem and process isolation
+	# - socat: Handles network socket communication for sandbox proxy
+	# Without these, sandbox falls back to unsandboxed execution (security risk)
+	# https://code.claude.com/docs/en/sandboxing
+	# https://code.claude.com/docs/en/settings#sandbox-settings
+	# https://code.claude.com/docs/en/security
+	echo "Installing sandbox dependencies ..."
+	if command -v apt-get > /dev/null; then \
+		sudo apt-get update -qq && sudo apt-get install -y bubblewrap socat; \
+	elif command -v dnf > /dev/null; then \
+		sudo dnf install -y bubblewrap socat; \
+	else \
+		echo "Unsupported package manager. Install bubblewrap and socat manually."; \
+		exit 1; \
+	fi
+	echo "Sandbox dependencies installed."
 
 setup_plantuml:  ## Setup PlantUML with docker, $(PLANTUML_SCRIPT) and $(PLANTUML_CONTAINER)
 	chmod +x $(PLANTUML_SCRIPT)
@@ -156,14 +187,15 @@ run_puml_single:  ## Generate a themed diagram from a PlantUML file.
 # MARK: run pandoc
 
 
-run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_pandoc INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" TITLE_PAGE="$$dir/title.tex" TOC_TITLE="ToC" LANGUAGE="en-US" NUMBER_SECTIONS="true" | Help: make run_pandoc HELP=1
+run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_pandoc INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" BIBLIOGRAPHY="$$dir/refs.bib" CSL="$$dir/style.csl" | Help: make run_pandoc HELP=1
 	if [ -n "$(HELP)" ]; then
 		$(PANDOC_SCRIPT) help
 	else
 		chmod +x $(PANDOC_SCRIPT)
 		$(PANDOC_SCRIPT) "$(INPUT_FILES)" "$(OUTPUT_FILE)" \
 			"$(TITLE_PAGE)" "$(TEMPLATE)" "$(FOOTER_TEXT)" \
-			"$(TOC_TITLE)" "$(LANGUAGE)" "$(NUMBER_SECTIONS)"
+			"$(TOC_TITLE)" "$(LANGUAGE)" "$(NUMBER_SECTIONS)" \
+			"$(BIBLIOGRAPHY)" "$(CSL)"
 	fi
 
 
@@ -196,31 +228,46 @@ run_profile:  ## Profile app with scalene
 # MARK: Sanity
 
 
-ruff:  ## Lint: Format and check with ruff
+ruff:  ## Lint: Format and check with ruff (src only)
 	uv run ruff format --exclude tests
 	uv run ruff check --fix --exclude tests
+	
+ruff_tests:  ## Lint: Format and fix tests with ruff
+	uv run ruff format tests
+	uv run ruff check tests --fix
+
+
+
+complexity:  ## Check cognitive complexity with complexipy
+	uv run complexipy
 
 test_all:  ## Run all tests
 	uv run pytest
 
-coverage_all:  ## Get test coverage
-	uv run coverage run -m pytest || true
-	uv run coverage report -m
+test_quick:  ## Quick test - rerun only failed tests (use during fix iterations)
+	uv run pytest --lf -x
+
+test_coverage:  ## Run tests with coverage threshold (configured in pyproject.toml)
+	echo "Running tests with coverage gate (fail_under% defined in pyproject.toml)..."
+	uv run pytest --cov
 
 type_check:  ## Check for static typing errors
 	uv run pyright src
 
 validate:  ## Complete pre-commit validation sequence
-	echo "Running complete validation sequence ..."
+	set -e
+	echo "Running complete validation sequence..."
 	$(MAKE) -s ruff
-	-$(MAKE) -s type_check
-	-$(MAKE) -s test_all
-	echo "Validation sequence completed (check output for any failures)"
+	$(MAKE) -s ruff_tests
+	$(MAKE) -s type_check
+	$(MAKE) -s complexity
+	$(MAKE) -s test_coverage
+	echo "Validation completed successfully"
 
 quick_validate:  ## Fast development cycle validation
 	echo "Running quick validation ..."
 	$(MAKE) -s ruff
-	-$(MAKE) -s type_check
+	$(MAKE) -s type_check
 	echo "Quick validation completed (check output for any failures)"
 
 output_unset_app_env_sh:  ## Unset app environment variables
@@ -275,6 +322,63 @@ status_opik:  ## Check Opik services health status
 	echo "ClickHouse:"
 	curl -s http://localhost:8123/ping 2>/dev/null && \
 		echo "ClickHouse healthy" || echo "ClickHouse not responding"
+
+
+# MARK: ralph
+
+
+ralph_userstory:  ## [Optional] Create UserStory.md interactively. Usage: make ralph_userstory
+	echo "Creating UserStory.md through interactive Q&A ..."
+	claude -p "/generating-interactive-userstory-md"
+
+ralph_prd_md:  ## [Optional] Generate PRD.md from UserStory.md
+	echo "Generating PRD.md from UserStory.md ..."
+	claude -p "/generating-prd-md-from-userstory-md"
+
+ralph_prd_json:  ## [Optional] Generate PRD.json from PRD.md
+	echo "Generating PRD.json from PRD.md ..."
+	claude -p "/generating-prd-json-from-prd-md"
+
+ralph_init:  ## Initialize Ralph loop environment
+	echo "Initializing Ralph loop environment ..."
+	bash ralph/scripts/init.sh
+
+ralph_run:  ## Run Ralph autonomous development loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku)
+	echo "Starting Ralph loop ..."
+	RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) bash ralph/scripts/ralph.sh
+
+ralph_status:  ## Show Ralph loop progress and status
+	echo "Ralph Loop Status"
+	echo "================="
+	if [ -f ralph/docs/prd.json ]; then
+		total=$$(jq '.stories | length' ralph/docs/prd.json)
+		passing=$$(jq '[.stories[] | select(.passes == true)] | length' ralph/docs/prd.json)
+		echo "Stories: $$passing/$$total completed"
+		echo ""
+		echo "Incomplete stories:"
+		jq -r '.stories[] | select(.passes == false) | "  - [\(.id)] \(.title)"' ralph/docs/prd.json
+	else
+		echo "prd.json not found. Run 'make ralph_init' first."
+	fi
+
+ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
+	echo "WARNING: This will reset Ralph loop state!"
+	echo "Press Ctrl+C to cancel, Enter to continue..."
+	read
+	rm -f ralph/docs/prd.json ralph/docs/progress.txt
+	echo "Ralph state cleaned. Run 'make ralph_init' to reinitialize."
+
+ralph_reorganize:  ## Archive current PRD and start new iteration. Usage: make ralph_reorganize NEW_PRD=path/to/new.md [VERSION=2]
+	if [ -z "$(NEW_PRD)" ]; then
+		echo "Error: NEW_PRD parameter required"
+		echo "Usage: make ralph_reorganize NEW_PRD=docs/PRD-New.md [VERSION=2]"
+		exit 1
+	fi
+	VERSION_ARG=""
+	if [ -n "$(VERSION)" ]; then
+		VERSION_ARG="-v $(VERSION)"
+	fi
+	bash ralph/scripts/reorganize_prd.sh $$VERSION_ARG $(NEW_PRD)
 
 
 # MARK: help
