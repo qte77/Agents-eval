@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MAS composition sweep: `SweepRunner` for N×M×P benchmarking with CC headless baseline, 33 tests (STORY-007)
 - CC artifact collection scripts with docs and tests (STORY-004)
 - Spec-constrained mock tests for trace collection, review persistence, log config, logfire instrumentation
+- UserStory.md: report generation user story and success criterion (Sprint 8 Feature 6 traceability)
 - PRD-Sprint7-Ralph.md and PRD-Sprint8-Ralph.md
 - Ralph: baseline-aware validation, process management, story-scoped lint, per-story baseline persistence, timeout protection
 
@@ -41,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Composite scoring tests consolidated: 3 files → 1 (`test_composite_scorer.py`) with BDD structure template in conftest (STORY-007)
 - Removed 3 FIXME dead code blocks from `agent_system.py` and `orchestration.py` (STORY-007)
 - PlantUML diagrams updated: `metrics-eval-sweep` (sweep workflow + CC path), `MAS-Review-Workflow` (MAESTRO security boundaries) (STORY-006)
+- Docs: architecture.md v3.7.0 — Sprint 8 scope, report generation section, CC stream-json integration, ADR-008 status, researcher tool update
+- Docs: roadmap.md v4.3.0 — Sprint 8 description aligned with PRD scope
 - Docs updated: README v4.0.0, architecture.md (benchmarking + security sections), roadmap, CC OTel analysis corrected (STORY-003/004/005)
 - CC baseline scripts renamed: `collect-cc-solo.sh` → `run-cc.sh`, `collect-cc-teams.sh` → `collect-team-artifacts.sh`
 - ADR-008: CC baseline engine subprocess vs SDK decision

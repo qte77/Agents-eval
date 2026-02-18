@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-02-17
+updated: 2026-02-18
 category: architecture
-version: 3.6.0
+version: 3.7.0
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -225,15 +225,35 @@ SweepConfig → SweepRunner → (compositions × papers × repetitions) → Swee
 An optional CC path feeds real Claude Code agent artifacts into the same evaluation pipeline:
 
 ```text
-claude -p "prompt" → artifacts (raw_stream.jsonl) → CCTraceAdapter → GraphTraceData → evaluation
+Solo:  claude -p "prompt" --output-format json        → CCResult → CCTraceAdapter → GraphTraceData → evaluation
+Teams: claude -p "prompt" --output-format stream-json  → Popen JSONL stream → CCResult → CCTraceAdapter → GraphTraceData → evaluation
 ```
 
-`shutil.which("claude")` validates CC availability at startup; missing CLI raises a clear error.
+`check_cc_available()` (`src/app/engines/cc_engine.py`) wraps `shutil.which("claude")` for fail-fast validation. Teams mode sets `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` and parses `init`, `result`, `TeamCreate`, and `Task` events from the live JSONL stream via `Popen`, since CC teams artifacts (`~/.claude/teams/`, `~/.claude/tasks/`) are ephemeral in print mode (see AGENT_LEARNINGS.md).
 
 ### Output Files
 
 - `results.json` — raw per-evaluation scores (composition × paper × repetition)
 - `summary.md` — Markdown table with mean/stddev per metric per composition
+
+## Report Generation (Sprint 8)
+
+Post-evaluation report generation synthesizes tier scores into actionable Markdown reports.
+
+### Architecture
+
+```text
+CompositeResult → SuggestionEngine → [Suggestion, ...] → ReportGenerator → Markdown report
+```
+
+- **`SuggestionEngine`** (`src/app/reports/suggestion_engine.py`): Iterates `metric_scores`, compares each against tier thresholds from `JudgeSettings` (accept=0.8, weak_accept=0.6, weak_reject=0.4). Assigns severity (critical/warning/info). Optional LLM enrichment via judge provider with rule-based fallback.
+- **`ReportGenerator`** (`src/app/reports/report_generator.py`): Produces structured Markdown: executive summary, per-tier breakdown, weakness identification, actionable suggestions from the engine.
+- **`Suggestion`** (`src/app/data_models/report_models.py`): Pydantic model with `severity`, `metric_name`, `tier`, `score`, `threshold`, `message`.
+
+### Entry Points
+
+- **CLI**: `--generate-report` flag on `run_cli.py` (requires evaluation, incompatible with `--skip-eval`). Output: `{output_dir}/reports/{timestamp}.md`
+- **GUI**: "Generate Report" button on App page, enabled after evaluation completes. Inline Markdown display with download option.
 
 ## Security Framework (Sprint 6)
 
@@ -260,7 +280,26 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 7 - Active)
+### Current Implementation (Sprint 8 - Planned)
+
+**Sprint 8 Scope** (Draft — 8 features, 14 stories):
+
+- **Tool Fix**: Replace `read_paper_pdf_tool` with `get_paper_content(paper_id)` using parsed JSON fallback chain (fixes sweep-crashing `FileNotFoundError`)
+- **API Key Cleanup**: Remove `"not-required"` sentinel from `create_llm_model()` (5 call sites); fix judge auto-mode model inheritance (`chat_model` parameter)
+- **CC Engine Consolidation**: New `src/app/engines/cc_engine.py` module with `run_cc_solo()` + `run_cc_teams()`, replacing inline subprocess code and shell scripts
+- **Graph Alignment**: Fix `node_type` → `type` attribute mismatch between `graph_analysis.py` and `agent_graph.py`
+- **Dead Code Removal**: Remove `pydantic_ai_stream` parameter (upstream still unsupported) from 8 call sites
+- **Report Generation**: New `src/app/reports/` module — `report_generator.py` (CLI `--generate-report` + GUI button) and `suggestion_engine.py` (rule-based + optional LLM suggestions)
+- **Judge Settings UX**: Replace 4 free-text inputs with `selectbox` dropdowns populated from `PROVIDER_REGISTRY` and `config_chat.json`
+- **GUI A11y/UX**: WCAG fixes (contrast, ARIA, radio labels), environment-aware URL resolution, run ID display, baseline path validation
+
+**Sprint 7 Key Deliverables** (Delivered):
+
+- Unified provider configuration (`--chat-provider`, `--judge-provider`, `--judge-model`)
+- `--engine=mas|cc` flag for CLI and sweep (replaces `--cc-baseline`)
+- Sweep rate-limit resilience (retry with backoff, incremental result persistence)
+- GUI: real-time debug log streaming, paper selection dropdown, editable settings
+- `_handle_model_http_error` fix: re-raise instead of `SystemExit(1)` on HTTP 429
 
 **Sprint 6 Key Deliverables** (Delivered):
 
@@ -283,14 +322,6 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 - **Test Quality**:
   - Security tests in `tests/security/` (SSRF, prompt injection, data scrubbing)
   - Test filesystem isolation via `tmp_path`
-
-**Sprint 7 In Progress**:
-
-- Unified provider configuration (`--chat-provider`, `--judge-provider`, `--judge-model`)
-- `--engine=mas|cc` flag for CLI and sweep (replaces `--cc-baseline`)
-- Sweep rate-limit resilience (retry with backoff, incremental result persistence)
-- GUI: real-time debug log streaming, paper selection dropdown, editable settings
-- `_handle_model_http_error` fix: re-raise instead of `SystemExit(1)` on HTTP 429
 
 **Sprint 5 Key Improvements** (Delivered):
 
@@ -421,7 +452,8 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 4**: Operational resilience, Claude Code baseline comparison (solo + teams) -- Delivered
 - **Sprint 5**: Runtime fixes, GUI enhancements, architecture improvements, code quality review -- Delivered
 - **Sprint 6**: Benchmarking infrastructure, CC baseline completion, security hardening, test quality -- Delivered
-- **Sprint 7**: Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine -- Active
+- **Sprint 7**: Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine -- Delivered
+- **Sprint 8**: Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, report generation, GUI a11y/UX -- Planned
 
 For sprint details, see [roadmap.md](roadmap.md).
 
@@ -473,6 +505,7 @@ The system relies on several key technology categories for implementation and ev
   - Checks the accuracy of assumptions, facts, and conclusions.
 - **Tools**:
   - [DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool)
+  - `get_paper_content(paper_id)` — retrieves full paper text from local PeerRead dataset via parsed JSON → raw PDF → abstract fallback chain (Sprint 8, replaces `read_paper_pdf_tool`)
 - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
 
 ### Analyst Agent
@@ -642,7 +675,7 @@ Each architectural decision includes:
   - `subprocess.run` is the simplest correct approach (KISS); `shutil.which("claude")` provides fail-fast validation
   - `anthropic` SDK is valid as a **separate** `--engine=claude-api` mode for model-vs-model comparison, not as a CC replacement
   - `claude-agent-sdk` is a valid Sprint 8 refinement if subprocess proves brittle
-- **Status**: Active (subprocess); SDK migration deferred pending research
+- **Status**: Active (subprocess). Sprint 8 PRD confirmed: SDK migration removed from scope, subprocess retained per this ADR
 
 ## Agentic System Architecture
 
