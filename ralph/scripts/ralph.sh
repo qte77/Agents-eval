@@ -180,6 +180,10 @@ monitor_story_progress() {
     local story_id="$1"
     local sprint_start
     sprint_start=$(jq -r '.generated' "$PRD_JSON")
+    # Reason: Track byte offset to read only new log content per cycle,
+    # preventing [CC] prefix nesting when monitor re-reads its own output.
+    local log_offset
+    log_offset=$(wc -c < "$LOG_FILE" 2>/dev/null || echo 0)
 
     while sleep 30; do
         local elapsed=$(($(date +%s) - RALPH_STORY_START))
@@ -194,11 +198,15 @@ monitor_story_progress() {
         fi
 
         log_info "  >> [$story_id] phase: $phase | elapsed: $(fmt_elapsed $elapsed)"
-        # Show recent agent activity from log (last non-empty line, truncated)
-        local activity
-        activity=$(tail -5 "$LOG_FILE" 2>/dev/null | grep -v "^$\|^\[\|  >>" | tail -1 | cut -c1-120)
-        # Strip leading log-level prefix to avoid [INFO] ... [CC] [INFO] duplication
-        activity=$(echo "$activity" | sed -E 's/^\[(INFO|WARN|WARNING|ERROR|DEBUG|SUCCESS)\]\s*//')
+        # Show recent agent activity from log (new content only, via byte offset)
+        local activity=""
+        local current_size
+        current_size=$(wc -c < "$LOG_FILE" 2>/dev/null || echo 0)
+        if [ "$current_size" -gt "$log_offset" ]; then
+            activity=$(tail -c +"$((log_offset + 1))" "$LOG_FILE" 2>/dev/null \
+                | grep -v "^$\|^\[\|  >>" | tail -1 | cut -c1-120)
+            log_offset=$current_size
+        fi
         if [ -n "$activity" ]; then
             if echo "$activity" | grep -qi "error\|fail\|traceback"; then
                 log_cc_error "$activity"
