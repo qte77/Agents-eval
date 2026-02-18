@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **CC Agent Teams as alternative orchestrator**: PRD dual-mode support (Ralph loop + CC Teams), file-conflict dependencies, orchestration waves, teammate prompt template
+- **Known Failure Mode #5**: File-conflict dependencies not tracked in `get_unblocked_stories`
 - **Agent Activity Monitor**: Heartbeat now tails agent log output at 30s intervals with `[CC]` (magenta) prefix for agent activity and red for agent errors (`common.sh`: `log_cc`, `log_cc_error`)
 - **Quality Retry Context**: Failed quality gate name is passed to the agent prompt on retry via `RETRY_CONTEXT_FILE`, so the agent knows what to fix
 - **PRD Parser**: Parser for structured PRD.md files with automatic prd.json generation
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CC Monitor Log Dedup**: Strip inner log-level prefix from CC agent output before wrapping with `log_cc*`
 - **Scoped Reset**: TDD failure cleanup now only removes story-created untracked files instead of `git clean -fd` which nuked all untracked files
 - **REFACTOR Marker Fallback**: `check_tdd_commits` detects conventional `refactor(` prefix when `[REFACTOR]` bracket marker is missing
 - **Quality Retry TDD Skip**: Retries after quality failure skip TDD verification (prior RED+GREEN already verified), preventing false rejections

@@ -310,20 +310,47 @@ doesn't account for story B's changes that were applied in the same batch.
   check if those failures exist in ANY story's test file list from the batch. If yes,
   log a warning but don't block. Only block on truly orphaned regressions.
 
+### 5. File-conflict dependencies not tracked
+
+Ralph's `depends_on` tracks logical dependencies (STORY-006 needs STORY-005's
+`cc_engine.py` to exist) but not file-overlap conflicts. In sequential mode this is
+harmless — stories never run simultaneously. In teams mode, two unrelated stories editing
+the same file (e.g., STORY-006 and STORY-009 both editing `run_cli.py`) produce merge
+conflicts or silently overwrite each other's changes.
+
+**Root cause in code**: `get_unblocked_stories` (line 121) checks only `depends_on` — it
+has no file-overlap awareness. Two stories with `depends_on: []` and overlapping `files`
+arrays both appear unblocked and get delegated to different teammates.
+
+**Solutions (pick one):**
+
+- **A. File-conflict deps in prd.json** (recommended): Add file-overlap dependencies
+  during PRD generation or in the Story Breakdown. The `generate_prd_json.py` parser can
+  detect overlapping `files` arrays and auto-inject `depends_on` edges. These deps are
+  only needed for teams mode — sequential mode ignores them harmlessly.
+
+  Sprint 8 PRD demonstrates this pattern with `[file: run_cli.py]` annotations:
+  `STORY-009 (depends: STORY-008, STORY-006 [file: run_cli.py])`.
+
+- **B. Runtime file-lock check**: Before delegating a story, check if any in-progress
+  story shares files. Skip overlapping stories until the conflicting story completes.
+  Requires tracking which stories are currently being executed (new state in ralph.sh).
+
 ### Key Structural Issue
 
 The fundamental problem is **cross-story interference in teams mode**: quality gates for
 story X catch regressions introduced by stories Y and Z. The validation checks the
 entire test suite against a baseline that predates all stories in the batch.
 
-**Recommended combined approach**: Implement solutions 1A + 2A + 3B + 4A. This gives:
+**Recommended combined approach**: Implement solutions 1A + 2A + 3B + 4A + 5A. This gives:
 
 - Phase persistence across resets (1A) — eliminates Sisyphean loops
 - File-scoped commit attribution (2A) — correct story ownership
 - Per-file complexity (3B) — scoped complexity checks
 - Rolling baseline (4A) — simplest baseline fix
+- File-conflict deps in prd.json (5A) — prevents parallel edits to same file
 
-All four are backward-compatible with single-story mode (`TEAMS=false`).
+All five are backward-compatible with single-story mode (`TEAMS=false`).
 
 ## TODO / Future Work
 
@@ -332,12 +359,13 @@ All four are backward-compatible with single-story mode (`TEAMS=false`).
 - **Agent Teams for parallel story execution**: Enable with `make ralph_run TEAMS=true` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`). Lead agent orchestrates teammates with skill-specific delegation. See [CC Agent Teams Orchestration](../docs/analysis/CC-agent-teams-orchestration.md) for architecture and tracing.
   - ~~**Inter-story**~~: **DONE** — `ralph.sh` appends unblocked independent stories to the prompt; `check_tdd_commits` filters by story ID in teams mode to prevent cross-story marker false positives. Completed stories caught by existing `detect_already_complete` path.
   - **Intra-story** (**TODO**): Multiple agents on one story (e.g., test writer + implementer). Requires shared-file coordination, merge conflict handling, and split TDD ownership. Deferred until inter-story mode is validated.
+  - **CC Agent Teams as alternative orchestrator** (**TODO**): Instead of Ralph's bash loop driving `claude -p` with bolted-on teams support, the CC main orchestrator agent directly spawns a team via `TeamCreate` + `Task` tool. Each story becomes a `TaskCreate` entry with `blockedBy` dependencies (both logical and file-conflict). Addresses Ralph failure modes structurally: isolated teammate contexts prevent cross-contamination (#2), `blockedBy` prevents stale snapshots (#4), no external reset eliminates Sisyphean loops (#1), lead-scoped validation prevents cross-story complexity failures (#3), and file-conflict deps in `blockedBy` prevent parallel edits to the same file (#5). Requires self-contained story descriptions in the PRD Story Breakdown (usable as `TaskCreate(description=...)`). See Sprint 8 PRD "Notes for CC Agent Teams" section for orchestration waves, file-conflict dependency table, and teammate prompt template.
 
 - ~~**Scoped reset on red-green validation failure**~~: **DONE** — Untracked files are snapshot before story execution; on TDD failure, only story-created files are removed. Additionally, quality-failure retries skip TDD verification entirely (prior RED+GREEN already verified), and `check_tdd_commits` has a fallback that detects `refactor(` prefix when `[REFACTOR]` bracket marker is missing.
 
 - **Ad-hoc steering instructions** (**TODO**): Accept a free-text `INSTRUCTION` parameter via CLI/Make to inject user guidance into the prompt without editing PRD or progress files. Usage: `make ralph_run INSTRUCTION="focus on error handling"`. The instruction would be appended to the story prompt so the agent factors it in during implementation. Useful for nudging behavior (e.g., "prefer small commits", "skip Tier 2 tests") without modifying tracked files.
 
-- **Deduplicate log level in CC monitor output** (**TODO**): The `[CC]` monitor lines show a redundant log level — e.g., `[INFO] 2026-02-18T00:01:57Z [CC] [INFO]`. The outer `[INFO]` is from ralph's own `log_info`/`log_cc_info`, and the inner `[INFO]` is from the captured CC agent output. Strip the inner level prefix when wrapping with `log_cc_*` to avoid `[INFO] ... [CC] [INFO]` duplication.
+- ~~**Deduplicate log level in CC monitor output**~~: **DONE** — `monitor_story_progress` strips leading `[INFO]`/`[WARN]`/`[ERROR]` prefix from CC agent output before wrapping with `log_cc*`, preventing `[INFO] ... [CC] [INFO]` duplication.
 
 ## Sources
 
