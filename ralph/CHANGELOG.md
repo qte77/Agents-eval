@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CC Monitor Log Nesting**: Replace `tail -5` with byte offset tracking (`wc -c`) so monitor reads only new log content per 30s cycle, preventing `[CC] [INFO] [CC] [INFO] ...` chains
+- **Worktree VIRTUAL_ENV Mismatch**: Launch `ralph.sh` via `env -u VIRTUAL_ENV` so uv discovers `.venv` via symlink without devcontainer mismatch warnings; capture `SOURCE_VENV=$PWD` before `cd` (replaces `git rev-parse`)
+- **Worktree Phantom chmod**: Replace `make_executable()` with `check_executable()` in `init.sh` — warn instead of writing, preventing phantom permission changes on read-only worktree filesystems
 - **CC Monitor Log Dedup**: Strip inner log-level prefix from CC agent output before wrapping with `log_cc*`
 - **Scoped Reset**: TDD failure cleanup now only removes story-created untracked files instead of `git clean -fd` which nuked all untracked files
 - **REFACTOR Marker Fallback**: `check_tdd_commits` detects conventional `refactor(` prefix when `[REFACTOR]` bracket marker is missing

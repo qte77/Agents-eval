@@ -13,7 +13,7 @@ if [[ "${1:-}" =~ ^(-h|--help)$ ]]; then
     echo "  RALPH_MODEL, MAX_ITERATIONS, RALPH_TEAMS, CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"
     echo ""
     echo "The worktree shares the source repo's .venv via symlink."
-    echo "Changes to .venv (e.g., uv sync) are visible immediately in both."
+    echo "Ralph should never run uv sync — changes to .venv belong in the source repo."
     echo ""
     echo "Preferred: make ralph_worktree BRANCH=ralph/sprint8-name TEAMS=true"
     exit 0
@@ -21,6 +21,8 @@ fi
 
 BRANCH="${1:?Usage: $0 BRANCH. Try --help.}"
 WORKTREE_DIR="../$(basename "$BRANCH")"
+SOURCE_VENV="$PWD/.venv"
+RALPH_SCRIPT="ralph/scripts/ralph.sh"
 
 # Reuse existing worktree, or set up branch + worktree
 WORKTREE_EXISTS=false
@@ -48,10 +50,8 @@ fi
 cd "$WORKTREE_DIR"
 
 # Symlink source repo's .venv — both repos share one venv in real time.
-# Ralph should never runs uv sync.
-SOURCE_VENV="$(git rev-parse --path-format=absolute --git-common-dir)/../.venv"
+# Ralph should never run uv sync.
 if [ -d "$SOURCE_VENV" ] && [ ! -e .venv ]; then
     ln -s "$SOURCE_VENV" .venv
 fi
-export VIRTUAL_ENV="$PWD/.venv"
-bash ralph/scripts/ralph.sh
+env -u VIRTUAL_ENV bash "$RALPH_SCRIPT"

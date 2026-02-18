@@ -152,12 +152,16 @@ check_prd_json() {
     fi
 }
 
-# Make scripts executable
-make_executable() {
-    log_info "Making scripts executable..."
-    chmod +x ralph/scripts/ralph.sh
-    chmod +x ralph/scripts/init.sh
-    log_success "Scripts are executable"
+# Verify scripts are executable (commit as 755, don't chmod at runtime)
+check_executable() {
+    local missing=0
+    for script in ralph/scripts/ralph.sh ralph/scripts/init.sh; do
+        if [ ! -x "$script" ]; then
+            log_warn "$script is not executable — run: chmod +x $script"
+            missing=1
+        fi
+    done
+    [ $missing -eq 0 ] && log_success "Scripts are executable"
 }
 
 # Main
@@ -165,7 +169,7 @@ main() {
     check_prerequisites
     check_project_structure
     initialize_progress
-    make_executable
+    check_executable
 
     echo ""
     log_success "Ralph Loop environment initialized!"
