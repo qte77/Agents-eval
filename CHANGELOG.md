@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Judge 401 auth failures: validated API key now forwarded through `_resolve_provider_key` → `select_available_provider` → `create_judge_agent` instead of being discarded
+- `run_cli.py` CLI parser: space-separated args (`--paper-id 1105.1072`) now parsed correctly instead of treating value flags as booleans
 
 - `CCTraceAdapter._extract_coordination_events()` stub now parses `inboxes/*.json` messages (STORY-014)
 - `test_download_success_mocked` AttributeError — patched correct import path (STORY-007)

@@ -20,40 +20,64 @@ def _convert_value(key: str, value: str | bool) -> str | bool | int:
     return value
 
 
-_COMMANDS = {
-    "--help": "Display help information",
-    "--version": "Display version information",
-    "--chat-provider": "Specify the chat provider to use",
-    "--query": "Specify the query to process",
-    "--include-researcher": "Include the researcher agent",
-    "--include-analyst": "Include the analyst agent",
-    "--include-synthesiser": "Include the synthesiser agent",
-    "--pydantic-ai-stream": "Enable streaming output",
-    "--chat-config-file": "Specify the path to the chat configuration file",
-    "--enable-review-tools": "Enable PeerRead review generation tools (enabled by default)",
-    "--no-review-tools": "Disable PeerRead review generation tools (opt-out)",
-    "--paper-id": "Specify paper ID for PeerRead review (supports arxiv IDs like '1105.1072')",
-    "--judge-provider": "Override Tier 2 LLM provider for judge (default: auto, inherits provider)",
-    "--judge-model": "Override Tier 2 judge LLM model",
-    "--skip-eval": "Skip evaluation after run_manager completes",
-    "--token-limit": "Override agent token limit (1000-1000000, default from config)",
-    "--download-peerread-full-only": ("Download all of the PeerRead dataset and exit (setup mode)"),
+# (description, takes_value) — single source of truth for flag metadata.
+_COMMANDS: dict[str, tuple[str, bool]] = {
+    "--help": ("Display help information", False),
+    "--version": ("Display version information", False),
+    "--chat-provider": ("Specify the chat provider to use", True),
+    "--query": ("Specify the query to process", True),
+    "--include-researcher": ("Include the researcher agent", False),
+    "--include-analyst": ("Include the analyst agent", False),
+    "--include-synthesiser": ("Include the synthesiser agent", False),
+    "--pydantic-ai-stream": ("Enable streaming output", False),
+    "--chat-config-file": ("Specify the path to the chat configuration file", True),
+    "--enable-review-tools": (
+        "Enable PeerRead review generation tools (enabled by default)",
+        False,
+    ),
+    "--no-review-tools": ("Disable PeerRead review generation tools (opt-out)", False),
+    "--paper-id": (
+        "Specify paper ID for PeerRead review (supports arxiv IDs like '1105.1072')",
+        True,
+    ),
+    "--judge-provider": (
+        "Override Tier 2 LLM provider for judge (default: auto, inherits provider)",
+        True,
+    ),
+    "--judge-model": ("Override Tier 2 judge LLM model", True),
+    "--skip-eval": ("Skip evaluation after run_manager completes", False),
+    "--token-limit": (
+        "Override agent token limit (1000-1000000, default from config)",
+        True,
+    ),
+    "--download-peerread-full-only": (
+        "Download all of the PeerRead dataset and exit (setup mode)",
+        False,
+    ),
     "--download-peerread-samples-only": (
-        "Download a small sample of the PeerRead dataset and exit (setup mode)"
+        "Download a small sample of the PeerRead dataset and exit (setup mode)",
+        False,
     ),
     "--peerread-max-papers-per-sample-download": (
-        "Specify max papers to download per split, overrides sample default"
+        "Specify max papers to download per split, overrides sample default",
+        True,
     ),
-    "--cc-solo-dir": ("Path to Claude Code solo session export directory for baseline comparison"),
+    "--cc-solo-dir": (
+        "Path to Claude Code solo session export directory for baseline comparison",
+        True,
+    ),
     "--cc-teams-dir": (
-        "Path to Claude Code Agent Teams artifacts directory for baseline comparison"
+        "Path to Claude Code Agent Teams artifacts directory for baseline comparison",
+        True,
     ),
     "--cc-teams-tasks-dir": (
         "Path to Claude Code Agent Teams tasks directory "
-        "(optional, auto-discovered if not specified)"
+        "(optional, auto-discovered if not specified)",
+        True,
     ),
     "--engine": (
-        "Execution engine: 'mas' for MAS pipeline (default), 'cc' for Claude Code headless"
+        "Execution engine: 'mas' for MAS pipeline (default), 'cc' for Claude Code headless",
+        True,
     ),
 }
 
@@ -61,19 +85,20 @@ _COMMANDS = {
 def _print_help() -> None:
     """Print available commands and exit."""
     print("Available commands:")
-    for cmd, desc in _COMMANDS.items():
+    for cmd, (desc, _) in _COMMANDS.items():
         print(f"{cmd}: {desc}")
     exit(0)
 
 
-def _parse_single_arg(arg: str) -> tuple[str, str | bool] | None:
-    """Parse one argument into (key, value) or return None if unrecognized."""
+def _parse_single_arg(arg: str) -> tuple[str, str | bool, bool] | None:
+    """Parse one argument into (key, value, takes_value) or None if unrecognized."""
     flag = arg.split("=", 1)[0]
     if flag not in _COMMANDS:
         return None
+    _, takes_value = _COMMANDS[flag]
     key = flag.lstrip("--").replace("-", "_")
     value: str | bool = arg.split("=", 1)[1] if "=" in arg else True
-    return key, value
+    return key, value, takes_value
 
 
 def _normalize(parsed_args: dict[str, Any]) -> dict[str, Any]:
@@ -110,11 +135,19 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
         _print_help()
 
     parsed_args: dict[str, Any] = {}
-    for arg in argv:
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
         result = _parse_single_arg(arg)
         if result is not None:
-            key, value = result
+            key, value, takes_value = result
+            # Reason: value-taking flags used as `--flag value` (space-separated)
+            # get True from _parse_single_arg; consume next token as the value.
+            if value is True and takes_value and i + 1 < len(argv):
+                i += 1
+                value = argv[i]
             parsed_args[key] = _convert_value(key, value)
+        i += 1
 
     return _normalize(parsed_args)
 
