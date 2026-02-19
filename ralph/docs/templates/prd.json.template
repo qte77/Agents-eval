@@ -1,5 +1,5 @@
 {
-  "project": "RDI-AgentBeats-TheBulletproofProtocol",
+  "project": "{{PROJECT}}",
   "description": "A concise project description",
   "source": "docs/PRD.md",
   "generated": "TEMPLATE",

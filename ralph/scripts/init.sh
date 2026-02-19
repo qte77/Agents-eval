@@ -91,12 +91,16 @@ check_project_structure() {
 
 # Initialize progress.txt from template if it doesn't exist
 initialize_progress() {
+    local project="${RALPH_PROJECT:-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")}"
+
     if [ ! -f "ralph/docs/progress.txt" ]; then
         log_info "Initializing progress.txt from template..."
+        log_info "Project: $project"
 
         if [ -f "ralph/docs/templates/progress.txt.template" ]; then
-            # Copy from template and replace {{DATE}} placeholder
-            sed "s/{{DATE}}/$(date)/" ralph/docs/templates/progress.txt.template > ralph/docs/progress.txt
+            # Copy from template and replace {{DATE}} and {{PROJECT}} placeholders
+            sed -e "s/{{DATE}}/$(date)/" -e "s/{{PROJECT}}/$project/" \
+                ralph/docs/templates/progress.txt.template > ralph/docs/progress.txt
             log_success "progress.txt initialized from template"
         else
             log_warn "Template not found, creating default progress.txt..."
@@ -104,7 +108,7 @@ initialize_progress() {
 # Ralph Loop Progress Log
 
 Started: $(date)
-Project: RDI-AgentBeats-TheBulletproofProtocol
+Project: $project
 
 This file tracks the progress of Ralph loop autonomous execution.
 Each iteration appends its results here.
@@ -121,14 +125,17 @@ EOF
 
 # Check if prd.json exists, create from template if not
 check_prd_json() {
+    local project="${RALPH_PROJECT:-$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")}"
+
     if [ ! -f "ralph/docs/prd.json" ]; then
         log_warn "prd.json not found"
 
         if [ -f "ralph/docs/templates/prd.json.template" ]; then
             log_info "Creating prd.json from template..."
-            cp ralph/docs/templates/prd.json.template ralph/docs/prd.json
-            # Update timestamp
-            sed -i "s/\"TEMPLATE\"/\"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"/" ralph/docs/prd.json
+            # Copy template and substitute placeholders
+            sed -e "s/{{PROJECT}}/$project/" \
+                -e "s/\"TEMPLATE\"/\"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"/" \
+                ralph/docs/templates/prd.json.template > ralph/docs/prd.json
             log_success "prd.json created from template"
         fi
 

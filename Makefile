@@ -75,6 +75,7 @@ CC_TEAMS_TIMEOUT ?= 600
 CC_MODEL ?=
 
 # -- ralph (autonomous loop) --
+RALPH_PROJECT ?= $(notdir $(CURDIR))
 RALPH_TIMEOUT ?=
 TEAMS ?= false
 
@@ -445,9 +446,9 @@ ralph_prd_md:  ## [Optional] Generate PRD.md from UserStory.md
 ralph_prd_json:  ## [Optional] Generate PRD.json from PRD.md (DRY_RUN=1 for parse-only)
 	$(if $(DRY_RUN),python ralph/scripts/generate_prd_json.py --dry-run,echo "Generating PRD.json from PRD.md ..." && claude -p "/generating-prd-json-from-prd-md")
 
-ralph_init:  ## Initialize Ralph loop environment
+ralph_init:  ## Initialize Ralph loop environment. Usage: make ralph_init [RALPH_PROJECT=name]
 	echo "Initializing Ralph loop environment ..."
-	bash ralph/scripts/init.sh
+	RALPH_PROJECT=$(RALPH_PROJECT) bash ralph/scripts/init.sh
 
 ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false EXPERIMENTAL)
 	echo "Starting Ralph loop ..."
