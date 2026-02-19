@@ -59,8 +59,9 @@ WRITEUP_BIB ?= $(WRITEUP_DIR)/09a_bibliography.bib
 WRITEUP_CSL ?= scripts/writeup/citation-styles/ieee.csl
 WRITEUP_PUML_DIR := docs/arch_vis
 SKIP_PUML ?=
-SKIP_CONTENT ?= 1
+SKIP_CREATE_CONTENT ?= 1
 WRITEUP_TIMEOUT ?= 600
+WRITEUP_TITLE_PAGE = $(wildcard $(WRITEUP_DIR)/00_title_abstract.tex)
 
 # -- phoenix (trace viewer) --
 PHOENIX_CONTAINER_NAME := phoenix-tracing
@@ -237,8 +238,8 @@ run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_p
 
 
 # Convenience wrapper: content generation (CC teams) + PlantUML regen + pandoc PDF build.
-writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs-new [LANGUAGE=de-DE] [SKIP_CONTENT=1] [SKIP_PUML=1]
-	if [ -z "$(SKIP_CONTENT)" ]; then
+writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs-new [LANGUAGE=de-DE] [SKIP_CREATE_CONTENT=1] [SKIP_PUML=1]
+	if [ -z "$(SKIP_CREATE_CONTENT)" ]; then
 		echo "=== Generating writeup content with Claude Code teams ==="
 		$(MAKE) -s writeup_generate
 	fi
@@ -254,6 +255,7 @@ writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs
 	$(MAKE) -s run_pandoc \
 		INPUT_FILES="$$(printf '%s\036' $(WRITEUP_DIR)/01_*.md $(WRITEUP_DIR)/0[2-8]_*.md $(WRITEUP_DIR)/09b_*.md $(WRITEUP_DIR)/10_*.md $(WRITEUP_DIR)/11_*.md)" \
 		OUTPUT_FILE="$(WRITEUP_OUTPUT)" \
+		TITLE_PAGE="$(WRITEUP_TITLE_PAGE)" \
 		BIBLIOGRAPHY="$(WRITEUP_BIB)" \
 		CSL="$(WRITEUP_CSL)" \
 		LANGUAGE="$(LANGUAGE)" \
@@ -539,6 +541,8 @@ help:  ## Show available recipes grouped by section
 
 
 # MARK: FIXME backward-compat aliases
+
+
 ruff: lint_src
 ruff_tests: lint_tests
 test_all: test

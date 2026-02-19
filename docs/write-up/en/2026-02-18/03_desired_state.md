@@ -1,7 +1,3 @@
----
-title: Desired State and End Goals
----
-
 # Desired State and End Goals
 
 ## Vision
