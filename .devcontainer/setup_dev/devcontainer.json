@@ -57,5 +57,5 @@
     "UV_LINK_MODE": "copy",
     "UV_CACHE_DIR": "/tmp/claude-1000/uv-cache"
   },
-  "postCreateCommand": "make setup_devc"
+  "postCreateCommand": "make setup_sandbox && make setup_dev"
 }

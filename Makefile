@@ -6,9 +6,9 @@
 .SILENT:
 .ONESHELL:
 .PHONY: \
-	setup_prod setup_dev setup_devc setup_claude_code setup_sandbox \
-	setup_plantuml setup_pdf_converter setup_markdownlint setup_jscpd \
-	setup_ollama clean_ollama setup_dataset_sample setup_dataset_full \
+	setup_prod setup_dev setup_claude_code setup_sandbox \
+	setup_plantuml setup_pdf_converter setup_npm_tools \
+	setup_ollama clean_ollama setup_dataset \
 	dataset_smallest quickstart \
 	start_ollama stop_ollama \
 	plantuml_serve plantuml_render \
@@ -21,10 +21,8 @@
 	setup_phoenix start_phoenix stop_phoenix status_phoenix \
 	ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run \
 	ralph_worktree ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean \
-	help \
-	ruff ruff_tests test_all test_quick sweep quick_start dataset_get_smallest \
-	run_puml_interactive run_puml_single run_markdownlint \
-	setup_prod_ollama setup_dev_ollama setup_devc_ollama
+	clean_results clean_logs \
+	help
 .DEFAULT_GOAL := help
 
 # -- paths --
@@ -97,20 +95,14 @@ setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, plantuml. Flags:
 	uv sync --all-groups
 	echo "npm version: $$(npm --version)"
 	$(MAKE) -s setup_claude_code
-	$(MAKE) -s setup_markdownlint
-	$(MAKE) -s setup_jscpd
+	$(MAKE) -s setup_npm_tools
 	$(MAKE) -s setup_plantuml
 	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s start_ollama)
-
-setup_devc:  ## Setup dev environment with sandbox. Flags: OLLAMA=1 (via setup_dev)
-	$(MAKE) -s setup_sandbox
-	$(MAKE) -s setup_dev
 
 setup_claude_code:  ## Setup claude code CLI
 	echo "Setting up Claude Code CLI ..."
 	cp -r .claude/.claude.json ~/.claude.json
 	curl -fsSL https://claude.ai/install.sh | bash
-	claude plugin marketplace add anthropics/claude-plugins-official
 	echo "Claude Code CLI version: $$(claude --version)"
 
 setup_sandbox:  ## Install sandbox deps (bubblewrap, socat) for Linux/WSL2
@@ -151,17 +143,14 @@ setup_pdf_converter:  ## Setup PDF converter tools. Usage: make setup_pdf_conver
 		$(PDF_CONVERTER_SCRIPT) "$(CONVERTER)"
 	fi
 
-# TODO: evaluate Python-native alternative to markdownlint (pymarkdownlnt, mdformat) to reduce npm dependency
-setup_markdownlint:  ## Setup markdownlint CLI, node.js and npm have to be present
-	echo "Setting up markdownlint CLI ..."
-	npm install -gs markdownlint-cli
+# TODO: evaluate Python-native alternatives (pymarkdownlnt, mdformat, pylint R0801) to reduce npm dependency
+setup_npm_tools:  ## Setup npm-based dev tools (markdownlint, jscpd). Requires node.js and npm
+	echo "Setting up npm dev tools ..."
+	npm install -gs markdownlint-cli jscpd
 	echo "markdownlint version: $$(markdownlint --version)"
-
-setup_jscpd:  ## Setup jscpd copy-paste detector, node.js and npm have to be present
-	echo "Setting up jscpd ..."
-	npm install -gs jscpd
 	echo "jscpd version: $$(jscpd --version)"
-# Ollama BINDIR in /usr/local/bin /usr/bin /bin 
+
+# Ollama BINDIR in /usr/local/bin /usr/bin /bin
 setup_ollama:  ## Download Ollama, script does start local Ollama server
 	echo "Downloading Ollama binary ... Using '$(OLLAMA_SETUP_URL)'."
 	# script does start server but not consistently
@@ -171,24 +160,27 @@ setup_ollama:  ## Download Ollama, script does start local Ollama server
 
 clean_ollama:  ## Remove local Ollama from system
 	echo "Searching for Ollama binary ..."
+	BIN=""
 	for BINDIR in /usr/local/bin /usr/bin /bin; do
-		if echo $$PATH | grep -q $$BINDIR; then
-			echo "Ollama binary found in '$${BINDIR}'"
+		if [ -x "$$BINDIR/ollama" ]; then
+			echo "Ollama binary found in '$$BINDIR'"
 			BIN="$$BINDIR/ollama"
 			break
 		fi
 	done
-	echo "Cleaning up ..."
-	rm -f $(BIN)
+	if [ -z "$$BIN" ]; then
+		echo "Ollama binary not found in PATH"
+		exit 1
+	fi
+	echo "Removing $$BIN ..."
+	sudo rm -f "$$BIN"
 
-setup_dataset_sample:  ## Download small sample of PeerRead dataset
-	echo "Downloading small sample of PeerRead dataset ..."
-	$(MAKE) -s run_cli ARGS=--download-peerread-samples-only
-	$(MAKE) -s dataset_smallest
-
-setup_dataset_full:  ## Download full PeerRead dataset
-	echo "Downloading full PeerRead dataset ..."
-	$(MAKE) -s run_cli ARGS=--download-peerread-full-only
+setup_dataset:  ## Download PeerRead dataset. Usage: make setup_dataset [MODE=full] [MAX_PAPERS=5]
+	$(if $(filter full,$(MODE)),\
+		echo "Downloading full PeerRead dataset ..." && \
+		$(MAKE) -s run_cli ARGS=--download-peerread-full-only,\
+		echo "Downloading PeerRead sample ..." && \
+		$(MAKE) -s run_cli ARGS="--download-peerread-samples-only $(if $(MAX_PAPERS),--peerread-max-papers-per-sample-download $(MAX_PAPERS))")
 	$(MAKE) -s dataset_smallest
 
 dataset_smallest:  ## Show N smallest papers by file size. Usage: make dataset_smallest N=5
@@ -294,14 +286,14 @@ lint_md:  ## Lint markdown files. Usage: make lint_md INPUT_FILES="docs/**/*.md"
 quickstart:  ## Download sample data and run evaluation on smallest paper
 	echo "=== Quick Start: Download samples + evaluate smallest paper ==="
 	if [ ! -d datasets/peerread ]; then
-		$(MAKE) -s setup_dataset_sample
+		$(MAKE) -s setup_dataset
 	else
 		echo "PeerRead dataset already present, skipping download."
 	fi
 	PAPER_ID=$$($(MAKE) -s dataset_smallest N=1 \
 		| awk '{print $$2}' | sed 's|.*/parsed_pdfs/||;s|\.pdf\.json||')
 	if [ -z "$$PAPER_ID" ]; then
-		echo "ERROR: No papers found. Run 'make setup_dataset_sample' first."
+		echo "ERROR: No papers found. Run 'make setup_dataset' first."
 		exit 1
 	fi
 	echo "Selected smallest paper: $$PAPER_ID"
@@ -314,13 +306,14 @@ run_cli:  ## Run app on CLI only. Usage: make run_cli ARGS="--help" or make run_
 run_gui:  ## Run app with Streamlit GUI
 	PYTHONPATH=$(SRC_PATH) uv run streamlit run $(GUI_PATH_ST)
 
-run_sweep:  ## Run MAS composition sweep. Usage: make run_sweep ARGS="--paper-numbers 1,2,3 --repetitions 3 --all-compositions"
+run_sweep:  ## Run MAS composition sweep. Usage: make run_sweep ARGS="--paper-ids 1,2,3 --repetitions 3 --all-compositions"
 	PYTHONPATH=$(SRC_PATH) uv run python $(SRC_PATH)/run_sweep.py $(ARGS)
 
 run_profile:  ## Profile app with scalene
+	mkdir -p logs/scalene-profiles
 	uv run scalene --outfile \
-		"$(APP_PATH)/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
-		"$(APP_PATH)/main.py"
+		"logs/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
+		"$(CLI_PATH)"
 
 
 # MARK: cc-baselines
@@ -369,7 +362,7 @@ duplication:  ## Detect copy-paste duplication with jscpd
 	if command -v jscpd > /dev/null 2>&1; then
 		jscpd src/ --min-lines 5 --min-tokens 50 --reporters console
 	else
-		echo "jscpd not installed — skipping duplication check (run 'make setup_jscpd' to enable)"
+		echo "jscpd not installed — skipping duplication check (run 'make setup_npm_tools' to enable)"
 	fi
 
 test:  ## Run all tests
@@ -385,7 +378,7 @@ test_coverage:  ## Run tests with coverage threshold (configured in pyproject.to
 type_check:  ## Check for static typing errors
 	uv run pyright src
 
-validate:  ## Complete pre-commit validation sequence
+validate:  ## Complete pre-commit validation (lint + type check + complexity + duplication + test coverage)
 	set -e
 	echo "Running complete validation sequence..."
 	$(MAKE) -s lint_src
@@ -506,6 +499,22 @@ ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
 	echo "Ralph state cleaned. Run 'make ralph_init' to reinitialize."
 
 
+# MARK: clean
+
+
+clean_results:  ## Remove all sweep result files from results/sweeps/
+	echo "Removing results/sweeps/ contents ..."
+	rm -rf results/sweeps/*
+	echo "Sweep results cleaned."
+
+clean_logs:  ## Remove accumulated agent evaluation logs from logs/Agent_evals/
+	echo "WARNING: This will delete all logs in logs/Agent_evals/ (including traces)!"
+	echo "Press Ctrl+C to cancel, Enter to continue..."
+	read
+	rm -rf logs/Agent_evals/*
+	echo "Agent evaluation logs cleaned."
+
+
 # MARK: help
 
 
@@ -524,19 +533,3 @@ help:  ## Show available recipes grouped by section
 			printf "  \033[36m%-22s\033[0m %s\n", recipe, substr($$0, RSTART + 3, RLENGTH) \
 		} \
 	}' $(MAKEFILE_LIST)
-
-
-# MARK: FIXME backward-compat aliases
-ruff: lint_src
-ruff_tests: lint_tests
-test_all: test
-test_quick: test_rerun
-sweep: run_sweep
-quick_start: quickstart
-dataset_get_smallest: dataset_smallest
-run_puml_interactive: plantuml_serve
-run_puml_single: plantuml_render
-run_markdownlint: lint_md
-setup_prod_ollama: ; $(MAKE) setup_prod OLLAMA=1
-setup_dev_ollama: ; $(MAKE) setup_dev OLLAMA=1
-setup_devc_ollama: ; $(MAKE) setup_devc OLLAMA=1
