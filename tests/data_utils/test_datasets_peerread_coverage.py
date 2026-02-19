@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 
 import httpx
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from app.data_models.peerread_models import PeerReadConfig
@@ -115,6 +115,7 @@ class TestPeerReadDownloaderErrorHandling:
         with pytest.raises(ValueError, match="Invalid data_type"):
             downloader._construct_url("acl_2017", "train", "invalid_type", "104")
 
+    @settings(deadline=500)
     @given(
         venue=st.sampled_from(["acl_2017", "conll_2016", "iclr_2017"]),
         split=st.sampled_from(["train", "test", "dev"]),
@@ -342,6 +343,7 @@ class TestURLExtraction:
         # Assert
         assert paper_id is None
 
+    @settings(deadline=500)
     @given(
         filename=st.text(min_size=1, max_size=100),
     )

@@ -6,8 +6,10 @@ with the PeerRead dataset for paper retrieval, querying, and review evaluation.
 """
 
 import time
+from collections.abc import Awaitable, Callable
 from json import dump
 from pathlib import Path
+from typing import TypeVar
 
 from markitdown import MarkItDown
 from pydantic import BaseModel
@@ -74,6 +76,62 @@ def read_paper_pdf(
         raise ValueError(f"Failed to read PDF: {str(e)}")
 
 
+T = TypeVar("T")
+
+
+async def _traced_tool_call(  # noqa: UP047
+    agent_id: str,
+    tool_name: str,
+    context: str,
+    fn: Callable[[], Awaitable[T]],
+    error_cls: type[Exception] = ModelRetry,
+    error_msg: str = "",
+) -> T:
+    """Execute an async tool function with tracing and error handling.
+
+    Wraps tool business logic with standardized timing, trace logging,
+    and error handling to eliminate boilerplate across PeerRead tools.
+
+    Args:
+        agent_id: Agent identifier for trace logging.
+        tool_name: Name of the tool being called.
+        context: Context string for trace logging (e.g., "paper_id=123").
+        fn: Zero-arg async callable containing the tool's business logic.
+        error_cls: Exception type to wrap unexpected errors (default: ModelRetry).
+        error_msg: Prefix for the error message on unexpected failures.
+
+    Returns:
+        T: The result from the tool's business logic.
+
+    Raises:
+        ModelRetry: Re-raised if the business logic raises it.
+        error_cls: Wraps any other exception with the provided error_msg.
+    """
+    start_time = time.perf_counter()
+    trace_collector = get_trace_collector()
+    success = False
+
+    try:
+        result = await fn()
+        success = True
+        return result
+    except ModelRetry:
+        raise
+    except Exception as e:
+        logger.error(f"Error in {tool_name}: {e}")
+        msg = f"{error_msg}: {str(e)}" if error_msg else str(e)
+        raise error_cls(msg)
+    finally:
+        duration = time.perf_counter() - start_time
+        trace_collector.log_tool_call(
+            agent_id=agent_id,
+            tool_name=tool_name,
+            success=success,
+            duration=duration,
+            context=context,
+        )
+
+
 def add_peerread_tools_to_agent(agent: Agent[None, BaseModel], agent_id: str = "manager"):
     """Add PeerRead dataset tools to an agent.
 
@@ -95,36 +153,23 @@ def add_peerread_tools_to_agent(agent: Agent[None, BaseModel], agent_id: str = "
         Returns:
             PeerReadPaper with title, abstract, and reviews.
         """
-        start_time = time.perf_counter()
-        trace_collector = get_trace_collector()
-        success = False
 
-        try:
+        async def _fn() -> PeerReadPaper:
             config = load_peerread_config()
             loader = PeerReadLoader(config)
-
             paper = loader.get_paper_by_id(paper_id)
             if not paper:
                 raise ModelRetry(f"Paper {paper_id} not found in PeerRead dataset")
-
             logger.info(f"Retrieved paper {paper_id}: {paper.title[:50]}...")
-            success = True
             return paper
 
-        except ModelRetry:
-            raise
-        except Exception as e:
-            logger.error(f"Error retrieving paper: {e}")
-            raise ModelRetry(f"Failed to retrieve paper: {str(e)}")
-        finally:
-            duration = time.perf_counter() - start_time
-            trace_collector.log_tool_call(
-                agent_id=agent_id,
-                tool_name="get_peerread_paper",
-                success=success,
-                duration=duration,
-                context=f"paper_id={paper_id}",
-            )
+        return await _traced_tool_call(
+            agent_id=agent_id,
+            tool_name="get_peerread_paper",
+            context=f"paper_id={paper_id}",
+            fn=_fn,
+            error_msg="Failed to retrieve paper",
+        )
 
     @agent.tool
     async def query_peerread_papers(  # type: ignore[reportUnusedFunction]
@@ -142,39 +187,25 @@ def add_peerread_tools_to_agent(agent: Agent[None, BaseModel], agent_id: str = "
         Returns:
             List of PeerReadPaper objects matching the criteria.
         """
-        start_time = time.perf_counter()
-        trace_collector = get_trace_collector()
-        success = False
 
-        try:
+        async def _fn() -> list[PeerReadPaper]:
             config = load_peerread_config()
             loader = PeerReadLoader(config)
-
-            # Query papers with filters
             papers = loader.query_papers(
                 venue=venue if venue else None,
                 min_reviews=min_reviews,
                 limit=config.max_papers_per_query,
             )
-
             logger.info(f"Found {len(papers)} papers matching criteria")
-            success = True
             return papers
 
-        except ModelRetry:
-            raise
-        except Exception as e:
-            logger.error(f"Error querying papers: {e}")
-            raise ModelRetry(f"Failed to query papers: {str(e)}")
-        finally:
-            duration = time.perf_counter() - start_time
-            trace_collector.log_tool_call(
-                agent_id=agent_id,
-                tool_name="query_peerread_papers",
-                success=success,
-                duration=duration,
-                context=f"venue={venue},min_reviews={min_reviews}",
-            )
+        return await _traced_tool_call(
+            agent_id=agent_id,
+            tool_name="query_peerread_papers",
+            context=f"venue={venue},min_reviews={min_reviews}",
+            fn=_fn,
+            error_msg="Failed to query papers",
+        )
 
     @agent.tool
     async def get_paper_content(  # type: ignore[reportUnusedFunction]
@@ -195,35 +226,25 @@ def add_peerread_tools_to_agent(agent: Agent[None, BaseModel], agent_id: str = "
         Returns:
             str: Full paper text content from the local PeerRead dataset.
         """
-        start_time = time.perf_counter()
-        trace_collector = get_trace_collector()
-        success = False
 
-        try:
+        async def _fn() -> str:
             config = load_peerread_config()
             loader = PeerReadLoader(config)
             paper = loader.get_paper_by_id(paper_id)
-
             if not paper:
                 raise ValueError(f"Paper {paper_id} not found in PeerRead dataset")
-
             content = _load_paper_content_with_fallback(ctx, loader, paper_id, paper.abstract)
             logger.info(f"Retrieved content for paper {paper_id}")
-            success = True
             return content
 
-        except Exception as e:
-            logger.error(f"Error retrieving paper content: {e}")
-            raise ValueError(f"Failed to retrieve paper content: {str(e)}")
-        finally:
-            duration = time.perf_counter() - start_time
-            trace_collector.log_tool_call(
-                agent_id=agent_id,
-                tool_name="get_paper_content",
-                success=success,
-                duration=duration,
-                context=f"paper_id={paper_id}",
-            )
+        return await _traced_tool_call(
+            agent_id=agent_id,
+            tool_name="get_paper_content",
+            context=f"paper_id={paper_id}",
+            fn=_fn,
+            error_cls=ValueError,
+            error_msg="Failed to retrieve paper content",
+        )
 
 
 def _truncate_paper_content(abstract: str, body: str, max_length: int) -> str:
@@ -385,42 +406,27 @@ def add_peerread_review_tools_to_agent(
             str: Review template with paper information and placeholder sections
                  that need to be manually completed.
         """
-        start_time = time.perf_counter()
-        trace_collector = get_trace_collector()
-        success = False
 
-        try:
+        async def _fn() -> str:
             config = load_peerread_config()
             loader = PeerReadLoader(config)
             paper = loader.get_paper_by_id(paper_id)
-
             if not paper:
                 raise ModelRetry(f"Paper {paper_id} not found in PeerRead dataset")
-
             paper_content = _load_paper_content_with_fallback(ctx, loader, paper_id, paper.abstract)
-
             review_template = _load_and_format_template(
                 paper.title, paper.abstract, paper_content, tone, review_focus, max_content_length
             )
-
             logger.info(f"Created review template for paper {paper_id} (NOT a real review)")
-            success = True
             return review_template
 
-        except ModelRetry:
-            raise
-        except Exception as e:
-            logger.error(f"Error creating review template: {e}")
-            raise ModelRetry(f"Failed to create review template: {str(e)}")
-        finally:
-            duration = time.perf_counter() - start_time
-            trace_collector.log_tool_call(
-                agent_id=agent_id,
-                tool_name="generate_paper_review_content_from_template",
-                success=success,
-                duration=duration,
-                context=f"paper_id={paper_id},focus={review_focus}",
-            )
+        return await _traced_tool_call(
+            agent_id=agent_id,
+            tool_name="generate_paper_review_content_from_template",
+            context=f"paper_id={paper_id},focus={review_focus}",
+            fn=_fn,
+            error_msg="Failed to create review template",
+        )
 
     @agent.tool
     async def save_paper_review(  # type: ignore[reportUnusedFunction]
@@ -444,38 +450,26 @@ def add_peerread_review_tools_to_agent(
         Returns:
             str: Path to the saved review file.
         """
-        start_time = time.perf_counter()
-        trace_collector = get_trace_collector()
-        success = False
 
-        try:
-            # Create PeerReadReview — only set fields we have, model defaults apply
+        async def _fn() -> str:
             review = PeerReadReview(
                 comments=review_text,
                 recommendation=recommendation if recommendation else "UNKNOWN",
                 reviewer_confidence=str(confidence) if confidence > 0 else "UNKNOWN",
             )
-
-            # Save to persistent storage
             persistence = ReviewPersistence()
             filepath = persistence.save_review(paper_id, review)
-
             logger.info(f"Saved review for paper {paper_id} to {filepath}")
-            success = True
             return filepath
 
-        except Exception as e:
-            logger.error(f"Error saving paper review: {e}")
-            raise ValueError(f"Failed to save review: {str(e)}")
-        finally:
-            duration = time.perf_counter() - start_time
-            trace_collector.log_tool_call(
-                agent_id=agent_id,
-                tool_name="save_paper_review",
-                success=success,
-                duration=duration,
-                context=f"paper_id={paper_id}",
-            )
+        return await _traced_tool_call(
+            agent_id=agent_id,
+            tool_name="save_paper_review",
+            context=f"paper_id={paper_id}",
+            fn=_fn,
+            error_cls=ValueError,
+            error_msg="Failed to save review",
+        )
 
     @agent.tool
     async def save_structured_review(  # type: ignore[reportUnusedFunction]
@@ -495,23 +489,16 @@ def add_peerread_review_tools_to_agent(
         Returns:
             str: Path to the saved review file.
         """
-        start_time = time.perf_counter()
-        trace_collector = get_trace_collector()
-        success = False
 
-        try:
+        async def _fn() -> str:
             from datetime import UTC, datetime
 
-            # Convert structured review to PeerReadReview format for persistence
             peerread_format = structured_review.to_peerread_format()
-            # Pydantic handles uppercase→lowercase via validation_alias and defaults
             review = PeerReadReview.model_validate(peerread_format)
 
-            # Save to persistent storage
             persistence = ReviewPersistence()
             filepath = persistence.save_review(paper_id, review)
 
-            # Also save the original structured format for validation
             timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
             result = ReviewGenerationResult(
                 paper_id=paper_id,
@@ -520,27 +507,21 @@ def add_peerread_review_tools_to_agent(
                 model_info="GPT-4o via PydanticAI",
             )
 
-            # Save structured version alongside
             structured_path = filepath.replace(".json", "_structured.json")
             with open(structured_path, "w", encoding="utf-8") as f:
                 dump(result.model_dump(), f, indent=2, ensure_ascii=False)
 
             logger.info(f"Saved structured review for paper {paper_id} to {filepath}")
-            success = True
             return filepath
 
-        except Exception as e:
-            logger.error(f"Error saving structured review: {e}")
-            raise ValueError(f"Failed to save structured review: {str(e)}")
-        finally:
-            duration = time.perf_counter() - start_time
-            trace_collector.log_tool_call(
-                agent_id=agent_id,
-                tool_name="save_structured_review",
-                success=success,
-                duration=duration,
-                context=f"paper_id={paper_id}",
-            )
+        return await _traced_tool_call(
+            agent_id=agent_id,
+            tool_name="save_structured_review",
+            context=f"paper_id={paper_id}",
+            fn=_fn,
+            error_cls=ValueError,
+            error_msg="Failed to save structured review",
+        )
 
 
 # Backward compatibility alias

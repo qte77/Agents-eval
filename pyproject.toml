@@ -98,7 +98,7 @@ reportUnknownVariableType = "none"
 
 [tool.complexipy]
 paths = ["src"]
-max-complexity-allowed = 12  # FIXME: was 10, bumped during Sprint 8 restore — refactor add_peerread_tools_to_agent (CC=11) to restore threshold
+max-complexity-allowed = 10
 sort = "desc"
 
 [tool.ruff]

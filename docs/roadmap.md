@@ -20,7 +20,3 @@ Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for tech
 | **Sprint 7** | Delivered | Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine | [PRD Sprint 7](PRD-Sprint7-Ralph.md) |
 | **Sprint 8** | Delivered | Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, dead code removal, report generation, judge settings UX, GUI a11y/UX | [PRD Sprint 8](sprints/archive/PRD-Sprint8-Ralph.md) |
 | **Sprint 9** | In Progress | Sprint 8 carry-forward (14 stories) + sweep results UI | [PRD Sprint 9](sprints/PRD-Sprint9-Ralph.md) |
-
-## TODO
-
-- [ ] Squash commit `9395e97` ("temp: sync locked system files") — workaround for system-locked files during Sprint 8 restore branch creation
