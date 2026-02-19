@@ -135,7 +135,7 @@ class SweepRunner:
                 if e.status_code != 429 or not await self._handle_rate_limit(e, label, attempt):
                     return None
             except Exception as e:
-                logger.error(f"Evaluation failed for {label}: {e}")
+                logger.error(f"Evaluation failed for {label}: {e}", exc_info=True)
                 return None
 
         return None
@@ -255,6 +255,10 @@ class SweepRunner:
 
     async def _save_results(self) -> None:
         """Save sweep results to both results.json and summary.md."""
+        if not self.results:
+            logger.warning("No successful evaluations — skipping results write")
+            return
+
         await self._save_results_json()
 
         # Generate and save statistical summary
