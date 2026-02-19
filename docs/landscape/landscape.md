@@ -55,7 +55,7 @@ Comprehensive guide covering:
 
 - **[Agent Evaluation Metrics](agent_eval_metrics.md)** - Comprehensive catalog of evaluation metrics for AI agents
 - **[Tracing & Observation Methods](trace_observe_methods.md)** - Technical analysis of 17 observability tool implementations with OpenTelemetry GenAI conventions and multi-agent tracing patterns
-- **[Trace Processors Implementation](../../src/app/evals/trace_processors.py)** - Source code for processing agent execution traces
+- **[Trace Processors Implementation](../../src/app/judge/trace_processors.py)** - Source code for processing agent execution traces
 
 ### Architecture Visualization
 

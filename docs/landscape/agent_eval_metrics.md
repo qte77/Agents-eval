@@ -296,7 +296,7 @@ Metrics derived from production evaluation frameworks and competition benchmarks
 - **Strengths**: Simple, threshold-based behavioral assessment
 - **Limitations**: Requires multiple runs and score threshold definition
 - **Reference**: Bloom Framework (Anthropic)
-- **Landscape Reference**: [Bloom](further_reading.md#practitioner-resources)
+- **Landscape Reference**: [Bloom](../research/further_reading.md#practitioner-resources)
 
 #### Session Continuity
 

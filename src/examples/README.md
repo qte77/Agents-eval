@@ -94,5 +94,5 @@ These examples use the same `EvaluationPipeline`, `JudgeSettings`, and
 | Settings customization | `JUDGE_TIER2_PROVIDER=anthropic make app_cli ...` | App → Settings |
 | Engine comparison | `make app_sweep ARGS="--engine=cc"` | App → Run (engine selector) |
 
-For full usage, see the [main README](../../../README.md) and the
-[CLI reference](../../../CONTRIBUTING.md).
+For full usage, see the [main README](../../README.md) and the
+[CLI reference](../../CONTRIBUTING.md).
