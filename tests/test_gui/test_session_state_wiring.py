@@ -56,8 +56,8 @@ def sample_composite_result():
 def sample_graph():
     """NetworkX graph representing agent interactions."""
     graph = nx.DiGraph()
-    graph.add_node("manager", node_type="agent", label="Manager")
-    graph.add_node("researcher", node_type="agent", label="Researcher")
+    graph.add_node("manager", type="agent", label="Manager")
+    graph.add_node("researcher", type="agent", label="Researcher")
     graph.add_edge("manager", "researcher", interaction="delegation")
     return graph
 
@@ -420,7 +420,7 @@ class TestSessionStateProperties:
 
         graph = nx.DiGraph()
         for i in range(num_nodes):
-            graph.add_node(f"agent_{i}", node_type="agent")
+            graph.add_node(f"agent_{i}", type="agent")
 
         mock_result = CompositeResult(
             composite_score=0.5,

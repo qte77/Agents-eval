@@ -18,13 +18,13 @@ def mock_networkx_graph():
     """Create mock NetworkX graph for testing."""
     graph = nx.DiGraph()
     # Add agent nodes
-    graph.add_node("manager", node_type="agent", label="Manager")
-    graph.add_node("researcher", node_type="agent", label="Researcher")
-    graph.add_node("analyst", node_type="agent", label="Analyst")
+    graph.add_node("manager", type="agent", label="Manager")
+    graph.add_node("researcher", type="agent", label="Researcher")
+    graph.add_node("analyst", type="agent", label="Analyst")
 
     # Add tool nodes
-    graph.add_node("search_tool", node_type="tool", label="Search")
-    graph.add_node("analysis_tool", node_type="tool", label="Analysis")
+    graph.add_node("search_tool", type="tool", label="Search")
+    graph.add_node("analysis_tool", type="tool", label="Analysis")
 
     # Add edges (interactions)
     graph.add_edge("manager", "researcher", interaction="delegation")

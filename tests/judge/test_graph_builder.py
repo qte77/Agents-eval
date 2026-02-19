@@ -71,9 +71,9 @@ class TestBuildInteractionGraph:
         """Agents involved in interactions appear as agent-typed nodes."""
         graph = build_interaction_graph(multi_agent_trace)
 
-        assert graph.nodes["manager"]["node_type"] == "agent"
-        assert graph.nodes["researcher"]["node_type"] == "agent"
-        assert graph.nodes["analyst"]["node_type"] == "agent"
+        assert graph.nodes["manager"]["type"] == "agent"
+        assert graph.nodes["researcher"]["type"] == "agent"
+        assert graph.nodes["analyst"]["type"] == "agent"
 
     def test_agent_interactions_create_edges(self, multi_agent_trace):
         """Each interaction creates a directed edge between agents."""
@@ -88,8 +88,8 @@ class TestBuildInteractionGraph:
         """Tools used in calls appear as tool-typed nodes."""
         graph = build_interaction_graph(multi_agent_trace)
 
-        assert graph.nodes["search_tool"]["node_type"] == "tool"
-        assert graph.nodes["analysis_tool"]["node_type"] == "tool"
+        assert graph.nodes["search_tool"]["type"] == "tool"
+        assert graph.nodes["analysis_tool"]["type"] == "tool"
 
     def test_tool_calls_create_agent_to_tool_edges(self, multi_agent_trace):
         """Each tool call creates an edge from agent to tool."""
@@ -121,7 +121,7 @@ class TestBuildInteractionGraph:
         # "researcher" appears in interactions AND tool_calls
         researcher_count = sum(1 for n in graph.nodes if n == "researcher")
         assert researcher_count == 1
-        assert graph.nodes["researcher"]["node_type"] == "agent"
+        assert graph.nodes["researcher"]["type"] == "agent"
 
     def test_tool_only_trace(self):
         """Trace with only tool calls (no agent interactions) builds correctly."""
@@ -137,8 +137,8 @@ class TestBuildInteractionGraph:
         graph = build_interaction_graph(trace)
 
         assert graph.number_of_nodes() == 2
-        assert graph.nodes["solo_agent"]["node_type"] == "agent"
-        assert graph.nodes["web_search"]["node_type"] == "tool"
+        assert graph.nodes["solo_agent"]["type"] == "agent"
+        assert graph.nodes["web_search"]["type"] == "tool"
         assert graph.has_edge("solo_agent", "web_search")
 
     def test_alternative_key_names_for_interactions(self):
@@ -184,7 +184,7 @@ class TestGraphBuilderSnapshots:
 
         structure = {
             "nodes": sorted(
-                [{"id": n, "type": graph.nodes[n]["node_type"]} for n in graph.nodes],
+                [{"id": n, "type": graph.nodes[n]["type"]} for n in graph.nodes],
                 key=lambda x: x["id"],
             ),
             "edge_count": graph.number_of_edges(),
@@ -284,7 +284,7 @@ class TestGraphBuilderProperties:
 
     @given(num_tool_calls=st.integers(min_value=1, max_value=15))
     def test_all_tool_nodes_typed_as_tool(self, num_tool_calls):
-        """Property: every tool node has node_type='tool'."""
+        """Property: every tool node has type='tool'."""
         tool_calls = [
             {"agent_id": "agent_0", "tool_name": f"tool_{i}", "success": True}
             for i in range(num_tool_calls)
@@ -299,7 +299,7 @@ class TestGraphBuilderProperties:
 
         graph = build_interaction_graph(trace)
 
-        tool_nodes = [n for n, d in graph.nodes(data=True) if d.get("node_type") == "tool"]
+        tool_nodes = [n for n, d in graph.nodes(data=True) if d.get("type") == "tool"]
         assert len(tool_nodes) == num_tool_calls
 
     @given(num_interactions=st.integers(min_value=0, max_value=10))

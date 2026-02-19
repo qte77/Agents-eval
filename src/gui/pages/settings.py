@@ -10,7 +10,7 @@ with session state persistence.
 """
 
 import streamlit as st
-from streamlit import button, checkbox, expander, header, number_input, selectbox, text, text_input
+from streamlit import button, checkbox, expander, header, number_input, selectbox, text_input
 
 from app.common.settings import CommonSettings
 from app.data_models.app_models import PROVIDER_REGISTRY
@@ -42,7 +42,7 @@ def _render_agent_configuration() -> None:
         )
 
         # Sub-agent toggles
-        text("**Enable Sub-Agents:**")
+        st.markdown("**Enable Sub-Agents:**")
         st.session_state["include_researcher"] = checkbox(
             "Include Researcher Agent",
             value=st.session_state.get("include_researcher", False),
@@ -73,7 +73,7 @@ def _render_agent_configuration() -> None:
             else 25000
         )
 
-        text("**Token Limit:**")
+        st.markdown("**Token Limit:**")
         st.session_state["token_limit"] = number_input(
             "Agent Token Limit",
             min_value=1000,

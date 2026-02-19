@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Sprint 9 Feature 1: CC engine GUI wiring — PRD feature for routing "Claude Code" radio selection to `cc_engine.run_cc_solo`/`run_cc_teams` in GUI execution path (mirrors existing CLI logic in `run_cli.py:126-138`)
 - `resolve_service_url(port)` in `src/gui/config/config.py`: detects GitHub Codespaces, Gitpod, and `PHOENIX_ENDPOINT` override to build correct service URLs in cloud dev environments; `PHOENIX_DEFAULT_ENDPOINT` now uses it (STORY-014)
 - GUI report generation: "Generate Report" button on App page enabled after evaluation completes; report rendered inline as Markdown with a download button; shares `generate_report()` logic with CLI (STORY-010)
 - App page UX: MAS-specific controls (sub-agents, provider, token limit, config summary) hidden entirely when CC engine selected — not just disabled (STORY-013)
@@ -26,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `graph_builder.py`: aligned node attribute key `node_type` → `type` to match `agent_graph.py` reader (Sprint 8 Feature 4 residual); fixed stale `node_type=` fixtures in `test_session_state_wiring.py`
+- `settings.py`: replaced `text("**Enable Sub-Agents:**")` and `text("**Token Limit:**")` with `st.markdown(...)` so bold formatting renders correctly; removed unused `text` import
 - `render_output()` in `output.py`: renamed `type` parameter to `output_type` to avoid shadowing Python built-in `type` (STORY-013)
 
 - GUI a11y/usability: text-prefix badges `[WARN]`/`[ERR]`/`[INFO]`/`[DBG]` in log panel (WCAG 1.4.1); `[CRIT]` for CRITICAL; module text color `#999999`→`#696969` for 5.9:1 contrast (WCAG 1.4.3); `"Navigation"` radio label with `label_visibility="collapsed"` (WCAG 1.3.1, 2.4.6); `"(opens in new tab)"` on Phoenix Traces link (WCAG 3.2.5); CSS radio-circle hiding hack removed (WCAG 1.3.3, 1.4.1); display-only warning on Prompts page; `HOME_INFO` onboarding corrected to Settings-before-App; `RUN_APP_QUERY_PLACEHOLDER` made domain-specific; `include_researcher`/`include_analyst` default to `True`; Streamlit primary color `#4A90E2` (agent graph blue) (STORY-012)
