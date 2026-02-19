@@ -25,6 +25,10 @@
 	help
 .DEFAULT_GOAL := help
 
+
+# MARK: params
+
+
 # -- paths --
 SRC_PATH := src
 APP_PATH := $(SRC_PATH)/app
@@ -316,6 +320,18 @@ app_profile:  ## Profile app with scalene
 		"logs/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
 		"$(CLI_PATH)"
 
+app_clean_results:  ## Remove all sweep result files from results/sweeps/
+	echo "Removing results/sweeps/ contents ..."
+	rm -rf results/sweeps/*
+	echo "Sweep results cleaned."
+
+app_clean_logs:  ## Remove accumulated agent evaluation logs from logs/Agent_evals/
+	echo "WARNING: This will delete all logs in logs/Agent_evals/ (including traces)!"
+	echo "Press Ctrl+C to cancel, Enter to continue..."
+	read
+	rm -rf logs/Agent_evals/*
+	echo "Agent evaluation logs cleaned."
+
 
 # MARK: cc-baselines
 
@@ -498,22 +514,6 @@ ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
 	read
 	rm -f ralph/docs/prd.json ralph/docs/progress.txt
 	echo "Ralph state cleaned. Run 'make ralph_init' to reinitialize."
-
-
-# MARK: clean
-
-
-clean_results:  ## Remove all sweep result files from results/sweeps/
-	echo "Removing results/sweeps/ contents ..."
-	rm -rf results/sweeps/*
-	echo "Sweep results cleaned."
-
-clean_logs:  ## Remove accumulated agent evaluation logs from logs/Agent_evals/
-	echo "WARNING: This will delete all logs in logs/Agent_evals/ (including traces)!"
-	echo "Press Ctrl+C to cancel, Enter to continue..."
-	read
-	rm -rf logs/Agent_evals/*
-	echo "Agent evaluation logs cleaned."
 
 
 # MARK: help
