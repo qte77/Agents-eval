@@ -13,12 +13,12 @@ updated: 2026-02-16
 **Development Workflow:**
 
 - `make setup_dev` → Setup development environment  
-- `make quick_validate` → Fast validation during development (ruff + type checking + complexity + duplication)
-- `make validate` → Complete pre-commit validation (ruff + type check + test_all)
+- `make quick_validate` → Fast validation during development (lint + type checking + complexity + duplication)
+- `make validate` → Complete pre-commit validation (lint + type check + test)
 
 **Testing:**
 
-- `make test_all` → Run all tests with pytest
+- `make test` → Run all tests with pytest
 - `uv run pytest <path>` → Run specific test file/function
 
 **Emergency Fallback** (if make commands fail):
@@ -33,21 +33,21 @@ updated: 2026-02-16
 |---------|---------|---------------|----------------|
 | `make setup_dev` | Install all dev dependencies | Makefile exists, uv installed | Try `uv sync --dev` directly |
 | `make setup_claude_code` | Setup Claude Code CLI | Above + Claude Code available | Manual setup per Claude docs |
-| `make setup_dev_ollama` | Setup with Ollama local LLM | Above + Ollama installed | Check Ollama installation |
-| `make quick_start` | Download samples + evaluate smallest paper | API key in `.env` | `make setup_dataset_sample` then `make run_cli ARGS="--paper-number=ID"` |
+| `make setup_dev OLLAMA=1` | Setup with Ollama local LLM | Above + Ollama installed | Check Ollama installation |
+| `make quickstart` | Download samples + evaluate smallest paper | API key in `.env` | `make setup_dataset_sample` then `make run_cli ARGS="--paper-number=ID"` |
 | `make run_cli` | Run CLI application | Dev environment setup | Try `uv run python src/app/main.py` |
 | `make run_cli ARGS="--help"` | Run CLI with arguments | Above | Try `uv run python src/app/main.py --help` |
 | `make run_gui` | Run Streamlit GUI | Above + Streamlit installed | Try `uv run streamlit run src/run_gui.py` |
-| `make ruff` | Format code and fix linting | Ruff installed | Try `uv run ruff format . && uv run ruff check . --fix` |
+| `make lint_src` | Format and lint src with ruff | Ruff installed | Try `uv run ruff format . && uv run ruff check . --fix` |
 | `make type_check` | Run pyright static type checking | pyright installed | Try `uv run pyright` |
-| `make test_all` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
+| `make test` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
 | `make test_coverage` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
 | `make validate` | Complete pre-commit validation | Above dependencies | Run individual commands manually |
-| `make quick_validate` | Fast development validation | Ruff, pyright, complexipy, jscpd installed | Run `make ruff && make type_check && make complexity && make duplication` |
+| `make quick_validate` | Fast development validation | Ruff, pyright, complexipy, jscpd installed | Run `make lint_src && make type_check && make complexity && make duplication` |
 | `make duplication` | Detect copy-paste duplication in src/ | jscpd installed | Try `jscpd src/ --min-lines 5 --min-tokens 50` |
 | `make setup_jscpd` | Setup jscpd copy-paste detector | Node.js and npm installed | Try `npm install -gs jscpd` |
 | `make setup_markdownlint` | Setup markdownlint CLI | Node.js and npm installed | Try `npm install -gs markdownlint-cli` |
-| `make run_markdownlint INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
+| `make lint_md INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
 | `make run_pandoc` | Convert MD to PDF with citations. See `make run_pandoc HELP=1` | pandoc + texlive installed | Try `make setup_pdf_converter CONVERTER=pandoc` |
 | `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
 | `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notify user |
@@ -124,7 +124,7 @@ The project requirements are in `pyproject.toml`. Use the provided `Makefile` to
 - Input size limits (DoS prevention)
 - Tool registration scope validation
 
-Security tests run as part of `make test_all` (no separate command needed).
+Security tests run as part of `make test` (no separate command needed).
 
 **Testing Guidelines:**
 
@@ -212,8 +212,8 @@ Security tests run as part of `make test_all` (no separate command needed).
 
 ### Pre-commit Checklist
 
-1. **Automated validation**: `make validate` - runs streamlined sequence (ruff + type_check + test_all)
-2. **Quick validation** (development): `make quick_validate` - runs fast checks (ruff + type_check + complexity)
+1. **Automated validation**: `make validate` - runs streamlined sequence (lint + type_check + test)
+2. **Quick validation** (development): `make quick_validate` - runs fast checks (lint + type_check + complexity)
 3. **Update CHANGELOG.md**: Add entry to `## [Unreleased]` section describing your changes
 4. Update documentation as described above.
 

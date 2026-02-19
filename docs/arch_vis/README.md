@@ -40,22 +40,22 @@ make setup_plantuml
 Render a single diagram to `assets/images/`:
 
 ```shell
-make run_puml_single INPUT_FILE="docs/arch_vis/metrics-eval-sweep.plantuml" STYLE="light" OUTPUT_PATH="assets/images"
+make plantuml_render INPUT_FILE="docs/arch_vis/metrics-eval-sweep.plantuml" STYLE="light" OUTPUT_PATH="assets/images"
 ```
 
 Generate both themes for all diagrams:
 
 ```shell
 for f in docs/arch_vis/*.plantuml; do
-  make run_puml_single INPUT_FILE="$f" STYLE="light" OUTPUT_PATH="assets/images"
-  make run_puml_single INPUT_FILE="$f" STYLE="dark" OUTPUT_PATH="assets/images"
+  make plantuml_render INPUT_FILE="$f" STYLE="light" OUTPUT_PATH="assets/images"
+  make plantuml_render INPUT_FILE="$f" STYLE="dark" OUTPUT_PATH="assets/images"
 done
 ```
 
 ### Interactive Mode
 
 ```shell
-make run_puml_interactive
+make plantuml_serve
 ```
 
 Starts a server on `http://localhost:8080` that re-renders on file changes.

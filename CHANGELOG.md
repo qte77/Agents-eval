@@ -53,11 +53,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MAS composition sweep: `SweepRunner` for N×M×P benchmarking with CC headless baseline, 33 tests (STORY-007)
 - CC artifact collection scripts with docs and tests (STORY-004)
 - Spec-constrained mock tests for trace collection, review persistence, log config, logfire instrumentation
+- UserStory.md: report generation user story and success criterion (Sprint 8 Feature 6 traceability)
 - PRD-Sprint7-Ralph.md and PRD-Sprint8-Ralph.md
 - Ralph: baseline-aware validation, process management, story-scoped lint, per-story baseline persistence, timeout protection
 
 ### Changed
 
+- Makefile: renamed recipes for clarity (`ruff`→`lint_src`, `ruff_tests`→`lint_tests`, `test_all`→`test`, `test_quick`→`test_rerun`, `sweep`→`run_sweep`, `quick_start`→`quickstart`, `dataset_get_smallest`→`dataset_smallest`, `run_puml_*`→`plantuml_*`, `run_markdownlint`→`lint_md`); backward-compat aliases preserved
+- Makefile: collapsed 3 Ollama setup variants into `OLLAMA=1` flag on `setup_prod`/`setup_dev`/`setup_devc`
+- Makefile: grouped `make help` output with section headers from `# MARK:` comments
+- Makefile: renamed MARK sections for consistency (`Sanity`→`quality`, `run ollama`→`ollama`, etc.)
 - `--paper-number` renamed to `--paper-id` (string, supports arxiv IDs); `--provider` renamed to `--chat-provider` across CLI, sweep, config (STORY-012)
 - `SweepConfig.paper_numbers: list[int]` → `paper_ids: list[str]`; added `judge_provider`, `judge_model`, `engine`, `cc_teams` fields (STORY-012, STORY-013, STORY-006)
 - `render_sidebar()` accepts `execution_state` parameter; shows in-progress indicator when running (STORY-007)
@@ -75,6 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Composite scoring tests consolidated: 3 files → 1 (`test_composite_scorer.py`) with BDD structure template in conftest (STORY-007)
 - Removed 3 FIXME dead code blocks from `agent_system.py` and `orchestration.py` (STORY-007)
 - PlantUML diagrams updated: `metrics-eval-sweep` (sweep workflow + CC path), `MAS-Review-Workflow` (MAESTRO security boundaries) (STORY-006)
+- Docs: architecture.md v3.7.0 — Sprint 8 scope, report generation section, CC stream-json integration, ADR-008 status, researcher tool update
+- Docs: roadmap.md v4.3.0 — Sprint 8 description aligned with PRD scope
 - Docs updated: README v4.0.0, architecture.md (benchmarking + security sections), roadmap, CC OTel analysis corrected (STORY-003/004/005)
 - CC baseline scripts renamed: `collect-cc-solo.sh` → `run-cc.sh`, `collect-cc-teams.sh` → `collect-team-artifacts.sh`
 - ADR-008: CC baseline engine subprocess vs SDK decision
@@ -84,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - `scripts/collect-cc-traces/` shell scripts directory — replaced by `cc_engine.py` Python module (STORY-006)
+- Makefile: dead recipes `setup_devc_full`, `setup_devc_ollama_full`, `output_unset_app_env_sh`
 - Legacy config keys `paper_numbers` and `provider` in sweep JSON — use `paper_ids` and `chat_provider`
 - `"not-required"` API key sentinel in `create_simple_model` — `None` lets SDK fall back to env vars
 - 3 composite scoring test files merged into `test_composite_scorer.py` (STORY-007)

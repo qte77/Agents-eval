@@ -56,6 +56,27 @@ commit_state_files() {
     git commit -m "$msg" || log_warn "No state changes to commit"
 }
 
+# Persist TDD phase verification across git resets (Solution 1A).
+# After check_tdd_commits passes, save RED+GREEN hashes so a quality-failure
+# reset doesn't erase proof that TDD phases were completed.
+persist_tdd_verified() {
+    local story_id="$1"
+    local red_hash="$2"
+    local green_hash="$3"
+    mkdir -p "$TDD_VERIFIED_DIR"
+    echo "RED=$red_hash GREEN=$green_hash" > "$TDD_VERIFIED_DIR/$story_id"
+    log_info "TDD phases persisted for $story_id (RED=$red_hash GREEN=$green_hash)"
+}
+
+# Clear persisted TDD verification (on story completion or story change).
+clear_tdd_verified() {
+    local story_id="$1"
+    if [ -f "$TDD_VERIFIED_DIR/$story_id" ]; then
+        rm -f "$TDD_VERIFIED_DIR/$story_id"
+        log_info "Cleared TDD verification for $story_id"
+    fi
+}
+
 # Configuration
 RALPH_MODEL=${RALPH_MODEL:-"sonnet"}  # Model: sonnet, opus, haiku
 MAX_ITERATIONS=${MAX_ITERATIONS:-25}
@@ -68,6 +89,7 @@ RALPH_TEAMS=${RALPH_TEAMS:-false}  # EXPERIMENTAL: cross-story interference caus
 RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
 BASELINE_FILE="/tmp/claude/ralph_baseline_failures.txt"
 RETRY_CONTEXT_FILE="/tmp/claude/ralph_retry_context.txt"
+TDD_VERIFIED_DIR="/tmp/claude/ralph_tdd_verified"
 
 # Set up logging
 LOG_DIR="logs/ralph"
@@ -131,6 +153,166 @@ get_unblocked_stories() {
       | select((.depends_on // []) - $completed | length == 0)
       | .id
     ' "$PRD_JSON"
+}
+
+# Print dependency wave plan and blocking tree for remaining stories.
+# Uses iterative BFS: each wave is the frontier of unblocked incomplete stories.
+# Output goes to both log and progress file for visibility.
+print_dependency_tree() {
+    local completed_ids
+    completed_ids=$(jq -r '[.stories[] | select(.passes == true) | .id]' "$PRD_JSON")
+    local completed_count
+    completed_count=$(echo "$completed_ids" | jq 'length')
+
+    # Get all incomplete stories as JSON array of {id, depends_on}
+    local incomplete
+    incomplete=$(jq '[.stories[] | select(.passes == false) | {id, depends_on: (.depends_on // [])}]' "$PRD_JSON")
+    local incomplete_count
+    incomplete_count=$(echo "$incomplete" | jq 'length')
+
+    if [ "$incomplete_count" -eq 0 ]; then
+        log_info "All stories complete — no dependency tree to show"
+        return 0
+    fi
+
+    local total_count
+    total_count=$(jq '.stories | length' "$PRD_JSON")
+
+    # BFS wave computation
+    local placed="$completed_ids"
+    local wave_num=0
+    local tree_output=""
+    local blocking_output=""
+
+    while true; do
+        wave_num=$((wave_num + 1))
+        # Find frontier: incomplete stories whose depends_on is subset of placed
+        local frontier
+        frontier=$(echo "$incomplete" | jq -r --argjson placed "$placed" '
+            [.[] | select(
+                .depends_on as $deps |
+                ($deps | length == 0) or ($deps - ($placed | [.[]]) | length == 0)
+            ) | .id] | .[]
+        ')
+
+        if [ -z "$frontier" ]; then
+            break
+        fi
+
+        # Build wave label with dependency annotation
+        local wave_ids
+        wave_ids=$(echo "$frontier" | paste -sd', ' -)
+        local dep_annotation=""
+        if [ "$wave_num" -gt 1 ]; then
+            # Collect unique dependencies of this wave's stories from placed set
+            local wave_deps=""
+            local fid
+            for fid in $frontier; do
+                local story_deps
+                story_deps=$(echo "$incomplete" | jq -r --arg id "$fid" \
+                    '.[] | select(.id == $id) | .depends_on[]' 2>/dev/null || true)
+                for sd in $story_deps; do
+                    # Only include deps that were placed in a previous wave (not pre-completed)
+                    if echo "$completed_ids" | jq -e --arg d "$sd" 'any(.[]; . == $d)' >/dev/null 2>&1; then
+                        continue  # skip pre-completed deps
+                    fi
+                    wave_deps="${wave_deps:+$wave_deps }$sd"
+                done
+            done
+            # Deduplicate and sort
+            if [ -n "$wave_deps" ]; then
+                local unique_deps
+                unique_deps=$(echo "$wave_deps" | tr ' ' '\n' | sort -u | paste -sd', ' -)
+                dep_annotation=" (after $unique_deps)"
+            fi
+        fi
+        tree_output="${tree_output}  Wave $wave_num${dep_annotation}: $wave_ids
+"
+
+        # Add frontier to placed, remove from incomplete
+        for fid in $frontier; do
+            placed=$(echo "$placed" | jq --arg id "$fid" '. + [$id]')
+            incomplete=$(echo "$incomplete" | jq --arg id "$fid" '[.[] | select(.id != $id)]')
+        done
+
+        local remaining_incomplete
+        remaining_incomplete=$(echo "$incomplete" | jq 'length')
+        if [ "$remaining_incomplete" -eq 0 ]; then
+            break
+        fi
+    done
+
+    # Build blocking relationships (reverse depends_on)
+    local all_incomplete
+    all_incomplete=$(jq '[.stories[] | select(.passes == false) | {id, depends_on: (.depends_on // [])}]' "$PRD_JSON")
+    local blocker_ids
+    blocker_ids=$(echo "$all_incomplete" | jq -r '[.[].depends_on[]] | unique | .[]' 2>/dev/null || true)
+
+    for bid in $blocker_ids; do
+        # Skip if blocker is already completed
+        if echo "$completed_ids" | jq -e --arg d "$bid" 'any(.[]; . == $d)' >/dev/null 2>&1; then
+            continue
+        fi
+        local blocked_by_this
+        blocked_by_this=$(echo "$all_incomplete" | jq -r --arg bid "$bid" \
+            '[.[] | select(.depends_on | any(. == $bid)) | .id] | join(", ")')
+        if [ -n "$blocked_by_this" ]; then
+            blocking_output="${blocking_output}    $bid -> $blocked_by_this
+"
+        fi
+    done
+
+    # Output
+    local header="===== Dependency Wave Plan ====="
+    local footer=""
+    if [ "$completed_count" -gt 0 ]; then
+        footer="  (Note: $completed_count/$total_count stories already complete and excluded from waves)"
+    fi
+    local separator="============================="
+
+    log_info "$header"
+    echo "$tree_output" | while IFS= read -r line; do
+        [ -n "$line" ] && log_info "$line"
+    done
+
+    if [ -n "$blocking_output" ]; then
+        log_info ""
+        log_info "  Blocking relationships:"
+        echo "$blocking_output" | while IFS= read -r line; do
+            [ -n "$line" ] && log_info "$line"
+        done
+    fi
+
+    [ -n "$footer" ] && log_info "$footer"
+    log_info "$separator"
+
+    # Also append to progress file
+    {
+        echo ""
+        echo "$header"
+        echo "$tree_output"
+        if [ -n "$blocking_output" ]; then
+            echo "  Blocking relationships:"
+            echo "$blocking_output"
+        fi
+        [ -n "$footer" ] && echo "$footer"
+        echo "$separator"
+        echo ""
+    } >> "$PROGRESS_FILE"
+}
+
+# Run full validation at wave boundaries (teams mode only).
+# Non-blocking: cross-story issues are logged but don't halt the pipeline.
+# The next wave's stories will address any issues found here.
+run_wave_checkpoint() {
+    log_info "===== Wave Checkpoint: Full Validation ====="
+    if make --no-print-directory validate 2>&1 | tee /tmp/claude/ralph_wave_checkpoint.log; then
+        log_info "Wave checkpoint PASSED"
+        return 0
+    else
+        log_warn "Wave checkpoint found cross-story issues (non-blocking, logged for next wave)"
+        return 0  # Non-blocking — issues logged, next wave's stories will fix them
+    fi
 }
 
 # Get story details
@@ -356,7 +538,7 @@ run_quality_checks() {
     local story_id="${1:-unknown}"
 
     if [ "$RALPH_BASELINE_MODE" = "true" ]; then
-        run_quality_checks_baseline "$BASELINE_FILE" "$story_id"
+        run_quality_checks_baseline "$BASELINE_FILE" "$story_id" "$PRD_JSON"
     else
         log_info "Running quality checks (make validate)..."
         if make --no-print-directory validate 2>&1 | tee /tmp/claude/ralph_validate.log; then
@@ -379,6 +561,14 @@ check_tdd_commits() {
 
     log_info "Checking TDD commits (REQUIRE_REFACTOR=$REQUIRE_REFACTOR)..."
 
+    # Solution 1A: If TDD phases were persisted from a prior iteration
+    # (before quality-failure reset), accept REFACTOR-only commits.
+    if [ -f "$TDD_VERIFIED_DIR/$story_id" ]; then
+        log_info "TDD phases already verified (persisted): $(cat "$TDD_VERIFIED_DIR/$story_id")"
+        log_info "Accepting REFACTOR-only iteration (prior RED+GREEN persisted)"
+        return 0
+    fi
+
     local commits_after=$(commit_count)
     local new_commits=$((commits_after - commits_before))
 
@@ -389,12 +579,47 @@ check_tdd_commits() {
 
     local recent_commits=$(git log --oneline -n $new_commits)
 
-    # Teams mode: filter commits to only those for current story ID
+    # Teams mode (Solution 2A): file-scoped commit attribution.
+    # Instead of grepping commit messages for story ID (fragile — agents write
+    # generic messages), check which files each commit touches against the
+    # story's files array from prd.json. Falls back to message grep if no
+    # files array exists.
     if [ "$RALPH_TEAMS" = "true" ]; then
-        recent_commits=$(echo "$recent_commits" | grep "$story_id" || true)
+        local story_files
+        story_files=$(jq -r --arg id "$story_id" \
+            '.stories[] | select(.id == $id) | .files // [] | .[]' "$PRD_JSON" 2>/dev/null || true)
+
+        if [ -n "$story_files" ]; then
+            # File-scoped attribution: keep commits that touch at least one story file
+            local filtered_commits=""
+            local commit_hash
+            while IFS= read -r line; do
+                commit_hash=$(echo "$line" | cut -d' ' -f1)
+                local changed_files
+                changed_files=$(git diff-tree --no-commit-id --name-only -r "$commit_hash" 2>/dev/null || true)
+                local match=false
+                local sf
+                while IFS= read -r sf; do
+                    if echo "$changed_files" | grep -qF "$sf"; then
+                        match=true
+                        break
+                    fi
+                done <<< "$story_files"
+                if [ "$match" = "true" ]; then
+                    filtered_commits="${filtered_commits:+$filtered_commits
+}$line"
+                fi
+            done <<< "$recent_commits"
+            recent_commits="$filtered_commits"
+        else
+            # Fallback: no files array in prd.json, use original message grep
+            log_warn "No files array for $story_id — falling back to message grep"
+            recent_commits=$(echo "$recent_commits" | grep "$story_id" || true)
+        fi
+
         new_commits=$(echo "$recent_commits" | grep -c . || true)
         if [ "$new_commits" -eq 0 ]; then
-            log_error "No commits for $story_id in team batch"
+            log_error "No commits for $story_id in team batch (file-scoped)"
             return 1
         fi
     fi
@@ -505,11 +730,18 @@ main() {
 
     validate_environment
 
+    # Show dependency wave plan before starting
+    print_dependency_tree
+
     # Track timing for ETA calculation
     RALPH_START_TIME=$(date +%s)
     RALPH_START_PASSING=$(jq '[.stories[] | select(.passes == true)] | length' "$PRD_JSON")
 
     local iteration=0
+
+    # Wave tracking for teams mode checkpoint validation
+    local last_wave_stories
+    last_wave_stories=$(get_unblocked_stories)
 
     while [ $iteration -lt $MAX_ITERATIONS ]; do
         iteration=$((iteration + 1))
@@ -529,6 +761,8 @@ main() {
 
         # Track retries for current story
         if [ "$story_id" != "${last_story_id:-}" ]; then
+            # Clear persisted TDD state from previous story
+            [ -n "${last_story_id:-}" ] && clear_tdd_verified "$last_story_id"
             retry_count=0
             last_story_id="$story_id"
             rm -f "$RETRY_CONTEXT_FILE"
@@ -551,6 +785,8 @@ main() {
         local exec_status=0
         execute_story "$story_id" "$details" || exec_status=$?
 
+        local story_passed=false
+
         if [ $exec_status -eq 2 ]; then
             # Story already complete - skip TDD verification, just run quality checks
             log_info "Story already complete - verifying with quality checks"
@@ -562,6 +798,7 @@ main() {
                 log_info "Story $story_id marked as PASSING (pre-existing implementation)"
 
                 commit_state_files "chore: Update Ralph state after verifying $story_id (already complete)"
+                story_passed=true
                 print_progress
             else
                 log_error "Story reported as complete but quality checks failed"
@@ -617,6 +854,16 @@ main() {
                 continue  # Retry same story (get_next_story returns same incomplete story)
             fi
 
+            # Persist TDD phases so quality-failure reset doesn't lose them (Solution 1A)
+            local red_hash green_hash
+            red_hash=$(git log --oneline -n $(($(commit_count) - commits_before)) \
+                | grep "\[RED\]" | sed -n '1p' | cut -d' ' -f1)
+            green_hash=$(git log --oneline -n $(($(commit_count) - commits_before)) \
+                | grep "\[GREEN\]" | sed -n '1p' | cut -d' ' -f1)
+            if [ -n "$red_hash" ] && [ -n "$green_hash" ]; then
+                persist_tdd_verified "$story_id" "$red_hash" "$green_hash"
+            fi
+
             # Run quality checks
             if run_quality_checks "$story_id"; then
                 # Mark as passing
@@ -624,8 +871,10 @@ main() {
                 log_progress "$iteration" "$story_id" "PASS" "Completed successfully with TDD commits"
                 log_info "Story $story_id marked as PASSING"
                 rm -f "$RETRY_CONTEXT_FILE"
+                clear_tdd_verified "$story_id"
 
                 commit_state_files "chore: Update Ralph state after completing $story_id"
+                story_passed=true
                 print_progress
             else
                 # Keep commits (RED+GREEN are valid) so next iteration can REFACTOR
@@ -644,6 +893,16 @@ main() {
             # Execution failed
             log_error "Story execution failed"
             log_progress "$iteration" "$story_id" "FAIL" "Execution error"
+        fi
+
+        # Wave boundary detection (teams mode only)
+        if [ "$story_passed" = "true" ] && [ "$RALPH_TEAMS" = "true" ]; then
+            local next_story
+            next_story=$(get_next_story)
+            if [ -n "$next_story" ] && ! echo "$last_wave_stories" | grep -qx "$next_story"; then
+                run_wave_checkpoint
+                last_wave_stories=$(get_unblocked_stories)
+            fi
         fi
 
         rm -f "$untracked_before"

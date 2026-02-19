@@ -21,7 +21,7 @@ support. IEEE `[1]` style by default.
 3. **Generate sections** - Use [template.md](template.md) for structure and formats
 4. **Setup bibliography** - Create `references.bib` (see template for BibTeX format)
 5. **Add YAML frontmatter** - See template for required fields
-6. **Run markdownlint** - `make run_markdownlint INPUT_FILES="docs/write-up/<topic>/*.md"`
+6. **Run markdownlint** - `make lint_md INPUT_FILES="docs/write-up/<topic>/*.md"`
 7. **Generate PDF** - `make run_pandoc` with `BIBLIOGRAPHY` variable
 
 ## Additional Resources
@@ -80,6 +80,6 @@ produce duplicated numbers in the PDF output.
 Before completing:
 
 1. **No manual section numbers** - Headings must not contain `N.`, `N.N`, `N.N.N` prefixes
-2. **Markdownlint** - `make run_markdownlint INPUT_FILES="docs/write-up/<topic>/*.md"`
+2. **Markdownlint** - `make lint_md INPUT_FILES="docs/write-up/<topic>/*.md"`
 3. **Citation validation** - Verify all `[@key]` references exist in `.bib` file
 4. **PDF generation** - Run pandoc command above and confirm output

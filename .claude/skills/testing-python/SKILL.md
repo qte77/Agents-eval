@@ -77,8 +77,8 @@ test_order_processor_validates_items()
 ## Execution
 
 ```bash
-make test_all          # All tests
-make test_quick        # Rerun failed tests (fast iteration)
+make test              # All tests
+make test_rerun        # Rerun failed tests (fast iteration)
 make validate          # Full pre-commit validation
 pytest tests/ -v       # Verbose
 pytest -k test_user_   # Filter by name
@@ -86,7 +86,7 @@ pytest -k test_user_   # Filter by name
 
 ## Quality Gates
 
-- [ ] All tests pass (`make test_all`)
+- [ ] All tests pass (`make test`)
 - [ ] TDD Red-Green-Refactor followed
 - [ ] Arrange-Act-Assert structure used
 - [ ] Naming convention followed

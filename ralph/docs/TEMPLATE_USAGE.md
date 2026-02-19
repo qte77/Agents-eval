@@ -85,7 +85,7 @@ make ralph_reorganize NEW_PRD=docs/PRD-v2.md VERSION=2  # Archive and iterate
 | `make ralph_worktree BRANCH=name` | Run Ralph in a git worktree branch |
 | `make ralph_status` | Show progress from `ralph/docs/progress.txt` |
 | `make ralph_clean` | Reset state (removes prd.json, progress.txt) |
-| `make validate` | Run quality checks (ruff, pyright, pytest) |
+| `make validate` | Run quality checks (lint, pyright, pytest) |
 
 ## Configuration
 
@@ -100,6 +100,9 @@ MAX_ITERATIONS=50 make ralph_run      # Override default (25)
 
 # TDD enforcement
 REQUIRE_REFACTOR=true make ralph_run  # Require [REFACTOR] commit (default: false)
+
+# Teams mode (experimental)
+TEAMS=true make ralph_run             # Enable parallel story delegation
 ```
 
 ## Directory Structure
@@ -165,6 +168,17 @@ Ralph enforces Test-Driven Development with commit markers:
 
 Ralph verifies commits are made chronologically in the correct order.
 
+## Quality Checks (Baseline-Aware)
+
+Ralph uses baseline-aware validation to avoid blocking stories on pre-existing failures:
+
+- **Baseline capture**: Test failures are snapshot before each story starts
+- **Regression detection**: Only NEW failures block progress; pre-existing ones are tolerated
+- **Teams scoping**: In teams mode, ruff/tests are scoped to story files to prevent cross-contamination
+- **Wave checkpoints**: Full `make validate` runs at wave boundaries (teams mode only)
+- **Impact diagnostics**: Prompt instructs agent to grep for consumers before implementing renames
+- **Killed-process detection**: Exit 137/143 (OOM/SIGTERM) is a hard failure, never treated as PASS
+
 ## Troubleshooting
 
 **Ralph skips stories:**
@@ -181,7 +195,7 @@ Ralph verifies commits are made chronologically in the correct order.
 **Quality checks fail:**
 
 - Run `make validate` manually to see specific errors
-- Fix linting: `make lint_fix`
+- Fix linting: `make lint_src`
 - Fix type errors: check `pyright` output
 
 **Reset and retry:**

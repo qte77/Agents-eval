@@ -24,6 +24,7 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 - As a researcher, I want an interactive agent graph visualization so I can see how agents delegated tasks and coordinated during review generation.
 - As a researcher, I want to compare MAS evaluation results against Claude Code baselines so I can quantify coordination quality differences between orchestration approaches.
 - As a researcher, I want to run the evaluation pipeline across all agent composition variations so I can identify which agent combination produces the best review quality compared to graph quality.
+- As a researcher, I want to generate evaluation reports with actionable improvement suggestions so I can systematically identify weaknesses in review quality without manually interpreting raw metric scores.
 
 ## Success Criteria
 
@@ -35,6 +36,7 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 6. Local trace viewer shows agent execution traces without Docker setup.
 7. Streamlit "Evaluation Results" page displays tier scores and comparison charts.
 8. Streamlit "Agent Graph" page renders the delegation graph interactively.
+9. `--generate-report` produces a Markdown report with per-tier breakdown and actionable suggestions grounded in evaluation data.
 
 ## Constraints
 

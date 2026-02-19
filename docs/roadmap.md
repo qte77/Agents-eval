@@ -3,8 +3,8 @@ title: Development Roadmap
 description: Sprint roadmap and implementation status for the Agents-eval project
 category: roadmap
 created: 2025-09-04
-updated: 2026-02-17
-version: 4.2.0
+updated: 2026-02-18
+version: 4.3.0
 ---
 
 Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for technical decisions (ADRs).
@@ -18,4 +18,4 @@ Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for tech
 | **Sprint 5** | Delivered | Runtime fixes, GUI enhancements, architecture improvements, code quality review | [PRD Sprint 5](PRD-Sprint5-Ralph.md) |
 | **Sprint 6** | Delivered | Benchmarking infrastructure, CC baseline completion, security hardening, test quality | [PRD Sprint 6](PRD-Sprint6-Ralph.md) |
 | **Sprint 7** | In Progress | Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine | [PRD Sprint 7](PRD-Sprint7-Ralph.md) |
-| **Sprint 8** | Draft | Report generation, graph alignment, MAESTRO hardening, code quality, PydanticAI streaming | [PRD Sprint 8](PRD-Sprint8-Ralph.md) |
+| **Sprint 8** | Draft | Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, dead code removal, report generation, judge settings UX, GUI a11y/UX | [PRD Sprint 8](sprints/PRD-Sprint8-Ralph.md) |

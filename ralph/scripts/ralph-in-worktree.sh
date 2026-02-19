@@ -24,20 +24,24 @@ WORKTREE_DIR="../$(basename "$BRANCH")"
 SOURCE_VENV="$PWD/.venv"
 RALPH_SCRIPT="ralph/scripts/ralph.sh"
 
-# Create branch or confirm reuse
-if git rev-parse --verify "$BRANCH" &>/dev/null; then
-    echo "Branch '$BRANCH' already exists ($(git log -1 --format='%h %s' "$BRANCH"))."
-    read -rp "Continue with existing branch? [y/N] " confirm
+# Reuse existing worktree, or set up branch + worktree
+WORKTREE_EXISTS=false
+if git worktree list --porcelain | grep -q "branch refs/heads/${BRANCH}$"; then
+    WORKTREE_EXISTS=true
+fi
+
+if [ "$WORKTREE_EXISTS" = true ]; then
+    echo "Resuming worktree: $(realpath "$WORKTREE_DIR") ($(git log -1 --format='%h %s' "$BRANCH"))"
+elif git rev-parse --verify "$BRANCH" &>/dev/null; then
+    # Branch exists but no worktree — confirm before creating one
+    echo "Branch '$BRANCH' exists but has no worktree ($(git log -1 --format='%h %s' "$BRANCH"))."
+    read -rp "Create worktree and continue? [y/N] " confirm
     [[ "$confirm" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 1; }
+    git worktree add "$WORKTREE_DIR" "$BRANCH"
+    echo "Worktree: $(realpath "$WORKTREE_DIR")"
 else
     git branch "$BRANCH"
     echo "Created branch: $BRANCH"
-fi
-
-# Add worktree (skip if already linked)
-if git worktree list --porcelain | grep -q "branch refs/heads/${BRANCH}$"; then
-    echo "Worktree already exists: $(realpath "$WORKTREE_DIR")"
-else
     git worktree add "$WORKTREE_DIR" "$BRANCH"
     echo "Worktree: $(realpath "$WORKTREE_DIR")"
 fi

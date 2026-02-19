@@ -56,6 +56,17 @@ Follow the project's testing best practices. Tests MUST be written and
 - Understand existing patterns before writing any code
 - **STATUS**: Output "Reading story files for STORY-XXX"
 
+### Before RED: Impact scan for renames and behavior changes
+
+- If your story renames a function, tool, class, or changes observable output
+  (HTML, colors, widget types), grep the full test tree for the old value:
+  `grep -r "old_name" tests/`
+- Any test file that asserts on the old value is in scope for your story,
+  even if not listed in the PRD `files` array
+- Update those tests alongside your implementation
+- **STATUS**: Output "Impact scan: N additional test file(s) in scope" or
+  "Impact scan: no cross-references found"
+
 ### RED: Write failing tests
 
 - **STATUS**: Output "Starting RED phase: writing tests for ..."
@@ -79,7 +90,7 @@ Follow the project's testing best practices. Tests MUST be written and
 - **STATUS**: Output "Starting REFACTOR phase"
 - Fix any remaining test failures or edge cases from GREEN phase
 - Improve code structure while keeping tests passing
-  - Use focused checks: `make ruff`, `make type_check`, `make complexity`, `uv run pytest <test-file>`
+  - Use focused checks: `make lint_src`, `make type_check`, `make complexity`, `uv run pytest <test-file>`
   - Do NOT run `make validate` — Ralph handles full validation after your work
   - **COMMIT**: `git add . && git commit -m "refactor(STORY-XXX): fix edge cases [REFACTOR]"`
 
@@ -100,7 +111,7 @@ Ralph runs quality checks automatically after your work completes.
 Use focused checks during development to catch issues early:
 
 ```bash
-make ruff          # Format and lint src
+make lint_src      # Format and lint src
 make type_check    # Static type checking
 make complexity    # Cognitive complexity check
 uv run pytest <test-file>  # Run specific tests
