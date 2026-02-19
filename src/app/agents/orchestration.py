@@ -245,7 +245,6 @@ async def run_manager_orchestrated(
     query: UserPromptType,
     provider: str,
     usage_limits: UsageLimits | None,
-    pydantic_ai_stream: bool = False,
 ) -> None:
     """
     Run manager agent with orchestration and error handling.
@@ -255,7 +254,6 @@ async def run_manager_orchestrated(
         query: The query to process
         provider: Provider name for logging
         usage_limits: Usage limits for the execution
-        pydantic_ai_stream: Whether to use streaming (not implemented)
     """
     orchestrator = AgentOrchestrator()
     orchestrator.log_step("starting_manager_execution")
@@ -264,19 +262,13 @@ async def run_manager_orchestrated(
     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
 
     try:
-        if pydantic_ai_stream:
-            raise NotImplementedError(
-                "Streaming currently only possible for Agents with output_type "
-                "str not pydantic model"
-            )
-        else:
-            orchestrator.log_step("waiting_for_model_response")
-            logger.info("Waiting for model response ...")
+        orchestrator.log_step("waiting_for_model_response")
+        logger.info("Waiting for model response ...")
 
-            result = await manager.run(user_prompt=str(query), usage_limits=usage_limits)
+        result = await manager.run(user_prompt=str(query), usage_limits=usage_limits)
 
-            orchestrator.log_step("model_response_received")
-            logger.info(f"Result: {result}")
+        orchestrator.log_step("model_response_received")
+        logger.info(f"Result: {result}")
 
     except Exception as e:
         orchestrator.log_step("manager_execution_failed", {"error": str(e)})

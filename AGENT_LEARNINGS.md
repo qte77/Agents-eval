@@ -183,6 +183,15 @@ updated: 2026-02-16
 - **Anti-pattern**: Copy-pasting dispatch logic into each method that needs type-specific behavior.
 - **References**: `src/app/data_utils/datasets_peerread.py`, CodeFactor Sprint 7 review
 
+### Pydantic max_length Cannot Prevent Allocation-Time OOM
+
+- **Context**: Security tests for input size limits using Pydantic `Field(max_length=N)`
+- **Problem**: Test allocated a 1GB string (`"X" * (1024**3)`) expecting Pydantic `max_length` to reject it. Python must allocate the full string *before* passing it to the Pydantic constructor, so the validator never runs -- the process OOMs or hangs (SIGTERM exit 143), blocking the entire test suite.
+- **Solution**: Test oversized inputs at moderate multiples of the limit (e.g. 10x), not at memory-exhaustion scale. Boundary rejection is already proven by `max_length + 1` tests. Pydantic validators are post-allocation; they cannot guard against allocation itself.
+- **Anti-pattern**: Using unrealistically large inputs in unit tests to simulate DoS. The test itself becomes the DoS.
+- **Key distinction**: True DoS prevention belongs at the I/O layer (HTTP request body size limits, `read(max_bytes)` on streams). Pydantic `max_length` is a second line of defense for data already in memory. Don't conflate the two layers in tests.
+- **References**: `tests/security/test_input_size_limits.py::TestMemoryExhaustionPrevention`
+
 ### Shell Keyword Collision in jq Arguments (SC1010)
 
 - **Context**: Bash scripts calling `jq` with `--argjson` or `--arg`

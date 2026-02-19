@@ -38,6 +38,7 @@ class LLMJudgeEngine:
         settings: JudgeSettings,
         env_config: AppEnv | None = None,
         chat_provider: str | None = None,
+        chat_model: str | None = None,
     ) -> None:
         """Initialize evaluation LLM manager with settings.
 
@@ -45,6 +46,8 @@ class LLMJudgeEngine:
             settings: JudgeSettings instance with tier2 configuration.
             env_config: Application environment configuration. If None, creates default AppEnv().
             chat_provider: Active chat provider from agent system. Used when tier2_provider='auto'.
+            chat_model: Active chat model from agent system. Inherited when tier2_provider='auto'
+                and provider resolves to chat_provider (not fallen back to another provider).
         """
         self.settings = settings
         self.fallback_engine = TraditionalMetricsEngine()
@@ -72,6 +75,9 @@ class LLMJudgeEngine:
         selected = self.select_available_provider(env_config)
         if selected:
             self.provider, self.model, self._api_key = selected
+            # Inherit chat_model when provider didn't fall back (same as chat_provider)
+            if chat_model is not None and self.provider == resolved_provider:
+                self.model = chat_model
             self.tier2_available = True
         else:
             # No providers available - mark Tier 2 as unavailable

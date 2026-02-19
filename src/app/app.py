@@ -76,7 +76,6 @@ async def _run_agent_execution(
     include_researcher: bool,
     include_analyst: bool,
     include_synthesiser: bool,
-    pydantic_ai_stream: bool,
     token_limit: int | None,
 ) -> tuple[str, dict[str, str], Any]:
     """Execute agent system and return execution ID, prompts, and manager output.
@@ -114,7 +113,6 @@ async def _run_agent_execution(
         agent_env.query,
         agent_env.provider,
         agent_env.usage_limits,
-        pydantic_ai_stream,
     )
 
     return execution_id, prompts, manager_output
@@ -171,21 +169,28 @@ def _prepare_query(paper_id: str | None, query: str, prompts: dict[str, str]) ->
     return query, False
 
 
-def _prepare_result_dict(composite_result: Any | None, graph: Any | None) -> dict[str, Any] | None:
+def _prepare_result_dict(
+    composite_result: Any | None,
+    graph: Any | None,
+    execution_id: str | None = None,
+) -> dict[str, Any] | None:
     """Prepare result dictionary for GUI usage.
 
     Args:
         composite_result: Evaluation result
         graph: Interaction graph
+        execution_id: Execution trace ID for display on Evaluation page
 
     Returns:
-        Dict with result and graph if available, None otherwise
+        Dict with result, graph, and execution_id if available, None otherwise
     """
     # Return dict if we have either result or graph
     if composite_result is not None or graph is not None:
         return {
             "composite_result": composite_result,
             "graph": graph,
+            # S8-F8.2: include execution_id for Evaluation Results page threading
+            "execution_id": execution_id,
         }
     return None
 
@@ -197,7 +202,6 @@ async def main(
     include_researcher: bool = False,
     include_analyst: bool = False,
     include_synthesiser: bool = False,
-    pydantic_ai_stream: bool = False,
     chat_config_file: str | Path | None = None,
     enable_review_tools: bool = True,
     paper_id: str | None = None,
@@ -210,6 +214,7 @@ async def main(
     cc_teams_tasks_dir: str | None = None,
     token_limit: int | None = None,
     judge_settings: JudgeSettings | None = None,
+    engine: str = "mas",
 ) -> dict[str, Any] | None:
     """Main entry point for the application.
 
@@ -220,7 +225,7 @@ async def main(
         Dictionary with 'composite_result' (CompositeResult) and 'graph' (nx.DiGraph)
         if evaluation runs successfully, None otherwise (CLI mode or download-only).
     """
-    logger.info(f"Starting app '{PROJECT_NAME}' v{__version__}")
+    logger.info(f"Starting app '{PROJECT_NAME}' v{__version__} (engine={engine})")
 
     # Handle download-only mode (setup phase)
     if _handle_download_mode(
@@ -248,7 +253,6 @@ async def main(
                 include_researcher,
                 include_analyst,
                 include_synthesiser,
-                pydantic_ai_stream,
                 token_limit,
             )
 
@@ -270,8 +274,8 @@ async def main(
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 
-            # Return data for GUI usage
-            return _prepare_result_dict(composite_result, graph)
+            # Return data for GUI usage (include execution_id for Evaluation page)
+            return _prepare_result_dict(composite_result, graph, execution_id)
 
     except Exception as e:
         msg = generic_exception(f"Aborting app '{PROJECT_NAME}' with: {e}")

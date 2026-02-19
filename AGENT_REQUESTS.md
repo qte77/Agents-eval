@@ -18,10 +18,10 @@ updated: 2026-02-16
 
 ## Active Requests
 
-- [ ] The `agent_system.py:526` module has a `NotImplementedError` for streaming with Pydantic model outputs. Please clarify the intended approach for streaming structured data.
-  - Human: `# TODO` but not of priority as of now. Remind me once a week.
-  - Tracked in: PRD-Sprint3.md Out of Scope
+None.
 
 ## Closed Requests
 
-None. All closed requests purged on 2026-02-17 (Sprint 7 start).
+- [x] The `agent_system.py:526` module had a `NotImplementedError` for streaming with Pydantic model outputs.
+  - Closed in STORY-004 (Sprint 8): PydanticAI `run_stream()` still does not support structured `BaseModel` output_type. Dead code path removed. Parameter `pydantic_ai_stream` deleted from `run_manager()`, `run_manager_orchestrated()`, `_run_agent_execution()`, and `main()`.
+  - Closed: 2026-02-18

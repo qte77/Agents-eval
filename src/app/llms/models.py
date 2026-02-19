@@ -75,7 +75,7 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
         return OpenAIChatModel(
             model_name=model_name,
             provider=OpenAIProvider(
-                api_key=api_key or "not-required",
+                api_key=api_key,
             ),
         )
     elif provider in ["openrouter", "github"]:
@@ -84,7 +84,7 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
             model_name=model_name,
             provider=OpenAIProvider(
                 base_url=base_url,
-                api_key=api_key or "not-required",
+                api_key=api_key,
             ),
         )
     elif provider == "cerebras":
@@ -95,7 +95,7 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
             model_name=model_name,
             provider=OpenAIProvider(
                 base_url=base_url,
-                api_key=api_key or "not-required",
+                api_key=api_key,
             ),
             profile=OpenAIModelProfile(
                 openai_supports_strict_tool_definition=False,
@@ -116,7 +116,7 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
                 model_name=model_name,
                 provider=OpenAIProvider(
                     base_url=base_url,
-                    api_key=api_key or "not-required",
+                    api_key=api_key,
                 ),
             )
     else:
@@ -125,7 +125,7 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
             model_name=model_name,
             provider=OpenAIProvider(
                 base_url=base_url,
-                api_key=api_key or "not-required",
+                api_key=api_key,
             ),
         )
 

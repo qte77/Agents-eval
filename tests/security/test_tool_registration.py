@@ -117,7 +117,7 @@ class TestToolRegistrationSafety:
         expected_tools = {
             "get_peerread_paper",
             "query_peerread_papers",
-            "read_paper_pdf_tool",
+            "get_paper_content",
         }
 
         # All expected tools should be present

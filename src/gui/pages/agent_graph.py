@@ -98,7 +98,7 @@ def render_agent_graph(graph: nx.DiGraph[str] | None = None) -> None:
     # Add nodes with visual distinction
     for node in graph.nodes():
         node_data: dict[str, Any] = graph.nodes[node]  # type: ignore[assignment]
-        node_type = node_data.get("node_type", "agent")
+        node_type = node_data.get("type", "agent")
         label = node_data.get("label", str(node))
 
         if node_type == "agent":
@@ -147,7 +147,7 @@ def render_agent_graph(graph: nx.DiGraph[str] | None = None) -> None:
         st.text(f"Total Nodes: {graph.number_of_nodes()}")
         st.text(f"Total Edges: {graph.number_of_edges()}")
 
-        agent_nodes = sum(1 for n in graph.nodes() if graph.nodes[n].get("node_type") == "agent")
+        agent_nodes = sum(1 for n in graph.nodes() if graph.nodes[n].get("type") == "agent")
         tool_nodes = graph.number_of_nodes() - agent_nodes
 
         st.text(f"Agent Nodes: {agent_nodes}")

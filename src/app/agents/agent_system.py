@@ -15,7 +15,6 @@ Args:
     query (str | list[dict[str, str]]): The query or messages for the agent.
     chat_config (ChatConfig): The configuration object for agents and providers.
     usage_limits (UsageLimits): Usage limits for agent execution.
-    pydantic_ai_stream (bool): Whether to use Pydantic AI streaming.
 
 Functions:
     get_manager: Initializes and returns a manager agent with the specified
@@ -514,7 +513,6 @@ async def run_manager(
     query: UserPromptType,
     provider: str,
     usage_limits: UsageLimits | None,
-    pydantic_ai_stream: bool = False,
 ) -> tuple[str, Any]:
     """
     Asynchronously runs the manager with the given query and provider, handling errors
@@ -528,8 +526,6 @@ async def run_manager(
         provider (str): The provider to be used for the query.
         usage_limits (UsageLimits): The usage limits to be applied during the query
             execution.
-        pydantic_ai_stream (bool, optional): Flag to enable or disable Pydantic AI
-            stream. Defaults to False.
     Returns:
         tuple[str, Any]: Tuple of (execution_id, manager_output) for trace retrieval and evaluation
     """
@@ -543,26 +539,13 @@ async def run_manager(
     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
 
     try:
-        if pydantic_ai_stream:
-            raise NotImplementedError(
-                "Streaming currently only possible for Agents with output_type "
-                "str not pydantic model"
-            )
-            # logger.info("Streaming model response ...")
-            # result = await manager.run(**mgr_cfg)
-            # aync for chunk in result.stream_text():  # .run(**mgr_cfg) as result:
-            # async with manager.run_stream(user_prompt=query) as stream:
-            #    async for chunk in stream.stream_text():
-            #        logger.info(str(chunk))
-            # result = await stream.get_result()
-        else:
-            logger.info("Waiting for model response ...")
-            # FIXME deprecated warning manager.run(), query unknown type
-            # FIXME [call-overload] error: No overload variant of "run" of "Agent"
-            # matches argument type "dict[str, list[dict[str, str]] |
-            # Sequence[str | ImageUrl | AudioUrl | DocumentUrl | VideoUrl |
-            # BinaryContent] | UsageLimits | None]"
-            result = await manager.run(**mgr_cfg)  # type: ignore[reportDeprecated,reportUnknownArgumentType,reportCallOverload,call-overload]
+        logger.info("Waiting for model response ...")
+        # FIXME deprecated warning manager.run(), query unknown type
+        # FIXME [call-overload] error: No overload variant of "run" of "Agent"
+        # matches argument type "dict[str, list[dict[str, str]] |
+        # Sequence[str | ImageUrl | AudioUrl | DocumentUrl | VideoUrl |
+        # BinaryContent] | UsageLimits | None]"
+        result = await manager.run(**mgr_cfg)  # type: ignore[reportDeprecated,reportUnknownArgumentType,reportCallOverload,call-overload]
         logger.info(f"Result: {result}")
         # FIXME  # type: ignore
         logger.info(f"Usage statistics: {result.usage()}")  # type: ignore

@@ -87,7 +87,7 @@ def _render_agent_configuration() -> None:
 
 def _render_tier_configuration(judge_settings: JudgeSettings) -> None:
     """Render tier configuration section with editable timeout values."""
-    with expander("Judge Settings - Tier Configuration", expanded=True):
+    with expander("Judge Settings - Tier Configuration", expanded=False):
         st.session_state["judge_tier1_max_seconds"] = number_input(
             "Tier 1 Max Seconds",
             min_value=0.1,
@@ -128,7 +128,7 @@ def _render_tier_configuration(judge_settings: JudgeSettings) -> None:
 
 def _render_composite_scoring(judge_settings: JudgeSettings) -> None:
     """Render composite scoring section with editable threshold values."""
-    with expander("Judge Settings - Composite Scoring"):
+    with expander("Judge Settings - Composite Scoring", expanded=False):
         st.session_state["judge_composite_accept_threshold"] = number_input(
             "Accept Threshold",
             min_value=0.0,
@@ -166,37 +166,152 @@ def _render_composite_scoring(judge_settings: JudgeSettings) -> None:
         )
 
 
+def _get_model_options(chat_config: object, provider: str, fallback_model: str) -> list[str]:
+    """Return model names for a provider from chat_config, falling back to fallback_model.
+
+    Args:
+        chat_config: ChatConfig instance with providers mapping.
+        provider: Provider key to look up in chat_config.
+        fallback_model: Default model name if provider not found.
+
+    Returns:
+        List of model name strings for the given provider.
+    """
+    provider_config = chat_config.providers.get(provider)  # type: ignore[reportAttributeAccessIssue]
+    if provider_config:
+        return [provider_config.model_name]  # type: ignore[reportUnknownMemberType]
+    return [fallback_model]
+
+
+def _render_provider_model_selectboxes(
+    chat_config: object,
+    provider_options: list[str],
+    provider_state_key: str,
+    model_state_key: str,
+    default_provider: str,
+    default_model: str,
+    provider_label: str,
+    model_label: str,
+    provider_key: str,
+    model_key: str,
+    provider_help: str,
+    model_help: str,
+    fallback_provider_for_auto: str = "",
+) -> str:
+    """Render a provider selectbox and a dependent model selectbox.
+
+    Args:
+        chat_config: ChatConfig instance for model lookup.
+        provider_options: Available provider choices.
+        provider_state_key: Session state key for the provider.
+        model_state_key: Session state key for the model.
+        default_provider: Default provider value from settings.
+        default_model: Default model value from settings.
+        provider_label: Display label for provider selectbox.
+        model_label: Display label for model selectbox.
+        provider_key: Streamlit widget key for provider selectbox.
+        model_key: Streamlit widget key for model selectbox.
+        provider_help: Help text for provider selectbox.
+        model_help: Help text for model selectbox.
+        fallback_provider_for_auto: Provider to use for model lookup when "auto" is selected.
+
+    Returns:
+        Selected provider string.
+    """
+    current_provider = st.session_state.get(provider_state_key, default_provider)
+    provider_idx = (
+        provider_options.index(current_provider) if current_provider in provider_options else 0
+    )
+    selected_provider = selectbox(
+        provider_label,
+        options=provider_options,
+        index=provider_idx,
+        key=provider_key,
+        help=provider_help,
+    )
+    st.session_state[provider_state_key] = selected_provider
+
+    # Resolve which provider to use for model lookup (handle "auto" alias)
+    lookup_provider = (
+        fallback_provider_for_auto
+        if selected_provider == "auto" and fallback_provider_for_auto
+        else selected_provider
+    )
+    model_options = _get_model_options(chat_config, lookup_provider, default_model)
+    current_model = st.session_state.get(model_state_key, default_model)
+    if current_model not in model_options:
+        model_options = [current_model] + model_options
+    st.session_state[model_state_key] = selectbox(
+        model_label,
+        options=model_options,
+        index=model_options.index(current_model) if current_model in model_options else 0,
+        key=model_key,
+        help=model_help,
+    )
+    return selected_provider
+
+
 def _render_tier2_llm_judge(judge_settings: JudgeSettings) -> None:
     """Render Tier 2 LLM judge section with editable provider/model fields."""
-    with expander("Judge Settings - Tier 2 LLM Judge"):
-        st.session_state["judge_tier2_provider"] = text_input(
-            "Provider",
-            value=st.session_state.get("judge_tier2_provider", judge_settings.tier2_provider),
-            key="tier2_provider_input",
-            help="LLM provider for Tier 2 evaluation (e.g., 'openai', 'github', 'auto').",
+    # S8-F7: replace text_input with selectbox for provider/model discovery
+    from app.config.config_app import CHAT_CONFIG_FILE
+    from app.data_models.app_models import ChatConfig
+
+    config_path = resolve_config_path(CHAT_CONFIG_FILE)
+    chat_config = load_config(config_path, ChatConfig)
+
+    provider_options = list(PROVIDER_REGISTRY.keys()) + ["auto"]
+    fallback_provider_options = list(PROVIDER_REGISTRY.keys())
+    fallback_strategies = ["tier1_only"]
+
+    with expander("Judge Settings - Tier 2 LLM Judge", expanded=False):
+        _render_provider_model_selectboxes(
+            chat_config=chat_config,
+            provider_options=provider_options,
+            provider_state_key="judge_tier2_provider",
+            model_state_key="judge_tier2_model",
+            default_provider=judge_settings.tier2_provider,
+            default_model=judge_settings.tier2_model,
+            provider_label="Provider",
+            model_label="Model",
+            provider_key="tier2_provider_input",
+            model_key="tier2_model_input",
+            provider_help="LLM provider for Tier 2 evaluation. 'auto' selects best available.",
+            model_help="LLM model for Tier 2 evaluation.",
+            fallback_provider_for_auto=judge_settings.tier2_fallback_provider,
         )
-        st.session_state["judge_tier2_model"] = text_input(
-            "Model",
-            value=st.session_state.get("judge_tier2_model", judge_settings.tier2_model),
-            key="tier2_model_input",
-            help="LLM model for Tier 2 evaluation (e.g., 'gpt-4o-mini').",
+
+        _render_provider_model_selectboxes(
+            chat_config=chat_config,
+            provider_options=fallback_provider_options,
+            provider_state_key="judge_tier2_fallback_provider",
+            model_state_key="judge_tier2_fallback_model",
+            default_provider=judge_settings.tier2_fallback_provider,
+            default_model=judge_settings.tier2_fallback_model,
+            provider_label="Fallback Provider",
+            model_label="Fallback Model",
+            provider_key="tier2_fallback_provider_input",
+            model_key="tier2_fallback_model_input",
+            provider_help="Fallback LLM provider if primary fails.",
+            model_help="Fallback LLM model if primary fails.",
         )
-        st.session_state["judge_tier2_fallback_provider"] = text_input(
-            "Fallback Provider",
-            value=st.session_state.get(
-                "judge_tier2_fallback_provider", judge_settings.tier2_fallback_provider
-            ),
-            key="tier2_fallback_provider_input",
-            help="Fallback LLM provider if primary fails.",
+
+        current_strategy = st.session_state.get(
+            "judge_fallback_strategy", judge_settings.fallback_strategy
         )
-        st.session_state["judge_tier2_fallback_model"] = text_input(
-            "Fallback Model",
-            value=st.session_state.get(
-                "judge_tier2_fallback_model", judge_settings.tier2_fallback_model
-            ),
-            key="tier2_fallback_model_input",
-            help="Fallback LLM model if primary fails.",
+        strategy_idx = (
+            fallback_strategies.index(current_strategy)
+            if current_strategy in fallback_strategies
+            else 0
         )
+        st.session_state["judge_fallback_strategy"] = selectbox(
+            "Fallback Strategy",
+            options=fallback_strategies,
+            index=strategy_idx,
+            key="fallback_strategy_input",
+            help="Strategy used when evaluation tiers fail.",
+        )
+
         st.session_state["judge_tier2_timeout_seconds"] = number_input(
             "Timeout Seconds",
             min_value=0.1,
@@ -212,7 +327,7 @@ def _render_tier2_llm_judge(judge_settings: JudgeSettings) -> None:
 
 def _render_observability_settings(judge_settings: JudgeSettings) -> None:
     """Render observability settings section with editable boolean and URL fields."""
-    with expander("Judge Settings - Observability"):
+    with expander("Judge Settings - Observability", expanded=False):
         st.session_state["judge_logfire_enabled"] = checkbox(
             "Logfire Enabled",
             value=st.session_state.get("judge_logfire_enabled", judge_settings.logfire_enabled),
@@ -310,6 +425,9 @@ def render_settings(common_settings: CommonSettings, judge_settings: JudgeSettin
 
     # Common Settings Section (editable)
     _render_common_settings(common_settings)
+
+    # Advanced Settings header before judge settings expanders
+    st.header("Advanced Settings")
 
     # Judge Settings - Editable Sections
     _render_tier_configuration(judge_settings)

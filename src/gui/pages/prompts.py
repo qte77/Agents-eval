@@ -7,7 +7,7 @@ from ChatConfig without hardcoded fallbacks (DRY principle).
 """
 
 from pydantic import BaseModel
-from streamlit import error, header, info
+from streamlit import error, header, info, warning
 
 from app.data_models.app_models import ChatConfig
 from app.utils.error_messages import invalid_type
@@ -25,6 +25,11 @@ def render_prompts(chat_config: ChatConfig | BaseModel):  # -> dict[str, str]:
     """
 
     header(PROMPTS_HEADER)
+    # S8-F8.1: prominent warning — prompt edits are display-only and not persisted
+    warning(
+        "Edits on this page are display-only and will not be saved. "
+        "To persist prompt changes, edit config_chat.json directly."
+    )
 
     if not isinstance(chat_config, ChatConfig):
         msg = invalid_type("ChatConfig", type(chat_config).__name__)

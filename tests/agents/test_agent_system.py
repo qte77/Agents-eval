@@ -4,6 +4,7 @@ Test cases for agent system orchestration.
 Tests for delegation flow, usage limit enforcement, and single-agent fallback.
 """
 
+import inspect
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -11,6 +12,7 @@ import pytest
 from app.agents.agent_system import (
     _validate_model_return,
     initialize_logfire_instrumentation_from_settings,
+    run_manager,
 )
 from app.data_models.app_models import ResearchResult
 from app.judge.settings import JudgeSettings
@@ -300,3 +302,41 @@ class TestTraceCollection:
             )
 
             mock_collector.log_tool_call.assert_called_once()
+
+
+class TestPydanticAiStreamRemoval:
+    """Verify that dead `pydantic_ai_stream` parameter has been removed from all call sites."""
+
+    def test_run_manager_has_no_pydantic_ai_stream_param(self):
+        """run_manager() must not accept pydantic_ai_stream parameter."""
+        sig = inspect.signature(run_manager)
+        assert "pydantic_ai_stream" not in sig.parameters, (
+            "pydantic_ai_stream is dead code (NotImplementedError) and must be removed from run_manager()"
+        )
+
+    def test_run_manager_orchestrated_has_no_pydantic_ai_stream_param(self):
+        """run_manager_orchestrated() must not accept pydantic_ai_stream parameter."""
+        from app.agents.orchestration import run_manager_orchestrated
+
+        sig = inspect.signature(run_manager_orchestrated)
+        assert "pydantic_ai_stream" not in sig.parameters, (
+            "pydantic_ai_stream is dead code and must be removed from run_manager_orchestrated()"
+        )
+
+    def test_app_run_agent_execution_has_no_pydantic_ai_stream_param(self):
+        """_run_agent_execution() in app.py must not accept pydantic_ai_stream parameter."""
+        from app.app import _run_agent_execution
+
+        sig = inspect.signature(_run_agent_execution)
+        assert "pydantic_ai_stream" not in sig.parameters, (
+            "pydantic_ai_stream is dead code and must be removed from _run_agent_execution()"
+        )
+
+    def test_app_main_has_no_pydantic_ai_stream_param(self):
+        """main() in app.py must not accept pydantic_ai_stream parameter."""
+        from app.app import main
+
+        sig = inspect.signature(main)
+        assert "pydantic_ai_stream" not in sig.parameters, (
+            "pydantic_ai_stream is dead code and must be removed from main()"
+        )
