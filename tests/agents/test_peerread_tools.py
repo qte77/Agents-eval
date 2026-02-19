@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from pydantic import BaseModel
-from pydantic_ai import Agent
+from pydantic_ai import Agent, ModelRetry
 
 from app.data_models.peerread_models import (
     PeerReadConfig,
@@ -374,7 +374,7 @@ class TestToolRegistration:
             # Act & Assert
             import pytest
 
-            with pytest.raises(ValueError, match="not found"):
+            with pytest.raises(ModelRetry, match="not found"):
                 import asyncio
 
                 asyncio.run(get_paper_tool(None, "invalid_id"))
@@ -554,7 +554,7 @@ class TestQueryErrorHandling:
             if query_tool:
                 import asyncio
 
-                with pytest.raises(ValueError, match="Failed to query papers"):
+                with pytest.raises(ModelRetry, match="Failed to query papers"):
                     asyncio.run(query_tool(None, "machine learning"))
 
 

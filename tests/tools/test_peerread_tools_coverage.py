@@ -11,6 +11,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+from pydantic_ai import ModelRetry
 
 from app.data_models.peerread_models import PeerReadPaper
 
@@ -199,7 +200,7 @@ class TestAddPeerreadToolsToAgent:
             mock_loader_class.return_value = mock_loader
 
             # Act & Assert
-            with pytest.raises(ValueError, match="Paper .* not found"):
+            with pytest.raises(ModelRetry, match="not found"):
                 await get_paper_tool(None, "nonexistent")
 
     @pytest.mark.asyncio
