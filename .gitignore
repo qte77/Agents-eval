@@ -49,13 +49,14 @@ reference/
 site/
 
 # project specific
-wandb/
 data/
-test_data/
 datasets/
 docs/write-up/*
 !docs/write-up/en/
-results/sweeps/
+!docs/write-up/template/
+results/
+test_data/
+wandb/
 
 # Ralph state
 ralph/state/
