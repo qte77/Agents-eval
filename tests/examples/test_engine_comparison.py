@@ -20,36 +20,6 @@ from app.data_models.evaluation_models import GraphTraceData
 from app.judge.cc_trace_adapter import CCTraceAdapter
 
 
-class TestEngineComparisonExists:
-    """Verify the engine_comparison.py example file is created."""
-
-    def test_example_file_exists(self) -> None:
-        """engine_comparison.py must exist in src/examples/."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        target = examples_dir / "engine_comparison.py"
-        # Assert
-        assert target.exists(), f"Example file missing: {target}"
-
-    def test_example_documents_prerequisites(self) -> None:
-        """Example must document CC artifact prerequisites."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        content = (examples_dir / "engine_comparison.py").read_text()
-        # Assert
-        assert (
-            "collect-cc" in content or "scripts" in content or "Prerequisites" in content.lower()
-        ), "Example must document prerequisites for CC artifact collection"
-
-    def test_example_uses_cc_trace_adapter(self) -> None:
-        """Example must use CCTraceAdapter for loading CC artifacts."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        content = (examples_dir / "engine_comparison.py").read_text()
-        # Assert
-        assert "CCTraceAdapter" in content, "Example must import and use CCTraceAdapter"
-
-
 class TestCCTraceAdapterIntegration:
     """Verify CCTraceAdapter integration works as shown in the example."""
 

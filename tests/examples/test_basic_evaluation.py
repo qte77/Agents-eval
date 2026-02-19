@@ -17,45 +17,6 @@ import pytest
 from app.data_models.evaluation_models import CompositeResult, GraphTraceData
 
 
-class TestBasicEvaluationExists:
-    """Verify the basic_evaluation.py example file is created."""
-
-    def test_example_file_exists(self) -> None:
-        """basic_evaluation.py must exist in src/examples/."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        target = examples_dir / "basic_evaluation.py"
-        # Assert
-        assert target.exists(), f"Example file missing: {target}"
-
-    def test_example_has_docstring(self) -> None:
-        """basic_evaluation.py must have a module docstring documenting purpose and usage."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        target = examples_dir / "basic_evaluation.py"
-        content = target.read_text()
-        # Assert
-        assert '"""' in content, "Example must have a docstring"
-        assert "prerequisite" in content.lower() or "api key" in content.lower(), (
-            "Docstring must document prerequisites (API key requirement)"
-        )
-
-    def test_example_uses_current_imports(self) -> None:
-        """basic_evaluation.py must use current project imports, not deprecated APIs."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        target = examples_dir / "basic_evaluation.py"
-        content = target.read_text()
-        # Assert
-        assert "EvaluationPipeline" in content, "Must import EvaluationPipeline"
-        assert "GraphTraceData" in content, "Must import GraphTraceData"
-        assert "PeerReadPaper" in content, "Must import PeerReadPaper"
-        # Ensure it does NOT use deprecated dict-based API
-        assert "execution_trace = {" not in content or "GraphTraceData" in content, (
-            "Must not use deprecated dict-based execution_trace API"
-        )
-
-
 class TestBasicEvaluationRuns:
     """Verify the basic evaluation example runs without errors using mocked dependencies."""
 

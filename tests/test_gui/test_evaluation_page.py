@@ -82,12 +82,6 @@ def mock_tier_results():
 class TestEvaluationPage:
     """Test suite for Evaluation Results page rendering."""
 
-    def test_render_evaluation_page_exists(self):
-        """Test that render_evaluation function exists and is callable."""
-        from gui.pages.evaluation import render_evaluation
-
-        assert callable(render_evaluation)
-
     def test_render_with_composite_result(self, mock_composite_result):
         """Test page renders with valid CompositeResult data."""
         from gui.pages.evaluation import render_evaluation

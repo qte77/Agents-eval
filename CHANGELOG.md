@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Baseline Comparison Configuration: path validation with `st.error` for non-existent directories; auto-populate from `logs/Agent_evals/traces/` if it exists (STORY-013)
 - `execution_id` included in `_prepare_result_dict` return and threaded to session state via `_execute_query_background` (STORY-013)
 
+### Removed
+
+- 43 implementation-detail tests across 14 files: deleted `test_load_settings.py` (4 AST introspection guards), `test_sprint1_examples_deleted.py` (8 deleted-file guards), `test_opik_removal.py` (12 removal guards); removed file-exists/string-contains test classes from 3 example test files; removed individual `hasattr`/`callable`/`isinstance` checks from 8 test files. No behavioral coverage lost.
+
 ### Changed
 
 - Docs: README Status section updated to Sprint 8 Delivered; architecture.md Implementation Status and Development Timeline aligned; Sprint 9 PRD stripped of all 14 solved stories (Features 1-8, Story Breakdown, Ralph Loop notes removed)

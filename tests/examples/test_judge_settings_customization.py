@@ -16,28 +16,6 @@ from pathlib import Path
 from app.judge.settings import JudgeSettings
 
 
-class TestJudgeSettingsCustomizationExists:
-    """Verify the judge_settings_customization.py example file is created."""
-
-    def test_example_file_exists(self) -> None:
-        """judge_settings_customization.py must exist in src/examples/."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        target = examples_dir / "judge_settings_customization.py"
-        # Assert
-        assert target.exists(), f"Example file missing: {target}"
-
-    def test_example_demonstrates_key_settings(self) -> None:
-        """Example must show timeout, tier weight, and provider customization."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        content = (examples_dir / "judge_settings_customization.py").read_text()
-        # Assert
-        assert "JudgeSettings" in content, "Must use JudgeSettings"
-        assert "tier" in content.lower(), "Must demonstrate tier configuration"
-        assert "provider" in content.lower(), "Must show provider selection"
-
-
 class TestJudgeSettingsModifications:
     """Verify settings modifications shown in the example work correctly."""
 

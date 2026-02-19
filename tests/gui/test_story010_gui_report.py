@@ -29,18 +29,6 @@ class TestGenerateReportButtonPresence:
     a composite_result is available.
     """
 
-    def test_run_app_has_render_report_section_function(self) -> None:
-        """run_app must define a _render_report_section function.
-
-        This function encapsulates the "Generate Report" button and report display.
-        """
-        from gui.pages import run_app
-
-        assert hasattr(run_app, "_render_report_section"), (
-            "run_app must define _render_report_section for STORY-010"
-        )
-        assert callable(run_app._render_report_section), "_render_report_section must be callable"
-
     def test_render_report_section_signature(self) -> None:
         """_render_report_section must accept a composite_result parameter."""
         from gui.pages import run_app

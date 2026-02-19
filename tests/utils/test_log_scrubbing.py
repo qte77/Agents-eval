@@ -13,13 +13,6 @@ from hypothesis import strategies as st
 class TestSensitivePatterns:
     """Test the sensitive data pattern definitions."""
 
-    def test_sensitive_patterns_exist(self):
-        """Sensitive patterns list should be defined."""
-        from app.utils.log_scrubbing import SENSITIVE_PATTERNS
-
-        assert isinstance(SENSITIVE_PATTERNS, (list, tuple, frozenset))
-        assert len(SENSITIVE_PATTERNS) > 0
-
     def test_sensitive_patterns_include_key_types(self):
         """Sensitive patterns should include common secret types."""
         from app.utils.log_scrubbing import SENSITIVE_PATTERNS
@@ -120,15 +113,6 @@ class TestLogRecordScrubbing:
 
 class TestLogfireScrubbingPatterns:
     """Test Logfire scrubbing pattern configuration."""
-
-    def test_get_logfire_scrubbing_patterns_returns_list(self):
-        """Logfire scrubbing patterns should return a list or dict."""
-        from app.utils.log_scrubbing import get_logfire_scrubbing_patterns
-
-        patterns = get_logfire_scrubbing_patterns()
-
-        # Logfire.configure expects scrubbing parameter as list or dict
-        assert isinstance(patterns, (list, dict))
 
     def test_logfire_patterns_include_key_fields(self):
         """Logfire scrubbing patterns should include common sensitive field names."""

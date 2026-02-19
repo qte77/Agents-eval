@@ -94,12 +94,6 @@ def mock_baseline_comparison(mock_pydantic_result, mock_cc_solo_result):
 class TestGUIBaselineComparison:
     """Test suite for GUI baseline comparison view."""
 
-    def test_render_baseline_section_exists(self):
-        """Test that render_baseline_comparison function exists."""
-        from gui.pages.evaluation import render_baseline_comparison
-
-        assert callable(render_baseline_comparison)
-
     def test_render_single_baseline_comparison(self, mock_baseline_comparison):
         """Test rendering single baseline comparison."""
         from gui.pages.evaluation import render_baseline_comparison

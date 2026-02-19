@@ -179,14 +179,6 @@ class TestResolveServiceUrlFallback:
 class TestPhoenixDefaultEndpointUsesResolver:
     """Verify PHOENIX_DEFAULT_ENDPOINT uses resolve_service_url()."""
 
-    def test_phoenix_default_endpoint_is_string(self) -> None:
-        """PHOENIX_DEFAULT_ENDPOINT must be a string URL."""
-        from gui.config.config import PHOENIX_DEFAULT_ENDPOINT
-
-        assert isinstance(PHOENIX_DEFAULT_ENDPOINT, str), (
-            f"PHOENIX_DEFAULT_ENDPOINT must be a string, got {type(PHOENIX_DEFAULT_ENDPOINT)}"
-        )
-
     def test_phoenix_default_endpoint_is_http_url(self) -> None:
         """PHOENIX_DEFAULT_ENDPOINT must start with http:// or https://."""
         from gui.config.config import PHOENIX_DEFAULT_ENDPOINT

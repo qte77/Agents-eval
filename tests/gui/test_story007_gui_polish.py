@@ -323,16 +323,6 @@ class TestEvaluationHumanReadableLabels:
     Expected: Human-readable label returned for each
     """
 
-    def test_metric_label_module_exports_mapping(self) -> None:
-        """evaluation.py exports METRIC_LABELS dict or format_metric_label function."""
-        import gui.pages.evaluation as eval_module
-
-        has_mapping = hasattr(eval_module, "METRIC_LABELS")
-        has_function = hasattr(eval_module, "format_metric_label")
-        assert has_mapping or has_function, (
-            "evaluation.py must export METRIC_LABELS dict or format_metric_label function"
-        )
-
     def test_cosine_score_maps_to_readable_label(self) -> None:
         """'cosine_score' maps to a human-readable label."""
         import gui.pages.evaluation as eval_module

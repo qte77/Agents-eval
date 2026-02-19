@@ -55,23 +55,6 @@ def _make_result(
 
 
 # ---------------------------------------------------------------------------
-# Import existence check
-# ---------------------------------------------------------------------------
-
-
-def test_report_generator_module_importable() -> None:
-    """report_generator module must be importable from app.reports."""
-    from app.reports import report_generator  # noqa: F401
-
-
-def test_generate_report_function_exists() -> None:
-    """generate_report() must be a callable exported from report_generator."""
-    from app.reports.report_generator import generate_report
-
-    assert callable(generate_report)
-
-
-# ---------------------------------------------------------------------------
 # Markdown structure — executive summary
 # ---------------------------------------------------------------------------
 
