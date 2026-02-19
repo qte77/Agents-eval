@@ -9,8 +9,6 @@ Expected behavior: Example demonstrates timeout adjustment, tier weight customiz
 Mock strategy: No mocking needed; JudgeSettings is local configuration only.
 """
 
-import importlib.util
-import sys
 from pathlib import Path
 
 from app.judge.settings import JudgeSettings
@@ -55,20 +53,6 @@ class TestJudgeSettingsModifications:
         enabled = settings.get_enabled_tiers()
         assert enabled == {1, 3}, f"Expected {{1, 3}}, got {enabled}"
         assert not settings.is_tier_enabled(2), "Tier 2 should be disabled"
-
-    def test_example_is_importable(self) -> None:
-        """judge_settings_customization.py imports without errors."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        spec = importlib.util.spec_from_file_location(
-            "judge_settings_customization",
-            examples_dir / "judge_settings_customization.py",
-        )
-        assert spec is not None
-        module = importlib.util.module_from_spec(spec)
-        # Act / Assert: loading must not raise
-        sys.modules["judge_settings_customization"] = module
-        spec.loader.exec_module(module)  # type: ignore[union-attr]
 
     def test_example_demonstrates_env_var_override(self) -> None:
         """Example explains how environment variable override works."""

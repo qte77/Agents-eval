@@ -258,16 +258,6 @@ class TestStory013EngineRefactor:
             "SweepConfig must NOT have cc_baseline_enabled field (removed in STORY-013)"
         )
 
-    def test_sweep_runner_has_invoke_cc_comparison_method(self, basic_sweep_config: SweepConfig):
-        """Test that SweepRunner has _invoke_cc_comparison() method (renamed from _invoke_cc_baseline)."""
-        runner = SweepRunner(basic_sweep_config)
-        assert hasattr(runner, "_invoke_cc_comparison"), (
-            "SweepRunner must have _invoke_cc_comparison method"
-        )
-        assert not hasattr(runner, "_invoke_cc_baseline"), (
-            "SweepRunner must NOT have _invoke_cc_baseline (renamed to _invoke_cc_comparison)"
-        )
-
     def test_cc_baseline_enabled_not_in_model_fields(self, tmp_path: Path):
         """Test that cc_baseline_enabled is not a defined field on SweepConfig."""
         # Pydantic silently ignores extra fields by default, but the field must
@@ -296,13 +286,6 @@ class TestStory013bRetryAndPersistence:
     def test_sweep_config_retry_delay_in_model_fields(self, tmp_path: Path):
         """Test that retry_delay_seconds is a declared Pydantic field."""
         assert "retry_delay_seconds" in SweepConfig.model_fields
-
-    def test_sweep_runner_has_save_results_json_method(self, basic_sweep_config: SweepConfig):
-        """Test that SweepRunner has _save_results_json() method (split from _save_results)."""
-        runner = SweepRunner(basic_sweep_config)
-        assert hasattr(runner, "_save_results_json"), (
-            "SweepRunner must have _save_results_json method"
-        )
 
     @pytest.mark.asyncio
     async def test_save_results_json_writes_only_results_json(

@@ -79,12 +79,6 @@ def mock_trace_data():
 class TestAgentGraphPage:
     """Test suite for Agent Graph visualization page."""
 
-    def test_render_agent_graph_exists(self):
-        """Test that render_agent_graph function exists and is callable."""
-        from gui.pages.agent_graph import render_agent_graph
-
-        assert callable(render_agent_graph)
-
     def test_render_with_networkx_graph(self, mock_networkx_graph):
         """Test page renders with valid NetworkX graph."""
         from gui.pages.agent_graph import render_agent_graph

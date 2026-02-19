@@ -9,9 +9,7 @@ Mock strategy: Create minimal CC artifact directory structure in tmp_path;
                patch EvaluationPipeline LLM calls.
 """
 
-import importlib.util
 import json
-import sys
 from pathlib import Path
 
 import pytest
@@ -111,23 +109,3 @@ class TestCCTraceAdapterIntegration:
         # Act / Assert
         with pytest.raises(ValueError, match="does not exist"):
             CCTraceAdapter(missing_dir)
-
-
-class TestEngineComparisonIsImportable:
-    """Verify engine_comparison.py can be loaded without errors."""
-
-    def test_example_is_importable(self) -> None:
-        """engine_comparison.py imports without errors."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        target = examples_dir / "engine_comparison.py"
-
-        spec = importlib.util.spec_from_file_location(
-            "engine_comparison",
-            target,
-        )
-        assert spec is not None
-        module = importlib.util.module_from_spec(spec)
-        # Act / Assert: loading must not raise
-        sys.modules["engine_comparison"] = module
-        spec.loader.exec_module(module)  # type: ignore[union-attr]

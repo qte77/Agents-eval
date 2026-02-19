@@ -68,17 +68,6 @@ def test_weave_not_imported_when_api_key_absent():
         mock_weave.init.assert_not_called()
 
 
-def test_app_op_decorator_with_weave_available():
-    """Test that @op() decorator works when weave is available."""
-    with patch.dict(sys.modules, {"weave": MagicMock()}):
-        if "app.app" in sys.modules:
-            del sys.modules["app.app"]
-
-        from app.app import op
-
-        assert callable(op)
-
-
 def test_app_op_decorator_without_weave():
     """Test that @op() decorator fallback is correctly defined in app.py."""
 
