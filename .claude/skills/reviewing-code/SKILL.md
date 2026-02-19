@@ -61,6 +61,12 @@ comprehensive testing
 - [ ] Proper type hints and docstrings
 - [ ] Tests cover stated functionality
 
+**Structural Health**:
+
+- [ ] No function exceeds cognitive complexity threshold (suggested default: 15 per function, overridable per-project)
+- [ ] No copy-paste duplication across methods (watch for repeated dispatch chains)
+- [ ] File aggregate complexity — flag if trending above project norms (suggested default: 50 per file, overridable per-project)
+
 ## Output Standards
 
 **Simple Tasks**: CRITICAL issues only, clear approval when requirements met

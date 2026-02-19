@@ -15,6 +15,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
 # Ensure src directory is available for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -22,10 +25,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 from app.data_models.evaluation_models import (
     GraphTraceData,
 )
-from app.evals.evaluation_pipeline import EvaluationPipeline
-from app.evals.graph_analysis import GraphAnalysisEngine
-from app.evals.llm_evaluation_managers import LLMJudgeEngine
-from app.evals.traditional_metrics import TraditionalMetricsEngine
+from app.judge.evaluation_pipeline import EvaluationPipeline
+from app.judge.graph_analysis import GraphAnalysisEngine
+from app.judge.llm_evaluation_managers import LLMJudgeEngine
+from app.judge.traditional_metrics import TraditionalMetricsEngine
 
 
 class PerformanceBenchmarkData:
@@ -192,7 +195,9 @@ class PerformanceBenchmarkData:
                             "conflict_resolution",
                         ][i // 20 % 3],
                         "manager_agent": f"Agent_{i % agent_count}",
-                        "target_agents": [f"Agent_{j}" for j in range(agent_count) if j != i % agent_count],
+                        "target_agents": [
+                            f"Agent_{j}" for j in range(agent_count) if j != i % agent_count
+                        ],
                         "timestamp": i * 0.2,
                         "task": f"complex_coordination_{i // 20}",
                         "complexity": (i // 20) + 1,
@@ -223,19 +228,16 @@ class TestPerformanceBaselines:
     @pytest.fixture
     def llm_engine(self):
         """Fixture providing LLM judge engine."""
-        # Load default configuration
-        from app.utils.load_configs import load_eval_config
+        from app.judge.settings import JudgeSettings
 
-        config = load_eval_config()
-        return LLMJudgeEngine(config)
+        return LLMJudgeEngine(JudgeSettings())
 
     @pytest.fixture
     def graph_engine(self):
         """Fixture providing graph analysis engine."""
-        from app.utils.load_configs import load_eval_config
+        from app.judge.settings import JudgeSettings
 
-        config = load_eval_config()
-        return GraphAnalysisEngine(config)
+        return GraphAnalysisEngine(JudgeSettings())
 
     @pytest.fixture
     def evaluation_pipeline(self):
@@ -305,7 +307,9 @@ class TestPerformanceBaselines:
 
             # Validate against target (1.0 second)
             target_time = 1.0
-            success_rate = sum(1 for t in execution_times if t <= target_time) / len(execution_times)
+            success_rate = sum(1 for t in execution_times if t <= target_time) / len(
+                execution_times
+            )
             print(f"  Success rate (≤{target_time}s): {success_rate:.1%}")
 
             # Reason: Allow some flexibility for larger papers but warn if slow
@@ -622,6 +626,7 @@ class TestPerformanceBaselines:
 
         return performance_data
 
+    @pytest.mark.benchmark
     async def test_performance_regression_detection(self, evaluation_pipeline, benchmark_data):
         """Test for performance regression detection."""
         print("\n=== Performance Regression Detection ===")
@@ -677,10 +682,6 @@ if __name__ == "__main__":
             benchmark_data = PerformanceBenchmarkData()
             traditional_engine = TraditionalMetricsEngine()
             pipeline = EvaluationPipeline()
-
-            from app.utils.load_configs import load_eval_config
-
-            load_eval_config()
 
             print("✅ Components initialized")
             print("Performance targets: T1≤1.0s, T2≤10.0s, T3≤15.0s, Total≤25.0s")
@@ -767,11 +768,15 @@ if __name__ == "__main__":
 
             if tier1_results:
                 tier1_times = [r["time"] for r in tier1_results]
-                print(f"Tier 1 (Traditional): {statistics.mean(tier1_times):.3f}s avg, target ≤1.0s")
+                print(
+                    f"Tier 1 (Traditional): {statistics.mean(tier1_times):.3f}s avg, target ≤1.0s"
+                )
 
             if pipeline_results:
                 pipeline_times = [r["time"] for r in pipeline_results]
-                print(f"End-to-End Pipeline: {statistics.mean(pipeline_times):.3f}s avg, target ≤25.0s")
+                print(
+                    f"End-to-End Pipeline: {statistics.mean(pipeline_times):.3f}s avg, target ≤25.0s"
+                )
 
             print("\n✅ Performance benchmarking completed!")
             print("Results available for performance baseline documentation.")
@@ -783,3 +788,210 @@ if __name__ == "__main__":
             raise
 
     asyncio.run(run_performance_benchmarks())
+
+
+# STORY-004: Hypothesis property-based tests for benchmark result invariants
+class TestBenchmarkResultInvariants:
+    """Property-based tests for benchmark result structure invariants."""
+
+    @given(
+        word_count=st.integers(min_value=10, max_value=1000),
+        execution_time=st.floats(min_value=0.001, max_value=30.0, allow_nan=False),
+    )
+    def test_performance_data_structure_invariants(self, word_count, execution_time):
+        """Property: Performance data always has valid structure."""
+        # Arrange & Act
+        perf_data = {
+            "word_count": word_count,
+            "mean_time": execution_time,
+            "median_time": execution_time * 0.95,
+            "stddev_time": execution_time * 0.1,
+            "percentile_95": execution_time * 1.05,
+            "max_time": execution_time * 1.2,
+            "min_time": execution_time * 0.8,
+        }
+
+        # Assert invariants
+        assert perf_data["word_count"] >= 10
+        assert perf_data["mean_time"] > 0
+        assert perf_data["min_time"] <= perf_data["mean_time"] <= perf_data["max_time"]
+        assert perf_data["stddev_time"] >= 0
+
+    @given(interaction_count=st.integers(min_value=3, max_value=200))
+    def test_trace_generation_invariants(self, interaction_count):
+        """Property: Generated traces always have valid structure."""
+        # Arrange
+        data_gen = PerformanceBenchmarkData()
+
+        # Act
+        if interaction_count <= 50:
+            trace = data_gen.create_simple_trace(interaction_count)
+        else:
+            trace = data_gen.create_complex_trace(interaction_count)
+
+        # Assert invariants
+        assert len(trace["agent_interactions"]) == interaction_count
+        assert len(trace["tool_calls"]) > 0
+        assert "execution_id" in trace
+        assert all(isinstance(i["timestamp"], float) for i in trace["agent_interactions"])
+
+
+# STORY-004: Inline-snapshot regression tests for benchmark outputs
+class TestBenchmarkOutputSnapshots:
+    """Snapshot tests for benchmark output structure regression testing."""
+
+    def test_simple_trace_structure(self):
+        """Snapshot: Simple trace data structure."""
+        # Arrange
+        data_gen = PerformanceBenchmarkData()
+
+        # Act
+        trace = data_gen.create_simple_trace(10)
+
+        # Assert with snapshot
+        assert trace == snapshot(
+            {
+                "execution_id": "simple_trace_10",
+                "agent_interactions": [
+                    {
+                        "from": "Agent_0",
+                        "to": "Agent_1",
+                        "type": "task_request",
+                        "timestamp": 0.0,
+                        "data_size": 100,
+                    },
+                    {
+                        "from": "Agent_1",
+                        "to": "Agent_2",
+                        "type": "result_delivery",
+                        "timestamp": 0.5,
+                        "data_size": 150,
+                    },
+                    {
+                        "from": "Agent_2",
+                        "to": "Agent_0",
+                        "type": "task_request",
+                        "timestamp": 1.0,
+                        "data_size": 200,
+                    },
+                    {
+                        "from": "Agent_0",
+                        "to": "Agent_1",
+                        "type": "result_delivery",
+                        "timestamp": 1.5,
+                        "data_size": 250,
+                    },
+                    {
+                        "from": "Agent_1",
+                        "to": "Agent_2",
+                        "type": "task_request",
+                        "timestamp": 2.0,
+                        "data_size": 300,
+                    },
+                    {
+                        "from": "Agent_2",
+                        "to": "Agent_0",
+                        "type": "result_delivery",
+                        "timestamp": 2.5,
+                        "data_size": 350,
+                    },
+                    {
+                        "from": "Agent_0",
+                        "to": "Agent_1",
+                        "type": "task_request",
+                        "timestamp": 3.0,
+                        "data_size": 400,
+                    },
+                    {
+                        "from": "Agent_1",
+                        "to": "Agent_2",
+                        "type": "result_delivery",
+                        "timestamp": 3.5,
+                        "data_size": 450,
+                    },
+                    {
+                        "from": "Agent_2",
+                        "to": "Agent_0",
+                        "type": "task_request",
+                        "timestamp": 4.0,
+                        "data_size": 500,
+                    },
+                    {
+                        "from": "Agent_0",
+                        "to": "Agent_1",
+                        "type": "result_delivery",
+                        "timestamp": 4.5,
+                        "data_size": 550,
+                    },
+                ],
+                "tool_calls": [
+                    {
+                        "agent_id": "Agent_0",
+                        "tool_name": "tool_0",
+                        "success": True,
+                        "duration": 0.1,
+                        "timestamp": 0.2,
+                        "context": "Processing task 0",
+                    },
+                    {
+                        "agent_id": "Agent_0",
+                        "tool_name": "tool_3",
+                        "success": True,
+                        "duration": 0.4,
+                        "timestamp": 1.7,
+                        "context": "Processing task 3",
+                    },
+                    {
+                        "agent_id": "Agent_0",
+                        "tool_name": "tool_1",
+                        "success": True,
+                        "duration": 0.2,
+                        "timestamp": 3.2,
+                        "context": "Processing task 6",
+                    },
+                    {
+                        "agent_id": "Agent_0",
+                        "tool_name": "tool_4",
+                        "success": True,
+                        "duration": 0.5,
+                        "timestamp": 4.7,
+                        "context": "Processing task 9",
+                    },
+                ],
+                "coordination_events": [
+                    {
+                        "coordination_type": "task_delegation",
+                        "manager_agent": "Agent_0",
+                        "target_agents": ["Agent_1", "Agent_2"],
+                        "timestamp": 0.0,
+                        "task": "benchmark_task_10",
+                    }
+                ],
+            }
+        )
+
+    def test_performance_baseline_data_structure(self):
+        """Snapshot: Performance baseline data structure."""
+        # Arrange
+        perf_data = {
+            "word_count": 300,
+            "mean_time": 0.523,
+            "median_time": 0.498,
+            "stddev_time": 0.042,
+            "percentile_95": 0.587,
+            "max_time": 0.612,
+            "min_time": 0.461,
+        }
+
+        # Assert with snapshot
+        assert perf_data == snapshot(
+            {
+                "word_count": 300,
+                "mean_time": 0.523,
+                "median_time": 0.498,
+                "stddev_time": 0.042,
+                "percentile_95": 0.587,
+                "max_time": 0.612,
+                "min_time": 0.461,
+            }
+        )

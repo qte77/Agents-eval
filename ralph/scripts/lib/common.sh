@@ -4,17 +4,31 @@
 # Source this file: source "$SCRIPT_DIR/lib/common.sh"
 #
 
-# Colors
+# Colors: [INFO]=blue, [WARN]=yellow, [ERROR]=red,
+# [SUCCESS]=green, [CC]=magenta, [CC error]=red
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
+MAGENTA='\033[0;35m'
 NC='\033[0m'
 
+# Utilities
+_ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+fmt_elapsed() { echo "$((${1} / 60))m$((${1} % 60))s"; }
+
 # Logging functions
-log_info() { echo -e "${GREEN}[INFO]${NC} $1" >&2; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1" >&2; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
-log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1" >&2; }
+_log() { echo -e "${1}[${2}]${NC} $(_ts) $3" >&2; }
+
+log_info()    { _log "$BLUE"   "INFO"    "$1"; }
+log_warn()    { _log "$YELLOW" "WARN"    "$1"; }
+log_error()   { _log "$RED"    "ERROR"   "$1"; }
+log_success() { _log "$GREEN"  "SUCCESS" "$1"; }
+
+log_cc()         { log_info    "${MAGENTA}[CC]${NC} $1"; }
+log_cc_warn()    { log_warn    "${MAGENTA}[CC]${NC} $1"; }
+log_cc_error()   { log_error   "${RED}[CC]${NC} $1"; }
+log_cc_success() { log_success "${MAGENTA}[CC]${NC} $1"; }
 
 # Check if command exists
 require_command() {

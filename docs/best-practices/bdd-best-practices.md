@@ -2,31 +2,45 @@
 title: BDD Best Practices
 version: 2.0
 based-on: Industry research 2025-2026
-see-also: testing-strategy.md
+see-also: testing-strategy.md, tdd-best-practices.md
 ---
 
-**Purpose**: How to do BDD - Given-When-Then scenarios for stakeholder collaboration on acceptance criteria.
+**Purpose**: How to do BDD - Given-When-Then scenarios
+for stakeholder collaboration on acceptance criteria.
 
 ## Behavior-Driven Development (BDD)
 
-**BDD is NOT a superset of TDD** - they are different methodologies with different focus.
+**BDD is NOT a superset of TDD** - they are different
+methodologies with different focus.
 
 **Key Distinction**:
 
-- **TDD**: Developer-driven methodology (Red-Green-Refactor) - works at unit, integration, and acceptance levels
-- **BDD**: Stakeholder-driven methodology (Discovery → Formulation → Automation) - focuses on acceptance criteria in plain language
+- **TDD**: Developer-driven (Red-Green-Refactor) -
+  unit, integration, and acceptance levels
+- **BDD**: Stakeholder-driven
+  (Discovery - Formulation - Automation) -
+  acceptance criteria in plain language
 
-**Relationship**: Both can test the same system. TDD focuses on code correctness, BDD focuses on stakeholder-defined behavior. You can USE TDD to implement the code that makes BDD scenarios pass.
+**Relationship**: Both can test the same system. TDD
+focuses on code correctness, BDD focuses on
+stakeholder-defined behavior. You can USE TDD to
+implement code that makes BDD scenarios pass.
 
-BDD focuses on defining expected system behavior through collaboration between technical and non-technical stakeholders using plain-language scenarios.
+BDD defines expected system behavior through
+collaboration between technical and non-technical
+stakeholders using plain-language scenarios.
 
 ## The Three Pillars
 
-**1. Discovery**: Product Owner, Developer, Tester collaborate to uncover concrete examples before implementation.
+**1. Discovery**: Product Owner, Developer, Tester
+collaborate to uncover concrete examples before
+implementation.
 
-**2. Formulation**: Capture examples as Given-When-Then scenarios in business language.
+**2. Formulation**: Capture examples as
+Given-When-Then scenarios in business language.
 
-**3. Automation**: Implement scenarios as executable tests (living documentation).
+**3. Automation**: Implement scenarios as executable
+tests (living documentation).
 
 ## Given-When-Then Structure
 
@@ -92,7 +106,8 @@ def verify_redirect(submit_login):
 - All stakeholders can understand
 - Align on requirements before implementation
 
-**Three Amigos pattern**: PO defines "what", Dev designs "how", Tester asks "what about...?"
+**Three Amigos pattern**: PO defines "what", Dev
+designs "how", Tester asks "what about...?"
 
 ### 2. Scenario Quality
 
@@ -105,20 +120,27 @@ Scenario: Calculate order discount
   Then they should receive a 15% discount
 ```
 
-Avoid technical details (database connections, method names, data types).
+Avoid technical details (database connections,
+method names, data types).
 
 ### 3. Declarative, Not Imperative
 
-State what (declarative): "Given a user is authenticated"
-Not how (imperative): "Given user opens login, enters email, enters password, clicks button..."
+State what (declarative):
+"Given a user is authenticated"
+
+Not how (imperative):
+"Given user opens login, enters email,
+enters password, clicks button..."
 
 ### 4. One Scenario Per Behavior
 
-Each scenario tests one behavior. Avoid kitchen-sink scenarios testing "all order features".
+Each scenario tests one behavior. Avoid kitchen-sink
+scenarios testing "all order features".
 
 ### 5. Maintain Scenarios
 
-Revisit when requirements change, remove obsolete scenarios.
+Revisit when requirements change, remove obsolete
+scenarios.
 
 - Prevent test suite bloat
 - Keep scenarios aligned with business needs
@@ -152,14 +174,18 @@ When I submit the order
 
 ## Combining TDD + BDD
 
-BDD and TDD are different methodologies that can work together:
+BDD and TDD are different methodologies that can
+work together:
 
-- **BDD**: Defines acceptance criteria in stakeholder language (Given-When-Then)
-- **TDD**: Implements components using Red-Green-Refactor cycle
+- **BDD**: Defines acceptance criteria in
+  stakeholder language (Given-When-Then)
+- **TDD**: Implements components using
+  Red-Green-Refactor cycle
 
-**Strategy**: Write BDD scenario → Use TDD to implement components → BDD scenario passes
+**Strategy**: Write BDD scenario, use TDD to
+implement components, BDD scenario passes.
 
-See `testing-strategy.md` for detailed TDD/BDD comparison.
+See `testing-strategy.md` for detailed comparison.
 
 ## Tools for BDD
 
@@ -167,16 +193,14 @@ See `testing-strategy.md` for detailed TDD/BDD comparison.
 
 - **pytest-bdd** - Gherkin scenarios with pytest
 - **behave** - Pure BDD framework
-- **Cucumber** - Cross-language BDD (via behave-cucumber)
+- **Cucumber** - Cross-language BDD
 
-See `pyproject.toml` for installed BDD tools or run `make setup_dev` to install dependencies.
+See `pyproject.toml` for installed BDD tools.
 
-**Run BDD scenarios**:
-
-```bash
-make test_all                           # All tests including BDD
-uv run pytest tests/acceptance/         # BDD scenarios only
-```
+**Run BDD scenarios**: See
+[CONTRIBUTING.md](../../CONTRIBUTING.md#complete-command-reference)
+for make recipes. Run BDD scenarios with
+`uv run pytest tests/acceptance/`.
 
 ## When to Use BDD
 

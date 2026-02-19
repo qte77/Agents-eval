@@ -1,0 +1,247 @@
+"""
+Tests for trace collection integration in agent orchestration.
+
+Validates that TraceCollector is wired into agent delegations,
+agent-to-agent interactions are logged, tool calls are captured,
+and GraphTraceData is properly constructed and passed to evaluation.
+"""
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from pydantic_ai import AgentRunResult
+
+from app.data_models.evaluation_models import GraphTraceData
+
+
+@pytest.mark.asyncio
+async def test_trace_collector_initialized_in_run_manager():
+    """Test that TraceCollector is initialized when run_manager is called."""
+    with (
+        patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
+    ):
+        mock_collector = MagicMock()
+        mock_collector.start_execution = MagicMock()
+        mock_collector.end_execution = MagicMock()
+        mock_get_collector.return_value = mock_collector
+
+        from app.agents.agent_system import run_manager
+
+        # Mock the manager and its run method
+        mock_manager = MagicMock()
+        mock_manager.model._model_name = "test-model"
+        mock_result = MagicMock(spec=AgentRunResult)
+        mock_result.output = MagicMock()
+        mock_result.usage = MagicMock(return_value={})
+        mock_manager.run = AsyncMock(return_value=mock_result)
+
+        execution_id, manager_output = await run_manager(
+            manager=mock_manager,
+            query="test query",
+            provider="test_provider",
+            usage_limits=None,
+        )
+
+        # Verify trace collector was initialized
+        mock_get_collector.assert_called()
+        # Verify return values
+        assert isinstance(execution_id, str)
+        assert manager_output is mock_result.output
+
+
+@pytest.mark.asyncio
+async def test_trace_execution_started_for_each_run():
+    """Test that trace execution is started with unique execution_id."""
+    with (
+        patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
+    ):
+        mock_collector = MagicMock()
+        mock_collector.start_execution = MagicMock()
+        mock_collector.end_execution = MagicMock()
+        mock_get_collector.return_value = mock_collector
+
+        from app.agents.agent_system import run_manager
+
+        # Mock the manager and its run method
+        mock_manager = MagicMock()
+        mock_manager.model._model_name = "test-model"
+        mock_result = MagicMock(spec=AgentRunResult)
+        mock_result.output = MagicMock()
+        mock_result.usage = MagicMock(return_value={})
+        mock_manager.run = AsyncMock(return_value=mock_result)
+
+        await run_manager(
+            manager=mock_manager,
+            query="test query",
+            provider="test_provider",
+            usage_limits=None,
+        )
+
+        # Verify start_execution was called with execution_id
+        mock_collector.start_execution.assert_called_once()
+        call_args = mock_collector.start_execution.call_args
+        execution_id = call_args[0][0]
+        assert isinstance(execution_id, str)
+        assert len(execution_id) > 0
+
+
+@pytest.mark.asyncio
+async def test_timing_data_captured_during_execution():
+    """Test that timing data is captured for each delegation step."""
+    with (
+        patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
+    ):
+        mock_collector = MagicMock()
+        mock_collector.start_execution = MagicMock()
+        mock_collector.end_execution = MagicMock(
+            return_value=MagicMock(
+                performance_metrics={
+                    "total_duration": 1.5,
+                    "agent_interactions": 3,
+                    "tool_calls": 2,
+                }
+            )
+        )
+        mock_get_collector.return_value = mock_collector
+
+        from app.agents.agent_system import run_manager
+
+        # Mock the manager and its run method
+        mock_manager = MagicMock()
+        mock_manager.model._model_name = "test-model"
+        mock_result = MagicMock(spec=AgentRunResult)
+        mock_result.output = MagicMock()
+        mock_result.usage = MagicMock(return_value={})
+        mock_manager.run = AsyncMock(return_value=mock_result)
+
+        await run_manager(
+            manager=mock_manager,
+            query="test query",
+            provider="test_provider",
+            usage_limits=None,
+        )
+
+        # Verify end_execution was called to finalize timing
+        mock_collector.end_execution.assert_called_once()
+
+
+def test_end_execution_idempotent_no_warning():
+    """Test that calling end_execution twice does not log a warning on the second call.
+
+    Simulates the double-call pattern: run_manager calls end_execution(),
+    then the trace_execution decorator calls it again. The second call
+    should be a silent no-op, not a misleading warning.
+    """
+    from app.judge.settings import JudgeSettings
+    from app.judge.trace_processors import TraceCollector
+
+    collector = TraceCollector(JudgeSettings())
+    collector.trace_enabled = True
+    # Simulate state after a successful first end_execution
+    collector.current_execution_id = None
+    collector.current_events = []
+
+    with patch("app.judge.trace_processors.logger") as mock_logger:
+        result = collector.end_execution()
+
+        assert result is None
+        mock_logger.warning.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_graph_trace_data_passed_to_evaluation():
+    """Test that GraphTraceData is constructed and passed to evaluate_comprehensive."""
+    with (
+        patch("app.app.setup_agent_env") as mock_setup,
+        patch("app.app.login"),
+        patch("app.app.get_manager") as mock_get_manager,
+        patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
+        patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
+        patch("app.app.load_config") as mock_load_config,
+        patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
+    ):
+        # Setup mocks
+        mock_setup.return_value = MagicMock(
+            provider="test_provider",
+            provider_config={},
+            api_key="test_key",
+            prompts={},
+            query="test query",
+            usage_limits=None,
+        )
+        mock_manager = MagicMock()
+        mock_get_manager.return_value = mock_manager
+
+        # Mock trace collector with real GraphTraceData
+        mock_collector = MagicMock()
+        mock_trace_data = GraphTraceData(
+            execution_id="test_exec_123",
+            agent_interactions=[{"from": "manager", "to": "researcher", "type": "delegation"}],
+            tool_calls=[{"tool_name": "delegate_research", "success": True, "duration": 0.5}],
+            timing_data={"start_time": 0.0, "end_time": 1.5, "total_duration": 1.5},
+        )
+        mock_collector.load_trace = MagicMock(return_value=mock_trace_data)
+        mock_get_collector.return_value = mock_collector
+
+        # Mock run_manager to return execution_id
+        mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
+
+        # Mock pipeline
+        mock_pipeline = MagicMock()
+        mock_pipeline.evaluate_comprehensive = AsyncMock()
+        mock_pipeline_class.return_value = mock_pipeline
+
+        mock_load_config.return_value = MagicMock(prompts={})
+
+        from app.app import main
+
+        # Run main with paper_id (enables evaluation)
+        await main(
+            chat_provider="test_provider",
+            query="test query",
+            paper_id="001",
+        )
+
+        # Verify evaluate_comprehensive was called with GraphTraceData
+        mock_pipeline.evaluate_comprehensive.assert_called_once()
+        call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+
+        # This assertion will fail until STORY-003 is implemented
+        assert "execution_trace" in call_kwargs, (
+            "evaluate_comprehensive should receive execution_trace parameter"
+        )
+
+        # When implemented, execution_trace should be GraphTraceData instance
+        # assert isinstance(call_kwargs["execution_trace"], GraphTraceData)
+
+
+@pytest.mark.asyncio
+async def test_graph_trace_data_constructed_via_model_validate():
+    """Test that GraphTraceData uses model_validate instead of manual dict extraction."""
+    with (
+        patch("app.judge.trace_processors.TraceCollector.load_trace") as mock_load_trace,
+    ):
+        # Mock load_trace to return GraphTraceData via model_validate
+        trace_dict = {
+            "execution_id": "test_123",
+            "agent_interactions": [{"from": "manager", "to": "researcher"}],
+            "tool_calls": [{"tool_name": "test_tool", "success": True}],
+            "timing_data": {"total_duration": 1.0},
+            "coordination_events": [],
+        }
+
+        # Simulate model_validate construction
+        graph_trace = GraphTraceData.model_validate(trace_dict)
+        mock_load_trace.return_value = graph_trace
+
+        from app.judge.settings import JudgeSettings
+        from app.judge.trace_processors import TraceCollector
+
+        collector = TraceCollector(JudgeSettings())
+        result = collector.load_trace("test_123")
+
+        # Verify result is GraphTraceData instance (constructed properly)
+        assert isinstance(result, GraphTraceData)
+        assert result.execution_id == "test_123"
+        assert len(result.agent_interactions) == 1
+        assert len(result.tool_calls) == 1

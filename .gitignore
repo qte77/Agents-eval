@@ -1,11 +1,11 @@
-# Python bytecode
-__pycache__/
-*.py[cod]
-
 # environment
 .venv/
 *.env
 unset_env.sh
+
+# Python bytecode
+__pycache__/
+*.py[cod]
 
 # Distribution / packaging
 build/
@@ -16,10 +16,21 @@ dist/
 .pytest_cache/
 .coverage/
 .coverage
+.hypothesis/
+pytest-of-vscode/
+
+# Sanity Checks
+.complexipy_cache/
+.ruff_cache/
+.mypy_cache/
+complexipy-snapshot.json
 
 # Logs
 *.log
 logs/
+
+# Temporary files
+.tmp/
 
 # Traces
 scalene-profiles
@@ -32,32 +43,30 @@ profile.json
 Thumbs.db
 
 # IDE specific files (adjust as needed)
-# .vscode/
-# .idea/
+.vscode/
+.idea/
 
 # mkdocs
 reference/
 site/
-
-# linting
-.ruff_cache/
-
-# type checking
-.mypy_cache/
 
 # project specific
 wandb/
 data/
 test_data/
 datasets/
-write-up/
+docs/write-up/*
+!docs/write-up/en/
+!docs/write-up/template/
+results/sweeps/
 
-# Ralph state files (generated from templates)
-docs/ralph/prd.json
-docs/ralph/progress.txt
+# Ralph state
+ralph/state/
 
-# mermaid
-package.json
-package-lock.json
-puppeteer-config.json
+# npm
 node_modules/
+package-lock.json
+package.json
+
+# Frontend libraries (Pyvis uses CDN, not local lib/)
+/lib/

@@ -14,6 +14,15 @@ version: 1.0
 ## Functional Requirements
 
 <!-- PARSER REQUIREMENT: Use exactly "#### Feature N:" format -->
+<!-- PARSER REQUIREMENT: No compound sub-features (e.g., "##### 2.1 + 2.2") — one heading per story -->
+<!-- PARSER REQUIREMENT: Flatten AC items — no indented sub-items under a checkbox -->
+<!--   BAD:  - [ ] Module with:\n         - helper_a()\n         - helper_b()     -->
+<!--   GOOD: - [ ] Module created\n       - [ ] helper_a()\n       - [ ] helper_b() -->
+<!-- PARSER REQUIREMENT: Each sub-feature MUST have its own **Files**: section -->
+<!--   Parser uses re.search (first match) — without sub-feature Files, it finds  -->
+<!--   the parent's (wrong scope) or nothing (empty array)                         -->
+<!-- PARSER LIMITATION: Sub-feature descriptions are NOT extracted — parser always  -->
+<!--   uses the parent #### feature description. Fix manually in prd.json if needed -->
 
 #### Feature 1: {{FEATURE_NAME}}
 
@@ -43,6 +52,7 @@ version: 1.0
 **Acceptance Criteria**:
 - [ ] {{SUB_CRITERION_1}}
 
+<!-- REQUIRED: Each sub-feature needs its own Files section -->
 **Files**:
 - `{{SUB_FILE_PATH}}`
 
@@ -62,6 +72,34 @@ version: 1.0
 
 <!-- PARSER REQUIREMENT: Include story count in parentheses -->
 <!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
+<!-- PARSER: [file: ...] annotations are ignored — parser extracts STORY-\d+ IDs only -->
 Story Breakdown - Phase 1 ({{STORY_COUNT}} stories total):
-- **Feature 1 ({{FEATURE_NAME}})** → STORY-001: {{STORY_TITLE}}
-- **Feature 2 ({{FEATURE_NAME}})** → STORY-002: {{STORY_TITLE}}, STORY-003: {{STORY_TITLE}} (depends: STORY-002)
+
+- **Feature 1** → STORY-001: {{STORY_TITLE}}
+  {{SELF_CONTAINED_DESCRIPTION}}. Files: `{{FILE_1}}`, `{{FILE_2}}`.
+
+- **Feature 2** → STORY-002: {{STORY_TITLE}} (depends: STORY-001)
+  {{SELF_CONTAINED_DESCRIPTION}}. Files: `{{FILE_3}}`.
+
+- **Feature 2** → STORY-003: {{STORY_TITLE}} (depends: STORY-002, STORY-001 [file: {{SHARED_FILE}}])
+  {{SELF_CONTAINED_DESCRIPTION}}. Files: `{{SHARED_FILE}}`, `{{FILE_4}}`.
+
+<!-- OPTIONAL: Include if using CC Agent Teams for parallel execution -->
+<!-- Delete this section if using Ralph sequential mode only -->
+
+### Notes for CC Agent Teams
+
+#### File-Conflict Dependencies
+
+<!-- Stories sharing files need blockedBy deps beyond logical depends_on -->
+
+| Story | Logical Dep | + File-Conflict Dep | Shared File |
+|---|---|---|---|
+| STORY-003 | STORY-002 | + STORY-001 | `{{SHARED_FILE}}` |
+
+#### Orchestration Waves
+
+```text
+Wave 1 (independent): STORY-001, ...
+Wave 2 (after ...):   STORY-002, ...
+```

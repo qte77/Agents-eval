@@ -1,0 +1,488 @@
+{
+  "project": "Product Requirements Document - Agents-eval Sprint 7",
+  "description": "Documentation alignment, example modernization, test suite refinement, GUI improvements (real-time logging, paper selection, editable settings), unified provider configuration, and Claude Code engine option for the Agents-eval MAS evaluation framework.",
+  "source": "PRD-Sprint7-Ralph.md",
+  "generated": "2026-02-17 19:04:49",
+  "stories": [
+    {
+      "id": "STORY-001",
+      "title": "Delete Sprint 1-era examples and generic PydanticAI tutorials",
+      "description": "`src/examples/` contains Sprint 1-era code using deprecated APIs and generic PydanticAI tutorials without project context. Remove all outdated examples to eliminate confusion and maintenance burden.",
+      "acceptance": [
+        "Delete evaluation examples: `run_evaluation_example.py`, `run_evaluation_example_simple.py` (use deprecated dict-based `execution_trace` API)",
+        "Delete generic agent examples: `run_simple_agent_no_tools.py`, `run_simple_agent_system.py`, `run_simple_agent_tools.py` (PydanticAI tutorials, no project value)",
+        "Delete supporting files: `src/examples/utils/` directory, `config.json`",
+        "No remaining imports of deleted files (verified via `grep -r \"from examples\" src/`)",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "Delete files: `run_evaluation_example.py`, `run_evaluation_example_simple.py`, `run_simple_agent_no_tools.py`, `run_simple_agent_system.py`, `run_simple_agent_tools.py`",
+        "Delete directory: `src/examples/utils/` (contains 5 files)",
+        "Delete config: `src/examples/config.json`",
+        "Note: `src/examples/__init__.py` does not currently exist — create it only if needed by Feature 2 examples"
+      ],
+      "files": [
+        "src/examples/run_evaluation_example.py",
+        "src/examples/run_evaluation_example_simple.py",
+        "src/examples/run_simple_agent_no_tools.py",
+        "src/examples/run_simple_agent_system.py",
+        "src/examples/run_simple_agent_tools.py",
+        "src/examples/utils/",
+        "src/examples/config.json"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-17T19:37:35Z",
+      "content_hash": "a31c61c3c083369ceae93a2ddca4af2375308cf461137ebebfbf31276160f4e6",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-002",
+      "title": "Build evaluation, settings, and engine comparison examples with tests and README",
+      "description": "Replace outdated examples with minimal, self-contained demonstrations of Sprint 5-6 features using current APIs.",
+      "acceptance": [
+        "`basic_evaluation.py` demonstrates plugin-based evaluation with realistic paper/review data",
+        "Uses current imports: `EvaluationPipeline`, `GraphTraceData`, `PeerReadPaper`",
+        "Includes docstring: purpose, prerequisites, expected output",
+        "Runs successfully with API key in `.env`",
+        "Test verifies example runs without errors (mock external dependencies)",
+        "File: `src/examples/basic_evaluation.py` (~80 lines)",
+        "Demonstrates: Tier 1-3 evaluation with synthetic `GraphTraceData`",
+        "Mock strategy: Mock provider for Tier 2 LLM calls",
+        "`judge_settings_customization.py` shows `JudgeSettings` configuration",
+        "Demonstrates: environment variable override, programmatic settings modification",
+        "Shows: timeout adjustment, tier weight customization, provider selection",
+        "Test verifies settings modifications work correctly",
+        "`engine_comparison.py` demonstrates comparing MAS results against CC results using `CCTraceAdapter`",
+        "Prerequisites documented: collected CC artifacts via `scripts/collect-cc-traces/collect-cc-*.sh`",
+        "Shows: loading CC artifacts, comparing multi-LLM MAS vs single-LLM MAS vs CC (optional) evaluation scores",
+        "Test verifies adapter integration (mock artifact loading)",
+        "`src/examples/README.md` documents all examples with usage instructions",
+        "Lists prerequisites: API keys, sample data requirements",
+        "Integration guide: how examples relate to main CLI/GUI",
+        "All examples use actual project imports (no external utility modules)",
+        "`make validate` passes"
+      ],
+      "files": [
+        "src/examples/basic_evaluation.py",
+        "tests/examples/test_basic_evaluation.py",
+        "src/examples/judge_settings_customization.py",
+        "tests/examples/test_judge_settings_customization.py",
+        "src/examples/engine_comparison.py",
+        "tests/examples/test_engine_comparison.py",
+        "src/examples/README.md"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-17T19:47:31Z",
+      "content_hash": "62adae279bdc82fb2708802e849f2e004f26704f28aad752a18726a06cd99d5e",
+      "depends_on": [
+        "STORY-001"
+      ]
+    },
+    {
+      "id": "STORY-003",
+      "title": "Reflect Sprint 6 deliverables, version 4.0.0, new examples",
+      "description": "`README.md` shows version 3.3.0 (Sprint 5) but doesn't reflect Sprint 6 deliverables. Update status, feature list, and versions to match current implementation.",
+      "acceptance": [
+        "Version badge updated to 4.0.0",
+        "\"Current Release\" section lists Sprint 6: benchmarking sweep, CC scripts, security fixes, test improvements",
+        "\"Next\" section updated to Sprint 7 scope",
+        "Quick Start commands verified working (review tools enabled by default)",
+        "Examples section references `src/examples/README.md` instead of deleted files",
+        "All referenced files/commands exist and work",
+        "No broken links (verified via `make run_markdownlint`)",
+        "CHANGELOG.md updated",
+        "Update version badge to 4.0.0",
+        "Replace examples references: `See [src/examples/README.md](src/examples/README.md)`"
+      ],
+      "files": [
+        "README.md"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-17T19:53:00Z",
+      "content_hash": "3b7daa866b417125826066bca378a1902631e9eb39674875271b57d7e5ac750c",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-004",
+      "title": "Mark Sprint 6 delivered, add Sprint 7 row",
+      "description": "`docs/roadmap.md` shows Sprint 6 as \"Planned\" — update to \"Delivered\" with Sprint 7 row added.",
+      "acceptance": [
+        "Sprint 6 row: status \"Delivered\", reference `PRD-Sprint6-Ralph.md`",
+        "Sprint 7 row added: status \"In Progress\", reference `PRD-Sprint7-Ralph.md`",
+        "Table chronology maintained (Sprint 1-6 delivered, Sprint 7 current)",
+        "All PRD links valid",
+        "CHANGELOG.md updated"
+      ],
+      "files": [
+        "docs/roadmap.md"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-17T19:59:43Z",
+      "content_hash": "021f334e6e738c4e3ee72245b8699c74368d1d41b71e2bbf1e84f05634f67408",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-005",
+      "title": "Add benchmarking/security sections, correct CC OTel analysis doc, update status",
+      "description": "`docs/architecture.md` doesn't include Sprint 6 features. Add sections for benchmarking and security, update implementation status.",
+      "acceptance": [
+        "New section \"Benchmarking Infrastructure (Sprint 6)\" describes sweep architecture",
+        "Documents: `SweepConfig`, `SweepRunner`, `SweepAnalysis` modules",
+        "Explains: composition variations (2^3 default), CC headless integration, statistical aggregation",
+        "Benchmarking section content (~30 lines): architecture (config → runner → compositions × papers × repetitions → analysis), CC integration (`claude -p` headless), output (`results.json` + `summary.md` with mean/stddev per metric)",
+        "New section \"Security Framework (Sprint 6)\" references MAESTRO review",
+        "Documents: CVE mitigations, input sanitization layers, log scrubbing patterns",
+        "References `SECURITY.md` for known advisories",
+        "`docs/analysis/CC-agent-teams-orchestration.md` updated: OTel approach table corrected to show metrics/logs only, no trace spans",
+        "Approach table adds \"Trace spans\" row showing: OTel (No — upstream limitation), Hooks (No), Artifact collection (Yes — via CCTraceAdapter)",
+        "Recommendation section updated: artifact collection is primary for evaluation; OTel is supplementary for cost/token dashboards",
+        "`.claude/settings.json` OTel vars annotated: currently disabled, enables cost/token metrics only when active",
+        "Upstream limitation documented with references (GitHub #9584, #2090)",
+        "`AGENT_LEARNINGS.md` updated with CC OTel limitation finding",
+        "\"Current Implementation\" updated to Sprint 6 deliverables",
+        "Timeline shows Sprint 6 delivered, Sprint 7 in progress",
+        "All code references valid (files exist at mentioned paths)",
+        "CHANGELOG.md updated"
+      ],
+      "files": [
+        "docs/architecture.md",
+        "docs/analysis/CC-agent-teams-orchestration.md",
+        "AGENT_LEARNINGS.md"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-17T20:06:04Z",
+      "content_hash": "c425de1b3b934b9324910e8bbc8ad32652355c18f68384b8dd20f46c152ce66b",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-006",
+      "title": "Create sweep diagram, update workflow with security",
+      "description": "PlantUML diagrams don't reflect Sprint 6 changes. Update workflow diagrams with benchmarking pipeline and security boundaries.",
+      "acceptance": [
+        "New diagram: `metrics-eval-sweep.plantuml` shows benchmarking workflow",
+        "Workflow: SweepConfig → SweepRunner → (compositions × papers × repetitions) → SweepAnalysis → output files",
+        "Includes optional CC headless path: `claude -p` → artifacts → CCTraceAdapter → evaluation",
+        "Renders without errors, PNGs generated (light/dark themes)",
+        "File: `docs/arch_vis/metrics-eval-sweep.plantuml` (~80 lines)",
+        "Style: activity diagram or sequence diagram",
+        "Generate: `./scripts/writeup/generate-plantuml-png.sh docs/arch_vis/metrics-eval-sweep.plantuml`",
+        "Updated diagram: `MAS-Review-Workflow.plantuml` includes security boundaries",
+        "Shows: URL validation checkpoints, prompt sanitization before LLM calls, log scrubbing before trace export",
+        "Annotations for MAESTRO layers",
+        "Re-generated PNGs (light/dark themes)",
+        "`docs/arch_vis/README.md` updated with new diagram descriptions",
+        "Diagrams referenced in `docs/architecture.md` and `README.md`",
+        "All PlantUML sources render without errors",
+        "CHANGELOG.md updated"
+      ],
+      "files": [
+        "docs/arch_vis/metrics-eval-sweep.plantuml",
+        "assets/images/metrics-eval-sweep-light.png",
+        "assets/images/metrics-eval-sweep-dark.png",
+        "docs/arch_vis/MAS-Review-Workflow.plantuml",
+        "assets/images/MAS-Review-Workflow-light.png",
+        "assets/images/MAS-Review-Workflow-dark.png",
+        "docs/arch_vis/README.md"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-17T20:12:02Z",
+      "content_hash": "83c735c464e4d1b7c2e62b9a657e59da0dc5c7a8db0e746fc10c56e94577e6de",
+      "depends_on": [
+        "STORY-005"
+      ]
+    },
+    {
+      "id": "STORY-007",
+      "title": "Consolidate composite tests, remove residual implementation-detail tests, clean up FIXME dead code, fix broken peerread test, add BDD template",
+      "description": "Execute strategic test refactoring aligned with TDD principles — remove tests that don't prevent regressions, consolidate duplicates, ensure BDD structure.",
+      "acceptance": [
+        "Composite scoring tests merged: 3 files → 1 (`test_composite_scorer.py`)",
+        "Test organization: `TestBasicScoring`, `TestWeightRedistribution`, `TestEdgeCases` classes",
+        "Original files deleted after merge",
+        "Coverage maintained (no behavioral test loss)",
+        "`make test_all` passes",
+        "Merge into `tests/evals/test_composite_scorer.py`:",
+        "Plugin implementation tests removed from `test_plugin_*.py` files (any isinstance checks, property existence tests, default constant verifications remaining after Sprint 6 audit)",
+        "Kept: behavioral tests (evaluate returns correct structure, error handling)",
+        "`make coverage_all` shows no reduction in critical module coverage",
+        "If no implementation-detail tests remain (Sprint 6 fully cleaned these), mark as verified-complete with no changes",
+        "Remove commented-out `error_handling_context` code blocks in `agent_system.py:459,518` and `orchestration.py:263` (3 FIXME markers with dead code)",
+        "Fix `test_download_success_mocked` in `test_datasets_peerread.py:35` (FIXME: AttributeError on module)",
+        "`make validate` passes",
+        "Test structure template added to `tests/conftest.py`",
+        "All remaining tests follow BDD: arrange/act/assert with comments",
+        "Test docstrings added explaining: purpose, setup, expected behavior",
+        "Mock strategy documented in test file headers",
+        "CHANGELOG.md updated"
+      ],
+      "files": [
+        "tests/evals/test_composite_scorer.py",
+        "tests/evals/test_composite_scoring_scenarios.py",
+        "tests/evals/test_composite_scoring_interpretability.py",
+        "tests/evals/test_composite_scoring_edge_cases.py",
+        "tests/judge/test_plugin_llm_judge.py",
+        "tests/judge/test_plugin_traditional.py",
+        "tests/judge/test_plugin_graph.py",
+        "src/app/agents/agent_system.py",
+        "src/app/agents/orchestration.py",
+        "tests/data_utils/test_datasets_peerread.py",
+        "tests/conftest.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-17T20:26:44Z",
+      "content_hash": "f8a9ea6b4f41633d359236903c6b7d7168057884692759878e79b130b00a4deb",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-008",
+      "title": "Stream debug log entries during agent execution instead of post-completion dump",
+      "description": "The App page debug log (`st.expander(\"Debug Log\")`) currently collects log entries via `LogCapture` during agent execution but only renders them after completion (in the `finally` block). During execution the panel shows stale content. Replace the post-hoc rendering with a real-time streaming approach so users can monitor agent progress as it happens.",
+      "acceptance": [
+        "Debug log panel updates with new entries while agent execution is in progress",
+        "Log entries appear within ~1 second of being emitted by `app.*` modules",
+        "Color-coded level formatting (existing `format_logs_as_html` behavior) preserved",
+        "Panel auto-scrolls to latest entry during streaming",
+        "After execution completes, full log remains visible (no truncation)",
+        "No performance degradation: Streamlit reruns kept to minimum (use `st.fragment` or container-based approach)",
+        "Test verifies log entries are captured and rendered incrementally (mock execution with timed log emissions)",
+        "Streamlit >= 1.33 confirmed in `pyproject.toml` (required for `st.fragment`)",
+        "PeerRead debug log noise reduced: `_create_review_from_dict` aggregates missing optional fields into one line per review instead of one line per field (e.g., `\"Paper 306: 9 optional fields missing (IMPACT, SUBSTANCE, ...), using UNKNOWN\"`)",
+        "Fix `st.text()` rendering raw Markdown: `run_app.py:235-238` uses `text()` (plain monospace) for strings containing `**bold**` markdown — replace with `st.markdown()` so formatting renders correctly. Audit other `st.text()` calls in GUI pages for same issue.",
+        "`make validate` passes",
+        "**Prerequisite — background thread execution**: Streamlit cannot update UI while Python is blocked on `await main(...)`. Execution must move to `threading.Thread` so the render loop stays free. See AGENT_LEARNINGS.md \"Streamlit Background Execution Strategy\" for the established pattern (`threading.Thread` + synchronized session state writes for page-level survival)",
+        "**Log noise fix**: In `datasets_peerread.py:_create_review_from_dict`, collect missing field names into a list, then emit a single `logger.debug(f\"Paper {paper_id}: {len(missing)} optional fields missing ({', '.join(missing)}), using UNKNOWN\")` instead of per-field logging",
+        "Modify `LogCapture` to support a polling interface (e.g., `get_new_logs_since(index)` returning only entries added since last read). `LogCapture._buffer` is written from the worker thread, read from the Streamlit thread — use `threading.Lock` for safe access",
+        "Use `st.fragment` (Streamlit 1.33+) with a polling loop (`time.sleep(1)` + `st.rerun()` scoped to the fragment) to re-render the log panel independently of the main page",
+        "Preserve existing `_capture_execution_logs` for final state persistence (session survives page navigation)",
+        "See **`_execute_query_background` Signature Convergence** in Notes for Ralph Loop — Features 8, 9, and 10 all modify this function"
+      ],
+      "files": [
+        "src/gui/utils/log_capture.py",
+        "src/gui/pages/run_app.py",
+        "src/app/data_utils/datasets_peerread.py",
+        "tests/gui/test_realtime_debug_log.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-17T20:39:37Z",
+      "content_hash": "00c58a95021f767f1d4eda5e3913373af8bf32e3ab8a17fb28c0784e5119a0dd",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-009",
+      "title": "Add paper dropdown with ID/title display and abstract preview alongside free-form input",
+      "description": "The App page currently only offers a free-text query input. Users should be able to choose between free-form text input and selecting a pre-downloaded PeerRead paper from a dropdown — mirroring the CLI `--paper-id` flag. When a paper is selected, its abstract is displayed for confirmation before running.",
+      "acceptance": [
+        "Radio button or toggle: \"Free-form query\" vs \"Select a paper\"",
+        "Free-form mode: existing text input field (unchanged behavior)",
+        "Paper mode: dropdown replaces text input; optional query override text field shown below (pre-filled with default review template, editable)",
+        "Switching modes preserves state (query text survives toggle back)",
+        "`paper_id` is passed to `main()` when in paper mode (enables `enable_review_tools=True` and evaluation pipeline)",
+        "Add `st.radio` with options `[\"Free-form query\", \"Select a paper\"]`",
+        "Store selection in `st.session_state.input_mode`",
+        "When paper mode: pass `paper_id` to `_execute_query_background` → `main(paper_id=...)`. If user also provides a custom query, pass both (mirrors CLI behavior where `--paper-id` + query are independent)",
+        "When free-form mode: pass `query` only (existing behavior, `paper_id=None`)",
+        "`_execute_query_background` signature must add `paper_id: str | None = None` parameter (see **Signature Convergence** in Notes for Ralph Loop)",
+        "Dropdown lists all locally downloaded PeerRead papers",
+        "`PeerReadReview` model coerces int review scores to str (fixes validation errors that silently drop papers with numeric `SOUNDNESS_CORRECTNESS`, `RECOMMENDATION`, etc. fields)",
+        "Each option displays: paper ID and title (e.g., `\"42 — Attention Is All You Need\"`)",
+        "Papers loaded via `PeerReadLoader.load_papers()` across configured venues/splits",
+        "If no papers are downloaded, show: `\"No papers downloaded yet. Use the Downloads page to fetch the PeerRead dataset.\"` with a button linking to the Downloads tab",
+        "Selecting a paper stores `paper_id` in session state",
+        "When a paper is selected in the dropdown, its abstract is displayed below",
+        "Abstract shown in a styled container (e.g., `st.info` or `st.markdown` with blockquote)",
+        "Abstract updates immediately on dropdown selection change",
+        "No abstract shown when in free-form mode or no paper selected"
+      ],
+      "files": [
+        "src/gui/pages/run_app.py",
+        "src/app/data_models/peerread_models.py",
+        "tests/gui/test_paper_selection.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-18T09:45:00Z",
+      "content_hash": "dedb90b8f3c3800bcb0c664274d609b51143b196297849dba10c3e3096b1b380",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-010",
+      "title": "Make log level, logfire, max content length editable with tooltip descriptions",
+      "description": "The Settings page displays `CommonSettings` (log level, enable logfire, max content length) as read-only text. Make these editable with session state persistence and add tooltip descriptions (question-mark icon) for each setting explaining what it controls.",
+      "acceptance": [
+        "Log Level: dropdown with options `[\"DEBUG\", \"INFO\", \"WARNING\", \"ERROR\", \"CRITICAL\"]`",
+        "Enable Logfire: checkbox (boolean toggle)",
+        "Max Content Length: number input with min=1000, max=100000, step=1000",
+        "Edited values stored in session state with `common_` prefix (e.g., `common_log_level`)",
+        "Edited values passed to application execution (override `CommonSettings` defaults)",
+        "Reset to Defaults button also resets common settings to `CommonSettings()` defaults",
+        "`make validate` passes",
+        "Replace `st.text(f\"Log Level: {common_settings.log_level}\")` with `st.selectbox`",
+        "Replace `st.text(f\"Enable Logfire: ...\")` with `st.checkbox`",
+        "Replace `st.text(f\"Max Content Length: ...\")` with `st.number_input`",
+        "Store overrides in session state with `common_` prefix; in the App page, build a `_build_common_settings_from_session()` helper (mirrors existing `_build_judge_settings_from_session()` pattern)",
+        "`_execute_query_background` signature must also receive `common_*` overrides (see Signature Convergence in Notes for Ralph Loop)",
+        "Logfire setting consolidation: `CommonSettings.enable_logfire` and `JudgeSettings.logfire_enabled` control overlapping behavior. Consolidate to a single `logfire_enabled` in `JudgeSettings`",
+        "Update `_render_reset_button` to also clear `common_*` session state keys",
+        "Each setting field has a help icon (question mark) that shows a description on hover",
+        "Tooltips are concise (1-2 sentences) and explain: what the setting controls, valid values, and effect",
+        "Tooltips applied to both Common Settings and existing Judge Settings fields",
+        "Streamlit native `help` parameter used (available on `st.selectbox`, `st.checkbox`, `st.number_input`, `st.text_input`, `st.slider`)",
+        "Use Streamlit built-in `help` parameter on input widgets: `st.selectbox(\"Log Level\", ..., help=\"Controls verbosity...\")`",
+        "Add `help` parameter to existing Judge Settings widgets (tier timeouts, composite thresholds, Tier 2 model fields)",
+        "CHANGELOG.md updated"
+      ],
+      "files": [
+        "src/gui/pages/settings.py",
+        "src/gui/pages/run_app.py",
+        "tests/gui/test_editable_common_settings.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-18T09:55:00Z",
+      "content_hash": "f65735f76c3465b580dedb14b06f91b126058d4e29a1a6275203dffb88494767",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-011",
+      "title": "Change tier2_provider default to auto, fix fallback chain hardcoded provider bug",
+      "description": "The MAS chat provider and judge (Tier 2) provider are currently configured through different mechanisms with inconsistent naming. The judge defaults to `\"openai\"` regardless of the MAS provider. Unify provider configuration so the judge defaults to the MAS provider, both can be independently overridden, and naming is consistent across CLI, sweep, and GUI.",
+      "acceptance": [
+        "`JudgeSettings.tier2_provider` default changed from `\"openai\"` to `\"auto\"`",
+        "When `tier2_provider=\"auto\"`, judge inherits the MAS `chat_provider` at runtime (existing `LLMJudgeEngine` logic — no new code required)",
+        "`JUDGE_TIER2_PROVIDER` env var still overrides the default",
+        "Migration log emitted at startup when `\"auto\"` resolves to a different provider than `\"openai\"`: `logger.info(\"Judge provider: auto → {resolved}\")`",
+        "Existing tests updated to reflect new default",
+        "Fallback chain in `llm_evaluation_managers.py:112` fixed: when `tier2_provider=\"auto\"`, fallback uses resolved MAS provider instead of hardcoded `openai→github` (fixes FIXME Sprint5-STORY-001)",
+        "`make validate` passes",
+        "Edit `src/app/judge/settings.py` line 74: `tier2_provider: str = Field(default=\"auto\")`",
+        "Fix `_get_fallback_provider()` in `llm_evaluation_managers.py`: use resolved `chat_provider` when `tier2_provider=\"auto\"` instead of hardcoded `\"openai\"` → `\"github\"` chain",
+        "`tier2_fallback_provider` default remains `\"github\"` (unchanged)"
+      ],
+      "files": [
+        "src/app/judge/settings.py",
+        "src/app/judge/llm_evaluation_managers.py",
+        "tests/judge/test_judge_settings.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-18T09:55:00Z",
+      "content_hash": "7838098c1e8774fe84c01ad89b258e3dd62221db7a4626b9c82e0e493543b8c5",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-012",
+      "title": "Rename paper-number to paper-id, sweep provider to chat-provider, add judge-provider/judge-model args",
+      "description": "The MAS chat provider and judge (Tier 2) provider are currently configured through different mechanisms with inconsistent naming. The judge defaults to `\"openai\"` regardless of the MAS provider. Unify provider configuration so the judge defaults to the MAS provider, both can be independently overridden, and naming is consistent across CLI, sweep, and GUI.",
+      "acceptance": [
+        "`run_cli.py`: `--paper-number` renamed to `--paper-id` (accepts string IDs like `\"1105.1072\"`); existing `--chat-provider` unchanged; new `--judge-provider` and `--judge-model` args added",
+        "`run_sweep.py`: `--paper-numbers` renamed to `--paper-ids` (accepts comma-separated string IDs, no `int()` cast); `--provider` renamed to `--chat-provider` for consistency; new `--judge-provider` and `--judge-model` args added",
+        "`SweepConfig.paper_numbers: list[int]` renamed to `paper_ids: list[str]` (fixes crash on arxiv IDs like `\"1105.1072\"` that cannot be cast to int)",
+        "`SweepRunner` method signatures updated: `paper_id: str` replaces `paper_number: int`",
+        "`main()` parameter renamed: `paper_id: str | None` replaces `paper_number: str | None`",
+        "`SweepConfig` adds `judge_provider: str` and `judge_model: str | None` fields",
+        "JSON sweep config accepts `\"chat_provider\"` key (rename from `\"provider\"`) and `\"paper_ids\"` (rename from `\"paper_numbers\"`)",
+        "Both args documented in `--help` output for both entry points",
+        "`make validate` passes"
+      ],
+      "files": [
+        "src/run_cli.py",
+        "src/run_sweep.py",
+        "src/app/app.py",
+        "src/app/judge/evaluation_runner.py",
+        "src/app/benchmark/sweep_config.py",
+        "src/app/benchmark/sweep_runner.py",
+        "tests/benchmark/test_sweep_config.py",
+        "tests/benchmark/test_sweep_runner.py",
+        "tests/cli/test_run_cli.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-18T10:26:19Z",
+      "content_hash": "eb3512cdeae50b3c3afdd5bdbcc17ccb62496cb12eb308e256a205cce8b7d090",
+      "depends_on": [
+        "STORY-011"
+      ]
+    },
+    {
+      "id": "STORY-013",
+      "title": "Add --engine=mas|cc flag, remove --cc-baseline, rename _invoke_cc_baseline, subprocess error handling",
+      "description": "The benchmarking model uses single-LLM MAS as the baseline. Multi-LLM MAS compositions are compared against this baseline. CC (Claude Code) is an optional comparison engine. Add an `--engine` flag so users can choose between MAS (PydanticAI agents) and CC as the execution engine across CLI, sweep, and GUI.",
+      "acceptance": [
+        "`run_cli.py` accepts `--engine=mas` (default) or `--engine=cc`",
+        "`run_sweep.py` accepts `--engine=mas` (default) or `--engine=cc`; `--cc-baseline` removed (replaced by `--engine=cc`)",
+        "`--engine=mas`: existing MAS execution path (unchanged)",
+        "`--engine=cc`: invokes CC headless (`claude -p \"...\"`) via `subprocess.run()`, collects artifacts, passes artifact dirs to `main(cc_solo_dir=..., cc_teams_dir=..., cc_teams_tasks_dir=...)` for evaluation",
+        "`--engine=cc` with `claude` CLI not found: raises clear error at arg-parse time (`shutil.which(\"claude\")` check)",
+        "`--engine=cc` subprocess failure handling: non-zero exit code raises `RuntimeError` with stderr content; `subprocess.TimeoutExpired` caught and re-raised with context; malformed JSON output raises `ValueError` with parsing details",
+        "`--engine` documented in `--help` output for both entry points",
+        "Mutual exclusivity enforced: `--engine=cc` with MAS-specific flags raises a clear error",
+        "`make validate` passes",
+        "Delete `--cc-baseline` from `run_sweep.py` and `cc_baseline_enabled` from `SweepConfig` (replaced entirely by `--engine=cc`). Rename `_invoke_cc_baseline()` → `_invoke_cc_comparison()` in `SweepRunner`",
+        "`SweepConfig` adds `engine: str = Field(default=\"mas\")`",
+        "Reuse existing `CCTraceAdapter` for artifact parsing — no new adapter code"
+      ],
+      "files": [
+        "src/run_cli.py",
+        "src/run_sweep.py",
+        "src/app/benchmark/sweep_config.py",
+        "src/app/benchmark/sweep_runner.py",
+        "tests/cli/test_run_cli_engine.py",
+        "tests/benchmark/test_sweep_runner.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-18T10:29:18Z",
+      "content_hash": "fd84e1fcacd6b29a6a40f3bc6755c615df853fc82d1c4e9bdb000f3c8333b4f6",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-013b",
+      "title": "Rate-limit retry with backoff, SystemExit re-raise fix, incremental result persistence",
+      "description": "The benchmarking model uses single-LLM MAS as the baseline. Multi-LLM MAS compositions are compared against this baseline. CC (Claude Code) is an optional comparison engine. Add an `--engine` flag so users can choose between MAS (PydanticAI agents) and CC as the execution engine across CLI, sweep, and GUI.",
+      "acceptance": [
+        "Sweep rate-limit resilience: `SweepRunner._run_single_evaluation()` retries on HTTP 429 / rate-limit errors with exponential backoff (max 3 retries, initial delay from `SweepConfig.retry_delay_seconds`). After max retries, logs error and continues to next evaluation (does not abort sweep)",
+        "Incremental result persistence: `SweepRunner` writes partial `results.json` after each successful evaluation, so a crash or kill mid-sweep preserves completed results",
+        "`_handle_model_http_error()` in `agent_system.py:478` re-raises `ModelHTTPError` instead of `SystemExit(1)`. `run_manager()` catches `ModelHTTPError` with status 429 and raises `SystemExit(1)` there (preserves CLI behavior)",
+        "`SweepConfig` adds `retry_delay_seconds: float = Field(default=5.0)`",
+        "Split `_save_results()` into `_save_results_json()` (writes only `results.json`) and `_save_results()` (writes both `results.json` and `summary.md`)",
+        "`make validate` passes"
+      ],
+      "files": [
+        "src/app/benchmark/sweep_runner.py",
+        "src/app/benchmark/sweep_config.py",
+        "src/app/agents/agent_system.py",
+        "tests/benchmark/test_sweep_runner.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-18T10:41:01Z",
+      "content_hash": "629af68b0c746cc9fc048efb609f048c2956b7a42ac0770cf61474582982ed0f",
+      "depends_on": [
+        "STORY-013"
+      ]
+    },
+    {
+      "id": "STORY-014",
+      "title": "Add engine selector to GUI, CC orchestration graph, CC availability check, disable MAS controls",
+      "description": "The benchmarking model uses single-LLM MAS as the baseline. Multi-LLM MAS compositions are compared against this baseline. CC (Claude Code) is an optional comparison engine. Add an `--engine` flag so users can choose between MAS (PydanticAI agents) and CC as the execution engine across CLI, sweep, and GUI.",
+      "acceptance": [
+        "Engine selector placed on App page: radio with `[\"MAS (PydanticAI)\", \"Claude Code\"]` — engine choice is per-run, not persistent config",
+        "When CC selected: MAS-specific agent toggles (Researcher, Analyst, Synthesiser) are hidden or disabled with a note",
+        "When CC selected: CC availability warning shown if `claude` CLI not found",
+        "Engine selection stored in `st.session_state.engine`",
+        "App page passes `engine` to execution; when `cc`, invokes CC headless path (same subprocess approach as STORY-013)",
+        "CC orchestration graph visualized on Agent Graph page after CC execution completes: `CCTraceAdapter.parse()` → `GraphTraceData` → `build_interaction_graph()` → `render_agent_graph()`",
+        "CC `coordination_events` populated from teams mode `inboxes/*.json` messages (currently a stub returning `[]`)",
+        "`make validate` passes",
+        "CHANGELOG.md updated",
+        "CC availability: compute once via `st.session_state.setdefault(\"cc_available\", shutil.which(\"claude\") is not None)`",
+        "Disable MAS agent toggles with `st.checkbox(..., disabled=(engine == \"cc\"))` when CC selected",
+        "Fix `CCTraceAdapter._extract_coordination_events()` stub: populate `coordination_events` from teams `inboxes/*.json`"
+      ],
+      "files": [
+        "src/gui/pages/run_app.py",
+        "src/app/judge/cc_trace_adapter.py",
+        "tests/gui/test_engine_selector.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-18T12:41:56Z",
+      "content_hash": "0fb80bbf022c5eeef0fb41a5e756e2fc43cda61bf10d6d48a74da8cac30be538",
+      "depends_on": [
+        "STORY-013"
+      ]
+    }
+  ]
+}

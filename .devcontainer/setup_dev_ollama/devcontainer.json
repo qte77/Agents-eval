@@ -1,12 +1,61 @@
 {
-    "name": "make setup_devc_ollama",
-    "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
-    "features": {
-        "ghcr.io/devcontainers/features/node:1": {},
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {
-            "version": "latest",
-            "moby": false
+  "name": "Agents-eval (Ollama)",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": false
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code",
+        "saoudrizwan.claude-dev",
+        "charliermarsh.ruff",
+        "davidanson.vscode-markdownlint",
+        "donjayamanne.githistory",
+        "editorconfig.editorconfig",
+        "gruntfuggly.todo-tree",
+        "mhutchie.git-graph",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml",
+        "yzhang.markdown-all-in-one",
+        "github.copilot",
+        "github.copilot-chat",
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-docker",
+        "ms-python.debugpy",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode.makefile-tools"
+      ],
+      "settings": {
+        "editor.lineNumbers": "on",
+        "editor.wordWrap": "on",
+        "explorer.confirmDelete": true,
+        "files.autoSave": "onFocusChange",
+        "git.autofetch": true,
+        "git.enableSmartCommit": true,
+        "makefile.configureOnOpen": false,
+        "python.defaultInterpreterPath": "./.venv/bin/python",
+        "redhat.telemetry.enabled": false,
+        "terminal.integrated.env.linux": {
+          "LOAD_DOTENV": "true"
+        },
+        "terminal.integrated.env.osx": {
+          "LOAD_DOTENV": "true"
+        },
+        "terminal.integrated.env.windows": {
+          "LOAD_DOTENV": "true"
         }
-    },
-    "postCreateCommand": "make setup_devc_ollama"
+      }
+    }
+  },
+  "containerEnv": {
+    "UV_LINK_MODE": "copy",
+    "UV_CACHE_DIR": "/tmp/claude-1000/uv-cache"
+  },
+  "postCreateCommand": "make setup_devc_ollama"
 }

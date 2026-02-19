@@ -1,14 +1,12 @@
 """
-Utility functions and classes for loading application settings and configuration.
+Utility functions for loading application settings and configuration.
 
-This module defines the AppEnv class for managing environment variables using Pydantic,
-and provides a function to load and validate application configuration from a JSON file.
+This module provides functions to load and validate application configuration from a JSON file.
+For environment variables, use AppEnv from app.data_models.app_models.
 """
 
 import json
 from pathlib import Path
-
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.data_models.app_models import ChatConfig
 from app.utils.error_messages import (
@@ -17,39 +15,6 @@ from app.utils.error_messages import (
     invalid_json,
 )
 from app.utils.log import logger
-
-
-class AppEnv(BaseSettings):
-    """
-    Application environment settings loaded from environment variables or .env file.
-
-    This class uses Pydantic's BaseSettings to manage API keys and configuration
-    for various inference endpoints, tools, and logging/monitoring services.
-    Environment variables are loaded from a .env file by default.
-    """
-
-    # Inference endpoints
-    GEMINI_API_KEY: str = ""
-    GITHUB_API_KEY: str = ""
-    GROK_API_KEY: str = ""
-    HUGGINGFACE_API_KEY: str = ""
-    OPENROUTER_API_KEY: str = ""
-    PERPLEXITY_API_KEY: str = ""
-    RESTACK_API_KEY: str = ""
-    TOGETHER_API_KEY: str = ""
-
-    # Tools
-    TAVILY_API_KEY: str = ""
-
-    # Logging/Monitoring/Tracing
-    AGENTOPS_API_KEY: str = ""
-    LOGFIRE_TOKEN: str = ""
-    WANDB_API_KEY: str = ""
-
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
-
-
-chat_config = AppEnv()
 
 
 def load_config(config_path: str | Path) -> ChatConfig:

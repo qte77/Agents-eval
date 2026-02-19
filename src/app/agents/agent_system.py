@@ -26,18 +26,21 @@ Functions:
         settings, prompts, API key, and usage limits.
 """
 
+import time
+import uuid
+from typing import Any, NoReturn
+
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.common_tools.duckduckgo import (
     duckduckgo_search_tool,  # type: ignore[reportUnknownVariableType]
 )
+from pydantic_ai.exceptions import ModelHTTPError, UsageLimitExceeded
 from pydantic_ai.usage import UsageLimits
 
-from app.agents.opik_instrumentation import (
-    get_instrumentation_manager,
-    initialize_opik_instrumentation,
-)
+from app.agents.logfire_instrumentation import initialize_logfire_instrumentation
 from app.data_models.app_models import (
+    PROVIDER_REGISTRY,
     AgentConfig,
     AnalysisResult,
     AppEnv,
@@ -52,39 +55,190 @@ from app.data_models.app_models import (
     UserPromptType,
 )
 from app.data_models.peerread_models import ReviewGenerationResult
-from app.evals.evaluation_config import EvaluationConfig
+from app.judge.settings import JudgeSettings
+from app.judge.trace_processors import get_trace_collector
 from app.llms.models import create_agent_models
 from app.llms.providers import (
     get_api_key,
     get_provider_config,
     setup_llm_environment,
 )
-from app.tools.peerread_tools import (
-    add_peerread_review_tools_to_manager,
-    add_peerread_tools_to_manager,
-)
+from app.tools.peerread_tools import add_peerread_tools_to_agent
 from app.utils.error_messages import generic_exception, invalid_data_model_format
-from app.utils.load_configs import OpikConfig
+from app.utils.load_configs import LogfireConfig
 from app.utils.log import logger
 
 
-def initialize_opik_instrumentation_from_config(config_path: str | None = None) -> None:
-    """Initialize Opik instrumentation from evaluation config."""
+def initialize_logfire_instrumentation_from_settings(
+    settings: JudgeSettings | None = None,
+) -> None:
+    """Initialize Logfire instrumentation from JudgeSettings.
+
+    Uses logfire.instrument_pydantic_ai() for automatic tracing.
+    No manual decorators needed - all PydanticAI agents auto-instrumented.
+
+    Args:
+        settings: JudgeSettings instance. If None, uses default JudgeSettings().
+    """
     try:
-        eval_config = EvaluationConfig(config_path)
-        opik_config = OpikConfig.from_config(eval_config.config)
-        initialize_opik_instrumentation(opik_config)
-        logger.info(f"Opik instrumentation initialized: enabled={opik_config.enabled}")
+        if settings is None:
+            settings = JudgeSettings()
+        logfire_config = LogfireConfig.from_settings(settings)
+        initialize_logfire_instrumentation(logfire_config)
+        logger.info(f"Logfire instrumentation initialized: enabled={logfire_config.enabled}")
     except Exception as e:
-        logger.warning(f"Failed to initialize Opik instrumentation: {e}")
+        logger.warning(f"Failed to initialize Logfire instrumentation: {e}")
 
 
-def get_opik_decorator(agent_name: str, agent_role: str, execution_phase: str):
-    """Get Opik tracking decorator if available."""
-    manager = get_instrumentation_manager()
-    if manager and manager.config.enabled:
-        return manager.track_agent_execution(agent_name, agent_role, execution_phase)
-    return lambda func: func  # No-op decorator if Opik not available
+def _validate_model_return(
+    result_output: str,
+    result_model: type[ResultBaseType],
+) -> ResultBaseType:
+    """Validates the output against the expected model."""
+    try:
+        return result_model.model_validate(result_output)
+    except ValidationError as e:
+        msg = invalid_data_model_format(str(e))
+        logger.error(msg)
+        raise e
+    except Exception as e:
+        msg = generic_exception(str(e))
+        logger.exception(msg)
+        raise Exception(msg)
+
+
+async def _execute_traced_delegation(
+    sub_agent: Agent[None, BaseModel],
+    ctx: RunContext[None],
+    query: str,
+    *,
+    to_agent: str,
+    tool_name: str,
+    task_type: str,
+) -> Any:
+    """Execute a sub-agent delegation with trace collection.
+
+    Centralizes the tracing pattern shared by all delegation tools:
+    log interaction, run sub-agent, log tool call with timing.
+
+    Args:
+        sub_agent: The sub-agent to delegate to.
+        ctx: The run context from the manager agent.
+        query: The query string to delegate.
+        to_agent: Target agent name for trace logging.
+        tool_name: Tool name for trace logging.
+        task_type: Task type for trace logging.
+
+    Returns:
+        The AgentRunResult from the sub-agent execution.
+    """
+    trace_collector = get_trace_collector()
+    start_time = time.perf_counter()
+
+    trace_collector.log_agent_interaction(
+        from_agent="manager",
+        to_agent=to_agent,
+        interaction_type="delegation",
+        data={"query": query, "task_type": task_type},
+    )
+
+    result = await sub_agent.run(query, usage=ctx.usage)
+
+    duration = time.perf_counter() - start_time
+    trace_collector.log_tool_call(
+        agent_id="manager",
+        tool_name=tool_name,
+        success=True,
+        duration=duration,
+        context=f"{task_type}_delegation",
+    )
+
+    return result
+
+
+def _add_research_tool(
+    manager_agent: Agent[None, BaseModel],
+    research_agent: Agent[None, BaseModel],
+    result_type: type[ResearchResult | ResearchResultSimple | ReviewGenerationResult],
+):
+    """Add research delegation tool to manager agent.
+
+    Auto-instrumented by logfire.instrument_pydantic_ai() - no manual decorators needed.
+    """
+
+    @manager_agent.tool
+    async def delegate_research(  # type: ignore[reportUnusedFunction]
+        ctx: RunContext[None], query: str
+    ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
+        """Delegate research task to ResearchAgent."""
+        result = await _execute_traced_delegation(
+            research_agent,
+            ctx,
+            query,
+            to_agent="researcher",
+            tool_name="delegate_research",
+            task_type="research",
+        )
+        if isinstance(
+            result.output,
+            ResearchResult | ResearchResultSimple | ReviewGenerationResult,
+        ):
+            return result.output
+        return _validate_model_return(str(result.output), result_type)
+
+
+def _add_analysis_tool(
+    manager_agent: Agent[None, BaseModel],
+    analysis_agent: Agent[None, BaseModel],
+):
+    """Add analysis delegation tool to manager agent.
+
+    Auto-instrumented by logfire.instrument_pydantic_ai() - no manual decorators needed.
+    """
+
+    @manager_agent.tool
+    async def delegate_analysis(  # type: ignore[reportUnusedFunction]
+        ctx: RunContext[None], query: str
+    ) -> AnalysisResult:
+        """Delegate analysis task to AnalysisAgent."""
+        result = await _execute_traced_delegation(
+            analysis_agent,
+            ctx,
+            query,
+            to_agent="analyst",
+            tool_name="delegate_analysis",
+            task_type="analysis",
+        )
+        if isinstance(result.output, AnalysisResult):
+            return result.output
+        return _validate_model_return(str(result.output), AnalysisResult)
+
+
+def _add_synthesis_tool(
+    manager_agent: Agent[None, BaseModel],
+    synthesis_agent: Agent[None, BaseModel],
+):
+    """Add synthesis delegation tool to manager agent.
+
+    Auto-instrumented by logfire.instrument_pydantic_ai() - no manual decorators needed.
+    """
+
+    @manager_agent.tool
+    async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
+        ctx: RunContext[None], query: str
+    ) -> ResearchSummary:
+        """Delegate synthesis task to SynthesisAgent."""
+        result = await _execute_traced_delegation(
+            synthesis_agent,
+            ctx,
+            query,
+            to_agent="synthesizer",
+            tool_name="delegate_synthesis",
+            task_type="synthesis",
+        )
+        if isinstance(result.output, ResearchSummary):
+            return result.output
+        return _validate_model_return(str(result.output), ResearchSummary)
 
 
 def _add_tools_to_manager_agent(
@@ -107,85 +261,18 @@ def _add_tools_to_manager_agent(
     Returns:
         None
     """
-
-    def _validate_model_return(
-        result_output: str,
-        result_model: type[ResultBaseType],
-    ) -> ResultBaseType:
-        """Validates the output against the expected model."""
-        try:
-            return result_model.model_validate(result_output)
-        except ValidationError as e:
-            msg = invalid_data_model_format(str(e))
-            logger.error(msg)
-            raise e
-        except Exception as e:
-            msg = generic_exception(str(e))
-            logger.exception(msg)
-            raise Exception(msg)
-
     if research_agent is not None:
-        # Apply Opik tracing decorator
-        opik_decorator = get_opik_decorator("researcher", "research", "information_gathering")
-
-        @opik_decorator
-        @manager_agent.tool
-        # TODO remove redundant tool creation
-        # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_research(  # type: ignore[reportUnusedFunction]
-            ctx: RunContext[None], query: str
-        ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
-            """Delegate research task to ResearchAgent."""
-            result = await research_agent.run(query, usage=ctx.usage)
-            # result.output is already a result object from the agent
-            if isinstance(
-                result.output,
-                ResearchResult | ResearchResultSimple | ReviewGenerationResult,
-            ):
-                return result.output
-            else:
-                return _validate_model_return(str(result.output), result_type)
+        _add_research_tool(manager_agent, research_agent, result_type)
 
     if analysis_agent is not None:
-        # Apply Opik tracing decorator
-        opik_decorator_analysis = get_opik_decorator("analyst", "analysis", "analytical_processing")
-
-        @opik_decorator_analysis
-        @manager_agent.tool
-        # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_analysis(  # type: ignore[reportUnusedFunction]
-            ctx: RunContext[None], query: str
-        ) -> AnalysisResult:
-            """Delegate analysis task to AnalysisAgent."""
-            result = await analysis_agent.run(query, usage=ctx.usage)
-            # result.output is already an AnalysisResult object from the agent
-            if isinstance(result.output, AnalysisResult):
-                return result.output
-            else:
-                return _validate_model_return(str(result.output), AnalysisResult)
+        _add_analysis_tool(manager_agent, analysis_agent)
 
     if synthesis_agent is not None:
-        # Apply Opik tracing decorator
-        opik_decorator_synthesis = get_opik_decorator("synthesizer", "synthesis", "integration_synthesis")
-
-        @opik_decorator_synthesis
-        @manager_agent.tool
-        # ignore "delegate_research" is not accessed because of decorator
-        async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
-            ctx: RunContext[None], query: str
-        ) -> ResearchSummary:
-            """Delegate synthesis task to AnalysisAgent."""
-            result = await synthesis_agent.run(query, usage=ctx.usage)
-            # result.output is already a ResearchSummary object from the agent
-            if isinstance(result.output, ResearchSummary):
-                return result.output
-            else:
-                return _validate_model_return(str(result.output), ResearchSummary)
+        _add_synthesis_tool(manager_agent, synthesis_agent)
 
 
 def _create_agent(agent_config: AgentConfig) -> Agent[None, BaseModel]:
-    """Factory for creating configured agents"""
-
+    """Factory for creating configured agents."""
     return Agent(
         model=agent_config.model,
         output_type=agent_config.output_type,
@@ -193,6 +280,35 @@ def _create_agent(agent_config: AgentConfig) -> Agent[None, BaseModel]:
         tools=agent_config.tools,
         retries=agent_config.retries,
     )
+
+
+def _create_optional_agent(
+    model: Any,
+    output_type: type[BaseModel],
+    system_prompt: str,
+    tools: list[Any] | None = None,
+) -> Agent[None, BaseModel] | None:
+    """Create an agent if model is provided, otherwise return None.
+
+    Args:
+        model: The model instance, or None to skip creation.
+        output_type: Pydantic model type for agent output.
+        system_prompt: System prompt string for the agent.
+        tools: Optional list of tools to register on the agent.
+
+    Returns:
+        Configured Agent instance, or None if model is None.
+    """
+    if model is None:
+        return None
+    config: dict[str, Any] = {
+        "model": model,
+        "output_type": output_type,
+        "system_prompt": system_prompt,
+    }
+    if tools:
+        config["tools"] = tools
+    return _create_agent(AgentConfig.model_validate(config))
 
 
 def _get_result_type(
@@ -227,6 +343,7 @@ def _create_manager(
     models: ModelDict,
     provider: str,
     enable_review_tools: bool = False,
+    max_content_length: int = 15000,
 ) -> Agent[None, BaseModel]:
     """
     Creates and configures a manager Agent with associated researcher, analyst,
@@ -249,9 +366,13 @@ def _create_manager(
     active_agents = [
         agent
         for agent in [
-            f"researcher({models.model_researcher.model_name})" if models.model_researcher else None,
+            f"researcher({models.model_researcher.model_name})"
+            if models.model_researcher
+            else None,
             f"analyst({models.model_analyst.model_name})" if models.model_analyst else None,
-            f"synthesiser({models.model_synthesiser.model_name})" if models.model_synthesiser else None,
+            f"synthesiser({models.model_synthesiser.model_name})"
+            if models.model_synthesiser
+            else None,
         ]
         if agent
     ]
@@ -271,48 +392,42 @@ def _create_manager(
         )
     )
 
-    if models.model_researcher is None:
-        researcher = None
-    else:
-        researcher = _create_agent(
-            AgentConfig.model_validate(
-                {
-                    "model": models.model_researcher,
-                    "output_type": result_type,
-                    "system_prompt": prompts["system_prompt_researcher"],
-                    "tools": [duckduckgo_search_tool()],
-                }
-            )
-        )
-
-    if models.model_analyst is None:
-        analyst = None
-    else:
-        analyst = _create_agent(
-            AgentConfig.model_validate(
-                {
-                    "model": models.model_analyst,
-                    "output_type": AnalysisResult,
-                    "system_prompt": prompts["system_prompt_analyst"],
-                }
-            )
-        )
-
-    if models.model_synthesiser is None:
-        synthesiser = None
-    else:
-        synthesiser = _create_agent(
-            AgentConfig.model_validate(
-                {
-                    "model": models.model_synthesiser,
-                    "output_type": AnalysisResult,
-                    "system_prompt": prompts["system_prompt_synthesiser"],
-                }
-            )
-        )
+    # Reason: prompt lookup guarded by model presence to match original behavior —
+    # tests may omit sub-agent prompt keys when model is None.
+    researcher = _create_optional_agent(
+        models.model_researcher,
+        result_type,
+        prompts["system_prompt_researcher"] if models.model_researcher else "",
+        tools=[duckduckgo_search_tool()],
+    )
+    analyst = _create_optional_agent(
+        models.model_analyst,
+        AnalysisResult,
+        prompts["system_prompt_analyst"] if models.model_analyst else "",
+    )
+    synthesiser = _create_optional_agent(
+        models.model_synthesiser,
+        AnalysisResult,
+        prompts["system_prompt_synthesiser"] if models.model_synthesiser else "",
+    )
 
     _add_tools_to_manager_agent(manager, researcher, analyst, synthesiser, result_type)
-    add_peerread_tools_to_manager(manager)
+
+    # Determine target agent for PeerRead tools
+    # Researcher gets tools in multi-agent mode, manager in single-agent mode
+    target_agent = researcher if researcher is not None else manager
+    target_agent_id = "researcher" if researcher is not None else "manager"
+
+    # Add PeerRead base tools
+    add_peerread_tools_to_agent(target_agent, agent_id=target_agent_id)
+
+    # Add review tools if enabled
+    if enable_review_tools:
+        from app.tools.peerread_tools import add_peerread_review_tools_to_agent
+
+        add_peerread_review_tools_to_agent(
+            target_agent, agent_id=target_agent_id, max_content_length=max_content_length
+        )
 
     return manager
 
@@ -344,8 +459,6 @@ def get_manager(
         Agent: The initialized Agent manager.
     """
 
-    # FIXME context manager try-catch
-    # with error_handling_context("get_manager()"):
     model_config = EndpointConfig.model_validate(
         {
             "provider": provider,
@@ -354,34 +467,44 @@ def get_manager(
             "provider_config": provider_config,
         }
     )
-    models = create_agent_models(model_config, include_researcher, include_analyst, include_synthesiser)
-    manager = _create_manager(prompts, models, provider, enable_review_tools)
-
-    # Conditionally add review tools based on flag
-    def conditionally_add_review_tools(
-        manager: Agent[None, BaseModel],
-        enable: bool = False,
-        max_content_length: int = 15000,
-    ):
-        """Conditionally add review persistence tools to the manager.
-
-        Args:
-            manager: The manager agent to potentially add tools to.
-            enable: Flag to determine whether to add review tools.
-            max_content_length: The maximum number of characters to include in the
-                prompt.
-        """
-        if enable:
-            add_peerread_review_tools_to_manager(manager, max_content_length=max_content_length)
-        return manager
-
-    max_content_length = provider_config.max_content_length or 15000
-
-    return conditionally_add_review_tools(
-        manager,
-        enable=enable_review_tools,
-        max_content_length=max_content_length,
+    models = create_agent_models(
+        model_config, include_researcher, include_analyst, include_synthesiser
     )
+    max_content_length = provider_config.max_content_length or 15000
+    manager = _create_manager(prompts, models, provider, enable_review_tools, max_content_length)
+
+    return manager
+
+
+def _extract_rate_limit_detail(error: ModelHTTPError) -> str:
+    """Extract a human-readable detail message from a 429 ModelHTTPError body.
+
+    Args:
+        error: The 429 ModelHTTPError to extract detail from.
+
+    Returns:
+        str: Detail message from the error body, or string representation of error.
+    """
+    body = error.body if isinstance(error.body, dict) else {}
+    return body.get("message") or body.get("details") or str(error)  # type: ignore[return-value]
+
+
+def _handle_model_http_error(error: ModelHTTPError, provider: str, model_name: str) -> NoReturn:
+    """Handle non-429 ModelHTTPError with actionable logging. Re-raises the error.
+
+    For 429 rate-limit errors, callers should handle logging and SystemExit directly.
+    This allows sweep runners to catch ModelHTTPError for retry logic.
+
+    Args:
+        error: The ModelHTTPError to handle (expected: non-429).
+        provider: Provider name for logging context.
+        model_name: Model name for logging context.
+
+    Raises:
+        ModelHTTPError: Always re-raises the original error.
+    """
+    logger.error(f"HTTP error from model {provider}({model_name}): {error}")
+    raise error
 
 
 # Apply Opik tracing decorator to run_manager
@@ -392,10 +515,13 @@ async def run_manager(
     provider: str,
     usage_limits: UsageLimits | None,
     pydantic_ai_stream: bool = False,
-) -> None:
+) -> tuple[str, Any]:
     """
     Asynchronously runs the manager with the given query and provider, handling errors
         and printing results.
+
+    Auto-instrumented by logfire.instrument_pydantic_ai() - no manual decorators needed.
+
     Args:
         manager (Agent): The system agent responsible for running the query.
         query (str): The query to be processed by the manager.
@@ -405,11 +531,13 @@ async def run_manager(
         pydantic_ai_stream (bool, optional): Flag to enable or disable Pydantic AI
             stream. Defaults to False.
     Returns:
-        None
+        tuple[str, Any]: Tuple of (execution_id, manager_output) for trace retrieval and evaluation
     """
+    # Initialize trace collection
+    trace_collector = get_trace_collector()
+    execution_id = f"exec_{uuid.uuid4().hex[:12]}"
+    trace_collector.start_execution(execution_id)
 
-    # FIXME context manager try-catch
-    # with out ? error_handling_context("run_manager()"):
     model_name = getattr(manager, "model")._model_name
     mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
@@ -417,7 +545,8 @@ async def run_manager(
     try:
         if pydantic_ai_stream:
             raise NotImplementedError(
-                "Streaming currently only possible for Agents with output_type str not pydantic model"
+                "Streaming currently only possible for Agents with output_type "
+                "str not pydantic model"
             )
             # logger.info("Streaming model response ...")
             # result = await manager.run(**mgr_cfg)
@@ -437,9 +566,89 @@ async def run_manager(
         logger.info(f"Result: {result}")
         # FIXME  # type: ignore
         logger.info(f"Usage statistics: {result.usage()}")  # type: ignore
+
+        # Finalize trace collection
+        trace_collector.end_execution()
+        logger.info(f"Trace collection completed for execution: {execution_id}")
+
+        return execution_id, result.output
+
+    except ModelHTTPError as e:
+        trace_collector.end_execution()
+        if e.status_code == 429:
+            detail = _extract_rate_limit_detail(e)
+            logger.error(f"Rate limit exceeded for {provider}({model_name}): {detail}")
+            raise SystemExit(1) from e
+        _handle_model_http_error(e, provider, model_name)
+
+    except UsageLimitExceeded as e:
+        trace_collector.end_execution()
+        logger.error(f"Token limit reached for {provider}({model_name}): {e}")
+        raise SystemExit(1) from e
+
     except Exception as e:
+        trace_collector.end_execution()
         logger.error(f"Error in run_manager: {e}")
         raise
+
+
+def _determine_effective_token_limit(
+    token_limit: int | None,
+    chat_env_config: AppEnv,
+    provider_config: ProviderConfig,
+) -> int | None:
+    """Determine effective token limit with priority: CLI/GUI > env var > config.
+
+    Args:
+        token_limit: Optional CLI/GUI token limit override
+        chat_env_config: App environment config with AGENT_TOKEN_LIMIT
+        provider_config: Provider config with usage_limits
+
+    Returns:
+        Effective token limit or None if not set
+    """
+    if token_limit is not None:
+        return token_limit
+    if chat_env_config.AGENT_TOKEN_LIMIT is not None:
+        return chat_env_config.AGENT_TOKEN_LIMIT
+    return provider_config.usage_limits
+
+
+def _validate_token_limit(effective_limit: int | None) -> None:
+    """Validate token limit bounds (1000-1000000).
+
+    Args:
+        effective_limit: Token limit to validate
+
+    Raises:
+        ValueError: If limit is outside valid range
+    """
+    if effective_limit is None:
+        return
+
+    if effective_limit < 1000:
+        msg = f"Token limit {effective_limit} below minimum 1000"
+        logger.error(msg)
+        raise ValueError(msg)
+
+    if effective_limit > 1000000:
+        msg = f"Token limit {effective_limit} above maximum 1000000"
+        logger.error(msg)
+        raise ValueError(msg)
+
+
+def _create_usage_limits(effective_limit: int | None) -> UsageLimits | None:
+    """Create UsageLimits object if token limit is set.
+
+    Args:
+        effective_limit: Effective token limit
+
+    Returns:
+        UsageLimits object or None
+    """
+    if effective_limit is None:
+        return None
+    return UsageLimits(request_limit=10, total_tokens_limit=effective_limit)
 
 
 def setup_agent_env(
@@ -447,6 +656,7 @@ def setup_agent_env(
     query: UserPromptType,
     chat_config: ChatConfig | BaseModel,
     chat_env_config: AppEnv,
+    token_limit: int | None = None,
 ) -> EndpointConfig:
     """
     Sets up the environment for an agent by configuring provider settings, prompts,
@@ -459,6 +669,8 @@ def setup_agent_env(
             provider and prompt settings.
         chat_env_config (AppEnv): The application environment configuration
             containing API keys.
+        token_limit (int | None): Optional token limit override (CLI/GUI param).
+            Priority: CLI/GUI > env var > config. Valid range: 1000-1000000.
 
     Returns:
         EndpointConfig: The configuration object for the agent.
@@ -466,26 +678,17 @@ def setup_agent_env(
 
     if not isinstance(chat_config, ChatConfig):
         raise TypeError("'chat_config' of invalid type: ChatConfig expected")
-    msg: str | None
-    # FIXME context manager try-catch
-    # with error_handling_context("setup_agent_env()"):
-    provider_config = get_provider_config(provider, chat_config.providers)
 
+    provider_config = get_provider_config(provider, chat_config.providers)
     prompts = chat_config.prompts
     is_api_key, api_key_msg = get_api_key(provider, chat_env_config)
 
-    # Set up LLM environment with all available API keys
-    api_keys = {
-        "openai": chat_env_config.OPENAI_API_KEY,
-        "anthropic": chat_env_config.ANTHROPIC_API_KEY,
-        "gemini": chat_env_config.GEMINI_API_KEY,
-        "github": chat_env_config.GITHUB_API_KEY,
-        "grok": chat_env_config.GROK_API_KEY,
-        "huggingface": chat_env_config.HUGGINGFACE_API_KEY,
-        "openrouter": chat_env_config.OPENROUTER_API_KEY,
-        "perplexity": chat_env_config.PERPLEXITY_API_KEY,
-        "together": chat_env_config.TOGETHER_API_KEY,
-    }
+    # Set up LLM environment with only the selected provider's API key
+    selected_meta = PROVIDER_REGISTRY.get(provider)
+    if selected_meta and selected_meta.env_key:
+        api_keys = {selected_meta.name: getattr(chat_env_config, selected_meta.env_key, "")}
+    else:
+        api_keys = {}
     setup_llm_environment(api_keys)
 
     if provider.lower() != "ollama" and not is_api_key:
@@ -493,34 +696,12 @@ def setup_agent_env(
         logger.error(msg)
         raise ValueError(msg)
 
-    # TODO Separate Gemini request into function
-    # FIXME GeminiModel not compatible with pydantic-ai OpenAIModel
-    # ModelRequest not iterable
-    # Input should be 'STOP', 'MAX_TOKENS' or 'SAFETY'
-    # [type=literal_error, input_value='MALFORMED_FUNCTION_CALL', input_type=str]
-    # For further information visit https://errors.pydantic.dev/2.11/v/literal_error
-    # if provider.lower() == "gemini":
-    #     if isinstance(query, str):
-    #         query = ModelRequest.user_text_prompt(query)
-    #     elif isinstance(query, list):  # type: ignore[reportUnnecessaryIsInstance]
-    #         # query = [
-    #         #    ModelRequest.user_text_prompt(
-    #         #        str(msg.get("content", ""))
-    #         #    )  # type: ignore[reportUnknownArgumentType]
-    #         #    if isinstance(msg, dict)
-    #         #    else msg
-    #         #    for msg in query
-    #         # ]
-    #         raise NotImplementedError("Currently conflicting with UserPromptType")
-    #     else:
-    #         msg = f"Unsupported query type for Gemini: {type(query)}"
-    #         logger.error(msg)
-    #         raise TypeError(msg)
-
-    # Load usage limits from config instead of hardcoding
-    usage_limits = None
-    if provider_config.usage_limits is not None:
-        usage_limits = UsageLimits(request_limit=10, total_tokens_limit=provider_config.usage_limits)
+    # Determine and validate token limit with priority: CLI/GUI > env var > config
+    effective_limit = _determine_effective_token_limit(
+        token_limit, chat_env_config, provider_config
+    )
+    _validate_token_limit(effective_limit)
+    usage_limits = _create_usage_limits(effective_limit)
 
     return EndpointConfig.model_validate(
         {

@@ -1,0 +1,114 @@
+% Title page for Agents-eval en writeup
+% LaTeX format for pandoc -B (before-body) option
+% Compatible with pandoc report document class
+
+\hypersetup{pdftitle={Agents-eval: A Multi-Agent Evaluation Framework for Agentic AI Systems}}
+
+\begin{titlepage}
+\centering
+
+% Project context
+{\large \textbf{>>>> DRAFT <<<<}}\\[0.5cm]
+
+% Main title
+{\Huge \textbf{Agents-eval: A Multi-Agent Evaluation Framework for Agentic AI Systems}}\\[1.5cm]
+
+% Subtitle
+{\Large Three-Tier Evaluation with PydanticAI and PeerRead Dataset}\\[1cm]
+
+\vfill
+
+% Author, version and date
+{\large Version 3.3.0}\\[0.3cm]
+{\large \today}
+
+\end{titlepage}
+
+% Abstract - exclude from TOC
+\section*{Abstract}
+
+This work presents \textbf{Agents-eval}, a three-tier evaluation framework for agentic AI systems based on PydanticAI. The framework combines text-based metrics (ROUGE, BLEU, BERTScore), LLM-as-Judge evaluations, and graph-based behavioral analysis for systematic assessment of Multi-Agent Systems. The PeerRead corpus of scientific peer-review data serves as the benchmark dataset.
+
+The empirical evaluation is based on \textbf{30~traces} and compares four configurations: A \textbf{Manager-only} setup achieves a median throughput of 4.8~seconds per task with a 0\,\% error rate. The \textbf{3-agent} configuration requires a median of 12.3~seconds (+156\,\% vs.\ Manager-only) with a 25\,\% error rate. In comparison, Claude Code-based systems show significantly higher resource requirements: \textbf{CC~Solo} requires 118.3~seconds and \$0.94 per execution, \textbf{CC~Teams} 359.9~seconds and \$1.35. PydanticAI-based agents prove to be 25 to 75 times faster and 50 to 100 times more cost-effective than the Claude Code baselines. The framework, developed iteratively over 7~sprints (Version~3.3.0), confirms the performance advantages of specialized MAS architectures.
+
+\textbf{Keywords:} Multi-Agent Systems, LLM Evaluation, PydanticAI, Agentic AI, Evaluation Framework, LLM-as-Judge, Peer Review, Benchmarking, Tracing, Observability
+
+\vspace{0.75cm}
+
+\noindent\textbf{Project Resources:}\\
+Source Code: \texttt{https://github.com/qte77/Agents-eval}\\
+Documentation: \texttt{https://qte77.github.io/Agents-eval}
+
+\newpage
+
+% List of Abbreviations
+\section*{List of Abbreviations}
+
+\begin{longtable}{ll}
+\multicolumn{2}{l}{\textbf{General IT Abbreviations}} \\
+\textbf{API} & Application Programming Interface \\
+\textbf{CLI} & Command-Line Interface \\
+\textbf{CORS} & Cross-Origin Resource Sharing \\
+\textbf{CSV} & Comma-Separated Values \\
+\textbf{GPU} & Graphics Processing Unit \\
+\textbf{GUI} & Graphical User Interface \\
+\textbf{HTTP} & Hypertext Transfer Protocol \\
+\textbf{HTTPS} & Hypertext Transfer Protocol Secure \\
+\textbf{JSON} & JavaScript Object Notation \\
+\textbf{JSONL} & JSON Lines (line-delimited JSON format) \\
+\textbf{PDF} & Portable Document Format \\
+\textbf{RAM} & Random Access Memory \\
+\textbf{REST} & Representational State Transfer \\
+\textbf{SDK} & Software Development Kit \\
+\textbf{UI} & User Interface \\
+\textbf{URL} & Uniform Resource Locator \\
+\textbf{YAML} & YAML Ain't Markup Language \\
+\\
+\multicolumn{2}{l}{\textbf{Development Methodology and Principles}} \\
+\textbf{AC} & Acceptance Criteria \\
+\textbf{ADR} & Architectural Decision Record \\
+\textbf{BDD} & Behavior-Driven Development \\
+\textbf{C4} & Context, Container, Component, Code (architecture model) \\
+\textbf{CI/CD} & Continuous Integration / Continuous Deployment \\
+\textbf{CSL} & Citation Style Language \\
+\textbf{DRY} & Don't Repeat Yourself (redundancy avoidance principle) \\
+\textbf{IEEE} & Institute of Electrical and Electronics Engineers \\
+\textbf{KISS} & Keep It Simple, Stupid (system simplification principle) \\
+\textbf{PRD} & Product Requirements Document \\
+\textbf{SDLC} & Software Development Life Cycle \\
+\textbf{TDD} & Test-Driven Development \\
+\textbf{YAGNI} & You Aren't Gonna Need It (premature implementation avoidance) \\
+\\
+\multicolumn{2}{l}{\textbf{Framework and Tool Abbreviations}} \\
+\textbf{AutoGen} & Microsoft's Multi-Agent Conversation Framework \\
+\textbf{BibTeX} & Bibliography management format for LaTeX and Pandoc \\
+\textbf{CC} & Claude Code (Anthropic's agent-based CLI tool) \\
+\textbf{CrewAI} & Framework for orchestrating role-playing, autonomous AI agents \\
+\textbf{LangChain} & Framework for building applications with LLMs \\
+\textbf{MCP} & Model Context Protocol \\
+\textbf{PydanticAI} & Type-safe agent framework based on Pydantic \\
+\\
+\multicolumn{2}{l}{\textbf{AI and Machine Learning}} \\
+\textbf{GAIA} & General AI Assistants (benchmark suite) \\
+\textbf{LLM} & Large Language Model \\
+\textbf{MAS} & Multi-Agent System \\
+\textbf{ML} & Machine Learning \\
+\textbf{NLP} & Natural Language Processing \\
+\\
+\multicolumn{2}{l}{\textbf{Evaluation and Dataset Abbreviations}} \\
+\textbf{BLEU} & Bilingual Evaluation Understudy \\
+\textbf{PeerRead} & Dataset of Peer Reviews for scientific papers \\
+\textbf{ROUGE} & Recall-Oriented Understudy for Gisting Evaluation \\
+\\
+\multicolumn{2}{l}{\textbf{Security}} \\
+\textbf{MAESTRO} & Multi-Agent Environment Security Threat and Risk Ontology \\
+\textbf{OWASP} & Open Web Application Security Project \\
+\textbf{SSRF} & Server-Side Request Forgery \\
+\\
+\multicolumn{2}{l}{\textbf{Observability and Monitoring}} \\
+\textbf{AgentOps} & Observability and monitoring platform for AI agents \\
+\textbf{Logfire} & Pydantic's uncomplicated observability platform \\
+\textbf{Weave} & Weights \& Biases toolkit for AI-powered applications \\
+\end{longtable}
+
+\newpage

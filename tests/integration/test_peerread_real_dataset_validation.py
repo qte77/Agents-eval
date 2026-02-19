@@ -169,10 +169,8 @@ class TestPeerReadRealDatasetValidation:
         assert len(json_files) > 0, "Cache files missing after second download"
 
     @pytest.mark.integration
-    @pytest.mark.network
     async def test_peerread_error_handling(self, peerread_config, temp_cache_dir):
-        """Test error handling for network issues and invalid configurations."""
-        # Test with invalid venue
+        """Download should fail gracefully for invalid venue."""
         invalid_config = PeerReadConfig(
             venues=["invalid_venue_2099"],
             splits=["train"],
@@ -180,20 +178,20 @@ class TestPeerReadRealDatasetValidation:
             max_papers_per_query=1,
             raw_github_base_url=peerread_config.raw_github_base_url,
             github_api_base_url=peerread_config.github_api_base_url,
-            download_timeout=5.0,  # Short timeout for testing
-            max_retries=1,  # Single retry for testing
+            download_timeout=5.0,
+            max_retries=1,
             retry_delay_seconds=1.0,
         )
 
         downloader = PeerReadDownloader(invalid_config)
         result = downloader.download_venue_split("invalid_venue_2099", "train")
 
-        # Should fail gracefully
         assert not result.success, "Download should fail for invalid venue"
         assert result.error_message is not None, "Should provide error message"
         assert result.papers_downloaded == 0, "Should not download any papers"
 
     @pytest.mark.integration
+    @pytest.mark.network
     async def test_real_data_loader_integration(self, test_downloader):
         """Test integration between downloader and loader with real data."""
         config = test_downloader.config
@@ -229,6 +227,7 @@ class TestPeerReadRealDatasetValidation:
                 assert len(review.comments) > 0, "Review should have comments"
 
     @pytest.mark.integration
+    @pytest.mark.network
     async def test_download_performance_targets(self, test_downloader):
         """Test that download performance meets targets."""
         config = test_downloader.config
@@ -249,24 +248,6 @@ class TestPeerReadRealDatasetValidation:
         # Memory usage should be reasonable (test doesn't exceed limits during execution)
         # This is implicitly tested by the test not failing with memory errors
 
-    @pytest.mark.integration
-    @pytest.mark.network
-    async def test_file_discovery_mechanism(self, test_downloader):
-        """Test file discovery via GitHub API."""
-        config = test_downloader.config
-        venue = config.venues[0]
-        split = config.splits[0]
-
-        # Test file discovery
-        available_papers = test_downloader._discover_available_files(venue, split, "reviews")
-
-        # Validate discovery results
-        assert isinstance(available_papers, list), "Should return list of paper IDs"
-        if available_papers:  # Only test if files are discovered
-            assert len(available_papers) > 0, "Should discover some papers"
-            assert all(isinstance(paper_id, str) for paper_id in available_papers), "All paper IDs should be strings"
-            assert all(len(paper_id) > 0 for paper_id in available_papers), "All paper IDs should be non-empty"
-
 
 if __name__ == "__main__":
     """Run the real dataset validation tests directly."""
@@ -277,7 +258,9 @@ if __name__ == "__main__":
         try:
             # Load configuration
             config = load_peerread_config()
-            print(f"✓ Configuration loaded: {len(config.venues)} venues, {len(config.splits)} splits")
+            print(
+                f"✓ Configuration loaded: {len(config.venues)} venues, {len(config.splits)} splits"
+            )
 
             # Create test downloader with limited scope
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -304,7 +287,9 @@ if __name__ == "__main__":
                 download_time = time.time() - start_time
 
                 if result.success:
-                    print(f"✓ Download successful: {result.papers_downloaded} papers in {download_time:.2f}s")
+                    print(
+                        f"✓ Download successful: {result.papers_downloaded} papers in {download_time:.2f}s"
+                    )
 
                     # Test loader integration
                     loader = PeerReadLoader(test_config)
@@ -313,7 +298,9 @@ if __name__ == "__main__":
 
                     if papers:
                         paper = papers[0]
-                        print(f"✓ Sample paper: {paper.title[:50]}... ({len(paper.reviews)} reviews)")
+                        print(
+                            f"✓ Sample paper: {paper.title[:50]}... ({len(paper.reviews)} reviews)"
+                        )
 
                 else:
                     print(f"✗ Download failed: {result.error_message}")

@@ -21,7 +21,7 @@ support. IEEE `[1]` style by default.
 3. **Generate sections** - Use [template.md](template.md) for structure and formats
 4. **Setup bibliography** - Create `references.bib` (see template for BibTeX format)
 5. **Add YAML frontmatter** - See template for required fields
-6. **Run markdownlint** - `make run_markdownlint INPUT_FILES="docs/write-up/<topic>/*.md"`
+6. **Run markdownlint** - `make lint_md INPUT_FILES="docs/write-up/<topic>/*.md"`
 7. **Generate PDF** - `make run_pandoc` with `BIBLIOGRAPHY` variable
 
 ## Additional Resources
@@ -32,10 +32,10 @@ support. IEEE `[1]` style by default.
 
 | Style | How | Notes |
 | ----- | --- | ----- |
-| IEEE (default) | Bundled (`scripts/citation-styles/ieee.csl`) | Numeric `[1]` |
-| APA | Bundled (`scripts/citation-styles/apa.csl`) | Author-date `(Smith, 2024)` |
-| Chicago | Bundled (`scripts/citation-styles/chicago-author-date.csl`) | Author-date `(Smith 2024)` |
-| Vancouver | Bundled (`scripts/citation-styles/vancouver.csl`) | Numeric `(1)` |
+| IEEE (default) | Bundled (`scripts/writeup/citation-styles/ieee.csl`) | Numeric `[1]` |
+| APA | Bundled (`scripts/writeup/citation-styles/apa.csl`) | Author-date `(Smith, 2024)` |
+| Chicago | Bundled (`scripts/writeup/citation-styles/chicago-author-date.csl`) | Author-date `(Smith 2024)` |
+| Vancouver | Bundled (`scripts/writeup/citation-styles/vancouver.csl`) | Numeric `(1)` |
 
 Additional CSL files are available from the
 [Zotero Style Repository](https://www.zotero.org/styles).
@@ -60,13 +60,26 @@ make run_pandoc \
   INPUT_FILES="$$(printf '%s\036' $$dir/*.md)" \
   OUTPUT_FILE="$$dir/output.pdf" \
   BIBLIOGRAPHY="$$dir/references.bib" \
-  CSL="scripts/citation-styles/apa.csl"
+  CSL="scripts/writeup/citation-styles/apa.csl"
 ```
+
+## Section Numbering (MANDATORY)
+
+**NEVER add manual section numbers to headings.** Pandoc `--number-sections`
+handles all numbering automatically.
+
+- **Wrong**: `# 2. Projektvorstellung`, `## 2.1 Motivation`, `### 2.1.1 Details`
+- **Correct**: `# Projektvorstellung`, `## Motivation`, `### Details`
+
+The `NUMBER_SECTIONS` parameter in the Makefile `writeup` recipe controls this.
+Manual numbers in markdown headings conflict with pandoc auto-numbering and
+produce duplicated numbers in the PDF output.
 
 ## Quality Checks
 
 Before completing:
 
-1. **Markdownlint** - `make run_markdownlint INPUT_FILES="docs/write-up/<topic>/*.md"`
-2. **Citation validation** - Verify all `[@key]` references exist in `.bib` file
-3. **PDF generation** - Run pandoc command above and confirm output
+1. **No manual section numbers** - Headings must not contain `N.`, `N.N`, `N.N.N` prefixes
+2. **Markdownlint** - `make lint_md INPUT_FILES="docs/write-up/<topic>/*.md"`
+3. **Citation validation** - Verify all `[@key]` references exist in `.bib` file
+4. **PDF generation** - Run pandoc command above and confirm output

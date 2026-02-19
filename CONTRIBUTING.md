@@ -1,4 +1,10 @@
-# Contributing to Agents-eval
+---
+title: Contributing to Agents-eval
+description: Technical development workflows, coding standards, and implementation guidelines
+version: 1.0.0
+created: 2025-08-23
+updated: 2026-02-16
+---
 
 **This document contains technical development workflows, coding standards, and implementation guidelines shared by both human developers and AI coding agents.** For AI agent behavioral rules and compliance requirements, see [AGENTS.md](AGENTS.md). For project overview and navigation, see [README.md](README.md).
 
@@ -7,12 +13,12 @@
 **Development Workflow:**
 
 - `make setup_dev` → Setup development environment  
-- `make quick_validate` → Fast validation during development (ruff + type checking)
-- `make validate` → Complete pre-commit validation (ruff + type check + test_all)
+- `make quick_validate` → Fast validation during development (lint + type checking + complexity + duplication)
+- `make validate` → Complete pre-commit validation (lint + type check + test)
 
 **Testing:**
 
-- `make test_all` → Run all tests with pytest
+- `make test` → Run all tests with pytest
 - `uv run pytest <path>` → Run specific test file/function
 
 **Emergency Fallback** (if make commands fail):
@@ -26,27 +32,25 @@
 | Command | Purpose | Prerequisites | Error Recovery |
 |---------|---------|---------------|----------------|
 | `make setup_dev` | Install all dev dependencies | Makefile exists, uv installed | Try `uv sync --dev` directly |
-| `make setup_dev_claude` | Setup with Claude Code CLI | Above + Claude Code available | Manual setup per Claude docs |
-| `make setup_dev_ollama` | Setup with Ollama local LLM | Above + Ollama installed | Check Ollama installation |
+| `make setup_claude_code` | Setup Claude Code CLI | Above + Claude Code available | Manual setup per Claude docs |
+| `make setup_dev OLLAMA=1` | Setup with Ollama local LLM | Above + Ollama installed | Check Ollama installation |
+| `make quickstart` | Download samples + evaluate smallest paper | API key in `.env` | `make setup_dataset_sample` then `make run_cli ARGS="--paper-number=ID"` |
 | `make run_cli` | Run CLI application | Dev environment setup | Try `uv run python src/app/main.py` |
 | `make run_cli ARGS="--help"` | Run CLI with arguments | Above | Try `uv run python src/app/main.py --help` |
 | `make run_gui` | Run Streamlit GUI | Above + Streamlit installed | Try `uv run streamlit run src/run_gui.py` |
-| `make ruff` | Format code and fix linting | Ruff installed | Try `uv run ruff format . && uv run ruff check . --fix` |
+| `make lint_src` | Format and lint src with ruff | Ruff installed | Try `uv run ruff format . && uv run ruff check . --fix` |
 | `make type_check` | Run pyright static type checking | pyright installed | Try `uv run pyright` |
-| `make test_all` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
-| `make coverage_all` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
+| `make test` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
+| `make test_coverage` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
 | `make validate` | Complete pre-commit validation | Above dependencies | Run individual commands manually |
-| `make quick_validate` | Fast development validation | Ruff and pyright installed | Run `make ruff && make type_check` |
+| `make quick_validate` | Fast development validation | Ruff, pyright, complexipy, jscpd installed | Run `make lint_src && make type_check && make complexity && make duplication` |
+| `make duplication` | Detect copy-paste duplication in src/ | jscpd installed | Try `jscpd src/ --min-lines 5 --min-tokens 50` |
+| `make setup_jscpd` | Setup jscpd copy-paste detector | Node.js and npm installed | Try `npm install -gs jscpd` |
 | `make setup_markdownlint` | Setup markdownlint CLI | Node.js and npm installed | Try `npm install -gs markdownlint-cli` |
-| `make run_markdownlint INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
+| `make lint_md INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
 | `make run_pandoc` | Convert MD to PDF with citations. See `make run_pandoc HELP=1` | pandoc + texlive installed | Try `make setup_pdf_converter CONVERTER=pandoc` |
 | `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
 | `ocm` | Output commit message using repo style for all staged and changed changes | `git` available | Notify user |
-| `make start_opik` | Start local Opik tracing stack | Docker installed | Try `docker-compose -f docker-compose.opik.yaml up -d` |
-| `make stop_opik` | Stop local Opik tracing stack | Docker running | Try `docker-compose -f docker-compose.opik.yaml down` |
-| `make status_opik` | Check Opik services health | Opik running | Check Docker containers manually |
-| `make setup_opik_env` | Setup Opik environment variables | Shell access | Add variables to shell profile manually |
-| `make clean_opik` | Remove all Opik trace data | Confirmation prompt | Warning: Destructive operation |
 
 ## Code Patterns Quick Reference
 
@@ -111,6 +115,16 @@ The project requirements are in `pyproject.toml`. Use the provided `Makefile` to
 - Keep iterations **concise** to maintain low complexity
 - **Iteratively improve** tests and code until feature requirements are met
 - All code quality and tests must **pass before advancing** to the next step
+
+#### Security Tests (`tests/security/`)
+
+- SSRF prevention (URL validation, domain allowlisting, internal IP blocking)
+- Prompt injection resistance (length limits, XML delimiter wrapping, format string prevention)
+- Sensitive data filtering in logs and traces (API keys, passwords, tokens, env var names)
+- Input size limits (DoS prevention)
+- Tool registration scope validation
+
+Security tests run as part of `make test` (no separate command needed).
 
 **Testing Guidelines:**
 
@@ -198,8 +212,8 @@ The project requirements are in `pyproject.toml`. Use the provided `Makefile` to
 
 ### Pre-commit Checklist
 
-1. **Automated validation**: `make validate` - runs streamlined sequence (ruff + type_check + test_all)
-2. **Quick validation** (development): `make quick_validate` - runs fast checks (ruff + type_check only)
+1. **Automated validation**: `make validate` - runs streamlined sequence (lint + type_check + test)
+2. **Quick validation** (development): `make quick_validate` - runs fast checks (lint + type_check + complexity)
 3. **Update CHANGELOG.md**: Add entry to `## [Unreleased]` section describing your changes
 4. Update documentation as described above.
 
@@ -286,28 +300,6 @@ This hierarchy prevents the confusion between "what could be built" (landscape r
 
 ## Human-Agent Collaboration
 
-### Git Worktree Development Workflow
-
-**For parallel feature development and safe integration testing:**
-
-```bash
-# Create feature worktree
-git worktree add --track -b feat/feature-name ../Agents-eval-feature main
-
-# Test integration without committing  
-cd ../Agents-eval-integration
-git merge --no-commit --no-ff feat/feature-name
-make validate
-git reset --hard HEAD  # Clean reset, no commits made
-
-# Integration testing scripts
-./scripts/worktrees/setup-opik.sh          # Setup Opik deployment
-./scripts/worktrees/integration-workflow.sh test-all  # Test all features
-./scripts/worktrees/cleanup-worktrees.sh   # Clean up when done
-```
-
-**Benefits**: Parallel development, safe integration testing, no commit conflicts
-
 ### Agent Integration Guidelines
 
 **For comprehensive AI agent instructions, see [AGENTS.md](AGENTS.md).**
@@ -318,7 +310,6 @@ git reset --hard HEAD  # Clean reset, no commits made
 - Technical implementation standards → This document
 - Command execution → [Complete Command Reference](#complete-command-reference)
 - Testing approach → [Testing Strategy & Guidelines](#testing-strategy--guidelines)
-- Git worktree workflows → Above section
 
 ### Context7 MCP Documentation Access
 

@@ -2,14 +2,17 @@
 title: TDD Best Practices
 version: 2.0
 based-on: Industry research 2025-2026
-see-also: testing-strategy.md
+see-also: testing-strategy.md, bdd-best-practices.md
 ---
 
-**Purpose**: How to do TDD - Red-Green-Refactor cycle, AAA structure, best practices, anti-patterns.
+**Purpose**: How to do TDD - Red-Green-Refactor cycle, AAA structure,
+best practices, anti-patterns.
 
 ## Test-Driven Development (TDD)
 
-TDD is a development methodology where tests are written before implementation code, driving design and ensuring testability from the start.
+TDD is a development methodology where tests are written before
+implementation code, driving design and ensuring testability from the
+start.
 
 ## The Red-Green-Refactor Cycle
 
@@ -70,15 +73,18 @@ def test_order_processor_calculates_total():
 
 ### 3. Keep Tests Atomic and Isolated
 
-**One behavior per test**: `test_calculator_adds_numbers()` tests addition only, not subtraction, multiplication, etc.
+**One behavior per test**: `test_calculator_adds_numbers()` tests
+addition only, not subtraction, multiplication, etc.
 
 ### 4. Test Edge Cases Before Happy Paths
 
-Cover failure modes first (empty input, malformed data), then success cases.
+Cover failure modes first (empty input, malformed data), then success
+cases.
 
 ### 5. Descriptive Test Names
 
-Name describes behavior: `test_user_service_returns_404_for_unknown_user()` not `test_service_response()`.
+Name describes behavior: `test_user_service_returns_404_for_unknown_user()`
+not `test_service_response()`.
 
 ## Benefits of TDD
 
@@ -106,31 +112,35 @@ def test_service_fetches_data():
     assert service.fetch("key") == expected_value
 ```
 
-**Overly complex tests**: If test setup is harder to understand than the code, simplify. Avoid excessive mocking.
+**Unspec'd mocks on third-party types**: `MagicMock()` silently accepts any
+attribute, masking API drift bugs until runtime.
 
-**Chasing 100% coverage**: Aim for meaningful behavior coverage, not line coverage percentage.
+```python
+# BAD - mock.data always succeeds even if AgentRunResult has no .data
+mock_result = MagicMock()
+result = await run_manager(...)  # passes, but crashes at runtime
 
-**Low-value patterns**: See `testing-strategy.md` → "Patterns to Remove" for full list.
+# GOOD - spec= constrains to real interface
+mock_result = MagicMock(spec=AgentRunResult)
+mock_result.output = MagicMock()  # must explicitly set dataclass fields
+```
+
+**Overly complex tests**: If test setup is harder to understand than
+the code, simplify. Avoid excessive mocking.
+
+**Chasing 100% coverage**: Aim for meaningful behavior coverage, not
+line coverage percentage.
+
+**Low-value patterns**: See `testing-strategy.md` → "Patterns to Remove"
+for full list.
 
 ## Running Tests
 
-Use project make recipes for consistent test execution:
+See [CONTRIBUTING.md](../../CONTRIBUTING.md#complete-command-reference)
+for all make recipes and test commands.
 
-```bash
-make test_all           # Run all tests
-make quick_validate     # Fast validation (ruff + type checking, no tests)
-make validate          # Full validation (ruff + type check + tests)
-```
-
-For TDD iterations, run specific tests:
-
-```bash
-uv run pytest tests/test_module.py::test_specific_function  # Single test
-uv run pytest tests/test_module.py                         # Single file
-uv run pytest -k pattern                                    # Pattern match
-```
-
-See `testing-strategy.md` for complete test execution guide.
+For TDD iterations, run specific tests with
+`uv run pytest tests/test_module.py::test_function`.
 
 ## When to Use TDD
 

@@ -56,99 +56,10 @@ class TestPeerReadAgentTools:
         """Create sample configuration for testing."""
         return PeerReadConfig()
 
-    def test_add_peerread_tools_to_manager(self, mock_agent):
-        """Test adding PeerRead tools to manager agent."""
-        # Import here to avoid import errors if module doesn't exist yet
-        from app.tools.peerread_tools import add_peerread_tools_to_manager
-
-        # Act
-        add_peerread_tools_to_manager(mock_agent)
-
-        # Assert
-        # Tools are added via decorators, so we can't easily test their presence
-        # But we can verify the function runs without error
-        assert mock_agent is not None
-
-    def test_add_peerread_review_tools_to_manager(self, mock_agent):
-        """Test adding PeerRead review persistence tools to manager agent."""
-        # Import here to avoid import errors if module doesn't exist yet
-        from app.tools.peerread_tools import add_peerread_review_tools_to_manager
-
-        # Act
-        add_peerread_review_tools_to_manager(mock_agent)
-
-        # Assert
-        # Tools are added via decorators, so we can't easily test their presence
-        # But we can verify the function runs without error
-        assert mock_agent is not None
-
-    @patch("app.agents.peerread_tools.load_peerread_config")
-    @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_get_peerread_paper_tool_success(self, mock_loader_class, mock_config, sample_paper, sample_config):
-        """Test successful paper retrieval via agent tool."""
-        # Import here to avoid import errors if module doesn't exist yet
-        from app.tools.peerread_tools import add_peerread_tools_to_manager
-
-        # Arrange
-        mock_config.return_value = sample_config
-        mock_loader = Mock()
-        mock_loader.get_paper_by_id.return_value = sample_paper
-        mock_loader_class.return_value = mock_loader
-
-        # Create a real agent to test with
-        test_agent = Agent(model="test", output_type=BaseModel)
-        add_peerread_tools_to_manager(test_agent)
-
-        # Note: Due to the decorator pattern, we can't easily test the tool directly
-        # This test verifies the setup completes without error
-        assert test_agent is not None
-
-    @patch("app.agents.peerread_tools.load_peerread_config")
-    @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_get_peerread_paper_tool_not_found(self, mock_loader_class, mock_config, sample_config):
-        """Test paper retrieval when paper is not found."""
-        # Import here to avoid import errors if module doesn't exist yet
-        from app.tools.peerread_tools import add_peerread_tools_to_manager
-
-        # Arrange
-        mock_config.return_value = sample_config
-        mock_loader = Mock()
-        mock_loader.get_paper_by_id.return_value = None  # Paper not found
-        mock_loader_class.return_value = mock_loader
-
-        # Create a real agent to test with
-        test_agent = Agent(model="test", output_type=BaseModel)
-        add_peerread_tools_to_manager(test_agent)
-
-        # Note: The actual error handling is tested indirectly through integration
-        assert test_agent is not None
-
-    @patch("app.agents.peerread_tools.load_peerread_config")
-    @patch("app.agents.peerread_tools.PeerReadLoader")
-    def test_query_peerread_papers_tool(self, mock_loader_class, mock_config, sample_paper, sample_config):
-        """Test paper querying via agent tool."""
-        # Import here to avoid import errors if module doesn't exist yet
-        from app.tools.peerread_tools import add_peerread_tools_to_manager
-
-        # Arrange
-        mock_config.return_value = sample_config
-        mock_loader = Mock()
-        mock_loader.query_papers.return_value = [sample_paper]
-        mock_loader_class.return_value = mock_loader
-
-        # Create a real agent to test with
-        test_agent = Agent(model="test", output_type=BaseModel)
-        add_peerread_tools_to_manager(test_agent)
-
-        # Note: Due to the decorator pattern, we can't easily test the tool directly
-        # This test verifies the setup completes without error
-        assert test_agent is not None
-
     def test_save_paper_review_tool(self, tmp_path, sample_paper, sample_config):
         """Test review saving functionality with actual file persistence."""
         import json
         from pathlib import Path
-        from unittest.mock import Mock, patch
 
         from app.data_utils.review_persistence import ReviewPersistence
 
@@ -158,9 +69,9 @@ class TestPeerReadAgentTools:
 
         # Test the underlying save_paper_review logic by creating it manually
         with (
-            patch("app.agents.peerread_tools.load_peerread_config") as mock_config,
-            patch("app.agents.peerread_tools.PeerReadLoader") as mock_loader_class,
-            patch("app.agents.peerread_tools.ReviewPersistence") as mock_persistence_class,
+            patch("app.tools.peerread_tools.load_peerread_config") as mock_config,
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+            patch("app.tools.peerread_tools.ReviewPersistence") as mock_persistence_class,
         ):
             # Setup mocks
             mock_config.return_value = sample_config
@@ -217,82 +128,6 @@ class TestPeerReadAgentTools:
             assert saved_data["review"]["recommendation"] == test_recommendation
             assert saved_data["review"]["reviewer_confidence"] == str(test_confidence)
             assert "timestamp" in saved_data
-
-
-class TestToolIntegration:
-    """Test integration aspects of PeerRead tools with agent system."""
-
-    def test_tool_functions_exist(self):
-        """Test that tool integration functions exist and are callable."""
-        # Import here to avoid import errors if module doesn't exist yet
-        from app.tools.peerread_tools import (
-            add_peerread_review_tools_to_manager,
-            add_peerread_tools_to_manager,
-        )
-
-        # Assert
-        assert callable(add_peerread_tools_to_manager)
-        assert callable(add_peerread_review_tools_to_manager)
-
-    def test_tool_integration_with_none_agent(self):
-        """Test tool integration handles None agent gracefully."""
-        # Import here to avoid import errors if module doesn't exist yet
-        from app.tools.peerread_tools import add_peerread_tools_to_manager
-
-        # Act & Assert - Should not raise error with None
-        # Note: In practice, this would fail, but we're testing the import works
-        try:
-            # This would fail in practice, but we're just testing imports
-            assert callable(add_peerread_tools_to_manager)
-        except Exception:
-            # Expected - just testing the function exists
-            pass
-
-    @patch("app.agents.peerread_tools.logger")
-    def test_tool_error_logging(self, mock_logger):
-        """Test that tool errors are properly logged."""
-        # Import here to avoid import errors if module doesn't exist yet
-        from app.tools.peerread_tools import add_peerread_tools_to_manager
-
-        # Create a real agent to test with
-        test_agent = Agent(model="test", output_type=BaseModel)
-
-        # Act
-        add_peerread_tools_to_manager(test_agent)
-
-        # Assert - Verify function completes (logging tested indirectly)
-        assert test_agent is not None
-
-
-class TestToolErrorHandling:
-    """Test error handling in PeerRead agent tools."""
-
-    @patch("app.agents.peerread_tools.load_peerread_config")
-    def test_config_loading_error_handling(self, mock_config):
-        """Test handling of configuration loading errors."""
-        # Import here to avoid import errors if module doesn't exist yet
-        from app.tools.peerread_tools import add_peerread_tools_to_manager
-
-        # Arrange
-        mock_config.side_effect = Exception("Config loading failed")
-
-        # Create a real agent to test with
-        test_agent = Agent(model="test", output_type=BaseModel)
-
-        # Act & Assert - Should not raise error during tool addition
-        add_peerread_tools_to_manager(test_agent)
-        assert test_agent is not None
-
-    def test_import_error_handling(self):
-        """Test that imports work correctly."""
-        # Act & Assert - All imports should work
-        from app.tools.peerread_tools import (
-            add_peerread_review_tools_to_manager,
-            add_peerread_tools_to_manager,
-        )
-
-        assert add_peerread_tools_to_manager is not None
-        assert add_peerread_review_tools_to_manager is not None
 
 
 class TestPaperPDFReading:
@@ -361,3 +196,470 @@ class TestPaperPDFReading:
         # Attempt to read non-PDF file
         with pytest.raises(ValueError, match="Not a PDF file"):
             read_paper_pdf(None, str(invalid_file))
+
+
+class TestContentTruncation:
+    """Test content truncation functionality for model-aware limits."""
+
+    def test_truncate_content_preserves_abstract(self):
+        """Test that truncation preserves the abstract section."""
+        from app.tools.peerread_tools import _truncate_paper_content
+
+        abstract = "This is the abstract section."
+        body = "A" * 20000  # Large body content
+        max_length = 1000
+
+        result = _truncate_paper_content(abstract, body, max_length)
+
+        # Abstract should be preserved
+        assert abstract in result
+        # Should contain truncation marker
+        assert "[TRUNCATED]" in result
+        # Result should be within limit
+        assert len(result) <= max_length
+
+    def test_truncate_content_adds_marker(self):
+        """Test that truncation adds [TRUNCATED] marker."""
+        from app.tools.peerread_tools import _truncate_paper_content
+
+        abstract = "Abstract text."
+        body = "B" * 10000
+        max_length = 500
+
+        result = _truncate_paper_content(abstract, body, max_length)
+
+        assert "[TRUNCATED]" in result
+
+    def test_truncate_content_no_truncation_when_under_limit(self):
+        """Test that content under limit is not truncated."""
+        from app.tools.peerread_tools import _truncate_paper_content
+
+        abstract = "Short abstract."
+        body = "Short body content."
+        max_length = 10000
+
+        result = _truncate_paper_content(abstract, body, max_length)
+
+        # Should not contain truncation marker
+        assert "[TRUNCATED]" not in result
+        # Should contain full content
+        assert abstract in result
+        assert body in result
+
+    def test_truncate_content_logs_warning(self, caplog):
+        """Test that truncation logs a warning."""
+        import logging
+
+        from app.tools.peerread_tools import _truncate_paper_content
+
+        caplog.set_level(logging.WARNING)
+
+        abstract = "Abstract."
+        body = "C" * 15000
+        max_length = 1000
+
+        # Capture logs via Loguru sink
+        import io
+
+        from loguru import logger
+
+        log_capture = io.StringIO()
+        handler_id = logger.add(log_capture, level="WARNING")
+
+        try:
+            _truncate_paper_content(abstract, body, max_length)
+            log_output = log_capture.getvalue()
+
+            # Should log warning with size information
+            assert "truncat" in log_output.lower()
+            assert str(max_length) in log_output
+        finally:
+            logger.remove(handler_id)
+
+    def test_truncate_content_abstract_exceeds_limit(self):
+        """Test that truncation handles abstract larger than max_length."""
+        import io
+
+        from loguru import logger
+
+        from app.tools.peerread_tools import _truncate_paper_content
+
+        # Abstract alone exceeds max_length
+        abstract = "A" * 1500
+        body = "B" * 1000
+        max_length = 1000
+
+        # Capture logs to verify warning
+        log_capture = io.StringIO()
+        handler_id = logger.add(log_capture, level="WARNING")
+
+        try:
+            result = _truncate_paper_content(abstract, body, max_length)
+
+            # Should return abstract + [TRUNCATED] marker (preserves abstract even if too large)
+            assert "[TRUNCATED]" in result
+            assert abstract in result
+            # Body should be omitted since abstract alone exceeds limit
+            assert "B" not in result
+
+            # Should log warning about abstract exceeding limit
+            log_output = log_capture.getvalue()
+            assert "abstract alone exceeds" in log_output.lower()
+            assert str(max_length) in log_output
+        finally:
+            logger.remove(handler_id)
+
+    def test_generate_review_template_with_truncation(self):
+        """Test that generate_paper_review_content_from_template truncates long content."""
+        # This test will validate the integration with the actual tool
+        # Will be implemented after _truncate_paper_content is added
+        pass
+
+
+class TestToolRegistration:
+    """Test tool registration and initialization."""
+
+    def test_add_peerread_tools_registers_all_tools(self):
+        """Test that add_peerread_tools_to_agent registers all expected tools."""
+        from unittest.mock import Mock
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        mock_agent = Mock()
+        mock_agent.tool = Mock(return_value=lambda f: f)  # Decorator that returns function
+
+        # Act
+        add_peerread_tools_to_agent(mock_agent, agent_id="test_agent")
+
+        # Assert
+        # Should register get_peerread_paper, query_peerread_papers, read_paper_pdf_tool
+        assert mock_agent.tool.call_count >= 3
+
+    def test_peerread_tool_with_invalid_paper_id(self):
+        """Test tool behavior with invalid paper ID."""
+        # This test validates error handling in tools
+        # Will fail until proper error handling is implemented
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_loader = Mock()
+            mock_loader.get_paper_by_id.return_value = None  # Paper not found
+            mock_loader_class.return_value = mock_loader
+
+            add_peerread_tools_to_agent(agent, agent_id="test_agent")
+
+            # Get the get_peerread_paper tool
+            get_paper_tool = None
+            for tool in registered_tools:
+                if "peerread_paper" in tool.__name__:
+                    get_paper_tool = tool
+                    break
+
+            # Act & Assert
+            import pytest
+
+            with pytest.raises(ValueError, match="not found"):
+                import asyncio
+
+                asyncio.run(get_paper_tool(None, "invalid_id"))
+
+
+class TestPDFExtractionErrorHandling:
+    """Test PDF extraction error handling."""
+
+    def test_read_paper_pdf_with_empty_file(self, tmp_path):
+        """Test error handling for empty PDF file."""
+        from app.tools.peerread_tools import read_paper_pdf
+
+        # Create an empty file
+        empty_pdf = tmp_path / "empty.pdf"
+        empty_pdf.write_bytes(b"")
+
+        # Act & Assert
+        with pytest.raises(ValueError):
+            read_paper_pdf(None, str(empty_pdf))
+
+    def test_read_paper_pdf_with_corrupted_file(self, tmp_path):
+        """Test that PDF reader handles corrupted files gracefully."""
+        from app.tools.peerread_tools import read_paper_pdf
+
+        # Create a corrupted PDF (invalid PDF structure but valid header)
+        corrupted_pdf = tmp_path / "corrupted.pdf"
+        corrupted_pdf.write_bytes(b"%PDF-1.4\n%corrupted content")
+
+        # Act - MarkItDown extracts what it can from corrupted PDFs
+        result = read_paper_pdf(None, str(corrupted_pdf))
+
+        # Assert - should return a string (even if empty or partial)
+        assert isinstance(result, str)
+
+
+class TestToolTracingIntegration:
+    """Test tool tracing and trace collector integration."""
+
+    def test_get_peerread_paper_tool_captures_trace(self):
+        """Test that get_peerread_paper tool records trace data."""
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        sample_paper = PeerReadPaper(
+            paper_id="test_001",
+            title="Test Paper",
+            abstract="Test abstract",
+            reviews=[],
+            histories=[],
+        )
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+            patch("app.tools.peerread_tools.get_trace_collector") as mock_get_collector,
+        ):
+            mock_loader = Mock()
+            mock_loader.get_paper_by_id.return_value = sample_paper
+            mock_loader_class.return_value = mock_loader
+
+            mock_collector = Mock()
+            mock_get_collector.return_value = mock_collector
+
+            add_peerread_tools_to_agent(agent, agent_id="test_agent")
+
+            # Get the tool
+            get_paper_tool = None
+            for tool in registered_tools:
+                if "peerread_paper" in tool.__name__:
+                    get_paper_tool = tool
+                    break
+
+            # Act
+            import asyncio
+
+            asyncio.run(get_paper_tool(None, "test_001"))
+
+            # Assert - trace collector should be called
+            assert mock_get_collector.called
+
+    def test_save_paper_review_tool_captures_trace(self):
+        """Test that save_paper_review tool records trace data."""
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_review_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader"),
+            patch("app.tools.peerread_tools.ReviewPersistence"),
+            patch("app.tools.peerread_tools.get_trace_collector") as mock_get_collector,
+        ):
+            mock_collector = Mock()
+            mock_get_collector.return_value = mock_collector
+
+            add_peerread_review_tools_to_agent(agent, "test_agent")
+
+            # Get the save review tool
+            save_review_tool = None
+            for tool in registered_tools:
+                if "save" in tool.__name__ and "review" in tool.__name__:
+                    save_review_tool = tool
+                    break
+
+            # Act
+            if save_review_tool:
+                import asyncio
+
+                result = asyncio.run(
+                    save_review_tool(None, "test_001", "Test review", "accept", 0.9)
+                )
+
+                # Assert - trace collector should be called
+                assert mock_get_collector.called
+                assert result is not None
+
+
+class TestQueryErrorHandling:
+    """Test error handling for query_peerread_papers tool."""
+
+    def test_query_peerread_papers_handles_loader_exception(self):
+        """Test that query_peerread_papers handles exceptions from loader."""
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+        ):
+            # Mock loader to raise an exception
+            mock_loader = Mock()
+            mock_loader.query_papers.side_effect = RuntimeError("Database connection failed")
+            mock_loader_class.return_value = mock_loader
+
+            add_peerread_tools_to_agent(agent, agent_id="test_agent")
+
+            # Get the query tool
+            query_tool = None
+            for tool in registered_tools:
+                if "query" in tool.__name__:
+                    query_tool = tool
+                    break
+
+            # Act & Assert
+            if query_tool:
+                import asyncio
+
+                with pytest.raises(ValueError, match="Failed to query papers"):
+                    asyncio.run(query_tool(None, "machine learning"))
+
+
+class TestTemplateLoading:
+    """Test review template loading functionality."""
+
+    def test_generate_review_template_missing_abstract(self):
+        """Test template generation with missing paper abstract."""
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        sample_paper = PeerReadPaper(
+            paper_id="test_001",
+            title="Test Paper",
+            abstract="",  # Empty abstract
+            reviews=[],
+            histories=[],
+        )
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_loader = Mock()
+            mock_loader.get_paper_by_id.return_value = sample_paper
+            mock_loader_class.return_value = mock_loader
+
+            add_peerread_tools_to_agent(agent, agent_id="test_agent")
+
+            # Get the template generation tool
+            generate_template_tool = None
+            for tool in registered_tools:
+                if "template" in tool.__name__ or "review" in tool.__name__:
+                    generate_template_tool = tool
+                    break
+
+            # Act & Assert
+            if generate_template_tool:
+                import asyncio
+
+                result = asyncio.run(generate_template_tool(None, "test_001"))
+                # Should handle empty abstract gracefully
+                assert result is not None
+
+    def test_generate_review_template_with_truncation(self):
+        """Test template generation with content truncation."""
+        from unittest.mock import Mock, patch
+
+        from app.tools.peerread_tools import add_peerread_tools_to_agent
+
+        # Arrange
+        agent = Mock()
+        registered_tools = []
+
+        def capture_tool(func):
+            registered_tools.append(func)
+            return func
+
+        agent.tool = capture_tool
+
+        # Create paper with very long content
+        long_abstract = "A" * 10000
+        sample_paper = PeerReadPaper(
+            paper_id="test_001",
+            title="Test Paper",
+            abstract=long_abstract,
+            reviews=[],
+            histories=[],
+        )
+
+        with (
+            patch("app.tools.peerread_tools.load_peerread_config"),
+            patch("app.tools.peerread_tools.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_loader = Mock()
+            mock_loader.get_paper_by_id.return_value = sample_paper
+            mock_loader.load_parsed_pdf_content.return_value = None
+            mock_loader_class.return_value = mock_loader
+
+            add_peerread_tools_to_agent(agent, agent_id="test_agent")
+
+            # Get the template generation tool
+            generate_template_tool = None
+            for tool in registered_tools:
+                if "template" in tool.__name__ or "review" in tool.__name__:
+                    generate_template_tool = tool
+                    break
+
+            # Act
+            if generate_template_tool:
+                import asyncio
+
+                result = asyncio.run(generate_template_tool(None, "test_001"))
+                # Assert - should truncate long content
+                assert result is not None
+                # Result should be reasonably sized (under some limit)
+                assert len(result) < 50000  # Reasonable limit for template

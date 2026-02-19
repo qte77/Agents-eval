@@ -1,25 +1,27 @@
 """
-Streamlit component for editing agent system prompts.
+Streamlit component for displaying agent system prompts.
 
-This module provides a function to render and edit prompt configurations
-for agent roles using a Streamlit-based UI. It validates the input configuration,
-displays warnings if prompts are missing, and allows interactive editing of each prompt.
+This module provides a function to display prompt configurations
+for agent roles using a Streamlit-based UI. Loads prompts directly
+from ChatConfig without hardcoded fallbacks (DRY principle).
 """
 
 from pydantic import BaseModel
-from streamlit import error, header, warning
+from streamlit import error, header, info
 
 from app.data_models.app_models import ChatConfig
 from app.utils.error_messages import invalid_type
 from app.utils.log import logger
 from gui.components.prompts import render_prompt_editor
-from gui.config.config import PROMPTS_DEFAULT
-from gui.config.text import PROMPTS_HEADER, PROMPTS_WARNING
+from gui.config.text import PROMPTS_HEADER
 
 
 def render_prompts(chat_config: ChatConfig | BaseModel):  # -> dict[str, str]:
     """
     Render and edit the prompt configuration for agent roles in the Streamlit UI.
+
+    Loads prompts directly from ChatConfig.prompts without hardcoded fallbacks.
+    Follows DRY principle with config_chat.json as single source of truth.
     """
 
     header(PROMPTS_HEADER)
@@ -30,12 +32,12 @@ def render_prompts(chat_config: ChatConfig | BaseModel):  # -> dict[str, str]:
         error(msg)
         return None
 
-    # updated = False
+    # Load prompts directly from ChatConfig - single source of truth
     prompts = chat_config.prompts
 
     if not prompts:
-        warning(PROMPTS_WARNING)
-        prompts = PROMPTS_DEFAULT
+        info("No prompts configured. Add prompts to config_chat.json.")
+        return None
 
     updated_prompts = prompts.copy()
 
@@ -44,6 +46,5 @@ def render_prompts(chat_config: ChatConfig | BaseModel):  # -> dict[str, str]:
         new_value = render_prompt_editor(prompt_key, prompt_value, height=200)
         if new_value != prompt_value and new_value is not None:
             updated_prompts[prompt_key] = new_value
-            # updated = True
 
-    # return updated_prompts if updated else prompts
+    # Note: Changes are display-only, not persisted (YAGNI principle)

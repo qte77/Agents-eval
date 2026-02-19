@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-01-14
+updated: 2026-02-18
 category: architecture
-version: 3.2.0
+version: 3.7.0
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -40,7 +40,7 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 | ------ | ------ | ------- |
 | Tier 1 (Traditional) | VALIDATOR | Fast, objective text similarity baseline |
 | Tier 2 (LLM-Judge) | VALIDATOR | Semantic quality assessment |
-| Tier 3 (Graph) | PRIMARY | Coordination patterns from Opik traces |
+| Tier 3 (Graph) | PRIMARY | Coordination patterns from execution traces |
 
 **Validation Logic:**
 
@@ -50,7 +50,7 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 
 **Design Goals:**
 
-- **Graph (Tier 3)**: Rich analysis from Opik traces - PRIMARY innovation
+- **Graph (Tier 3)**: Rich analysis from execution traces - PRIMARY innovation
 - **Traditional (Tier 1)**: Keep SIMPLE - lightweight metrics only
 - **LLM-Judge (Tier 2)**: Keep SIMPLE - single LLM call, structured output
 
@@ -100,13 +100,13 @@ Evaluation Requirements Assessment
 
 The evaluation framework is built around large context window models capable of processing full PeerRead papers with automatic selection based on paper token count and intelligent fallback to document chunking for smaller context models.
 
-**Model Selection**: See [Large Language Models](landscape-agent-frameworks-infrastructure.md#2-large-language-models) for detailed model comparisons, context limits, and integration approaches for Claude 4 Opus/Sonnet, GPT-4 Turbo, and Gemini-1.5-Pro.
+**Model Selection**: Configurable per provider via `--chat-provider` and `--judge-provider`. See [Large Language Models](landscape-agent-frameworks-infrastructure.md#2-large-language-models) for model comparisons, context limits, and integration approaches.
 
 ### Sprint 1: PeerRead Evaluation Components
 
 #### Traditional Evaluation Metrics
 
-**Location**: `src/app/evals/traditional_metrics.py`
+**Location**: `src/app/judge/plugins/traditional.py`
 
 - **Output Similarity Assessment** (config: `output_similarity`):
   - Cosine similarity (primary metric from config)
@@ -123,7 +123,7 @@ The evaluation framework is built around large context window models capable of 
 
 #### LLM-as-a-Judge Framework
 
-**Location**: `src/app/evals/llm_evaluation_managers.py`
+**Location**: `src/app/judge/plugins/llm_judge.py`
 
 - **Planning Rationality Assessment** (config: `planning_rationality`):
   - Decision-making process quality evaluation
@@ -140,16 +140,16 @@ The evaluation framework is built around large context window models capable of 
 
 #### Graph-Based Complexity Analysis
 
-**Location**: `src/app/evals/graph_analysis.py`
+**Location**: `src/app/judge/plugins/graph_metrics.py`
 
 **Approach**: Post-execution behavioral analysis where agents autonomously decide tool use during execution, then observability logs are processed to construct behavioral graphs for retrospective evaluation.
 
 ##### Integration Workflow
 
 1. **Agent Execution** → PydanticAI agents (Manager/Researcher/Analyst/Synthesizer) autonomously decide tool use and coordination strategies during PeerRead paper processing
-2. **Observability Logging** → Opik captures comprehensive execution traces, tool usage patterns, and agent interactions in real-time
-3. **Graph Construction** → spaCy + NetworkX and Google LangExtract process trace logs to build behavioral graphs showing coordination patterns and decision flows
-4. **Analysis** → NetworkX and NetworKit analyze coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
+2. **Observability Logging** → Logfire auto-instrumentation captures comprehensive execution traces, tool usage patterns, and agent interactions (viewable via Arize Phoenix)
+3. **Graph Construction** → NetworkX processes trace data to build behavioral graphs showing coordination patterns and decision flows
+4. **Analysis** → NetworkX analyzes coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
 
 **Tool Selection**: See [Graph Analysis & Network Tools](landscape-evaluation-data-resources.md#6-graph-analysis--network-tools), [Post-Execution Graph Construction Tools](landscape-evaluation-data-resources.md#8-post-execution-graph-construction-tools), [Observability & Monitoring Platforms](landscape-agent-frameworks-infrastructure.md#4-observability--monitoring), and [Technical Analysis: Tracing Methods](landscape/trace_observe_methods.md) for detailed feasibility assessments and integration approaches.
 
@@ -179,11 +179,11 @@ The evaluation framework is built around large context window models capable of 
 
 #### Composite Scoring System
 
-**Location**: `src/app/evals/composite_scorer.py`
+**Location**: `src/app/judge/composite_scorer.py`
 
 **Formula**: `Agent Score = Weighted Sum of Six Core Metrics`
 
-**Configuration-Based Metrics** (from `config_eval.json`):
+**Configuration-Based Metrics** (from `JudgeSettings` via pydantic-settings):
 
 - `time_taken`: 0.167 (16.7% - execution time efficiency)
 - `task_success`: 0.167 (16.7% - review completion and accuracy)
@@ -199,15 +199,160 @@ The evaluation framework is built around large context window models capable of 
 - Recommendation scoring with config weights and confidence threshold (0.8)
 - Performance trend analysis with configurable evaluation parameters
 
+**Adaptive Weight Redistribution** (Sprint 5):
+
+- **Single-Agent Mode Detection**: Automatically detects single-agent runs from `GraphTraceData` (0-1 unique agent IDs, empty `coordination_events`)
+- **Weight Redistribution**: When single-agent mode is detected, the `coordination_quality` metric (0.167 weight) is excluded and its weight is redistributed equally across the remaining 5 metrics (0.20 each)
+- **Transparency**: `CompositeResult` includes `single_agent_mode: bool` flag to indicate when redistribution occurred
+- **Compound Redistribution**: When both Tier 2 is skipped (no valid provider) AND single-agent mode is detected, weights are redistributed across the remaining available metrics to always sum to ~1.0
+
+## Benchmarking Infrastructure (Sprint 6)
+
+The benchmarking pipeline enables systematic comparison of MAS compositions with statistical rigor.
+
+### Architecture
+
+```text
+SweepConfig → SweepRunner → (compositions × papers × repetitions) → SweepAnalysis → output files
+```
+
+- **`SweepConfig`** (`src/app/benchmark/sweep_config.py`): Declares sweep parameters — agent compositions (2³ = 8 default), paper IDs, repetitions per combination, provider settings
+- **`SweepRunner`** (`src/app/benchmark/sweep_runner.py`): Executes the sweep matrix, calls `evaluation_pipeline.evaluate_comprehensive()` for each cell, aggregates raw results
+- **`SweepAnalysis`** / `SweepAnalyzer` (`src/app/benchmark/sweep_analysis.py`): Computes mean, stddev, min, max per metric per composition across repetitions
+
+### CC Headless Integration
+
+An optional CC path feeds real Claude Code agent artifacts into the same evaluation pipeline:
+
+```text
+Solo:  claude -p "prompt" --output-format json        → CCResult → CCTraceAdapter → GraphTraceData → evaluation
+Teams: claude -p "prompt" --output-format stream-json  → Popen JSONL stream → CCResult → CCTraceAdapter → GraphTraceData → evaluation
+```
+
+`check_cc_available()` (`src/app/engines/cc_engine.py`) wraps `shutil.which("claude")` for fail-fast validation. Teams mode sets `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` and parses `init`, `result`, `TeamCreate`, and `Task` events from the live JSONL stream via `Popen`, since CC teams artifacts (`~/.claude/teams/`, `~/.claude/tasks/`) are ephemeral in print mode (see AGENT_LEARNINGS.md).
+
+### Output Files
+
+- `results.json` — raw per-evaluation scores (composition × paper × repetition)
+- `summary.md` — Markdown table with mean/stddev per metric per composition
+
+## Report Generation (Sprint 8)
+
+Post-evaluation report generation synthesizes tier scores into actionable Markdown reports.
+
+### Architecture
+
+```text
+CompositeResult → SuggestionEngine → [Suggestion, ...] → ReportGenerator → Markdown report
+```
+
+- **`SuggestionEngine`** (`src/app/reports/suggestion_engine.py`): Iterates `metric_scores`, compares each against tier thresholds from `JudgeSettings` (accept=0.8, weak_accept=0.6, weak_reject=0.4). Assigns severity (critical/warning/info). Optional LLM enrichment via judge provider with rule-based fallback.
+- **`ReportGenerator`** (`src/app/reports/report_generator.py`): Produces structured Markdown: executive summary, per-tier breakdown, weakness identification, actionable suggestions from the engine.
+- **`Suggestion`** (`src/app/data_models/report_models.py`): Pydantic model with `severity`, `metric_name`, `tier`, `score`, `threshold`, `message`.
+
+### Entry Points
+
+- **CLI**: `--generate-report` flag on `run_cli.py` (requires evaluation, incompatible with `--skip-eval`). Output: `{output_dir}/reports/{timestamp}.md`
+- **GUI**: "Generate Report" button on App page, enabled after evaluation completes. Inline Markdown display with download option.
+
+## Security Framework (Sprint 6)
+
+The security hardening sprint applied the OWASP MAESTRO 7-layer model (Model, Agent Logic, Integration, Monitoring, Execution, Orchestration) to the evaluation framework.
+
+### Key Mitigations
+
+- **SSRF prevention**: URL validation with domain allowlisting (`src/app/utils/url_validation.py`). Allowlist derived from actual `validate_url()` call sites, not conceptual dependencies.
+- **Input sanitization**: Prompt injection resistance via length limits and XML delimiter wrapping before LLM calls
+- **Log scrubbing**: Sensitive data filtering (API keys, tokens, passwords) before trace export (`src/app/utils/log_scrubbing.py`)
+- **Input size limits**: DoS prevention through maximum payload sizes at system boundaries
+
+### CVE Status
+
+See [security-advisories.md](security-advisories.md) for all known advisories and their mitigation status. All Sprint 6 CVEs were either already mitigated by existing version pins or patched during this sprint.
+
+### References
+
+- Security tests: `tests/security/` (SSRF, prompt injection, sensitive data filtering)
+- MAESTRO review findings: `docs/reviews/sprint5-code-review.md`
+- Design principles: [best-practices/mas-security.md](best-practices/mas-security.md)
+
 ## Implementation Status
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 1 Complete)
+### Current Implementation (Sprint 8 - Planned)
 
-The three-tiered evaluation framework is fully operational with the following components:
+**Sprint 8 Scope** (Draft — 8 features, 14 stories):
 
-**✅ Tier 1 - Traditional Metrics** (`src/app/evals/traditional_metrics.py`):
+- **Tool Fix**: Replace `read_paper_pdf_tool` with `get_paper_content(paper_id)` using parsed JSON fallback chain (fixes sweep-crashing `FileNotFoundError`)
+- **API Key Cleanup**: Remove `"not-required"` sentinel from `create_llm_model()` (5 call sites); fix judge auto-mode model inheritance (`chat_model` parameter)
+- **CC Engine Consolidation**: New `src/app/engines/cc_engine.py` module with `run_cc_solo()` + `run_cc_teams()`, replacing inline subprocess code and shell scripts
+- **Graph Alignment**: Fix `node_type` → `type` attribute mismatch between `graph_analysis.py` and `agent_graph.py`
+- **Dead Code Removal**: Remove `pydantic_ai_stream` parameter (upstream still unsupported) from 8 call sites
+- **Report Generation**: New `src/app/reports/` module — `report_generator.py` (CLI `--generate-report` + GUI button) and `suggestion_engine.py` (rule-based + optional LLM suggestions)
+- **Judge Settings UX**: Replace 4 free-text inputs with `selectbox` dropdowns populated from `PROVIDER_REGISTRY` and `config_chat.json`
+- **GUI A11y/UX**: WCAG fixes (contrast, ARIA, radio labels), environment-aware URL resolution, run ID display, baseline path validation
+
+**Sprint 7 Key Deliverables** (Delivered):
+
+- Unified provider configuration (`--chat-provider`, `--judge-provider`, `--judge-model`)
+- `--engine=mas|cc` flag for CLI and sweep (replaces `--cc-baseline`)
+- Sweep rate-limit resilience (retry with backoff, incremental result persistence)
+- GUI: real-time debug log streaming, paper selection dropdown, editable settings
+- `_handle_model_http_error` fix: re-raise instead of `SystemExit(1)` on HTTP 429
+
+**Sprint 6 Key Deliverables** (Delivered):
+
+- **Benchmarking Infrastructure**:
+  - MAS composition sweep (`SweepRunner`): 8 agent compositions × N papers × N repetitions
+  - Statistical analysis (`SweepAnalyzer`): mean, stddev, min, max per composition
+  - Sweep CLI (`run_sweep.py`) with `--provider`, `--paper-numbers`, `--repetitions`, `--all-compositions`
+  - Results output: `results.json` (raw) + `summary.md` (Markdown table)
+
+- **CC Baseline Completion**:
+  - `CCTraceAdapter` for parsing Claude Code artifacts from headless invocation
+  - Artifact collection from `~/.claude/teams/` and `~/.claude/tasks/`
+
+- **Security Hardening**:
+  - SSRF prevention: URL validation with domain allowlisting
+  - Prompt injection resistance: length limits, XML delimiter wrapping
+  - Sensitive data filtering in logs and traces (API keys, tokens)
+  - Input size limits for DoS prevention
+
+- **Test Quality**:
+  - Security tests in `tests/security/` (SSRF, prompt injection, data scrubbing)
+  - Test filesystem isolation via `tmp_path`
+
+**Sprint 5 Key Improvements** (Delivered):
+
+- **Runtime Fixes**:
+  - Tier 2 judge provider fallback with automatic API key validation
+  - Configurable agent token limits via CLI (`--token-limit`), GUI, and env var
+  - PeerRead dataset validation resilience for optional fields (IMPACT, SUBSTANCE)
+  - OTLP endpoint double-path bug fix for Phoenix trace export
+
+- **GUI Enhancements**:
+  - Background query execution with tab navigation resilience
+  - Debug log panel in App tab with real-time capture
+  - Evaluation Results and Agent Graph tabs wired to live data
+  - Editable settings page with session-scoped persistence
+
+- **Architecture Improvements**:
+  - Single-agent composite score weight redistribution (adaptive scoring)
+  - PeerRead tools moved from manager to researcher agent (separation of concerns)
+  - Tier 3 tool accuracy accumulation bug fixes
+  - Dead code removal (duplicate AppEnv class, commented agentops code)
+
+- **Code Quality**:
+  - OWASP MAESTRO 7-layer security review (Model, Agent Logic, Integration, Monitoring, Execution, Environment, Orchestration)
+  - Test suite refactoring to remove implementation-detail tests (595 → 564 tests, no behavioral coverage loss)
+  - Debug logging for empty API keys in provider resolution
+
+### Previous Implementation (Sprint 4 Complete)
+
+The three-tiered evaluation framework is fully operational with plugin architecture:
+
+**✅ Tier 1 - Traditional Metrics** (`src/app/judge/plugins/traditional.py`):
 
 - Cosine similarity using TF-IDF vectorization
 - Jaccard similarity with enhanced textdistance support
@@ -215,40 +360,102 @@ The three-tiered evaluation framework is fully operational with the following co
 - Execution time measurement and normalization
 - Task success assessment with configurable thresholds
 
-**✅ Tier 2 - LLM-as-a-Judge** (`src/app/evals/llm_evaluation_managers.py`):
+**✅ Tier 2 - LLM-as-a-Judge** (`src/app/judge/plugins/llm_judge.py`):
 
-- Quality assessment using gpt-4o-mini model
+- Quality assessment using configurable judge provider (default: auto-inherits chat provider)
 - Planning rationality evaluation
 - Technical accuracy scoring
 - Cost-budgeted evaluation with retry mechanisms
+- **Provider Fallback Chain** (Sprint 5): Automatically selects available LLM provider by validating API key availability before attempting calls
+  - Primary provider validation → Fallback provider if primary unavailable → Skip Tier 2 entirely if both unavailable
+  - `tier2_provider=auto` mode inherits the agent system's active `chat_provider` for consistency
+  - When Tier 2 is skipped, its 3 metrics (`technical_accuracy`, `constructiveness`, `planning_rationality`) are excluded from composite scoring and weights redistributed to Tier 1 and Tier 3
+  - Prevents 401 authentication errors and neutral 0.5 fallback scores when providers are unavailable
 
-**✅ Tier 3 - Graph Analysis (PRIMARY)** (`src/app/evals/graph_analysis.py`):
+**✅ Tier 3 - Graph Analysis (PRIMARY)** (`src/app/judge/plugins/graph_metrics.py`):
 
-- NetworkX-based behavioral pattern analysis **from Opik traces**
+- NetworkX-based behavioral pattern analysis **from execution traces**
 - Agent coordination quality measurement
 - Tool usage effectiveness evaluation
 - Performance bottleneck detection
 - **Primary differentiator** - all other tiers validate this
 
-**✅ Composite Scoring** (`src/app/evals/composite_scorer.py`):
+**✅ Composite Scoring** (`src/app/judge/composite_scorer.py`):
 
 - Six-metric weighted formula implementation
 - Recommendation mapping (accept/weak_accept/weak_reject/reject)
-- Configuration-driven weights from `config_eval.json`
+- Configuration-driven weights from `JudgeSettings`
 
-**✅ Evaluation Pipeline** (`src/app/evals/evaluation_pipeline.py`):
+**✅ Evaluation Pipeline** (`src/app/judge/agent.py`):
 
 - End-to-end evaluation orchestration
 - Performance monitoring and error handling
 - Fallback strategies and timeout management
 
+### Plugin Architecture (Sprint 3 - Delivered)
+
+**Design Principles**: See [best-practices/mas-design-principles.md](best-practices/mas-design-principles.md) for 12-Factor Agents, Anthropic Harnesses, and PydanticAI integration patterns.
+
+**Security Framework**: See [best-practices/mas-security.md](best-practices/mas-security.md) for OWASP MAESTRO 7-layer security model.
+
+#### EvaluatorPlugin Interface
+
+All evaluation engines (Traditional, LLM-Judge, Graph) implement the typed `EvaluatorPlugin` abstract base class:
+
+```python
+class EvaluatorPlugin(ABC):
+    @property
+    @abstractmethod
+    def name(self) -> str: ...
+
+    @property
+    @abstractmethod
+    def tier(self) -> int: ...
+
+    @abstractmethod
+    def evaluate(self, context: BaseModel) -> BaseModel: ...
+
+    @abstractmethod
+    def get_context_for_next_tier(self, result: BaseModel) -> BaseModel: ...
+```
+
+#### PluginRegistry
+
+Central registry for plugin discovery and tier-ordered execution. Plugins register at import time and are executed in tier order (1 → 2 → 3) with typed context passing between tiers.
+
+#### JudgeSettings Configuration
+
+Replaces `EvaluationConfig` JSON with `pydantic-settings` BaseSettings class using `JUDGE_` environment variable prefix:
+
+```python
+class JudgeSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="JUDGE_")
+
+    tier1_timeout: int = 30
+    tier2_timeout: int = 60
+    tier3_timeout: int = 45
+    tier_weights: dict[int, float] = {1: 0.33, 2: 0.33, 3: 0.34}
+    # ... other settings
+```
+
+JSON fallback available during migration period via `json_file` parameter.
+
+#### Typed Context Passing
+
+All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_context_for_next_tier()` method returns typed context consumed by the next tier's `evaluate()` method.
+
 ### Development Timeline
 
-**Foundation Phase**: Sprint 1 (Three-tiered Evaluation) - ✅ Complete (Aug 23-28, 2025)
-**Refactoring Phase**: Sprint 2 (SoC/SRP Refactoring) - 📋 Not Started (Next Priority)
-**Advanced Features Phase**: Sprint 3 - 📋 Blocked (awaiting Sprint 2 completion)
+- **Sprint 1**: Three-tiered evaluation framework -- Delivered
+- **Sprint 2**: Eval wiring, trace capture, Logfire+Phoenix, Streamlit dashboard -- Delivered
+- **Sprint 3**: Plugin architecture, GUI wiring, test alignment, optional weave, trace quality -- Delivered
+- **Sprint 4**: Operational resilience, Claude Code baseline comparison (solo + teams) -- Delivered
+- **Sprint 5**: Runtime fixes, GUI enhancements, architecture improvements, code quality review -- Delivered
+- **Sprint 6**: Benchmarking infrastructure, CC baseline completion, security hardening, test quality -- Delivered
+- **Sprint 7**: Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine -- Delivered
+- **Sprint 8**: Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, report generation, GUI a11y/UX -- Planned
 
-For detailed sprint information, implementation status, and development dependencies, see [roadmap.md](roadmap.md).
+For sprint details, see [roadmap.md](roadmap.md).
 
 ### New Metrics for Implementation
 
@@ -298,6 +505,7 @@ The system relies on several key technology categories for implementation and ev
   - Checks the accuracy of assumptions, facts, and conclusions.
 - **Tools**:
   - [DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool)
+  - `get_paper_content(paper_id)` — retrieves full paper text from local PeerRead dataset via parsed JSON → raw PDF → abstract fallback chain (Sprint 8, replaces `read_paper_pdf_tool`)
 - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
 
 ### Analyst Agent
@@ -317,7 +525,7 @@ The system relies on several key technology categories for implementation and ev
   - Maintains the original facts, conclusions, and sources.
 - **Location**: [src/app/agents/agent_system.py](https://github.com/qte77/Agents-eval/blob/main/src/app/agents/agent_system.py)
 
-### Critic Agent (Planned - Sprint 3)
+### Critic Agent (Proposed - Unscheduled)
 
 - **Description**: Dedicated skeptical reviewer that participates in all agent interactions to reduce hallucinations and compounding errors. Based on Stanford Virtual Lab research showing critic agents significantly improve output quality.
 - **Responsibilities**:
@@ -338,21 +546,21 @@ Based on Stanford's Agents4Science conference (300+ AI-generated papers analyzed
 - **Metric**: `reference_accuracy_score`
 - **Finding**: 56% of AI-generated papers contained ≥1 hallucinated reference
 - **Implementation**: Automated web search verification of cited sources
-- **Location**: Planned for `src/app/evals/citation_validator.py`
+- **Location**: Planned for `src/app/judge/citation_validator.py`
 
 ### Priority 2: Reviewer Calibration
 
 - **Metric**: `reviewer_calibration_score`, `reviewer_consistency_score`
 - **Finding**: Claude most balanced (closest to human experts), GPT most conservative, Gemini most sycophantic
 - **Implementation**: Tune LLM-as-Judge using PeerRead accepted/rejected baseline
-- **Location**: Enhancement to `src/app/evals/llm_evaluation_managers.py`
+- **Location**: Enhancement to `src/app/judge/plugins/llm_judge.py`
 
 ### Priority 3: Social Dynamics Tracking
 
 - **Metrics**: `agent_dominance_score`, `coordination_balance`
 - **Finding**: Agent speaking order affects outcome quality
-- **Implementation**: Extract from Opik traces - agent invocation order, message frequency/length
-- **Location**: Enhancement to `src/app/evals/graph_analysis.py`
+- **Implementation**: Extract from execution traces - agent invocation order, message frequency/length
+- **Location**: Enhancement to `src/app/judge/plugins/graph_metrics.py`
 
 ## Tools Available
 
@@ -410,6 +618,64 @@ Each architectural decision includes:
 - **Alternatives**: Real-time graph construction, embedded monitoring, manual analysis
 - **Rationale**: Avoids performance overhead, enables comprehensive analysis, preserves agent autonomy
 - **Status**: Active
+
+#### ADR-005: Plugin-Based Evaluation Architecture
+
+- **Date**: 2026-02-09
+- **Decision**: Wrap existing evaluation engines in `EvaluatorPlugin` interface with `PluginRegistry` for tier-ordered execution
+- **Context**: Need extensibility without modifying core pipeline code; enable new metrics without breaking existing functionality
+- **Alternatives**: Direct engine refactoring, new parallel pipeline, microservices architecture
+- **Rationale**: Pure adapter pattern preserves existing engines; 12-Factor #4/#10/#12 (backing services, dev/prod parity, stateless processes); MAESTRO Agent Logic Layer typed interfaces
+- **Status**: Active
+
+#### ADR-006: pydantic-settings Migration
+
+- **Date**: 2026-02-09
+- **Decision**: Replace JSON config files with `BaseSettings` classes (`JudgeSettings`, `CommonSettings`) using environment variables
+- **Context**: Need 12-Factor #3 (config in env) compliance; eliminate JSON parsing overhead; enable per-environment configuration
+- **Alternatives**: Keep JSON, YAML config, TOML config, mixed approach
+- **Rationale**: Type-safe config with Pydantic validation; environment variable support; JSON fallback during transition; aligns with 12-Factor app principles
+- **Status**: Active
+
+#### ADR-007: Optional Container-Based Deployment
+
+- **Date**: 2026-02-09
+- **Decision**: Support both local (default) and containerized (optional) deployment modes for MAS orchestrator and judge components
+- **Context**: Future need for distributed evaluation, parallel judge execution, production isolation, and scalable infrastructure; current single-machine execution sufficient but architecture should enable growth
+- **Alternatives**:
+  - Local-only - simple but doesn't scale
+  - Container-only - production-ready but development friction
+  - Hybrid (chosen) - local default, containers optional
+  - Microservices - over-engineered for current scale
+- **Rationale**:
+  - Local execution remains default (zero friction for development)
+  - Containers optional (opt-in for production/CI/CD scenarios)
+  - API-first communication (FastAPI Feature 10 enables inter-container communication)
+  - Stateless judge design (plugin architecture naturally supports containerization)
+  - 12-Factor #6 compliance (execute as stateless processes)
+  - Parallel evaluation via multiple judge replicas per tier
+- **Implementation**:
+  - Phase 1: Document pattern only, no implementation
+  - Phase 2: Docker images, compose files, deployment docs
+  - Prerequisite: FastAPI API stability
+- **Status**: Proposed (deferred, unscheduled)
+
+#### ADR-008: CC Baseline Engine — subprocess vs SDK
+
+- **Date**: 2026-02-17
+- **Decision**: Keep `subprocess.run([claude, "-p"])` for Sprint 7 STORY-013; evaluate SDK migration for Sprint 8
+- **Context**: `--engine=cc` invokes Claude Code headless to compare CC's agentic approach against PydanticAI MAS. Three implementation options exist.
+- **Alternatives**:
+  - `subprocess.run([claude, "-p"])` (Sprint 7) — full CC tool use, external CLI dependency, correct agentic semantics
+  - `anthropic` SDK (`messages.create`) — pure Python, no CLI, but **no tool use** — reduces CC to a raw LLM call, not a valid agentic baseline
+  - `claude-agent-sdk` — wraps CLI in Python package, full CC tools, bundles CLI (~100MB), proprietary license
+- **Rationale**:
+  - The CC baseline measures **orchestration approach** (CC agents vs PydanticAI agents), not model quality
+  - CC solo used 19 tool calls (Task, Bash, Glob, Grep, Read) — removing tools changes what's being measured
+  - `subprocess.run` is the simplest correct approach (KISS); `shutil.which("claude")` provides fail-fast validation
+  - `anthropic` SDK is valid as a **separate** `--engine=claude-api` mode for model-vs-model comparison, not as a CC replacement
+  - `claude-agent-sdk` is a valid Sprint 8 refinement if subprocess proves brittle
+- **Status**: Active (subprocess). Sprint 8 PRD confirmed: SDK migration removed from scope, subprocess retained per this ADR
 
 ## Agentic System Architecture
 

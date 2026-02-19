@@ -1,0 +1,165 @@
+{
+  "project": "Agents-eval",
+  "description": "Settings migration, eval wiring, trace capture, graph-vs-text comparison, Logfire+Phoenix tracing, Streamlit dashboard",
+  "source": "docs/PRD-Sprint2.md",
+  "generated": "2026-02-11T00:00:00Z",
+  "stories": [
+    {
+      "id": "STORY-001",
+      "title": "Migrate EvaluationConfig to JudgeSettings pydantic-settings",
+      "description": "Replace JSON-based EvaluationConfig with JudgeSettings(BaseSettings) using JUDGE_ env prefix. Defaults in code, overridable via .env. Reuse CommonSettings pattern.",
+      "acceptance": [
+        "JudgeSettings(BaseSettings) with JUDGE_ env prefix replaces EvaluationConfig",
+        "Typed defaults in code: tier weights, timeouts, model selection, enabled tiers",
+        "EvaluationPipeline uses JudgeSettings instead of loading config_eval.json",
+        "Existing evaluation tests pass with settings-based config",
+        "Timeout fields use bounded validators (gt=0, le=300)",
+        "Time tracking pattern standardized across all tiers",
+        "Existing test fixtures updated: pipeline uses JudgeSettings, JSON fixtures removed",
+        "make validate passes"
+      ],
+      "files": [
+        "src/app/evals/settings.py",
+        "src/app/evals/evaluation_config.py",
+        "src/app/evals/evaluation_pipeline.py",
+        "src/app/evals/composite_scorer.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-12Z09:30:00",
+      "content_hash": "",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-002",
+      "title": "Wire evaluate_comprehensive after run_manager",
+      "description": "Connect run_manager() output to EvaluationPipeline.evaluate_comprehensive() in app.py. Add --skip-eval CLI flag. Pipeline uses JudgeSettings from STORY-001.",
+      "acceptance": [
+        "After run_manager() completes, EvaluationPipeline runs automatically",
+        "--skip-eval CLI flag disables evaluation",
+        "Graceful skip when no ground-truth reviews available",
+        "make validate passes"
+      ],
+      "files": [
+        "src/app/app.py",
+        "src/run_cli.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-15T01:41:53Z",
+      "content_hash": "",
+      "depends_on": [
+        "STORY-001"
+      ]
+    },
+    {
+      "id": "STORY-003",
+      "title": "Capture GraphTraceData during MAS execution",
+      "description": "Wire TraceCollector into agent orchestration so GraphTraceData is populated from real agent runs.",
+      "acceptance": [
+        "Agent-to-agent delegations logged via trace_collector.log_agent_interaction()",
+        "Tool calls logged via trace_collector.log_tool_call()",
+        "Timing data captured for each delegation step",
+        "GraphTraceData passed to evaluate_comprehensive() with real data",
+        "GraphTraceData constructed via model_validate() instead of manual .get() extraction",
+        "make validate passes"
+      ],
+      "files": [
+        "src/app/agents/agent_system.py",
+        "src/app/agents/orchestration.py",
+        "src/app/app.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-15T01:49:54Z",
+      "content_hash": "",
+      "depends_on": [
+        "STORY-002"
+      ]
+    },
+    {
+      "id": "STORY-004",
+      "title": "Add graph vs text metric comparison logging",
+      "description": "Log comparative summary showing Tier 1 (text) vs Tier 3 (graph) scores after evaluation completes.",
+      "acceptance": [
+        "Log shows Tier 1 overall score vs Tier 3 overall score",
+        "Individual graph metrics displayed (path_convergence, tool_selection_accuracy, etc.)",
+        "Individual text metrics displayed (cosine_score, jaccard_score, semantic_score)",
+        "Composite score shows per-tier contribution",
+        "make validate passes"
+      ],
+      "files": [
+        "src/app/app.py",
+        "src/app/evals/evaluation_pipeline.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-15T01:57:39Z",
+      "content_hash": "",
+      "depends_on": [
+        "STORY-003"
+      ]
+    },
+    {
+      "id": "STORY-005",
+      "title": "Migrate Opik to Logfire + Phoenix local tracing",
+      "description": "Replace Opik tracing (11 Docker containers) with Logfire SDK + Arize Phoenix. Auto-instrument PydanticAI agents via logfire.instrument_pydantic_ai(), use Phoenix as local trace viewer via pip install. Remove OpikInstrumentationManager, @track decorators, and get_opik_decorator() wrappers.",
+      "acceptance": [
+        "pyproject.toml replaces opik with arize-phoenix and openinference-instrumentation-pydantic-ai",
+        "JudgeSettings replaces opik_* fields with logfire_enabled, logfire_send_to_cloud, phoenix_endpoint, logfire_service_name",
+        "LogfireConfig replaces OpikConfig in load_configs.py",
+        "logfire_instrumentation.py replaces opik_instrumentation.py with auto-instrumentation",
+        "agent_system.py removes manual @opik_decorator wrappers from delegation tools",
+        "evaluation_pipeline.py removes Opik import block and _apply_opik_decorator/_record_opik_metadata methods",
+        "CommonSettings.enable_opik renamed to enable_logfire",
+        "Makefile adds start_phoenix, stop_phoenix, status_phoenix targets",
+        "make validate passes"
+      ],
+      "files": [
+        "pyproject.toml",
+        "src/app/evals/settings.py",
+        "src/app/utils/load_configs.py",
+        "src/app/agents/opik_instrumentation.py",
+        "src/app/agents/logfire_instrumentation.py",
+        "src/app/agents/agent_system.py",
+        "src/app/evals/evaluation_pipeline.py",
+        "src/app/common/settings.py",
+        ".env.example",
+        "Makefile",
+        "tests/evals/test_judge_settings.py",
+        "tests/common/test_common_settings.py"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-15T09:19:43Z",
+      "content_hash": "",
+      "depends_on": [
+        "STORY-001"
+      ]
+    },
+    {
+      "id": "STORY-006",
+      "title": "Streamlit evaluation dashboard and agent graph visualization",
+      "description": "Add Evaluation Results page (Tier 1/2/3 scores, graph vs text comparison) and Agent Graph page (Pyvis NetworkX visualization) to Streamlit GUI. Cross-link Phoenix for deep trace inspection.",
+      "acceptance": [
+        "Evaluation Results page displays Tier 1/2/3 scores from CompositeResult",
+        "Bar chart compares graph metrics vs text metrics",
+        "Agent Graph page renders export_trace_to_networkx() output as interactive Pyvis graph",
+        "Agent and tool nodes visually distinguished",
+        "Sidebar includes Phoenix status link",
+        "Pages render gracefully with empty data",
+        "pyvis added to gui dependency group",
+        "make validate passes"
+      ],
+      "files": [
+        "src/gui/pages/evaluation.py",
+        "src/gui/pages/agent_graph.py",
+        "src/gui/config/config.py",
+        "src/gui/components/sidebar.py",
+        "src/run_gui.py",
+        "pyproject.toml"
+      ],
+      "passes": true,
+      "completed_at": "2026-02-15T10:00:44Z",
+      "content_hash": "",
+      "depends_on": [
+        "STORY-005"
+      ]
+    }
+  ]
+}

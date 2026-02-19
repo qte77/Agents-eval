@@ -11,17 +11,17 @@ tags:
   - opentelemetry
   - multi-agent-systems
 created: 2025-08-24
-updated: 2026-01-13
-version: 1.1.0
+updated: 2026-02-15
+version: 1.2.0
 ---
 
 ## Executive Summary
 
-This analysis examines the specific technical mechanisms used by 15 observability platforms (updated January 2026) to trace and observe AI agent behavior. The research reveals five primary technical patterns plus emerging multi-agent observability capabilities: decorator-based instrumentation, proxy-based interception, OpenTelemetry standard implementation, native framework integration, specialized statistical approaches, and distributed multi-agent coordination tracking.
+This analysis examines the specific technical mechanisms used by 17 observability platforms (updated February 2026) to trace and observe AI agent behavior. The research reveals five primary technical patterns plus emerging multi-agent observability capabilities: decorator-based instrumentation, proxy-based interception, OpenTelemetry standard implementation, native framework integration, specialized statistical approaches, and distributed multi-agent coordination tracking.
 
 **2026 Update**: The landscape has matured significantly with 89% of organizations implementing agent observability. OpenTelemetry GenAI semantic conventions are now finalized for agent applications, with framework-specific conventions in active development. New standards enable consistent tracing across IBM Bee Stack, CrewAI, AutoGen, LangGraph, and other major frameworks.
 
-**Key Developments**: Four new tools added (Braintrust, Maxim AI, AgentOps, Datadog LLM Observability), six existing tools received major feature updates (Langfuse v2 APIs, MLflow TypeScript support, Arize Phoenix continuous releases, enhanced multi-agent observability across platforms).
+**Key Developments**: Six new tools added (Braintrust, Maxim AI, AgentOps, Datadog LLM Observability, Pydantic Logfire, otel-tui), six existing tools received major feature updates (Langfuse v2 APIs, MLflow TypeScript support, Arize Phoenix continuous releases, enhanced multi-agent observability across platforms).
 
 **See**: [landscape.md](landscape.md)
 
@@ -36,7 +36,7 @@ This analysis examines the specific technical mechanisms used by 15 observabilit
 
 ## Technical Insights Documented
 
-- **15 tools analyzed** across 5 technical patterns (updated January 2026)
+- **17 tools analyzed** across 5 technical patterns (updated February 2026)
 - **Specific implementation mechanisms** rather than generic feature descriptions
 - **Performance characteristics** (latency, scalability, storage backends) with updated benchmarks
 - **Export capabilities** for offline analysis and graph construction
@@ -81,15 +81,16 @@ The OpenTelemetry community has established standardized semantic conventions fo
 
 ## Technical Patterns Overview
 
-### Pattern Distribution (Updated January 2026)
+### Pattern Distribution (Updated February 2026)
 
-- **Decorator-Based Instrumentation**: 7 tools (47%) - AgentNeo, Comet Opik, MLflow, Langfuse, W&B Weave, Braintrust, AgentOps
-- **OpenTelemetry Standard**: 5 tools (33%) - Arize Phoenix, LangWatch, Uptrace, Langtrace, Datadog LLM Observability
-- **Proxy-Based Interception**: 1 tool (7%) - Helicone
-- **Native Framework Integration**: 1 tool (7%) - LangSmith
-- **Specialized Approaches**: 3 tools (20%) - Neptune.ai, Evidently AI, Maxim AI
+- **Decorator-Based Instrumentation**: 7 tools (41%) - AgentNeo, Comet Opik, MLflow, Langfuse, W&B Weave, Braintrust, AgentOps
+- **OpenTelemetry Standard**: 5 tools (29%) - Arize Phoenix, LangWatch, Uptrace, Langtrace, Datadog LLM Observability
+- **Proxy-Based Interception**: 1 tool (6%) - Helicone
+- **Native Framework Integration**: 2 tools (12%) - LangSmith, Pydantic Logfire
+- **Specialized Approaches**: 3 tools (18%) - Neptune.ai, Evidently AI, Maxim AI
+- **Lightweight Development Tools**: 1 tool (6%) - otel-tui
 
-**Note**: Percentages reflect the updated landscape of 15 analyzed tools (increased from 11 in the original 2025 analysis). Decorator-based instrumentation remains the dominant pattern, while OpenTelemetry adoption continues growing as the vendor-neutral standard.
+**Note**: Percentages reflect the updated landscape of 17 analyzed tools. Decorator-based instrumentation remains the dominant pattern, while OpenTelemetry adoption continues growing as the vendor-neutral standard. Pydantic Logfire is notable as the first-party observability solution for PydanticAI, the framework used by this project.
 
 ## Detailed Technical Analysis
 
@@ -374,6 +375,39 @@ This pattern provides deep integration with specific frameworks or ecosystems.
 - [LangSmith Data Export Documentation](https://docs.smith.langchain.com/observability/how_to_guides/data_export)
 - [LangSmith Performance Comparison](https://www.akira.ai/blog/langsmith-and-agentops-with-ai-agents)
 
+#### Pydantic Logfire
+
+**Technical Mechanism**: First-party OpenTelemetry-based observability platform built by the Pydantic team
+
+- `logfire.configure()` + `logfire.instrument_pydantic_ai()` for zero-config instrumentation
+- `Agent.instrument_all()` for global PydanticAI agent instrumentation
+- `InstrumentationSettings(tracer_provider=..., logger_provider=...)` for custom OTel providers
+- Follows OpenTelemetry Semantic Conventions for GenAI (v1.37.0)
+- Can route traces to any OTel backend via `logfire.configure(send_to_logfire=False)`
+
+**PydanticAI Integration**: Native, first-party. Three instrumentation paths:
+
+1. Logfire cloud: `logfire.configure()` + `logfire.instrument_pydantic_ai()`
+2. Raw OpenTelemetry: `Agent.instrument_all()` with custom `TracerProvider`
+3. Hybrid: Logfire SDK as OTel configurator pointing to alternative backend
+
+**MAS Tracing**: Agent runs with parent-child span hierarchy, tool calls (inputs, outputs, duration), structured outputs, system prompts. Custom spans via `logfire.span()` for agent-to-agent communication.
+
+**Deployment**:
+
+- Cloud (free tier): `pip install logfire` — zero infrastructure
+- Self-hosted: Enterprise plan required — Kubernetes + Helm + PostgreSQL + Object Storage + Identity Provider (heavier than Opik)
+- Local development: Cloud free tier or route to local OTel backend (Phoenix, otel-tui)
+
+**License**: Proprietary SaaS (cloud), Enterprise license (self-hosted)
+
+**Primary Sources**:
+
+- [Pydantic Logfire Documentation](https://logfire.pydantic.dev/)
+- [PydanticAI Logfire Integration](https://ai.pydantic.dev/logfire/)
+- [Logfire Self-Hosted Overview](https://logfire.pydantic.dev/docs/reference/self-hosted/overview/)
+- [Logfire Self-Hosting Announcement](https://pydantic.dev/articles/logfire-self-hosting-announcement)
+
 ### 5. Specialized Approaches Pattern
 
 This pattern uses domain-specific methods for particular use cases.
@@ -474,6 +508,43 @@ This emerging pattern addresses the specific challenges of distributed multi-age
 - **Multi-Agent Coordination**: AgentOps, MLflow, Datadog, AgentNeo provide specialized multi-agent observability features
 - **OpenTelemetry Compliance**: Phoenix, LangWatch, Uptrace, Langtrace, Datadog, LangSmith support GenAI semantic conventions
 
+### 7. Lightweight Development Tools
+
+#### otel-tui
+
+**Technical Mechanism**: Terminal-based OpenTelemetry trace viewer
+
+- Single binary, no dependencies — accepts OTLP traces on ports 4317 (gRPC) and 4318 (HTTP)
+- Renders trace waterfall diagrams, span details, and attributes in the terminal
+- Explicitly referenced in PydanticAI documentation as an alternative local backend
+
+**Setup**: `brew install ymtdzzz/tap/otel-tui` or `go install` — zero containers, no browser needed
+
+**Use Case**: Quick local debugging during development. No persistence, no web UI.
+
+**License**: Apache-2.0
+
+**Primary Sources**:
+
+- [otel-tui GitHub Repository](https://github.com/ymtdzzz/otel-tui)
+- [PydanticAI Alternative OTel Backends](https://ai.pydantic.dev/logfire/#using-opentelemetry)
+
+## Local Development Deployment Comparison
+
+Setup complexity for local MAS tracing (most relevant to development workflows):
+
+| Tool | Setup | Containers | Local UI | Persistence | PydanticAI Native |
+|------|-------|------------|----------|-------------|-------------------|
+| **Comet Opik** | `docker-compose up` | 11 | Web (5173) | Yes (MySQL+ClickHouse) | SDK wrapper |
+| **Arize Phoenix** | `pip install arize-phoenix && phoenix serve` | 0 | Web (6006) | Yes (SQLite) | Via OpenInference |
+| **Logfire cloud** | `pip install logfire` | 0 | Web (cloud) | Yes (cloud) | First-party |
+| **Logfire + Phoenix** | `pip install logfire arize-phoenix` | 0 | Web (6006) | Yes (SQLite) | First-party + OpenInference |
+| **otel-tui** | Single binary | 0 | Terminal | No | Via OTel OTLP |
+| **Langfuse v3** | `docker compose up` | 3+ | Web (3000) | Yes (PostgreSQL+ClickHouse) | Via OTel OTLP |
+| **Logfire self-hosted** | Kubernetes + Helm | Many | Web | Yes | First-party |
+
+**Recommended local MAS tracing stack**: Logfire SDK for PydanticAI instrumentation (`logfire.instrument_pydantic_ai()`) sending traces to a local Phoenix instance via OTLP. This combines PydanticAI's first-party span generation with Phoenix's multi-agent-aware web UI, all with zero Docker containers.
+
 ## Research Methodology
 
 ### Source Verification Process
@@ -485,7 +556,7 @@ This emerging pattern addresses the specific challenges of distributed multi-age
 
 ### Tools Examined (Updated January 2026)
 
-15 observability platforms were analyzed across 6 technical categories (5 core patterns plus emerging multi-agent observability), focusing on:
+17 observability platforms were analyzed across 7 technical categories (5 core patterns, emerging multi-agent observability, and lightweight development tools), focusing on:
 
 - Actual implementation mechanisms (not just feature descriptions)
 - Data capture and storage approaches
@@ -495,9 +566,9 @@ This emerging pattern addresses the specific challenges of distributed multi-age
 - Multi-agent coordination and collaboration tracking
 - Performance overhead benchmarks and production readiness
 
-## Conclusions (Updated January 2026)
+## Conclusions (Updated February 2026)
 
-The 2026 landscape shows significant maturation with 89% of organizations implementing agent observability, up from earlier adoption rates. The analysis of 15 platforms (increased from 11 in 2025) reveals decorator-based instrumentation remains dominant at 47%, while OpenTelemetry adoption has grown to 33% of analyzed tools, establishing vendor-neutral observability as an industry standard.
+The 2026 landscape shows significant maturation with 89% of organizations implementing agent observability, up from earlier adoption rates. The analysis of 17 platforms (increased from 15 in January 2026) reveals decorator-based instrumentation remains dominant at 41%, while OpenTelemetry adoption continues growing. Native framework integration gained significance with the addition of Pydantic Logfire, the first-party observability solution for PydanticAI.
 
 ### Key 2026 Developments
 
@@ -519,6 +590,8 @@ The 2026 landscape shows significant maturation with 89% of organizations implem
 - **Framework-specific integrations** (7%): Provide deep, native functionality within specific ecosystems with minimal performance overhead
 - **Specialized tools** (20%): Address specific use cases with domain-optimized approaches, including full-stack platforms blurring development and monitoring boundaries
 - **Multi-agent observability** (Emerging): Cross-cutting pattern addressing distributed coordination challenges with 89% organizational adoption rate
+
+**Local Development Simplification**: A notable trend is the shift toward zero-infrastructure local tracing. Tools like Arize Phoenix (`pip install && phoenix serve`) and Pydantic Logfire eliminate the multi-container Docker setups (e.g., Opik's 11 containers) that create friction in local development. The combination of Logfire SDK instrumentation with Phoenix as a local OTLP receiver provides first-party PydanticAI span generation with a full web UI, all without Docker.
 
 ### Future Outlook
 

@@ -5,7 +5,7 @@ This module provides pure provider abstraction without business logic.
 Handles API key retrieval, provider configurations, and environment setup.
 """
 
-from app.data_models.app_models import AppEnv, ProviderConfig
+from app.data_models.app_models import PROVIDER_REGISTRY, AppEnv, ProviderConfig
 from app.utils.error_messages import generic_exception, get_key_error
 from app.utils.log import logger
 
@@ -14,35 +14,35 @@ def get_api_key(
     provider: str,
     chat_env_config: AppEnv,
 ) -> tuple[bool, str]:
-    """Retrieve API key from chat env config variable."""
-    provider = provider.upper()
+    """Retrieve API key from chat env config variable.
 
-    # Provider mapping for environment variable keys
-    provider_key_mapping = {
-        "OPENAI": "OPENAI_API_KEY",
-        "ANTHROPIC": "ANTHROPIC_API_KEY",
-        "GEMINI": "GEMINI_API_KEY",
-        "GITHUB": "GITHUB_API_KEY",
-        "GROK": "GROK_API_KEY",
-        "HUGGINGFACE": "HUGGINGFACE_API_KEY",
-        "OPENROUTER": "OPENROUTER_API_KEY",
-        "PERPLEXITY": "PERPLEXITY_API_KEY",
-        "TOGETHER": "TOGETHER_API_KEY",
-        "OLLAMA": None,  # Ollama doesn't require an API key
-    }
+    Args:
+        provider: Provider name (case-insensitive)
+        chat_env_config: Application environment configuration
 
-    if provider == "OLLAMA":
-        return (False, "Ollama does not require an API key.")
+    Returns:
+        Tuple of (success: bool, message: str) where message is either the API key or error message
+    """
+    provider_lower = provider.lower()
 
-    key_name = provider_key_mapping.get(provider)
-    if not key_name:
+    # Check if provider exists in registry
+    provider_metadata = PROVIDER_REGISTRY.get(provider_lower)
+    if not provider_metadata:
         return (False, f"Provider '{provider}' is not supported.")
 
-    key_content = getattr(chat_env_config, key_name, None)
+    # Handle providers without API keys (e.g., Ollama)
+    if provider_metadata.env_key is None:
+        return (False, f"{provider_metadata.name.title()} does not require an API key.")
+
+    # Retrieve API key from environment config
+    key_content = getattr(chat_env_config, provider_metadata.env_key, None)
     if key_content and key_content.strip():
         logger.info(f"Found API key for provider: '{provider}'")
         return (True, key_content)
     else:
+        # Reason: Diagnose transient .env loading issues (CWD mismatch, unset env vars)
+        if key_content is not None and not key_content.strip():
+            logger.debug(f"Provider '{provider}' has empty API key for {provider_metadata.env_key}")
         return (
             False,
             f"API key for provider '{provider}' not found in configuration.",
@@ -77,20 +77,9 @@ def setup_llm_environment(api_keys: dict[str, str]) -> None:
         if api_key and api_key.strip():
             env_var = f"{provider.upper()}_API_KEY"
             os.environ[env_var] = api_key
-            logger.info(f"Set environment variable: {env_var}")
+            logger.debug(f"Set environment variable: {env_var}")
 
 
 def get_supported_providers() -> list[str]:
-    """Get list of supported LLM providers."""
-    return [
-        "openai",
-        "anthropic",
-        "gemini",
-        "github",
-        "grok",
-        "huggingface",
-        "openrouter",
-        "perplexity",
-        "together",
-        "ollama",
-    ]
+    """Get list of supported LLM providers from the registry."""
+    return list(PROVIDER_REGISTRY.keys())

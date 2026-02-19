@@ -63,7 +63,7 @@ The agent has access to the following tools, defined in `src/app/agents/peerread
 
 ## Review Storage
 
-- **Location**: `src/app/data_utils/reviews/` (configured in `MAS_REVIEWS_PATH`)
+- **Location**: `datasets/peerread/MAS_reviews/` (configured in `MAS_REVIEWS_PATH`)
 - **Format**: JSON files with timestamp: `{paper_id}_{timestamp}.json`
 - **Structured Reviews**: Additional `{paper_id}_{timestamp}_structured.json` for validated reviews
 - **Content**: Complete review with metadata, timestamps, and paper references

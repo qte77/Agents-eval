@@ -2,75 +2,84 @@
 title: Architecture Visualizations
 description: PlantUML source files and rendering instructions for project architecture diagrams
 date: 2025-09-01
+updated: 2026-02-17
 category: documentation
-version: 1.0.0
+version: 2.0.0
 ---
 
-This directory contains the source files for the project's architecture diagrams. All diagrams are authored in PlantUML and are designed to be rendered into themed PNG images (light and dark modes).
+This directory contains PlantUML source files for the project's architecture diagrams. PNGs are rendered into `assets/images/` (light and dark themes). Source files live here; generated PNGs do not.
 
-## Local Rendering
+## Diagrams
 
-The recommended way to generate diagrams is by using the `make` commands from the root of the project. These commands handle all the complexities of rendering for you.
+| File | Type | Description |
+|---|---|---|
+| `MAS-C4-Overview.plantuml` | C4 | High-level architecture: MAS, Benchmark, Evaluation boundaries |
+| `MAS-C4-Detailed.plantuml` | C4 | All containers: agents, evaluation tiers, benchmark, security, providers |
+| `MAS-Review-Workflow.plantuml` | Sequence | Full evaluation workflow with security boundaries: URL validation (SSRF), prompt sanitization (MAESTRO L3), log scrubbing (MAESTRO L5) |
+| `mas-workflow.plantuml` | Sequence | Agent tool usage: Manager → Researcher/Analyst/Synthesizer delegation |
+| `mas-enhanced-workflow.plantuml` | Sequence | Separation of concerns: Loader, Evaluator, Manager (SRP/SoC) |
+| `metrics-eval-sweep.plantuml` | Sequence | Benchmarking sweep: SweepConfig → SweepRunner → compositions × papers × repetitions → SweepAnalysis → results.json/summary.md; optional CC headless path (CCTraceAdapter) |
+| `customer-journey-activity.plantuml` | Activity | End-to-end user journey: CLI/GUI → evaluation → sweep |
+| `documentation-hierarchy.plantuml` | Component | Doc authority hierarchy: agent vs human flows |
+| `AI-agent-landscape-visualization.puml` | Landscape | AI agent ecosystem snapshot (informational) |
+
+## Rendering
 
 ### Prerequisites
 
-- **Docker**: You must have Docker installed and running, as the command uses the official `plantuml/plantuml` Docker image to perform the rendering.
+- **Docker**: Uses the official `plantuml/plantuml` Docker image.
 
-### Setup
-
-First, you need to set up the PlantUML environment. This is a one-time setup.
+### Setup (one-time)
 
 ```shell
 make setup_plantuml
 ```
 
-### Usage
+### Generate PNGs
 
-There are two ways to render the diagrams:
-
-#### Interactive Mode
-
-To start an interactive PlantUML server that automatically re-renders diagrams when you make changes, use:
+Render a single diagram to `assets/images/`:
 
 ```shell
-make run_puml_interactive
+make plantuml_render INPUT_FILE="docs/arch_vis/metrics-eval-sweep.plantuml" STYLE="light" OUTPUT_PATH="assets/images"
 ```
 
-This will start a server on `http://localhost:8080`.
-
-#### Single Run
-
-To render a single diagram, use the `run_puml_single` command. You can specify the input file and the style (light or dark).
+Generate both themes for all diagrams:
 
 ```shell
-make run_puml_single INPUT_FILE="docs/arch_vis/metrics-eval-sweep.plantuml" STYLE="dark" OUTPUT_PATH="assets/images"
+for f in docs/arch_vis/*.plantuml; do
+  make plantuml_render INPUT_FILE="$f" STYLE="light" OUTPUT_PATH="assets/images"
+  make plantuml_render INPUT_FILE="$f" STYLE="dark" OUTPUT_PATH="assets/images"
+done
 ```
+
+### Interactive Mode
+
+```shell
+make plantuml_serve
+```
+
+Starts a server on `http://localhost:8080` that re-renders on file changes.
 
 ## Online Rendering (PlantUML.com)
 
-If you don't have Docker installed, you can use the official [PlantUML Web Server](http://www.plantuml.com/plantuml) to render diagrams. However, because our diagrams include local theme files, you must modify the source code before pasting it online.
+For rendering without Docker, use the [PlantUML Web Server](http://www.plantuml.com/plantuml). Local `!include` paths must be replaced with raw GitHub URLs:
 
-### Instructions
+Replace:
 
-1. **Open a diagram file** (e.g., `MAS-Review-Workflow.plantuml`) in a text editor.
-2. **Modify the `!include` path**. You need to replace the local path with the full raw GitHub URL to the theme file.
-    - **Find this line:**
+```plantuml
+!include styles/github-$STYLE.puml
+```
 
-        ```plantuml
-        !include styles/github-$STYLE.puml
-        ```
+With (light):
 
-    - **Replace it with this URL for the light theme:**
-  
-        ```plantuml
-        !include https://raw.githubusercontent.com/qte77/Agents-eval/main/docs/arch_vis/styles/github-light.puml
-        ```
+```plantuml
+!include https://raw.githubusercontent.com/qte77/Agents-eval/main/docs/arch_vis/styles/github-light.puml
+```
 
-    - **Or this URL for the dark theme:**
+Or (dark):
 
-        ```plantuml
-        !include https://raw.githubusercontent.com/qte77/Agents-eval/main/docs/arch_vis/styles/github-dark.puml
-        ```
+```plantuml
+!include https://raw.githubusercontent.com/qte77/Agents-eval/main/docs/arch_vis/styles/github-dark.puml
+```
 
-3. **Copy the entire, modified PlantUML source code.**
-4. **Paste it** into the text area on the [PlantUML Web Server](http://www.plantuml.com/plantuml). The diagram will update automatically.
+Then paste the modified source into the web editor.

@@ -260,15 +260,14 @@ async def run_manager_orchestrated(
     orchestrator = AgentOrchestrator()
     orchestrator.log_step("starting_manager_execution")
 
-    # FIXME context manager try-catch
-    # with error_handling_context("run_manager()"):
     model_name = getattr(manager, "model")._model_name
     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
 
     try:
         if pydantic_ai_stream:
             raise NotImplementedError(
-                "Streaming currently only possible for Agents with output_type str not pydantic model"
+                "Streaming currently only possible for Agents with output_type "
+                "str not pydantic model"
             )
         else:
             orchestrator.log_step("waiting_for_model_response")
@@ -310,7 +309,9 @@ async def parallel_workflow(agents: list[Agent], query: str) -> list[Any]:
     return [result for result in results]
 
 
-async def conditional_workflow(condition_func: Callable[[str], str], agent_map: dict[str, Agent], query: str) -> Any:
+async def conditional_workflow(
+    condition_func: Callable[[str], str], agent_map: dict[str, Agent], query: str
+) -> Any:
     """Route to different agents based on conditions."""
     condition_result = condition_func(query)
 

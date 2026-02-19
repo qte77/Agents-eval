@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Claude Code Statusline Input Structure",
+  "description": "JSON structure passed to statusline command scripts via stdin. Used by .claude/scripts/statusline.sh",
+
+  "_comment": "=== EXAMPLE STRUCTURE (Real values replace placeholders) ===",
+
+  "session_id": "550e8400-e29b-41d4-a716-446655440000",
+  "transcript_path": "/home/user/.claude/transcripts/2026-02-11/session-abc123.jsonl",
+  "cwd": "/workspaces/project-name",
+
+  "model": {
+    "id": "opusplan",
+    "display_name": "Claude Opus 4.6 (Plan mode)"
+  },
+
+  "workspace": {
+    "current_dir": "/workspaces/project-name",
+    "project_dir": "/workspaces/project-name"
+  },
+
+  "version": "1.15.0",
+
+  "output_style": {
+    "name": "default"
+  },
+
+  "cost": {
+    "total_cost_usd": 0.52,
+    "total_duration_ms": 120000,
+    "total_api_duration_ms": 45000,
+    "total_lines_added": 120,
+    "total_lines_removed": 35
+  },
+
+  "context_window": {
+    "total_input_tokens": 65000,
+    "total_output_tokens": 8500,
+    "context_window_size": 200000,
+    "current_usage": {
+      "input_tokens": 2000,
+      "output_tokens": 500,
+      "cache_creation_input_tokens": 15000,
+      "cache_read_input_tokens": 48000
+    },
+    "used_percentage": 36.75,
+    "remaining_percentage": 63.25
+  },
+
+  "exceeds_200k_tokens": false,
+
+  "_fields_used_by_statusline_sh": {
+    "workspace.current_dir": "Extracted with jq -r '.workspace.current_dir' → basename shown in statusline",
+    "model.id": "Extracted with jq -r '.model.id' → displayed as 'model:{value}'",
+    "version": "Extracted with jq -r '.version // \"\"' → displayed as 'ver:{value}'",
+    "cost.total_cost_usd": "Extracted and formatted: (value * 100 | round / 100 | tostring) + '$'",
+    "cost.total_api_duration_ms": "Converted to minutes: (value / 1000 / 60 | round | tostring) + 'm'",
+    "cost.total_lines_added": "Combined with total_lines_removed as '+{added}/-{removed}'",
+    "cost.total_lines_removed": "Combined with total_lines_added as '+{added}/-{removed}'",
+    "context_window.total_input_tokens": "Converted to k: (value / 1000 | floor | tostring) + 'k'",
+    "context_window.total_output_tokens": "Converted to k: (value / 1000 | floor | tostring) + 'k'",
+    "context_window.remaining_percentage": "Displayed as decimal and used for color thresholds",
+    "exceeds_200k_tokens": "Boolean flag displayed as '>200k:{value}'"
+  },
+
+  "_color_thresholds": {
+    "context_remaining": {
+      "critical": "≤25% → Yellow fg on Red bg (\\033[93;41m)",
+      "warning": "≤50% → Bright Red fg on Dark Gray bg (\\033[91;48;5;237m)",
+      "ok": ">50% → Green fg (\\033[0;32m)"
+    }
+  },
+
+  "_statusline_output_format": {
+    "line1": "model:{id} ver:{version} cost:{usd} dur:{minutes}m",
+    "line2": "lines:+{added}/-{removed} tokens(i/o):{in}k/{out}k ctx(left):{pct} >200k:{bool}",
+    "line3": "dir:{basename} branch:{git_branch} user:{whoami} time:{HH:MM:SS}"
+  },
+
+  "_usage_notes": {
+    "stdin_input": "This JSON is passed to statusline scripts via stdin (read with 'cat' in bash)",
+    "jq_extraction": "Fields extracted using jq queries like: echo \"$input\" | jq -r '.field.path'",
+    "script_location": ".claude/scripts/statusline.sh",
+    "config_location": ".claude/settings.json → statusLine.command",
+    "fallback_values": "Use // operator for optional fields: jq -r '.version // \"\"'"
+  }
+}

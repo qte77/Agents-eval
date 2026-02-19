@@ -12,27 +12,74 @@ This module also includes structured data models for LLM-generated reviews,
 ensuring consistency and validation against the PeerRead format.
 """
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator
 
 from app.config.config_app import DATASETS_PEERREAD_PATH
 
+# Coerce numeric score values from raw PeerRead JSON (int) to str.
+# Reason: Some PeerRead JSON files store scores as integers (e.g., "SOUNDNESS_CORRECTNESS": 3)
+# which fail str validation without coercion.
+_ScoreStr = Annotated[str, BeforeValidator(str)]
+
 
 class PeerReadReview(BaseModel):
-    """Individual peer review from PeerRead dataset."""
+    """Individual peer review from PeerRead dataset.
 
-    impact: str = Field(description="Impact score (1-5)")
-    substance: str = Field(description="Substance score (1-5)")
-    appropriateness: str = Field(description="Appropriateness score (1-5)")
-    meaningful_comparison: str = Field(description="Meaningful comparison score (1-5)")
-    presentation_format: str = Field(description="Presentation format (Poster/Oral)")
-    comments: str = Field(description="Detailed review comments")
-    soundness_correctness: str = Field(description="Soundness/correctness score (1-5)")
-    originality: str = Field(description="Originality score (1-5)")
-    recommendation: str = Field(description="Overall recommendation score (1-5)")
-    clarity: str = Field(description="Clarity score (1-5)")
-    reviewer_confidence: str = Field(description="Reviewer confidence score (1-5)")
+    Note: Some PeerRead papers (e.g., 304-308, 330) lack optional fields.
+    Defaults to "UNKNOWN" for missing review criteria fields.
+
+    Accepts both PeerRead uppercase keys (IMPACT) and model lowercase keys
+    (impact) via populate_by_name with aliases. Numeric score fields are
+    coerced to str to handle raw PeerRead JSON integer values.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    impact: _ScoreStr = Field(
+        default="UNKNOWN", validation_alias="IMPACT", description="Impact score (1-5)"
+    )
+    substance: _ScoreStr = Field(
+        default="UNKNOWN", validation_alias="SUBSTANCE", description="Substance score (1-5)"
+    )
+    appropriateness: _ScoreStr = Field(
+        default="UNKNOWN",
+        validation_alias="APPROPRIATENESS",
+        description="Appropriateness score (1-5)",
+    )
+    meaningful_comparison: _ScoreStr = Field(
+        default="UNKNOWN",
+        validation_alias="MEANINGFUL_COMPARISON",
+        description="Meaningful comparison score (1-5)",
+    )
+    presentation_format: str = Field(
+        default="Poster",
+        validation_alias="PRESENTATION_FORMAT",
+        description="Presentation format (Poster/Oral)",
+    )
+    comments: str = Field(default="", description="Detailed review comments")
+    soundness_correctness: _ScoreStr = Field(
+        default="UNKNOWN",
+        validation_alias="SOUNDNESS_CORRECTNESS",
+        description="Soundness/correctness score (1-5)",
+    )
+    originality: _ScoreStr = Field(
+        default="UNKNOWN", validation_alias="ORIGINALITY", description="Originality score (1-5)"
+    )
+    recommendation: _ScoreStr = Field(
+        default="UNKNOWN",
+        validation_alias="RECOMMENDATION",
+        description="Overall recommendation score (1-5)",
+    )
+    clarity: _ScoreStr = Field(
+        default="UNKNOWN", validation_alias="CLARITY", description="Clarity score (1-5)"
+    )
+    reviewer_confidence: _ScoreStr = Field(
+        default="UNKNOWN",
+        validation_alias="REVIEWER_CONFIDENCE",
+        description="Reviewer confidence score (1-5)",
+    )
     is_meta_review: bool | None = Field(default=None, description="Whether this is a meta review")
 
 
@@ -71,9 +118,15 @@ class PeerReadConfig(BaseModel):
     )
     splits: list[str] = Field(default=["train", "test", "dev"], description="Available data splits")
     max_papers_per_query: int = Field(default=100, description="Maximum papers to return per query")
-    download_timeout: int = Field(default=30, description="Timeout for download requests in seconds")
-    max_retries: int = Field(default=5, description="Maximum number of retry attempts for downloads")
-    retry_delay_seconds: int = Field(default=5, description="Delay in seconds between retry attempts")
+    download_timeout: int = Field(
+        default=30, description="Timeout for download requests in seconds"
+    )
+    max_retries: int = Field(
+        default=5, description="Maximum number of retry attempts for downloads"
+    )
+    retry_delay_seconds: int = Field(
+        default=5, description="Delay in seconds between retry attempts"
+    )
     similarity_metrics: dict[str, float] = Field(
         default={"cosine_weight": 0.6, "jaccard_weight": 0.4},
         description="Weights for similarity metrics",
@@ -142,7 +195,10 @@ class GeneratedReview(BaseModel):
         ...,
         ge=1,
         le=5,
-        description="Overall recommendation (1=strong reject, 2=reject, 3=borderline, 4=accept, 5=strong accept)",
+        description=(
+            "Overall recommendation (1=strong reject, 2=reject, 3=borderline, "
+            "4=accept, 5=strong accept)"
+        ),
     )
 
     clarity: int = Field(
@@ -160,7 +216,7 @@ class GeneratedReview(BaseModel):
     )
 
     @field_validator("comments")
-    def validate_comments_structure(cls, v: str) -> str:
+    def validate_comments_structure(cls, v: str) -> str:  # noqa: N805
         """Ensure comments contain key review sections."""
         required_sections = [
             "contributions",

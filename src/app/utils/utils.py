@@ -6,7 +6,7 @@ Functions:
     load_config(config_path: str) -> Config:
         Load and validate configuration from a JSON file.
 
-    print_research_Result(summary: Dict, usage: Usage) -> None:
+    print_research_result(summary: Dict, usage: Usage) -> None:
         Output structured summary of the research topic.
 
     error_handling_context(operation_name: str, console: Console = None):

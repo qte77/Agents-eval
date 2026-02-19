@@ -6,83 +6,123 @@ loading heavy dependencies. It only imports the main application
 when actual processing is needed.
 """
 
+import argparse
+import shutil
 from sys import argv, exit
+from typing import Any
+
+_parser = argparse.ArgumentParser(description="Agents-eval CLI — run MAS evaluation pipeline")
+
+for _flag, _help in [
+    ("--version", "Display version information"),
+    ("--include-researcher", "Include the researcher agent"),
+    ("--include-analyst", "Include the analyst agent"),
+    ("--include-synthesiser", "Include the synthesiser agent"),
+    ("--pydantic-ai-stream", "Enable streaming output"),
+    ("--skip-eval", "Skip evaluation after run_manager completes"),
+    ("--download-peerread-full-only", "Download all PeerRead data and exit (setup mode)"),
+    ("--download-peerread-samples-only", "Download PeerRead sample and exit (setup mode)"),
+]:
+    _parser.add_argument(_flag, action="store_true", default=None, help=_help)
+
+_review_group = _parser.add_mutually_exclusive_group()
+_review_group.add_argument(
+    "--enable-review-tools",
+    action="store_true",
+    dest="enable_review_tools",
+    help="Enable PeerRead review generation tools (enabled by default)",
+)
+_review_group.add_argument(
+    "--no-review-tools",
+    action="store_false",
+    dest="enable_review_tools",
+    help="Disable PeerRead review generation tools (opt-out)",
+)
+_parser.set_defaults(enable_review_tools=None)
+
+for _flag, _help in [
+    ("--chat-provider", "Specify the chat provider to use"),
+    ("--query", "Specify the query to process"),
+    ("--chat-config-file", "Path to the chat configuration file"),
+    ("--paper-id", "Paper ID for PeerRead review (supports arxiv IDs like '1105.1072')"),
+    ("--judge-provider", "Override Tier 2 LLM provider for judge (default: auto)"),
+    ("--judge-model", "Override Tier 2 judge LLM model"),
+    ("--cc-solo-dir", "Path to CC solo session export directory for baseline comparison"),
+    ("--cc-teams-dir", "Path to CC Agent Teams artifacts directory for baseline comparison"),
+    ("--cc-teams-tasks-dir", "Path to CC Agent Teams tasks directory (auto-discovered if omitted)"),
+]:
+    _parser.add_argument(_flag, help=_help)
+
+_parser.add_argument("--token-limit", type=int, help="Override agent token limit (1000-1000000)")
+_parser.add_argument(
+    "--peerread-max-papers-per-sample-download",
+    type=int,
+    help="Max papers to download per split, overrides sample default",
+)
+_parser.add_argument(
+    "--engine",
+    default="mas",
+    choices=["mas", "cc"],
+    help="Execution engine: 'mas' (default) or 'cc' for Claude Code headless",
+)
 
 
-def parse_args(argv: list[str]) -> dict[str, str | bool]:
-    """
-    Parse command line arguments into a dictionary.
+def parse_args(argv: list[str]) -> dict[str, Any]:
+    """Parse command line arguments into a dictionary.
 
-    This function processes a list of command-line arguments,
-    extracting recognized options and their values.
-    Supported arguments include flags (e.g., --help, --include-researcher
-    and key-value pairs (e.g., `--chat-provider=ollama`).
-    If the `--help` flag is present, a list of available commands and their
-    descriptions is printed, and an empty dictionary is returned.
+    Args:
+        argv: List of CLI argument strings (without the program name).
 
     Returns:
-        `dict[str, str | bool]`: A dictionary mapping argument names
-        (with leading '--' removed and hyphens replaced by underscores)
-        to their values (`str` for key-value pairs, `bool` for flags).
-        Returns an empty dict if `--help` is specified.
+        Dictionary of explicitly-provided arguments (plus engine default).
 
     Example:
-        >>> `parse_args(['--chat-provider=ollama', '--include-researcher'])`
-        returns `{'chat_provider': 'ollama', 'include_researcher': True}`
+        >>> parse_args(["--chat-provider", "ollama", "--include-researcher"])
+        {'chat_provider': 'ollama', 'include_researcher': True, 'engine': 'mas'}
     """
-
-    commands = {
-        "--help": "Display help information",
-        "--version": "Display version information",
-        "--chat-provider": "Specify the chat provider to use",
-        "--query": "Specify the query to process",
-        "--include-researcher": "Include the researcher agent",
-        "--include-analyst": "Include the analyst agent",
-        "--include-synthesiser": "Include the synthesiser agent",
-        "--no-stream": "Disable streaming output",
-        "--chat-config-file": "Specify the path to the chat configuration file",
-        "--paper-number": "Specify paper number for PeerRead review generation",
-        "--download-peerread-full-only": ("Download all of the PeerRead dataset and exit (setup mode)"),
-        "--download-peerread-samples-only": ("Download a small sample of the PeerRead dataset and exit (setup mode)"),
-        "--peerread-max-papers-per-sample-download": (
-            "Specify max papers to download per split, overrides sample default"
-        ),
-    }
-
-    # output help and exit
-    if "--help" in argv:
-        print("Available commands:")
-        for cmd, desc in commands.items():
-            print(f"{cmd}: {desc}")
-        exit(0)
-
-    parsed_args: dict[str, str | bool] = {}
-
-    # parse arguments for key-value pairs and flags
-    for arg in argv:
-        if arg.split("=", 1)[0] in commands.keys():
-            key, value = arg.split("=", 1) if "=" in arg else (arg, True)
-            key = key.lstrip("--").replace("-", "_")
-            parsed_args[key] = value
-
-    if parsed_args:
-        logger.info(f"Used arguments: {parsed_args}")
-
-    return parsed_args
+    return {k: v for k, v in vars(_parser.parse_args(argv)).items() if v is not None}
 
 
 if __name__ == "__main__":
-    """
-    CLI entry point that handles help quickly, then imports main app.
-    """
+    import json
+    import subprocess
+    import sys
 
-    if "--help" in argv[1:]:
-        parse_args(["--help"])
+    args = parse_args(argv[1:])
+    engine = args.pop("engine")
+
+    if engine == "cc" and not shutil.which("claude"):
+        print(
+            "error: --engine=cc requires the 'claude' CLI to be installed and on PATH",
+            file=sys.stderr,
+        )
+        exit(1)
 
     from asyncio import run
 
     from app.app import main
     from app.utils.log import logger
 
-    args = parse_args(argv[1:])
+    logger.info(f"Used arguments: {args}")
+
+    if engine == "cc":
+        query = args.get("query", "")
+        try:
+            result = subprocess.run(
+                ["claude", "-p", query, "--output-format", "json"],
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"CC failed: {result.stderr}")
+            try:
+                data = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"CC output not valid JSON: {e}") from e
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"CC timed out after {e.timeout}s") from e
+
+        args["cc_solo_dir"] = data.get("session_dir")
+
     run(main(**args))

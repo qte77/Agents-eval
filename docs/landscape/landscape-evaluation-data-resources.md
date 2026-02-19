@@ -3,8 +3,8 @@ title: Evaluation & Data Resources Landscape
 description: Comprehensive overview of evaluation frameworks, datasets, benchmarks, and analysis tools for AI agent systems and academic research applications
 category: landscape
 created: 2025-08-23
-updated: 2026-01-12
-version: 1.2.0
+updated: 2026-02-15
+version: 1.2.1
 ---
 
 This document provides a comprehensive overview of evaluation frameworks, datasets, benchmarks, graph analysis tools, and research resources relevant to evaluating AI agent systems and academic research applications. It includes technical details, feasibility assessments, integration scenarios, and project-specific guidance for the PeerRead evaluation use case.
@@ -91,7 +91,7 @@ This document provides a comprehensive overview of evaluation frameworks, datase
 
 ### Limited Local Support
 
-- [Pydantic Logfire](https://pydantic.dev/logfire) - Cloud service with OpenTelemetry integration and local export capabilities via query API in multiple formats. **Tracing Method**: OpenTelemetry-based automatic instrumentation with cloud-based storage and structured query API for data export and analysis workflows. **Medium feasibility** requiring cloud service setup but with local export capabilities. ([docs](https://logfire.pydantic.dev/docs/how-to-guides/query-api/))
+- [Pydantic Logfire](https://pydantic.dev/logfire) - First-party OpenTelemetry-based observability for PydanticAI agents with cloud free tier and local OTLP routing. **Tracing Method**: `logfire.instrument_pydantic_ai()` for zero-config agent instrumentation; traces can route to Logfire cloud, local Phoenix via OTLP, or otel-tui for terminal debugging. Multi-language SDKs (Python, TypeScript, Rust). **High feasibility** as first-party PydanticAI solution with zero-infrastructure cloud option. See [Agent Frameworks & Infrastructure](landscape-agent-frameworks-infrastructure.md#native-framework-integration) for full details. ([docs](https://logfire.pydantic.dev/), [PydanticAI integration](https://ai.pydantic.dev/logfire/))
 
 - [LangSmith](https://www.langchain.com/langsmith) - Unified observability and evaluation platform for LLM applications with comprehensive debugging, testing, and monitoring capabilities but enterprise-focused pricing. **Tracing Method**: Callback handler system that sends traces to distributed collector via background threads. Uses `@traceable` decorators and environment variables (`LANGSMITH_TRACING=true`). Framework wrappers like `wrap_openai()` provide direct SDK integration with context propagation headers (`langsmith-trace`). **Low feasibility** due to enterprise licensing requirements and limited free-tier export capabilities. ([docs](https://docs.smith.langchain.com/observability/how_to_guides/data_export))
 

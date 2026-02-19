@@ -4,7 +4,7 @@ title MAS Architecture Overview
 !log Current 'STYLE' dvar: STYLE
 !log About to include: styles/github-STYLE.puml
 !include styles/github-STYLE.puml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+!include external/C4_Component.puml
 
 
 LAYOUT_LEFT_RIGHT()
@@ -16,29 +16,36 @@ System(config, "Configuration", "Provides runtime settings for models, providers
 System_Boundary(agents_eval, "Agents-eval Platform") {
 
     System_Boundary(mas_boundary, "Multi-Agent System (MAS)") {
-        System(mas_core, "MAS Core", "Multi-agent orchestration for review generation")
+        System(mas_core, "MAS Core", "Multi-agent orchestration for review generation\n(--engine=mas|cc)")
     }
     ContainerDb(datasets, "Review Storage", "File System", "JSON files with generated reviews")
+    System_Boundary(benchmark_boundary, "Benchmark") {
+        System(benchmark_core, "Sweep Runner", "Composition sweep across agents × papers × repetitions")
+    }
     System_Boundary(eval_boundary, "Evaluation System") {
-        System(eval_core, "Evaluation Core", "Similarity analysis and metrics calculation")
+        System(eval_core, "Evaluation Core", "Three-tier: Traditional + LLM-Judge + Graph Analysis")
     }
 
     mas_boundary-[hidden]-> datasets
-    datasets-[hidden]-> eval_core
+    datasets-[hidden]-> benchmark_boundary
+    benchmark_boundary-[hidden]-> eval_boundary
 }
 
 ' ------ High-Level Data Flows ------
 Rel(user, agents_eval, "Initiate tasks", "CLI/Streamlit")
 Rel(user, config, "Adjusts for tasks", "CLI/Streamlit")
-Rel(config, agents_eval, "Provides runtime settings", "JSON")
+Rel(config, agents_eval, "Provides runtime settings", "env vars / CLI flags")
 
 Rel(mas_core, datasets, "Save generated reviews", "File I/O")
 Rel(eval_core, datasets, "Load saved reviews", "File I/O")
+Rel(benchmark_core, mas_core, "Run compositions", "compositions × papers × repetitions")
+Rel(benchmark_core, eval_core, "Collect CompositeResults", "statistical summary")
 
 ' ------ Clear Separation Notes ------
 note left of mas_boundary : **MAS Scope:**\nPDF → Review Generation → File Storage\nNo evaluation logic
-note top of datasets: **Clean Interface**\nMAS outputs datasets here\nEval system reads from here\nNo direct coupling
-note top of eval_boundary : **Evaluation Scope:**\nFile Storage → Similarity Analysis → Results\nIndependent of MAS
+note top of datasets: **Clean Interface**\nMAS outputs here\nEval reads from here\nNo direct coupling
+note right of benchmark_boundary : **Benchmark Scope:**\nSweep engine × composition\nStatistical analysis\nresults.json + summary.md
+note top of eval_boundary : **Evaluation Scope:**\nFile Storage → Tier 1/2/3 → CompositeResult\nIndependent of MAS
 
 ' SHOW_LEGEND() 
 

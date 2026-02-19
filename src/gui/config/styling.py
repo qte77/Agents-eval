@@ -10,7 +10,7 @@ def add_custom_styling(page_title: str):
     )
 
     custom_css = """
-    <style>    
+    <style>
     /* Hide the default radio button circles */
     div[role="radiogroup"] label > div:first-child {
         display: none !important;

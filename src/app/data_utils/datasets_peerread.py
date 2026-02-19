@@ -7,21 +7,112 @@ logic - only data access and management.
 """
 
 from json import JSONDecodeError, dump, load
+from pathlib import Path
 from time import sleep
 from typing import Any
 
 from httpx import Client, HTTPStatusError, RequestError
 
 from app.config.config_app import DATASETS_CONFIG_FILE
+from app.data_models.app_models import AppEnv
 from app.data_models.peerread_models import (
     DownloadResult,
     PeerReadConfig,
     PeerReadPaper,
     PeerReadReview,
 )
-from app.utils.load_settings import chat_config
 from app.utils.log import logger
 from app.utils.paths import resolve_config_path, resolve_project_path
+from app.utils.url_validation import validate_url
+
+
+def _perform_downloads(
+    downloader: "PeerReadDownloader",
+    config: PeerReadConfig,
+    max_papers: int,
+) -> tuple[int, list[str]]:
+    """Perform downloads for all venue/split combinations.
+
+    Args:
+        downloader: PeerReadDownloader instance.
+        config: PeerRead dataset configuration.
+        max_papers: Maximum number of papers to download per venue/split.
+
+    Returns:
+        Tuple of (total_downloaded, failed_downloads).
+    """
+    total_downloaded = 0
+    failed_downloads: list[str] = []
+
+    for venue in config.venues:
+        for split in config.splits:
+            logger.info(f"Downloading {venue}/{split}...")
+            result = downloader.download_venue_split(venue, split, max_papers=max_papers)
+
+            if result.success:
+                logger.info(f"✓ {venue}/{split}: {result.papers_downloaded} downloaded")
+                total_downloaded += result.papers_downloaded
+            else:
+                error_msg = f"✗ {venue}/{split}: {result.error_message}"
+                logger.error(error_msg)
+                failed_downloads.append(f"{venue}/{split}")
+
+    return total_downloaded, failed_downloads
+
+
+def _verify_downloads(
+    loader: "PeerReadLoader",
+    config: PeerReadConfig,
+    failed_downloads: list[str],
+) -> int:
+    """Verify downloads by attempting to load papers.
+
+    Args:
+        loader: PeerReadLoader instance.
+        config: PeerRead dataset configuration.
+        failed_downloads: List to append verification failures to.
+
+    Returns:
+        Number of papers verified.
+    """
+    logger.info("Verifying download integrity...")
+    verification_count = 0
+
+    for venue in config.venues:
+        for split in config.splits:
+            try:
+                papers = loader.load_papers(venue, split)
+                verification_count += len(papers)
+                logger.info(f"✓ Verified {venue}/{split}: {len(papers)} papers loaded")
+            except Exception as e:
+                logger.error(f"✗ Verification failed for {venue}/{split}: {e}")
+                failed_downloads.append(f"{venue}/{split} (verification)")
+
+    return verification_count
+
+
+def _validate_download_results(
+    total_downloaded: int,
+    verification_count: int,
+    failed_downloads: list[str],
+) -> None:
+    """Validate download results and raise if failures occurred.
+
+    Args:
+        total_downloaded: Number of papers downloaded.
+        verification_count: Number of papers verified.
+        failed_downloads: List of failed download/verification items.
+
+    Raises:
+        Exception: If download or verification failed.
+    """
+    if failed_downloads:
+        logger.warning(f"Failed downloads/verifications: {failed_downloads}")
+        logger.warning("Some downloads failed, but continuing (this may be expected)")
+        raise Exception(f"Failed to download from {len(failed_downloads)} sources.")
+
+    if total_downloaded == 0 and verification_count == 0:
+        raise Exception("No papers were downloaded or verified successfully")
 
 
 def download_peerread_dataset(
@@ -44,68 +135,31 @@ def download_peerread_dataset(
     logger.info("Starting PeerRead dataset download (setup mode)")
 
     try:
-        # Load configuration
         config = load_peerread_config()
-        logger.info(f"Loaded PeerRead config: {len(config.venues)} venues, {len(config.splits)} splits")
+        logger.info(
+            f"Loaded PeerRead config: {len(config.venues)} venues, {len(config.splits)} splits"
+        )
 
-        # Initialize downloader
         downloader = PeerReadDownloader(config)
         logger.info(f"Download target directory: {downloader.cache_dir}")
 
-        # Track download statistics
-        total_downloaded = 0
-        failed_downloads: list[str] = []
-
-        # Determine max papers to download
         max_papers = (
             peerread_max_papers_per_sample_download
             if peerread_max_papers_per_sample_download is not None
             else config.max_papers_per_query
         )
 
-        # Download dataset for each venue/split combination
-        for venue in config.venues:
-            for split in config.splits:
-                logger.info(f"Downloading {venue}/{split}...")
-                result = downloader.download_venue_split(venue, split, max_papers=max_papers)
+        total_downloaded, failed_downloads = _perform_downloads(downloader, config, max_papers)
 
-                if result.success:
-                    logger.info(f"✓ {venue}/{split}: {result.papers_downloaded} downloaded")
-                    total_downloaded += result.papers_downloaded
-                else:
-                    error_msg = f"✗ {venue}/{split}: {result.error_message}"
-                    logger.error(error_msg)
-                    failed_downloads.append(f"{venue}/{split}")
-
-        # Verify download by attempting to load papers
-        logger.info("Verifying download integrity...")
         loader = PeerReadLoader(config)
+        verification_count = _verify_downloads(loader, config, failed_downloads)
 
-        verification_count = 0
-        for venue in config.venues:
-            for split in config.splits:
-                try:
-                    papers = loader.load_papers(venue, split)
-                    verification_count += len(papers)
-                    logger.info(f"✓ Verified {venue}/{split}: {len(papers)} papers loaded")
-                except Exception as e:
-                    logger.error(f"✗ Verification failed for {venue}/{split}: {e}")
-                    failed_downloads.append(f"{venue}/{split} (verification)")
-
-        # Summary report
         logger.info("=== Download Summary ===")
         logger.info(f"Total papers downloaded: {total_downloaded}")
         logger.info(f"Total papers verified: {verification_count}")
         logger.info(f"Download directory: {downloader.cache_dir}")
 
-        if failed_downloads:
-            logger.warning(f"Failed downloads/verifications: {failed_downloads}")
-            # Don't raise exception for partial failures - venue might not have data
-            logger.warning("Some downloads failed, but continuing (this may be expected)")
-            raise Exception(f"Failed to download from {len(failed_downloads)} sources.")
-
-        if total_downloaded == 0 and verification_count == 0:
-            raise Exception("No papers were downloaded or verified successfully")
+        _validate_download_results(total_downloaded, verification_count, failed_downloads)
 
         logger.info("✓ PeerRead dataset download and verification completed successfully")
 
@@ -154,9 +208,10 @@ class PeerReadDownloader:
         # Resolve cache directory relative to project root
         self.cache_dir = resolve_project_path(config.cache_directory)
         headers: dict[str, str] = {}
-        if chat_config.GITHUB_API_KEY:
+        app_env = AppEnv()
+        if app_env.GITHUB_API_KEY:
             logger.info("Using GitHub API key for authenticated requests")
-            headers["Authorization"] = f"token {chat_config.GITHUB_API_KEY}"
+            headers["Authorization"] = f"token {app_env.GITHUB_API_KEY}"
         self.client = Client(headers=headers)
 
     def _construct_url(
@@ -194,9 +249,33 @@ class PeerReadDownloader:
         elif data_type == "pdfs":
             filename = f"{paper_id}.pdf"
         else:
-            raise ValueError(f"Invalid data_type: {data_type}. Valid types: reviews, parsed_pdfs, pdfs")
+            raise ValueError(
+                f"Invalid data_type: {data_type}. Valid types: reviews, parsed_pdfs, pdfs"
+            )
 
         return f"{self.config.raw_github_base_url}/{venue}/{split}/{data_type}/{filename}"
+
+    def _extract_paper_id_from_filename(
+        self,
+        filename: str,
+        data_type: str,
+    ) -> str | None:
+        """Extract paper ID from filename based on data type.
+
+        Args:
+            filename: Name of the file.
+            data_type: Type of data ('reviews', 'parsed_pdfs', 'pdfs').
+
+        Returns:
+            Paper ID without extension, or None if filename doesn't match.
+        """
+        if data_type == "reviews" and filename.endswith(".json"):
+            return filename[:-5]  # Remove .json extension
+        elif data_type == "parsed_pdfs" and filename.endswith(".pdf.json"):
+            return filename[:-9]  # Remove .pdf.json extension
+        elif data_type == "pdfs" and filename.endswith(".pdf"):
+            return filename[:-4]  # Remove .pdf extension
+        return None
 
     def _discover_available_files(
         self,
@@ -214,40 +293,65 @@ class PeerReadDownloader:
         Returns:
             List of paper IDs (without extensions) available in the directory.
         """
-        # Use GitHub API to list directory contents
         api_url = f"{self.config.github_api_base_url}/{venue}/{split}/{data_type}"
 
         try:
+            # Validate URL for SSRF protection (CVE-2026-25580 mitigation)
+            validated_url = validate_url(api_url)
             logger.info(f"Discovering {data_type} files in {venue}/{split} via GitHub API")
-            response = self.client.get(api_url, timeout=self.config.download_timeout)
+            response = self.client.get(validated_url, timeout=self.config.download_timeout)
             response.raise_for_status()
 
             files_data = response.json()
 
-            # Extract paper IDs from filenames based on data type
             paper_ids: list[str] = []
             for file_info in files_data:
-                if file_info.get("type") == "file":
-                    filename = file_info.get("name", "")
-                    if data_type == "reviews" and filename.endswith(".json"):
-                        paper_id = filename[:-5]  # Remove .json extension
-                        paper_ids.append(paper_id)
-                    elif data_type == "parsed_pdfs" and filename.endswith(".pdf.json"):
-                        paper_id = filename[:-9]  # Remove .pdf.json extension
-                        paper_ids.append(paper_id)
-                    elif data_type == "pdfs" and filename.endswith(".pdf"):
-                        paper_id = filename[:-4]  # Remove .pdf extension
-                        paper_ids.append(paper_id)
+                if file_info.get("type") != "file":
+                    continue
+
+                filename = file_info.get("name", "")
+                paper_id = self._extract_paper_id_from_filename(filename, data_type)
+                if paper_id:
+                    paper_ids.append(paper_id)
 
             logger.info(f"Found {len(paper_ids)} {data_type} files in {venue}/{split}")
             return sorted(paper_ids)
 
-        except RequestError as e:
+        except (RequestError, HTTPStatusError) as e:
             logger.error(f"Failed to discover {data_type} files for {venue}/{split}: {e}")
             return []
         except (KeyError, ValueError) as e:
-            logger.error(f"Failed to parse GitHub API response for {venue}/{split}/{data_type}: {e}")
+            logger.error(
+                f"Failed to parse GitHub API response for {venue}/{split}/{data_type}: {e}"
+            )
             return []
+
+    def _handle_download_error(
+        self,
+        error: Exception,
+        data_type: str,
+        paper_id: str,
+    ) -> bool:
+        """Handle download errors and determine if retry should continue.
+
+        Args:
+            error: The exception that occurred.
+            data_type: Type of data being downloaded.
+            paper_id: Paper identifier.
+
+        Returns:
+            True if retry should continue, False otherwise.
+        """
+        if isinstance(error, HTTPStatusError) and error.response.status_code == 429:
+            logger.warning(
+                f"Rate limit hit for {data_type}/{paper_id}. "
+                f"Retrying in {self.config.retry_delay_seconds} seconds..."
+            )
+            sleep(self.config.retry_delay_seconds)
+            return True
+
+        logger.error(f"Failed to download {data_type}/{paper_id}: {error}")
+        return False
 
     def download_file(
         self,
@@ -272,39 +376,148 @@ class PeerReadDownloader:
             ValueError: If venue/split is invalid.
         """
         url = self._construct_url(venue, split, data_type, paper_id)
+
         for attempt in range(self.config.max_retries):
             try:
+                # Validate URL for SSRF protection (CVE-2026-25580 mitigation)
+                validated_url = validate_url(url)
                 logger.info(
-                    f"Downloading {data_type}/{paper_id} from {url} (Attempt {attempt + 1}/{self.config.max_retries})"
+                    f"Downloading {data_type}/{paper_id} from {validated_url} "
+                    f"(Attempt {attempt + 1}/{self.config.max_retries})"
                 )
 
-                response = self.client.get(url, timeout=self.config.download_timeout)
+                response = self.client.get(validated_url, timeout=self.config.download_timeout)
                 response.raise_for_status()
 
-                # Return JSON for .json files, bytes for PDFs
                 if data_type in ["reviews", "parsed_pdfs"]:
                     return response.json()
-                else:  # PDFs
-                    return response.content
+                return response.content
 
-            except HTTPStatusError as e:
-                if e.response.status_code == 429:
-                    logger.warning(
-                        f"Rate limit hit for {data_type}/{paper_id}. "
-                        f"Retrying in {self.config.retry_delay_seconds} seconds..."
-                    )
-                    sleep(self.config.retry_delay_seconds)
-                else:
-                    logger.error(f"Failed to download {data_type}/{paper_id}: {e}")
+            except (HTTPStatusError, RequestError, JSONDecodeError) as e:
+                should_retry = self._handle_download_error(e, data_type, paper_id)
+                if not should_retry:
                     return None
-            except RequestError as e:
-                logger.error(f"Failed to download {data_type}/{paper_id}: {e}")
-                return None
-            except JSONDecodeError as e:
-                logger.error(f"Invalid JSON for {data_type}/{paper_id}: {e}")
-                return None
-        logger.error(f"Failed to download {data_type}/{paper_id} after {self.config.max_retries} attempts.")
+
+        logger.error(
+            f"Failed to download {data_type}/{paper_id} after {self.config.max_retries} attempts."
+        )
         return None
+
+    def _get_cache_filename(self, data_type: str, paper_id: str) -> str:
+        """Get cache filename for given data type and paper ID.
+
+        Args:
+            data_type: Type of data ('reviews', 'parsed_pdfs', 'pdfs').
+            paper_id: Paper identifier.
+
+        Returns:
+            Cache filename.
+        """
+        if data_type == "reviews":
+            return f"{paper_id}.json"
+        elif data_type == "parsed_pdfs":
+            return f"{paper_id}.pdf.json"
+        elif data_type == "pdfs":
+            return f"{paper_id}.pdf"
+        else:
+            logger.warning(f"Unsupported data_type: {data_type}")
+            return ""
+
+    def _save_file_data(
+        self,
+        file_data: bytes | dict[str, Any],
+        cache_file: Path,
+        data_type: str,
+    ) -> None:
+        """Save downloaded file data to cache.
+
+        Args:
+            file_data: Downloaded file content.
+            cache_file: Path to cache file.
+            data_type: Type of data being saved.
+        """
+        if data_type in ["reviews", "parsed_pdfs"]:
+            with open(cache_file, "w", encoding="utf-8") as f:
+                dump(file_data, f, indent=2)
+        elif isinstance(file_data, bytes):
+            with open(cache_file, "wb") as f:
+                f.write(file_data)
+
+    def _download_single_data_type(
+        self,
+        venue: str,
+        split: str,
+        data_type: str,
+        paper_id: str,
+        base_cache_path: Path,
+        errors: list[str],
+    ) -> bool:
+        """Download a single data type for a paper.
+
+        Args:
+            venue: Conference venue.
+            split: Data split.
+            data_type: Type of data to download.
+            paper_id: Paper identifier.
+            base_cache_path: Base cache directory path.
+            errors: List to append errors to.
+
+        Returns:
+            True if file was downloaded or already cached, False otherwise.
+        """
+        data_type_path = base_cache_path / data_type
+        data_type_path.mkdir(parents=True, exist_ok=True)
+
+        cache_filename = self._get_cache_filename(data_type, paper_id)
+        if not cache_filename:
+            return False
+
+        cache_file = data_type_path / cache_filename
+
+        if cache_file.exists():
+            logger.debug(f"{data_type}/{paper_id} already cached")
+            return True
+
+        file_data = self.download_file(venue, split, data_type, paper_id)
+        if file_data is None:
+            errors.append(f"Failed to download {data_type}/{paper_id}")
+            return False
+
+        self._save_file_data(file_data, cache_file, data_type)
+        logger.info(f"Cached {data_type}/{paper_id}")
+        return True
+
+    def _download_paper_all_types(
+        self,
+        venue: str,
+        split: str,
+        paper_id: str,
+        base_cache_path: Path,
+        errors: list[str],
+    ) -> bool:
+        """Download all data types for a single paper.
+
+        Args:
+            venue: Conference venue.
+            split: Data split.
+            paper_id: Paper identifier.
+            base_cache_path: Base cache directory path.
+            errors: List to append errors to.
+
+        Returns:
+            True if at least one file was downloaded successfully.
+        """
+        data_types = ["reviews", "parsed_pdfs", "pdfs"]
+        paper_downloaded = False
+
+        for data_type in data_types:
+            success = self._download_single_data_type(
+                venue, split, data_type, paper_id, base_cache_path, errors
+            )
+            if success and not paper_downloaded:
+                paper_downloaded = True
+
+        return paper_downloaded
 
     def download_venue_split(
         self,
@@ -322,14 +535,7 @@ class PeerReadDownloader:
         Returns:
             DownloadResult with download statistics.
         """
-        # Create base cache directory structure
         base_cache_path = self.cache_dir / venue / split
-
-        downloaded = 0
-        errors: list[str] = []
-        data_types = ["reviews", "parsed_pdfs", "pdfs"]
-
-        # Discover available papers from reviews (use as master list)
         available_paper_ids = self._discover_available_files(venue, split, "reviews")
 
         if not available_paper_ids:
@@ -342,7 +548,6 @@ class PeerReadDownloader:
                 error_message=error_msg,
             )
 
-        # Apply max_papers limit if specified
         max_papers = max_papers or self.config.max_papers_per_query
         paper_ids_to_download = available_paper_ids[:max_papers]
         logger.info(
@@ -350,54 +555,11 @@ class PeerReadDownloader:
             f"{len(available_paper_ids)} available papers across all data types"
         )
 
-        # Download all data types for each paper
+        downloaded = 0
+        errors: list[str] = []
+
         for paper_id in paper_ids_to_download:
-            paper_downloaded = False
-
-            for data_type in data_types:
-                # Create data type directory
-                data_type_path = base_cache_path / data_type
-                data_type_path.mkdir(parents=True, exist_ok=True)
-
-                # Determine cache filename based on data type
-                if data_type == "reviews":
-                    cache_filename = f"{paper_id}.json"
-                elif data_type == "parsed_pdfs":
-                    cache_filename = f"{paper_id}.pdf.json"
-                elif data_type == "pdfs":
-                    cache_filename = f"{paper_id}.pdf"
-                else:
-                    # This case should not be reached if data_types list is correct
-                    logger.warning(f"Unsupported data_type: {data_type}")
-                    continue
-
-                cache_file = data_type_path / cache_filename
-
-                if cache_file.exists():
-                    logger.debug(f"{data_type}/{paper_id} already cached")
-                    if not paper_downloaded:
-                        paper_downloaded = True
-                    continue
-
-                # Download the file
-                file_data = self.download_file(venue, split, data_type, paper_id)
-                if file_data is not None:
-                    if data_type in ["reviews", "parsed_pdfs"]:
-                        # JSON data
-                        with open(cache_file, "w", encoding="utf-8") as f:
-                            dump(file_data, f, indent=2)
-                    elif isinstance(file_data, bytes):
-                        # PDF binary data
-                        with open(cache_file, "wb") as f:
-                            f.write(file_data)
-
-                    logger.info(f"Cached {data_type}/{paper_id}")
-                    if not paper_downloaded:
-                        paper_downloaded = True
-                else:
-                    errors.append(f"Failed to download {data_type}/{paper_id}")
-
-            if paper_downloaded:
+            if self._download_paper_all_types(venue, split, paper_id, base_cache_path, errors):
                 downloaded += 1
 
         success = downloaded > 0
@@ -424,6 +586,65 @@ class PeerReadLoader:
         # Resolve cache directory relative to project root
         self.cache_dir = resolve_project_path(self.config.cache_directory)
 
+    def _extract_text_from_parsed_data(self, parsed_data: dict[str, Any]) -> str:
+        """Extract text content from parsed PDF data.
+
+        Args:
+            parsed_data: Parsed PDF JSON data.
+
+        Returns:
+            Concatenated text from all sections.
+        """
+        full_text: list[str] = []
+        sections = parsed_data.get("metadata", {}).get("sections", [])
+        for section in sections:
+            if "text" in section:
+                full_text.append(section["text"])
+        return "\n".join(full_text).strip()
+
+    def _load_parsed_file(self, parsed_file: Path) -> str | None:
+        """Load and parse a single parsed PDF file.
+
+        Args:
+            parsed_file: Path to parsed PDF file.
+
+        Returns:
+            Extracted text content, or None if loading fails.
+        """
+        try:
+            with open(parsed_file, encoding="utf-8") as f:
+                parsed_data = load(f)
+            return self._extract_text_from_parsed_data(parsed_data)
+        except Exception as e:
+            logger.warning(f"Failed to load/parse {parsed_file}: {e}")
+            return None
+
+    def _find_parsed_pdf_in_split(
+        self,
+        venue: str,
+        split: str,
+        paper_id: str,
+    ) -> str | None:
+        """Find and load parsed PDF content in a specific venue/split.
+
+        Args:
+            venue: Conference venue.
+            split: Data split.
+            paper_id: Paper identifier.
+
+        Returns:
+            Extracted text content, or None if not found.
+        """
+        parsed_pdfs_path = self.cache_dir / venue / split / "parsed_pdfs"
+        if not parsed_pdfs_path.exists():
+            return None
+
+        parsed_files = sorted(parsed_pdfs_path.glob(f"{paper_id}.pdf.json"), reverse=True)
+        if not parsed_files:
+            return None
+
+        return self._load_parsed_file(parsed_files[0])
+
     def load_parsed_pdf_content(self, paper_id: str) -> str | None:
         """Load the text content from the parsed PDF for a given paper ID.
 
@@ -438,26 +659,9 @@ class PeerReadLoader:
         """
         for venue in self.config.venues:
             for split in self.config.splits:
-                parsed_pdfs_path = self.cache_dir / venue / split / "parsed_pdfs"
-                if parsed_pdfs_path.exists():
-                    # Find all parsed PDF files for this paper_id
-                    # Assuming filenames are like 'PAPER_ID.pdf.json'
-                    # If multiple revisions, we'll just take the first one found for now
-                    parsed_files = sorted(parsed_pdfs_path.glob(f"{paper_id}.pdf.json"), reverse=True)
-                    if parsed_files:
-                        latest_parsed_file = parsed_files[0]
-                        try:
-                            with open(latest_parsed_file, encoding="utf-8") as f:
-                                parsed_data = load(f)
-
-                            # Extract and concatenate text from all sections
-                            full_text: list[str] = []
-                            for section in parsed_data.get("metadata", {}).get("sections", []):
-                                if "text" in section:
-                                    full_text.append(section["text"])
-                            return "\n".join(full_text).strip()
-                        except Exception as e:
-                            logger.warning(f"Failed to load/parse {latest_parsed_file}: {e}")
+                content = self._find_parsed_pdf_in_split(venue, split, paper_id)
+                if content:
+                    return content
         return None
 
     def get_raw_pdf_path(self, paper_id: str) -> str | None:
@@ -476,6 +680,36 @@ class PeerReadLoader:
                     return str(pdf_path)
         return None
 
+    def _create_review_from_dict(
+        self, review_data: dict[str, Any], paper_id: str
+    ) -> PeerReadReview:
+        """Create PeerReadReview from dictionary with optional field handling.
+
+        Args:
+            review_data: Review dictionary from PeerRead dataset.
+            paper_id: Paper identifier for logging.
+
+        Returns:
+            Validated PeerReadReview model.
+        """
+        # Reason: Papers 304-308, 330 lack IMPACT and other fields.
+        # Aggregate missing optional fields into one log line to reduce noise.
+        missing = [
+            str(field_info.validation_alias)
+            for _, field_info in PeerReadReview.model_fields.items()
+            if field_info.validation_alias
+            and field_info.validation_alias not in review_data
+            and field_info.default == "UNKNOWN"
+        ]
+        if missing:
+            logger.debug(
+                f"Paper {paper_id}: {len(missing)} optional fields missing"
+                f" ({', '.join(missing)}), using UNKNOWN"
+            )
+
+        # Pydantic model handles alias mapping and defaults
+        return PeerReadReview.model_validate(review_data)
+
     def _validate_papers(
         self,
         papers_data: list[dict[str, Any]],
@@ -493,26 +727,14 @@ class PeerReadLoader:
         for paper_data in papers_data:
             try:
                 # Convert from PeerRead format to our model format
-                reviews = [
-                    PeerReadReview(
-                        impact=r["IMPACT"],
-                        substance=r["SUBSTANCE"],
-                        appropriateness=r["APPROPRIATENESS"],
-                        meaningful_comparison=r["MEANINGFUL_COMPARISON"],
-                        presentation_format=r["PRESENTATION_FORMAT"],
-                        comments=r["comments"],
-                        soundness_correctness=r["SOUNDNESS_CORRECTNESS"],
-                        originality=r["ORIGINALITY"],
-                        recommendation=r["RECOMMENDATION"],
-                        clarity=r["CLARITY"],
-                        reviewer_confidence=r["REVIEWER_CONFIDENCE"],
-                        is_meta_review=r.get("is_meta_review"),
-                    )
+                paper_id = str(paper_data.get("id", "unknown"))
+                reviews: list[PeerReadReview] = [
+                    self._create_review_from_dict(r, paper_id)
                     for r in paper_data.get("reviews", [])
                 ]
 
                 paper = PeerReadPaper(
-                    paper_id=str(paper_data["id"]),
+                    paper_id=paper_id,
                     title=paper_data["title"],
                     abstract=paper_data["abstract"],
                     reviews=reviews,
@@ -579,6 +801,25 @@ class PeerReadLoader:
 
         return self._validate_papers(papers_data)
 
+    def _load_paper_from_path(self, cache_path: Path, paper_id: str) -> PeerReadPaper | None:
+        """Load and validate a paper from a specific cache path.
+
+        Args:
+            cache_path: Path to the cached paper JSON file.
+            paper_id: Paper identifier for logging.
+
+        Returns:
+            Validated PeerReadPaper, or None if loading fails.
+        """
+        try:
+            with open(cache_path, encoding="utf-8") as f:
+                data: dict[str, Any] = load(f)
+            papers = self._validate_papers([data])
+            return papers[0] if papers else None
+        except Exception as e:
+            logger.warning(f"Failed to load paper {paper_id}: {e}")
+            return None
+
     def get_paper_by_id(self, paper_id: str) -> PeerReadPaper | None:
         """Get a specific paper by ID.
 
@@ -588,19 +829,16 @@ class PeerReadLoader:
         Returns:
             PeerReadPaper if found, None otherwise.
         """
-        # Search across all venues and splits in reviews directory
         for venue in self.config.venues:
             for split in self.config.splits:
                 cache_path = self.cache_dir / venue / split / "reviews" / f"{paper_id}.json"
-                if cache_path.exists():
-                    try:
-                        with open(cache_path, encoding="utf-8") as f:
-                            data: dict[str, Any] = load(f)
-                        papers = self._validate_papers([data])
-                        return papers[0] if papers else None
-                    except Exception as e:
-                        logger.warning(f"Failed to load paper {paper_id}: {e}")
-                        continue
+                if not cache_path.exists():
+                    continue
+
+                paper = self._load_paper_from_path(cache_path, paper_id)
+                if paper:
+                    return paper
+
         return None
 
     def query_papers(

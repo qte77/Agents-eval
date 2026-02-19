@@ -11,11 +11,11 @@ features:
   - cross-references
   - relationship-explanations
   - clustering-by-themes
-papers_count: 253+
-coverage_period: 2020-10 to 2026-01
+papers_count: 260+
+coverage_period: 2020-10 to 2026-02
 created: 2025-08-24
-updated: 2026-01-13
-version: 3.1.1
+updated: 2026-02-15
+version: 3.2.0
 ---
 
 ## Overview
@@ -32,7 +32,7 @@ This document provides a comprehensive, curated collection of research papers on
 
 ### Document Features
 
-- 250+ papers covering 2020-2026 research
+- 260+ papers covering 2020-2026 research
 - 14 thematic tags for categorization
 - Cross-references with relationship explanations
 - Chronological organization preserving research timeline
@@ -74,22 +74,24 @@ This document provides a comprehensive, curated collection of research papers on
 - Multi-agent: 2503.01935 (MultiAgentBench), 2512.08296 (scaling agent systems), 2507.05178 (CREW)
 - Safety: 2402.05044 (SALAD-Bench ACL 2024), 2412.14470 (Agent-SafetyBench), 2412.13178 (SafeAgentBench), 2410.09024 (AgentHarm ICLR 2025)
 - Recent 2025-2026: 2510.02271 (InfoMosaic-Bench), 2510.02190 (Deep Research), 2510.01670 (BLIND-ACT), 2512.12791 (assessment framework), TEAM-PHI (de-identification), Behavioral Fingerprinting (LLM profiles), Strategic Reasoning (digital twin)
+- Observability/Production: 2601.00481 (MAESTRO), 2602.10133 (AgentTrace), 2512.04123 (measuring agents), 2601.19583 (architecture-aware metrics), 2512.18311 (monitorability)
 - Surveys: 2503.16416 (evaluation survey), 2507.21504 (LLM agents survey), 2411.13768 (evaluation-driven), 2501.11067 (IntellAgent)
 
 **Architecture & System Design** `[ARCH]`:
 
 - Foundation: 2308.11432 (foundational survey), 2404.11584 (architecture landscape), 2510.09244 (fundamentals)
-- Frameworks: 2508.10146 (agentic AI frameworks), 2501.10114 (infrastructure), 2601.01743 (AI agent systems)
+- Frameworks: 2508.10146 (agentic AI frameworks), 2501.10114 (infrastructure), 2601.01743 (AI agent systems), 2602.10479 (goal-directed systems)
 - Surveys: 2510.25445 (comprehensive survey), 2503.23037 (agentic LLMs), 2506.01438 (architectural frameworks)
 - Governance: 2508.03858 (governance protocol), 2503.00237 (systems theory)
 
 **Safety & Risk Management** `[SAFETY]`:
 
 - Constitutional AI: 2212.08073 (foundational), 2406.07814 (collective), 2501.17112 (inverse)
-- Core frameworks: 2302.10329 (harms analysis), 2506.04133 (TRiSM), 2408.02205 (guardrails), 2507.06134 (OpenAgentSafety)
+- Core frameworks: 2302.10329 (harms analysis), 2506.04133 (TRiSM), 2408.02205 (guardrails), 2507.06134 (OpenAgentSafety), MITRE ATLAS, OWASP MAESTRO
+- Standards: NIST AI RMF 1.0, ISO/IEC 42001 (AI management system), ISO/IEC 23894 (AI risk management)
 - Security: 2510.23883 (agentic AI security), 2512.06659 (cybersecurity evolution), BadScientist (AI publishing vulnerabilities)
 - Safety benchmarks: 2402.05044 (SALAD-Bench ACL 2024), 2412.14470 (Agent-SafetyBench), 2412.13178 (SafeAgentBench), 2410.09024 (AgentHarm ICLR 2025)
-- Monitoring: 2507.11473 (CoT monitorability), 2512.20798 (constraint violations), 2601.00911 (privacy-preserving)
+- Monitoring: 2507.11473 (CoT monitorability), 2512.18311 (monitoring monitorability), 2512.20798 (constraint violations), 2601.00911 (privacy-preserving)
 - Reports: 2510.13653 (AI safety first update), 2511.19863 (AI safety second update)
 - Recent 2025: 2510.02286 (adversarial dialogue), 2510.01586 (AdvEvo-MARL), 2510.01569 (InvThink), 2510.02204 (reasoning-execution gaps)
 - Multi-agent: 2503.13657 (MAS failures), 2402.04247 (safeguarding over autonomy), Hierarchical Delegated Oversight (scalable alignment)
@@ -111,7 +113,8 @@ This document provides a comprehensive, curated collection of research papers on
 - Analysis: 2503.13657 (failure analysis), 2505.21298 (LLMs miss the mark), 2511.02303 (lazy to deliberation)
 - Applications: 2507.02097 (recommender systems), 2512.20618 (LongVideoAgent), 2512.16214 (PDE-Agent), Echo (pharmacovigilance), Drug Discovery (Alzheimer's), PsySpace (space missions), Evolutionary Boids (agent societies)
 - Oversight: Hierarchical Delegated Oversight (scalable alignment)
-- Recent 2026: 2601.03328 (design patterns evaluation)
+- Observability: 2602.10133 (AgentTrace), 2601.00481 (MAESTRO)
+- Recent 2026: 2601.03328 (design patterns evaluation), 2602.10479 (goal-directed systems)
 
 **Planning & Reasoning** `[PLAN]`:
 
@@ -182,6 +185,27 @@ Based on current gaps and transformative potential, three areas warrant immediat
 **2. Persistent Contextual Memory** - Current agents lack genuine episodic memory across sessions. Developing memory systems that maintain context, relationships, and learned preferences over months or years is critical for practical deployment and user trust.
 
 **3. Robust Human-Agent Teaming** - Most current work treats humans as either supervisors or users. Research on agents as true collaborators—with theory-of-mind, explanation capabilities, and dynamic role adaptation—is essential for high-stakes domains like healthcare, research, and decision-making.
+
+## 2026-02
+
+- [[2602.10479] From Prompt-Response to Goal-Directed Systems: The Evolution of Agentic AI Software Architecture](https://arxiv.org/abs/2602.10479) `[ARCH]` `[MAS]` `[SURVEY]` `cs.SE` `cs.AI`
+  - Reference architecture for production-grade LLM agents, taxonomy of multi-agent topologies with failure modes, enterprise hardening checklist covering governance, observability, and reproducibility
+  - Cross-ref: 2601.01743 (agent system architectures), 2601.03328 (MAS design patterns), 2508.10146 (agentic frameworks)
+- [[2602.10133] AgentTrace: A Structured Logging Framework for Agent System Observability](https://arxiv.org/abs/2602.10133) `[COMP]` `[EVAL]` `[MAS]` `cs.AI` `cs.SE`
+  - First open standard for structured agent logging via schema-based protocol spanning cognitive, operational, and contextual traces; enables fine-grained debugging, failure attribution, and transparent governance
+  - Cross-ref: 2601.00481 (MAESTRO evaluation suite), 2512.04123 (measuring agents in production), 2508.02121 (AgentOps survey)
+- [[2601.19583] Toward Architecture-Aware Evaluation Metrics for LLM Agents](https://arxiv.org/abs/2601.19583) `[EVAL]` `[ARCH]` `cs.SE` `cs.AI`
+  - Links agent architectural components (planners, memory, tool routers) to observable behaviors and appropriate evaluation metrics; enables targeted and actionable evaluation
+  - Cross-ref: 2512.12791 (assessment framework), 2503.16416 (evaluation survey), 2507.21504 (LLM agents survey)
+- [[2601.00481] MAESTRO: Multi-Agent Evaluation Suite for Testing, Reliability, and Observability](https://arxiv.org/abs/2601.00481) `[EVAL]` `[MAS]` `[BENCH]` `[COMP]` `cs.MA` `cs.AI`
+  - Standardizes MAS configuration and exports framework-agnostic execution traces with system-level signals (latency, cost, failures); 12 representative MAS across popular frameworks show architecture is the dominant driver of resource profiles and cost-latency-accuracy trade-offs
+  - Cross-ref: 2602.10133 (AgentTrace), 2512.04123 (measuring agents), 2508.02121 (AgentOps survey)
+- [[2512.18311] Monitoring Monitorability](https://arxiv.org/abs/2512.18311) `[SAFETY]` `[EVAL]` `[COMP]` `cs.AI` `cs.LG`
+  - Proposes monitorability metric and evaluation archetypes (intervention, process, outcome-property) for chain-of-thought monitoring; finds longer CoTs are more monitorable and smaller models at higher reasoning effort can yield higher monitorability
+  - Cross-ref: 2512.12791 (assessment framework), 2601.01743 (agent architectures survey)
+- [[2512.04123] Measuring Agents in Production](https://arxiv.org/abs/2512.04123) `[EVAL]` `[COMP]` `cs.SE` `cs.AI`
+  - Interview-based study (306 survey responses, 20 in-depth interviews across 26 domains) arguing agent evaluation must move beyond correctness metrics to assess reliability under varying autonomy levels
+  - Cross-ref: 2512.12791 (assessment framework), 2601.00481 (MAESTRO), 2503.16416 (evaluation survey)
 
 ## 2026-01
 
@@ -1109,3 +1133,43 @@ Industry blog posts and engineering articles providing implementation insights a
   - Best practice: Volume over quality; encourage reasoning before scoring
   - Bloom correlation: Claude Opus 4.1 (0.86), Sonnet 4.5 (0.75) with human scores
   - Cross-ref: Bloom (alignment.anthropic.com), 2503.16416 (evaluation survey)
+- [Pydantic Logfire](https://logfire.pydantic.dev/) - Pydantic (2025-2026)
+  - First-party OpenTelemetry-based observability for PydanticAI agents via `logfire.instrument_pydantic_ai()`
+  - Three instrumentation paths: Logfire cloud, raw OpenTelemetry with custom `TracerProvider`, or hybrid routing to alternative backends
+  - Multi-language SDKs (Python, TypeScript, Rust); follows OpenTelemetry GenAI Semantic Conventions
+  - Cross-ref: Pydantic Evals (above), 2602.10133 (AgentTrace), 2601.00481 (MAESTRO)
+- [How to Build a Production Agentic App, the Pydantic Way](https://pydantic.dev/articles/building-agentic-application) - Pydantic (2026)
+  - End-to-end guide combining Pydantic AI (agents), Logfire (observability), Pydantic Evals (evaluation), and FastAPI (serving)
+  - Demonstrates full agentic stack: agent → instrument → evaluate → deploy pattern
+  - Cross-ref: Pydantic Evals (above), Pydantic Logfire (above)
+- [OpenTelemetry AI Agent Observability Blog](https://opentelemetry.io/blog/2025/ai-agent-observability/) - OpenTelemetry (2025)
+  - Establishes need for standardized agent observability; covers OpenTelemetry GenAI semantic conventions for agent tracing
+  - Cross-ref: 2508.02121 (AgentOps survey), 2602.10133 (AgentTrace)
+- [OTel GenAI Agentic Systems Semantic Conventions Proposal](https://github.com/open-telemetry/semantic-conventions/issues/2664) - OpenTelemetry (2025)
+  - Defines attributes for tracing tasks, actions, agents, teams, artifacts, and memory in OpenTelemetry
+  - Standardizes telemetry across complex AI workflows for traceability, reproducibility, and analysis
+  - Cross-ref: 2601.00481 (MAESTRO), 2602.10133 (AgentTrace)
+- [otel-tui](https://github.com/ymtdzzz/otel-tui) - ymtdzzz (2025)
+  - Terminal-based OpenTelemetry trace viewer; single binary accepting OTLP on ports 4317/4318
+  - Zero-infrastructure local debugging; referenced in PydanticAI docs as alternative local backend
+  - Cross-ref: Pydantic Logfire (above), Arize Phoenix (trace_observe_methods.md)
+- [MITRE ATLAS](https://atlas.mitre.org/) - MITRE (2021-2026)
+  - Adversarial Threat Landscape for Artificial-Intelligence Systems; ATT&CK-style framework for AI/ML threats
+  - 2026 updates add agentic AI attack surfaces: runtime decision manipulation, credential abuse, tool misuse, AI Service API (AML.T0096)
+  - Cross-ref: 2510.23883 (agentic AI security), 2506.04133 (TRiSM), OWASP MAESTRO (below)
+- [OWASP MAESTRO Framework](https://genai.owasp.org/) - OWASP GenAI Security Project (2025)
+  - Multi-Agent Environment, Security, Threat, Risk, and Outcome; 7-layer threat modeling for multi-agent systems
+  - Applies OWASP ASI threat taxonomy to MAS: Tool Misuse, Intent Manipulation, Privilege Compromise; companion to MITRE ATLAS
+  - Cross-ref: MITRE ATLAS (above), 2503.13657 (MAS failures), 2601.00911 (privacy-preserving agents)
+- [NIST AI Risk Management Framework (AI RMF 1.0)](https://www.nist.gov/itl/ai-risk-management-framework) - NIST (2023)
+  - Four core functions: Govern, Map, Measure, Manage for trustworthy AI lifecycle risk management
+  - Flexible, voluntary framework; official crosswalk to ISO/IEC 42001 available from NIST
+  - Cross-ref: ISO 42001 (below), ISO 23894 (below), 2506.04133 (TRiSM)
+- [ISO/IEC 42001:2023](https://www.iso.org/standard/42001) - ISO/IEC (2023)
+  - World's first AI management system standard; requirements for establishing, implementing, and maintaining an AIMS
+  - Covers ethical considerations, transparency, continuous learning, auditability, and data handling
+  - Cross-ref: NIST AI RMF (above), ISO 23894 (below)
+- [ISO/IEC 23894:2023](https://www.iso.org/standard/77304.html) - ISO/IEC (2023)
+  - AI risk management guidance; provides principles and processes for managing risk specific to AI systems
+  - Complements ISO 42001 (management system) with focused risk assessment and treatment methodology
+  - Cross-ref: ISO 42001 (above), NIST AI RMF (above)

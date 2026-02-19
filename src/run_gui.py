@@ -17,52 +17,92 @@ Functions:
 
 from asyncio import run
 from pathlib import Path
-from sys import path
 
-# rebase project root path to avoid import errors
-project_root = Path(__file__).parent.parent
-path.insert(0, str(project_root))
+import streamlit as st
 
-from app.config.config_app import (  # noqa: E402
+from app.common.settings import CommonSettings
+from app.config.config_app import (
     CHAT_CONFIG_FILE,
     CHAT_DEFAULT_PROVIDER,
 )
-from app.data_models.app_models import ChatConfig  # noqa: E402
-from app.utils.load_configs import load_config  # noqa: E402
-from app.utils.log import logger  # noqa: E402
-from gui.components.sidebar import render_sidebar  # noqa: E402
-from gui.config.config import APP_CONFIG_PATH  # noqa: E402
-from gui.config.styling import add_custom_styling  # noqa: E402
-from gui.config.text import PAGE_TITLE  # noqa: E402
-from gui.pages.home import render_home  # noqa: E402
-from gui.pages.prompts import render_prompts  # noqa: E402
-from gui.pages.run_app import render_app  # noqa: E402
-from gui.pages.settings import render_settings  # noqa: E402
+from app.data_models.app_models import ChatConfig
+from app.judge.settings import JudgeSettings
+from app.utils.load_configs import load_config
+from app.utils.log import logger
+from gui.components.sidebar import render_sidebar
+from gui.config.config import APP_CONFIG_PATH
+from gui.config.styling import add_custom_styling
+from gui.config.text import PAGE_TITLE
+from gui.pages.agent_graph import render_agent_graph
+from gui.pages.evaluation import render_evaluation
+from gui.pages.home import render_home
+from gui.pages.prompts import render_prompts
+from gui.pages.run_app import render_app
+from gui.pages.settings import render_settings
 
 # TODO create sidebar tabs, move settings to page,
 # set readme.md as home, separate prompts into page
 
 chat_config_file = Path(__file__).parent / APP_CONFIG_PATH / CHAT_CONFIG_FILE
 chat_config = load_config(chat_config_file, ChatConfig)
+common_settings = CommonSettings()
+judge_settings = JudgeSettings()
 provider = CHAT_DEFAULT_PROVIDER
 logger.info(f"Default provider in GUI: {CHAT_DEFAULT_PROVIDER}")
 
 
+def get_session_state_defaults() -> dict[str, str | bool]:
+    """
+    Get default values for session state.
+
+    Returns:
+        Dict with default provider and sub-agent configuration flags
+    """
+    return {
+        "chat_provider": CHAT_DEFAULT_PROVIDER,
+        "include_researcher": False,
+        "include_analyst": False,
+        "include_synthesiser": False,
+    }
+
+
+def initialize_session_state() -> None:
+    """
+    Initialize session state with default values if not already set.
+
+    Uses st.session_state to persist user selections across page navigation.
+    """
+    defaults = get_session_state_defaults()
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+
 async def main():
+    # Initialize session state before rendering any pages
+    initialize_session_state()
+
     add_custom_styling(PAGE_TITLE)
     selected_page = render_sidebar(PAGE_TITLE)
 
     if selected_page == "Home":
         render_home()
     elif selected_page == "Settings":
-        # TODO temp save settings to be used in gui
-        provider = render_settings(chat_config)
-        logger.info(f"Page 'Settings' provider: {provider}")
+        # Display actual settings from pydantic-settings classes
+        render_settings(common_settings, judge_settings)
     elif selected_page == "Prompts":
         render_prompts(chat_config)
     elif selected_page == "App":
         logger.info(f"Page 'App' provider: {CHAT_DEFAULT_PROVIDER}")
         await render_app(CHAT_DEFAULT_PROVIDER, chat_config_file)
+    elif selected_page == "Evaluation Results":
+        # Pass composite result from session state if available
+        composite_result = st.session_state.get("execution_composite_result", None)
+        render_evaluation(composite_result)
+    elif selected_page == "Agent Graph":
+        # Pass graph from session state if available
+        graph = st.session_state.get("execution_graph", None)
+        render_agent_graph(graph)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ This module provides agent tools that enable the manager agent to interact
 with the PeerRead dataset for paper retrieval, querying, and review evaluation.
 """
 
+import time
 from json import dump
 from pathlib import Path
 
@@ -20,8 +21,10 @@ from app.data_models.peerread_models import (
 )
 from app.data_utils.datasets_peerread import PeerReadLoader, load_peerread_config
 from app.data_utils.review_persistence import ReviewPersistence
+from app.judge.trace_processors import get_trace_collector
 from app.utils.log import logger
 from app.utils.paths import get_review_template_path
+from app.utils.prompt_sanitization import sanitize_paper_abstract, sanitize_paper_title
 
 
 def read_paper_pdf(
@@ -64,14 +67,15 @@ def read_paper_pdf(
         raise ValueError(f"Failed to read PDF: {str(e)}")
 
 
-def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
-    """Add PeerRead dataset tools to the manager agent.
+def add_peerread_tools_to_agent(agent: Agent[None, BaseModel], agent_id: str = "manager"):
+    """Add PeerRead dataset tools to an agent.
 
     Args:
-        manager_agent: The manager agent to which PeerRead tools will be added.
+        agent: The agent to which PeerRead tools will be added.
+        agent_id: The agent identifier for tracing (default: "manager").
     """
 
-    @manager_agent.tool
+    @agent.tool
     async def get_peerread_paper(ctx: RunContext[None], paper_id: str) -> PeerReadPaper:  # type: ignore[reportUnusedFunction]
         """Get a specific paper from the PeerRead dataset.
 
@@ -81,6 +85,10 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         Returns:
             PeerReadPaper with title, abstract, and reviews.
         """
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
         try:
             config = load_peerread_config()
             loader = PeerReadLoader(config)
@@ -90,13 +98,23 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
                 raise ValueError(f"Paper {paper_id} not found in PeerRead dataset")
 
             logger.info(f"Retrieved paper {paper_id}: {paper.title[:50]}...")
+            success = True
             return paper
 
         except Exception as e:
             logger.error(f"Error retrieving paper: {e}")
             raise ValueError(f"Failed to retrieve paper: {str(e)}")
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id=agent_id,
+                tool_name="get_peerread_paper",
+                success=success,
+                duration=duration,
+                context=f"paper_id={paper_id}",
+            )
 
-    @manager_agent.tool
+    @agent.tool
     async def query_peerread_papers(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], venue: str = "", min_reviews: int = 1
     ) -> list[PeerReadPaper]:
@@ -109,6 +127,10 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         Returns:
             List of PeerReadPaper objects matching the criteria.
         """
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
         try:
             config = load_peerread_config()
             loader = PeerReadLoader(config)
@@ -121,13 +143,23 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
             )
 
             logger.info(f"Found {len(papers)} papers matching criteria")
+            success = True
             return papers
 
         except Exception as e:
             logger.error(f"Error querying papers: {e}")
             raise ValueError(f"Failed to query papers: {str(e)}")
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id=agent_id,
+                tool_name="query_peerread_papers",
+                success=success,
+                duration=duration,
+                context=f"venue={venue},min_reviews={min_reviews}",
+            )
 
-    @manager_agent.tool
+    @agent.tool
     async def read_paper_pdf_tool(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None],
         pdf_path: str,
@@ -143,18 +175,160 @@ def add_peerread_tools_to_manager(manager_agent: Agent[None, BaseModel]):
         Returns:
             str: Extracted text content from the entire PDF in Markdown format.
         """
-        return read_paper_pdf(ctx, pdf_path)
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
+        try:
+            result = read_paper_pdf(ctx, pdf_path)
+            success = True
+            return result
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id=agent_id,
+                tool_name="read_paper_pdf_tool",
+                success=success,
+                duration=duration,
+                context=f"pdf_path={pdf_path}",
+            )
 
 
-def add_peerread_review_tools_to_manager(manager_agent: Agent[None, BaseModel], max_content_length: int = 15000):
-    """Add PeerRead review generation and persistence tools to the manager agent.
+def _truncate_paper_content(abstract: str, body: str, max_length: int) -> str:
+    """Truncate paper content to fit within max_length while preserving abstract.
 
     Args:
-        manager_agent: The manager agent to which review tools will be added.
+        abstract: The paper abstract (always preserved).
+        body: The full body content to be truncated if necessary.
+        max_length: Maximum total character length.
+
+    Returns:
+        str: Content with abstract preserved and body truncated if needed.
+    """
+    # Reason: Always preserve abstract as it contains critical paper summary
+    abstract_section = f"Abstract:\n{abstract}\n\n"
+    full_content = abstract_section + body
+
+    if len(full_content) <= max_length:
+        return full_content
+
+    # Calculate available space for body after abstract
+    available_for_body = max_length - len(abstract_section) - len("\n[TRUNCATED]")
+
+    if available_for_body <= 0:
+        logger.warning(
+            f"Content truncation: abstract alone exceeds max_length. "
+            f"Original: {len(full_content)} chars, Limit: {max_length} chars"
+        )
+        return abstract_section + "[TRUNCATED]"
+
+    truncated_body = body[:available_for_body]
+    result = abstract_section + truncated_body + "\n[TRUNCATED]"
+
+    logger.warning(
+        f"Content truncated: {len(full_content)} chars -> {len(result)} chars (limit: {max_length})"
+    )
+
+    return result
+
+
+def _load_paper_content_with_fallback(
+    ctx: RunContext[None],
+    loader: PeerReadLoader,
+    paper_id: str,
+    paper_abstract: str,
+) -> str:
+    """Load paper content with PDF fallback strategy."""
+    paper_content = loader.load_parsed_pdf_content(paper_id)
+    if paper_content:
+        return paper_content
+
+    logger.warning(f"No parsed PDF content found for paper {paper_id}. Attempting to read raw PDF.")
+    raw_pdf_path = loader.get_raw_pdf_path(paper_id)
+
+    if not raw_pdf_path:
+        logger.warning(f"No raw PDF found for paper {paper_id}. Using abstract as fallback.")
+        return paper_abstract
+
+    try:
+        paper_content = read_paper_pdf(ctx, raw_pdf_path)
+        logger.info(f"Successfully read raw PDF for paper {paper_id}.")
+        return paper_content
+    except Exception as e:
+        logger.warning(
+            f"Failed to read raw PDF for paper {paper_id}: {e}. Using abstract as fallback."
+        )
+        return paper_abstract
+
+
+def _load_and_format_template(
+    paper_title: str,
+    paper_abstract: str,
+    paper_content: str,
+    tone: str,
+    review_focus: str,
+    max_content_length: int,
+) -> str:
+    """Load review template and format with paper information.
+
+    Args:
+        paper_title: Title of the paper.
+        paper_abstract: Abstract of the paper.
+        paper_content: Full body content of the paper.
+        tone: Review tone.
+        review_focus: Review focus type.
+        max_content_length: Maximum content length for truncation.
+
+    Returns:
+        str: Formatted review template with truncated content if needed.
+    """
+    template_path = get_review_template_path()
+
+    try:
+        with open(template_path, encoding="utf-8") as f:
+            template_content = f.read()
+
+        # Truncate paper content before formatting into template
+        truncated_content = _truncate_paper_content(
+            paper_abstract, paper_content, max_content_length
+        )
+
+        # Sanitize user-controlled content before template formatting
+        # This prevents format string injection attacks while preserving template compatibility
+        sanitized_title = sanitize_paper_title(paper_title)
+        sanitized_abstract = sanitize_paper_abstract(paper_abstract)
+
+        # Safe to use .format() here since inputs are sanitized and wrapped in XML delimiters
+        # Template uses {variable} placeholders which is the standard Python format
+        return template_content.format(
+            paper_title=sanitized_title,
+            paper_abstract=sanitized_abstract,
+            paper_full_content=truncated_content,
+            tone=tone,
+            review_focus=review_focus,
+        )
+    except FileNotFoundError:
+        logger.error(f"Review template file not found at {template_path}")
+        raise ValueError(f"Review template configuration file missing: {template_path}")
+    except Exception as e:
+        logger.error(f"Error loading review template: {e}")
+        raise ValueError(f"Failed to load review template: {str(e)}")
+
+
+def add_peerread_review_tools_to_agent(
+    agent: Agent[None, BaseModel],
+    agent_id: str = "manager",
+    max_content_length: int = 15000,
+):
+    """Add PeerRead review generation and persistence tools to an agent.
+
+    Args:
+        agent: The agent to which review tools will be added.
+        agent_id: The agent identifier for tracing (default: "manager").
         max_content_length: The maximum number of characters to include in the prompt.
     """
 
-    @manager_agent.tool
+    @agent.tool
     async def generate_paper_review_content_from_template(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None],
         paper_id: str,
@@ -176,6 +350,10 @@ def add_peerread_review_tools_to_manager(manager_agent: Agent[None, BaseModel], 
             str: Review template with paper information and placeholder sections
                  that need to be manually completed.
         """
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
         try:
             config = load_peerread_config()
             loader = PeerReadLoader(config)
@@ -184,56 +362,30 @@ def add_peerread_review_tools_to_manager(manager_agent: Agent[None, BaseModel], 
             if not paper:
                 raise ValueError(f"Paper {paper_id} not found in PeerRead dataset")
 
-            # Load paper content for the template
-            paper_content_for_template = loader.load_parsed_pdf_content(paper_id)
+            paper_content = _load_paper_content_with_fallback(ctx, loader, paper_id, paper.abstract)
 
-            if not paper_content_for_template:
-                logger.warning(f"No parsed PDF content found for paper {paper_id}. Attempting to read raw PDF.")
-                raw_pdf_path = loader.get_raw_pdf_path(paper_id)
-                if raw_pdf_path:
-                    try:
-                        paper_content_for_template = read_paper_pdf(ctx, raw_pdf_path)
-                        logger.info(f"Successfully read raw PDF for paper {paper_id}.")
-                    except Exception as e:
-                        logger.warning(f"Failed to read raw PDF for paper {paper_id}: {e}. Using abstract as fallback.")
-                        paper_content_for_template = paper.abstract
-                else:
-                    logger.warning(f"No raw PDF found for paper {paper_id}. Using abstract as fallback.")
-                    paper_content_for_template = paper.abstract
-
-            # Use centralized path resolution for template
-            template_path = get_review_template_path()
-
-            try:
-                with open(template_path, encoding="utf-8") as f:
-                    template_content = f.read()
-                # TODO max content length handling for models
-                # full_input_contenxt_len > max_content_length
-
-                # Format the template with paper information including full content
-                review_template = template_content.format(
-                    paper_title=paper.title,
-                    paper_abstract=paper.abstract,
-                    paper_full_content=paper_content_for_template,
-                    tone=tone,
-                    review_focus=review_focus,
-                )
-
-            except FileNotFoundError:
-                logger.error(f"Review template file not found at {template_path}")
-                raise ValueError(f"Review template configuration file missing: {template_path}")
-            except Exception as e:
-                logger.error(f"Error loading review template: {e}")
-                raise ValueError(f"Failed to load review template: {str(e)}")
+            review_template = _load_and_format_template(
+                paper.title, paper.abstract, paper_content, tone, review_focus, max_content_length
+            )
 
             logger.info(f"Created review template for paper {paper_id} (NOT a real review)")
+            success = True
             return review_template
 
         except Exception as e:
             logger.error(f"Error creating review template: {e}")
             raise ValueError(f"Failed to create review template: {str(e)}")
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id=agent_id,
+                tool_name="generate_paper_review_content_from_template",
+                success=success,
+                duration=duration,
+                context=f"paper_id={paper_id},focus={review_focus}",
+            )
 
-    @manager_agent.tool
+    @agent.tool
     async def save_paper_review(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None],
         paper_id: str,
@@ -252,20 +404,16 @@ def add_peerread_review_tools_to_manager(manager_agent: Agent[None, BaseModel], 
         Returns:
             str: Path to the saved review file.
         """
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
         try:
-            # Create PeerReadReview object
+            # Create PeerReadReview — only set fields we have, model defaults apply
             review = PeerReadReview(
-                impact="N/A",
-                substance="N/A",
-                appropriateness="N/A",
-                meaningful_comparison="N/A",
-                presentation_format="N/A",
                 comments=review_text,
-                soundness_correctness="N/A",
-                originality="N/A",
-                recommendation=recommendation or "N/A",
-                clarity="N/A",
-                reviewer_confidence=str(confidence) if confidence > 0 else "N/A",
+                recommendation=recommendation if recommendation else "UNKNOWN",
+                reviewer_confidence=str(confidence) if confidence > 0 else "UNKNOWN",
             )
 
             # Save to persistent storage
@@ -273,13 +421,23 @@ def add_peerread_review_tools_to_manager(manager_agent: Agent[None, BaseModel], 
             filepath = persistence.save_review(paper_id, review)
 
             logger.info(f"Saved review for paper {paper_id} to {filepath}")
+            success = True
             return filepath
 
         except Exception as e:
             logger.error(f"Error saving paper review: {e}")
             raise ValueError(f"Failed to save review: {str(e)}")
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id=agent_id,
+                tool_name="save_paper_review",
+                success=success,
+                duration=duration,
+                context=f"paper_id={paper_id}",
+            )
 
-    @manager_agent.tool
+    @agent.tool
     async def save_structured_review(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None],
         paper_id: str,
@@ -294,26 +452,17 @@ def add_peerread_review_tools_to_manager(manager_agent: Agent[None, BaseModel], 
         Returns:
             str: Path to the saved review file.
         """
+        start_time = time.perf_counter()
+        trace_collector = get_trace_collector()
+        success = False
+
         try:
             from datetime import UTC, datetime
 
             # Convert structured review to PeerReadReview format for persistence
             peerread_format = structured_review.to_peerread_format()
-            # Create PeerReadReview with proper type conversion
-            review = PeerReadReview(
-                impact=peerread_format["IMPACT"] or "N/A",
-                substance=peerread_format["SUBSTANCE"] or "N/A",
-                appropriateness=peerread_format["APPROPRIATENESS"] or "N/A",
-                meaningful_comparison=peerread_format["MEANINGFUL_COMPARISON"] or "N/A",
-                presentation_format=peerread_format["PRESENTATION_FORMAT"] or "Poster",
-                comments=peerread_format["comments"] or "No comments provided",
-                soundness_correctness=peerread_format["SOUNDNESS_CORRECTNESS"] or "N/A",
-                originality=peerread_format["ORIGINALITY"] or "N/A",
-                recommendation=peerread_format["RECOMMENDATION"] or "N/A",
-                clarity="N/A",
-                reviewer_confidence=peerread_format["REVIEWER_CONFIDENCE"] or "N/A",
-                is_meta_review=None,
-            )
+            # Pydantic handles uppercase→lowercase via validation_alias and defaults
+            review = PeerReadReview.model_validate(peerread_format)
 
             # Save to persistent storage
             persistence = ReviewPersistence()
@@ -334,8 +483,35 @@ def add_peerread_review_tools_to_manager(manager_agent: Agent[None, BaseModel], 
                 dump(result.model_dump(), f, indent=2, ensure_ascii=False)
 
             logger.info(f"Saved structured review for paper {paper_id} to {filepath}")
+            success = True
             return filepath
 
         except Exception as e:
             logger.error(f"Error saving structured review: {e}")
             raise ValueError(f"Failed to save structured review: {str(e)}")
+        finally:
+            duration = time.perf_counter() - start_time
+            trace_collector.log_tool_call(
+                agent_id=agent_id,
+                tool_name="save_structured_review",
+                success=success,
+                duration=duration,
+                context=f"paper_id={paper_id}",
+            )
+
+
+# Backward compatibility alias
+def add_peerread_review_tools_to_manager(
+    manager_agent: Agent[None, BaseModel], max_content_length: int = 15000
+):
+    """Backward compatibility wrapper for add_peerread_review_tools_to_agent.
+
+    Deprecated: Use add_peerread_review_tools_to_agent instead.
+
+    Args:
+        manager_agent: The manager agent to which review tools will be added.
+        max_content_length: The maximum number of characters to include in the prompt.
+    """
+    return add_peerread_review_tools_to_agent(
+        manager_agent, agent_id="manager", max_content_length=max_content_length
+    )

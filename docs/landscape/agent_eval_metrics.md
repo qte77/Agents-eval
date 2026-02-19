@@ -421,10 +421,11 @@ Metrics derived from production evaluation frameworks and competition benchmarks
 
 *For detailed technical analysis, see [Observability & Monitoring Platforms](landscape-evaluation-data-resources.md#4-observability--monitoring) in landscape-evaluation-data-resources.md*
 
-- **AgentNeo**: Decorator-based tracing with SQLite storage
+- **Pydantic Logfire**: First-party PydanticAI instrumentation via `logfire.instrument_pydantic_ai()` with OTel-based tracing
 - **Comet Opik**: OpenTelemetry-compatible spans with local deployment
-- **Langfuse**: Comprehensive prompt management with evaluation integration
 - **Arize Phoenix**: Path convergence metrics with LLM-as-a-judge templates
+- **Langfuse**: Comprehensive prompt management with evaluation integration
+- **AgentNeo**: Decorator-based tracing with SQLite storage
 - **TruLens**: RAG Triad metrics with multi-step workflow assessment
 
 ### Graph Analysis Integration

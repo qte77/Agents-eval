@@ -1,12 +1,13 @@
 ---
 title: Testing Strategy
-version: 5.0
+version: 6.0.0
 applies-to: Agents and humans
 purpose: High-level testing strategy aligned with KISS/DRY/YAGNI
 see-also: tdd-best-practices.md, bdd-best-practices.md
 ---
 
-**Purpose**: What to test, when to use TDD/BDD/Hypothesis, test organization, running commands.
+**Purpose**: What to test, when to use each tool, test organization,
+running commands.
 
 ## Core Principles
 
@@ -22,13 +23,16 @@ see-also: tdd-best-practices.md, bdd-best-practices.md
 
 1. Business logic - Core algorithms, calculations, decision rules
 2. Integration points - API handling, external service interactions
-3. Edge cases with real impact - Empty inputs, error propagation, boundary conditions
+3. Edge cases with real impact - Empty inputs, error propagation,
+   boundary conditions
 4. Contracts - API response formats, model transformations
 
 **Low-Value** (Avoid these):
 
-1. Library behavior - Pydantic validation, `os.environ` reading, framework internals
-2. Trivial assertions - `x is not None`, `isinstance(x, SomeClass)`, `hasattr()`, `callable()`
+1. Library behavior - Pydantic validation, `os.environ` reading,
+   framework internals
+2. Trivial assertions - `x is not None`, `isinstance(x, SomeClass)`,
+   `hasattr()`, `callable()`
 3. Default values - Unless defaults encode business rules
 4. Documentation content - String contains checks
 
@@ -36,48 +40,118 @@ see-also: tdd-best-practices.md, bdd-best-practices.md
 
 | Pattern | Why Remove | Example |
 | --------- | ------------ | --------- |
-| Import/existence | Python/imports handle this | `test_module_exists()` |
-| Field existence | Pydantic validates at instantiation | `test_model_has_field_x()` |
-| Default constants | Testing `300 == 300` | `assert DEFAULT_TIMEOUT == 300` |
-| Over-granular | Consolidate into schema validation | 8 tests for one model |
-| Type checks | Type checker (pyright) handles | `assert isinstance(result, dict)` |
+| Import/existence | Python/imports handle | `test_module_exists()` |
+| Field existence | Pydantic validates | `test_model_has_field_x()` |
+| Default constants | Testing `300 == 300` | `assert DEFAULT == 300` |
+| Over-granular | Consolidate to schema | 8 tests for one model |
+| Type checks | pyright handles | `assert isinstance(r, dict)` |
+| Filesystem leak | Writes mock data to real paths | `cache_dir` not redirected to `tmp_path` |
 
 **Rule**: If the test wouldn't catch a real bug, remove it.
 
 ## Testing Approach
 
-### Current Focus: TDD (with pytest + Hypothesis)
+### Tool Selection Guide
+
+Each tool answers a different testing question. Pick the right one:
+
+| Tool | Question it answers | Input | Output assertion | Use for |
+| --- | --- | --- | --- | --- |
+| **pytest** | Does this logic produce the right result? | Known, specific | Manual `assert` | TDD, unit tests, integration tests |
+| **Hypothesis** | Does this hold for ALL inputs? | Generated, random | Property invariants | Edge cases, math, parsers |
+| **inline-snapshot** | Does this output still look the same? | Known, specific | Auto-captured structure | Regression, contracts, model dumps |
+| **pytest-bdd** | Does this meet acceptance criteria? | Scenario-driven | Given-When-Then | Stakeholder validation |
+
+**One-line rule**: pytest for **logic**, Hypothesis for
+**properties**, inline-snapshot for **structure**,
+pytest-bdd for **behavior specs**.
+
+### TDD with pytest + Hypothesis (Primary)
 
 **Primary methodology**: Test-Driven Development (TDD)
 
 **Tools** (see `tdd-best-practices.md`):
 
 - **pytest**: Core tool for all TDD tests (specific test cases)
-- **Hypothesis**: Optional extension for property-based edge case testing (generative tests)
+- **Hypothesis**: Extension for property-based edge case testing
+  (generative tests)
 
 **When to use each**:
 
-- **pytest**: Known cases (specific inputs, API contracts, known edge cases)
-- **Hypothesis**: Unknown edge cases (any string, any number, invariants for ALL inputs)
+- **pytest**: Known cases (specific inputs, API contracts,
+  known edge cases)
+- **Hypothesis**: Unknown edge cases (any string, any number,
+  invariants for ALL inputs)
 
 ### Hypothesis Test Priorities (Edge Cases within TDD)
 
 | Priority | Area | Why | Example |
 | ---------- | ------ | ----- | --------- |
-| **CRITICAL** | Scoring/math formulas | Math must work for ALL inputs | `test_score_always_in_bounds()` |
-| **CRITICAL** | Loop termination | Must terminate for ANY input | `test_processor_always_terminates()` |
-| **HIGH** | Input validation | Handle arbitrary text safely | `test_parser_never_crashes()` |
-| **HIGH** | Output serialization | Must always produce valid JSON | `test_output_always_serializable()` |
-| **MEDIUM** | Invariant sums | Total equals component sum | `test_total_equals_sum()` |
+| **CRITICAL** | Math formulas | All inputs work | `test_score_bounds()` |
+| **CRITICAL** | Loop termination | Always terminates | `test_terminates()` |
+| **HIGH** | Input validation | Arbitrary text ok | `test_parser_safe()` |
+| **HIGH** | Serialization | Valid JSON always | `test_output_valid()` |
+| **MEDIUM** | Invariant sums | Total equals sum | `test_total_sum()` |
 
-See [Hypothesis documentation](https://hypothesis.readthedocs.io/) for usage patterns.
+See [Hypothesis documentation](https://hypothesis.readthedocs.io/) for
+usage patterns.
+
+### Inline Snapshots: Regression & Contract Tests (Supplementary)
+
+**inline-snapshot** auto-captures complex output structures directly
+in test source code. It complements TDD — it does not replace it.
+
+**When to use**:
+
+- Pydantic `.model_dump()` output (full structure, auto-maintained)
+- Complex return dicts (nested structures, parser outputs)
+- Format conversion results (serialization, transformations)
+- Integration results (multi-field response objects)
+
+**When NOT to use**:
+
+- TDD Red-Green-Refactor (snapshots can't fail before code exists)
+- Hypothesis property tests (random inputs produce varying output)
+- Simple value checks (`assert score >= 0.85`)
+- Range/bound assertions (`0.0 <= x <= 1.0`)
+- Relative comparisons (`assert a < b`)
+
+```python
+from inline_snapshot import snapshot
+
+# REGRESSION - Capture full structure, auto-update on changes
+def test_user_serialization():
+    user = create_user(name="Alice", role="admin")
+    assert user.model_dump() == snapshot()
+    # pytest --inline-snapshot=create  → fills snapshot
+    # pytest --inline-snapshot=fix     → updates when model changes
+
+# NON-DETERMINISTIC VALUES - Use dirty-equals for dynamic fields
+from dirty_equals import IsDatetime
+def test_result_with_timestamp():
+    result = process(input_data)
+    assert result.model_dump() == snapshot({
+        "score": 0.85,
+        "timestamp": IsDatetime(),  # Not managed by snapshot
+    })
+```
+
+**Commands**:
+
+- `pytest --inline-snapshot=create` - Fill empty `snapshot()` calls
+- `pytest --inline-snapshot=fix` - Update changed snapshots
+- `pytest --inline-snapshot=review` - Interactive review mode
+
+**Constraint**: Standard `pytest` runs validate snapshots normally.
+No changes needed to `make validate` or CI.
 
 ### BDD: Stakeholder Collaboration (Optional)
 
 **BDD** (see `bdd-best-practices.md`) - Different approach from TDD:
 
 - **TDD**: Developer-driven, Red-Green-Refactor, all test levels
-- **BDD**: Stakeholder-driven, Given-When-Then, acceptance criteria in plain language
+- **BDD**: Stakeholder-driven, Given-When-Then, acceptance criteria
+  in plain language
 
 **When to use BDD**:
 
@@ -143,6 +217,11 @@ async def test_order_service_saves_to_database(db_session):
 - `responses` - Mock HTTP requests
 - `freezegun` - Mock time/dates
 
+**Mock safety rules**:
+
+- Use `spec=RealClass` or `spec_set=RealClass` when mocking third-party return types
+- Bare `MagicMock()` accepts any attribute name silently — use `spec=` to constrain to the real interface
+
 ```python
 # MOCK external API
 from unittest.mock import patch
@@ -164,10 +243,14 @@ def test_order_repository_saves_order(tmp_path):
 
 ### Priority Test Areas
 
-1. **Core business logic** - Algorithms, calculations, decision rules (unit tests)
-2. **API contracts** - Request/response formats, protocol handling (unit + integration)
-3. **Edge cases** - Empty/null inputs, boundary values, numeric stability (unit with Hypothesis)
-4. **Integration points** - External services, database operations (integration tests)
+1. **Core business logic** - Algorithms, calculations, decision rules
+   (unit tests)
+2. **API contracts** - Request/response formats, protocol handling
+   (unit + integration)
+3. **Edge cases** - Empty/null inputs, boundary values,
+   numeric stability (unit with Hypothesis)
+4. **Integration points** - External services, database operations
+   (integration tests)
 
 ## Test Organization
 
@@ -197,29 +280,8 @@ tests/
 
 ## Running Tests
 
-```bash
-# Make recipes (project standard)
-make test_all              # All tests
-make test_quick            # Rerun failed tests only (fast iteration)
-make test_coverage         # Tests with coverage gate (70% threshold)
-
-# Direct pytest (for specific suites)
-pytest tests/unit/         # Unit tests only
-pytest tests/integration/  # Integration tests only
-pytest -k pattern          # Filter by name
-pytest -m marker           # Filter by marker
-```
-
-See `Makefile` for all recipes or `pytest --help` for full CLI reference.
-
-## Pre-Commit Validation
-
-```bash
-make validate              # Full validation (ruff, pyright, complexity, tests)
-make quick_validate        # Fast validation (ruff, pyright only - no tests)
-```
-
-Run `make validate` before committing to ensure all quality gates pass.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md#complete-command-reference)
+for all make recipes and test commands.
 
 ## Naming Conventions
 
@@ -235,7 +297,8 @@ test_score_always_in_bounds()
 test_percentile_ordering()
 ```
 
-**Benefits**: Clear ownership, easier filtering (`pytest -k test_user_`), better organization
+**Benefits**: Clear ownership, easier filtering (`pytest -k test_user_`),
+better organization
 
 ## Decision Checklist
 
@@ -244,13 +307,15 @@ Before writing a test, ask:
 1. Does this test **behavior** (keep) or **implementation** (skip)?
 2. Would this catch a **real bug** (keep) or is it **trivial** (skip)?
 3. Is this testing **our code** (keep) or **a library** (skip)?
-4. Which approach:
-   - **TDD** (default) - Unit tests, business logic, known edge cases
+4. Which tool:
+   - **pytest** (default) - Unit tests, business logic, known edge cases
    - **Hypothesis** - Unknown edge cases (any input), numeric invariants
-   - **BDD** (optional) - Acceptance criteria, stakeholder communication
+   - **inline-snapshot** - Complex output structures, model dumps, contracts
+   - **pytest-bdd** (optional) - Acceptance criteria, stakeholder communication
 
 ## References
 
 - TDD practices: `docs/best-practices/tdd-best-practices.md`
 - BDD practices: `docs/best-practices/bdd-best-practices.md`
 - [Hypothesis Documentation](https://hypothesis.readthedocs.io/)
+- [inline-snapshot Documentation](https://15r10nk.github.io/inline-snapshot/)
