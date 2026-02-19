@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Baseline Comparison Configuration: path validation with `st.error` for non-existent directories; auto-populate from `logs/Agent_evals/traces/` if it exists (STORY-013)
 - `execution_id` included in `_prepare_result_dict` return and threaded to session state via `_execute_query_background` (STORY-013)
 
+### Changed
+
+- Docs: README Status section updated to Sprint 8 Delivered; architecture.md Implementation Status and Development Timeline aligned; Sprint 9 PRD stripped of all 14 solved stories (Features 1-8, Story Breakdown, Ralph Loop notes removed)
+
 ### Fixed
 
 - `render_output()` in `output.py`: renamed `type` parameter to `output_type` to avoid shadowing Python built-in `type` (STORY-013)

@@ -9,7 +9,7 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 **I am a:** [**User/Researcher**](#userresearcher) | [**Human Developer**](#human-developer) | [**AI Agent**](#ai-agent)
 
 [![License](https://img.shields.io/badge/license-BSD3Clause-58f4c2.svg)](LICENSE.md)
-![Version](https://img.shields.io/badge/version-4.0.0-58f4c2.svg)
+![Version](https://img.shields.io/badge/version-3.3.0-58f4c2.svg)
 [![CodeQL](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml)
 [![CodeFactor](https://www.codefactor.io/repository/github/qte77/Agents-eval/badge)](https://www.codefactor.io/repository/github/qte77/Agents-eval)
 [![ruff](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml)
@@ -57,14 +57,16 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 
 (DRAFT) (WIP) ----> Not fully implemented yet
 
-**Current Release**: Version 4.0.0 - Sprint 6 (Delivered)
-- Benchmarking infrastructure: `SweepRunner`, `SweepConfig`, `SweepAnalysis` for composition sweeps
-- Claude Code baseline: headless `claude -p` integration, `CCTraceAdapter`, collection scripts
-- Security hardening: MAESTRO audit fixes, SSRF allowlist, prompt sanitization, log scrubbing
-- Test quality improvements: spec-constrained mocks, coverage expansion, BDD consolidation
-- Examples modernized: `basic_evaluation.py`, `judge_settings_customization.py`, `engine_comparison.py`
+**Current Release**: Version 3.3.0 - Sprint 8 (Delivered)
 
-**Next**: Sprint 7 (In Progress) — GUI improvements (real-time debug log, paper selection, editable settings, engine selector), unified provider config, CC engine option ([PRD](docs/PRD-Sprint7-Ralph.md))
+- CC engine consolidation: `cc_engine.py` with solo + teams support, retired shell scripts
+- Report generation: CLI `--generate-report`, GUI button, rule-based suggestion engine with optional LLM
+- Tool fix: `get_paper_content(paper_id)` replaces crash-prone `read_paper_pdf_tool`
+- API key cleanup: removed `"not-required"` sentinel, fixed judge auto-mode model inheritance
+- GUI a11y/UX: WCAG fixes, judge settings dropdowns, environment-aware URL resolution
+- Graph alignment: unified `type` node attribute across export and rendering
+
+**Next**: Sprint 9 (In Progress) — sweep results UI ([PRD](docs/sprints/PRD-Sprint9-Ralph.md))
 
 For version history see the [CHANGELOG](CHANGELOG.md).
 
