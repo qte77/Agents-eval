@@ -183,15 +183,6 @@ updated: 2026-02-16
 - **Anti-pattern**: Copy-pasting dispatch logic into each method that needs type-specific behavior.
 - **References**: `src/app/data_utils/datasets_peerread.py`, CodeFactor Sprint 7 review
 
-### Pydantic max_length Cannot Prevent Allocation-Time OOM
-
-- **Context**: Security tests for input size limits using Pydantic `Field(max_length=N)`
-- **Problem**: Test allocated a 1GB string (`"X" * (1024**3)`) expecting Pydantic `max_length` to reject it. Python must allocate the full string *before* passing it to the Pydantic constructor, so the validator never runs -- the process OOMs or hangs (SIGTERM exit 143), blocking the entire test suite.
-- **Solution**: Test oversized inputs at moderate multiples of the limit (e.g. 10x), not at memory-exhaustion scale. Boundary rejection is already proven by `max_length + 1` tests. Pydantic validators are post-allocation; they cannot guard against allocation itself.
-- **Anti-pattern**: Using unrealistically large inputs in unit tests to simulate DoS. The test itself becomes the DoS.
-- **Key distinction**: True DoS prevention belongs at the I/O layer (HTTP request body size limits, `read(max_bytes)` on streams). Pydantic `max_length` is a second line of defense for data already in memory. Don't conflate the two layers in tests.
-- **References**: `tests/security/test_input_size_limits.py::TestMemoryExhaustionPrevention`
-
 ### Shell Keyword Collision in jq Arguments (SC1010)
 
 - **Context**: Bash scripts calling `jq` with `--argjson` or `--arg`
@@ -199,3 +190,11 @@ updated: 2026-02-16
 - **Solution**: Avoid shell keywords (`done`, `then`, `fi`, `do`, `esac`) as jq variable names. Use descriptive names matching the bash variable feeding them.
 - **Example**: `--argjson completed "$completed"` instead of `--argjson done "$completed"`
 - **References**: `ralph/scripts/ralph.sh` (`get_next_story`, `get_unblocked_stories`)
+
+### `-X ours` Does Not Delete Files Added by Theirs
+
+- **Context**: Squash merging a feature branch into `main` via PR when `main` has diverged
+- **Problem**: `git merge -X ours origin/main` resolves conflicted hunks in our favor, but files that exist only on `main` (added after branches diverged) are auto-merged as clean additions — no conflict triggers, so `-X ours` never fires. Result: stale files from `main` leak into the feature branch and survive the squash merge.
+- **Solution**: After `-X ours` merge, diff against the pre-merge state and `git rm` files the other branch introduced: `git diff HEAD <pre-merge-sha> --name-only --diff-filter=A | xargs git rm`
+- **Anti-pattern**: Assuming `-X ours` means "keep only our files." It means "resolve conflicts in our favor" — non-conflicting additions from theirs pass through silently.
+- **References**: `ralph/README.md` (Merging Back), `ralph/docs/LEARNINGS.md` (section 4)
