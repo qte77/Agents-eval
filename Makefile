@@ -61,7 +61,7 @@ WRITEUP_PUML_DIR := docs/arch_vis
 SKIP_PUML ?=
 SKIP_CREATE_CONTENT ?= 1
 WRITEUP_TIMEOUT ?= 600
-WRITEUP_TITLE_PAGE = $(wildcard $(WRITEUP_DIR)/00_title_abstract.tex)
+WRITEUP_TITLE_PAGE = $(wildcard $(WRITEUP_DIR)/00_title_abstract_abbrev.tex)
 
 # -- phoenix (trace viewer) --
 PHOENIX_CONTAINER_NAME := phoenix-tracing

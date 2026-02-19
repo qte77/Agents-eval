@@ -1,0 +1,53 @@
+% Title page for writeup
+% LaTeX format for pandoc -B (before-body) option
+% Compatible with pandoc report document class
+
+\hypersetup{pdftitle={Project Title: Subtitle}}
+
+\begin{titlepage}
+\centering
+
+% Project context
+{\large \textbf{>>>> DRAFT <<<<}}\\[0.5cm]
+
+% Main title
+{\Huge \textbf{Project Title}}\\[1.5cm]
+
+% Subtitle
+{\Large Subtitle describing the approach}\\[1cm]
+
+\vfill
+
+% Author, version and date
+{\large Version 0.1.0}\\[0.3cm]
+{\large \today}
+
+\end{titlepage}
+
+% Abstract - exclude from TOC
+\section*{Abstract}
+
+% TODO: Replace with your abstract text.
+Abstract text goes here. Describe the problem, approach, key findings, and conclusions.
+
+\textbf{Keywords:} Keyword1, Keyword2, Keyword3
+
+\vspace{0.75cm}
+
+\noindent\textbf{Project Resources:}\\
+Source Code: \texttt{https://github.com/user/project}\\
+Documentation: \texttt{https://user.github.io/project}
+
+\newpage
+
+% List of Abbreviations
+\section*{List of Abbreviations}
+
+\begin{longtable}{ll}
+\multicolumn{2}{l}{\textbf{General Abbreviations}} \\
+\textbf{API} & Application Programming Interface \\
+\textbf{CLI} & Command-Line Interface \\
+% TODO: Add project-specific abbreviations
+\end{longtable}
+
+\newpage

@@ -56,6 +56,7 @@ test_data/
 datasets/
 docs/write-up/*
 !docs/write-up/en/
+!docs/write-up/template/
 results/sweeps/
 
 # Ralph state
