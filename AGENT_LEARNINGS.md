@@ -191,6 +191,15 @@ updated: 2026-02-16
 - **Example**: `--argjson completed "$completed"` instead of `--argjson done "$completed"`
 - **References**: `ralph/scripts/ralph.sh` (`get_next_story`, `get_unblocked_stories`)
 
+### Stale Test Fixtures Cause Cross-File Pollution
+
+- **Context**: Full `make test` suite with tests that error/fail due to stale fixtures (e.g., patching removed imports)
+- **Problem**: Test fixture errors (e.g., `patch("module.removed_name")`) don't clean up properly. Shared singletons or module-level state mutated during failed setup leaks into subsequent test files. Test passes in isolation but fails in full suite.
+- **Solution**: Delete stale tests promptly. When a source module changes (renamed/removed imports, restructured widgets), update or delete tests that patch the old interface. Use `pytest --lf` (last failed) + bisection to identify the polluter: `uv run pytest tests/suspect_dir/ tests/failing_test.py`
+- **Anti-pattern**: Leaving failing tests in the suite "to fix later." Their fixture side-effects silently corrupt other tests.
+- **Detection**: Test passes alone (`uv run pytest tests/file.py`) but fails in full suite (`make test`). Run directory batches to bisect.
+- **References**: `tests/gui/test_settings.py` (deleted), `tests/test_gui/test_settings_page.py` (deleted) — fixture patching `gui.pages.settings.text` after import was removed
+
 ### `-X ours` Does Not Delete Files Added by Theirs
 
 - **Context**: Squash merging a feature branch into `main` via PR when `main` has diverged
