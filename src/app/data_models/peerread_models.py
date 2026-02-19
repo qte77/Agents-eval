@@ -90,7 +90,9 @@ class PeerReadPaper(BaseModel):
     title: str = Field(description="Paper title")
     abstract: str = Field(description="Paper abstract")
     reviews: list[PeerReadReview] = Field(description="Peer reviews for this paper")
-    review_histories: list[str] = Field(default_factory=list, description="Paper revision histories")
+    review_histories: list[str] = Field(
+        default_factory=list, description="Paper revision histories"
+    )
 
 
 class PeerReadConfig(BaseModel):
@@ -152,7 +154,9 @@ class GeneratedReview(BaseModel):
 
     impact: int = Field(..., ge=1, le=5, description="Impact rating (1=minimal, 5=high impact)")
 
-    substance: int = Field(..., ge=1, le=5, description="Substance/depth rating (1=shallow, 5=substantial)")
+    substance: int = Field(
+        ..., ge=1, le=5, description="Substance/depth rating (1=shallow, 5=substantial)"
+    )
 
     appropriateness: int = Field(
         ...,
@@ -168,7 +172,9 @@ class GeneratedReview(BaseModel):
         description="Related work comparison rating (1=poor, 5=excellent)",
     )
 
-    presentation_format: Literal["Poster", "Oral"] = Field(..., description="Recommended presentation format")
+    presentation_format: Literal["Poster", "Oral"] = Field(
+        ..., description="Recommended presentation format"
+    )
 
     comments: str = Field(
         ...,

@@ -85,10 +85,6 @@ send_to_logfire=false  # Was "if-token-present" - changed to disable pytest-logf
 # MARK: Testing and linting configurations
 
 
-
-# MARK: Testing and linting configurations
-
-
 [tool.pyright]
 pythonVersion = "3.13"
 include = ["src", "tests"]

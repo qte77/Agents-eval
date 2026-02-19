@@ -21,7 +21,9 @@ class ReviewPersistence:
         self.reviews_dir = resolve_project_path(reviews_dir)
         self.reviews_dir.mkdir(parents=True, exist_ok=True)
 
-    def save_review(self, paper_id: str, review: PeerReadReview, timestamp: str | None = None) -> str:
+    def save_review(
+        self, paper_id: str, review: PeerReadReview, timestamp: str | None = None
+    ) -> str:
         """Save a review to the reviews directory.
 
         Args:

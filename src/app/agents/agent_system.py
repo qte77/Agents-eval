@@ -246,7 +246,9 @@ def _add_tools_to_manager_agent(
     research_agent: Agent[None, BaseModel] | None = None,
     analysis_agent: Agent[None, BaseModel] | None = None,
     synthesis_agent: Agent[None, BaseModel] | None = None,
-    result_type: type[ResearchResult | ResearchResultSimple | ReviewGenerationResult] = ResearchResult,
+    result_type: type[
+        ResearchResult | ResearchResultSimple | ReviewGenerationResult
+    ] = ResearchResult,
 ):
     """
     Adds tools to the manager agent for delegating tasks to research, analysis, and
@@ -507,8 +509,6 @@ def _handle_model_http_error(error: ModelHTTPError, provider: str, model_name: s
     raise error
 
 
-# Apply Opik tracing decorator to run_manager
-@get_opik_decorator("manager", "orchestrator", "coordination")
 async def run_manager(
     manager: Agent[None, BaseModel],
     query: UserPromptType,
