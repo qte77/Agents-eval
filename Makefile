@@ -9,16 +9,16 @@
 	setup_prod setup_dev setup_claude_code setup_sandbox \
 	setup_plantuml setup_pdf_converter setup_npm_tools \
 	setup_ollama clean_ollama setup_dataset \
-	dataset_smallest quickstart \
-	start_ollama stop_ollama \
+	dataset_smallest app_quickstart \
+	ollama_start ollama_stop \
 	plantuml_serve plantuml_render \
-	run_pandoc writeup writeup_generate \
+	pandoc_run writeup writeup_generate \
 	lint_md \
-	run_cli run_gui run_sweep run_profile \
+	app_cli app_gui app_sweep app_profile \
 	cc_run_solo cc_collect_teams cc_run_teams \
 	lint_src lint_tests complexity duplication \
 	test test_rerun test_coverage type_check validate quick_validate \
-	setup_phoenix start_phoenix stop_phoenix status_phoenix \
+	setup_phoenix phoenix_start phoenix_stop phoenix_status \
 	ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run \
 	ralph_worktree ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean \
 	clean_results clean_logs \
@@ -44,7 +44,7 @@ PLANTUML_SCRIPT := scripts/writeup/generate-plantuml-png.sh
 # -- pandoc / writeup --
 PANDOC_SCRIPT := scripts/writeup/run-pandoc.sh
 PDF_CONVERTER_SCRIPT := scripts/writeup/setup-pdf-converter.sh
-# run_pandoc optional overrides (empty = disabled)
+# pandoc_run optional overrides (empty = disabled)
 BIBLIOGRAPHY :=
 CSL :=
 LIST_OF_FIGURES :=
@@ -86,7 +86,7 @@ setup_prod:  ## Install uv and deps. Flags: OLLAMA=1
 	echo "Setting up prod environment ..."
 	pip install uv -q
 	uv sync --frozen
-	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s start_ollama)
+	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s ollama_start)
 
 setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, plantuml. Flags: OLLAMA=1
 	echo "Setting up dev environment ..."
@@ -97,7 +97,7 @@ setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, plantuml. Flags:
 	$(MAKE) -s setup_claude_code
 	$(MAKE) -s setup_npm_tools
 	$(MAKE) -s setup_plantuml
-	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s start_ollama)
+	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s ollama_start)
 
 setup_claude_code:  ## Setup claude code CLI
 	echo "Setting up Claude Code CLI ..."
@@ -178,9 +178,9 @@ clean_ollama:  ## Remove local Ollama from system
 setup_dataset:  ## Download PeerRead dataset. Usage: make setup_dataset [MODE=full] [MAX_PAPERS=5]
 	$(if $(filter full,$(MODE)),\
 		echo "Downloading full PeerRead dataset ..." && \
-		$(MAKE) -s run_cli ARGS=--download-peerread-full-only,\
+		$(MAKE) -s app_cli ARGS=--download-peerread-full-only,\
 		echo "Downloading PeerRead sample ..." && \
-		$(MAKE) -s run_cli ARGS="--download-peerread-samples-only $(if $(MAX_PAPERS),--peerread-max-papers-per-sample-download $(MAX_PAPERS))")
+		$(MAKE) -s app_cli ARGS="--download-peerread-samples-only $(if $(MAX_PAPERS),--peerread-max-papers-per-sample-download $(MAX_PAPERS))")
 	$(MAKE) -s dataset_smallest
 
 dataset_smallest:  ## Show N smallest papers by file size. Usage: make dataset_smallest N=5
@@ -191,10 +191,10 @@ dataset_smallest:  ## Show N smallest papers by file size. Usage: make dataset_s
 # MARK: ollama
 
 
-start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
+ollama_start:  ## Start local Ollama server, default 127.0.0.1:11434
 	ollama serve
 
-stop_ollama:  ## Stop local Ollama server
+ollama_stop:  ## Stop local Ollama server
 	echo "Stopping Ollama server ..."
 	pkill ollama
 
@@ -215,7 +215,7 @@ plantuml_render:  ## Render a themed diagram from a PlantUML file
 # MARK: pandoc
 
 
-run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_pandoc INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" [BIBLIOGRAPHY="$$dir/refs.bib"] [CSL="$$dir/style.csl"] | Help: make run_pandoc HELP=1
+pandoc_run:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make pandoc_run INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" [BIBLIOGRAPHY="$$dir/refs.bib"] [CSL="$$dir/style.csl"] | Help: make pandoc_run HELP=1
 	if [ -n "$(HELP)" ]; then
 		$(PANDOC_SCRIPT) help
 	else
@@ -243,7 +243,7 @@ writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs
 		done
 	fi
 	echo "=== Building writeup PDF ==="
-	$(MAKE) -s run_pandoc \
+	$(MAKE) -s pandoc_run \
 		INPUT_FILES="$$(printf '%s\036' $(WRITEUP_DIR)/01_*.md $(WRITEUP_DIR)/0[2-8]_*.md $(WRITEUP_DIR)/09b_*.md $(WRITEUP_DIR)/10_*.md $(WRITEUP_DIR)/11_*.md)" \
 		OUTPUT_FILE="$(WRITEUP_OUTPUT)" \
 		BIBLIOGRAPHY="$(WRITEUP_BIB)" \
@@ -283,7 +283,7 @@ lint_md:  ## Lint markdown files. Usage: make lint_md INPUT_FILES="docs/**/*.md"
 # MARK: app
 
 
-quickstart:  ## Download sample data and run evaluation on smallest paper
+app_quickstart:  ## Download sample data and run evaluation on smallest paper
 	echo "=== Quick Start: Download samples + evaluate smallest paper ==="
 	if [ ! -d datasets/peerread ]; then
 		$(MAKE) -s setup_dataset
@@ -297,19 +297,19 @@ quickstart:  ## Download sample data and run evaluation on smallest paper
 		exit 1
 	fi
 	echo "Selected smallest paper: $$PAPER_ID"
-	$(MAKE) -s run_cli ARGS="--paper-id=$$PAPER_ID"
+	$(MAKE) -s app_cli ARGS="--paper-id=$$PAPER_ID"
 
 
-run_cli:  ## Run app on CLI only. Usage: make run_cli ARGS="--help" or make run_cli ARGS="--download-peerread-samples-only"
+app_cli:  ## Run app on CLI only. Usage: make app_cli ARGS="--help" or make app_cli ARGS="--download-peerread-samples-only"
 	PYTHONPATH=$(SRC_PATH) uv run python $(CLI_PATH) $(ARGS)
 
-run_gui:  ## Run app with Streamlit GUI
+app_gui:  ## Run app with Streamlit GUI
 	PYTHONPATH=$(SRC_PATH) uv run streamlit run $(GUI_PATH_ST)
 
-run_sweep:  ## Run MAS composition sweep. Usage: make run_sweep ARGS="--paper-ids 1,2,3 --repetitions 3 --all-compositions"
+app_sweep:  ## Run MAS composition sweep. Usage: make app_sweep ARGS="--paper-ids 1,2,3 --repetitions 3 --all-compositions"
 	PYTHONPATH=$(SRC_PATH) uv run python $(SRC_PATH)/run_sweep.py $(ARGS)
 
-run_profile:  ## Profile app with scalene
+app_profile:  ## Profile app with scalene
 	mkdir -p logs/scalene-profiles
 	uv run scalene --outfile \
 		"logs/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
@@ -406,7 +406,7 @@ setup_phoenix:  ## Pull Phoenix Docker image (pre-download without starting)
 	docker pull $(PHOENIX_IMAGE)
 	echo "Phoenix image ready: $(PHOENIX_IMAGE)"
 
-start_phoenix:  ## Start local Arize Phoenix trace viewer (OTLP endpoint on port 6006)
+phoenix_start:  ## Start local Arize Phoenix trace viewer (OTLP endpoint on port 6006)
 	echo "Starting Arize Phoenix ..."
 	docker rm -f $(PHOENIX_CONTAINER_NAME) 2>/dev/null || true
 	docker run -d --name $(PHOENIX_CONTAINER_NAME) \
@@ -420,11 +420,11 @@ start_phoenix:  ## Start local Arize Phoenix trace viewer (OTLP endpoint on port
 	echo "OTLP HTTP endpoint: localhost:$(PHOENIX_PORT)/v1/traces"
 	echo "OTLP gRPC endpoint: localhost:$(PHOENIX_GRPC_PORT)"
 
-stop_phoenix:  ## Stop Phoenix trace viewer (volume data preserved)
+phoenix_stop:  ## Stop Phoenix trace viewer (volume data preserved)
 	echo "Stopping Phoenix ..."
 	docker stop $(PHOENIX_CONTAINER_NAME)
 
-status_phoenix:  ## Check Phoenix health status
+phoenix_status:  ## Check Phoenix health status
 	echo "Checking Phoenix status ..."
 	docker ps --filter name=$(PHOENIX_CONTAINER_NAME) --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 	curl -sf http://localhost:$(PHOENIX_PORT) > /dev/null 2>&1 && \

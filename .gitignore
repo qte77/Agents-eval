@@ -33,7 +33,6 @@ logs/
 .tmp/
 
 # Traces
-scalene-profiles
 profile.html
 profile.json
 

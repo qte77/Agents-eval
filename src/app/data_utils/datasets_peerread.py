@@ -774,7 +774,7 @@ class PeerReadLoader:
                 f"PeerRead dataset not found for {venue}/{split}. "
                 f"Please download the dataset first using: "
                 f"'python src/app/main.py --download-peerread-only' or "
-                f"'make run_cli ARGS=\"--download-peerread-only\"'"
+                f"'make app_cli ARGS=\"--download-peerread-only\"'"
             )
             logger.error(error_msg)
             raise FileNotFoundError(error_msg)
@@ -787,7 +787,7 @@ class PeerReadLoader:
                 f"PeerRead reviews not found for {venue}/{split}. "
                 f"Please download the dataset first using: "
                 f"'python src/app/main.py --download-peerread-only' or "
-                f"'make run_cli ARGS=\"--download-peerread-only\"'"
+                f"'make app_cli ARGS=\"--download-peerread-only\"'"
             )
             logger.error(error_msg)
             raise FileNotFoundError(error_msg)

@@ -31,8 +31,8 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 
 ## Human Developer
 
-- **Quick Start:** `make setup_dev && make quickstart` (downloads sample data, evaluates smallest paper)
-- **Full Setup:** `make setup_dev` then `make run_cli ARGS="--help"`
+- **Quick Start:** `make setup_dev && make app_quickstart` (downloads sample data, evaluates smallest paper)
+- **Full Setup:** `make setup_dev` then `make app_cli ARGS="--help"`
 - **Core Resources:**
   - [CONTRIBUTING.md](CONTRIBUTING.md) - Commands, workflows, coding patterns
   - [docs/architecture.md](docs/architecture.md) - Technical design and decisions

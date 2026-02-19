@@ -196,7 +196,7 @@ The CLI is implemented in `src/app/main.py` with Typer. It exposes all parameter
 Example invocation:
 
 ```bash
-make run_cli ARGS="--paper-number=1105.1072 --chat-provider=github \
+make app_cli ARGS="--paper-number=1105.1072 --chat-provider=github \
     --include-researcher --include-analyst --include-synthesiser"
 ```
 

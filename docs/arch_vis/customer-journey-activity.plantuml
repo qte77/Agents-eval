@@ -12,7 +12,7 @@ start
 :Clones repository and sets up development environment;
 
 if (First time use or dataset update?) then (yes)
-  :Download PeerRead dataset with `make run_cli --download-peerread-full-only`;
+  :Download PeerRead dataset with `make app_cli --download-peerread-full-only`;
   :Dataset cached locally in `datasets/peerread/`;
 else (no)
 endif
@@ -20,7 +20,7 @@ endif
 :User selects evaluation interface;
 
 if (Interface choice) then (CLI)
-  :Execute `make run_cli` with evaluation parameters;
+  :Execute `make app_cli` with evaluation parameters;
   partition "CLI Agent Evaluation" {
     :Select paper via `--paper-id=ID`;
     :Choose engine: `--engine=mas` (default) or `--engine=cc`;
@@ -29,7 +29,7 @@ if (Interface choice) then (CLI)
     :Three-tier evaluation runs automatically;
   }
 else (Streamlit GUI)
-  :Launch `make run_gui` for interactive evaluation;
+  :Launch `make app_gui` for interactive evaluation;
   partition "GUI Agent Evaluation" {
     :Browse and select PeerRead paper (dropdown with title/abstract);
     :Choose engine (MAS or Claude Code);
@@ -59,7 +59,7 @@ else (no)
 endif
 
 if (Sweep comparison needed?) then (yes)
-  :Run `make run_sweep` across compositions × papers × repetitions;
+  :Run `make app_sweep` across compositions × papers × repetitions;
   :Review statistical summary in `results/sweeps/<timestamp>/summary.md`;
 else (no)
 endif
