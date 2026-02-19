@@ -1,7 +1,3 @@
----
-title: Project Introduction
----
-
 # Project Introduction
 
 ## Motivation and Problem Statement
