@@ -1,0 +1,26 @@
+# Lychee link checker configuration
+# https://lychee.cli.rs/usage/config/
+
+# Accept status codes commonly returned by bot-blocking sites
+# 403 = Forbidden (openai.com, medium.com, dl.acm.org, iso.org, etc.)
+# 401 = Unauthorized (huggingface.co/spaces, semanticscholar.org/me)
+# 429 = Too Many Requests (rate limiting)
+accept = [200, 204, 301, 403, 401, 429]
+
+# Exclude archived sprint docs from scanning (historical, not maintained)
+exclude_path = ["docs/sprints/archive"]
+
+# Exclude URLs that are expected to fail in CI
+exclude = [
+  # SSRF test examples in security docs
+  "^https?://169\\.254\\.",
+  # Local dev servers referenced in sprint docs
+  "^https?://localhost",
+  # Domains with persistent network/DNS failures
+  "^https?://docs\\.agentstack\\.dev",
+  "^https?://docs\\.archon\\.ai",
+  "^https?://docs\\.fetch\\.ai",
+  "^https?://docs\\.graphiti\\.ai",
+  "^https?://coral-protocol\\.dev",
+  "^https?://docs\\.browse\\.ai",
+]
