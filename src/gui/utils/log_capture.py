@@ -120,15 +120,26 @@ class LogCapture:
             "DEBUG": "#2196F3",  # Blue
             "CRITICAL": "#9C27B0",  # Purple
         }
+        # S8-F8.1: WCAG 1.4.1 — text badges prevent color-only log level identification
+        level_badges = {
+            "WARNING": "[WARN]",
+            "ERROR": "[ERR]",
+            "DEBUG": "[DBG]",
+            "CRITICAL": "[CRIT]",
+            "INFO": "[INFO]",
+        }
 
         for entry in logs:
             level = entry["level"]
             color = level_colors.get(level, "#666666")
+            badge = level_badges.get(level, f"[{level}]")
             html_parts.append(
                 f'<div style="margin-bottom: 8px; font-family: monospace; font-size: 12px;">'
                 f'<span style="color: #666;">{entry["timestamp"]}</span> '
-                f'<span style="color: {color}; font-weight: bold;">[{level}]</span> '
-                f'<span style="color: #999;">{entry["module"]}</span> '
+                # S8-F8.1: WCAG 1.4.1 — text badge + color (not color alone)
+                f'<span style="color: {color}; font-weight: bold;">{badge}</span> '
+                # S8-F8.1: WCAG 1.4.3 — #696969 contrast ratio 5.9:1 (passes AA)
+                f'<span style="color: #696969;">{entry["module"]}</span> '
                 f"<span>{entry['message']}</span>"
                 f"</div>"
             )

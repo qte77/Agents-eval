@@ -110,11 +110,6 @@ class TestJudgeAgent:
         result = await agent.evaluate_comprehensive(paper="Sample paper", review="Sample review")
 
         assert isinstance(result, CompositeResult)
-        assert hasattr(result, "composite_score")
-        assert hasattr(result, "recommendation")
-        assert hasattr(result, "tier1_score")
-        assert hasattr(result, "tier2_score")
-        assert hasattr(result, "tier3_score")
 
     async def test_judge_agent_respects_enabled_tiers(self):
         """JudgeAgent respects tier configuration."""

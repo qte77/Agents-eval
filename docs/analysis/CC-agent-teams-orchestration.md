@@ -160,7 +160,7 @@ Official CC integration. Turnkey setup but splits observability across two platf
 
 ### Integration Points
 
-Plugs into existing stack: `LogfireConfig` in `load_configs.py`, Logfire instrumentation in `logfire_instrumentation.py`, Phoenix Docker container via `make start_phoenix`.
+Plugs into existing stack: `LogfireConfig` in `load_configs.py`, Logfire instrumentation in `logfire_instrumentation.py`, Phoenix Docker container via `make phoenix_start`.
 
 CC OTel is infrastructure-level (env vars + Phoenix endpoint), separate from application-level PydanticAI Logfire. Enable/disable without touching `src/app/agents/`.
 

@@ -39,9 +39,9 @@ def build_interaction_graph(trace_data: GraphTraceData) -> nx.DiGraph[str]:
 
         # Add agent nodes if not already present
         if source not in graph:
-            graph.add_node(source, node_type="agent", label=source.capitalize())
+            graph.add_node(source, type="agent", label=source.capitalize())
         if target not in graph:
-            graph.add_node(target, node_type="agent", label=target.capitalize())
+            graph.add_node(target, type="agent", label=target.capitalize())
 
         # Add edge with interaction type
         graph.add_edge(source, target, interaction=interaction_type)
@@ -53,11 +53,11 @@ def build_interaction_graph(trace_data: GraphTraceData) -> nx.DiGraph[str]:
 
         # Add agent node if not already present
         if agent_id not in graph:
-            graph.add_node(agent_id, node_type="agent", label=agent_id.capitalize())
+            graph.add_node(agent_id, type="agent", label=agent_id.capitalize())
 
         # Add tool node
         if tool_name not in graph:
-            graph.add_node(tool_name, node_type="tool", label=tool_name.replace("_", " ").title())
+            graph.add_node(tool_name, type="tool", label=tool_name.replace("_", " ").title())
 
         # Add edge from agent to tool
         success = tool_call.get("success", False)

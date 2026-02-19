@@ -13,6 +13,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Sprint 9 Feature 1: CC engine GUI wiring — PRD feature for routing "Claude Code" radio selection to `cc_engine.run_cc_solo`/`run_cc_teams` in GUI execution path (mirrors existing CLI logic in `run_cli.py:126-138`)
+- `resolve_service_url(port)` in `src/gui/config/config.py`: detects GitHub Codespaces, Gitpod, and `PHOENIX_ENDPOINT` override to build correct service URLs in cloud dev environments; `PHOENIX_DEFAULT_ENDPOINT` now uses it (STORY-014)
+- GUI report generation: "Generate Report" button on App page enabled after evaluation completes; report rendered inline as Markdown with a download button; shares `generate_report()` logic with CLI (STORY-010)
+- App page UX: MAS-specific controls (sub-agents, provider, token limit, config summary) hidden entirely when CC engine selected — not just disabled (STORY-013)
+- Evaluation Results page: `execution_id` displayed as caption below composite score; full ID shown in "Evaluation Details" expander (STORY-013)
+- Baseline Comparison Configuration: path validation with `st.error` for non-existent directories; auto-populate from `logs/Agent_evals/traces/` if it exists (STORY-013)
+- `execution_id` included in `_prepare_result_dict` return and threaded to session state via `_execute_query_background` (STORY-013)
+
+### Removed
+
+- 43 implementation-detail tests across 14 files: deleted `test_load_settings.py` (4 AST introspection guards), `test_sprint1_examples_deleted.py` (8 deleted-file guards), `test_opik_removal.py` (12 removal guards); removed file-exists/string-contains test classes from 3 example test files; removed individual `hasattr`/`callable`/`isinstance` checks from 8 test files. No behavioral coverage lost.
+
+### Changed
+
+- Docs: README Status section updated to Sprint 8 Delivered; architecture.md Implementation Status and Development Timeline aligned; Sprint 9 PRD stripped of all 14 solved stories (Features 1-8, Story Breakdown, Ralph Loop notes removed)
+
+### Fixed
+
+- `graph_builder.py`: aligned node attribute key `node_type` → `type` to match `agent_graph.py` reader (Sprint 8 Feature 4 residual); fixed stale `node_type=` fixtures in `test_session_state_wiring.py`
+- `settings.py`: replaced `text("**Enable Sub-Agents:**")` and `text("**Token Limit:**")` with `st.markdown(...)` so bold formatting renders correctly; removed unused `text` import
+- `render_output()` in `output.py`: renamed `type` parameter to `output_type` to avoid shadowing Python built-in `type` (STORY-013)
+
+- GUI a11y/usability: text-prefix badges `[WARN]`/`[ERR]`/`[INFO]`/`[DBG]` in log panel (WCAG 1.4.1); `[CRIT]` for CRITICAL; module text color `#999999`→`#696969` for 5.9:1 contrast (WCAG 1.4.3); `"Navigation"` radio label with `label_visibility="collapsed"` (WCAG 1.3.1, 2.4.6); `"(opens in new tab)"` on Phoenix Traces link (WCAG 3.2.5); CSS radio-circle hiding hack removed (WCAG 1.3.3, 1.4.1); display-only warning on Prompts page; `HOME_INFO` onboarding corrected to Settings-before-App; `RUN_APP_QUERY_PLACEHOLDER` made domain-specific; `include_researcher`/`include_analyst` default to `True`; Streamlit primary color `#4A90E2` (agent graph blue) (STORY-012)
+- GUI judge settings: `tier2_provider`, `tier2_model`, `tier2_fallback_provider`, `tier2_fallback_model` replaced with `selectbox` dropdowns populated from `PROVIDER_REGISTRY` and `config_chat.json`; `fallback_strategy` exposed as `selectbox` with "tier1_only"; judge settings expanders set to `expanded=False`; "Advanced Settings" header added (STORY-011)
+- `report_generator.py` in `src/app/reports/`: `generate_report(result, suggestions)` → Markdown report with executive summary, tier breakdown, and weakness/suggestion sections; `save_report(md, path)` with auto-created parent dirs (STORY-009)
+- `--generate-report` CLI flag (mutually exclusive with `--skip-eval`) writes report to `results/reports/<timestamp>.md` after evaluation (STORY-009)
+- `--no-llm-suggestions` CLI flag to disable LLM-assisted suggestions in generated reports (STORY-009)
+- `SuggestionEngine` with rule-based + optional LLM-assisted paths in `src/app/reports/suggestion_engine.py` (STORY-008)
+- `Suggestion` Pydantic model and `SuggestionSeverity` enum (critical/warning/info) in `src/app/data_models/report_models.py` (STORY-008)
+- `METRIC_LABELS` dict and `format_metric_label()` in `evaluation.py` for human-readable metric names (STORY-007)
+- ARIA live regions (`role="status"`, `role="alert"`) in `_display_execution_result` for screen reader accessibility (STORY-007)
+- Post-run navigation guidance in completed state ("Evaluation Results", "Agent Graph") (STORY-007)
+- Sidebar execution-in-progress indicator (⏳) when `execution_state="running"` (STORY-007)
+- `st.dataframe()` alt text below bar charts in `_render_metrics_comparison` (WCAG 1.1.1) (STORY-007)
+- Baseline comparison inputs wrapped in collapsed expander in `render_evaluation` (STORY-007)
+- Delta indicators in `_render_overall_results` from `BaselineComparison.tier_deltas` (STORY-007)
 - GUI engine selector: radio toggle between MAS (PydanticAI) and Claude Code engines with CC availability check (STORY-014)
 - GUI paper selection: dropdown with ID/title, abstract preview, free-form/paper mode toggle (STORY-009)
 - GUI editable common settings: log level, max content length with tooltips; logfire consolidated to JudgeSettings (STORY-010)
@@ -21,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sweep rate-limit resilience: exponential backoff on 429 (max 3 retries), incremental `results.json` persistence (STORY-013b)
 - `--judge-provider` and `--judge-model` CLI/sweep args for Tier 2 judge override (STORY-012)
 - New examples: `basic_evaluation.py`, `judge_settings_customization.py`, `engine_comparison.py` with README (STORY-002)
+- `--cc-teams` boolean flag for CLI (`run_cli.py`), sweep (`run_sweep.py`), and `SweepConfig` model; enables CC Agent Teams mode with `--engine=cc` (STORY-006)
 - CC baseline Makefile recipes (`cc_run_solo`, `cc_run_teams`, `cc_collect_teams`)
 - Test coverage improvements: `datasets_peerread` 27→60%, `models` 24→76%, `agent_factories` 39→75% (STORY-014)
 - Security test suite: 135 tests across 5 modules (SSRF, prompt injection, data filtering, input limits, tool registration) (STORY-013)
@@ -38,7 +75,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Makefile: grouped `make help` output with section headers from `# MARK:` comments
 - Makefile: renamed MARK sections for consistency (`Sanity`→`quality`, `run ollama`→`ollama`, etc.)
 - `--paper-number` renamed to `--paper-id` (string, supports arxiv IDs); `--provider` renamed to `--chat-provider` across CLI, sweep, config (STORY-012)
-- `SweepConfig.paper_numbers: list[int]` → `paper_ids: list[str]`; added `judge_provider`, `judge_model`, `engine` fields (STORY-012, STORY-013)
+- `SweepConfig.paper_numbers: list[int]` → `paper_ids: list[str]`; added `judge_provider`, `judge_model`, `engine`, `cc_teams` fields (STORY-012, STORY-013, STORY-006)
+- `render_sidebar()` accepts `execution_state` parameter; shows in-progress indicator when running (STORY-007)
+- Engine selector `st.radio` now includes `help=` text explaining MAS vs Claude Code (STORY-007)
+- Paper selectbox `st.selectbox` now includes `help=` kwarg (STORY-007)
+- `_render_paper_selection_input` no-papers message changed from "Downloads page" to `make setup_dataset_sample` CLI instruction (STORY-007)
+- `run_cli.py` CC branch now delegates to `cc_engine.run_cc_solo` / `run_cc_teams` (removes inline subprocess logic) (STORY-006)
+- `sweep_runner._invoke_cc_comparison` delegates to `cc_engine`; `_run_cc_baselines` wires through `CCTraceAdapter` (STORY-006)
+- `app.main()` now accepts `engine` parameter; `run_app._execute_query_background` passes it through (STORY-006)
+- Makefile `cc_run_solo` / `cc_run_teams` recipes use Python CLI entry point instead of shell scripts (STORY-006)
 - `JudgeSettings.tier2_provider` default changed from `"openai"` to `"auto"` — judge inherits MAS chat provider at runtime (STORY-011)
 - 429 errors in `agent_system.py` now re-raise `ModelHTTPError` instead of `SystemExit(1)`, enabling caller retry logic (STORY-013b)
 - PeerRead review score fields coerce int→str via `BeforeValidator(str)` to handle numeric JSON values (STORY-009)
@@ -56,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- `scripts/collect-cc-traces/` shell scripts directory — replaced by `cc_engine.py` Python module (STORY-006)
 - Makefile: dead recipes `setup_devc_full`, `setup_devc_ollama_full`, `output_unset_app_env_sh`
 - Legacy config keys `paper_numbers` and `provider` in sweep JSON — use `paper_ids` and `chat_provider`
 - `"not-required"` API key sentinel in `create_simple_model` — `None` lets SDK fall back to env vars

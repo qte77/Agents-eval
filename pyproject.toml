@@ -71,7 +71,7 @@ docs = [
 [tool.uv]
 # package = true
 default-groups = ["dev", "test", "gui", "docs"]
-exclude-newer = "2026-02-15T00:00:00Z"
+exclude-newer = "2026-02-20T00:00:00Z"
 
 
 # MARK: Logging configurations

@@ -168,6 +168,16 @@ gh pr merge --squash
 
 **`modify/delete` conflicts**: `-X ours` won't auto-resolve when ours deleted a file that theirs modified. Fix with `git rm <files>` then commit — ours (delete) wins. Untracked files blocking merge need `rm -rf` before `git merge`.
 
+**`-X ours` does NOT delete files added by theirs**: Files that exist only on the branch being merged in (e.g., `main` added files that `feat` never had) are not conflicts — git auto-merges them as additions. After `git merge -X ours origin/main`, diff against the pre-merge feat branch and `git rm` any files that shouldn't be there:
+
+```bash
+# After merge, find files main added that feat didn't have
+git diff HEAD <feat-branch-pre-merge-sha> --name-only --diff-filter=A
+# Delete them
+git diff HEAD <feat-branch-pre-merge-sha> --name-only --diff-filter=A | xargs git rm
+git commit --amend --no-edit
+```
+
 ## Security
 
 **Ralph runs with `--dangerously-skip-permissions`** - all operations

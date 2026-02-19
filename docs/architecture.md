@@ -2,7 +2,7 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-02-18
+updated: 2026-02-19
 category: architecture
 version: 3.7.0
 ---
@@ -280,9 +280,9 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 8 - Planned)
+### Current Implementation (Sprint 8 - Delivered)
 
-**Sprint 8 Scope** (Draft — 8 features, 14 stories):
+**Sprint 8 Scope** (8 features, 14 stories):
 
 - **Tool Fix**: Replace `read_paper_pdf_tool` with `get_paper_content(paper_id)` using parsed JSON fallback chain (fixes sweep-crashing `FileNotFoundError`)
 - **API Key Cleanup**: Remove `"not-required"` sentinel from `create_llm_model()` (5 call sites); fix judge auto-mode model inheritance (`chat_model` parameter)
@@ -453,7 +453,8 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 5**: Runtime fixes, GUI enhancements, architecture improvements, code quality review -- Delivered
 - **Sprint 6**: Benchmarking infrastructure, CC baseline completion, security hardening, test quality -- Delivered
 - **Sprint 7**: Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine -- Delivered
-- **Sprint 8**: Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, report generation, GUI a11y/UX -- Planned
+- **Sprint 8**: Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, report generation, GUI a11y/UX -- Delivered
+- **Sprint 9**: Sweep results UI, Sprint 8 carry-forward cleanup -- In Progress
 
 For sprint details, see [roadmap.md](roadmap.md).
 

@@ -11,10 +11,11 @@ PROJECT_NAME = "rd-mas-example"
 
 # MARK: paths, files
 CHAT_CONFIG_FILE = "config_chat.json"
-LOGS_PATH = "logs/Agent_evals"
 CONFIGS_PATH = "config"
 DATASETS_PATH = "datasets"
+LOGS_PATH = "logs/Agent_evals"
 DATASETS_CONFIG_FILE = "config_datasets.json"
+RESULTS_PATH = "results"
 DATASETS_PEERREAD_PATH = f"{DATASETS_PATH}/peerread"
-MAS_REVIEWS_PATH = f"{DATASETS_PEERREAD_PATH}/MAS_reviews"
+MAS_REVIEWS_PATH = f"{RESULTS_PATH}/MAS_reviews"
 REVIEW_PROMPT_TEMPLATE = "review_template.md"

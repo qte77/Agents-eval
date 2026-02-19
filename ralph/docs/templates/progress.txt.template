@@ -1,7 +1,7 @@
 # Ralph Loop Progress Log
 
 Initialized: {{DATE}}
-Project: RDI-AgentBeats-TheBulletproofProtocol
+Project: {{PROJECT}}
 
 This file tracks the progress of Ralph loop autonomous execution.
 Each iteration appends its results here.

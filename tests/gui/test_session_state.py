@@ -19,11 +19,12 @@ def test_session_state_defaults_structure():
     defaults = get_session_state_defaults()
 
     # Assert: Verify structure matches expected schema
+    # S8-F8.1: researcher and analyst default to True for better UX
     assert defaults == snapshot(
         {
             "chat_provider": CHAT_DEFAULT_PROVIDER,
-            "include_researcher": False,
-            "include_analyst": False,
+            "include_researcher": True,
+            "include_analyst": True,
             "include_synthesiser": False,
         }
     )
@@ -43,15 +44,18 @@ def test_session_state_provider_is_valid():
     assert provider in PROVIDER_REGISTRY, f"Default provider '{provider}' not in PROVIDER_REGISTRY"
 
 
-def test_session_state_all_agents_disabled_by_default():
-    """Test that all sub-agents are disabled by default."""
+def test_session_state_agent_defaults():
+    """Test sub-agent defaults: researcher and analyst enabled, synthesiser disabled.
+
+    S8-F8.1: researcher and analyst default to True for better UX.
+    """
     # Arrange
     from run_gui import get_session_state_defaults
 
     # Act
     defaults = get_session_state_defaults()
 
-    # Assert: All agent flags should be False
-    assert defaults["include_researcher"] is False
-    assert defaults["include_analyst"] is False
+    # Assert: researcher and analyst enabled by default; synthesiser stays off
+    assert defaults["include_researcher"] is True
+    assert defaults["include_analyst"] is True
     assert defaults["include_synthesiser"] is False

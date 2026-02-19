@@ -24,9 +24,11 @@ from streamlit import button, exception, header, info, spinner, subheader, text_
 from app.app import main
 from app.common.settings import CommonSettings
 from app.config.config_app import CHAT_DEFAULT_PROVIDER
+from app.data_models.evaluation_models import CompositeResult
 from app.data_models.peerread_models import PeerReadPaper
 from app.data_utils.datasets_peerread import PeerReadLoader
 from app.judge.settings import JudgeSettings
+from app.reports.report_generator import generate_report
 from app.utils.log import logger
 from gui.components.output import render_output
 from gui.config.text import (
@@ -282,6 +284,7 @@ async def _execute_query_background(
             token_limit=token_limit,
             judge_settings=judge_settings,
             paper_id=paper_id,
+            engine=engine,
         )
 
         # Store result and transition to completed
@@ -293,11 +296,14 @@ async def _execute_query_background(
             st.session_state.execution_graph = result.get("graph")
             # Keep legacy execution_result for backward compatibility
             st.session_state.execution_result = result.get("composite_result")
+            # S8-F8.2: store execution_id for Evaluation Results page display
+            st.session_state["execution_id"] = result.get("execution_id")
         else:
             # No evaluation result (e.g., skip_eval=True)
             st.session_state.execution_composite_result = None
             st.session_state.execution_graph = None
             st.session_state.execution_result = None
+            st.session_state["execution_id"] = None
 
         # Clear error if previously set
         if hasattr(st.session_state, "execution_error"):
@@ -337,25 +343,43 @@ def _display_configuration(provider: str, token_limit: int | None, agents_text: 
 def _display_execution_result(execution_state: str) -> None:
     """Display execution result based on current state.
 
+    Wraps state transitions in ARIA live regions for screen reader accessibility:
+    - role="status" for running/completed (polite, non-interrupting)
+    - role="alert" for errors (assertive, immediate announcement)
+
     Args:
         execution_state: Current execution state (running/completed/error/idle)
     """
     if execution_state == "running":
+        # S8-F3.3: ARIA role="status" for polite announcement (WCAG 4.1.3)
+        st.markdown('<div role="status" aria-live="polite">', unsafe_allow_html=True)
         with spinner("Query execution in progress..."):
             info(
                 "Execution is running. You can navigate to other tabs and return to see the result."
             )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     elif execution_state == "completed":
         result = getattr(st.session_state, "execution_result", None)
+        # S8-F3.3: ARIA role="status" for completed state + post-run navigation guidance
+        st.markdown('<div role="status" aria-live="polite">', unsafe_allow_html=True)
         if result:
             render_output(result)
         else:
             info("Execution completed but no result was returned.")
+        st.markdown(
+            "Navigate to **Evaluation Results** to view scores, "
+            "or **Agent Graph** to explore agent interactions.",
+            unsafe_allow_html=False,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     elif execution_state == "error":
+        # S8-F3.3: ARIA role="alert" for error state (assertive announcement, WCAG 4.1.3)
+        st.markdown('<div role="alert" aria-live="assertive">', unsafe_allow_html=True)
         error_msg = getattr(st.session_state, "execution_error", "Unknown error")
         exception(Exception(error_msg))
+        st.markdown("</div>", unsafe_allow_html=True)
 
     else:  # idle
         render_output(RUN_APP_OUTPUT_PLACEHOLDER)
@@ -378,7 +402,11 @@ def _render_paper_selection_input() -> tuple[str, str | None]:
         st.session_state.available_papers = available_papers
 
     if not available_papers:
-        st.info("No papers downloaded yet. Use the Downloads page to fetch the PeerRead dataset.")
+        # S8-F3.3: fix dead "Downloads page" reference — provide CLI instructions instead
+        st.info(
+            "No papers downloaded yet. "
+            "Run `make setup_dataset_sample` in your terminal to fetch the PeerRead dataset."
+        )
         return text_input(RUN_APP_QUERY_PLACEHOLDER), None
 
     selected_paper: PeerReadPaper = st.selectbox(
@@ -386,6 +414,7 @@ def _render_paper_selection_input() -> tuple[str, str | None]:
         options=available_papers,
         format_func=_format_paper_option,
         key="selected_paper",
+        help="Choose a PeerRead paper to evaluate. The abstract preview appears below.",
     )
     selected_paper_id = selected_paper.paper_id if selected_paper else None
 
@@ -450,6 +479,34 @@ async def _handle_query_submission(
     st.rerun()
 
 
+def _render_report_section(composite_result: CompositeResult | None) -> None:
+    """Render the report generation section on the App page.
+
+    Displays a "Generate Report" button when a composite_result is available.
+    On click, generates a Markdown report and renders it inline, with a
+    download button for saving to disk.
+
+    Args:
+        composite_result: Evaluation result to generate a report for,
+            or None when evaluation has not yet completed.
+    """
+    # S8-F6.2: report button only enabled after evaluation completes
+    if composite_result is None:
+        return
+
+    # Render the generate button
+    if st.button("Generate Report", key="generate_report_btn"):
+        markdown = generate_report(composite_result)
+        st.markdown(markdown)
+        st.download_button(
+            label="Download Report",
+            data=markdown,
+            file_name="evaluation_report.md",
+            mime="text/markdown",
+            key="download_report_btn",
+        )
+
+
 async def render_app(provider: str | None = None, chat_config_file: str | Path | None = None):
     """Render the main app interface for running agentic queries via Streamlit.
 
@@ -483,6 +540,11 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
         ["MAS (PydanticAI)", "Claude Code"],
         key="engine_label",
         horizontal=True,
+        # S8-F3.3: help text for engine selector
+        help=(
+            "MAS (PydanticAI): multi-agent pipeline with Researcher, Analyst, and Synthesiser. "
+            "Claude Code: single-model execution via the `claude` CLI."
+        ),
     )
     engine = "cc" if engine_label == "Claude Code" else "mas"
     st.session_state.engine = engine
@@ -493,15 +555,17 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
             "Install it to use the CC engine: https://docs.anthropic.com/en/docs/claude-code"
         )
 
-    mas_disabled = engine == "cc"
-    if mas_disabled:
+    if engine == "cc":
+        # S8-F8.2: hide MAS controls entirely when CC engine selected (not just disabled)
         st.info(
             "MAS agent controls (Researcher, Analyst, Synthesiser) are not applicable "
             "when using the Claude Code engine."
         )
-
-    agents_text = _format_enabled_agents(include_researcher, include_analyst, include_synthesiser)
-    _display_configuration(provider_from_state, token_limit, agents_text)
+    else:
+        agents_text = _format_enabled_agents(
+            include_researcher, include_analyst, include_synthesiser
+        )
+        _display_configuration(provider_from_state, token_limit, agents_text)
 
     input_mode = st.radio(
         "Input mode",
@@ -516,8 +580,6 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     else:
         query, selected_paper_id = _render_paper_selection_input()
 
-    subheader(OUTPUT_SUBHEADER)
-
     if button(RUN_APP_BUTTON):
         await _handle_query_submission(
             query,
@@ -531,5 +593,11 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
             engine=engine,
         )
 
+    # S8-F8.1: subheader placed after run button so output section follows user action
+    subheader(OUTPUT_SUBHEADER)
     _display_execution_result(_get_execution_state())
     _render_debug_log_panel()
+
+    # S8-F6.2: report section — enabled after evaluation completes
+    composite_result = st.session_state.get("execution_composite_result")
+    _render_report_section(composite_result)

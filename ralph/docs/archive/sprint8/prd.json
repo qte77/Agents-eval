@@ -7,11 +7,11 @@
     {
       "id": "STORY-001",
       "title": "Replace `read_paper_pdf_tool` with `get_paper_content` using parsed JSON fallback chain",
-      "description": "`read_paper_pdf_tool` is exposed directly to the LLM and requires a local filesystem path as input. The LLM has no way to discover valid paths, leading to hallucinated URLs (e.g., `https://arxiv.org/pdf/1105.1072`) that crash the agent with `FileNotFoundError`. The correct content-loading logic already exists internally in `_load_paper_content_with_fallback()` (parsed JSON \u2192 raw PDF \u2192 abstract), but it's private \u2014 only called from `generate_paper_review_content_from_template`. Meanwhile, `get_peerread_paper` returns only title/abstract/reviews, no body text, so the LLM naturally reaches for `read_paper_pdf_tool` to get full paper content.",
+      "description": "`read_paper_pdf_tool` is exposed directly to the LLM and requires a local filesystem path as input. The LLM has no way to discover valid paths, leading to hallucinated URLs (e.g., `https://arxiv.org/pdf/1105.1072`) that crash the agent with `FileNotFoundError`. The correct content-loading logic already exists internally in `_load_paper_content_with_fallback()` (parsed JSON → raw PDF → abstract), but it's private — only called from `generate_paper_review_content_from_template`. Meanwhile, `get_peerread_paper` returns only title/abstract/reviews, no body text, so the LLM naturally reaches for `read_paper_pdf_tool` to get full paper content.",
       "acceptance": [
         "`read_paper_pdf_tool` removed from agent tool registration (no longer LLM-callable)",
         "New tool `get_paper_content(paper_id: str) -> str` registered on the same agent (researcher or manager)",
-        "`get_paper_content` internally calls `_load_paper_content_with_fallback()` fallback chain: parsed JSON \u2192 raw PDF \u2192 abstract",
+        "`get_paper_content` internally calls `_load_paper_content_with_fallback()` fallback chain: parsed JSON → raw PDF → abstract",
         "Tool docstring clearly states: returns full paper text from local PeerRead dataset, requires `paper_id` (not a file path or URL)",
         "`read_paper_pdf()` function retained as internal helper (used by fallback chain), just not exposed as a tool",
         "`read_paper_pdf()` rejects URLs with a descriptive return instead of `FileNotFoundError` (defensive guard)",
@@ -21,15 +21,15 @@
         "Remove `@agent.tool` decorator from `read_paper_pdf_tool` in `add_peerread_tools_to_agent()`",
         "Add new `@agent.tool get_paper_content(ctx, paper_id)` that instantiates `PeerReadLoader`, calls `_load_paper_content_with_fallback(ctx, loader, paper_id, abstract)` where `abstract` is obtained from `loader.get_paper_by_id(paper_id).abstract`",
         "Add URL guard in `read_paper_pdf()`: if `pdf_path` starts with `http`, return error string instead of raising",
-        "`_load_paper_content_with_fallback` already handles all three tiers \u2014 no changes needed there",
+        "`_load_paper_content_with_fallback` already handles all three tiers — no changes needed there",
         "Update tool trace logging (`trace_collector.log_tool_call`) for the new tool name"
       ],
       "files": [
         "src/app/tools/peerread_tools.py",
         "tests/tools/test_peerread_tools.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T19:44:25Z",
       "content_hash": "069d741d3f480f5a42c83061c1bbc4363740a742b5f97dcf7a576f727831f7f8",
       "depends_on": []
     },
@@ -44,17 +44,17 @@
         "`LLMJudgeEngine.__init__` accepts `chat_model: str | None` parameter alongside `chat_provider`",
         "When `tier2_provider=\"auto\"` and `chat_model` is provided, `self.model` inherits `chat_model` (not hardcoded `tier2_model`)",
         "When `tier2_provider=\"auto\"` and `chat_model` is `None`, `self.model` falls back to `tier2_model` (current behavior preserved)",
-        "Cross-provider mismatch test: `chat_provider=\"cerebras\"` with only `GITHUB_API_KEY` set \u2192 engine falls back to github provider and github-compatible model",
+        "Cross-provider mismatch test: `chat_provider=\"cerebras\"` with only `GITHUB_API_KEY` set → engine falls back to github provider and github-compatible model",
         "`EvaluationPipeline` passes `chat_model` through to `LLMJudgeEngine` (caller must supply it)",
-        "Existing tests pass \u2014 no behavioral change when API key is provided explicitly",
-        "TDD: RED tests first covering sentinel removal (`api_key=None` \u2192 `OpenAIProvider(api_key=None)`), model inheritance (`chat_model` pass-through), cross-provider fallback. GREEN: implement fixes. REFACTOR: simplify any redundant provider resolution logic. Use `testing-python` skill.",
+        "Existing tests pass — no behavioral change when API key is provided explicitly",
+        "TDD: RED tests first covering sentinel removal (`api_key=None` → `OpenAIProvider(api_key=None)`), model inheritance (`chat_model` pass-through), cross-provider fallback. GREEN: implement fixes. REFACTOR: simplify any redundant provider resolution logic. Use `testing-python` skill.",
         "`make validate` passes",
         "Replace `api_key=api_key or \"not-required\"` with `api_key=api_key` at 5 call sites in `create_llm_model()`",
         "Add `chat_model: str | None = None` parameter to `LLMJudgeEngine.__init__`; when `resolved_provider != settings.tier2_provider` and `chat_model` is provided, set `self.model = chat_model`",
         "Update `EvaluationPipeline.__init__` to accept and forward `chat_model`",
         "Add test: `create_llm_model(provider=\"openai\", ..., api_key=None)` results in `OpenAIProvider(api_key=None)`, not `\"not-required\"`",
-        "Add test: `LLMJudgeEngine(settings, chat_provider=\"cerebras\", chat_model=\"llama-4-scout-17b-16e-instruct\")` \u2192 `engine.model == \"llama-4-scout-17b-16e-instruct\"`",
-        "Add test: `chat_provider=\"cerebras\"` with only `GITHUB_API_KEY` \u2192 falls back to github with `tier2_fallback_model`",
+        "Add test: `LLMJudgeEngine(settings, chat_provider=\"cerebras\", chat_model=\"llama-4-scout-17b-16e-instruct\")` → `engine.model == \"llama-4-scout-17b-16e-instruct\"`",
+        "Add test: `chat_provider=\"cerebras\"` with only `GITHUB_API_KEY` → falls back to github with `tier2_fallback_model`",
         "Existing auto-mode tests to verify still pass (all seed same-provider keys): `test_tier2_provider_auto_inherits_from_chat_provider` (line 427), `test_auto_mode_inherits_chat_provider_correctly` (line 746), `test_auto_mode_inherits_chat_provider` (line 684, Hypothesis)"
       ],
       "files": [
@@ -64,14 +64,14 @@
         "tests/llms/test_models.py",
         "tests/judge/test_llm_evaluation_managers.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T19:50:30Z",
       "content_hash": "7a41488d81c622f46b746374f6821788e19dd94170a8056eae5a9316e1319ebe",
       "depends_on": []
     },
     {
       "id": "STORY-003",
-      "title": "Fix graph node attribute alignment (`\"node_type\"` \u2192 `\"type\"` in `agent_graph.py`) + GUI a11y wrapper",
+      "title": "Fix graph node attribute alignment (`\"node_type\"` → `\"type\"` in `agent_graph.py`) + GUI a11y wrapper",
       "description": "`graph_analysis.py:export_trace_to_networkx()` uses `type` as node attribute, while `agent_graph.py:render_agent_graph()` expects `node_type`. Direct callers of `export_trace_to_networkx()` get wrong visual node types. Sprint 7 avoided this by routing through `build_interaction_graph()`, but the latent mismatch should be fixed.",
       "acceptance": [
         "Unified node attribute name across graph export and rendering",
@@ -79,15 +79,15 @@
         "TDD: RED tests first verifying attribute name consistency between `export_trace_to_networkx()` output and `render_agent_graph()` expectations. GREEN: fix attribute name. REFACTOR: remove any adapter shims. Use `testing-python` skill.",
         "`make validate` passes",
         "Canonical attribute name: `type` (already used by `graph_analysis.py:export_trace_to_networkx()` at 4 call sites and internally by `_build_tool_graph`/`analyze_tool_usage_patterns`)",
-        "Fix consumer side: `agent_graph.py:render_agent_graph()` reads `node_data.get(\"node_type\")` at lines 101 and 150 \u2014 change to `node_data.get(\"type\")` (2 edits)",
-        "No changes to `graph_analysis.py` \u2014 it already uses the canonical name"
+        "Fix consumer side: `agent_graph.py:render_agent_graph()` reads `node_data.get(\"node_type\")` at lines 101 and 150 — change to `node_data.get(\"type\")` (2 edits)",
+        "No changes to `graph_analysis.py` — it already uses the canonical name"
       ],
       "files": [
         "src/gui/pages/agent_graph.py",
         "tests/judge/test_graph_analysis.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T19:54:39Z",
       "content_hash": "8492c83b8e9aa41b3b3d42aeb4910745a38946197008c797bce68279aff7c1d1",
       "depends_on": []
     },
@@ -109,22 +109,22 @@
         "src/app/app.py",
         "tests/agents/test_agent_system.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T20:13:49Z",
       "content_hash": "97f4320c08cd6cfe450f665c4a6b3f553382bd4a70c857601e5baca62483dad6",
       "depends_on": []
     },
     {
       "id": "STORY-005",
       "title": "Create `cc_engine.py` core module (`CCResult`, `run_cc_solo`, `run_cc_teams`, `parse_stream_json`, `check_cc_available`)",
-      "description": "CC (Claude Code) engine logic is duplicated across 4 locations with inconsistent error handling and incomplete wiring. Solo mode only \u2014 no teams orchestration path. Shell scripts duplicate logic that should live in Python.",
+      "description": "CC (Claude Code) engine logic is duplicated across 4 locations with inconsistent error handling and incomplete wiring. Solo mode only — no teams orchestration path. Shell scripts duplicate logic that should live in Python.",
       "acceptance": [
         "New module `src/app/engines/cc_engine.py` created",
-        "`check_cc_available() -> bool` \u2014 `shutil.which(\"claude\")` (replaces 3 inline checks)",
-        "`run_cc_solo(query: str, timeout: int = 600) -> CCResult` \u2014 solo subprocess with `--output-format json`",
-        "`run_cc_teams(query: str, timeout: int = 600) -> CCResult` \u2014 teams subprocess with `--output-format stream-json` + `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env var, parses team events from live stream via `Popen`",
+        "`check_cc_available() -> bool` — `shutil.which(\"claude\")` (replaces 3 inline checks)",
+        "`run_cc_solo(query: str, timeout: int = 600) -> CCResult` — solo subprocess with `--output-format json`",
+        "`run_cc_teams(query: str, timeout: int = 600) -> CCResult` — teams subprocess with `--output-format stream-json` + `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env var, parses team events from live stream via `Popen`",
         "`CCResult` Pydantic model: `execution_id`, `output_data`, `session_dir` (solo), `team_artifacts` (teams: parsed from stream events)",
-        "`parse_stream_json(stream) -> CCResult` \u2014 JSONL line parser extracting `init`, `result`, `TeamCreate`, `Task` events",
+        "`parse_stream_json(stream) -> CCResult` — JSONL line parser extracting `init`, `result`, `TeamCreate`, `Task` events",
         "`src/app/engines/__init__.py` created",
         "TDD: RED tests first (`tests/engines/test_cc_engine.py`) covering `run_cc_solo`, `run_cc_teams`, `parse_stream_json`, `check_cc_available` with mocked `subprocess`. GREEN: implement `cc_engine.py`. Use `testing-python` skill.",
         "`make validate` passes"
@@ -134,23 +134,23 @@
         "src/app/engines/cc_engine.py",
         "tests/engines/test_cc_engine.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T20:34:31Z",
       "content_hash": "c5bdf3b04225680e8fde5cdd019df90e56cd72c658e0b17ce77e280bd320c98d",
       "depends_on": []
     },
     {
       "id": "STORY-006",
       "title": "Wire `cc_engine` into CLI/sweep/GUI, add `--cc-teams` flag, retire shell scripts",
-      "description": "CC (Claude Code) engine logic is duplicated across 4 locations with inconsistent error handling and incomplete wiring. Solo mode only \u2014 no teams orchestration path. Shell scripts duplicate logic that should live in Python.",
+      "description": "CC (Claude Code) engine logic is duplicated across 4 locations with inconsistent error handling and incomplete wiring. Solo mode only — no teams orchestration path. Shell scripts duplicate logic that should live in Python.",
       "acceptance": [
         "`--cc-teams` boolean flag added to CLI (`run_cli.py`), sweep (`run_sweep.py`), and GUI (`run_app.py`)",
         "`--engine=cc` without `--cc-teams`: calls `run_cc_solo()` (current behavior, consolidated)",
         "`--engine=cc --cc-teams`: calls `run_cc_teams()` with teams env var and stream-json parsing",
-        "`run_cli.py` CC branch delegates to `cc_engine` \u2014 no inline subprocess code",
-        "`sweep_runner.py._invoke_cc_comparison()` delegates to `cc_engine` \u2014 no inline subprocess code",
+        "`run_cli.py` CC branch delegates to `cc_engine` — no inline subprocess code",
+        "`sweep_runner.py._invoke_cc_comparison()` delegates to `cc_engine` — no inline subprocess code",
         "`run_app.py._execute_query_background()` passes `engine` to `main()` when `engine == \"cc\"` (currently silently dropped)",
-        "`_run_cc_baselines()` wires CC results through `CCTraceAdapter` \u2192 evaluation (not a stub)",
+        "`_run_cc_baselines()` wires CC results through `CCTraceAdapter` → evaluation (not a stub)",
         "`scripts/collect-cc-traces/` directory removed (replaced by Python implementation)",
         "Makefile recipes `cc_run_solo`, `cc_run_teams`, `cc_collect_teams` updated to use Python entry point instead of shell scripts",
         "REFACTOR: remove inline subprocess code from callers",
@@ -165,8 +165,8 @@
         "scripts/collect-cc-traces/",
         "Makefile"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T21:08:57Z",
       "content_hash": "4665ec8145413d9715d77a8396e856193b31ef2d775f9b8d69191983872ae63d",
       "depends_on": [
         "STORY-005"
@@ -178,7 +178,7 @@
       "description": "GUI polish for Feature 3 integration files. Add ARIA live regions, fix dead reference, add help text to engine/paper selectors, execution-in-progress indicator, human-readable metric labels, baseline expander, dataframe alt text.",
       "acceptance": [
         "Add ARIA live region (`role=\"status\"`) for execution state transitions, `role=\"alert\"` for errors *(WCAG 4.1.3)* (`run_app.py:343-361`)",
-        "Fix dead \"Downloads page\" reference \u2014 replace with CLI instructions (`make setup_dataset_sample`) (`run_app.py:381`)",
+        "Fix dead \"Downloads page\" reference — replace with CLI instructions (`make setup_dataset_sample`) (`run_app.py:381`)",
         "Add `help=` to engine selector explaining MAS vs Claude Code (`run_app.py:481`)",
         "Add `help=` parameter to paper selectbox (`run_app.py:384-389`)",
         "Add post-run navigation guidance to Evaluation Results and Agent Graph (`run_app.py:349-354`)",
@@ -194,8 +194,8 @@
         "src/gui/pages/evaluation.py",
         "src/gui/components/sidebar.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T21:17:18Z",
       "content_hash": "25e8d0090af98f458670bc889866ef046d0bd5953282a6b16f3bef53845c943c",
       "depends_on": [
         "STORY-006"
@@ -204,7 +204,7 @@
     {
       "id": "STORY-008",
       "title": "Suggestion engine (`suggestion_engine.py`, `Suggestion` model, rule-based + optional LLM)",
-      "description": "After evaluation completes, users should be able to generate a structured report that summarizes evaluation results and suggests improvements. The report synthesizes Tier 1/2/3 scores, highlights weaknesses (low-scoring dimensions), and proposes actionable content suggestions (e.g., \"Tier 1 BLEU score low \u2014 review lacks specific technical terminology from the paper abstract\"). Available via `--generate-report` in CLI and a \"Generate Report\" button in the GUI.",
+      "description": "After evaluation completes, users should be able to generate a structured report that summarizes evaluation results and suggests improvements. The report synthesizes Tier 1/2/3 scores, highlights weaknesses (low-scoring dimensions), and proposes actionable content suggestions (e.g., \"Tier 1 BLEU score low — review lacks specific technical terminology from the paper abstract\"). Available via `--generate-report` in CLI and a \"Generate Report\" button in the GUI.",
       "acceptance": [
         "Suggestions are specific and actionable (not generic \"improve quality\")",
         "Each suggestion references the metric/tier that triggered it",
@@ -217,15 +217,15 @@
         "src/app/data_models/report_models.py",
         "tests/reports/test_suggestion_engine.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T21:23:06Z",
       "content_hash": "5ec2a93365281393abb294f6d256f4ab5c8b3bbe344a542028b7cda368ca7698",
       "depends_on": []
     },
     {
       "id": "STORY-009",
       "title": "CLI report generation (`report_generator.py`, `--generate-report` flag)",
-      "description": "After evaluation completes, users should be able to generate a structured report that summarizes evaluation results and suggests improvements. The report synthesizes Tier 1/2/3 scores, highlights weaknesses (low-scoring dimensions), and proposes actionable content suggestions (e.g., \"Tier 1 BLEU score low \u2014 review lacks specific technical terminology from the paper abstract\"). Available via `--generate-report` in CLI and a \"Generate Report\" button in the GUI.",
+      "description": "After evaluation completes, users should be able to generate a structured report that summarizes evaluation results and suggests improvements. The report synthesizes Tier 1/2/3 scores, highlights weaknesses (low-scoring dimensions), and proposes actionable content suggestions (e.g., \"Tier 1 BLEU score low — review lacks specific technical terminology from the paper abstract\"). Available via `--generate-report` in CLI and a \"Generate Report\" button in the GUI.",
       "acceptance": [
         "`run_cli.py` accepts `--generate-report` flag (requires evaluation to have run, incompatible with `--skip-eval`)",
         "Report includes: executive summary, per-tier score breakdown, identified weaknesses, actionable suggestions",
@@ -239,8 +239,8 @@
         "src/app/reports/report_generator.py",
         "tests/reports/test_report_generator.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T21:29:10Z",
       "content_hash": "ea3dcb7bf13d3b5d21a04ac885afb9aa119bf3432732ecffaa1e3732d9acbc19",
       "depends_on": [
         "STORY-008",
@@ -250,7 +250,7 @@
     {
       "id": "STORY-010",
       "title": "GUI report generation (report button + inline display)",
-      "description": "After evaluation completes, users should be able to generate a structured report that summarizes evaluation results and suggests improvements. The report synthesizes Tier 1/2/3 scores, highlights weaknesses (low-scoring dimensions), and proposes actionable content suggestions (e.g., \"Tier 1 BLEU score low \u2014 review lacks specific technical terminology from the paper abstract\"). Available via `--generate-report` in CLI and a \"Generate Report\" button in the GUI.",
+      "description": "After evaluation completes, users should be able to generate a structured report that summarizes evaluation results and suggests improvements. The report synthesizes Tier 1/2/3 scores, highlights weaknesses (low-scoring dimensions), and proposes actionable content suggestions (e.g., \"Tier 1 BLEU score low — review lacks specific technical terminology from the paper abstract\"). Available via `--generate-report` in CLI and a \"Generate Report\" button in the GUI.",
       "acceptance": [
         "\"Generate Report\" button on App page, enabled after evaluation completes",
         "Report displayed inline (Markdown rendered via `st.markdown`) with download option",
@@ -261,8 +261,8 @@
         "src/gui/pages/run_app.py",
         "src/app/reports/report_generator.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T23:32:54Z",
       "content_hash": "1752c57b7eb60da01eca6001bfde8818dabedaf28de497e30de30760c67cc36e",
       "depends_on": [
         "STORY-009",
@@ -273,7 +273,7 @@
     {
       "id": "STORY-011",
       "title": "Replace 4 free-text inputs with populated `selectbox` in Tier 2 LLM Judge GUI + expander polish",
-      "description": "The \"Judge Settings - Tier 2 LLM Judge\" section in `src/gui/pages/settings.py:169-211` uses `text_input` for provider and model fields (lines 172, 178, 184, 192). Users must type provider names and model IDs from memory, with no validation or discovery. In contrast, \"Agent Configuration\" (line 30-42) already uses `selectbox` populated from `PROVIDER_REGISTRY` \u2014 the same pattern should be reused for judge settings.",
+      "description": "The \"Judge Settings - Tier 2 LLM Judge\" section in `src/gui/pages/settings.py:169-211` uses `text_input` for provider and model fields (lines 172, 178, 184, 192). Users must type provider names and model IDs from memory, with no validation or discovery. In contrast, \"Agent Configuration\" (line 30-42) already uses `selectbox` populated from `PROVIDER_REGISTRY` — the same pattern should be reused for judge settings.",
       "acceptance": [
         "`tier2_provider` field uses `selectbox` populated from `PROVIDER_REGISTRY.keys()` + `\"auto\"` option",
         "`tier2_model` field uses `selectbox` populated from `config_chat.json` model names for the selected provider (dynamic, updates when provider changes)",
@@ -291,8 +291,8 @@
         "src/gui/pages/settings.py",
         "tests/gui/test_settings.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T22:05:17Z",
       "content_hash": "fb5c3c9f6ed7f1fba55bc14f02c8a6b065743d41abb679a258d4bfd474f2fe1c",
       "depends_on": []
     },
@@ -301,17 +301,17 @@
       "title": "Standalone a11y/usability fixes (styling, sidebar, log, home, prompts, theme, defaults)",
       "description": "Standalone GUI improvements that don't share files with Features 3, 4, or 7. Synergy items (touching `run_app.py`, `evaluation.py`, `settings.py`, `agent_graph.py`) have been folded into their parent features as GUI polish sub-sections. This feature contains: (1) items with their own dedicated files, (2) items moved from Features 3/7 that are independent GUI concerns. Consolidated audit: `docs/reviews/gui-comprehensive-audit.md`.",
       "acceptance": [
-        "Remove CSS radio button circle hiding hack \u2014 restores native selection indicator *(Critical, Level A \u2014 WCAG 1.3.3, 1.4.1)* (`styling.py:14-16`)",
-        "Fix sidebar radio: replace `\" \"` label with `\"Navigation\"` + `label_visibility=\"collapsed\"` *(Level AA \u2014 WCAG 1.3.1, 2.4.6)* (`sidebar.py:16`)",
-        "Add text-prefix badges (`[WARN]`, `[ERR]`, etc.) to log levels \u2014 not color-only *(Level AA \u2014 WCAG 1.4.1)* (`log_capture.py:117-134`)",
-        "Fix log module text color `#999999` \u2192 `#696969` (contrast 2.8:1 \u2192 5.9:1) *(Level AA \u2014 WCAG 1.4.3)* (`log_capture.py:131`)",
+        "Remove CSS radio button circle hiding hack — restores native selection indicator *(Critical, Level A — WCAG 1.3.3, 1.4.1)* (`styling.py:14-16`)",
+        "Fix sidebar radio: replace `\" \"` label with `\"Navigation\"` + `label_visibility=\"collapsed\"` *(Level AA — WCAG 1.3.1, 2.4.6)* (`sidebar.py:16`)",
+        "Add text-prefix badges (`[WARN]`, `[ERR]`, etc.) to log levels — not color-only *(Level AA — WCAG 1.4.1)* (`log_capture.py:117-134`)",
+        "Fix log module text color `#999999` → `#696969` (contrast 2.8:1 → 5.9:1) *(Level AA — WCAG 1.4.3)* (`log_capture.py:131`)",
         "Add \"(opens in new tab)\" to Phoenix Traces link (`sidebar.py:21-24`)",
         "Update `HOME_INFO` to reflect correct onboarding order: Settings before App *(Critical)* (`text.py:1`, `home.py:7-9`)",
         "Add prominent warning on Prompts page that edits are display-only *(Critical)* (`prompts.py:50`)",
         "Update query placeholder to domain-specific example: `\"e.g., Evaluate this paper's methodology and novelty\"` (`text.py:16`)",
-        "Add `.streamlit/config.toml` theme \u2014 primary `#4A90E2` (matches agent graph blue), replace default red",
-        "Default sub-agents to True: change `\"include_researcher\": False` \u2192 `True`, `\"include_analyst\": False` \u2192 `True` in `get_session_state_defaults()` (`run_gui.py:63-64`)",
-        "Move `subheader(OUTPUT_SUBHEADER)` after the `button(RUN_APP_BUTTON)` call \u2014 \"Output\" header currently appears above the Run button (`run_app.py:519-521`)"
+        "Add `.streamlit/config.toml` theme — primary `#4A90E2` (matches agent graph blue), replace default red",
+        "Default sub-agents to True: change `\"include_researcher\": False` → `True`, `\"include_analyst\": False` → `True` in `get_session_state_defaults()` (`run_gui.py:63-64`)",
+        "Move `subheader(OUTPUT_SUBHEADER)` after the `button(RUN_APP_BUTTON)` call — \"Output\" header currently appears above the Run button (`run_app.py:519-521`)"
       ],
       "files": [
         "src/gui/config/styling.py",
@@ -324,8 +324,8 @@
         "src/run_gui.py",
         ".streamlit/config.toml"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T22:19:06Z",
       "content_hash": "7b72053e65c99f7300ba9a757cfd3ec75cfbe11f4c399b7a17c16f56cb5040da",
       "depends_on": [
         "STORY-007"
@@ -336,10 +336,10 @@
       "title": "App page UX + Evaluation page UX",
       "description": "Standalone GUI improvements that don't share files with Features 3, 4, or 7. Synergy items (touching `run_app.py`, `evaluation.py`, `settings.py`, `agent_graph.py`) have been folded into their parent features as GUI polish sub-sections. This feature contains: (1) items with their own dedicated files, (2) items moved from Features 3/7 that are independent GUI concerns. Consolidated audit: `docs/reviews/gui-comprehensive-audit.md`.",
       "acceptance": [
-        "`run_app.py`: when `engine == \"cc\"`, MAS-specific controls are hidden (not just disabled) \u2014 sub-agent checkboxes, provider selectbox, token limit, configuration summary (`_display_configuration`). Currently `mas_disabled` (line 496) shows an info banner but all controls remain visible.",
-        "`run_app.py`: custom query `text_input` visible in both \"Free-form query\" and \"Select a paper\" modes. Currently free-form mode (line 514) renders only the query input, while paper mode renders paper selectbox + custom query inside `_render_paper_selection_input()` (line 395-398). Refactor so the query input is rendered once after the mode-specific controls, visible in both modes \u2014 paper mode just adds the paper selectbox above it.",
-        "`output.py`: rename `type` parameter to `output_type` in `render_output()` signature \u2014 currently shadows Python built-in `type` (`output.py:6`). Update all callers. When reworking `render_output()` to format `CompositeResult` as a summary card (audit item #23), fix the parameter name.",
-        "Evaluation Results page displays shortened run ID. The `execution_id` (format `exec_{uuid.hex[:12]}`, generated at `agent_system.py:538`) is returned through `app.py:120` but never stored in session state \u2014 the GUI only stores `composite_result` and `graph`. Fix: (1) `run_app.py:_execute_query_background()` stores `execution_id` in `st.session_state`, (2) `evaluation.py:_render_overall_results()` displays it as a metric or caption alongside composite score, (3) \"Evaluation Details\" expander (line 271) also shows the full `execution_id`.",
+        "`run_app.py`: when `engine == \"cc\"`, MAS-specific controls are hidden (not just disabled) — sub-agent checkboxes, provider selectbox, token limit, configuration summary (`_display_configuration`). Currently `mas_disabled` (line 496) shows an info banner but all controls remain visible.",
+        "`run_app.py`: custom query `text_input` visible in both \"Free-form query\" and \"Select a paper\" modes. Currently free-form mode (line 514) renders only the query input, while paper mode renders paper selectbox + custom query inside `_render_paper_selection_input()` (line 395-398). Refactor so the query input is rendered once after the mode-specific controls, visible in both modes — paper mode just adds the paper selectbox above it.",
+        "`output.py`: rename `type` parameter to `output_type` in `render_output()` signature — currently shadows Python built-in `type` (`output.py:6`). Update all callers. When reworking `render_output()` to format `CompositeResult` as a summary card (audit item #23), fix the parameter name.",
+        "Evaluation Results page displays shortened run ID. The `execution_id` (format `exec_{uuid.hex[:12]}`, generated at `agent_system.py:538`) is returned through `app.py:120` but never stored in session state — the GUI only stores `composite_result` and `graph`. Fix: (1) `run_app.py:_execute_query_background()` stores `execution_id` in `st.session_state`, (2) `evaluation.py:_render_overall_results()` displays it as a metric or caption alongside composite score, (3) \"Evaluation Details\" expander (line 271) also shows the full `execution_id`.",
         "Evaluation Results page \"Baseline Comparison Configuration\" (`evaluation.py:249-259`): add path validation and directory picker for CC Solo/Teams directory inputs. Currently only free-text `st.text_input` (lines 250, 255) with no existence check. Fix: (1) validate entered paths exist on disk (`Path.is_dir()`), show `st.error` if not, (2) auto-populate from known CC artifact locations (e.g., `logs/Agent_evals/traces/`) if they exist, (3) optionally add a directory picker widget alongside `text_input` for browsing."
       ],
       "files": [
@@ -348,8 +348,8 @@
         "src/gui/components/output.py",
         "tests/gui/test_run_app.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T23:26:04Z",
       "content_hash": "85c5669a5231c52cfa58229c9e7675d432283b15e0472fa32a5505cd72b37821",
       "depends_on": [
         "STORY-007",
@@ -361,7 +361,7 @@
       "title": "Environment-aware `resolve_service_url()` + tests",
       "description": "Standalone GUI improvements that don't share files with Features 3, 4, or 7. Synergy items (touching `run_app.py`, `evaluation.py`, `settings.py`, `agent_graph.py`) have been folded into their parent features as GUI polish sub-sections. This feature contains: (1) items with their own dedicated files, (2) items moved from Features 3/7 that are independent GUI concerns. Consolidated audit: `docs/reviews/gui-comprehensive-audit.md`.",
       "acceptance": [
-        "Sidebar \"Trace Viewer\" link (`src/gui/components/sidebar.py:20-25`) resolves to the correct environment URL, not hardcoded `localhost:6006`. A generalized `resolve_service_url(port: int) -> str` function detects the environment and constructs the correct URL. Detection chain (first match wins): (1) `PHOENIX_ENDPOINT` env var override \u2014 explicit user config, (2) GitHub Codespaces \u2014 `CODESPACE_NAME` + `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` \u2192 `https://{name}-{port}.{domain}/`, (3) Gitpod \u2014 `GITPOD_WORKSPACE_URL` \u2192 replace scheme with port prefix, (4) fallback \u2014 `http://localhost:{port}`. Current state: `PHOENIX_DEFAULT_ENDPOINT` (`src/gui/config/config.py:5`) reads from `JudgeSettings().phoenix_endpoint` which defaults to `http://localhost:6006`.",
+        "Sidebar \"Trace Viewer\" link (`src/gui/components/sidebar.py:20-25`) resolves to the correct environment URL, not hardcoded `localhost:6006`. A generalized `resolve_service_url(port: int) -> str` function detects the environment and constructs the correct URL. Detection chain (first match wins): (1) `PHOENIX_ENDPOINT` env var override — explicit user config, (2) GitHub Codespaces — `CODESPACE_NAME` + `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` → `https://{name}-{port}.{domain}/`, (3) Gitpod — `GITPOD_WORKSPACE_URL` → replace scheme with port prefix, (4) fallback — `http://localhost:{port}`. Current state: `PHOENIX_DEFAULT_ENDPOINT` (`src/gui/config/config.py:5`) reads from `JudgeSettings().phoenix_endpoint` which defaults to `http://localhost:6006`.",
         "TDD: RED tests first for `resolve_service_url()` (Codespaces env, Gitpod env, explicit override, fallback). RED tests for run ID threading (session state stores `execution_id`, evaluation page renders it). GREEN: implement. Use `testing-python` skill.",
         "`make validate` passes"
       ],
@@ -369,8 +369,8 @@
         "src/gui/config/config.py",
         "tests/gui/test_config.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "passes": true,
+      "completed_at": "2026-02-18T23:36:56Z",
       "content_hash": "52dfc6ca79f6de7339a635cba33a0fdd4b326f0d0f2d36c4b87494b8aa41f482",
       "depends_on": [
         "STORY-012"

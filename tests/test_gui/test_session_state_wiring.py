@@ -5,7 +5,6 @@ Verifies that CompositeResult and graph data from App tab execution
 flow correctly through session state to Evaluation Results and Agent Graph tabs.
 """
 
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import networkx as nx
@@ -15,6 +14,17 @@ from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import CompositeResult
+
+
+class _MockSessionState:
+    """Mock that supports both attribute and bracket access like Streamlit session state."""
+
+    def __setitem__(self, key: str, value: object) -> None:
+        setattr(self, key, value)
+
+    def __getitem__(self, key: str) -> object:
+        return getattr(self, key)
+
 
 # MARK: --- Fixtures ---
 
@@ -46,8 +56,8 @@ def sample_composite_result():
 def sample_graph():
     """NetworkX graph representing agent interactions."""
     graph = nx.DiGraph()
-    graph.add_node("manager", node_type="agent", label="Manager")
-    graph.add_node("researcher", node_type="agent", label="Researcher")
+    graph.add_node("manager", type="agent", label="Manager")
+    graph.add_node("researcher", type="agent", label="Researcher")
     graph.add_edge("manager", "researcher", interaction="delegation")
     return graph
 
@@ -63,7 +73,7 @@ class TestExecuteQueryStoresData:
         """When main() returns a result dict, both keys are stored in session state."""
         from gui.pages.run_app import _execute_query_background
 
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
 
         with (
             patch("gui.pages.run_app.st.session_state", mock_state),
@@ -94,7 +104,7 @@ class TestExecuteQueryStoresData:
         """When main() returns None (skip_eval), session state keys are set to None."""
         from gui.pages.run_app import _execute_query_background
 
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
 
         with (
             patch("gui.pages.run_app.st.session_state", mock_state),
@@ -277,7 +287,7 @@ class TestSessionStateSnapshots:
         """Snapshot: session state keys set after a successful execution."""
         from gui.pages.run_app import _execute_query_background
 
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
 
         with (
             patch("gui.pages.run_app.st.session_state", mock_state),
@@ -302,6 +312,7 @@ class TestSessionStateSnapshots:
             [
                 "execution_composite_result",
                 "execution_graph",
+                "execution_id",
                 "execution_provider",
                 "execution_query",
                 "execution_result",
@@ -314,7 +325,7 @@ class TestSessionStateSnapshots:
         """Snapshot: session state values after execution with known inputs."""
         from gui.pages.run_app import _execute_query_background
 
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
         mock_result = CompositeResult(
             composite_score=0.75,
             recommendation="weak_accept",
@@ -380,7 +391,7 @@ class TestSessionStateProperties:
             evaluation_complete=True,
         )
 
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
 
         with (
             patch("gui.pages.run_app.st.session_state", mock_state),
@@ -409,7 +420,7 @@ class TestSessionStateProperties:
 
         graph = nx.DiGraph()
         for i in range(num_nodes):
-            graph.add_node(f"agent_{i}", node_type="agent")
+            graph.add_node(f"agent_{i}", type="agent")
 
         mock_result = CompositeResult(
             composite_score=0.5,
@@ -422,7 +433,7 @@ class TestSessionStateProperties:
             evaluation_complete=True,
         )
 
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
 
         with (
             patch("gui.pages.run_app.st.session_state", mock_state),

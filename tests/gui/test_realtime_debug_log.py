@@ -1,20 +1,19 @@
 """
 Tests for real-time debug log streaming in the GUI.
 
-This module tests the incremental log capture (polling interface with thread-safety)
-and the log noise reduction in PeerRead review creation.
+This module tests the incremental log capture (polling interface with thread-safety),
+compliance filtering of PeerRead reviews, and display configuration.
 
 Mock strategy:
 - LogCapture internals tested directly (no Streamlit mocking needed for unit tests)
-- datasets_peerread._create_review_from_dict tested with a loader instance and
-  review dict containing missing optional fields
+- PeerRead compliance filtering tested via _validate_papers with non-compliant reviews
 - run_app._display_configuration tested to confirm st.markdown (not st.text) is used
   for strings containing Markdown
 """
 
 import threading
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 
 class TestLogCapturePollingInterface:
@@ -159,74 +158,72 @@ class TestLogCaptureFiltering:
         assert capture.get_logs()[0]["message"] == "kept"
 
 
-class TestLogNoiseReduction:
-    """Tests for aggregated missing-field log in _create_review_from_dict.
+class TestComplianceFiltering:
+    """Tests for compliance filtering of non-compliant reviews.
 
-    Arrange: PeerReadLoader with a review dict missing multiple optional fields
-    Act: Call _create_review_from_dict
-    Expected: A single debug log line containing all missing field names,
-              not one line per field
+    Arrange: PeerReadLoader with papers having reviews missing score fields
+    Act: Call _validate_papers
+    Expected: Papers with non-compliant reviews are excluded; compliant papers pass through
     """
 
-    def test_missing_fields_aggregated_into_single_log_line(self) -> None:
-        """Missing optional fields produce one aggregated log instead of N separate logs."""
+    def test_non_compliant_review_excluded_from_validate_papers(self) -> None:
+        """Papers with reviews missing score fields are filtered out by _validate_papers."""
         from app.data_utils.datasets_peerread import PeerReadLoader
 
         loader = PeerReadLoader()
 
-        # Build a minimal review dict that is missing IMPACT, SUBSTANCE, SOUNDNESS_CORRECTNESS
-        # These have validation_alias='IMPACT' etc. and default="UNKNOWN" in PeerReadReview
-        review_data: dict = {
-            "ORIGINALITY": "3",
-            "CLARITY": "3",
-            "REVIEWER_CONFIDENCE": "3",
-            "RECOMMENDATION": "3",
-            "RECOMMENDATION_UNOFFICIAL": "3",
-            # Missing: IMPACT, SUBSTANCE, SOUNDNESS_CORRECTNESS, etc.
-        }
+        test_papers = [
+            {
+                "id": "non_compliant_001",
+                "title": "Paper Missing Scores",
+                "abstract": "Abstract",
+                "reviews": [
+                    {
+                        "ORIGINALITY": "3",
+                        "CLARITY": "3",
+                        "REVIEWER_CONFIDENCE": "3",
+                        "RECOMMENDATION": "3",
+                        # Missing: IMPACT, SUBSTANCE, SOUNDNESS_CORRECTNESS, etc.
+                    }
+                ],
+                "histories": [],
+            }
+        ]
 
-        log_calls: list[str] = []
+        validated = loader._validate_papers(test_papers)
+        assert len(validated) == 0
 
-        with patch("app.data_utils.datasets_peerread.logger") as mock_logger:
-            mock_logger.debug = MagicMock(side_effect=lambda msg: log_calls.append(str(msg)))
-            loader._create_review_from_dict(review_data, "paper-306")
-
-        # Exactly ONE debug log line should have been emitted for missing fields
-        missing_field_logs = [msg for msg in log_calls if "optional fields missing" in msg]
-        assert len(missing_field_logs) == 1, (
-            f"Expected 1 aggregated log, got {len(missing_field_logs)}: {log_calls}"
-        )
-        # The log should mention the paper_id
-        assert "paper-306" in missing_field_logs[0]
-
-    def test_no_missing_field_log_when_all_fields_present(self) -> None:
-        """No missing-field log emitted when all optional fields are provided."""
+    def test_compliant_review_passes_validate_papers(self) -> None:
+        """Papers with all score fields populated pass through _validate_papers."""
         from app.data_utils.datasets_peerread import PeerReadLoader
 
         loader = PeerReadLoader()
 
-        # Provide all optional fields that have validation_alias and default="UNKNOWN"
-        review_data: dict = {
-            "ORIGINALITY": "3",
-            "CLARITY": "3",
-            "REVIEWER_CONFIDENCE": "3",
-            "RECOMMENDATION": "3",
-            "RECOMMENDATION_UNOFFICIAL": "3",
-            "IMPACT": "3",
-            "SUBSTANCE": "3",
-            "APPROPRIATENESS": "3",
-            "MEANINGFUL_COMPARISON": "3",
-            "SOUNDNESS_CORRECTNESS": "3",
-        }
+        test_papers = [
+            {
+                "id": "compliant_001",
+                "title": "Compliant Paper",
+                "abstract": "Abstract",
+                "reviews": [
+                    {
+                        "ORIGINALITY": "3",
+                        "CLARITY": "3",
+                        "REVIEWER_CONFIDENCE": "3",
+                        "RECOMMENDATION": "3",
+                        "IMPACT": "3",
+                        "SUBSTANCE": "3",
+                        "APPROPRIATENESS": "3",
+                        "MEANINGFUL_COMPARISON": "3",
+                        "SOUNDNESS_CORRECTNESS": "3",
+                    }
+                ],
+                "histories": [],
+            }
+        ]
 
-        log_calls: list[str] = []
-
-        with patch("app.data_utils.datasets_peerread.logger") as mock_logger:
-            mock_logger.debug = MagicMock(side_effect=lambda msg: log_calls.append(str(msg)))
-            loader._create_review_from_dict(review_data, "paper-001")
-
-        missing_field_logs = [msg for msg in log_calls if "optional fields missing" in msg]
-        assert len(missing_field_logs) == 0
+        validated = loader._validate_papers(test_papers)
+        assert len(validated) == 1
+        assert validated[0].paper_id == "compliant_001"
 
 
 class TestDisplayConfigurationUsesMarkdown:

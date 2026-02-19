@@ -1,4 +1,4 @@
-from streamlit import markdown, set_page_config
+from streamlit import set_page_config
 
 
 def add_custom_styling(page_title: str):
@@ -9,12 +9,4 @@ def add_custom_styling(page_title: str):
         initial_sidebar_state="expanded",
     )
 
-    custom_css = """
-    <style>
-    /* Hide the default radio button circles */
-    div[role="radiogroup"] label > div:first-child {
-        display: none !important;
-    }
-    </style>
-    """
-    markdown(custom_css, unsafe_allow_html=True)
+    # S8-F8.1: WCAG 1.3.3, 1.4.1 — native selection indicators must not be hidden via CSS

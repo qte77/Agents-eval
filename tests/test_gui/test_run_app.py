@@ -19,6 +19,16 @@ from gui.pages.run_app import (
 )
 
 
+class _MockSessionState:
+    """Mock that supports both attribute and bracket access like Streamlit session state."""
+
+    def __setitem__(self, key: str, value: object) -> None:
+        setattr(self, key, value)
+
+    def __getitem__(self, key: str) -> object:
+        return getattr(self, key)
+
+
 class TestBackgroundExecutionAPI:
     """Test the background execution API functions."""
 
@@ -26,9 +36,7 @@ class TestBackgroundExecutionAPI:
     async def test_execute_query_background_sets_running_state(self):
         """Test that background execution sets state to 'running' then 'completed'."""
         # Given a mock session state with dict-like access
-        from types import SimpleNamespace
-
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
 
         # When background execution is triggered
         with (
@@ -61,9 +69,7 @@ class TestBackgroundExecutionAPI:
     async def test_execute_query_background_handles_errors(self):
         """Test that background execution handles errors and sets error state."""
         # Given a mock session state
-        from types import SimpleNamespace
-
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
 
         # When execution fails
         with (
@@ -90,9 +96,7 @@ class TestBackgroundExecutionAPI:
     def test_get_execution_state_returns_idle_by_default(self):
         """Test that get_execution_state returns 'idle' when not set."""
         # Given an empty session state
-        from types import SimpleNamespace
-
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
 
         # When getting execution state
         with patch("gui.pages.run_app.st.session_state", mock_state):
@@ -104,9 +108,7 @@ class TestBackgroundExecutionAPI:
     def test_initialize_execution_state_creates_required_keys(self):
         """Test that initialize creates execution_state key."""
         # Given an empty session state
-        from types import SimpleNamespace
-
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
 
         # When initializing execution state
         with patch("gui.pages.run_app.st.session_state", mock_state):
@@ -173,9 +175,7 @@ class TestDebugLogPanel:
     @pytest.mark.asyncio
     async def test_debug_logs_captured_during_execution(self):
         """Test that logs are captured during query execution."""
-        from types import SimpleNamespace
-
-        mock_state = SimpleNamespace()
+        mock_state = _MockSessionState()
 
         # When execution captures logs
         with (

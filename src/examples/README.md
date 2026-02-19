@@ -90,9 +90,9 @@ These examples use the same `EvaluationPipeline`, `JudgeSettings`, and
 
 | Example topic | CLI equivalent | GUI page |
 |---|---|---|
-| Run evaluation | `make run_cli ARGS="--paper-id=123"` | App → Run |
-| Settings customization | `JUDGE_TIER2_PROVIDER=anthropic make run_cli ...` | App → Settings |
-| Engine comparison | `make run_sweep ARGS="--engine=cc"` | App → Run (engine selector) |
+| Run evaluation | `make app_cli ARGS="--paper-id=123"` | App → Run |
+| Settings customization | `JUDGE_TIER2_PROVIDER=anthropic make app_cli ...` | App → Settings |
+| Engine comparison | `make app_sweep ARGS="--engine=cc"` | App → Run (engine selector) |
 
 For full usage, see the [main README](../../../README.md) and the
 [CLI reference](../../../CONTRIBUTING.md).

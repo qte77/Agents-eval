@@ -9,45 +9,13 @@ Mock strategy: Create minimal CC artifact directory structure in tmp_path;
                patch EvaluationPipeline LLM calls.
 """
 
-import importlib.util
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
 from app.data_models.evaluation_models import GraphTraceData
 from app.judge.cc_trace_adapter import CCTraceAdapter
-
-
-class TestEngineComparisonExists:
-    """Verify the engine_comparison.py example file is created."""
-
-    def test_example_file_exists(self) -> None:
-        """engine_comparison.py must exist in src/examples/."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        target = examples_dir / "engine_comparison.py"
-        # Assert
-        assert target.exists(), f"Example file missing: {target}"
-
-    def test_example_documents_prerequisites(self) -> None:
-        """Example must document CC artifact prerequisites."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        content = (examples_dir / "engine_comparison.py").read_text()
-        # Assert
-        assert (
-            "collect-cc" in content or "scripts" in content or "Prerequisites" in content.lower()
-        ), "Example must document prerequisites for CC artifact collection"
-
-    def test_example_uses_cc_trace_adapter(self) -> None:
-        """Example must use CCTraceAdapter for loading CC artifacts."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        content = (examples_dir / "engine_comparison.py").read_text()
-        # Assert
-        assert "CCTraceAdapter" in content, "Example must import and use CCTraceAdapter"
 
 
 class TestCCTraceAdapterIntegration:
@@ -141,23 +109,3 @@ class TestCCTraceAdapterIntegration:
         # Act / Assert
         with pytest.raises(ValueError, match="does not exist"):
             CCTraceAdapter(missing_dir)
-
-
-class TestEngineComparisonIsImportable:
-    """Verify engine_comparison.py can be loaded without errors."""
-
-    def test_example_is_importable(self) -> None:
-        """engine_comparison.py imports without errors."""
-        # Arrange
-        examples_dir = Path(__file__).parent.parent.parent / "src" / "examples"
-        target = examples_dir / "engine_comparison.py"
-
-        spec = importlib.util.spec_from_file_location(
-            "engine_comparison",
-            target,
-        )
-        assert spec is not None
-        module = importlib.util.module_from_spec(spec)
-        # Act / Assert: loading must not raise
-        sys.modules["engine_comparison"] = module
-        spec.loader.exec_module(module)  # type: ignore[union-attr]

@@ -33,7 +33,6 @@ logs/
 .tmp/
 
 # Traces
-scalene-profiles
 profile.html
 profile.json
 
@@ -50,14 +49,14 @@ reference/
 site/
 
 # project specific
-wandb/
 data/
-test_data/
 datasets/
 docs/write-up/*
 !docs/write-up/en/
 !docs/write-up/template/
-results/sweeps/
+results/
+test_data/
+wandb/
 
 # Ralph state
 ralph/state/

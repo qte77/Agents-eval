@@ -1,6 +1,6 @@
 """Tests for review persistence path resolution.
 
-Validates that reviews are saved under the project root (datasets/peerread/MAS_reviews/)
+Validates that reviews are saved under the project root (results/MAS_reviews/)
 and NOT under src/app/.
 """
 

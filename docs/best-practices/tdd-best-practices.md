@@ -131,6 +131,11 @@ the code, simplify. Avoid excessive mocking.
 **Chasing 100% coverage**: Aim for meaningful behavior coverage, not
 line coverage percentage.
 
+**Stale fixture patches**: When source code changes (renamed imports,
+restructured modules), update or delete tests that patch the old
+interface. Broken fixtures don't clean up properly, leaving shared
+state dirty and causing unrelated tests to fail later in the suite.
+
 **Low-value patterns**: See `testing-strategy.md` → "Patterns to Remove"
 for full list.
 

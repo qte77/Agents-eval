@@ -310,6 +310,7 @@ class TestEnhancedPeerReadIntegration:
             yield []  # Fallback to empty list if real data unavailable
 
     @pytest.mark.integration
+    @pytest.mark.network
     async def test_error_recovery_scenarios(self, enhanced_test_data, evaluation_pipeline):
         """Test error recovery and graceful degradation."""
         print("\n=== Error Recovery Scenarios ===")
@@ -364,6 +365,7 @@ class TestEnhancedPeerReadIntegration:
         print("\n✅ Error recovery testing completed")
 
     @pytest.mark.integration
+    @pytest.mark.network
     async def test_production_readiness_checklist(self, evaluation_pipeline, enhanced_test_data):
         """Validate production readiness across all components."""
         print("\n=== Production Readiness Checklist ===")

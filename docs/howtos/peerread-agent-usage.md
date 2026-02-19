@@ -17,7 +17,7 @@ This guide explains how to use the Multi-Agent System (MAS) to generate reviews 
 To generate a review for a specific paper (e.g., paper 104), run the following command:
 
 ```bash
-make run_cli ARGS="--paper-number=104 --chat-provider=github"
+make app_cli ARGS="--paper-number=104 --chat-provider=github"
 ```
 
 **What this does:**
@@ -29,7 +29,7 @@ make run_cli ARGS="--paper-number=104 --chat-provider=github"
 
 **Prerequisites:**
 
-- PeerRead dataset downloaded (use `make run_cli ARGS="--download-peerread-samples-only"` for initial setup)
+- PeerRead dataset downloaded (use `make app_cli ARGS="--download-peerread-samples-only"` for initial setup)
 - Valid chat provider configuration in `src/app/config/config_chat.json`
 
 ## Available Agent Tools
@@ -63,7 +63,7 @@ The agent has access to the following tools, defined in `src/app/agents/peerread
 
 ## Review Storage
 
-- **Location**: `datasets/peerread/MAS_reviews/` (configured in `MAS_REVIEWS_PATH`)
+- **Location**: `results/MAS_reviews/` (configured in `MAS_REVIEWS_PATH`)
 - **Format**: JSON files with timestamp: `{paper_id}_{timestamp}.json`
 - **Structured Reviews**: Additional `{paper_id}_{timestamp}_structured.json` for validated reviews
 - **Content**: Complete review with metadata, timestamps, and paper references
@@ -93,23 +93,23 @@ The system supports various command-line options for different use cases:
 
 ```bash
 # Download sample PeerRead data (recommended for testing)
-make run_cli ARGS="--download-peerread-samples-only"
+make app_cli ARGS="--download-peerread-samples-only"
 
 # Download full PeerRead dataset (large download)
-make run_cli ARGS="--download-peerread-full-only"
+make app_cli ARGS="--download-peerread-full-only"
 ```
 
 ### Agent Configuration
 
 ```bash
 # Enable specific agent types
-make run_cli ARGS="--paper-number=104 --include-researcher --include-analyst"
+make app_cli ARGS="--paper-number=104 --include-researcher --include-analyst"
 
 # Disable streaming output
-make run_cli ARGS="--paper-number=104 --no-stream"
+make app_cli ARGS="--paper-number=104 --no-stream"
 
 # Use custom chat configuration
-make run_cli ARGS="--paper-number=104 --chat-config-file=/path/to/config.json"
+make app_cli ARGS="--paper-number=104 --chat-config-file=/path/to/config.json"
 ```
 
 ### Supported Chat Providers
@@ -127,7 +127,7 @@ See `src/app/config/config_chat.json` for provider configuration details.
 
 **Paper not found error:**
 
-- Ensure PeerRead dataset is downloaded: `make run_cli ARGS="--download-peerread-samples-only"`
+- Ensure PeerRead dataset is downloaded: `make app_cli ARGS="--download-peerread-samples-only"`
 - Check if paper ID exists in the dataset using query tools
 
 **Agent tools not working:**

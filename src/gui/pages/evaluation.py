@@ -6,10 +6,37 @@ LLM-as-Judge scores (Tier 2), and graph analysis metrics (Tier 3).
 Provides comparative visualization of graph-based vs text-based metrics.
 """
 
+from pathlib import Path
+
 import streamlit as st
 
 from app.data_models.evaluation_models import CompositeResult
 from app.judge.baseline_comparison import BaselineComparison
+
+# S8-F3.3: human-readable labels for metric snake_case keys (WCAG display clarity)
+METRIC_LABELS: dict[str, str] = {
+    "cosine_score": "Cosine Similarity",
+    "jaccard_score": "Jaccard Similarity",
+    "semantic_score": "Semantic Similarity",
+    "path_convergence": "Path Convergence",
+    "tool_selection_accuracy": "Tool Selection Accuracy",
+    "coordination_centrality": "Coordination Centrality",
+    "task_distribution_balance": "Task Distribution Balance",
+}
+
+
+def format_metric_label(metric_key: str) -> str:
+    """Return a human-readable label for a metric key.
+
+    Falls back to title-casing the key when no explicit mapping exists.
+
+    Args:
+        metric_key: Snake-case metric name (e.g. "cosine_score").
+
+    Returns:
+        Human-readable label string (e.g. "Cosine Similarity").
+    """
+    return METRIC_LABELS.get(metric_key, metric_key.replace("_", " ").title())
 
 
 def _extract_graph_metrics(metric_scores: dict[str, float]) -> dict[str, float]:
@@ -43,18 +70,29 @@ def _extract_text_metrics(metric_scores: dict[str, float]) -> dict[str, float]:
     return {k: v for k, v in metric_scores.items() if k in text_metric_names}
 
 
-def _render_overall_results(result: CompositeResult) -> None:
+def _render_overall_results(
+    result: CompositeResult,
+    baseline_comparison: BaselineComparison | None = None,
+) -> None:
     """Render overall results section with composite score and recommendation.
 
     Args:
         result: CompositeResult containing evaluation data.
+        baseline_comparison: Optional baseline for delta indicators in metrics.
     """
     st.subheader("Overall Results")
     col1, col2, col3 = st.columns(3)
+
+    # S8-F3.3: populate delta from baseline tier_deltas when available
+    tier1_delta: float | None = None
+    if baseline_comparison is not None:
+        tier1_delta = baseline_comparison.tier_deltas.get("tier1")
+
     with col1:
         st.metric(
             "Composite Score",
             f"{result.composite_score:.2f}",
+            delta=f"{tier1_delta:.3f}" if tier1_delta is not None else None,
             help="Weighted average across all evaluation tiers",
         )
     with col2:
@@ -65,6 +103,11 @@ def _render_overall_results(result: CompositeResult) -> None:
             f"{abs(result.recommendation_weight):.2f}",
             help="Confidence in recommendation based on score magnitude",
         )
+
+    # S8-F8.2: display shortened run ID below score metrics
+    execution_id: str | None = st.session_state.get("execution_id")
+    if execution_id:
+        st.caption(f"Run: {execution_id}")
 
 
 def _render_tier_scores(result: CompositeResult) -> None:
@@ -129,17 +172,15 @@ def _render_metrics_comparison(result: CompositeResult) -> None:
 
         st.bar_chart(comparison_data)
 
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("**Graph Metrics (Tier 3)**")
-            for metric, value in sorted(graph_metrics.items()):
-                st.text(f"{metric}: {value:.3f}")
-
-        with col2:
-            st.markdown("**Text Metrics (Tier 1)**")
-            for metric, value in sorted(text_metrics.items()):
-                st.text(f"{metric}: {value:.3f}")
+        # S8-F3.3: dataframe alt text for bar chart (WCAG 1.1.1 accessibility)
+        combined_rows = [
+            {"Metric": format_metric_label(k), "Score": round(v, 3), "Category": "Graph (Tier 3)"}
+            for k, v in sorted(graph_metrics.items())
+        ] + [
+            {"Metric": format_metric_label(k), "Score": round(v, 3), "Category": "Text (Tier 1)"}
+            for k, v in sorted(text_metrics.items())
+        ]
+        st.dataframe(combined_rows, use_container_width=True)
     else:
         st.info("Insufficient metric data for comparison visualization.")
 
@@ -227,6 +268,60 @@ def render_baseline_comparison(comparisons: list[BaselineComparison] | None) -> 
         _render_single_comparison(comp)
 
 
+def _render_empty_state() -> None:
+    """Render empty state with baseline configuration inputs.
+
+    Shown when no evaluation result is available. Provides path inputs
+    for Claude Code artifact directories (S8-F3.3, S8-F8.2).
+    """
+    st.info("No evaluation results available. Run an evaluation to see results here.")
+
+    # S8-F3.3: baseline inputs in collapsed expander (progressive disclosure)
+    with st.expander("🔧 Baseline Comparison Configuration", expanded=False):
+        st.markdown(
+            "Provide directory paths to Claude Code artifact exports to enable "
+            "comparative evaluation against MAS results."
+        )
+        # S8-F8.2: auto-populate from known CC artifact location if it exists
+        default_traces_dir = "logs/Agent_evals/traces/"
+        default_value = default_traces_dir if Path(default_traces_dir).is_dir() else ""
+        cc_solo_dir = st.text_input(
+            "Claude Code Solo Directory",
+            key="cc_solo_dir_input",
+            value=default_value,
+            help="Path to Claude Code solo session export directory",
+        )
+        if cc_solo_dir and not Path(cc_solo_dir).is_dir():
+            st.error(f"Directory not found: {cc_solo_dir}")
+
+        cc_teams_dir = st.text_input(
+            "Claude Code Teams Directory",
+            key="cc_teams_dir_input",
+            help="Path to Claude Code Agent Teams artifacts directory",
+        )
+        if cc_teams_dir and not Path(cc_teams_dir).is_dir():
+            st.error(f"Directory not found: {cc_teams_dir}")
+
+
+def _render_evaluation_details(result: CompositeResult) -> None:
+    """Render evaluation metadata expander with execution ID, timestamp, and weights.
+
+    Args:
+        result: CompositeResult with timestamp, config_version, and weights_used.
+    """
+    with st.expander("Evaluation Details"):
+        # S8-F8.2: show full execution_id in details expander
+        full_execution_id: str | None = st.session_state.get("execution_id")
+        if full_execution_id:
+            st.text(f"Execution ID: {full_execution_id}")
+        st.text(f"Timestamp: {result.timestamp}")
+        st.text(f"Config Version: {result.config_version}")
+        if result.weights_used:
+            st.text("Tier Weights:")
+            for tier, weight in result.weights_used.items():
+                st.text(f"  {tier}: {weight}")
+
+
 def render_evaluation(result: CompositeResult | None = None) -> None:
     """Render evaluation results page with tier scores and metric comparisons.
 
@@ -243,20 +338,7 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
     st.header("📊 Evaluation Results")
 
     if result is None:
-        st.info("No evaluation results available. Run an evaluation to see results here.")
-
-        # Show baseline configuration inputs even when no result
-        st.subheader("🔧 Baseline Comparison Configuration")
-        st.text_input(
-            "Claude Code Solo Directory",
-            key="cc_solo_dir_input",
-            help="Path to Claude Code solo session export directory",
-        )
-        st.text_input(
-            "Claude Code Teams Directory",
-            key="cc_teams_dir_input",
-            help="Path to Claude Code Agent Teams artifacts directory",
-        )
+        _render_empty_state()
         return
 
     _render_overall_results(result)
@@ -267,11 +349,4 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
     if "baseline_comparisons" in st.session_state:
         render_baseline_comparison(st.session_state["baseline_comparisons"])
 
-    # Evaluation metadata
-    with st.expander("Evaluation Details"):
-        st.text(f"Timestamp: {result.timestamp}")
-        st.text(f"Config Version: {result.config_version}")
-        if result.weights_used:
-            st.text("Tier Weights:")
-            for tier, weight in result.weights_used.items():
-                st.text(f"  {tier}: {weight}")
+    _render_evaluation_details(result)

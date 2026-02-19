@@ -680,34 +680,15 @@ class PeerReadLoader:
                     return str(pdf_path)
         return None
 
-    def _create_review_from_dict(
-        self, review_data: dict[str, Any], paper_id: str
-    ) -> PeerReadReview:
+    def _create_review_from_dict(self, review_data: dict[str, Any]) -> PeerReadReview:
         """Create PeerReadReview from dictionary with optional field handling.
 
         Args:
             review_data: Review dictionary from PeerRead dataset.
-            paper_id: Paper identifier for logging.
 
         Returns:
             Validated PeerReadReview model.
         """
-        # Reason: Papers 304-308, 330 lack IMPACT and other fields.
-        # Aggregate missing optional fields into one log line to reduce noise.
-        missing = [
-            str(field_info.validation_alias)
-            for _, field_info in PeerReadReview.model_fields.items()
-            if field_info.validation_alias
-            and field_info.validation_alias not in review_data
-            and field_info.default == "UNKNOWN"
-        ]
-        if missing:
-            logger.debug(
-                f"Paper {paper_id}: {len(missing)} optional fields missing"
-                f" ({', '.join(missing)}), using UNKNOWN"
-            )
-
-        # Pydantic model handles alias mapping and defaults
         return PeerReadReview.model_validate(review_data)
 
     def _validate_papers(
@@ -723,14 +704,14 @@ class PeerReadLoader:
             List of validated PeerReadPaper models.
         """
         validated_papers: list[PeerReadPaper] = []
+        skipped_ids: list[str] = []
 
         for paper_data in papers_data:
             try:
                 # Convert from PeerRead format to our model format
                 paper_id = str(paper_data.get("id", "unknown"))
                 reviews: list[PeerReadReview] = [
-                    self._create_review_from_dict(r, paper_id)
-                    for r in paper_data.get("reviews", [])
+                    self._create_review_from_dict(r) for r in paper_data.get("reviews", [])
                 ]
 
                 paper = PeerReadPaper(
@@ -742,11 +723,23 @@ class PeerReadLoader:
                         " ".join(map(str, h)) for h in paper_data.get("histories", [])
                     ],
                 )
+
+                # Exclude papers where any review is missing required score fields
+                if reviews and not all(r.is_compliant() for r in reviews):
+                    skipped_ids.append(paper_id)
+                    continue
+
                 validated_papers.append(paper)
 
             except Exception as e:
                 logger.warning(f"Failed to validate paper {paper_data.get('id', 'unknown')}: {e}")
                 continue
+
+        if skipped_ids:
+            logger.info(
+                f"Skipping {len(skipped_ids)} non-compliant papers "
+                f"(missing required score fields): {', '.join(skipped_ids)}"
+            )
 
         return validated_papers
 
@@ -774,7 +767,7 @@ class PeerReadLoader:
                 f"PeerRead dataset not found for {venue}/{split}. "
                 f"Please download the dataset first using: "
                 f"'python src/app/main.py --download-peerread-only' or "
-                f"'make run_cli ARGS=\"--download-peerread-only\"'"
+                f"'make app_cli ARGS=\"--download-peerread-only\"'"
             )
             logger.error(error_msg)
             raise FileNotFoundError(error_msg)
@@ -787,7 +780,7 @@ class PeerReadLoader:
                 f"PeerRead reviews not found for {venue}/{split}. "
                 f"Please download the dataset first using: "
                 f"'python src/app/main.py --download-peerread-only' or "
-                f"'make run_cli ARGS=\"--download-peerread-only\"'"
+                f"'make app_cli ARGS=\"--download-peerread-only\"'"
             )
             logger.error(error_msg)
             raise FileNotFoundError(error_msg)

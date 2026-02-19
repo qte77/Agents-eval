@@ -28,7 +28,7 @@ Understand whether graph-based analysis (how agents coordinate) provides differe
 
 ## Success Criteria
 
-1. `make run_cli ARGS="--paper-id=ID"` generates a review AND evaluates it automatically.
+1. `make app_cli ARGS="--paper-id=ID"` generates a review AND evaluates it automatically.
 2. Execution traces contain real agent delegations, tool calls, and timing data.
 3. Logs show Tier 1 (text) vs Tier 3 (graph) scores side by side with metric breakdowns.
 4. `--skip-eval` flag skips evaluation when only generation is needed.

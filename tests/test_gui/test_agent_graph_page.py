@@ -18,13 +18,13 @@ def mock_networkx_graph():
     """Create mock NetworkX graph for testing."""
     graph = nx.DiGraph()
     # Add agent nodes
-    graph.add_node("manager", node_type="agent", label="Manager")
-    graph.add_node("researcher", node_type="agent", label="Researcher")
-    graph.add_node("analyst", node_type="agent", label="Analyst")
+    graph.add_node("manager", type="agent", label="Manager")
+    graph.add_node("researcher", type="agent", label="Researcher")
+    graph.add_node("analyst", type="agent", label="Analyst")
 
     # Add tool nodes
-    graph.add_node("search_tool", node_type="tool", label="Search")
-    graph.add_node("analysis_tool", node_type="tool", label="Analysis")
+    graph.add_node("search_tool", type="tool", label="Search")
+    graph.add_node("analysis_tool", type="tool", label="Analysis")
 
     # Add edges (interactions)
     graph.add_edge("manager", "researcher", interaction="delegation")
@@ -78,12 +78,6 @@ def mock_trace_data():
 
 class TestAgentGraphPage:
     """Test suite for Agent Graph visualization page."""
-
-    def test_render_agent_graph_exists(self):
-        """Test that render_agent_graph function exists and is callable."""
-        from gui.pages.agent_graph import render_agent_graph
-
-        assert callable(render_agent_graph)
 
     def test_render_with_networkx_graph(self, mock_networkx_graph):
         """Test page renders with valid NetworkX graph."""

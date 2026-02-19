@@ -538,8 +538,13 @@ class TestContentExtraction:
         config = PeerReadConfig()
         loader = PeerReadLoader(config)
 
-        # Act - paper 104 has parsed content
-        result = loader.load_parsed_pdf_content("104")
+        # Act
+        with patch.object(
+            loader,
+            "_find_parsed_pdf_in_split",
+            return_value="Extracted paper text content.",
+        ):
+            result = loader.load_parsed_pdf_content("104")
 
         # Assert
         assert result is not None
@@ -950,12 +955,68 @@ class TestPeerReadDataSnapshots:
         )
 
 
+class TestReviewCompliance:
+    """Tests for PeerReadReview.is_compliant() method."""
+
+    def test_compliant_review(self):
+        """Review with all score fields populated is compliant."""
+        review = PeerReadReview(
+            impact="3",
+            substance="4",
+            appropriateness="5",
+            meaningful_comparison="2",
+            soundness_correctness="4",
+            originality="3",
+            recommendation="3",
+            clarity="3",
+            reviewer_confidence="3",
+        )
+        assert review.is_compliant() is True
+
+    def test_non_compliant_review_missing_one_field(self):
+        """Review with one UNKNOWN score field is non-compliant."""
+        review = PeerReadReview(
+            impact="UNKNOWN",
+            substance="4",
+            appropriateness="5",
+            meaningful_comparison="2",
+            soundness_correctness="4",
+            originality="3",
+            recommendation="3",
+            clarity="3",
+            reviewer_confidence="3",
+        )
+        assert review.is_compliant() is False
+
+    def test_non_compliant_review_all_defaults(self):
+        """Review with all default UNKNOWN fields is non-compliant."""
+        review = PeerReadReview()
+        assert review.is_compliant() is False
+
+    def test_compliant_review_from_raw_json(self):
+        """Review constructed via model_validate with uppercase keys is compliant."""
+        review = PeerReadReview.model_validate(
+            {
+                "IMPACT": "3",
+                "SUBSTANCE": "4",
+                "APPROPRIATENESS": "5",
+                "MEANINGFUL_COMPARISON": "2",
+                "SOUNDNESS_CORRECTNESS": "4",
+                "ORIGINALITY": "3",
+                "RECOMMENDATION": "3",
+                "CLARITY": "3",
+                "REVIEWER_CONFIDENCE": "3",
+            }
+        )
+        assert review.is_compliant() is True
+
+
 # STORY-004: Tests for optional field handling in PeerRead dataset validation
 class TestOptionalFieldHandling:
     """Tests for resilient validation of papers with missing optional fields."""
 
-    def test_paper_with_missing_impact_field(self):
-        """Test that papers with missing IMPACT field are validated successfully."""
+    def test_paper_with_missing_impact_field_excluded(self):
+        """Test that papers with missing IMPACT field are excluded by compliance filter."""
         from app.data_utils.datasets_peerread import PeerReadLoader
 
         # Arrange
@@ -990,21 +1051,17 @@ class TestOptionalFieldHandling:
         # Act
         validated_papers = loader._validate_papers(test_papers)
 
-        # Assert: Paper should be validated successfully with IMPACT defaulting to "UNKNOWN"
-        assert len(validated_papers) == 1
-        assert validated_papers[0].paper_id == "test_missing_impact"
-        assert len(validated_papers[0].reviews) == 1
-        assert validated_papers[0].reviews[0].impact == "UNKNOWN"
+        # Assert: Paper should be excluded because review is non-compliant
+        assert len(validated_papers) == 0
 
-    def test_paper_with_multiple_missing_optional_fields(self):
-        """Test that papers with multiple missing optional fields are handled gracefully."""
+    def test_paper_with_multiple_missing_fields_excluded(self):
+        """Test that papers with multiple missing optional fields are excluded."""
         from app.data_utils.datasets_peerread import PeerReadLoader
 
         # Arrange
         config = PeerReadConfig()
         loader = PeerReadLoader(config)
 
-        # Paper data with review missing multiple optional fields
         test_papers = [
             {
                 "id": "test_multiple_missing",
@@ -1024,28 +1081,23 @@ class TestOptionalFieldHandling:
                         "REVIEWER_CONFIDENCE": "3",
                     }
                 ],
-                # Missing: "histories"
             }
         ]
 
         # Act
         validated_papers = loader._validate_papers(test_papers)
 
-        # Assert: Paper should be validated successfully with defaults
-        assert len(validated_papers) == 1
-        assert validated_papers[0].reviews[0].impact == "UNKNOWN"
-        assert validated_papers[0].reviews[0].substance == "UNKNOWN"
-        assert validated_papers[0].review_histories == []
+        # Assert: Paper should be excluded because review is non-compliant
+        assert len(validated_papers) == 0
 
-    def test_paper_with_valid_impact_field_unchanged(self):
-        """Test that papers with valid IMPACT field are not affected (no regression)."""
+    def test_paper_with_all_score_fields_passes(self):
+        """Test that papers with all score fields populated are not affected (no regression)."""
         from app.data_utils.datasets_peerread import PeerReadLoader
 
         # Arrange
         config = PeerReadConfig()
         loader = PeerReadLoader(config)
 
-        # Paper data with valid IMPACT field
         test_papers = [
             {
                 "id": "test_valid_impact",
@@ -1077,8 +1129,8 @@ class TestOptionalFieldHandling:
         assert len(validated_papers) == 1
         assert validated_papers[0].reviews[0].impact == "4"
 
-    def test_validated_paper_with_missing_impact_snapshot(self):
-        """Snapshot: Validated paper structure with missing IMPACT field."""
+    def test_compliant_paper_snapshot(self):
+        """Snapshot: Validated paper structure with all score fields populated."""
         from app.data_utils.datasets_peerread import PeerReadLoader
 
         # Arrange
@@ -1092,7 +1144,7 @@ class TestOptionalFieldHandling:
                 "abstract": "Abstract for snapshot test.",
                 "reviews": [
                     {
-                        # Missing: "IMPACT"
+                        "IMPACT": "5",
                         "SUBSTANCE": "3",
                         "APPROPRIATENESS": "4",
                         "MEANINGFUL_COMPARISON": "2",
@@ -1121,7 +1173,7 @@ class TestOptionalFieldHandling:
                 "abstract": "Abstract for snapshot test.",
                 "reviews": [
                     {
-                        "impact": "UNKNOWN",
+                        "impact": "5",
                         "substance": "3",
                         "appropriateness": "4",
                         "meaningful_comparison": "2",
@@ -1149,8 +1201,8 @@ class TestOptionalFieldHandling:
         )
     )
     @hypothesis.settings(deadline=None)
-    def test_arbitrary_missing_fields_handled_gracefully(self, missing_fields):
-        """Property: Papers with arbitrary missing optional fields should validate successfully."""
+    def test_compliance_property(self, missing_fields):
+        """Property: Papers are included iff all score fields are present."""
         from app.data_utils.datasets_peerread import PeerReadLoader
 
         # Arrange
@@ -1172,7 +1224,6 @@ class TestOptionalFieldHandling:
             "REVIEWER_CONFIDENCE": "3",
         }
 
-        # Remove the fields that should be missing
         for field in missing_fields:
             review_data.pop(field, None)
 
@@ -1189,19 +1240,115 @@ class TestOptionalFieldHandling:
         # Act
         validated_papers = loader._validate_papers(test_papers)
 
-        # Assert: Paper should always validate successfully
-        # Invariant: Should always return exactly 1 paper
-        assert len(validated_papers) == 1
-        assert validated_papers[0].paper_id == "test_hypothesis"
-        # Invariant: Should always have exactly 1 review
-        assert len(validated_papers[0].reviews) == 1
+        # Assert: Paper included iff no fields were removed
+        if missing_fields:
+            assert len(validated_papers) == 0
+        else:
+            assert len(validated_papers) == 1
+            assert validated_papers[0].paper_id == "test_hypothesis"
 
-        # Invariant: Missing fields should have "UNKNOWN" default
-        review = validated_papers[0].reviews[0]
-        for field in missing_fields:
-            field_name = field.lower()
-            if hasattr(review, field_name):
-                assert getattr(review, field_name) == "UNKNOWN"
+
+class TestComplianceLogging:
+    """Tests that non-compliant paper filtering produces aggregated log output."""
+
+    def test_validate_papers_logs_aggregated_summary(self):
+        """Skipped papers produce one summary log line, not one per paper."""
+        import io
+
+        from loguru import logger
+
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        # 3 non-compliant papers (missing IMPACT)
+        non_compliant = [
+            {
+                "id": f"nc_{i}",
+                "title": f"Paper {i}",
+                "abstract": "Abstract",
+                "reviews": [
+                    {
+                        "SUBSTANCE": "4",
+                        "APPROPRIATENESS": "5",
+                        "MEANINGFUL_COMPARISON": "2",
+                        "SOUNDNESS_CORRECTNESS": "4",
+                        "ORIGINALITY": "3",
+                        "RECOMMENDATION": "3",
+                        "CLARITY": "3",
+                        "REVIEWER_CONFIDENCE": "3",
+                        "comments": "Review text",
+                    }
+                ],
+                "histories": [],
+            }
+            for i in range(3)
+        ]
+
+        log_capture = io.StringIO()
+        handler_id = logger.add(log_capture, level="INFO")
+        try:
+            loader._validate_papers(non_compliant)
+            log_lines = log_capture.getvalue().strip().splitlines()
+
+            # Should produce exactly 1 summary line, not 3 per-paper lines
+            skip_lines = [
+                ln for ln in log_lines if "skipping" in ln.lower() or "non-compliant" in ln.lower()
+            ]
+            assert len(skip_lines) == 1, (
+                f"Expected 1 aggregated log line, got {len(skip_lines)}: {skip_lines}"
+            )
+            # Summary should contain the count
+            assert "3" in skip_lines[0]
+        finally:
+            logger.remove(handler_id)
+
+    def test_validate_papers_no_log_when_all_compliant(self):
+        """No skip log when all papers are compliant."""
+        import io
+
+        from loguru import logger
+
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        compliant = [
+            {
+                "id": "ok_1",
+                "title": "Good Paper",
+                "abstract": "Abstract",
+                "reviews": [
+                    {
+                        "IMPACT": "3",
+                        "SUBSTANCE": "4",
+                        "APPROPRIATENESS": "5",
+                        "MEANINGFUL_COMPARISON": "2",
+                        "SOUNDNESS_CORRECTNESS": "4",
+                        "ORIGINALITY": "3",
+                        "RECOMMENDATION": "3",
+                        "CLARITY": "3",
+                        "REVIEWER_CONFIDENCE": "3",
+                        "comments": "Good review",
+                    }
+                ],
+                "histories": [],
+            }
+        ]
+
+        log_capture = io.StringIO()
+        handler_id = logger.add(log_capture, level="INFO")
+        try:
+            result = loader._validate_papers(compliant)
+            log_lines = log_capture.getvalue().strip()
+
+            assert len(result) == 1
+            assert "skipping" not in log_lines.lower()
+            assert "non-compliant" not in log_lines.lower()
+        finally:
+            logger.remove(handler_id)
 
 
 class TestFileDiscovery:

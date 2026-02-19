@@ -190,3 +190,11 @@ updated: 2026-02-16
 - **Solution**: Avoid shell keywords (`done`, `then`, `fi`, `do`, `esac`) as jq variable names. Use descriptive names matching the bash variable feeding them.
 - **Example**: `--argjson completed "$completed"` instead of `--argjson done "$completed"`
 - **References**: `ralph/scripts/ralph.sh` (`get_next_story`, `get_unblocked_stories`)
+
+### `-X ours` Does Not Delete Files Added by Theirs
+
+- **Context**: Squash merging a feature branch into `main` via PR when `main` has diverged
+- **Problem**: `git merge -X ours origin/main` resolves conflicted hunks in our favor, but files that exist only on `main` (added after branches diverged) are auto-merged as clean additions — no conflict triggers, so `-X ours` never fires. Result: stale files from `main` leak into the feature branch and survive the squash merge.
+- **Solution**: After `-X ours` merge, diff against the pre-merge state and `git rm` files the other branch introduced: `git diff HEAD <pre-merge-sha> --name-only --diff-filter=A | xargs git rm`
+- **Anti-pattern**: Assuming `-X ours` means "keep only our files." It means "resolve conflicts in our favor" — non-conflicting additions from theirs pass through silently.
+- **References**: `ralph/README.md` (Merging Back), `ralph/docs/LEARNINGS.md` (section 4)

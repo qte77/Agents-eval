@@ -16,7 +16,7 @@ The acceptance criteria originate from `docs/UserStory.md` [@user-story-md]:
 
 | Acceptance Criterion | Status | Finding |
 |----------------------|--------|---------|
-| `make run_cli ARGS="--paper-id=ID"` generates review AND evaluates automatically | Partially fulfilled | Blocked by `AgentRunResult.data` bug on `refactor-arch` branch (fixed in `CHANGELOG.md` Unreleased [@changelog]); functional on `main` |
+| `make app_cli ARGS="--paper-id=ID"` generates review AND evaluates automatically | Partially fulfilled | Blocked by `AgentRunResult.data` bug on `refactor-arch` branch (fixed in `CHANGELOG.md` Unreleased [@changelog]); functional on `main` |
 | Real-time execution traces with actual delegations and tool calls | Fulfilled | 30 JSONL traces in `logs/traces/` demonstrate real Manager-Researcher delegations and tool calls [@mas-findings] |
 | Logs show Tier 1 vs. Tier 3 scores side by side | Fulfilled | `_log_metric_comparison()` in `evaluation_pipeline.py:432` outputs structured comparison |
 | `--skip-eval` skips evaluation | Fulfilled | Implemented in Sprint 2, `app.py` delegates to `_run_evaluation_if_enabled()` |

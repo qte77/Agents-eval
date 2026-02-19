@@ -82,6 +82,22 @@ class PeerReadReview(BaseModel):
     )
     is_meta_review: bool | None = Field(default=None, description="Whether this is a meta review")
 
+    def is_compliant(self) -> bool:
+        """Check if all score fields are populated (not UNKNOWN).
+
+        A review is compliant when every field that defaults to UNKNOWN
+        has been populated with an actual value from the raw JSON.
+
+        Returns:
+            True if all score fields have non-UNKNOWN values.
+        """
+        # Reason: Derive dynamically from model_fields to stay in sync with field definitions.
+        return all(
+            getattr(self, name) != "UNKNOWN"
+            for name, info in PeerReadReview.model_fields.items()
+            if info.default == "UNKNOWN"
+        )
+
 
 class PeerReadPaper(BaseModel):
     """Scientific paper from PeerRead dataset."""

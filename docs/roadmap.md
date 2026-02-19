@@ -17,5 +17,6 @@ Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for tech
 | **Sprint 4** | Delivered | Operational resilience, Claude Code baseline comparison (solo + teams) | [PRD Sprint 4](PRD-Sprint4-Ralph.md) |
 | **Sprint 5** | Delivered | Runtime fixes, GUI enhancements, architecture improvements, code quality review | [PRD Sprint 5](PRD-Sprint5-Ralph.md) |
 | **Sprint 6** | Delivered | Benchmarking infrastructure, CC baseline completion, security hardening, test quality | [PRD Sprint 6](PRD-Sprint6-Ralph.md) |
-| **Sprint 7** | In Progress | Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine | [PRD Sprint 7](PRD-Sprint7-Ralph.md) |
-| **Sprint 8** | Draft | Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, dead code removal, report generation, judge settings UX, GUI a11y/UX | [PRD Sprint 8](sprints/PRD-Sprint8-Ralph.md) |
+| **Sprint 7** | Delivered | Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine | [PRD Sprint 7](PRD-Sprint7-Ralph.md) |
+| **Sprint 8** | Delivered | Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, dead code removal, report generation, judge settings UX, GUI a11y/UX | [PRD Sprint 8](sprints/archive/PRD-Sprint8-Ralph.md) |
+| **Sprint 9** | In Progress | Sprint 8 carry-forward (14 stories) + sweep results UI | [PRD Sprint 9](sprints/PRD-Sprint9-Ralph.md) |

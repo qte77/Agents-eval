@@ -22,7 +22,7 @@ support. IEEE `[1]` style by default.
 4. **Setup bibliography** - Create `references.bib` (see template for BibTeX format)
 5. **Add YAML frontmatter** - See template for required fields
 6. **Run markdownlint** - `make lint_md INPUT_FILES="docs/write-up/<topic>/*.md"`
-7. **Generate PDF** - `make run_pandoc` with `BIBLIOGRAPHY` variable
+7. **Generate PDF** - `make pandoc_run` with `BIBLIOGRAPHY` variable
 
 ## Additional Resources
 
@@ -46,7 +46,7 @@ Generate PDF with citations:
 
 ```bash
 dir=docs/write-up/<topic> && \
-make run_pandoc \
+make pandoc_run \
   INPUT_FILES="$$(printf '%s\036' $$dir/*.md)" \
   OUTPUT_FILE="$$dir/output.pdf" \
   BIBLIOGRAPHY="$$dir/references.bib"
@@ -56,7 +56,7 @@ With custom citation style:
 
 ```bash
 dir=docs/write-up/<topic> && \
-make run_pandoc \
+make pandoc_run \
   INPUT_FILES="$$(printf '%s\036' $$dir/*.md)" \
   OUTPUT_FILE="$$dir/output.pdf" \
   BIBLIOGRAPHY="$$dir/references.bib" \

@@ -489,8 +489,10 @@ class TestPipelineIntegration:
 
             pipeline = EvaluationPipeline(settings=settings, chat_provider="github")
 
-            # Verify LLMJudgeEngine was called with chat_provider
-            mock_engine_class.assert_called_once_with(settings, chat_provider="github")
+            # Verify LLMJudgeEngine was called with chat_provider and chat_model=None
+            mock_engine_class.assert_called_once_with(
+                settings, chat_provider="github", chat_model=None
+            )
             assert pipeline.chat_provider == "github"
 
     @pytest.mark.asyncio
@@ -865,3 +867,96 @@ class TestApiKeyForwarding:
                 assessment_type="constructiveness",
                 api_key="ghp-github-key-456",
             )
+
+
+# STORY-002: chat_model inheritance and cross-provider fallback tests
+class TestStory002ChatModelInheritance:
+    """Test suite for STORY-002: chat_model parameter and model inheritance."""
+
+    def test_llm_judge_engine_accepts_chat_model_parameter(self):
+        """LLMJudgeEngine.__init__ must accept chat_model parameter (STORY-002)."""
+        settings = JudgeSettings(tier2_provider="openai")
+        env_config = AppEnv(OPENAI_API_KEY="sk-test")
+
+        # Must not raise TypeError
+        engine = LLMJudgeEngine(
+            settings,
+            env_config=env_config,
+            chat_model="gpt-4o",
+        )
+        assert engine is not None
+
+    def test_chat_model_inherited_when_auto_mode_and_chat_provider_set(self):
+        """When tier2_provider=auto + chat_model provided, engine.model = chat_model (STORY-002)."""
+        settings = JudgeSettings(tier2_provider="auto")
+        env_config = AppEnv(GITHUB_API_KEY="ghp-test")
+
+        engine = LLMJudgeEngine(
+            settings,
+            env_config=env_config,
+            chat_provider="github",
+            chat_model="llama-4-scout-17b-16e-instruct",
+        )
+
+        assert engine.model == "llama-4-scout-17b-16e-instruct"
+
+    def test_chat_model_not_inherited_when_chat_model_is_none(self):
+        """When chat_model=None, engine.model falls back to tier2_model (STORY-002)."""
+        settings = JudgeSettings(tier2_provider="auto", tier2_model="gpt-4o-mini")
+        env_config = AppEnv(GITHUB_API_KEY="ghp-test")
+
+        engine = LLMJudgeEngine(
+            settings,
+            env_config=env_config,
+            chat_provider="github",
+            chat_model=None,
+        )
+
+        # Should fall back to tier2_model from settings
+        assert engine.model == "gpt-4o-mini"
+
+    def test_cross_provider_fallback_with_only_github_key(self):
+        """cerebras chat_provider with only GITHUB_API_KEY → falls back to github (STORY-002)."""
+        settings = JudgeSettings(
+            tier2_provider="auto",
+            tier2_fallback_provider="github",
+            tier2_fallback_model="gpt-4o-mini",
+        )
+        # Only GITHUB_API_KEY set — cerebras has no key
+        env_config = AppEnv(GITHUB_API_KEY="ghp-test", CEREBRAS_API_KEY="")
+
+        engine = LLMJudgeEngine(
+            settings,
+            env_config=env_config,
+            chat_provider="cerebras",
+            chat_model="llama-4-scout-17b-16e-instruct",
+        )
+
+        # Should have fallen back to github with tier2_fallback_model
+        assert engine.provider == "github"
+        assert engine.model == "gpt-4o-mini"
+
+    def test_evaluation_pipeline_accepts_chat_model_parameter(self):
+        """EvaluationPipeline.__init__ must accept and forward chat_model (STORY-002)."""
+        from app.judge.evaluation_pipeline import EvaluationPipeline
+
+        settings = JudgeSettings(tier2_provider="openai")
+
+        with patch("app.judge.evaluation_pipeline.LLMJudgeEngine") as mock_engine_class:
+            mock_engine = Mock()
+            mock_engine.tier2_available = True
+            mock_engine_class.return_value = mock_engine
+
+            pipeline = EvaluationPipeline(
+                settings=settings,
+                chat_provider="openai",
+                chat_model="gpt-4o",
+            )
+
+            # Verify LLMJudgeEngine was called with chat_model forwarded
+            mock_engine_class.assert_called_once_with(
+                settings,
+                chat_provider="openai",
+                chat_model="gpt-4o",
+            )
+            _ = pipeline  # ensure pipeline is used

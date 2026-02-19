@@ -6,9 +6,7 @@ comparison.
 """
 
 import asyncio
-import json
-import shutil
-import subprocess
+from pathlib import Path
 from typing import Any
 
 from pydantic_ai.exceptions import ModelHTTPError
@@ -17,6 +15,8 @@ from app.app import main
 from app.benchmark.sweep_analysis import SweepAnalyzer, generate_markdown_summary
 from app.benchmark.sweep_config import AgentComposition, SweepConfig
 from app.data_models.evaluation_models import CompositeResult
+from app.engines.cc_engine import CCResult, check_cc_available, run_cc_solo, run_cc_teams
+from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
@@ -135,58 +135,39 @@ class SweepRunner:
                 if e.status_code != 429 or not await self._handle_rate_limit(e, label, attempt):
                     return None
             except Exception as e:
-                logger.error(f"Evaluation failed for {label}: {e}")
+                logger.error(f"Evaluation failed for {label}: {e}", exc_info=True)
                 return None
 
         return None
 
-    async def _invoke_cc_comparison(self, paper_id: str) -> tuple[str, dict[str, Any]] | None:
+    async def _invoke_cc_comparison(self, paper_id: str) -> CCResult | None:
         """Invoke Claude Code in headless mode for baseline comparison.
+
+        Delegates to cc_engine.run_cc_solo or run_cc_teams depending on
+        sweep configuration. No inline subprocess logic.
 
         Args:
             paper_id: Paper ID to evaluate (string, supports arxiv IDs).
 
         Returns:
-            Tuple of (execution_id, result_data) if successful, None otherwise.
+            CCResult if successful, None otherwise.
 
         Raises:
             RuntimeError: If claude CLI not found, subprocess fails, or times out.
-            ValueError: If CC output is not valid JSON.
         """
-        # Check if claude CLI is available
-        claude_path = shutil.which("claude")
-        if not claude_path:
-            raise RuntimeError("claude CLI not found. Install Claude Code or use --engine=mas.")
-
         prompt = f"Review paper {paper_id} from the PeerRead dataset"
 
-        try:
-            result = subprocess.run(
-                [claude_path, "-p", prompt, "--output-format", "json"],
-                capture_output=True,
-                text=True,
-                timeout=600,  # 10 minute timeout
-            )
+        if self.config.cc_teams:
+            result = run_cc_teams(prompt, timeout=600)
+        else:
+            result = run_cc_solo(prompt, timeout=600)
 
-            if result.returncode != 0:
-                raise RuntimeError(f"CC failed: {result.stderr}")
-
-            try:
-                output_data = json.loads(result.stdout)
-            except json.JSONDecodeError as e:
-                raise ValueError(f"CC output not valid JSON: {e}") from e
-
-            execution_id = output_data.get("execution_id", "unknown")
-
-            logger.info(f"CC comparison completed: execution_id={execution_id}")
-            return (execution_id, output_data)
-
-        except subprocess.TimeoutExpired as e:
-            raise RuntimeError(f"CC timed out after {e.timeout}s") from e
+        logger.info(f"CC comparison completed: execution_id={result.execution_id}")
+        return result
 
     async def _validate_prerequisites(self) -> None:
         """Validate sweep prerequisites."""
-        if self.config.engine == "cc" and not shutil.which("claude"):
+        if self.config.engine == "cc" and not check_cc_available():
             raise RuntimeError(
                 "engine=cc requires claude CLI. Install Claude Code or use --engine=mas."
             )
@@ -205,16 +186,31 @@ class SweepRunner:
                         await self._save_results_json()
 
     async def _run_cc_baselines(self) -> None:
-        """Run CC comparison evaluations if engine=cc."""
+        """Run CC comparison evaluations if engine=cc.
+
+        Wires CC results through CCTraceAdapter for evaluation pipeline integration.
+        Adapts CCResult artifacts into GraphTraceData for three-tier evaluation.
+        """
         if self.config.engine != "cc":
             return
 
         for paper_id in self.config.paper_ids:
             cc_result = await self._invoke_cc_comparison(paper_id)
-            if cc_result:
-                logger.info(f"CC comparison completed for paper {paper_id}")
-                # CC evaluation integration would go here
-                # For now, just log that CC was invoked
+            if cc_result is None:
+                continue
+
+            logger.info(f"CC comparison completed for paper {paper_id}: {cc_result.execution_id}")
+
+            # Wire through CCTraceAdapter when session directory is available
+            if cc_result.session_dir and Path(cc_result.session_dir).exists():
+                try:
+                    adapter = CCTraceAdapter(Path(cc_result.session_dir))
+                    trace_data = adapter.parse()
+                    logger.info(
+                        f"CC trace parsed: execution_id={trace_data.execution_id}, paper={paper_id}"
+                    )
+                except Exception as e:
+                    logger.warning(f"CC trace parsing failed for paper {paper_id}: {e}")
 
     async def run(self) -> list[tuple[AgentComposition, CompositeResult]]:
         """Execute the full sweep across all compositions and repetitions.
@@ -237,6 +233,8 @@ class SweepRunner:
 
         Used for crash-resilient incremental persistence after each evaluation.
         """
+        import json
+
         results_file = self.config.output_dir / "results.json"
         json_data = [
             {
@@ -257,6 +255,10 @@ class SweepRunner:
 
     async def _save_results(self) -> None:
         """Save sweep results to both results.json and summary.md."""
+        if not self.results:
+            logger.warning("No successful evaluations — skipping results write")
+            return
+
         await self._save_results_json()
 
         # Generate and save statistical summary

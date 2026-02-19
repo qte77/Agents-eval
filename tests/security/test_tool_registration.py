@@ -20,33 +20,6 @@ from app.agents.agent_factories import AgentFactory
 from app.tools.peerread_tools import add_peerread_tools_to_agent
 
 
-class TestToolRegistrationScope:
-    """Test tools are only registered from expected modules."""
-
-    def test_peerread_tools_registration_succeeds(self):
-        """Tools from app.tools.peerread_tools should register successfully."""
-        agent: Agent[None, BaseModel] = Agent(TestModel())
-
-        # Should not raise exception
-        add_peerread_tools_to_agent(agent, agent_id="test-agent")
-
-        # Agent should have tools registered
-        # Note: PydanticAI Agent._function_toolset is internal API but needed for verification
-        assert hasattr(agent, "_function_toolset")
-
-    def test_tools_not_registered_without_explicit_call(self):
-        """Agents should not have tools unless explicitly registered."""
-        agent: Agent[None, BaseModel] = Agent(TestModel())
-
-        # No tools should be registered initially
-        # Accessing internal API for verification
-        if hasattr(agent, "_function_toolset"):
-            assert len(agent._function_toolset.tools) == 0
-        else:
-            # If attribute doesn't exist, no tools are registered
-            pass
-
-
 class TestAgentRoleBasedToolAssignment:
     """Test agent roles have appropriate tools assigned."""
 
@@ -117,7 +90,7 @@ class TestToolRegistrationSafety:
         expected_tools = {
             "get_peerread_paper",
             "query_peerread_papers",
-            "read_paper_pdf_tool",
+            "get_paper_content",
         }
 
         # All expected tools should be present

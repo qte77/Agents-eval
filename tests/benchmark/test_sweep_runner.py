@@ -144,20 +144,23 @@ class TestCCBaselineIntegration:
         )
         runner = SweepRunner(config)
 
+        from app.engines.cc_engine import CCResult
+
+        mock_cc_result = CCResult(execution_id="exec-001", output_data={})
+
         with (
             patch("app.benchmark.sweep_runner.main") as mock_main,
-            patch("app.benchmark.sweep_runner.subprocess.run") as mock_subprocess,
-            patch("app.benchmark.sweep_runner.shutil.which", return_value="/usr/bin/claude"),
+            patch(
+                "app.benchmark.sweep_runner.run_cc_solo", return_value=mock_cc_result
+            ) as mock_cc_solo,
+            patch("app.benchmark.sweep_runner.check_cc_available", return_value=True),
         ):
             mock_main.return_value = {"composite_result": mock_composite_result}
-            mock_subprocess.return_value = MagicMock(returncode=0, stdout='{"result": "test"}')
 
             await runner.run()
 
-            # Verify the Claude CLI was invoked (behavioral: CC comparison ran)
-            mock_subprocess.assert_called_once()
-            cmd = mock_subprocess.call_args[0][0]
-            assert any("claude" in arg for arg in cmd)
+            # Verify cc_engine.run_cc_solo was invoked (behavioral: CC comparison ran)
+            mock_cc_solo.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_cc_comparison_error_when_claude_not_found(self, tmp_path: Path):
@@ -177,7 +180,7 @@ class TestCCBaselineIntegration:
         )
         runner = SweepRunner(config)
 
-        with patch("app.benchmark.sweep_runner.shutil.which", return_value=None):
+        with patch("app.benchmark.sweep_runner.check_cc_available", return_value=False):
             with pytest.raises(RuntimeError, match="claude CLI"):
                 await runner.run()
 
@@ -190,14 +193,14 @@ class TestCCBaselineIntegration:
 
         with (
             patch("app.benchmark.sweep_runner.main") as mock_main,
-            patch("app.benchmark.sweep_runner.subprocess.run") as mock_subprocess,
+            patch("app.benchmark.sweep_runner.run_cc_solo") as mock_cc_solo,
         ):
             mock_main.return_value = {"composite_result": mock_composite_result}
 
             await runner.run()
 
-            # Verify CC was NOT invoked
-            mock_subprocess.assert_not_called()
+            # Verify CC was NOT invoked when engine=mas
+            mock_cc_solo.assert_not_called()
 
 
 class TestStory013EngineRefactor:
@@ -255,16 +258,6 @@ class TestStory013EngineRefactor:
             "SweepConfig must NOT have cc_baseline_enabled field (removed in STORY-013)"
         )
 
-    def test_sweep_runner_has_invoke_cc_comparison_method(self, basic_sweep_config: SweepConfig):
-        """Test that SweepRunner has _invoke_cc_comparison() method (renamed from _invoke_cc_baseline)."""
-        runner = SweepRunner(basic_sweep_config)
-        assert hasattr(runner, "_invoke_cc_comparison"), (
-            "SweepRunner must have _invoke_cc_comparison method"
-        )
-        assert not hasattr(runner, "_invoke_cc_baseline"), (
-            "SweepRunner must NOT have _invoke_cc_baseline (renamed to _invoke_cc_comparison)"
-        )
-
     def test_cc_baseline_enabled_not_in_model_fields(self, tmp_path: Path):
         """Test that cc_baseline_enabled is not a defined field on SweepConfig."""
         # Pydantic silently ignores extra fields by default, but the field must
@@ -293,13 +286,6 @@ class TestStory013bRetryAndPersistence:
     def test_sweep_config_retry_delay_in_model_fields(self, tmp_path: Path):
         """Test that retry_delay_seconds is a declared Pydantic field."""
         assert "retry_delay_seconds" in SweepConfig.model_fields
-
-    def test_sweep_runner_has_save_results_json_method(self, basic_sweep_config: SweepConfig):
-        """Test that SweepRunner has _save_results_json() method (split from _save_results)."""
-        runner = SweepRunner(basic_sweep_config)
-        assert hasattr(runner, "_save_results_json"), (
-            "SweepRunner must have _save_results_json method"
-        )
 
     @pytest.mark.asyncio
     async def test_save_results_json_writes_only_results_json(

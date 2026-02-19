@@ -6,26 +6,28 @@
 .SILENT:
 .ONESHELL:
 .PHONY: \
-	setup_prod setup_dev setup_devc setup_claude_code setup_sandbox \
-	setup_plantuml setup_pdf_converter setup_markdownlint setup_jscpd \
-	setup_ollama clean_ollama setup_dataset_sample setup_dataset_full \
-	dataset_smallest quickstart \
-	start_ollama stop_ollama \
+	setup_prod setup_dev setup_claude_code setup_sandbox \
+	setup_plantuml setup_pdf_converter setup_npm_tools \
+	setup_ollama clean_ollama setup_dataset \
+	dataset_smallest app_quickstart \
+	ollama_start ollama_stop \
 	plantuml_serve plantuml_render \
-	run_pandoc writeup writeup_generate \
+	pandoc_run writeup writeup_generate \
 	lint_md \
-	run_cli run_gui run_sweep run_profile \
+	app_cli app_gui app_sweep app_profile \
 	cc_run_solo cc_collect_teams cc_run_teams \
 	lint_src lint_tests complexity duplication \
 	test test_rerun test_coverage type_check validate quick_validate \
-	setup_phoenix start_phoenix stop_phoenix status_phoenix \
+	setup_phoenix phoenix_start phoenix_stop phoenix_status \
 	ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run \
 	ralph_worktree ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean \
-	help \
-	ruff ruff_tests test_all test_quick sweep quick_start dataset_get_smallest \
-	run_puml_interactive run_puml_single run_markdownlint \
-	setup_prod_ollama setup_dev_ollama setup_devc_ollama
+	clean_results clean_logs \
+	help
 .DEFAULT_GOAL := help
+
+
+# MARK: params
+
 
 # -- paths --
 SRC_PATH := src
@@ -46,7 +48,7 @@ PLANTUML_SCRIPT := scripts/writeup/generate-plantuml-png.sh
 # -- pandoc / writeup --
 PANDOC_SCRIPT := scripts/writeup/run-pandoc.sh
 PDF_CONVERTER_SCRIPT := scripts/writeup/setup-pdf-converter.sh
-# run_pandoc optional overrides (empty = disabled)
+# pandoc_run optional overrides (empty = disabled)
 BIBLIOGRAPHY :=
 CSL :=
 LIST_OF_FIGURES :=
@@ -59,9 +61,8 @@ WRITEUP_BIB ?= $(WRITEUP_DIR)/09a_bibliography.bib
 WRITEUP_CSL ?= scripts/writeup/citation-styles/ieee.csl
 WRITEUP_PUML_DIR := docs/arch_vis
 SKIP_PUML ?=
-SKIP_CREATE_CONTENT ?= 1
+SKIP_CONTENT ?= 1
 WRITEUP_TIMEOUT ?= 600
-WRITEUP_TITLE_PAGE = $(wildcard $(WRITEUP_DIR)/00_title_abstract_abbrev.tex)
 
 # -- phoenix (trace viewer) --
 PHOENIX_CONTAINER_NAME := phoenix-tracing
@@ -78,6 +79,7 @@ CC_TEAMS_TIMEOUT ?= 600
 CC_MODEL ?=
 
 # -- ralph (autonomous loop) --
+RALPH_PROJECT ?= $(notdir $(CURDIR))
 RALPH_TIMEOUT ?=
 TEAMS ?= false
 
@@ -89,7 +91,7 @@ setup_prod:  ## Install uv and deps. Flags: OLLAMA=1
 	echo "Setting up prod environment ..."
 	pip install uv -q
 	uv sync --frozen
-	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s start_ollama)
+	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s ollama_start)
 
 setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, plantuml. Flags: OLLAMA=1
 	echo "Setting up dev environment ..."
@@ -98,20 +100,14 @@ setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, plantuml. Flags:
 	uv sync --all-groups
 	echo "npm version: $$(npm --version)"
 	$(MAKE) -s setup_claude_code
-	$(MAKE) -s setup_markdownlint
-	$(MAKE) -s setup_jscpd
+	$(MAKE) -s setup_npm_tools
 	$(MAKE) -s setup_plantuml
-	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s start_ollama)
-
-setup_devc:  ## Setup dev environment with sandbox. Flags: OLLAMA=1 (via setup_dev)
-	$(MAKE) -s setup_sandbox
-	$(MAKE) -s setup_dev
+	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s ollama_start)
 
 setup_claude_code:  ## Setup claude code CLI
 	echo "Setting up Claude Code CLI ..."
 	cp -r .claude/.claude.json ~/.claude.json
 	curl -fsSL https://claude.ai/install.sh | bash
-	claude plugin marketplace add anthropics/claude-plugins-official
 	echo "Claude Code CLI version: $$(claude --version)"
 
 setup_sandbox:  ## Install sandbox deps (bubblewrap, socat) for Linux/WSL2
@@ -152,17 +148,14 @@ setup_pdf_converter:  ## Setup PDF converter tools. Usage: make setup_pdf_conver
 		$(PDF_CONVERTER_SCRIPT) "$(CONVERTER)"
 	fi
 
-# TODO: evaluate Python-native alternative to markdownlint (pymarkdownlnt, mdformat) to reduce npm dependency
-setup_markdownlint:  ## Setup markdownlint CLI, node.js and npm have to be present
-	echo "Setting up markdownlint CLI ..."
-	npm install -gs markdownlint-cli
+# TODO: evaluate Python-native alternatives (pymarkdownlnt, mdformat, pylint R0801) to reduce npm dependency
+setup_npm_tools:  ## Setup npm-based dev tools (markdownlint, jscpd). Requires node.js and npm
+	echo "Setting up npm dev tools ..."
+	npm install -gs markdownlint-cli jscpd
 	echo "markdownlint version: $$(markdownlint --version)"
-
-setup_jscpd:  ## Setup jscpd copy-paste detector, node.js and npm have to be present
-	echo "Setting up jscpd ..."
-	npm install -gs jscpd
 	echo "jscpd version: $$(jscpd --version)"
-# Ollama BINDIR in /usr/local/bin /usr/bin /bin 
+
+# Ollama BINDIR in /usr/local/bin /usr/bin /bin
 setup_ollama:  ## Download Ollama, script does start local Ollama server
 	echo "Downloading Ollama binary ... Using '$(OLLAMA_SETUP_URL)'."
 	# script does start server but not consistently
@@ -172,38 +165,45 @@ setup_ollama:  ## Download Ollama, script does start local Ollama server
 
 clean_ollama:  ## Remove local Ollama from system
 	echo "Searching for Ollama binary ..."
+	BIN=""
 	for BINDIR in /usr/local/bin /usr/bin /bin; do
-		if echo $$PATH | grep -q $$BINDIR; then
-			echo "Ollama binary found in '$${BINDIR}'"
+		if [ -x "$$BINDIR/ollama" ]; then
+			echo "Ollama binary found in '$$BINDIR'"
 			BIN="$$BINDIR/ollama"
 			break
 		fi
 	done
-	echo "Cleaning up ..."
-	rm -f $(BIN)
+	if [ -z "$$BIN" ]; then
+		echo "Ollama binary not found in PATH"
+		exit 1
+	fi
+	echo "Removing $$BIN ..."
+	sudo rm -f "$$BIN"
 
-setup_dataset_sample:  ## Download small sample of PeerRead dataset
-	echo "Downloading small sample of PeerRead dataset ..."
-	$(MAKE) -s run_cli ARGS=--download-peerread-samples-only
-	$(MAKE) -s dataset_smallest
-
-setup_dataset_full:  ## Download full PeerRead dataset
-	echo "Downloading full PeerRead dataset ..."
-	$(MAKE) -s run_cli ARGS=--download-peerread-full-only
+setup_dataset:  ## Download PeerRead dataset. Usage: make setup_dataset [MODE=full] [MAX_PAPERS=5]
+	$(if $(filter full,$(MODE)),\
+		echo "Downloading full PeerRead dataset ..." && \
+		$(MAKE) -s app_cli ARGS=--download-peerread-full-only,\
+		echo "Downloading PeerRead sample ..." && \
+		$(MAKE) -s app_cli ARGS="--download-peerread-samples-only $(if $(MAX_PAPERS),--peerread-max-papers-per-sample-download $(MAX_PAPERS))")
 	$(MAKE) -s dataset_smallest
 
 dataset_smallest:  ## Show N smallest papers by file size. Usage: make dataset_smallest N=5
 	@find datasets/peerread -path "*/parsed_pdfs/*.json" \
 		-type f -printf '%s %p\n' 2>/dev/null | sort -n | head -$(or $(N),10)
 
+setup_dataset_sample:  ## Download small sample of PeerRead dataset
+	echo "Downloading small sample of PeerRead dataset ..."
+	$(MAKE) -s run_cli ARGS=--download-peerread-samples-only
+	$(MAKE) -s dataset_smallest
 
 # MARK: ollama
 
 
-start_ollama:  ## Start local Ollama server, default 127.0.0.1:11434
+ollama_start:  ## Start local Ollama server, default 127.0.0.1:11434
 	ollama serve
 
-stop_ollama:  ## Stop local Ollama server
+ollama_stop:  ## Stop local Ollama server
 	echo "Stopping Ollama server ..."
 	pkill ollama
 
@@ -224,7 +224,7 @@ plantuml_render:  ## Render a themed diagram from a PlantUML file
 # MARK: pandoc
 
 
-run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_pandoc INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" [BIBLIOGRAPHY="$$dir/refs.bib"] [CSL="$$dir/style.csl"] | Help: make run_pandoc HELP=1
+pandoc_run:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make pandoc_run INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" [BIBLIOGRAPHY="$$dir/refs.bib"] [CSL="$$dir/style.csl"] | Help: make pandoc_run HELP=1
 	if [ -n "$(HELP)" ]; then
 		$(PANDOC_SCRIPT) help
 	else
@@ -238,8 +238,8 @@ run_pandoc:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make run_p
 
 
 # Convenience wrapper: content generation (CC teams) + PlantUML regen + pandoc PDF build.
-writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs-new [LANGUAGE=de-DE] [SKIP_CREATE_CONTENT=1] [SKIP_PUML=1]
-	if [ -z "$(SKIP_CREATE_CONTENT)" ]; then
+writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs-new [LANGUAGE=de-DE] [SKIP_CONTENT=1] [SKIP_PUML=1]
+	if [ -z "$(SKIP_CONTENT)" ]; then
 		echo "=== Generating writeup content with Claude Code teams ==="
 		$(MAKE) -s writeup_generate
 	fi
@@ -252,10 +252,9 @@ writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs
 		done
 	fi
 	echo "=== Building writeup PDF ==="
-	$(MAKE) -s run_pandoc \
+	$(MAKE) -s pandoc_run \
 		INPUT_FILES="$$(printf '%s\036' $(WRITEUP_DIR)/01_*.md $(WRITEUP_DIR)/0[2-8]_*.md $(WRITEUP_DIR)/09b_*.md $(WRITEUP_DIR)/10_*.md $(WRITEUP_DIR)/11_*.md)" \
 		OUTPUT_FILE="$(WRITEUP_OUTPUT)" \
-		TITLE_PAGE="$(WRITEUP_TITLE_PAGE)" \
 		BIBLIOGRAPHY="$(WRITEUP_BIB)" \
 		CSL="$(WRITEUP_CSL)" \
 		LANGUAGE="$(LANGUAGE)" \
@@ -293,75 +292,76 @@ lint_md:  ## Lint markdown files. Usage: make lint_md INPUT_FILES="docs/**/*.md"
 # MARK: app
 
 
-quickstart:  ## Download sample data and run evaluation on smallest paper
+app_quickstart:  ## Download sample data and run evaluation on smallest paper
 	echo "=== Quick Start: Download samples + evaluate smallest paper ==="
 	if [ ! -d datasets/peerread ]; then
-		$(MAKE) -s setup_dataset_sample
+		$(MAKE) -s setup_dataset
 	else
 		echo "PeerRead dataset already present, skipping download."
 	fi
 	PAPER_ID=$$($(MAKE) -s dataset_smallest N=1 \
 		| awk '{print $$2}' | sed 's|.*/parsed_pdfs/||;s|\.pdf\.json||')
 	if [ -z "$$PAPER_ID" ]; then
-		echo "ERROR: No papers found. Run 'make setup_dataset_sample' first."
+		echo "ERROR: No papers found. Run 'make setup_dataset' first."
 		exit 1
 	fi
 	echo "Selected smallest paper: $$PAPER_ID"
-	$(MAKE) -s run_cli ARGS="--paper-id=$$PAPER_ID"
+	$(MAKE) -s app_cli ARGS="--paper-id=$$PAPER_ID"
 
 
-run_cli:  ## Run app on CLI only. Usage: make run_cli ARGS="--help" or make run_cli ARGS="--download-peerread-samples-only"
+app_cli:  ## Run app on CLI only. Usage: make app_cli ARGS="--help" or make app_cli ARGS="--download-peerread-samples-only"
 	PYTHONPATH=$(SRC_PATH) uv run python $(CLI_PATH) $(ARGS)
 
-run_gui:  ## Run app with Streamlit GUI
+app_gui:  ## Run app with Streamlit GUI
 	PYTHONPATH=$(SRC_PATH) uv run streamlit run $(GUI_PATH_ST)
 
-run_sweep:  ## Run MAS composition sweep. Usage: make run_sweep ARGS="--paper-numbers 1,2,3 --repetitions 3 --all-compositions"
+app_sweep:  ## Run MAS composition sweep. Usage: make app_sweep ARGS="--paper-ids 1,2,3 --repetitions 3 --all-compositions"
 	PYTHONPATH=$(SRC_PATH) uv run python $(SRC_PATH)/run_sweep.py $(ARGS)
 
-run_profile:  ## Profile app with scalene
+app_profile:  ## Profile app with scalene
+	mkdir -p logs/scalene-profiles
 	uv run scalene --outfile \
-		"$(APP_PATH)/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
-		"$(APP_PATH)/main.py"
+		"logs/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
+		"$(CLI_PATH)"
+
+app_clean_results:  ## Remove all sweep result files from results/sweeps/
+	echo "Removing results/sweeps/ contents ..."
+	rm -rf results/sweeps/*
+	echo "Sweep results cleaned."
+
+app_clean_logs:  ## Remove accumulated agent evaluation logs from logs/Agent_evals/
+	echo "WARNING: This will delete all logs in logs/Agent_evals/ (including traces)!"
+	echo "Press Ctrl+C to cancel, Enter to continue..."
+	read
+	rm -rf logs/Agent_evals/*
+	echo "Agent evaluation logs cleaned."
 
 
 # MARK: cc-baselines
 
 
-cc_run_solo:  ## Run CC solo + collect artifacts. Usage: make cc_run_solo PAPER_ID=1105.1072 [CC_TIMEOUT=300] [CC_MODEL=sonnet]
+cc_run_solo:  ## Run CC solo via Python entry point. Usage: make cc_run_solo PAPER_ID=1105.1072 [CC_TIMEOUT=300]
 	if [ -z "$(PAPER_ID)" ]; then
 		echo "Error: PAPER_ID required. Usage: make cc_run_solo PAPER_ID=1105.1072"
 		exit 1
 	fi
-	chmod +x $(CC_TRACES_SCRIPT)/run-cc.sh
-	$(CC_TRACES_SCRIPT)/run-cc.sh \
-		--paper-id "$(PAPER_ID)" \
-		--output-dir "$(CC_SOLO_OUTPUT)/$(PAPER_ID)_$$(date +%Y%m%d_%H%M%S)" \
-		--timeout "$(CC_TIMEOUT)" \
-		$(if $(CC_MODEL),--model "$(CC_MODEL)")
+	uv run python $(CLI_PATH) \
+		--engine cc \
+		--paper-id "$(PAPER_ID)"
 
-cc_collect_teams:  ## Collect existing CC teams artifacts from ~/.claude/. Usage: make cc_collect_teams TEAM_NAME=my-team
-	if [ -z "$(TEAM_NAME)" ]; then
-		echo "Error: TEAM_NAME required. Usage: make cc_collect_teams TEAM_NAME=my-team"
-		exit 1
-	fi
-	chmod +x $(CC_TRACES_SCRIPT)/collect-team-artifacts.sh
-	$(CC_TRACES_SCRIPT)/collect-team-artifacts.sh \
-		--name "$(TEAM_NAME)" \
-		--output-dir "$(CC_TEAMS_OUTPUT)/$(TEAM_NAME)_$$(date +%Y%m%d_%H%M%S)"
+cc_collect_teams:  ## Collect existing CC teams artifacts (stub — use cc_run_teams instead)
+	echo "Note: Use 'make cc_run_teams' to run CC in teams mode via the Python engine."
+	echo "Direct artifact collection is no longer supported (shell scripts removed)."
 
-cc_run_teams:  ## Run CC teams + collect artifacts. Usage: make cc_run_teams PAPER_ID=1105.1072 [CC_TEAMS_TIMEOUT=600] [CC_MODEL=opus]
+cc_run_teams:  ## Run CC teams via Python entry point. Usage: make cc_run_teams PAPER_ID=1105.1072 [CC_TEAMS_TIMEOUT=600]
 	if [ -z "$(PAPER_ID)" ]; then
 		echo "Error: PAPER_ID required. Usage: make cc_run_teams PAPER_ID=1105.1072"
 		exit 1
 	fi
-	chmod +x $(CC_TRACES_SCRIPT)/run-cc.sh
-	$(CC_TRACES_SCRIPT)/run-cc.sh \
-		--paper-id "$(PAPER_ID)" \
-		--output-dir "$(CC_TEAMS_OUTPUT)/$(PAPER_ID)_$$(date +%Y%m%d_%H%M%S)" \
-		--timeout "$(CC_TEAMS_TIMEOUT)" \
-		--teams \
-		$(if $(CC_MODEL),--model "$(CC_MODEL)")
+	uv run python $(CLI_PATH) \
+		--engine cc \
+		--cc-teams \
+		--paper-id "$(PAPER_ID)"
 
 
 # MARK: quality
@@ -383,7 +383,7 @@ duplication:  ## Detect copy-paste duplication with jscpd
 	if command -v jscpd > /dev/null 2>&1; then
 		jscpd src/ --min-lines 5 --min-tokens 50 --reporters console
 	else
-		echo "jscpd not installed — skipping duplication check (run 'make setup_jscpd' to enable)"
+		echo "jscpd not installed — skipping duplication check (run 'make setup_npm_tools' to enable)"
 	fi
 
 test:  ## Run all tests
@@ -399,7 +399,7 @@ test_coverage:  ## Run tests with coverage threshold (configured in pyproject.to
 type_check:  ## Check for static typing errors
 	uv run pyright src
 
-validate:  ## Complete pre-commit validation sequence
+validate:  ## Complete pre-commit validation (lint + type check + complexity + duplication + test coverage)
 	set -e
 	echo "Running complete validation sequence..."
 	$(MAKE) -s lint_src
@@ -427,7 +427,7 @@ setup_phoenix:  ## Pull Phoenix Docker image (pre-download without starting)
 	docker pull $(PHOENIX_IMAGE)
 	echo "Phoenix image ready: $(PHOENIX_IMAGE)"
 
-start_phoenix:  ## Start local Arize Phoenix trace viewer (OTLP endpoint on port 6006)
+phoenix_start:  ## Start local Arize Phoenix trace viewer (OTLP endpoint on port 6006)
 	echo "Starting Arize Phoenix ..."
 	docker rm -f $(PHOENIX_CONTAINER_NAME) 2>/dev/null || true
 	docker run -d --name $(PHOENIX_CONTAINER_NAME) \
@@ -441,11 +441,11 @@ start_phoenix:  ## Start local Arize Phoenix trace viewer (OTLP endpoint on port
 	echo "OTLP HTTP endpoint: localhost:$(PHOENIX_PORT)/v1/traces"
 	echo "OTLP gRPC endpoint: localhost:$(PHOENIX_GRPC_PORT)"
 
-stop_phoenix:  ## Stop Phoenix trace viewer (volume data preserved)
+phoenix_stop:  ## Stop Phoenix trace viewer (volume data preserved)
 	echo "Stopping Phoenix ..."
 	docker stop $(PHOENIX_CONTAINER_NAME)
 
-status_phoenix:  ## Check Phoenix health status
+phoenix_status:  ## Check Phoenix health status
 	echo "Checking Phoenix status ..."
 	docker ps --filter name=$(PHOENIX_CONTAINER_NAME) --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 	curl -sf http://localhost:$(PHOENIX_PORT) > /dev/null 2>&1 && \
@@ -466,9 +466,9 @@ ralph_prd_md:  ## [Optional] Generate PRD.md from UserStory.md
 ralph_prd_json:  ## [Optional] Generate PRD.json from PRD.md (DRY_RUN=1 for parse-only)
 	$(if $(DRY_RUN),python ralph/scripts/generate_prd_json.py --dry-run,echo "Generating PRD.json from PRD.md ..." && claude -p "/generating-prd-json-from-prd-md")
 
-ralph_init:  ## Initialize Ralph loop environment
+ralph_init:  ## Initialize Ralph loop environment. Usage: make ralph_init [RALPH_PROJECT=name]
 	echo "Initializing Ralph loop environment ..."
-	bash ralph/scripts/init.sh
+	RALPH_PROJECT=$(RALPH_PROJECT) bash ralph/scripts/init.sh
 
 ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false EXPERIMENTAL)
 	echo "Starting Ralph loop ..."

@@ -204,6 +204,7 @@ class TestPeerReadIntegration:
         return p
 
     @pytest.mark.asyncio
+    @pytest.mark.network
     async def test_peerread_data_format_compatibility(self, peerread_data, evaluation_pipeline):
         """Test that pipeline can handle PeerRead data structures."""
         # Create test data
@@ -243,6 +244,7 @@ class TestPeerReadIntegration:
         assert stats["total_time"] < 25.0  # Within performance target
 
     @pytest.mark.asyncio
+    @pytest.mark.network
     async def test_large_context_handling(self, peerread_data, evaluation_pipeline):
         """Test pipeline with larger scientific paper content."""
         # Create paper with extended content
@@ -374,6 +376,7 @@ class TestPeerReadIntegrationInvariants:
         assert all(t["success"] is True for t in tool_calls)
 
     @pytest.mark.asyncio
+    @pytest.mark.network
     @given(abstract_word_count=st.integers(min_value=50, max_value=500))
     @hypothesis.settings(
         suppress_health_check=[hypothesis.HealthCheck.function_scoped_fixture],

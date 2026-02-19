@@ -61,7 +61,7 @@ def test_order_processor_calculates_total():
 
 **High-Value**: Business logic, integration points, edge cases, contracts
 
-**Avoid**: Library behavior, trivial assertions, implementation details, default constants
+**Avoid**: Library behavior, trivial assertions, implementation details, default constants, stale fixture patches (see `testing-strategy.md` → "Patterns to Remove")
 
 See `testing-strategy.md` → "Patterns to Remove" for full list.
 

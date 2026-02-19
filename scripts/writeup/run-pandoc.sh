@@ -172,8 +172,7 @@ cat > "$header_temp" << EOF
 \\let\\oldincludegraphics\\includegraphics
 \\renewcommand{\\includegraphics}[2][]{\\adjustimage{max width=\\linewidth,max height=0.85\\textheight,keepaspectratio,#1}{#2}}
 
-\\usepackage{longtable}
-\usepackage{float}
+\\usepackage{float}
 \\floatplacement{figure}{!tb}
 \\renewcommand{\\topfraction}{0.9}
 \\renewcommand{\\bottomfraction}{0.9}
@@ -247,7 +246,7 @@ lang_renames="\\renewcommand{\\figurename}{$figure_name}\\renewcommand{\\tablena
 [ -n "$abstract_name" ] && lang_renames="$lang_renames\\renewcommand{\\abstractname}{$abstract_name}"
 if [ -n "$bibliography_name" ]; then
     lang_renames="$lang_renames\\renewcommand{\\bibname}{$bibliography_name}"
-    lang_renames="$lang_renames\\ifdef{\\refname}{\\renewcommand{\\refname}{$bibliography_name}}{}"
+    lang_renames="$lang_renames\\makeatletter\\@ifundefined{refname}{}{\\renewcommand{\\refname}{$bibliography_name}}\\makeatother"
 fi
 cat >> "$header_temp" << EOF
 \\AtBeginDocument{$lang_renames}
