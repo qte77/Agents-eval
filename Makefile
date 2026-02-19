@@ -520,6 +520,111 @@ ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
 	echo "Ralph state cleaned. Run 'make ralph_init' to reinitialize."
 
 
+# MARK: opik
+
+setup_opik:  ## Complete Opik setup (start services + configure environment)
+	echo "Setting up Opik tracing stack..."
+	$(MAKE) start_opik
+	echo "Waiting for services to be healthy..."
+	sleep 20
+	$(MAKE) setup_opik_env
+	echo "Opik setup complete!"
+
+setup_opik_env:  ## Setup Opik environment variables for local development
+	echo "Setting up Opik environment variables ..."
+	echo "export OPIK_URL_OVERRIDE=http://localhost:8080" >> ~/.bashrc  # do not send to comet.com/api
+	echo "export OPIK_WORKSPACE=peerread-evaluation" >> ~/.bashrc
+	echo "export OPIK_PROJECT_NAME=peerread-evaluation" >> ~/.bashrc
+	echo "Environment variables added to ~/.bashrc"
+	echo "Run: source ~/.bashrc"
+
+start_opik:  ## Start local Opik tracing with ClickHouse database
+	# https://github.com/comet-ml/opik/blob/main/deployment/docker-compose/docker-compose.yaml
+	# https://www.comet.com/docs/opik/self-host/local_deployment/
+	echo "Starting Opik stack with ClickHouse ..."
+	docker-compose -f docker-compose.opik.yaml up -d
+	echo "Frontend: http://localhost:5173"
+	echo "Backend API: http://localhost:8080"
+	echo "ClickHouse: http://localhost:8123"
+
+stop_opik:  ## Stop local Opik tracing stack
+	echo "Stopping Opik stack ..."
+	docker-compose -f docker-compose.opik.yaml down
+
+clean_opik:  ## Stop Opik and remove all trace data (WARNING: destructive)
+	echo "WARNING: This will remove all Opik trace data!"
+	echo "Press Ctrl+C to cancel, Enter to continue..."
+	read
+	docker-compose -f docker-compose.opik.yaml down -v
+
+status_opik:  ## Check Opik services health status
+	echo "Checking Opik services status ..."
+	docker-compose -f docker-compose.opik.yaml ps
+	echo "API Health:"
+	curl -f http://localhost:8080/health-check 2>/dev/null && \
+		echo "Opik API healthy" || echo "Opik API not responding"
+	echo "ClickHouse:"
+	curl -s http://localhost:8123/ping 2>/dev/null && \
+		echo "ClickHouse healthy" || echo "ClickHouse not responding"
+
+
+# MARK: ralph
+
+
+ralph_userstory:  ## [Optional] Create UserStory.md interactively. Usage: make ralph_userstory
+	echo "Creating UserStory.md through interactive Q&A ..."
+	claude -p "/generating-interactive-userstory-md"
+
+ralph_prd_md:  ## [Optional] Generate PRD.md from UserStory.md
+	echo "Generating PRD.md from UserStory.md ..."
+	claude -p "/generating-prd-md-from-userstory-md"
+
+ralph_prd_json:  ## [Optional] Generate PRD.json from PRD.md
+	echo "Generating PRD.json from PRD.md ..."
+	claude -p "/generating-prd-json-from-prd-md"
+
+ralph_init:  ## Initialize Ralph loop environment
+	echo "Initializing Ralph loop environment ..."
+	bash ralph/scripts/init.sh
+
+ralph_run:  ## Run Ralph autonomous development loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku)
+	echo "Starting Ralph loop ..."
+	RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) bash ralph/scripts/ralph.sh
+
+ralph_status:  ## Show Ralph loop progress and status
+	echo "Ralph Loop Status"
+	echo "================="
+	if [ -f ralph/docs/prd.json ]; then
+		total=$$(jq '.stories | length' ralph/docs/prd.json)
+		passing=$$(jq '[.stories[] | select(.passes == true)] | length' ralph/docs/prd.json)
+		echo "Stories: $$passing/$$total completed"
+		echo ""
+		echo "Incomplete stories:"
+		jq -r '.stories[] | select(.passes == false) | "  - [\(.id)] \(.title)"' ralph/docs/prd.json
+	else
+		echo "prd.json not found. Run 'make ralph_init' first."
+	fi
+
+ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
+	echo "WARNING: This will reset Ralph loop state!"
+	echo "Press Ctrl+C to cancel, Enter to continue..."
+	read
+	rm -f ralph/docs/prd.json ralph/docs/progress.txt
+	echo "Ralph state cleaned. Run 'make ralph_init' to reinitialize."
+
+ralph_reorganize:  ## Archive current PRD and start new iteration. Usage: make ralph_reorganize NEW_PRD=path/to/new.md [VERSION=2]
+	if [ -z "$(NEW_PRD)" ]; then
+		echo "Error: NEW_PRD parameter required"
+		echo "Usage: make ralph_reorganize NEW_PRD=docs/PRD-New.md [VERSION=2]"
+		exit 1
+	fi
+	VERSION_ARG=""
+	if [ -n "$(VERSION)" ]; then
+		VERSION_ARG="-v $(VERSION)"
+	fi
+	bash ralph/scripts/reorganize_prd.sh $$VERSION_ARG $(NEW_PRD)
+
+
 # MARK: help
 
 

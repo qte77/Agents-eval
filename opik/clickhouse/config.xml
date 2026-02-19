@@ -1,0 +1,31 @@
+<clickhouse>
+    <!-- Listen on all interfaces for Docker networking -->
+    <listen_host>0.0.0.0</listen_host>
+    
+    <!-- Zookeeper configuration for ReplicatedMergeTree -->
+    <zookeeper>
+        <node>
+            <host>zookeeper</host>
+            <port>2181</port>
+        </node>
+    </zookeeper>
+    
+    <!-- Remote servers configuration -->
+    <remote_servers>
+        <opik>
+            <shard>
+                <replica>
+                    <host>clickhouse</host>
+                    <port>9000</port>
+                </replica>
+            </shard>
+        </opik>
+    </remote_servers>
+    
+    <!-- Macros for ReplicatedMergeTree tables -->
+    <macros>
+        <shard>01</shard>
+        <replica>opik-single-node</replica>
+        <cluster>opik</cluster>
+    </macros>
+</clickhouse>
