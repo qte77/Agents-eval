@@ -11,7 +11,7 @@ from pathlib import Path
 
 from markitdown import MarkItDown
 from pydantic import BaseModel
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent, ModelRetry, RunContext
 
 from app.data_models.peerread_models import (
     GeneratedReview,
@@ -102,15 +102,17 @@ def add_peerread_tools_to_agent(agent: Agent[None, BaseModel], agent_id: str = "
 
             paper = loader.get_paper_by_id(paper_id)
             if not paper:
-                raise ValueError(f"Paper {paper_id} not found in PeerRead dataset")
+                raise ModelRetry(f"Paper {paper_id} not found in PeerRead dataset")
 
             logger.info(f"Retrieved paper {paper_id}: {paper.title[:50]}...")
             success = True
             return paper
 
+        except ModelRetry:
+            raise
         except Exception as e:
             logger.error(f"Error retrieving paper: {e}")
-            raise ValueError(f"Failed to retrieve paper: {str(e)}")
+            raise ModelRetry(f"Failed to retrieve paper: {str(e)}")
         finally:
             duration = time.perf_counter() - start_time
             trace_collector.log_tool_call(
@@ -153,9 +155,11 @@ def add_peerread_tools_to_agent(agent: Agent[None, BaseModel], agent_id: str = "
             success = True
             return papers
 
+        except ModelRetry:
+            raise
         except Exception as e:
             logger.error(f"Error querying papers: {e}")
-            raise ValueError(f"Failed to query papers: {str(e)}")
+            raise ModelRetry(f"Failed to query papers: {str(e)}")
         finally:
             duration = time.perf_counter() - start_time
             trace_collector.log_tool_call(
@@ -382,7 +386,7 @@ def add_peerread_review_tools_to_agent(
             paper = loader.get_paper_by_id(paper_id)
 
             if not paper:
-                raise ValueError(f"Paper {paper_id} not found in PeerRead dataset")
+                raise ModelRetry(f"Paper {paper_id} not found in PeerRead dataset")
 
             paper_content = _load_paper_content_with_fallback(ctx, loader, paper_id, paper.abstract)
 
@@ -394,9 +398,11 @@ def add_peerread_review_tools_to_agent(
             success = True
             return review_template
 
+        except ModelRetry:
+            raise
         except Exception as e:
             logger.error(f"Error creating review template: {e}")
-            raise ValueError(f"Failed to create review template: {str(e)}")
+            raise ModelRetry(f"Failed to create review template: {str(e)}")
         finally:
             duration = time.perf_counter() - start_time
             trace_collector.log_tool_call(
