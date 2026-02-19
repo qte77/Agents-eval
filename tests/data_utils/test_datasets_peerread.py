@@ -1293,7 +1293,9 @@ class TestComplianceLogging:
             log_lines = log_capture.getvalue().strip().splitlines()
 
             # Should produce exactly 1 summary line, not 3 per-paper lines
-            skip_lines = [ln for ln in log_lines if "skipping" in ln.lower() or "non-compliant" in ln.lower()]
+            skip_lines = [
+                ln for ln in log_lines if "skipping" in ln.lower() or "non-compliant" in ln.lower()
+            ]
             assert len(skip_lines) == 1, (
                 f"Expected 1 aggregated log line, got {len(skip_lines)}: {skip_lines}"
             )
