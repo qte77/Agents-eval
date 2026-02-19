@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Makefile: renamed recipes for clarity (`ruff`→`lint_src`, `ruff_tests`→`lint_tests`, `test_all`→`test`, `test_quick`→`test_rerun`, `sweep`→`run_sweep`, `quick_start`→`quickstart`, `dataset_get_smallest`→`dataset_smallest`, `run_puml_*`→`plantuml_*`, `run_markdownlint`→`lint_md`); backward-compat aliases preserved
+- Makefile: collapsed 3 Ollama setup variants into `OLLAMA=1` flag on `setup_prod`/`setup_dev`/`setup_devc`
+- Makefile: grouped `make help` output with section headers from `# MARK:` comments
+- Makefile: renamed MARK sections for consistency (`Sanity`→`quality`, `run ollama`→`ollama`, etc.)
 - `--paper-number` renamed to `--paper-id` (string, supports arxiv IDs); `--provider` renamed to `--chat-provider` across CLI, sweep, config (STORY-012)
 - `SweepConfig.paper_numbers: list[int]` → `paper_ids: list[str]`; added `judge_provider`, `judge_model`, `engine` fields (STORY-012, STORY-013)
 - `JudgeSettings.tier2_provider` default changed from `"openai"` to `"auto"` — judge inherits MAS chat provider at runtime (STORY-011)
@@ -52,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Makefile: dead recipes `setup_devc_full`, `setup_devc_ollama_full`, `output_unset_app_env_sh`
 - Legacy config keys `paper_numbers` and `provider` in sweep JSON — use `paper_ids` and `chat_provider`
 - `"not-required"` API key sentinel in `create_simple_model` — `None` lets SDK fall back to env vars
 - 3 composite scoring test files merged into `test_composite_scorer.py` (STORY-007)

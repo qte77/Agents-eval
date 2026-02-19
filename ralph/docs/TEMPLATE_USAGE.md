@@ -85,7 +85,7 @@ make ralph_reorganize NEW_PRD=docs/PRD-v2.md VERSION=2  # Archive and iterate
 | `make ralph_worktree BRANCH=name` | Run Ralph in a git worktree branch |
 | `make ralph_status` | Show progress from `ralph/docs/progress.txt` |
 | `make ralph_clean` | Reset state (removes prd.json, progress.txt) |
-| `make validate` | Run quality checks (ruff, pyright, pytest) |
+| `make validate` | Run quality checks (lint, pyright, pytest) |
 
 ## Configuration
 
@@ -195,7 +195,7 @@ Ralph uses baseline-aware validation to avoid blocking stories on pre-existing f
 **Quality checks fail:**
 
 - Run `make validate` manually to see specific errors
-- Fix linting: `make lint_fix`
+- Fix linting: `make lint_src`
 - Fix type errors: check `pyright` output
 
 **Reset and retry:**

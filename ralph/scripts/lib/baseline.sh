@@ -366,7 +366,7 @@ run_complexity_scoped() {
 # Run ruff scoped to story files only.
 # In teams mode, cross-story changes can trigger false lint failures.
 # This runs ruff only on files listed in the story's prd.json entry.
-# Falls back to full `make ruff` + `make ruff_tests` if no story files.
+# Falls back to full `make lint_src` + `make lint_tests` if no story files.
 #
 # Args:
 #   $1 - Story ID
@@ -385,9 +385,9 @@ run_ruff_scoped() {
         "$prd_json" 2>/dev/null || true)
 
     if [ -z "$src_files" ] && [ -z "$test_files" ]; then
-        log_warn "No files for $story_id — falling back to full ruff"
-        make --no-print-directory ruff 2>&1 || return $?
-        make --no-print-directory ruff_tests 2>&1
+        log_warn "No files for $story_id — falling back to full lint"
+        make --no-print-directory lint_src 2>&1 || return $?
+        make --no-print-directory lint_tests 2>&1
         return $?
     fi
 
@@ -507,7 +507,7 @@ run_quality_checks_baseline() {
     # Phase 1: Lint/type/complexity (fail-fast)
     log_info "Phase 1: Lint/type/complexity checks..."
 
-    # Ruff: teams → scoped to story files; solo → make ruff + make ruff_tests
+    # Lint: teams → scoped to story files; solo → make lint_src + make lint_tests
     if [ "${RALPH_TEAMS:-false}" = "true" ] && [ -n "$prd_json" ]; then
         if ! run_ruff_scoped "$story_id" "$prd_json"; then
             log_error "ruff failed (scoped)"
@@ -515,14 +515,14 @@ run_quality_checks_baseline() {
             return 1
         fi
     else
-        if ! make --no-print-directory ruff 2>&1; then
-            log_error "ruff failed"
-            echo "ruff" > "${RETRY_CONTEXT_FILE:-/dev/null}"
+        if ! make --no-print-directory lint_src 2>&1; then
+            log_error "lint_src failed"
+            echo "lint_src" > "${RETRY_CONTEXT_FILE:-/dev/null}"
             return 1
         fi
-        if ! make --no-print-directory ruff_tests 2>&1; then
-            log_error "ruff_tests failed"
-            echo "ruff_tests" > "${RETRY_CONTEXT_FILE:-/dev/null}"
+        if ! make --no-print-directory lint_tests 2>&1; then
+            log_error "lint_tests failed"
+            echo "lint_tests" > "${RETRY_CONTEXT_FILE:-/dev/null}"
             return 1
         fi
     fi
