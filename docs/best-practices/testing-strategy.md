@@ -46,6 +46,7 @@ running commands.
 | Over-granular | Consolidate to schema | 8 tests for one model |
 | Type checks | pyright handles | `assert isinstance(r, dict)` |
 | Filesystem leak | Writes mock data to real paths | `cache_dir` not redirected to `tmp_path` |
+| Stale fixture patches | Patches removed imports, pollutes other tests | `patch("module.deleted_name")` |
 
 **Rule**: If the test wouldn't catch a real bug, remove it.
 
