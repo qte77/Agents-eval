@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-02-19
+
 ### Added
 
 - Sprint 9 Feature 1: CC engine GUI wiring — PRD feature for routing "Claude Code" radio selection to `cc_engine.run_cc_solo`/`run_cc_teams` in GUI execution path (mirrors existing CLI logic in `run_cli.py:126-138`)
