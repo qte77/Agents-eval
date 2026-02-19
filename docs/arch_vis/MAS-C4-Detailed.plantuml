@@ -77,11 +77,6 @@ Rel(composite_scorer, traditional_eval, "Traditional scores", "Data")
 Rel(composite_scorer, llm_judge, "Judge scores", "Data")
 Rel(composite_scorer, graph_analysis, "Complexity scores", "Data")
 
-' Three tiered eval system
-Rel(composite_scorer, traditional_eval, "Traditional scores", "Data")
-Rel(composite_scorer, llm_judge, "Judge scores", "Data")
-Rel(composite_scorer, graph_analysis, "Complexity scores", "Data")
-
 ' Dotted relations for external services
 Rel_D(eval_components, llm_providers, "Queries", "LLM-as-a-Judge")
 Rel_D(agent_system, llm_providers, "Queries", "chat/completion")

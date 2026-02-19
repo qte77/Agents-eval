@@ -738,7 +738,9 @@ class PeerReadLoader:
                     title=paper_data["title"],
                     abstract=paper_data["abstract"],
                     reviews=reviews,
-                    review_histories=[" ".join(map(str, h)) for h in paper_data.get("histories", [])],
+                    review_histories=[
+                        " ".join(map(str, h)) for h in paper_data.get("histories", [])
+                    ],
                 )
                 validated_papers.append(paper)
 
