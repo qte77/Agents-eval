@@ -88,11 +88,12 @@ class TestCCResult:
 class TestRunCCSolo:
     """Tests for run_cc_solo()."""
 
-    def test_solo_success_returns_ccresult(self):
+    def test_solo_success_returns_ccresult(self, tmp_path):
         """run_cc_solo returns CCResult on successful subprocess call."""
         from app.engines.cc_engine import CCResult, run_cc_solo
 
-        output_data = {"execution_id": "exec-solo-001", "session_dir": "/tmp/session"}
+        session_dir = str(tmp_path / "session")
+        output_data = {"execution_id": "exec-solo-001", "session_dir": session_dir}
         mock_result = MagicMock()
         mock_result.returncode = 0
         mock_result.stdout = json.dumps(output_data)
@@ -103,7 +104,7 @@ class TestRunCCSolo:
 
         assert isinstance(result, CCResult)
         assert result.execution_id == "exec-solo-001"
-        assert result.session_dir == "/tmp/session"
+        assert result.session_dir == session_dir
 
     def test_solo_uses_json_output_format(self):
         """run_cc_solo passes --output-format json to subprocess."""

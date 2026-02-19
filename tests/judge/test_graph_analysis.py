@@ -135,6 +135,7 @@ class TestAgentGraphAttributeConsistency:
         mock_text: MagicMock,
         mock_expander: MagicMock,
         mock_html: MagicMock,
+        tmp_path,
     ) -> None:
         """render_agent_graph() should add agent nodes with blue color when type='agent'.
 
@@ -154,7 +155,7 @@ class TestAgentGraphAttributeConsistency:
         # Make save_graph write something readable
         with patch("tempfile.NamedTemporaryFile") as mock_tmp:
             mock_file = MagicMock()
-            mock_file.name = "/tmp/test_graph.html"
+            mock_file.name = str(tmp_path / "test_graph.html")
             mock_file.__enter__ = MagicMock(return_value=mock_file)
             mock_file.__exit__ = MagicMock(return_value=False)
             mock_tmp.return_value = mock_file
@@ -198,6 +199,7 @@ class TestAgentGraphAttributeConsistency:
         mock_text: MagicMock,
         mock_expander: MagicMock,
         mock_html: MagicMock,
+        tmp_path,
     ) -> None:
         """Graph statistics section must count agent nodes using `type` attribute.
 
@@ -222,7 +224,7 @@ class TestAgentGraphAttributeConsistency:
 
         with patch("tempfile.NamedTemporaryFile") as mock_tmp:
             mock_file = MagicMock()
-            mock_file.name = "/tmp/test_graph.html"
+            mock_file.name = str(tmp_path / "test_graph.html")
             mock_file.__enter__ = MagicMock(return_value=mock_file)
             mock_file.__exit__ = MagicMock(return_value=False)
             mock_tmp.return_value = mock_file
