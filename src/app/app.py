@@ -87,7 +87,7 @@ async def _run_agent_execution(
         Tuple of (execution_id, prompts dict, manager_output)
     """
     chat_config = load_config(chat_config_file, ChatConfig)
-    prompts: dict[str, str] = cast(dict[str, str], chat_config.prompts)  # type: ignore[reportUnknownMemberType,reportAttributeAccessIssue]
+    prompts: dict[str, str] = cast(dict[str, str], chat_config.prompts)  # type: ignore[reportUnknownMemberType]
 
     query, review_tools_enabled = _prepare_query(paper_id, query, prompts)
     enable_review_tools = enable_review_tools or review_tools_enabled

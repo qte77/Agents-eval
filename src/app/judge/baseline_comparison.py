@@ -83,26 +83,29 @@ def compare(
     }
 
     # Generate human-readable summary
-    # Calculate average delta across all metrics
-    avg_delta: float = sum(metric_deltas.values()) / len(metric_deltas)
-
-    # Find metric with largest absolute delta
-    max_metric: tuple[str, float] = max(metric_deltas.items(), key=lambda x: abs(x[1]))
-    max_metric_name: str = max_metric[0]
-    max_metric_delta: float = max_metric[1]
-
-    if avg_delta > 0:
-        summary = (
-            f"{label_a} scored +{avg_delta:.2f} higher on average vs {label_b} "
-            f"(largest diff: {max_metric_name} +{max_metric_delta:.2f})"
-        )
-    elif avg_delta < 0:
-        summary = (
-            f"{label_a} scored {avg_delta:.2f} lower on average vs {label_b} "
-            f"(largest diff: {max_metric_name} {max_metric_delta:.2f})"
-        )
+    if not metric_deltas:
+        summary = f"{label_a} and {label_b} have no shared metrics to compare"
     else:
-        summary = f"{label_a} and {label_b} scored identically on average"
+        # Calculate average delta across all metrics
+        avg_delta: float = sum(metric_deltas.values()) / len(metric_deltas)
+
+        # Find metric with largest absolute delta
+        max_metric: tuple[str, float] = max(metric_deltas.items(), key=lambda x: abs(x[1]))
+        max_metric_name: str = max_metric[0]
+        max_metric_delta: float = max_metric[1]
+
+        if avg_delta > 0:
+            summary = (
+                f"{label_a} scored +{avg_delta:.2f} higher on average vs {label_b} "
+                f"(largest diff: {max_metric_name} +{max_metric_delta:.2f})"
+            )
+        elif avg_delta < 0:
+            summary = (
+                f"{label_a} scored {avg_delta:.2f} lower on average vs {label_b} "
+                f"(largest diff: {max_metric_name} {max_metric_delta:.2f})"
+            )
+        else:
+            summary = f"{label_a} and {label_b} scored identically on average"
 
     return BaselineComparison(
         label_a=label_a,

@@ -116,7 +116,7 @@ def _load_config_from_file(config_path: Path) -> SweepConfig | None:
 
     return SweepConfig(
         compositions=compositions,
-        repetitions=config_data["repetitions"],
+        repetitions=config_data.get("repetitions", 3),
         paper_ids=paper_ids,
         output_dir=Path(config_data["output_dir"]),
         chat_provider=chat_provider,

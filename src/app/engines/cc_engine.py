@@ -75,7 +75,8 @@ def _parse_jsonl_line(line: str) -> dict[str, Any] | None:
     if not stripped:
         return None
     try:
-        return json.loads(stripped)  # type: ignore[no-any-return]
+        parsed: dict[str, Any] | None = json.loads(stripped)
+        return parsed
     except json.JSONDecodeError:
         logger.debug(f"Skipping malformed JSONL line: {stripped[:80]}")
         return None

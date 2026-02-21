@@ -497,6 +497,9 @@ def add_peerread_review_tools_to_agent(
             str: Path to the saved review file.
         """
 
+        # Reason: derive model_info from actual model name instead of hardcoding
+        _model_info = f"{ctx.model.name()} via PydanticAI"
+
         async def _fn() -> str:
             from datetime import UTC, datetime
 
@@ -511,7 +514,7 @@ def add_peerread_review_tools_to_agent(
                 paper_id=paper_id,
                 review=structured_review,
                 timestamp=timestamp,
-                model_info="GPT-4o via PydanticAI",
+                model_info=_model_info,
             )
 
             structured_path = filepath.replace(".json", "_structured.json")

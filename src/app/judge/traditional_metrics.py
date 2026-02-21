@@ -496,8 +496,6 @@ def evaluate_single_traditional(
     engine = TraditionalMetricsEngine()
 
     start_time = time.perf_counter()
-    # Simulate minimal processing time for timing measurement
-    time.sleep(0.001)
     end_time = time.perf_counter()
 
     return engine.evaluate_traditional_metrics(
