@@ -187,12 +187,19 @@ teams_revert_primary_commits() {
 # Args:
 #   $1 - Primary story ID (excluded from verification)
 #   $2 - commits_before count (passed to check_tdd_commits)
+#   $3 - Newline-separated teammate story IDs (from delegation time).
+#        Reason: must use the list captured at delegation time, not re-query
+#        get_unblocked_stories, because the primary story is already "passed"
+#        by this point — which unblocks Wave N+1 stories that were never delegated.
 verify_teammate_stories() {
     local primary_id="$1"
     local commits_before="$2"
+    local teammate_stories="${3:-}"
 
-    local teammate_stories
-    teammate_stories=$(teams_get_wave_peers "$primary_id")
+    # Fallback for callers that don't pass an explicit list
+    if [ -z "$teammate_stories" ]; then
+        teammate_stories=$(teams_get_wave_peers "$primary_id")
+    fi
 
     if [ -z "$teammate_stories" ]; then
         return 0

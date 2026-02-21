@@ -442,8 +442,12 @@ execute_story() {
         log_info "Retry context appended to prompt (failed check: $failed_check)"
     fi
 
-    # Teams mode: append current wave (independent unblocked stories) for delegation
+    # Teams mode: append current wave (independent unblocked stories) for delegation.
+    # Capture the list now — by verification time the primary is "passed" and
+    # get_unblocked_stories would include Wave N+1 stories that were never delegated.
+    DELEGATED_TEAMMATES=""
     if [ "$RALPH_TEAMS" = "true" ]; then
+        DELEGATED_TEAMMATES=$(teams_get_wave_peers "$story_id")
         local delegate_count
         delegate_count=$(teams_append_delegation_prompt "$story_id" "$iteration_prompt")
         [ "$delegate_count" -gt 0 ] && log_info "Team mode: delegating $delegate_count additional story(ies)"
@@ -795,7 +799,7 @@ main() {
 
                 # Verify teammate stories in teams mode
                 if [ "$RALPH_TEAMS" = "true" ]; then
-                    verify_teammate_stories "$story_id" "$commits_before"
+                    verify_teammate_stories "$story_id" "$commits_before" "$DELEGATED_TEAMMATES"
                 fi
 
                 commit_state_files "chore: Update Ralph state after verifying $story_id (already complete)"
@@ -891,7 +895,7 @@ main() {
 
                 # Verify teammate stories in teams mode
                 if [ "$RALPH_TEAMS" = "true" ]; then
-                    verify_teammate_stories "$story_id" "$commits_before"
+                    verify_teammate_stories "$story_id" "$commits_before" "$DELEGATED_TEAMMATES"
                 fi
 
                 commit_state_files "chore: Update Ralph state after completing $story_id"
