@@ -199,7 +199,7 @@ dataset_smallest:  ## Show N smallest papers by file size. Usage: make dataset_s
 
 setup_dataset_sample:  ## Download small sample of PeerRead dataset
 	echo "Downloading small sample of PeerRead dataset ..."
-	$(MAKE) -s run_cli ARGS=--download-peerread-samples-only
+	$(MAKE) -s app_cli ARGS=--download-peerread-samples-only
 	$(MAKE) -s dataset_smallest
 
 # MARK: ollama
@@ -572,12 +572,12 @@ ruff: lint_src
 ruff_tests: lint_tests
 test_all: test
 test_quick: test_rerun
-sweep: run_sweep
-quick_start: quickstart
+sweep: app_sweep
+quick_start: app_quickstart
 dataset_get_smallest: dataset_smallest
 run_puml_interactive: plantuml_serve
 run_puml_single: plantuml_render
 run_markdownlint: lint_md
 setup_prod_ollama: ; $(MAKE) setup_prod OLLAMA=1
 setup_dev_ollama: ; $(MAKE) setup_dev OLLAMA=1
-setup_devc_ollama: ; $(MAKE) setup_devc OLLAMA=1
+setup_devc_ollama: ; $(MAKE) setup_dev OLLAMA=1
