@@ -498,7 +498,13 @@ def add_peerread_review_tools_to_agent(
         """
 
         # Reason: derive model_info from actual model name instead of hardcoding
-        _model_info = f"{ctx.model.name()} via PydanticAI"
+        _agent_model = agent.model
+        _model_name = (
+            _agent_model
+            if isinstance(_agent_model, str)
+            else (getattr(_agent_model, "model_name", "unknown") if _agent_model else "unknown")
+        )
+        _model_info = f"{_model_name} via PydanticAI"
 
         async def _fn() -> str:
             from datetime import UTC, datetime
