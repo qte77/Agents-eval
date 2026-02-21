@@ -10,9 +10,11 @@ import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pydantic_ai import Agent
 from pydantic_ai.usage import UsageLimits
 
 from app.app import main
+from app.data_models.app_models import ProviderConfig
 from run_cli import parse_args
 
 
@@ -38,7 +40,7 @@ class TestCLITokenLimitFlag:
                 query="test query",
                 usage_limits=UsageLimits(request_limit=10, total_tokens_limit=100000),
             )
-            mock_manager = MagicMock()
+            mock_manager = MagicMock(spec=Agent)
             mock_get_manager.return_value = mock_manager
             mock_run_manager.return_value = (
                 "test_exec_123",
@@ -67,7 +69,7 @@ class TestCLITokenLimitFlag:
             patch("app.app.load_config") as mock_load_config,
         ):
             # Setup mocks - config has 25000, CLI provides 100000
-            mock_config = MagicMock()
+            mock_config = MagicMock(spec=ProviderConfig)
             mock_config.usage_limits = 25000
             mock_setup.return_value = MagicMock(
                 provider="test_provider",
@@ -77,7 +79,7 @@ class TestCLITokenLimitFlag:
                 query="test query",
                 usage_limits=UsageLimits(request_limit=10, total_tokens_limit=100000),
             )
-            mock_manager = MagicMock()
+            mock_manager = MagicMock(spec=Agent)
             mock_get_manager.return_value = mock_manager
             mock_run_manager.return_value = (
                 "test_exec_123",
@@ -135,7 +137,7 @@ class TestEnvVarTokenLimit:
             patch.dict(os.environ, {"AGENT_TOKEN_LIMIT": "80000"}),
         ):
             # Setup mocks
-            mock_config = MagicMock()
+            mock_config = MagicMock(spec=ProviderConfig)
             mock_config.usage_limits = 25000
             mock_setup.return_value = MagicMock(
                 provider="test_provider",
@@ -145,7 +147,7 @@ class TestEnvVarTokenLimit:
                 query="test query",
                 usage_limits=UsageLimits(request_limit=10, total_tokens_limit=80000),
             )
-            mock_manager = MagicMock()
+            mock_manager = MagicMock(spec=Agent)
             mock_get_manager.return_value = mock_manager
             mock_run_manager.return_value = (
                 "test_exec_123",
@@ -174,7 +176,7 @@ class TestEnvVarTokenLimit:
             patch.dict(os.environ, {"AGENT_TOKEN_LIMIT": "80000"}),
         ):
             # Setup mocks
-            mock_config = MagicMock()
+            mock_config = MagicMock(spec=ProviderConfig)
             mock_config.usage_limits = 25000
             mock_setup.return_value = MagicMock(
                 provider="test_provider",
@@ -184,7 +186,7 @@ class TestEnvVarTokenLimit:
                 query="test query",
                 usage_limits=UsageLimits(request_limit=10, total_tokens_limit=120000),
             )
-            mock_manager = MagicMock()
+            mock_manager = MagicMock(spec=Agent)
             mock_get_manager.return_value = mock_manager
             mock_run_manager.return_value = (
                 "test_exec_123",
@@ -223,7 +225,7 @@ class TestConfigFallback:
             patch("app.app.load_config") as mock_load_config,
         ):
             # Setup mocks - only config value, no overrides
-            mock_config = MagicMock()
+            mock_config = MagicMock(spec=ProviderConfig)
             mock_config.usage_limits = 25000
             mock_setup.return_value = MagicMock(
                 provider="test_provider",
@@ -233,7 +235,7 @@ class TestConfigFallback:
                 query="test query",
                 usage_limits=UsageLimits(request_limit=10, total_tokens_limit=25000),
             )
-            mock_manager = MagicMock()
+            mock_manager = MagicMock(spec=Agent)
             mock_get_manager.return_value = mock_manager
             mock_run_manager.return_value = (
                 "test_exec_123",
