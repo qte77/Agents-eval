@@ -47,7 +47,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 source "$SCRIPT_DIR/lib/baseline.sh"
 
 # Helpers
-commit_count() { git rev-list --count HEAD 2>/dev/null; }
+commit_count() { git rev-list --count HEAD -- 2>/dev/null || echo 0; }
 
 commit_state_files() {
     local msg="$1"
@@ -127,6 +127,18 @@ validate_environment() {
         log_error "prd.json uses legacy 'passes' field. Migrate by running: python ralph/scripts/generate_prd_json.py"
         exit 1
     fi
+
+    # Clean sandbox artifacts that shadow git internals.
+    # Reason: Claude Code sandbox (bwrap) creates 0-byte files named HEAD, config,
+    # objects, refs, hooks in the working directory. A file named HEAD makes
+    # `git rev-list --count HEAD` ambiguous (exit 128), breaking commit_count().
+    # See .gitignore for full context and upstream tracking issue.
+    local artifact
+    for artifact in HEAD objects refs hooks config; do
+        if [ -f "$artifact" ] && [ ! -s "$artifact" ]; then
+            rm -f "$artifact" 2>/dev/null && log_warn "Removed sandbox artifact: $artifact" || true
+        fi
+    done
 
     log_info "Environment validated successfully"
 }
@@ -550,8 +562,9 @@ detect_already_complete() {
     fi
 
     # Fallback: scan agent output for completion phrases
+    # Reason: agents use varied phrasing — match broadly to avoid false negatives
     tail -n +$((start_line + 1)) "$LOG_FILE" 2>/dev/null \
-        | grep -qi "already complete\|already implemented\|no further implementation.*required" || return 1
+        | grep -qi "already complete\|already implemented\|no further implementation.*required\|stories are done\|already committed\|no new commits needed\|all.*already.*done\|work is.*done\|changes already exist" || return 1
 }
 
 # Run quality checks (dispatches to baseline-aware or original mode)
@@ -596,6 +609,21 @@ check_tdd_commits() {
     local new_commits=$((commits_after - commits_before))
 
     if [ $new_commits -eq 0 ]; then
+        # Fallback: agent made no new commits, but story's TDD commits may
+        # already exist in git history from a prior iteration or run.
+        # Search full history for RED+GREEN markers with this story ID.
+        local prior_red prior_green
+        prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
+        prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
+
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+            log_info "No new commits, but prior TDD commits found in history:"
+            log_info "  [RED]   $prior_red"
+            log_info "  [GREEN] $prior_green"
+            log_info "TDD verified via git history fallback"
+            return 0
+        fi
+
         log_error "No commits made during story execution"
         return 1
     fi
