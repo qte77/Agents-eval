@@ -2,6 +2,7 @@
 
 input=$(cat)
 cwd=$(echo "$input" | jq -r '.workspace.current_dir')
+agent=$(echo "$input" | jq -r '.agent.type // "main"')
 model=$(echo "$input" | jq -r '.model.id')
 version=$(echo "$input" | jq -r '.version // ""')
 cost=$(
@@ -66,4 +67,4 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
     else branch=""
 fi
 
-printf "\\033[0;33mmodel:%s \\033[2mver:%s \\033[0;34mcost:%s \\033[0;36mdur:%s\\n\\033[0;32mlines:%s \\033[2mtokens(i/o):%s ${ctx_color}ctx(free):%s\\033[0m \\033[0;31m>200k:%s\\033[0m\\n\\033[2mdir:%s \\033[0;36mbranch:%s \\033[0;32muser:%s \\033[0;35mtime:%s\\033[0m" "$model" "$version" "$cost" "$duration" "$lines_changed" "$tokens" "$remaining" "$exc_context" "$(basename "$cwd")" "$branch" "$user" "$time"
+printf "\\033[0;31magent:%s \\033[0;33mmodel:%s \\033[2mver:%s \\033[0;34mcost:%s \\033[0;36mdur:%s\\n\\033[0;32mlines:%s \\033[2mtokens(i/o):%s ${ctx_color}ctx(free):%s\\033[0m \\033[0;31m>200k:%s\\033[0m\\n\\033[2mdir:%s \\033[0;36mbranch:%s \\033[0;32muser:%s \\033[0;35mtime:%s\\033[0m" "$agent" "$model" "$version" "$cost" "$duration" "$lines_changed" "$tokens" "$remaining" "$exc_context" "$(basename "$cwd")" "$branch" "$user" "$time"
