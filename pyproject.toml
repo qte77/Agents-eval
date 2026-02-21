@@ -122,6 +122,8 @@ convention = "google"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers -m 'not network and not benchmark'"
+# Reason: asyncio_mode = "auto" makes @pytest.mark.asyncio redundant;
+# explicit markers intentionally omitted project-wide.
 asyncio_mode = "auto"
 # "function", "class", "module", "package", "session"
 asyncio_default_fixture_loop_scope = "function"

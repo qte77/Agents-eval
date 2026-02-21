@@ -12,7 +12,10 @@ from typing import Any, TypeVar
 from pydantic import BaseModel, ConfigDict, HttpUrl, field_validator
 from pydantic_ai.messages import ModelRequest
 from pydantic_ai.models import Model
-from pydantic_ai.tools import Tool
+from pydantic_ai.tools import (
+    ObjectJsonSchema,
+    Tool,
+)  # ObjectJsonSchema needed for Pydantic schema resolution
 from pydantic_ai.usage import UsageLimits
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -102,8 +105,7 @@ class AgentConfig(BaseModel):
     model: Model  # (1) Instance expected
     output_type: type[BaseModel]  # (2) Class expected
     system_prompt: str
-    # FIXME tools: list[Callable[..., Awaitable[Any]]]
-    tools: list[Any] = []  # (3) List of tools will be validated at creation
+    tools: list[Tool[Any]] = []  # (3) List of Tool instances validated at creation
     retries: int = 3
 
     # Avoid pydantic.errors.PydanticSchemaGenerationError:
@@ -114,13 +116,17 @@ class AgentConfig(BaseModel):
     )  # (4) Suppress Error non-Pydantic types caused by <class 'openai.AsyncOpenAI'>
 
     @field_validator("tools", mode="before")
-    def validate_tools(cls, v: list[Any]) -> list[Tool | None]:  # noqa: N805
+    def validate_tools(cls, v: list[Any]) -> list[Tool[Any]]:  # noqa: N805
         """Validate that all tools are instances of Tool."""
         if not v:
             return []
         if not all(isinstance(t, Tool) for t in v):
             raise ValueError("All tools must be Tool instances")
         return v
+
+
+# Reason: Tool[Any] references ObjectJsonSchema internally; model_rebuild resolves it.
+AgentConfig.model_rebuild(_types_namespace={"ObjectJsonSchema": ObjectJsonSchema})
 
 
 class ModelDict(BaseModel):

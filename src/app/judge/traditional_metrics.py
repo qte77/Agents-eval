@@ -369,23 +369,34 @@ class TraditionalMetricsEngine:
         # Find best similarity scores across all references
         best_scores = self.find_best_match(agent_output, reference_texts)
 
+        # Reason: Clamp cosine/semantic scores to [0, 1] — TF-IDF + sklearn cosine_similarity
+        # can return 1.0000000000000002 due to floating-point precision (tests-review C1).
+        cosine_score = min(1.0, max(0.0, best_scores.cosine))
+        semantic_score = min(1.0, max(0.0, best_scores.semantic))
+
         # Calculate execution metrics
         confidence_threshold = settings.tier1_confidence_threshold if settings else 0.8
         time_score = self.measure_execution_time(start_time, end_time)
         task_success = self.assess_task_success(best_scores, confidence_threshold)
 
         # Calculate weighted overall score
-        overall_score = (
-            best_scores.semantic * 0.4
-            + best_scores.cosine * 0.3
-            + best_scores.jaccard * 0.2
-            + time_score * 0.1
+        overall_score = min(
+            1.0,
+            max(
+                0.0,
+                (
+                    semantic_score * 0.4
+                    + cosine_score * 0.3
+                    + best_scores.jaccard * 0.2
+                    + time_score * 0.1
+                ),
+            ),
         )
 
         return Tier1Result(
-            cosine_score=best_scores.cosine,
+            cosine_score=cosine_score,
             jaccard_score=best_scores.jaccard,
-            semantic_score=best_scores.semantic,
+            semantic_score=semantic_score,
             execution_time=end_time - start_time,
             time_score=time_score,
             task_success=task_success,
@@ -485,8 +496,6 @@ def evaluate_single_traditional(
     engine = TraditionalMetricsEngine()
 
     start_time = time.perf_counter()
-    # Simulate minimal processing time for timing measurement
-    time.sleep(0.001)
     end_time = time.perf_counter()
 
     return engine.evaluate_traditional_metrics(
@@ -578,18 +587,39 @@ def create_evaluation_result(
         "semantic": best_scores.semantic,  # Levenshtein-based
     }
 
-    # Simple recommendation matching (could be more sophisticated)
-    agent_sentiment = "positive" if "good" in agent_review.lower() else "negative"
     gt_recommendations = [float(r.recommendation) for r in ground_truth_reviews]
 
     if len(gt_recommendations) == 0:
         # No ground truth to compare - default to False
         recommendation_match = False
     else:
-        # Match original logic: use 3.0 as threshold for positive/negative
+        # Reason: Use numeric GT recommendation directly (threshold 3.0 = borderline accept).
+        # Approximation: agent review text is used as a proxy because structured
+        # GeneratedReview scores are not available in this call context.
+        # Simple positive word heuristic is intentionally avoided (Review F19).
         avg_gt_recommendation = sum(gt_recommendations) / len(gt_recommendations)
-        recommendation_match = (agent_sentiment == "positive" and avg_gt_recommendation >= 3.0) or (
-            agent_sentiment == "negative" and avg_gt_recommendation < 3.0
+        # Positive review words that indicate acceptance (excluding negatable "good")
+        positive_indicators = [
+            "accept",
+            "strong contribution",
+            "recommend",
+            "excellent",
+            "solid",
+            "novel",
+        ]
+        negative_indicators = [
+            "reject",
+            "weak",
+            "insufficient",
+            "lacks novelty",
+            "serious issues",
+        ]
+        agent_review_lower = agent_review.lower()
+        positive_hits = sum(1 for p in positive_indicators if p in agent_review_lower)
+        negative_hits = sum(1 for n in negative_indicators if n in agent_review_lower)
+        agent_is_positive = positive_hits > negative_hits
+        recommendation_match = (agent_is_positive and avg_gt_recommendation >= 3.0) or (
+            not agent_is_positive and avg_gt_recommendation < 3.0
         )
 
     return PeerReadEvalResult(

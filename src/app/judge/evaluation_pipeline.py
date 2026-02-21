@@ -389,7 +389,6 @@ class EvaluationPipeline:
                 results.tier2 = Tier2Result(
                     technical_accuracy=0.5,
                     constructiveness=0.5,
-                    clarity=0.5,
                     planning_rationality=0.5,
                     overall_score=0.5,
                     model_used="fallback",

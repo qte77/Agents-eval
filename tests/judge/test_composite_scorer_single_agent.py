@@ -54,7 +54,6 @@ def tier2_result():
     return Tier2Result(
         technical_accuracy=0.75,
         constructiveness=0.8,
-        clarity=0.7,
         planning_rationality=0.85,
         overall_score=0.78,
         model_used="gpt-4",
@@ -227,7 +226,6 @@ class TestSingleAgentWeightRedistribution:
         tier2 = Tier2Result(
             technical_accuracy=0.75,
             constructiveness=0.8,
-            clarity=0.7,
             planning_rationality=0.85,
             overall_score=0.78,
             model_used="gpt-4",

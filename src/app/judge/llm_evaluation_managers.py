@@ -335,7 +335,24 @@ Provide scores and brief explanation."""
         review: str,
         execution_trace: dict[str, Any],
     ) -> tuple[float, float, float, bool]:
-        """Handle individual assessment failures with fallbacks."""
+        """Handle individual assessment failures with fallbacks.
+
+        Called after ``asyncio.gather(return_exceptions=True)`` so each score may
+        be either the float result or an exception instance. Replaces any exception
+        with its corresponding fallback value and sets ``fallback_used``.
+
+        Args:
+            technical_score: Technical accuracy score or exception from gather.
+            constructiveness_score: Constructiveness score or exception from gather.
+            planning_score: Planning rationality score or exception from gather.
+            paper: Original paper text used for semantic similarity fallback.
+            review: Review text used for constructiveness fallback.
+            execution_trace: Execution trace dict used for planning fallback.
+
+        Returns:
+            Tuple of (technical_float, constructiveness_float, planning_float,
+            fallback_used) where fallback_used is True if any score was replaced.
+        """
         fallback_used = False
 
         if isinstance(technical_score, BaseException):
@@ -425,7 +442,6 @@ Provide scores and brief explanation."""
             return Tier2Result(
                 technical_accuracy=technical_score_float,
                 constructiveness=constructiveness_score_float,
-                clarity=constructiveness_score_float,
                 planning_rationality=planning_score_float,
                 overall_score=overall_score,
                 model_used=f"{self.provider}/{self.model}",
@@ -438,7 +454,14 @@ Provide scores and brief explanation."""
             return self._complete_fallback(paper, review, execution_trace)
 
     def _extract_planning_decisions(self, execution_trace: dict[str, Any]) -> str:
-        """Extract key planning decisions from execution trace."""
+        """Extract key planning decisions from execution trace.
+
+        Args:
+            execution_trace: Dictionary with ``agent_interactions`` and ``tool_calls`` keys.
+
+        Returns:
+            str: Summary string truncated to 500 chars, or stub on parse failure.
+        """
         try:
             decisions = execution_trace.get("agent_interactions", [])
             tool_calls = execution_trace.get("tool_calls", [])
@@ -453,7 +476,8 @@ Provide scores and brief explanation."""
 
             return summary[:500]  # Limit length for API efficiency
 
-        except Exception:
+        except (AttributeError, KeyError, TypeError) as e:
+            logger.debug(f"_extract_planning_decisions failed: {e}", exc_info=True)
             return "Limited trace data available"
 
     def _fallback_constructiveness_check(self, review: str) -> float:
@@ -526,7 +550,6 @@ Provide scores and brief explanation."""
         return Tier2Result(
             technical_accuracy=semantic_score,
             constructiveness=constructiveness_score,
-            clarity=constructiveness_score,
             planning_rationality=planning_score,
             overall_score=overall_score,
             model_used="fallback_traditional",

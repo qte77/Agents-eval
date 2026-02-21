@@ -10,9 +10,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from inline_snapshot import snapshot
+from pydantic_ai import Agent
 
 from app.data_models.evaluation_models import CompositeResult
 from app.judge.baseline_comparison import BaselineComparison
+from app.judge.cc_trace_adapter import CCTraceAdapter
+from app.judge.evaluation_pipeline import EvaluationPipeline
 
 
 @pytest.mark.asyncio
@@ -36,12 +39,12 @@ async def test_cli_accepts_cc_solo_dir_flag(tmp_path):
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
         mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline and adapter
-        mock_pipeline = MagicMock()
+        mock_pipeline = MagicMock(spec=EvaluationPipeline)
         mock_result = CompositeResult(
             composite_score=0.8,
             recommendation="accept",
@@ -56,7 +59,7 @@ async def test_cli_accepts_cc_solo_dir_flag(tmp_path):
         mock_pipeline.evaluate_comprehensive = AsyncMock(side_effect=[mock_result, mock_result])
         mock_pipeline_class.return_value = mock_pipeline
 
-        mock_adapter_instance = MagicMock()
+        mock_adapter_instance = MagicMock(spec=CCTraceAdapter)
         mock_adapter_instance.parse.return_value = MagicMock()
         mock_adapter.return_value = mock_adapter_instance
 
@@ -96,12 +99,12 @@ async def test_cli_accepts_cc_teams_dir_flag(tmp_path):
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
         mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline and adapter
-        mock_pipeline = MagicMock()
+        mock_pipeline = MagicMock(spec=EvaluationPipeline)
         mock_result = CompositeResult(
             composite_score=0.8,
             recommendation="accept",
@@ -116,7 +119,7 @@ async def test_cli_accepts_cc_teams_dir_flag(tmp_path):
         mock_pipeline.evaluate_comprehensive = AsyncMock(side_effect=[mock_result, mock_result])
         mock_pipeline_class.return_value = mock_pipeline
 
-        mock_adapter_instance = MagicMock()
+        mock_adapter_instance = MagicMock(spec=CCTraceAdapter)
         mock_adapter_instance.parse.return_value = MagicMock()
         mock_adapter.return_value = mock_adapter_instance
 
@@ -157,12 +160,12 @@ async def test_three_way_comparison_with_both_cc_baselines(tmp_path):
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
         mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline to return CompositeResult for each evaluation
-        mock_pipeline = MagicMock()
+        mock_pipeline = MagicMock(spec=EvaluationPipeline)
         mock_result = CompositeResult(
             composite_score=0.8,
             recommendation="accept",
@@ -176,7 +179,7 @@ async def test_three_way_comparison_with_both_cc_baselines(tmp_path):
         mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
         mock_pipeline_class.return_value = mock_pipeline
 
-        mock_adapter_instance = MagicMock()
+        mock_adapter_instance = MagicMock(spec=CCTraceAdapter)
         mock_adapter_instance.parse.return_value = MagicMock()
         mock_adapter.return_value = mock_adapter_instance
 
@@ -234,12 +237,12 @@ async def test_baseline_comparison_printed_to_console(tmp_path):
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
         mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline
-        mock_pipeline = MagicMock()
+        mock_pipeline = MagicMock(spec=EvaluationPipeline)
         mock_result = CompositeResult(
             composite_score=0.8,
             recommendation="accept",
@@ -253,7 +256,7 @@ async def test_baseline_comparison_printed_to_console(tmp_path):
         mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
         mock_pipeline_class.return_value = mock_pipeline
 
-        mock_adapter_instance = MagicMock()
+        mock_adapter_instance = MagicMock(spec=CCTraceAdapter)
         mock_adapter_instance.parse.return_value = MagicMock()
         mock_adapter.return_value = mock_adapter_instance
 
@@ -307,11 +310,11 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
         mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
-        mock_pipeline = MagicMock()
+        mock_pipeline = MagicMock(spec=EvaluationPipeline)
         mock_pipeline.evaluate_comprehensive = AsyncMock()
         mock_pipeline_class.return_value = mock_pipeline
 
@@ -349,7 +352,7 @@ async def test_review_tools_enabled_by_default():
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
         mock_run_manager.return_value = ("test_exec_123", None)
 
@@ -390,7 +393,7 @@ async def test_no_review_tools_flag_disables_review_tools():
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
         mock_run_manager.return_value = ("test_exec_123", None)
 

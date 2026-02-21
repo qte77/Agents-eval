@@ -26,7 +26,11 @@ from app.data_utils.review_persistence import ReviewPersistence
 from app.judge.trace_processors import get_trace_collector
 from app.utils.log import logger
 from app.utils.paths import get_review_template_path
-from app.utils.prompt_sanitization import sanitize_paper_abstract, sanitize_paper_title
+from app.utils.prompt_sanitization import (
+    sanitize_paper_abstract,
+    sanitize_paper_content,
+    sanitize_paper_title,
+)
 
 
 def read_paper_pdf(
@@ -350,13 +354,16 @@ def _load_and_format_template(
         # This prevents format string injection attacks while preserving template compatibility
         sanitized_title = sanitize_paper_title(paper_title)
         sanitized_abstract = sanitize_paper_abstract(paper_abstract)
+        sanitized_content = sanitize_paper_content(truncated_content)
 
-        # Safe to use .format() here since inputs are sanitized and wrapped in XML delimiters
-        # Template uses {variable} placeholders which is the standard Python format
+        # Reason: Safe to use .format() — adversary-controlled inputs are sanitized:
+        # - title/abstract: XML-wrapped (length-limited)
+        # - paper content: braces escaped + XML-wrapped (prevents format string injection)
+        # - tone/review_focus: agent-controlled, not adversary input
         return template_content.format(
             paper_title=sanitized_title,
             paper_abstract=sanitized_abstract,
-            paper_full_content=truncated_content,
+            paper_full_content=sanitized_content,
             tone=tone,
             review_focus=review_focus,
         )
@@ -490,6 +497,15 @@ def add_peerread_review_tools_to_agent(
             str: Path to the saved review file.
         """
 
+        # Reason: derive model_info from actual model name instead of hardcoding
+        _agent_model = agent.model
+        _model_name = (
+            _agent_model
+            if isinstance(_agent_model, str)
+            else (getattr(_agent_model, "model_name", "unknown") if _agent_model else "unknown")
+        )
+        _model_info = f"{_model_name} via PydanticAI"
+
         async def _fn() -> str:
             from datetime import UTC, datetime
 
@@ -504,7 +520,7 @@ def add_peerread_review_tools_to_agent(
                 paper_id=paper_id,
                 review=structured_review,
                 timestamp=timestamp,
-                model_info="GPT-4o via PydanticAI",
+                model_info=_model_info,
             )
 
             structured_path = filepath.replace(".json", "_structured.json")

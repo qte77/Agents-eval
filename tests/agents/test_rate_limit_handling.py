@@ -12,19 +12,22 @@ Expected behavior:
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pydantic_ai import Agent
 from pydantic_ai.exceptions import ModelHTTPError, UsageLimitExceeded
+
+from app.judge.trace_processors import TraceCollector
 
 
 @pytest.mark.asyncio
 async def test_rate_limit_exits_cleanly():
     """429 rate limit MUST raise SystemExit(1), not propagate raw exception."""
     with patch("app.agents.agent_system.get_trace_collector") as mock_get_collector:
-        mock_collector = MagicMock()
+        mock_collector = MagicMock(spec=TraceCollector)
         mock_get_collector.return_value = mock_collector
 
         from app.agents.agent_system import run_manager
 
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_manager.model._model_name = "gpt-4.1"
         mock_manager.run = AsyncMock(
             side_effect=ModelHTTPError(
@@ -55,12 +58,12 @@ async def test_rate_limit_logs_provider_and_wait_time():
         patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
         patch("app.agents.agent_system.logger") as mock_logger,
     ):
-        mock_collector = MagicMock()
+        mock_collector = MagicMock(spec=TraceCollector)
         mock_get_collector.return_value = mock_collector
 
         from app.agents.agent_system import run_manager
 
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_manager.model._model_name = "gpt-4.1"
         detail_msg = "Rate limit of 50 per 86400s exceeded. Please wait 34796 seconds."
         mock_manager.run = AsyncMock(
@@ -91,12 +94,12 @@ async def test_rate_limit_logs_provider_and_wait_time():
 async def test_rate_limit_finalizes_trace_collection():
     """Trace collection MUST be finalized even when rate limit occurs."""
     with patch("app.agents.agent_system.get_trace_collector") as mock_get_collector:
-        mock_collector = MagicMock()
+        mock_collector = MagicMock(spec=TraceCollector)
         mock_get_collector.return_value = mock_collector
 
         from app.agents.agent_system import run_manager
 
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_manager.model._model_name = "test-model"
         mock_manager.run = AsyncMock(
             side_effect=ModelHTTPError(
@@ -121,12 +124,12 @@ async def test_rate_limit_finalizes_trace_collection():
 async def test_non_429_http_error_re_raises():
     """Non-429 ModelHTTPError (e.g. 500) MUST re-raise, not SystemExit."""
     with patch("app.agents.agent_system.get_trace_collector") as mock_get_collector:
-        mock_collector = MagicMock()
+        mock_collector = MagicMock(spec=TraceCollector)
         mock_get_collector.return_value = mock_collector
 
         from app.agents.agent_system import run_manager
 
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_manager.model._model_name = "test-model"
         mock_manager.run = AsyncMock(
             side_effect=ModelHTTPError(
@@ -149,12 +152,12 @@ async def test_non_429_http_error_re_raises():
 async def test_usage_limit_exceeded_exits_cleanly():
     """UsageLimitExceeded MUST raise SystemExit(1), not propagate raw exception."""
     with patch("app.agents.agent_system.get_trace_collector") as mock_get_collector:
-        mock_collector = MagicMock()
+        mock_collector = MagicMock(spec=TraceCollector)
         mock_get_collector.return_value = mock_collector
 
         from app.agents.agent_system import run_manager
 
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_manager.model._model_name = "gpt-oss-120b"
         mock_manager.run = AsyncMock(
             side_effect=UsageLimitExceeded(

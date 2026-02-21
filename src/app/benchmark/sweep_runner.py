@@ -101,7 +101,10 @@ class SweepRunner:
         )
         # Reason: main() returns dict with 'composite_result' key
         if isinstance(result, dict) and "composite_result" in result:
-            return result["composite_result"]  # type: ignore[return-value]
+            composite = result["composite_result"]
+            if isinstance(composite, CompositeResult):
+                return composite
+            return None
         logger.warning(f"Evaluation returned unexpected format: {type(result).__name__}")
         return None
 

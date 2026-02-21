@@ -56,7 +56,6 @@ def tier2_result() -> Tier2Result:
     return Tier2Result(
         technical_accuracy=0.5,
         constructiveness=0.55,
-        clarity=0.6,
         planning_rationality=0.5,
         overall_score=0.54,
         model_used="gpt-4",

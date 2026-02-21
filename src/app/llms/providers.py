@@ -50,7 +50,19 @@ def get_api_key(
 
 
 def get_provider_config(provider: str, providers: dict[str, ProviderConfig]) -> ProviderConfig:
-    """Retrieve configuration settings for the specified provider."""
+    """Retrieve configuration settings for the specified provider.
+
+    Args:
+        provider: Provider name key used to look up the configuration.
+        providers: Mapping of provider name to ProviderConfig instances.
+
+    Returns:
+        ProviderConfig for the requested provider.
+
+    Raises:
+        KeyError: If the provider is not found in the providers mapping.
+        Exception: On unexpected lookup failures.
+    """
     try:
         return providers[provider]
     except KeyError as e:
@@ -64,20 +76,21 @@ def get_provider_config(provider: str, providers: dict[str, ProviderConfig]) -> 
 
 
 def setup_llm_environment(api_keys: dict[str, str]) -> None:
-    """
-    Set up LLM environment variables for API keys.
+    """No-op: retained for backward compatibility only.
+
+    Previously wrote API keys to ``os.environ``, exposing them to child
+    processes, crash reporters, and debug dumps (Sprint 5 Finding 10,
+    Review F1 HIGH). All call sites have been migrated — keys are now
+    passed directly via provider constructors in ``models.py``.
 
     Args:
-        api_keys: Dictionary mapping provider names to API keys.
-    """
-    import os
+        api_keys: Ignored. Dictionary mapping provider names to API keys.
 
-    # Set environment variables for LLM
-    for provider, api_key in api_keys.items():
-        if api_key and api_key.strip():
-            env_var = f"{provider.upper()}_API_KEY"
-            os.environ[env_var] = api_key
-            logger.debug(f"Set environment variable: {env_var}")
+    .. deprecated::
+        Use provider constructor ``api_key`` parameter instead.
+        This function is scheduled for removal.
+    """
+    logger.debug("setup_llm_environment: no-op (keys passed via constructor, not os.environ)")
 
 
 def get_supported_providers() -> list[str]:

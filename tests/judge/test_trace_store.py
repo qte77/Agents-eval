@@ -70,20 +70,25 @@ class TestTraceStoreThreadSafety:
 
     def test_trace_store_is_thread_safe_for_mixed_operations(self):
         """TraceStore handles mixed read/write operations safely."""
-        # This will fail until TraceStore is implemented with thread safety
         store = TraceStore()
         write_count = [0]
         read_count = [0]
+        # Reason: Lock protects shared counters from concurrent increment races.
+        # Without a lock, write_count[0] += 1 is a read-modify-write that can
+        # be interrupted between threads, producing a lower final count.
+        counter_lock = threading.Lock()
 
         def writer(thread_id: int):
             for i in range(50):
                 store.add_trace(f"trace_{thread_id}_{i}", {"thread": thread_id, "index": i})
-                write_count[0] += 1
+                with counter_lock:
+                    write_count[0] += 1
 
         def reader():
             for _ in range(50):
                 _traces = store.get_all_traces()
-                read_count[0] += 1
+                with counter_lock:
+                    read_count[0] += 1
 
         # Mix of writers and readers
         threads = []
@@ -97,9 +102,12 @@ class TestTraceStoreThreadSafety:
         for thread in threads:
             thread.join()
 
-        # Should have all writes completed
+        # Assert counter values to confirm all operations completed
+        assert write_count[0] == 5 * 50, f"Expected {5 * 50} writes, got {write_count[0]}"
+        assert read_count[0] == 5 * 50, f"Expected {5 * 50} reads, got {read_count[0]}"
+        # Should have all writes reflected in the store
         all_traces = store.get_all_traces()
-        assert len(all_traces) == 5 * 50  # 5 writers, 50 traces each
+        assert len(all_traces) == write_count[0]  # 5 writers × 50 traces each
 
 
 class TestTraceStoreContextManager:

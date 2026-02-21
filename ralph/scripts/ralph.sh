@@ -37,7 +37,12 @@
 # forks an Explore agent; prefer inline file reads in the prompt template instead.
 #
 
-set -euo pipefail
+# -E: propagate ERR traps into functions  -e: exit on error
+# -u: error on unset variables  -o pipefail: pipeline fails on any non-zero
+set -Eeuo pipefail
+
+# Trap unexpected exits: log the failing command, line, and function for diagnosis
+trap '_exit_code=$?; if [ $_exit_code -ne 0 ]; then echo -e "\033[0;31m[FATAL]\033[0m $(date -u +%Y-%m-%dT%H:%M:%SZ) Unexpected exit (code=$_exit_code) at ${BASH_SOURCE[0]:-unknown}:${LINENO} in ${FUNCNAME[0]:-main}() — command: ${BASH_COMMAND}" >&2; fi' ERR
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,9 +50,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Source libraries
 source "$SCRIPT_DIR/lib/common.sh"
 source "$SCRIPT_DIR/lib/baseline.sh"
+source "$SCRIPT_DIR/lib/teams.sh"
 
 # Helpers
-commit_count() { git rev-list --count HEAD 2>/dev/null; }
+commit_count() { git rev-list --count HEAD -- 2>/dev/null || echo 0; }
 
 commit_state_files() {
     local msg="$1"
@@ -87,6 +93,8 @@ PROMPT_FILE="ralph/docs/templates/prompt.md"
 MAX_RETRIES=3
 RALPH_TEAMS=${RALPH_TEAMS:-false}  # EXPERIMENTAL: cross-story interference causes false rejections (see ralph/README.md)
 RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
+# TODO: these /tmp paths collide when multiple worktrees run concurrently.
+# Namespace by worktree (e.g., /tmp/claude/ralph_$(git rev-parse --show-toplevel | md5sum | cut -c1-8)/).
 BASELINE_FILE="/tmp/claude/ralph_baseline_failures.txt"
 RETRY_CONTEXT_FILE="/tmp/claude/ralph_retry_context.txt"
 TDD_VERIFIED_DIR="/tmp/claude/ralph_tdd_verified"
@@ -128,6 +136,18 @@ validate_environment() {
         exit 1
     fi
 
+    # Clean sandbox artifacts that shadow git internals.
+    # Reason: Claude Code sandbox (bwrap) creates 0-byte files named HEAD, config,
+    # objects, refs, hooks in the working directory. A file named HEAD makes
+    # `git rev-list --count HEAD` ambiguous (exit 128), breaking commit_count().
+    # See .gitignore for full context and upstream tracking issue.
+    local artifact
+    for artifact in HEAD objects refs hooks config; do
+        if [ -f "$artifact" ] && [ ! -s "$artifact" ]; then
+            rm -f "$artifact" 2>/dev/null && log_warn "Removed sandbox artifact: $artifact" || true
+        fi
+    done
+
     log_info "Environment validated successfully"
 }
 
@@ -151,18 +171,6 @@ get_next_story() {
 # of the dependency graph defined by each story's depends_on array.
 # Within a wave, stories run in parallel (one teammate each); the next
 # wave starts after the current one completes.
-get_unblocked_stories() {
-    local completed=$(jq -r '[.stories[] | select(.status == "passed") | .id] | @json' "$PRD_JSON")
-
-    # Reason: "in_progress" included so Ralph resumes interrupted stories after a crash
-    jq -r --argjson completed "$completed" '
-      .stories[]
-      | select(.status == "pending" or .status == "failed" or .status == "in_progress")
-      | select((.depends_on // []) - $completed | length == 0)
-      | .id
-    ' "$PRD_JSON"
-}
-
 # Print dependency wave plan and blocking tree for remaining stories.
 # Uses iterative BFS: each wave is the frontier of unblocked incomplete stories.
 # Output goes to both log and progress file for visibility.
@@ -312,17 +320,6 @@ print_dependency_tree() {
 # Run full validation at wave boundaries (teams mode only).
 # Non-blocking: cross-story issues are logged but don't halt the pipeline.
 # The next wave's stories will address any issues found here.
-run_wave_checkpoint() {
-    log_info "===== Wave Checkpoint: Full Validation ====="
-    if make --no-print-directory validate 2>&1 | tee /tmp/claude/ralph_wave_checkpoint.log; then
-        log_info "Wave checkpoint PASSED"
-        return 0
-    else
-        log_warn "Wave checkpoint found cross-story issues (non-blocking, logged for next wave)"
-        return 0  # Non-blocking — issues logged, next wave's stories will fix them
-    fi
-}
-
 # Get story details
 get_story_details() {
     local story_id="$1"
@@ -447,37 +444,15 @@ execute_story() {
         log_info "Retry context appended to prompt (failed check: $failed_check)"
     fi
 
-    # Teams mode: append current wave (independent unblocked stories) for delegation
+    # Teams mode: append current wave (independent unblocked stories) for delegation.
+    # Capture the list now — by verification time the primary is "passed" and
+    # get_unblocked_stories would include Wave N+1 stories that were never delegated.
+    DELEGATED_TEAMMATES=""
     if [ "$RALPH_TEAMS" = "true" ]; then
-        local other_stories
-        other_stories=$(get_unblocked_stories | grep -v "^${story_id}$" || true)
-        if [ -n "$other_stories" ]; then
-            {
-                echo ""
-                echo "## Team Mode: Delegate Independent Stories"
-                echo "Spawn one teammate per story using the Task tool."
-                echo "Each follows TDD: RED [RED] → GREEN [GREEN] → REFACTOR [REFACTOR]."
-                echo "Skills: \`testing-python\`, \`implementing-python\`, \`reviewing-code\`."
-                echo ""
-            } >> "$iteration_prompt"
-            local sid
-            for sid in $other_stories; do
-                local sdetails
-                sdetails=$(get_story_details "$sid")
-                local stitle
-                stitle=$(echo "$sdetails" | cut -d'|' -f1)
-                local sdesc
-                sdesc=$(echo "$sdetails" | cut -d'|' -f2)
-                {
-                    echo "### $sid: $stitle"
-                    echo "$sdesc"
-                    echo ""
-                } >> "$iteration_prompt"
-            done
-            local delegate_count
-            delegate_count=$(echo "$other_stories" | wc -l)
-            log_info "Team mode: delegating $delegate_count additional story(ies)"
-        fi
+        DELEGATED_TEAMMATES=$(teams_get_wave_peers "$story_id")
+        local delegate_count
+        delegate_count=$(teams_append_delegation_prompt "$story_id" "$iteration_prompt")
+        [ "$delegate_count" -gt 0 ] && log_info "Team mode: delegating $delegate_count additional story(ies)"
     fi
 
     # Mark log position before agent execution
@@ -500,7 +475,7 @@ execute_story() {
     local monitor_stories=("$story_id")
     if [ "$RALPH_TEAMS" = "true" ]; then
         local wave_others
-        wave_others=$(get_unblocked_stories | grep -v "^${story_id}$" || true)
+        wave_others=$(teams_get_wave_peers "$story_id")
         if [ -n "$wave_others" ]; then
             while IFS= read -r ws; do
                 monitor_stories+=("$ws")
@@ -550,8 +525,11 @@ detect_already_complete() {
     fi
 
     # Fallback: scan agent output for completion phrases
+    # Reason: agents use varied phrasing — match broadly to avoid false negatives.
+    # Uses extended regex (-E) with word-gap-tolerant patterns (.*) so insertions
+    # like "already fully committed" still match "already.*committed".
     tail -n +$((start_line + 1)) "$LOG_FILE" 2>/dev/null \
-        | grep -qi "already complete\|already implemented\|no further implementation.*required" || return 1
+        | grep -qiE "already.*(complete|committed|implemented|done)|no further implementation.*required|stories.*(done|complete)|no new commits needed|all.*already.*done|work is.*done|changes already exist" || return 1
 }
 
 # Run quality checks (dispatches to baseline-aware or original mode)
@@ -596,6 +574,21 @@ check_tdd_commits() {
     local new_commits=$((commits_after - commits_before))
 
     if [ $new_commits -eq 0 ]; then
+        # Fallback: agent made no new commits, but story's TDD commits may
+        # already exist in git history from a prior iteration or run.
+        # Search full history for RED+GREEN markers with this story ID.
+        local prior_red prior_green
+        prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
+        prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
+
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+            log_info "No new commits, but prior TDD commits found in history:"
+            log_info "  [RED]   $prior_red"
+            log_info "  [GREEN] $prior_green"
+            log_info "TDD verified via git history fallback"
+            return 0
+        fi
+
         log_error "No commits made during story execution"
         return 1
     fi
@@ -607,43 +600,24 @@ check_tdd_commits() {
     # touches a file in the story's files array. File-only matching (2A) missed
     # RED commits that create test files not listed in the files array.
     if [ "$RALPH_TEAMS" = "true" ]; then
-        local story_files
-        story_files=$(jq -r --arg id "$story_id" \
-            '.stories[] | select(.id == $id) | .files // [] | .[]' "$PRD_JSON" 2>/dev/null || true)
-
-        local filtered_commits=""
-        local commit_hash
-        while IFS= read -r line; do
-            commit_hash=$(echo "$line" | cut -d' ' -f1)
-            local match=false
-
-            # Check 1: commit message mentions story ID
-            if echo "$line" | grep -qF "$story_id"; then
-                match=true
-            fi
-
-            # Check 2: commit touches a file in the story's files array
-            if [ "$match" = "false" ] && [ -n "$story_files" ]; then
-                local changed_files
-                changed_files=$(git diff-tree --no-commit-id --name-only -r "$commit_hash" 2>/dev/null || true)
-                local sf
-                while IFS= read -r sf; do
-                    if echo "$changed_files" | grep -qF "$sf"; then
-                        match=true
-                        break
-                    fi
-                done <<< "$story_files"
-            fi
-
-            if [ "$match" = "true" ]; then
-                filtered_commits="${filtered_commits:+$filtered_commits
-}$line"
-            fi
-        done <<< "$recent_commits"
-        recent_commits="$filtered_commits"
+        recent_commits=$(teams_filter_commits_for_story "$story_id" "$recent_commits" "$PRD_JSON")
 
         new_commits=$(echo "$recent_commits" | grep -c . || true)
         if [ "$new_commits" -eq 0 ]; then
+            # Reason: teammate commits exist but none attributed to primary story.
+            # Check git history — primary story may already have TDD from a prior run.
+            local prior_red prior_green
+            prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
+            prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
+
+            if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+                log_info "No new commits for $story_id in team batch, but prior TDD found:"
+                log_info "  [RED]   $prior_red"
+                log_info "  [GREEN] $prior_green"
+                log_info "TDD verified via git history (teams fallback)"
+                return 0
+            fi
+
             log_error "No commits for $story_id in team batch (hybrid attribution)"
             return 1
         fi
@@ -879,9 +853,20 @@ main() {
 
         print_progress
 
-        # Execute story and capture return code (use || true to prevent set -e from exiting on non-zero)
+        # Pre-flight: skip agent execution if story already has TDD in git history
         local exec_status=0
-        execute_story "$story_id" "$details" || exec_status=$?
+        DELEGATED_TEAMMATES=""
+        local prior_red=$(git log --grep="\[RED\]" --grep="$story_id" \
+            --all-match --format="%h" -1 2>/dev/null || true)
+        local prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" \
+            --all-match --format="%h" -1 2>/dev/null || true)
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ ! -f "$RETRY_CONTEXT_FILE" ]; then
+            log_info "Story $story_id has prior TDD (RED: $prior_red, GREEN: $prior_green) — skipping agent"
+            exec_status=2
+        else
+            # Execute story and capture return code (|| true prevents set -e exit on non-zero)
+            execute_story "$story_id" "$details" || exec_status=$?
+        fi
 
         local story_passed=false
 
@@ -897,7 +882,7 @@ main() {
 
                 # Verify teammate stories in teams mode
                 if [ "$RALPH_TEAMS" = "true" ]; then
-                    verify_teammate_stories "$story_id" "$commits_before"
+                    verify_teammate_stories "$story_id" "$commits_before" "$DELEGATED_TEAMMATES"
                 fi
 
                 commit_state_files "chore: Update Ralph state after verifying $story_id (already complete)"
@@ -906,6 +891,8 @@ main() {
             else
                 log_error "Story reported as complete but quality checks failed"
                 log_progress "$iteration" "$story_id" "FAIL" "Quality checks failed despite reported completion"
+                # Reason: write retry context so pre-flight yields and agent runs to fix the issue
+                [ ! -f "$RETRY_CONTEXT_FILE" ] && echo "quality (already-complete path)" > "$RETRY_CONTEXT_FILE"
                 retry_count=$((retry_count + 1))
                 if [ $retry_count -ge $MAX_RETRIES ]; then
                     log_error "Max retries reached for story $story_id"
@@ -924,12 +911,24 @@ main() {
                 log_info "Quality retry — skipping TDD verification (prior RED+GREEN exist)"
                 rm -f "$RETRY_CONTEXT_FILE"
             elif ! check_tdd_commits "$story_id" "$commits_before"; then
-                # Clean up invalid commits and files before retry
+                # Clean up invalid commits and files before retry.
+                # Reason: in teams mode, only revert commits attributed to the
+                # primary story — teammate commits are valid and must survive.
                 local commits_after=$(commit_count)
                 local new_commits=$((commits_after - commits_before))
                 if [ $new_commits -gt 0 ]; then
-                    log_warn "Resetting $new_commits invalid commit(s)"
-                    git reset --hard HEAD~$new_commits
+                    if [ "$RALPH_TEAMS" = "true" ]; then
+                        local reverted
+                        reverted=$(teams_revert_primary_commits "$story_id" "$new_commits" "$PRD_JSON")
+                        if [ "$reverted" -gt 0 ]; then
+                            log_warn "Reverted $reverted primary-story commit(s), preserved teammate commits"
+                        else
+                            log_warn "No primary-story commits to revert"
+                        fi
+                    else
+                        log_warn "Resetting $new_commits invalid commit(s)"
+                        git reset --hard HEAD~$new_commits
+                    fi
                 fi
                 # Scoped clean: only remove files created during story execution
                 local untracked_after
@@ -961,10 +960,11 @@ main() {
 
             # Persist TDD phases so quality-failure reset doesn't lose them (Solution 1A)
             local red_hash green_hash
+            # Reason: grep exits 1 when no match; || true prevents pipefail from killing the script
             red_hash=$(git log --oneline -n $(($(commit_count) - commits_before)) \
-                | grep "\[RED\]" | sed -n '1p' | cut -d' ' -f1)
+                | grep "\[RED\]" | sed -n '1p' | cut -d' ' -f1 || true)
             green_hash=$(git log --oneline -n $(($(commit_count) - commits_before)) \
-                | grep "\[GREEN\]" | sed -n '1p' | cut -d' ' -f1)
+                | grep "\[GREEN\]" | sed -n '1p' | cut -d' ' -f1 || true)
             if [ -n "$red_hash" ] && [ -n "$green_hash" ]; then
                 persist_tdd_verified "$story_id" "$red_hash" "$green_hash"
             fi
@@ -980,7 +980,7 @@ main() {
 
                 # Verify teammate stories in teams mode
                 if [ "$RALPH_TEAMS" = "true" ]; then
-                    verify_teammate_stories "$story_id" "$commits_before"
+                    verify_teammate_stories "$story_id" "$commits_before" "$DELEGATED_TEAMMATES"
                 fi
 
                 commit_state_files "chore: Update Ralph state after completing $story_id"

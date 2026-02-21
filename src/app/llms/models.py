@@ -106,9 +106,15 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
         # Since PydanticAI supports Gemini natively, import and use it
         try:
             from pydantic_ai.models.google import GoogleModel
+            from pydantic_ai.providers.google import GoogleProvider
 
-            # GoogleModel uses different parameter name for API key
-            return GoogleModel(model_name=model_name)
+            # Reason: Pass api_key via constructor to avoid os.environ exposure (AC4).
+            # GoogleProvider accepts api_key directly, preventing key leakage to child
+            # processes, crash reporters, and debug dumps.
+            return GoogleModel(
+                model_name=model_name,
+                provider=GoogleProvider(api_key=api_key),
+            )
         except ImportError:
             logger.warning("GoogleModel not available, falling back to OpenAI format")
             # Fallback to OpenAI format with custom base URL

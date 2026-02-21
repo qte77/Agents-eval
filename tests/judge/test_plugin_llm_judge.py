@@ -68,7 +68,6 @@ class TestLLMJudgePlugin:
                 return_value=Tier2Result(
                     technical_accuracy=0.85,
                     constructiveness=0.78,
-                    clarity=0.80,
                     planning_rationality=0.82,
                     overall_score=0.81,
                     model_used="openai/gpt-4o-mini",
@@ -92,7 +91,6 @@ class TestLLMJudgePlugin:
                 return_value=Tier2Result(
                     technical_accuracy=0.85,
                     constructiveness=0.78,
-                    clarity=0.80,
                     planning_rationality=0.82,
                     overall_score=0.81,
                     model_used="openai/gpt-4o-mini",
@@ -125,7 +123,6 @@ class TestLLMJudgePlugin:
                 return_value=Tier2Result(
                     technical_accuracy=0.85,
                     constructiveness=0.78,
-                    clarity=0.80,
                     planning_rationality=0.82,
                     overall_score=0.81,
                     model_used="openai/gpt-4o-mini",
@@ -149,7 +146,6 @@ class TestLLMJudgePlugin:
                 return_value=Tier2Result(
                     technical_accuracy=0.85,
                     constructiveness=0.78,
-                    clarity=0.80,
                     planning_rationality=0.82,
                     overall_score=0.81,
                     model_used="openai/gpt-4o-mini",
@@ -168,7 +164,6 @@ class TestLLMJudgePlugin:
         mock_result = Tier2Result(
             technical_accuracy=0.85,
             constructiveness=0.78,
-            clarity=0.80,
             planning_rationality=0.82,
             overall_score=0.81,
             model_used="openai/gpt-4o-mini",
@@ -187,7 +182,6 @@ class TestLLMJudgePlugin:
         mock_result = Tier2Result(
             technical_accuracy=0.85,
             constructiveness=0.78,
-            clarity=0.80,
             planning_rationality=0.82,
             overall_score=0.81,
             model_used="openai/gpt-4o-mini",
@@ -200,7 +194,6 @@ class TestLLMJudgePlugin:
         assert context["tier2_overall_score"] == 0.81
         assert context["tier2_quality_metrics"]["technical_accuracy"] == 0.85
         assert context["tier2_quality_metrics"]["constructiveness"] == 0.78
-        assert context["tier2_quality_metrics"]["clarity"] == 0.80
         assert context["tier2_quality_metrics"]["planning_rationality"] == 0.82
 
     def test_get_context_includes_metadata(self, plugin):
@@ -208,7 +201,6 @@ class TestLLMJudgePlugin:
         mock_result = Tier2Result(
             technical_accuracy=0.85,
             constructiveness=0.78,
-            clarity=0.80,
             planning_rationality=0.82,
             overall_score=0.81,
             model_used="openai/gpt-4o-mini",

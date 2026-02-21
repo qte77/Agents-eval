@@ -51,7 +51,6 @@ def sample_tier_results():
     tier2 = Tier2Result(
         technical_accuracy=0.82,
         constructiveness=0.78,
-        clarity=0.85,
         planning_rationality=0.80,
         overall_score=0.83,
         model_used="gpt-4o-mini",
@@ -70,10 +69,6 @@ def sample_tier_results():
     )
 
     return EvaluationResults(tier1=tier1, tier2=tier2, tier3=tier3)
-
-
-class TestCompositeScorer:
-    """Test suite for CompositeScorer functionality."""
 
 
 class TestCompositeScorerMetricExtraction:
@@ -299,7 +294,6 @@ class TestCompositeScoreProperties:
         tier2 = Tier2Result(
             technical_accuracy=0.5,
             constructiveness=0.5,
-            clarity=0.5,
             planning_rationality=0.5,
             overall_score=tier2_overall,
             model_used="test",
@@ -377,7 +371,6 @@ class TestCompositeScoreProperties:
         tier2 = Tier2Result(
             technical_accuracy=tier2_score,
             constructiveness=tier2_score,
-            clarity=tier2_score,
             planning_rationality=tier2_score,
             overall_score=tier2_score,
             model_used="test",
@@ -460,7 +453,6 @@ class TestCompositeResultStructure:
         tier2 = Tier2Result(
             technical_accuracy=1.0,
             constructiveness=1.0,
-            clarity=1.0,
             planning_rationality=1.0,
             overall_score=1.0,
             model_used="test-model",
@@ -565,7 +557,6 @@ class TestBasicScoring:
                 tier2=Tier2Result(
                     technical_accuracy=0.88,
                     constructiveness=0.85,
-                    clarity=0.86,
                     planning_rationality=0.87,
                     overall_score=0.87,
                     model_used="gpt-4o-mini",
@@ -595,7 +586,6 @@ class TestBasicScoring:
                 tier2=Tier2Result(
                     technical_accuracy=0.91,
                     constructiveness=0.89,
-                    clarity=0.88,
                     planning_rationality=0.92,
                     overall_score=0.91,
                     model_used="gpt-4o-mini",
@@ -625,7 +615,6 @@ class TestBasicScoring:
                 tier2=Tier2Result(
                     technical_accuracy=0.35,
                     constructiveness=0.31,
-                    clarity=0.33,
                     planning_rationality=0.28,
                     overall_score=0.31,
                     model_used="gpt-4o-mini",
@@ -655,7 +644,6 @@ class TestBasicScoring:
                 tier2=Tier2Result(
                     technical_accuracy=0.29,
                     constructiveness=0.26,
-                    clarity=0.27,
                     planning_rationality=0.22,
                     overall_score=0.26,
                     model_used="gpt-4o-mini",
@@ -685,7 +673,6 @@ class TestBasicScoring:
                 tier2=Tier2Result(
                     technical_accuracy=0.52,
                     constructiveness=0.67,
-                    clarity=0.60,
                     planning_rationality=0.59,
                     overall_score=0.59,
                     model_used="gpt-4o-mini",
@@ -758,7 +745,6 @@ class TestBasicScoring:
             tier2=Tier2Result(
                 technical_accuracy=0.91,
                 constructiveness=0.89,
-                clarity=0.88,
                 planning_rationality=0.92,
                 overall_score=0.91,
                 model_used="gpt-4o-mini",
@@ -788,7 +774,6 @@ class TestBasicScoring:
             tier2=Tier2Result(
                 technical_accuracy=0.35,
                 constructiveness=0.31,
-                clarity=0.33,
                 planning_rationality=0.28,
                 overall_score=0.31,
                 model_used="gpt-4o-mini",
@@ -910,7 +895,6 @@ class TestWeightRedistribution:
                 tier2=Tier2Result(
                     technical_accuracy=tier2_overall,
                     constructiveness=tier2_overall,
-                    clarity=tier2_overall,
                     planning_rationality=high if dominant == "planning" else base,
                     overall_score=tier2_overall,
                     model_used="gpt-4o-mini",
@@ -975,7 +959,6 @@ class TestEdgeCases:
         defaults: dict[str, object] = {
             "technical_accuracy": 0.78,
             "constructiveness": 0.73,
-            "clarity": 0.75,
             "planning_rationality": 0.76,
             "overall_score": 0.76,
             "model_used": "gpt-4o-mini",
@@ -1038,7 +1021,6 @@ class TestEdgeCases:
             tier2=self._make_tier2(
                 technical_accuracy=0.0,
                 constructiveness=0.0,
-                clarity=0.0,
                 planning_rationality=0.0,
                 overall_score=0.0,
             ),

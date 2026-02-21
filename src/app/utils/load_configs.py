@@ -26,7 +26,7 @@ from app.utils.error_messages import (
 from app.utils.log import logger
 
 
-def load_config(config_path: str | Path, data_model: type[BaseModel]) -> BaseModel:
+def load_config[T: BaseModel](config_path: str | Path, data_model: type[T]) -> T:
     """
     Generic configuration loader that validates against any Pydantic model.
 

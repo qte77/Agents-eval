@@ -18,6 +18,7 @@ from hypothesis import strategies as st
 from app.utils.prompt_sanitization import (
     sanitize_for_prompt,
     sanitize_paper_abstract,
+    sanitize_paper_content,
     sanitize_paper_title,
     sanitize_review_text,
 )
@@ -261,3 +262,136 @@ class TestPropertyBasedSanitization:
             assert extracted == content
         else:
             assert extracted == content[:500]
+
+
+class TestPaperContentFormatStringInjection:
+    """Test format string injection via paper_full_content is neutralized (STORY-002).
+
+    MAESTRO Layer 1: Adversary-controlled PDF content containing Python str.format()
+    placeholders like {tone}, {review_focus}, or {0.__class__} must be escaped before
+    being passed to .format() in _load_and_format_template().
+    """
+
+    def test_sanitize_paper_content_escapes_curly_braces(self):
+        """sanitize_paper_content must escape { and } to prevent format string injection."""
+        malicious = "PDF body with {tone} and {review_focus} placeholders"
+        result = sanitize_paper_content(malicious)
+
+        # Braces must be doubled so .format() treats them as literals
+        assert "{{tone}}" in result
+        assert "{{review_focus}}" in result
+
+        # Verify .format() treats escaped braces as literals, not substitution targets
+        inner = result.replace("<paper_content>", "").replace("</paper_content>", "")
+        formatted = inner.format(tone="INJECTED", review_focus="INJECTED")
+        assert "INJECTED" not in formatted
+        assert "{tone}" in formatted  # Doubled braces become single literal braces
+
+    def test_sanitize_paper_content_wraps_in_xml(self):
+        """sanitize_paper_content must wrap in <paper_content> XML delimiters."""
+        result = sanitize_paper_content("benign content")
+        assert result.startswith("<paper_content>")
+        assert result.endswith("</paper_content>")
+
+    @pytest.mark.parametrize(
+        "attack_payload",
+        [
+            "{0.__class__.__mro__}",
+            "{__import__('os').system('whoami')}",
+            "{tone}",
+            "{review_focus}",
+            "{paper_title}",
+            "Text with {nested {braces}} inside",
+        ],
+    )
+    def test_sanitize_paper_content_neutralizes_format_attacks(self, attack_payload: str):
+        """Format string attack payloads must be escaped in paper content."""
+        result = sanitize_paper_content(attack_payload)
+
+        # Extract content between XML tags
+        inner = result.replace("<paper_content>", "").replace("</paper_content>", "")
+
+        # After escaping, .format() on the result should produce literal braces, not substitution
+        # This verifies the escaped content is safe for str.format()
+        formatted = inner.format(tone="INJECTED", review_focus="INJECTED", paper_title="INJECTED")
+        assert "INJECTED" not in formatted
+
+    def test_sanitize_paper_content_preserves_benign_text(self):
+        """Benign paper content without braces should be preserved exactly."""
+        benign = "This is a normal paper about machine learning algorithms."
+        result = sanitize_paper_content(benign)
+        assert benign in result
+
+    def test_load_and_format_template_neutralizes_malicious_content(self):
+        """_load_and_format_template must not substitute placeholders in paper content."""
+        from unittest.mock import mock_open, patch
+
+        from app.tools.peerread_tools import _load_and_format_template
+
+        # Template that uses all standard placeholders
+        template = "Title: {paper_title} Abstract: {paper_abstract} Content: {paper_full_content} Tone: {tone} Focus: {review_focus}"
+
+        malicious_content = "PDF body with {tone} and {review_focus} injections"
+
+        with patch("builtins.open", mock_open(read_data=template)):
+            with patch("app.tools.peerread_tools.get_review_template_path", return_value="fake.md"):
+                result = _load_and_format_template(
+                    paper_title="Test Paper",
+                    paper_abstract="Test abstract",
+                    paper_content=malicious_content,
+                    tone="professional",
+                    review_focus="comprehensive",
+                    max_content_length=50000,
+                )
+
+        # Extract the content section (between "Content: " and " Tone:")
+        content_section = result.split("Content: ")[1].split(" Tone:")[0]
+
+        # Literal {tone} must survive in content (doubled braces resolved to singles)
+        assert "{tone}" in content_section
+        # "professional" must NOT leak into content via format substitution
+        assert "professional" not in content_section
+
+        # Tone and focus should appear only in their proper template positions
+        assert "Tone: professional" in result
+        assert "Focus: comprehensive" in result
+
+    def test_load_and_format_template_benign_output_unchanged(self):
+        """Benign paper content without braces should produce normal output."""
+        from unittest.mock import mock_open, patch
+
+        from app.tools.peerread_tools import _load_and_format_template
+
+        template = "Title: {paper_title} Content: {paper_full_content} Tone: {tone}"
+        benign_content = "Normal paper about neural networks"
+
+        with patch("builtins.open", mock_open(read_data=template)):
+            with patch("app.tools.peerread_tools.get_review_template_path", return_value="fake.md"):
+                result = _load_and_format_template(
+                    paper_title="Test Paper",
+                    paper_abstract="Test abstract",
+                    paper_content=benign_content,
+                    tone="professional",
+                    review_focus="comprehensive",
+                    max_content_length=50000,
+                )
+
+        # Benign content should appear in the output (inside XML wrapper and with Abstract prefix)
+        assert "Normal paper about neural networks" in result
+        assert "Tone: professional" in result
+
+    @given(content=st.text(min_size=0, max_size=5000))
+    def test_sanitize_paper_content_always_safe_for_format(self, content: str):
+        """Property: sanitized paper content must never cause format string substitution."""
+        result = sanitize_paper_content(content)
+        inner = result.replace("<paper_content>", "").replace("</paper_content>", "")
+
+        # .format() with common template kwargs must not raise or substitute
+        formatted = inner.format(
+            tone="INJECTED",
+            review_focus="INJECTED",
+            paper_title="INJECTED",
+            paper_abstract="INJECTED",
+            paper_full_content="INJECTED",
+        )
+        assert "INJECTED" not in formatted

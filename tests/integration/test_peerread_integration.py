@@ -7,8 +7,6 @@ data structures and produce meaningful results with scientific paper content.
 """
 
 import asyncio
-import sys
-from pathlib import Path
 from typing import Any
 
 import hypothesis
@@ -16,9 +14,6 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
-
-# Ensure src directory is available for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from app.data_models.peerread_models import PeerReadPaper, PeerReadReview
 from app.judge.evaluation_pipeline import EvaluationPipeline

@@ -703,10 +703,6 @@ class TestSimilarityScoreProperties:
         # PROPERTY: Must be binary (0.0 or 1.0)
         assert success in [0.0, 1.0], f"Task success {success} not binary"
 
-    @pytest.mark.skip(
-        reason="Property test discovered real bug: cosine_score can be 1.0000000000000002, "
-        "causing Pydantic validation error. Requires production code fix in traditional_metrics.py"
-    )
     @given(
         agent_output=st.text(min_size=10, max_size=200).filter(
             lambda s: s.strip() and any(c.isalnum() for c in s)

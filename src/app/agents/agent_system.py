@@ -35,11 +35,11 @@ from pydantic_ai.common_tools.duckduckgo import (
     duckduckgo_search_tool,  # type: ignore[reportUnknownVariableType]
 )
 from pydantic_ai.exceptions import ModelHTTPError, UsageLimitExceeded
+from pydantic_ai.tools import Tool
 from pydantic_ai.usage import UsageLimits
 
 from app.agents.logfire_instrumentation import initialize_logfire_instrumentation
 from app.data_models.app_models import (
-    PROVIDER_REGISTRY,
     AgentConfig,
     AnalysisResult,
     AppEnv,
@@ -60,7 +60,6 @@ from app.llms.models import create_agent_models
 from app.llms.providers import (
     get_api_key,
     get_provider_config,
-    setup_llm_environment,
 )
 from app.tools.peerread_tools import add_peerread_tools_to_agent
 from app.utils.error_messages import generic_exception, invalid_data_model_format
@@ -287,7 +286,7 @@ def _create_optional_agent(
     model: Any,
     output_type: type[BaseModel],
     system_prompt: str,
-    tools: list[Any] | None = None,
+    tools: list[Tool[Any]] | None = None,
 ) -> Agent[None, BaseModel] | None:
     """Create an agent if model is provided, otherwise return None.
 
@@ -665,14 +664,6 @@ def setup_agent_env(
     provider_config = get_provider_config(provider, chat_config.providers)
     prompts = chat_config.prompts
     is_api_key, api_key_msg = get_api_key(provider, chat_env_config)
-
-    # Set up LLM environment with only the selected provider's API key
-    selected_meta = PROVIDER_REGISTRY.get(provider)
-    if selected_meta and selected_meta.env_key:
-        api_keys = {selected_meta.name: getattr(chat_env_config, selected_meta.env_key, "")}
-    else:
-        api_keys = {}
-    setup_llm_environment(api_keys)
 
     if provider.lower() != "ollama" and not is_api_key:
         msg = f"API key for provider '{provider}' is not set."

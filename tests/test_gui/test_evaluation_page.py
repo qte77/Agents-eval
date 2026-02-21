@@ -60,7 +60,6 @@ def mock_tier_results():
     tier2 = Tier2Result(
         technical_accuracy=0.88,
         constructiveness=0.85,
-        clarity=0.90,
         planning_rationality=0.87,
         overall_score=0.88,
         model_used="gpt-4",
@@ -319,7 +318,6 @@ class TestEvaluationPageRenderingSnapshots:
                 "tier2": {
                     "technical_accuracy": 0.88,
                     "constructiveness": 0.85,
-                    "clarity": 0.9,
                     "planning_rationality": 0.87,
                     "overall_score": 0.88,
                     "model_used": "gpt-4",

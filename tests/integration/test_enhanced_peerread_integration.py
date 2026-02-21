@@ -8,16 +8,11 @@ readiness validation for the PeerRead dataset integration.
 """
 
 import asyncio
-import sys
 import tempfile
 import time
-from pathlib import Path
 from typing import Any
 
 import pytest
-
-# Ensure src directory is available for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from app.data_models.peerread_models import PeerReadConfig, PeerReadPaper
 from app.data_utils.datasets_peerread import PeerReadDownloader, PeerReadLoader
