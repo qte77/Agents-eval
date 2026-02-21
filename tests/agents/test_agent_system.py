@@ -314,15 +314,6 @@ class TestPydanticAiStreamRemoval:
             "pydantic_ai_stream is dead code (NotImplementedError) and must be removed from run_manager()"
         )
 
-    def test_run_manager_orchestrated_has_no_pydantic_ai_stream_param(self):
-        """run_manager_orchestrated() must not accept pydantic_ai_stream parameter."""
-        from app.agents.orchestration import run_manager_orchestrated
-
-        sig = inspect.signature(run_manager_orchestrated)
-        assert "pydantic_ai_stream" not in sig.parameters, (
-            "pydantic_ai_stream is dead code and must be removed from run_manager_orchestrated()"
-        )
-
     def test_app_run_agent_execution_has_no_pydantic_ai_stream_param(self):
         """_run_agent_execution() in app.py must not accept pydantic_ai_stream parameter."""
         from app.app import _run_agent_execution

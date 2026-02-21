@@ -1,13 +1,11 @@
 """
-Multi-agent system components and orchestration.
+Multi-agent system components.
 
-This module provides agent creation, orchestration, and coordination functionality
+This module provides agent creation and coordination functionality
 for the multi-agent evaluation system. It includes agent factories for creating
-specialized agents, orchestration patterns for managing multi-agent workflows,
-and core agent system functionality.
+specialized agents and core agent system functionality.
 
 Key components:
 - Agent factories: Create specialized agents (researcher, analyst, synthesiser)
-- Orchestration: Multi-agent coordination and delegation patterns
 - Agent system: Core agent management and execution functionality
 """
