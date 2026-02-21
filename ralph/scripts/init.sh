@@ -150,7 +150,7 @@ check_prd_json() {
         # Validate JSON format
         if jq empty ralph/docs/prd.json 2>/dev/null; then
             local total=$(jq '.stories | length' ralph/docs/prd.json)
-            local passing=$(jq '[.stories[] | select(.passes == true)] | length' ralph/docs/prd.json)
+            local passing=$(jq '[.stories[] | select(.status == "passed")] | length' ralph/docs/prd.json)
             log_info "Status: $passing/$total stories completed"
         else
             log_error "prd.json is invalid JSON"

@@ -184,7 +184,8 @@ Ralph uses baseline-aware validation to avoid blocking stories on pre-existing f
 **Ralph skips stories:**
 
 - Check dependencies in `prd.json` - stories with unmet `depends_on` are skipped
-- Verify `passes: false` in prd.json for stories you want executed
+- Verify `status` is `"pending"`, `"failed"`, or `"in_progress"` in prd.json for stories you want executed
+- Stories marked `"in_progress"` from a prior crash are automatically resumed
 
 **TDD verification fails:**
 

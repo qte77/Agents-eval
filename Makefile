@@ -507,6 +507,7 @@ ralph_run_worktree:  ## Create worktree + run Ralph in it (BRANCH=required, MAX_
 	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)" && \
 	cd "../$$(basename $(BRANCH))" && \
 	$(if $(RALPH_TIMEOUT),timeout $(RALPH_TIMEOUT)) \
+		env -u VIRTUAL_ENV \
 		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) \
 		RALPH_TEAMS=$(TEAMS) \
 		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \

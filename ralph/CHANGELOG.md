@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Story Status Enum**: Replaced binary `passes: bool` with `status: str` enum (`"pending"` | `"in_progress"` | `"passed"` | `"failed"`) across prd.json schema, shell scripts, and templates — enables observable story state and distinguishes not-started from running from failed
+- **Wave Field in prd.json**: `wave: int` (1-indexed BFS level) computed by `compute_waves()` in `generate_prd_json.py` — makes dependency execution plan visible in prd.json without runtime computation
+- **Teammate Verification**: `verify_teammate_stories()` in `ralph.sh` — after primary story passes in teams mode, runs TDD commit check + scoped quality checks (ruff, complexity, tests) on each wave-peer story and marks them `"passed"` or `"failed"`
+- **Legacy Schema Guard**: `validate_environment()` detects old `passes` field without `status` and exits with migration instructions
 - **`-X ours` Merge Blind Spot**: Documented in README.md and LEARNINGS.md — files added exclusively by the other branch are auto-merged as clean additions, not conflicts; must `git rm` after merge
 - **Sprint 8 Archive**: `ralph/docs/archive/sprint8/` with completed `prd.json` and `progress.txt`
 - **Scoped Ruff Checks**: `run_ruff_scoped()` in teams mode — only lint story files from prd.json, preventing cross-story lint false positives
@@ -38,6 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`update_story_status()`**: Accepts enum values (`"pending"`, `"in_progress"`, `"passed"`, `"failed"`) instead of `"true"`/`"false"` — sets `.status` field, sets `completed_at` only on `"passed"`
+- **Story Lifecycle**: Main loop marks story `"in_progress"` at start, `"passed"` on success, `"failed"` on max retries (was only `"true"` on success)
+- **`_backfill_existing_stories()`**: Migrates legacy `passes: bool` → `status: str` and adds `wave: 0` for existing prd.json files
+- **prd.json Template**: `"passes": false` → `"status": "pending"`, added `"wave": 1`
+- **init.sh**: `.passes == true` → `.status == "passed"` in prd.json status display
 - **init.sh**: `initialize_progress()` and `check_prd_json()` substitute `{{PROJECT}}` placeholder from `RALPH_PROJECT` env var or git repo name (was hardcoded project name)
 - **LEARNINGS.md**: Condensed from 114 to ~55 lines, added frontmatter, replaced verbose prose with actionable table and checklists
 - **PRD-Sprint8**: Flattened AC sub-items, added sub-feature Files sections, merged compound sub-features, added file-conflict peer deps

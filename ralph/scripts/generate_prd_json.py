@@ -6,9 +6,9 @@ features with sub-features, and story breakdown mappings from any PRD.md.
 Supports incremental updates with content hashing.
 
 CRITICAL SAFETY RULES:
-1. NEVER modify stories marked as passed (passes: true)
+1. NEVER modify stories marked as passed (status: "passed")
 2. Only append new stories that don't already exist
-3. Only update incomplete stories (passes: false) if fields are missing
+3. Only update incomplete stories (status != "passed") if fields are missing
 4. Preserve all existing story metadata (completed_at, content_hash, etc.)
 """
 
@@ -28,7 +28,8 @@ class Story(TypedDict):
     description: str
     acceptance: list[str]
     files: list[str]
-    passes: bool
+    status: str  # "pending" | "in_progress" | "passed" | "failed"
+    wave: int  # 1-indexed BFS level in dependency graph (0 = uncomputed)
     completed_at: str | None
     content_hash: str
     depends_on: list[str]
@@ -520,7 +521,8 @@ def resolve_stories(specs: list[StorySpec], features: dict[str, Feature]) -> lis
                 "description": description,
                 "acceptance": acceptance,
                 "files": files,
-                "passes": False,
+                "status": "pending",
+                "wave": 0,
                 "completed_at": None,
                 "content_hash": compute_hash(spec["title"], description, acceptance),
                 "depends_on": spec["depends_on"],
@@ -531,7 +533,10 @@ def resolve_stories(specs: list[StorySpec], features: dict[str, Feature]) -> lis
 
 
 def _backfill_existing_stories(existing_stories: list[Story]) -> tuple[int, int]:
-    """Backfill missing fields on incomplete existing stories.
+    """Backfill missing fields and migrate legacy schema on existing stories.
+
+    Handles migration from legacy ``passes: bool`` to ``status: str`` enum,
+    and adds ``wave: int`` field when missing.
 
     Args:
         existing_stories: List of existing story dicts (mutated in place).
@@ -542,10 +547,24 @@ def _backfill_existing_stories(existing_stories: list[Story]) -> tuple[int, int]
     passed_count = 0
     updated_count = 0
     for story in existing_stories:
-        if story.get("passes", False):
-            passed_count += 1
-            continue
         modified = False
+
+        # Reason: Migrate legacy `passes: bool` → `status: str`
+        if "passes" in story and "status" not in story:
+            story["status"] = "passed" if story["passes"] else "pending"  # type: ignore[typeddict-item]
+            del story["passes"]  # type: ignore[typeddict-item]
+            modified = True
+
+        if "wave" not in story:
+            story["wave"] = 0
+            modified = True
+
+        if story.get("status") == "passed":
+            passed_count += 1
+            if modified:
+                updated_count += 1
+            continue
+
         if "content_hash" not in story:
             story["content_hash"] = compute_hash(
                 story["title"], story["description"], story["acceptance"]
@@ -554,9 +573,52 @@ def _backfill_existing_stories(existing_stories: list[Story]) -> tuple[int, int]
         if "depends_on" not in story:
             story["depends_on"] = []
             modified = True
+        if "status" not in story:
+            story["status"] = "pending"
+            modified = True
         if modified:
             updated_count += 1
     return passed_count, updated_count
+
+
+def compute_waves(stories: list[Story]) -> None:
+    """Assign BFS wave numbers to stories based on dependency graph.
+
+    Wave 1 = stories with no dependencies (or all deps already passed).
+    Wave N+1 = stories whose deps are all in waves 1..N.
+    Mutates stories in place.
+
+    Args:
+        stories: List of Story dicts (mutated in place to set ``wave``).
+    """
+    story_map = {s["id"]: s for s in stories}
+    placed: set[str] = set()
+    wave_num = 0
+
+    # Reason: Stories already passed are pre-placed (wave 0 = already done)
+    for s in stories:
+        if s["status"] == "passed":
+            placed.add(s["id"])
+            s["wave"] = 0
+
+    remaining: list[Story] = [s for s in stories if s["status"] != "passed"]
+
+    while remaining:
+        wave_num += 1
+        frontier: list[Story] = [
+            s
+            for s in remaining
+            if all(d in placed or d not in story_map for d in s["depends_on"])
+        ]
+        if not frontier:
+            # Circular dependency or unresolvable — assign wave 0
+            for s in remaining:
+                s["wave"] = 0
+            break
+        for s in frontier:
+            s["wave"] = wave_num
+            placed.add(s["id"])
+        remaining = [s for s in remaining if s["id"] not in placed]
 
 
 def _parse_args(argv: list[str]) -> tuple[Path, bool]:
@@ -632,11 +694,21 @@ def main() -> int:
     new_parsed_stories = resolve_stories(specs, features)
     print(f"Resolved {len(new_parsed_stories)} stories")
 
+    compute_waves(new_parsed_stories)
+
     if dry_run:
+        # Reason: Group by wave for visual dependency plan
+        wave_groups: dict[int, list[Story]] = {}
         for story in new_parsed_stories:
-            ac_count = len(story["acceptance"])
-            files_count = len(story["files"])
-            print(f"  {story['id']}: {story['title'][:60]} (AC: {ac_count}, files: {files_count})")
+            wave_groups.setdefault(story["wave"], []).append(story)
+        for wn in sorted(wave_groups):
+            label = f"Wave {wn}" if wn > 0 else "Pre-completed"
+            print(f"  {label}:")
+            for story in wave_groups[wn]:
+                ac_count = len(story["acceptance"])
+                files_count = len(story["files"])
+                sid, stitle = story["id"], story["title"][:60]
+                print(f"    {sid}: {stitle} (AC: {ac_count}, files: {files_count})")
         return 0
 
     # Load existing prd.json (safety: preserve passed stories)
@@ -663,6 +735,8 @@ def main() -> int:
     all_stories: list[Story] = existing_stories + new_stories
     all_stories.sort(key=lambda s: story_sort_key(s["id"]))
 
+    compute_waves(all_stories)
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
         json.dump(
@@ -677,12 +751,26 @@ def main() -> int:
             indent=2,
         )
 
-    completed = sum(1 for s in all_stories if s["passes"])
+    completed = sum(1 for s in all_stories if s.get("status") == "passed")
     print(f"\nGenerated {output_path}")
     print(
         f"Total stories: {len(all_stories)} ({completed} completed, "
         f"{len(all_stories) - completed} pending)"
     )
+
+    # Reason: Show per-wave grouping for visibility into execution plan
+    waves: dict[int, list[str]] = {}
+    for s in all_stories:
+        waves.setdefault(s["wave"], []).append(s["id"])
+    for wave_num in sorted(waves):
+        if wave_num == 0:
+            ids = [sid for sid in waves[0] if any(
+                st["id"] == sid and st.get("status") == "passed" for st in all_stories
+            )]
+            if ids:
+                print(f"  Completed: {', '.join(ids)}")
+        else:
+            print(f"  Wave {wave_num}: {', '.join(waves[wave_num])}")
 
     return 0
 
