@@ -1,0 +1,299 @@
+{
+  "project": "Product Requirements Document - Agents-eval Sprint 9",
+  "description": "\"Sprint 9: 9 features \u2014 dead code deletion, format string sanitization, PDF size guard, API key env cleanup, security hardening, judge accuracy, AgentConfig typing, type safety + quick fixes, test suite quality sweep.\"",
+  "source": "PRD.md",
+  "generated": "2026-02-21 18:57:20",
+  "stories": [
+    {
+      "id": "STORY-001",
+      "title": "Delete orchestration.py dead code module",
+      "description": "`src/app/agents/orchestration.py` (~317 lines) defines `EvaluationOrchestrator`, `PeerReviewOrchestrator`, `DelegationOrchestrator`, and workflow functions \u2014 none of which are imported or used anywhere in the codebase. Stub methods simulate work with `asyncio.sleep()`. The `_validate_model_return` function silently returns a default-constructed model on validation failure, masking errors. Flagged independently by both security and integration reviewers (Review F5). YAGNI per AGENTS.md.",
+      "acceptance": [
+        "AC1: `src/app/agents/orchestration.py` deleted",
+        "AC2: No imports of `orchestration` remain in `src/` or `tests/`",
+        "AC3: `make validate` passes \u2014 no import errors, no test failures",
+        "AC4: Any tests that imported `orchestration.py` are deleted or updated",
+        "Grep for `orchestration` imports across `src/` and `tests/` before deletion",
+        "Delete the module and any orphaned test files",
+        "Verify no runtime references via `make test`"
+      ],
+      "files": [
+        "src/app/agents/orchestration.py",
+        "tests/agents/test_orchestration.py"
+      ],
+      "status": "passed",
+      "wave": 1,
+      "completed_at": "2026-02-21T19:00:00",
+      "content_hash": "ca3ca48dc085ebf2a19f1823a372c28403c29bb3f42d4dc098debf4da3f496bf",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-002",
+      "title": "Sanitize paper_full_content format string",
+      "description": "In `_load_and_format_template()` (`peerread_tools.py:359`), `paper_title` and `paper_abstract` are sanitized via `sanitize_paper_title()` / `sanitize_paper_abstract()`, but `paper_full_content` (raw PDF body, potentially megabytes of adversary-controlled text) is passed to `.format()` without sanitization. Malicious PDF content containing Python `str.format()` placeholders like `{tone}`, `{review_focus}`, or `{0.__class__}` could execute format string injection (Review F3, MAESTRO L1).",
+      "acceptance": [
+        "AC1: `paper_full_content` is sanitized before being passed to `.format()` \u2014 curly braces escaped or `sanitize_for_prompt()` applied",
+        "AC2: Existing review generation produces identical output for benign inputs",
+        "AC3: A test verifies that `{malicious_placeholder}` in paper content is neutralized",
+        "AC4: `make validate` passes with no regressions",
+        "Apply `sanitize_for_prompt()` to `truncated_content` before `.format()`, OR escape `{` \u2192 `{{` and `}` \u2192 `}}` in paper_full_content, OR migrate the entire template to `string.Template.safe_substitute()`",
+        "Add security test covering format string injection via paper content"
+      ],
+      "files": [
+        "src/app/tools/peerread_tools.py",
+        "tests/security/test_prompt_injection.py"
+      ],
+      "status": "pending",
+      "wave": 2,
+      "completed_at": null,
+      "content_hash": "8b67d9855f3a488aab463df2b4f0435d7df011ce0dbb6918601791efe0b02262",
+      "depends_on": [
+        "STORY-001"
+      ]
+    },
+    {
+      "id": "STORY-003",
+      "title": "Add PDF file size guard",
+      "description": "`peerread_tools.py:68-72` calls `MarkItDown().convert(pdf_file)` without checking file size. Content truncation exists after extraction (via `_truncate_paper_content`), but the extraction itself is unbounded. A malicious or corrupt PDF could exhaust memory. This finding has been unresolved since Sprint 5 (Sprint 5 Finding 18, Review F7, MAESTRO L5).",
+      "acceptance": [
+        "AC1: PDF file size is checked before calling `MarkItDown().convert()`",
+        "AC2: Files exceeding the configured maximum (default 50MB) raise `ValueError` with a descriptive message",
+        "AC3: The size limit is configurable (constant or parameter), not hardcoded inline",
+        "AC4: A test verifies that oversized PDFs are rejected before extraction",
+        "AC5: `make validate` passes with no regressions",
+        "Add `pdf_file.stat().st_size` check before `md_converter.convert(pdf_file)`",
+        "Define `MAX_PDF_SIZE_BYTES` constant (default `50 * 1024 * 1024`)",
+        "Raise `ValueError` with file size and limit in the message"
+      ],
+      "files": [
+        "src/app/tools/peerread_tools.py",
+        "tests/tools/test_peerread_tools.py"
+      ],
+      "status": "pending",
+      "wave": 3,
+      "completed_at": null,
+      "content_hash": "4a623a4491fb283690fa0b0b730cdb421a9dc226dcdc3bb27a6b43b42ada1e62",
+      "depends_on": [
+        "STORY-002"
+      ]
+    },
+    {
+      "id": "STORY-004",
+      "title": "Remove API keys from os.environ",
+      "description": "`setup_llm_environment()` in `providers.py:66-80` writes API keys to `os.environ`, exposing them to child processes, crash reporters, and debug dumps. This has been the only HIGH-severity finding deferred across two consecutive review cycles (Sprint 5 Finding 10, Review F1). Most providers already accept keys via constructor in `models.py` \u2014 the `os.environ` path is redundant for all except Google/Gemini which relies on environment variable lookup.",
+      "acceptance": [
+        "AC1: `setup_llm_environment()` no longer writes API keys to `os.environ`",
+        "AC2: All LLM providers (OpenAI, Anthropic, Google, OpenRouter, Cerebras, GitHub, Ollama) still authenticate successfully",
+        "AC3: The `setup_llm_environment()` call in `agent_system.py:675` is removed or replaced with direct constructor injection",
+        "AC4: For Google/Gemini: API key is passed via constructor parameter or set in a scoped context (not left in `os.environ` permanently)",
+        "AC5: No API keys appear in `os.environ` after agent setup (verifiable via test)",
+        "AC6: `make validate` passes with no regressions",
+        "Audit `src/app/llms/models.py` to confirm which providers already accept keys via constructor (most do \u2014 `OpenAIChatModel`, `AnthropicModel`, etc.)",
+        "For Google/Gemini: check if `GoogleModel` accepts an `api_key` constructor parameter. If not, set env var before construction and unset immediately after",
+        "Remove `setup_llm_environment` import and call from `agent_system.py:63,675`",
+        "Delete or deprecate `setup_llm_environment()` in `providers.py`",
+        "Mock provider constructors in tests \u2014 never call real LLM APIs"
+      ],
+      "files": [
+        "src/app/llms/providers.py",
+        "src/app/agents/agent_system.py",
+        "src/app/llms/models.py",
+        "tests/agents/test_agent_system.py",
+        "tests/llms/test_providers.py"
+      ],
+      "status": "pending",
+      "wave": 2,
+      "completed_at": null,
+      "content_hash": "438d1781513690f5fced483cb105170f679c2ad83aefc05f8febc5174c7429dc",
+      "depends_on": [
+        "STORY-001"
+      ]
+    },
+    {
+      "id": "STORY-005",
+      "title": "Security hardening bundle",
+      "description": "Three LOW-effort security findings from the review bundled together: (1) DuckDuckGo search tool bypasses the SSRF allowlist \u2014 needs explicit documentation (Review F4), (2) Phoenix endpoint is configurable via env var but not validated before `requests.head()` probe (Review F14), (3) No idempotency guard on PeerRead tool registration \u2014 calling twice crashes (Review F16).",
+      "acceptance": [
+        "AC1: Code comment in `agent_system.py` at `duckduckgo_search_tool()` usage documents that this tool bypasses `validate_url()` SSRF protection (Review F4)",
+        "AC2: Phoenix endpoint (`JUDGE_PHOENIX_ENDPOINT`) validated at configuration time \u2014 must be `localhost` or explicitly trusted host (Review F14)",
+        "AC3: `add_peerread_tools_to_agent()` is idempotent \u2014 calling twice on the same agent does not crash (Review F16)",
+        "AC4: `make validate` passes with no regressions",
+        "AC5: `TestAgentRoleBasedToolAssignment` tests use `Agent(TestModel())` \u2014 bare `try/except ValueError` pattern removed (tests-review C2)",
+        "F4: Add inline comment at `agent_system.py:402` documenting the SSRF bypass",
+        "F14: Add URL format check in `logfire_instrumentation.py` before `requests.head()` \u2014 validate against allowed prefixes (`http://localhost`, `https://`)",
+        "F16: Check `agent._function_toolset.tools` for existing tool names before registration, or catch `UserError` and skip",
+        "C2: Replace `try/except ValueError` in `TestAgentRoleBasedToolAssignment` (3 tests at lines 26-57) with `Agent(TestModel())` pattern"
+      ],
+      "files": [
+        "src/app/agents/agent_system.py",
+        "src/app/agents/logfire_instrumentation.py",
+        "src/app/tools/peerread_tools.py",
+        "tests/security/test_tool_registration.py"
+      ],
+      "status": "pending",
+      "wave": 4,
+      "completed_at": null,
+      "content_hash": "95eb0c287dcfa34914124652175064470c5763016dc0192ca8053624e8af0296",
+      "depends_on": [
+        "STORY-003",
+        "STORY-004"
+      ]
+    },
+    {
+      "id": "STORY-006",
+      "title": "Judge pipeline accuracy fixes",
+      "description": "Four judge pipeline findings bundled together: (1) `clarity` field in `Tier2Result` always receives the `constructiveness` score, never independently assessed (Review F8), (2) `_extract_planning_decisions` silently returns a stub string on any exception with no logging (Review F18), (3) Recommendation matching uses naive `\"good\" in text` heuristic that misclassifies negations (Review F19), (4) Cosine score can exceed 1.0 due to floating-point precision, causing Pydantic validation errors (tests-review C1).",
+      "acceptance": [
+        "AC1: `Tier2Result.clarity` either has a dedicated `assess_clarity` method or the field is removed from the model (Review F8)",
+        "AC2: `_extract_planning_decisions` logs errors at debug level and narrows exception types to `(AttributeError, KeyError, TypeError)` (Review F18)",
+        "AC3: Recommendation matching uses the structured `GeneratedReview.recommendation` integer score instead of text sentiment, or is explicitly documented as an approximation (Review F19)",
+        "AC4: `make validate` passes with no regressions",
+        "AC5: Cosine score clamped to `min(1.0, score)` before `Tier1Result` construction \u2014 un-skip `test_tier1_result_scores_always_valid` property test (tests-review C1)",
+        "F8: Design decision needed \u2014 either implement `assess_clarity` mirroring `assess_constructiveness`, or remove `clarity` from `Tier2Result` and all callers. Removing is lower effort and more honest.",
+        "F18: Add `logger.debug(f\"_extract_planning_decisions failed: {e}\", exc_info=True)` and narrow `except Exception` to `except (AttributeError, KeyError, TypeError)`",
+        "F19: Replace `\"good\" in agent_review.lower()` with `review_result.recommendation` score comparison if `ReviewGenerationResult` is available in the call context",
+        "C1: Clamp `cosine_score = min(1.0, cosine_score)` in `traditional_metrics.py`. Un-skip `@pytest.mark.skip` property test at `test_traditional_metrics.py:706`"
+      ],
+      "files": [
+        "src/app/judge/llm_evaluation_managers.py",
+        "src/app/data_models/evaluation_models.py",
+        "src/app/judge/traditional_metrics.py",
+        "tests/judge/test_llm_evaluation_managers.py",
+        "tests/judge/test_traditional_metrics.py"
+      ],
+      "status": "pending",
+      "wave": 2,
+      "completed_at": null,
+      "content_hash": "5a03da60c33033ff9f114b916c582e264c0889adad6147be080da08a63d30846",
+      "depends_on": [
+        "STORY-001"
+      ]
+    },
+    {
+      "id": "STORY-007",
+      "title": "Add type annotation to AgentConfig.tools field",
+      "description": "`app_models.py:105-106` has a FIXME noting that `tools: list[Any]` should be `list[Callable[..., Awaitable[Any]]]`. The `Any` type bypasses static analysis and allows invalid tool registrations to pass silently. The correct type is known but was deferred due to Pydantic schema generation issues with callable types.",
+      "acceptance": [
+        "AC1: `tools` field uses `list[Callable[..., Awaitable[Any]]]` (or narrower type if feasible)",
+        "AC2: FIXME comment on line 105 removed",
+        "AC3: Pydantic schema generation still works (no `PydanticSchemaGenerationError`)",
+        "AC4: All existing agent creation paths pass type checking with the new annotation",
+        "AC5: `make validate` passes with no regressions",
+        "May require adding `Callable` to `arbitrary_types_allowed` or using a Pydantic `TypeAdapter`/custom validator",
+        "Verify all call sites that populate `tools` pass the correct callable types",
+        "If `Callable[..., Awaitable[Any]]` causes schema generation errors, use `Annotated` with a custom `BeforeValidator` or `SkipValidation`"
+      ],
+      "files": [
+        "src/app/data_models/app_models.py",
+        "tests/data_models/test_app_models.py"
+      ],
+      "status": "passed",
+      "wave": 1,
+      "completed_at": "2026-02-21T19:00:00",
+      "content_hash": "cf2d54c19da9166d0a5af570983d01330992438fcb26f9a95128f08e48038d4d",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-008",
+      "title": "Type safety + quick fixes",
+      "description": "Seven LOW-effort fixes bundled together: two FIXABLE type suppressions from the type audit plus five one-liner fixes from the review. (1) `sweep_runner.py:104` type suppression via TypedDict return (Review F11), (2) `cc_engine.py:78` type suppression via cast (Review type audit), (3) `load_config()` returns `BaseModel` instead of generic `T` (Review F12), (4) `model_info` hardcoded as `\"GPT-4o via PydanticAI\"` (Review F15), (5) Artificial `time.sleep(0.001)` inflates timing data (Review F21), (6) `ZeroDivisionError` on empty `metric_deltas` (Review F22), (7) Missing `.get()` default for `repetitions` (Review F24).",
+      "acceptance": [
+        "AC1: `sweep_runner.py:104` \u2014 `# type: ignore[return-value]` removed by typing `_prepare_result_dict` return as `TypedDict` with `composite_result: CompositeResult | None` (Review F11)",
+        "AC2: `cc_engine.py:78` \u2014 `# type: ignore[no-any-return]` removed by adding `cast(dict[str, Any] | None, ...)` around `json.loads()` (Review type audit)",
+        "AC3: `load_config()` is generic \u2014 returns `T` where `T: BaseModel`, eliminating cast and `# type: ignore` at `app.py:90` (Review F12)",
+        "AC4: `model_info` in `ReviewGenerationResult` derived from actual model name, not hardcoded string (Review F15)",
+        "AC5: `time.sleep(0.001)` removed from `evaluate_single_traditional` (Review F21)",
+        "AC6: `baseline_comparison.compare()` handles empty `metric_deltas` without `ZeroDivisionError` (Review F22)",
+        "AC7: `run_sweep.py` uses `config_data.get(\"repetitions\", 3)` or validates via `SweepConfig.model_validate()` (Review F24)",
+        "AC8: `make validate` passes \u2014 pyright clean on all changed files with no new suppressions",
+        "F11: Type `_prepare_result_dict` return as a `TypedDict` with `composite_result: CompositeResult | None` (preferred), or add explicit `cast()` at `sweep_runner.py:104`",
+        "Type audit: Add `cast(dict[str, Any] | None, json.loads(stripped))` at `cc_engine.py:78`, or assign to a typed variable",
+        "F12: Change `def load_config(config_path, data_model: type[BaseModel]) -> BaseModel` to `def load_config[T: BaseModel](config_path, data_model: type[T]) -> T` in `load_configs.py:29`",
+        "F15: Pass actual model name through tool context or agent attribute to `ReviewGenerationResult` construction at `peerread_tools.py:507`",
+        "F21: Remove `time.sleep(0.001)` at `traditional_metrics.py:488-490` \u2014 `measure_execution_time` already clamps minimum",
+        "F22: Add `if not metric_deltas: return BaselineComparisonSummary(...)` guard at `baseline_comparison.py:87`",
+        "F24: Replace `config_data[\"repetitions\"]` with `config_data.get(\"repetitions\", 3)` at `run_sweep.py:118`"
+      ],
+      "files": [
+        "src/app/benchmark/sweep_runner.py",
+        "src/app/engines/cc_engine.py",
+        "src/app/app.py",
+        "src/app/utils/load_configs.py",
+        "src/app/tools/peerread_tools.py",
+        "src/app/judge/traditional_metrics.py",
+        "src/app/judge/baseline_comparison.py",
+        "src/run_sweep.py",
+        "tests/judge/test_traditional_metrics.py",
+        "tests/judge/test_baseline_comparison.py"
+      ],
+      "status": "pending",
+      "wave": 3,
+      "completed_at": null,
+      "content_hash": "b3d33f54b2429853c1a6bfe69119f7787ebaafdb18e6f4f114504cfa758ce2d6",
+      "depends_on": [
+        "STORY-001",
+        "STORY-006"
+      ]
+    },
+    {
+      "id": "STORY-009",
+      "title": "Test suite quality sweep",
+      "description": "Bundled HIGH-priority test quality findings from the tests parallel review (`docs/reviews/tests-parallel-review-2026-02-21.md`). Addresses unspec'd mocks, missing asyncio markers, incorrect thread-safety test, duplicate test files, dead test code, and `sys.path.insert` hacks across the test suite.",
+      "acceptance": [
+        "AC1: All `MagicMock()`/`Mock()` in `tests/` use `spec=ClassName` \u2014 covers `tests/agents/test_rate_limit_handling.py`, `tests/agents/test_trace_collection_integration.py`, `tests/judge/test_evaluation_runner.py`, `tests/judge/test_llm_evaluation_managers.py`, `tests/judge/test_graph_analysis.py`, `tests/evals/test_evaluation_pipeline.py`, `tests/app/test_cli_baseline.py`, `tests/app/test_app.py`, `tests/app/test_cli_token_limit.py`, `tests/gui/test_story013_ux_fixes.py`, `tests/gui/test_story007_gui_polish.py`, `tests/benchmark/test_sweep_runner.py`, `tests/agents/test_logfire_instrumentation.py`, `tests/judge/test_trace_skip_warning.py`, `tests/evals/test_metric_comparison_logging.py` (tests-review H1-H3, H13, M11)",
+        "AC2: Async tests in `test_judge_agent.py` have `@pytest.mark.asyncio` + mock LLM calls (tests-review H10)",
+        "AC3: Thread-safety test in `test_trace_store.py` uses `threading.Lock` around counter increments + final assertions on counter values (tests-review H9)",
+        "AC4: Shared async fixture extracted in `test_metric_comparison_logging.py` \u2014 four tests share setup, each contains only its unique assertion (tests-review H11)",
+        "AC5: `test_agent_factories_coverage.py` merged into `test_agent_factories.py`, coverage file deleted (tests-review H12)",
+        "AC6: Empty `TestCompositeScorer` class deleted from `test_composite_scorer.py` (tests-review M9)",
+        "AC7: `sys.path.insert` removed from `tests/integration/test_peerread_integration.py`, `tests/integration/test_enhanced_peerread_integration.py`, `tests/integration/test_peerread_real_dataset_validation.py`, `tests/benchmarks/test_performance_baselines.py` (tests-review M13)",
+        "AC8: Stub test with `pass` body deleted from `test_peerread_tools.py:312` (tests-review H7)",
+        "AC9: `test_datasets_peerread_coverage.py` merged into `test_datasets_peerread.py`, coverage file deleted (tests-review L6)",
+        "AC10: `make validate` passes",
+        "AC1: Grep for `MagicMock()` and `Mock()` without `spec=` across all listed files. Add `spec=ClassName` for each mock target (e.g., `spec=Agent`, `spec=TraceCollector`, `spec=AgentRunResult`, `spec=EvaluationPipeline`, `spec=requests.models.Response`). Use `spec_set=` where stricter enforcement is appropriate.",
+        "AC2: Add `@pytest.mark.asyncio` to all `async def test_*` methods in `test_judge_agent.py`. Add proper mocking for `JudgeAgent.evaluate_comprehensive` to prevent real LLM calls.",
+        "AC3: Add `threading.Lock` in `test_trace_store.py` around `write_count[0] += 1` increments. Add `assert write_count[0] == expected_writes` at end of test.",
+        "AC4: Extract `@pytest_asyncio.fixture` in `test_metric_comparison_logging.py` with shared mock setup (~40 lines). Each test function receives the fixture and asserts only its unique condition.",
+        "AC5: Move unique tests from `test_agent_factories_coverage.py` into `test_agent_factories.py`. Delete `tests/agents/test_agent_factories_coverage.py`.",
+        "AC6: Delete the empty `class TestCompositeScorer:` at `test_composite_scorer.py:75-76`.",
+        "AC7: Remove `sys.path.insert(0, ...)` from all 4 files. Root `conftest.py` already handles path setup.",
+        "AC8: Delete the stub `test_generate_review_template_with_truncation` at `test_peerread_tools.py:312-316`.",
+        "AC9: Move unique tests from `test_datasets_peerread_coverage.py` into `test_datasets_peerread.py`. Delete `tests/data_utils/test_datasets_peerread_coverage.py`."
+      ],
+      "files": [
+        "tests/agents/test_rate_limit_handling.py",
+        "tests/agents/test_trace_collection_integration.py",
+        "tests/agents/test_logfire_instrumentation.py",
+        "tests/agents/test_peerread_tools.py",
+        "tests/agents/test_agent_factories.py",
+        "tests/agents/test_agent_factories_coverage.py",
+        "tests/judge/test_evaluation_runner.py",
+        "tests/judge/test_llm_evaluation_managers.py",
+        "tests/judge/test_graph_analysis.py",
+        "tests/judge/test_judge_agent.py",
+        "tests/judge/test_trace_store.py",
+        "tests/judge/test_trace_skip_warning.py",
+        "tests/evals/test_evaluation_pipeline.py",
+        "tests/evals/test_metric_comparison_logging.py",
+        "tests/evals/test_composite_scorer.py",
+        "tests/app/test_cli_baseline.py",
+        "tests/app/test_app.py",
+        "tests/app/test_cli_token_limit.py",
+        "tests/gui/test_story013_ux_fixes.py",
+        "tests/gui/test_story007_gui_polish.py",
+        "tests/benchmark/test_sweep_runner.py",
+        "tests/integration/test_peerread_integration.py",
+        "tests/integration/test_enhanced_peerread_integration.py",
+        "tests/integration/test_peerread_real_dataset_validation.py",
+        "tests/benchmarks/test_performance_baselines.py",
+        "tests/data_utils/test_datasets_peerread.py",
+        "tests/data_utils/test_datasets_peerread_coverage.py"
+      ],
+      "status": "passed",
+      "wave": 1,
+      "completed_at": "2026-02-21T19:00:00",
+      "content_hash": "7e5b3e2a2bffb987c3b82637367aaaa7b8f41be970e040a9d750ef0376ed9123",
+      "depends_on": []
+    }
+  ]
+}

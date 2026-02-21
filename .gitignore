@@ -58,9 +58,6 @@ results/
 test_data/
 wandb/
 
-# Ralph state
-ralph/state/
-
 # npm
 node_modules/
 package-lock.json

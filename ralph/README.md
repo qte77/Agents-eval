@@ -14,11 +14,13 @@ iteratively improving until completion.
 
 ```text
 while stories remain:
-  1. Read prd.json, pick next story (passes: false)
-  2. Implement story (TDD: red → green → refactor)
+  1. Read prd.json, pick next story (status: "pending"/"failed")
+  2. Mark story "in_progress", implement (TDD: red → green → refactor)
   3. Run typecheck + tests
-  4. If passing: commit, mark done, log learnings
-  5. Repeat until all pass (or context limit)
+  4. If passing: mark "passed", commit, log learnings
+  5. On max retries: mark "failed"
+  6. In teams mode: verify teammate stories in same wave
+  7. Repeat until all pass (or context limit)
 ```
 
 **Memory persists only through:**
@@ -246,8 +248,8 @@ ralph/
 ├── README.md                  # This file
 ├── docs/
 │   ├── LEARNINGS.md           # Patterns and lessons
-│   ├── prd.json               # Story tracking (gitignored)
-│   ├── progress.txt           # Execution log (gitignored)
+│   ├── prd.json               # Story tracking (committed)
+│   ├── progress.txt           # Execution log (committed)
 │   ├── TEMPLATE_USAGE.md      # Setup guide
 │   └── templates/             # Project templates
 │       ├── prd.json.template
