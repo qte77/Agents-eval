@@ -69,7 +69,9 @@ def sanitize_paper_content(content: str, max_length: int = 50000) -> str:
 
     Args:
         content: Paper body content from PDF extraction.
-        max_length: Maximum content length before truncation (default: 50000).
+        max_length: Maximum length of the escaped content before truncation
+            (default: 50000). Applied after brace escaping, so the original
+            content may be shorter than max_length when braces are present.
 
     Returns:
         str: Content with braces escaped, wrapped in <paper_content> delimiters.
