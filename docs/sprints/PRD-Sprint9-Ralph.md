@@ -347,7 +347,7 @@ Sprint 8 features (8 features, 14 stories) have been fully implemented: tool bug
 
 ## Out of Scope
 
-**Deferred to Sprint 10 (see [PRD-Sprint10.md](PRD-Sprint10.md)):**
+**Deferred to Sprint 10 (see [PRD-Sprint10-Ralph.md](PRD-Sprint10-Ralph.md)):**
 
 - Feature 1: Wire CC Engine to GUI Execution Path
 - Feature 2: PydanticAI API Migration
@@ -409,6 +409,10 @@ Sprint 8 features (8 features, 14 stories) have been fully implemented: tool bug
 - **P3 (quick wins)**: STORY-007
 - **P4 (test quality)**: STORY-009
 
+### Notes for CC Agent Teams
+
+- **Team Structure**: Lead + 3 teammates max
+
 #### File-Conflict Dependencies
 
 | Stories sharing files | Shared file | Resolution |
@@ -417,10 +421,6 @@ Sprint 8 features (8 features, 14 stories) have been fully implemented: tool bug
 | STORY-001, STORY-004, STORY-005 | `agent_system.py` | STORY-001→004→005 |
 | STORY-006, STORY-008 | `traditional_metrics.py` | STORY-006→008 |
 | STORY-006, STORY-009 | `test_llm_evaluation_managers.py` | STORY-006→009 |
-
-### Notes for CC Agent Teams
-
-- **Team Structure**: Lead + 3 teammates max
 
 #### Orchestration Waves
 

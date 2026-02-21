@@ -232,16 +232,16 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 - **P3 (refactoring)**: STORY-013 (data layer), STORY-014 (dispatch chain)
 - **P4 (test quality)**: STORY-015 (source inspection)
 
+### Notes for CC Agent Teams
+
+- **Team Structure**: Lead + 2 teammates max
+
 #### File-Conflict Dependencies
 
 | Stories sharing files | Shared file | Resolution |
 |---|---|---|
 | STORY-010, STORY-011 | `agent_system.py` | STORY-010→STORY-011 (sequential) |
 | STORY-013, STORY-014 | `datasets_peerread.py` | STORY-013→STORY-014 (sequential) |
-
-### Notes for CC Agent Teams
-
-- **Team Structure**: Lead + 2 teammates max
 
 #### Orchestration Waves
 
