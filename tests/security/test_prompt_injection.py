@@ -345,7 +345,10 @@ class TestPaperContentFormatStringInjection:
                 )
 
         # The malicious placeholders must NOT be substituted
-        assert "professional" not in result.split("Content: ")[1].split(" Tone:")[0] or "{tone}" not in result.split("Content: ")[1]
+        assert (
+            "professional" not in result.split("Content: ")[1].split(" Tone:")[0]
+            or "{tone}" not in result.split("Content: ")[1]
+        )
         # Tone and focus should appear in their proper template positions
         assert "Tone: professional" in result
         assert "Focus: comprehensive" in result
