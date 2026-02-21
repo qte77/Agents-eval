@@ -82,7 +82,7 @@ Restricts lead to coordination-only (spawn, assign, synthesize). Blocks direct i
 
 **Single CC Session**: Sequential workflows, prompt engineering, pipeline debugging, single-file changes, test writing. Full context retention, lower cost.
 
-**Agent Teams**: 3+ independent files, multiple review perspectives, competing approaches, large refactoring. See [parallel review test](../reviews/evaluation-pipeline-parallel-review-2026-02-11.md).
+**Agent Teams**: 3+ independent files, multiple review perspectives, competing approaches, large refactoring. See Test Results section below.
 
 ## Benchmarking PydanticAI MAS vs CC-Style Baselines
 
@@ -329,7 +329,7 @@ Each task is tracked in its own JSON file:
 - **Execution**: ~26 seconds for 3 complete reviews (quality 23:57:29, coverage +6s, security +20s)
 - **Dependencies**: Tasks 1-3 ran in parallel; task 4 (aggregation) waited for all 3
 - **Output**: Full review content preserved in mailboxes (19k+ chars each)
-- **Report**: [evaluation-pipeline-parallel-review-2026-02-11.md](../reviews/evaluation-pipeline-parallel-review-2026-02-11.md)
+- **Report**: evaluation-pipeline-parallel-review-2026-02-11.md (removed — stale review document)
 
 ### Phoenix/Logfire Correlation
 

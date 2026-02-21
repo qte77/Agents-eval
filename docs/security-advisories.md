@@ -16,7 +16,7 @@ Information disclosure via Server-Side Request Forgery (SSRF) through malicious 
 
 **Impact**:
 
-- Agents could be tricked into accessing internal AWS metadata (http://169.254.169.254/latest/meta-data/)
+- Agents could be tricked into accessing internal AWS metadata (<http://169.254.169.254/latest/meta-data/>)
 - External service enumeration and port scanning
 - Bypass of network access controls
 - Information disclosure from internal services
@@ -89,6 +89,14 @@ This project pins `scikit-learn>=1.8.0` in `pyproject.toml`, which includes the 
 
 ## Related Frameworks
 
-- [MITRE ATLAS](https://atlas.mitre.org/) — Adversarial threat landscape for AI/ML systems
-- [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/) — LLM-specific vulnerability categories
-- [OWASP MAESTRO](https://owasp.org/www-project-multi-agent-security-testing-and-review-operations/) — Multi-agent security testing (used in Sprint 5 review)
+### Threat Modeling & Attack Taxonomy
+
+- [MITRE ATLAS](https://atlas.mitre.org/) — Adversarial tactics and techniques for AI/ML systems. Catalog of real-world attack case studies on ML pipelines.
+- [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/) — LLM-specific vulnerability categories (prompt injection, data poisoning, supply chain).
+- [OWASP MAESTRO](https://genai.owasp.org/resource/multi-agentic-system-threat-modeling-guide-v1-0/) — 7-layer threat model for multi-agent systems. Used in Sprint 5 security review.
+
+### AI Risk & Governance
+
+- [NIST AI RMF 1.0](https://www.nist.gov/artificial-intelligence/executive-order-safe-secure-and-trustworthy-artificial-intelligence) — AI Risk Management Framework. Four functions: Govern, Map, Measure, Manage for trustworthy AI lifecycle.
+- [ISO 23894:2023](https://www.iso.org/standard/77304.html) — AI risk management guidance extending ISO 31000. Covers risk identification and treatment specific to AI system characteristics.
+- [ISO 42001:2023](https://www.iso.org/standard/81230.html) — AI Management System (AIMS) standard. Certifiable requirements for establishing, implementing, and improving AI governance within organizations.

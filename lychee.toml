@@ -5,10 +5,17 @@
 # 403 = Forbidden (openai.com, medium.com, dl.acm.org, iso.org, etc.)
 # 401 = Unauthorized (huggingface.co/spaces, semanticscholar.org/me)
 # 429 = Too Many Requests (rate limiting)
-accept = [200, 204, 301, 403, 401, 429]
+# 400 = Bad Request (wandb.ai, operator.chatgpt.com — bot-blocking)
+# 415 = Unsupported Media Type (ecanarys.com, secondtalent.com — bot-blocking)
+# 500 = Internal Server Error (neurips.cc — intermittent)
+accept = [200, 204, 301, 400, 401, 403, 415, 429, 500]
 
-# Exclude archived sprint docs from scanning (historical, not maintained)
-exclude_path = ["docs/sprints/archive"]
+# Exclude paths from scanning
+exclude_path = [
+  "docs/sprints/archive",  # archived sprint docs (historical, not maintained)
+  ".venv",                  # virtual environment (vendor packages, not our code)
+  ".github/workflows",      # workflow files contain template variables (e.g. ${{ }})
+]
 
 # Exclude URLs that are expected to fail in CI
 exclude = [
@@ -23,4 +30,9 @@ exclude = [
   "^https?://docs\\.graphiti\\.ai",
   "^https?://coral-protocol\\.dev",
   "^https?://docs\\.browse\\.ai",
+  # Paywalled academic articles (valid DOI, bot-rejected)
+  "^https://link\\.springer\\.com/article/10\\.1007/s10458-013-9235-1",
+  # Allen AI domains (persistent timeouts in CI)
+  "^https?://allenai\\.org",
+  "^https?://.*\\.allen\\.ai",
 ]

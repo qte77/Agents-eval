@@ -25,6 +25,23 @@ METRIC_LABELS: dict[str, str] = {
 }
 
 
+def _safe_resolve_dir(user_path: str) -> Path | None:
+    """Resolve and validate a user-provided directory path.
+
+    Args:
+        user_path: Raw path string from user input.
+
+    Returns:
+        Resolved Path if valid directory, None otherwise.
+    """
+    if "\x00" in user_path:
+        return None
+    resolved = Path(user_path).resolve()
+    if not resolved.is_dir():
+        return None
+    return resolved
+
+
 def format_metric_label(metric_key: str) -> str:
     """Return a human-readable label for a metric key.
 
@@ -268,6 +285,19 @@ def render_baseline_comparison(comparisons: list[BaselineComparison] | None) -> 
         _render_single_comparison(comp)
 
 
+def _validate_dir_input(label: str, key: str, default: str = "") -> None:
+    """Render a directory path input with validation feedback.
+
+    Args:
+        label: Display label for the text input.
+        key: Streamlit session state key.
+        default: Default value for the input field.
+    """
+    user_dir = st.text_input(label, key=key, value=default, help=f"Path to {label}")
+    if user_dir and _safe_resolve_dir(user_dir) is None:
+        st.error(f"Directory not found: {user_dir}")
+
+
 def _render_empty_state() -> None:
     """Render empty state with baseline configuration inputs.
 
@@ -285,22 +315,8 @@ def _render_empty_state() -> None:
         # S8-F8.2: auto-populate from known CC artifact location if it exists
         default_traces_dir = "logs/Agent_evals/traces/"
         default_value = default_traces_dir if Path(default_traces_dir).is_dir() else ""
-        cc_solo_dir = st.text_input(
-            "Claude Code Solo Directory",
-            key="cc_solo_dir_input",
-            value=default_value,
-            help="Path to Claude Code solo session export directory",
-        )
-        if cc_solo_dir and not Path(cc_solo_dir).is_dir():
-            st.error(f"Directory not found: {cc_solo_dir}")
-
-        cc_teams_dir = st.text_input(
-            "Claude Code Teams Directory",
-            key="cc_teams_dir_input",
-            help="Path to Claude Code Agent Teams artifacts directory",
-        )
-        if cc_teams_dir and not Path(cc_teams_dir).is_dir():
-            st.error(f"Directory not found: {cc_teams_dir}")
+        _validate_dir_input("Claude Code Solo Directory", "cc_solo_dir_input", default_value)
+        _validate_dir_input("Claude Code Teams Directory", "cc_teams_dir_input")
 
 
 def _render_evaluation_details(result: CompositeResult) -> None:

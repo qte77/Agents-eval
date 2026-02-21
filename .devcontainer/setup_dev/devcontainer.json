@@ -29,7 +29,8 @@
         "ms-python.debugpy",
         "ms-python.python",
         "ms-python.vscode-pylance",
-        "ms-vscode.makefile-tools"
+        "ms-vscode.makefile-tools",
+        "wakatime.vscode-wakatime"
       ],
       "settings": {
         "editor.lineNumbers": "on",

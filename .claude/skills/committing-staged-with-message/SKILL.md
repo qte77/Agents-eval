@@ -26,9 +26,9 @@ Use the Read tool to check `.gitmessage` for commit message format and syntax.
 
 **The commit message body MUST include (concisely — no padding, no redundancy):**
 
-1. **Diff stats**: lines added/removed (from `--stat` summary line)
-2. **What changed**: bullet points per file or logical group
-3. **Symbols added/removed** (when applicable): functions, classes, tests
+1. **What changed**: bullet points per file or logical group
+2. **Symbols added/removed** (when applicable): functions, classes, tests
+3. **Diff stats**: lines added/removed (from `--stat` summary line) — MUST be the last line of the body
    - Format: `+ symbol_name`, `- symbol_name`
    - Omit for config/docs/formatting-only changes
 
@@ -46,5 +46,5 @@ Keep the message laser-focused. Do not repeat the subject line in the body.
 
 Once approved:
 
-- `git commit -m "[message]"` - Commit staged changes with approved message
+- `git commit --gpg-sign -m "[message]"` - Commit staged changes with approved message (GPG signature mandatory)
 - `git status` - Verify success

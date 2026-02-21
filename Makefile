@@ -13,14 +13,14 @@
 	ollama_start ollama_stop \
 	plantuml_serve plantuml_render \
 	pandoc_run writeup writeup_generate \
-	lint_md \
+	lint_links lint_md \
 	app_cli app_gui app_sweep app_profile \
 	cc_run_solo cc_collect_teams cc_run_teams \
-	lint_src lint_tests complexity duplication \
+	lint_src lint_tests complexity duplication lint_hardcoded_paths \
 	test test_rerun test_coverage type_check validate quick_validate \
 	setup_phoenix phoenix_start phoenix_stop phoenix_status \
 	ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run \
-	ralph_worktree ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean \
+	ralph_worktree ralph_run_worktree ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean \
 	clean_results clean_logs \
 	help
 .DEFAULT_GOAL := help
@@ -149,11 +149,12 @@ setup_pdf_converter:  ## Setup PDF converter tools. Usage: make setup_pdf_conver
 	fi
 
 # TODO: evaluate Python-native alternatives (pymarkdownlnt, mdformat, pylint R0801) to reduce npm dependency
-setup_npm_tools:  ## Setup npm-based dev tools (markdownlint, jscpd). Requires node.js and npm
+setup_npm_tools:  ## Setup npm-based dev tools (markdownlint, jscpd, lychee). Requires node.js and npm
 	echo "Setting up npm dev tools ..."
-	npm install -gs markdownlint-cli jscpd
+	npm install -gs markdownlint-cli jscpd lychee
 	echo "markdownlint version: $$(markdownlint --version)"
 	echo "jscpd version: $$(jscpd --version)"
+	echo "lychee version: $$(lychee --version)"
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin
 setup_ollama:  ## Download Ollama, script does start local Ollama server
@@ -281,6 +282,13 @@ writeup_generate:  ## Generate writeup markdown via CC teams. Usage: make writeu
 # MARK: markdown
 
 
+lint_links:  ## Check for broken links with lychee. Usage: make lint_links [INPUT_FILES="docs/**/*.md"]
+	if command -v lychee > /dev/null 2>&1; then
+		lychee $(or $(INPUT_FILES),.)
+	else
+		echo "lychee not installed — skipping link check (run 'make setup_npm_tools' to enable)"
+	fi
+
 lint_md:  ## Lint markdown files. Usage: make lint_md INPUT_FILES="docs/**/*.md"
 	if [ -z "$(INPUT_FILES)" ]; then
 		echo "Error: No input files specified. Use INPUT_FILES=\"docs/**/*.md\""
@@ -386,6 +394,12 @@ duplication:  ## Detect copy-paste duplication with jscpd
 		echo "jscpd not installed — skipping duplication check (run 'make setup_npm_tools' to enable)"
 	fi
 
+lint_hardcoded_paths:  ## Check for hardcoded /workspaces/ paths in tests
+	if grep -rn --include='*.py' '/workspaces/' tests/; then
+		echo "ERROR: Hardcoded /workspaces/ paths found in tests (breaks GHA). Use relative paths or inspect.getfile()."
+		exit 1
+	fi
+
 test:  ## Run all tests
 	uv run pytest
 
@@ -416,6 +430,7 @@ quick_validate:  ## Fast development cycle validation
 	$(MAKE) -s type_check
 	$(MAKE) -s complexity
 	$(MAKE) -s duplication
+	$(MAKE) -s lint_hardcoded_paths
 	echo "Quick validation completed (check output for any failures)"
 
 
@@ -479,14 +494,18 @@ ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_
 		bash ralph/scripts/ralph.sh \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph loop timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
 
-ralph_worktree:  ## Run Ralph in a git worktree (BRANCH=required, TEAMS=true|false, MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds)
-	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_worktree BRANCH=ralph/sprint8-name))
-	echo "Starting Ralph in worktree for branch '$(BRANCH)' ..."
+ralph_worktree:  ## Create a git worktree for Ralph and cd into it (BRANCH=required)
+	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_worktree BRANCH=ralph/sprint-name))
+	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)"
+
+ralph_run_worktree:  ## Create worktree + run Ralph in it (BRANCH=required, MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false)
+	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_run_worktree BRANCH=ralph/sprint-name))
+	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)"
 	$(if $(RALPH_TIMEOUT),timeout $(RALPH_TIMEOUT)) \
 		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) \
 		RALPH_TEAMS=$(TEAMS) \
 		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \
-		bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)" \
+		bash -c 'cd "../$$(basename $(BRANCH))" && bash ralph/scripts/ralph.sh' \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph worktree timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
 
 ralph_stop:  ## Stop all running Ralph loops (keeps state and data)

@@ -11,6 +11,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `make lint_links` recipe and lychee link checker npm dependency for dead-link detection in docs
+- Agent type indicator (red prefix) in Claude Code status line script (`.claude/scripts/statusline.sh`)
+- WakaTime extension to devcontainer VS Code configurations
+- `lychee.toml` link checker config accepting bot-blocked status codes (403/401/429), excluding archived sprints and unreachable domains
+- AGENT_LEARNINGS.md: "Stale Test Fixtures Cause Cross-File Pollution" pattern
+
+### Changed
+
+- Docs: `security-advisories.md` Related Frameworks section restructured into Threat Modeling and AI Risk & Governance subsections; added NIST AI RMF 1.0, ISO 23894, ISO 42001
+- Docs: Sprint 9 PRD expanded to 13 features incorporating review findings
+- Commit skill updated for stats ordering and GPG signing
+- pytest CI workflow: replaced pip+Python 3.12 with uv+Python 3.13, added project deps install and `pull_request` trigger
+- `.claude/scripts/statusline.sh`: consolidated 12 separate `jq` invocations into single tab-delimited call; fixed threshold comments (`<` → `≤` to match `<=` operators); added POSIX trailing newline
+
+### Removed
+
+- 5 stale review documents from `docs/reviews/` (evaluation-pipeline-parallel-review, gui-comprehensive-audit, sprint5-code-review, sprint5-test-audit, test-audit)
+- `.cline/config.json` and `.gemini/config.json` — unused agent configs (project standardized on Claude Code)
+- 72 stale files leaked from old `main` during squash merge: `.claude/agents/` (9), `opik/` (3), `docs/sprints/` (15), `src/app/evals/` (8), `scripts/citation-styles/` (4), `assets/images/` (4), `tests/` (8), `src/examples/` (2), `docker-compose.opik.yaml`
+
+### Fixed
+
+- `test_no_agentops_commented_code_in_login` hardcoded `/workspaces/` path broke pytest in GHA; replaced with `inspect.getfile()` for portability
+- Sprint 9 Out of Scope stale link: `PRD-Sprint10.md` → `PRD-Sprint10-Ralph.md` after file rename
+- 24 broken URLs across landscape docs, further_reading, security-advisories (paper-qa repo, OWASP MAESTRO, StableToolBench org, OpenAI Operator, MatterGen publication)
+- `lychee.toml`: accept 400/415/500 status codes, exclude `.venv` and `.github/workflows`, add `allenai.org` and Springer DOI to excludes
+- Broken local file links: `architecture.md` landscape refs, `agent_eval_metrics.md` further_reading ref, `landscape.md` trace_processors path, `roadmap.md` sprint archive paths, `src/examples/README.md` relative paths
+- Claude Code sandbox phantom files added to `.gitignore`
+- Content diffs from stale merge fixed in `.gitignore`, `Makefile`, `pyproject.toml`, `agent_system.py`, `peerread_models.py`, `datasets_peerread.py`, `review_persistence.py`
+
 ## [4.0.0] - 2026-02-19
 
 ### Added
