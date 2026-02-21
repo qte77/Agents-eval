@@ -109,7 +109,6 @@ def sample_tier2_result():
     return Tier2Result(
         technical_accuracy=0.82,
         constructiveness=0.78,
-        clarity=0.85,
         planning_rationality=0.80,
         overall_score=0.81,
         model_used="gpt-4o-mini",

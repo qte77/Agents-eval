@@ -65,7 +65,6 @@ class MockTier2Plugin(EvaluatorPlugin):
         return Tier2Result(
             technical_accuracy=0.85,
             constructiveness=0.80,
-            clarity=0.90,
             planning_rationality=0.75,
             overall_score=0.82,
             model_used="mock-model",

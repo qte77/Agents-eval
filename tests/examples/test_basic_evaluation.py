@@ -29,7 +29,6 @@ class TestBasicEvaluationRuns:
         mock_tier2 = Tier2Result(
             technical_accuracy=0.8,
             constructiveness=0.75,
-            clarity=0.85,
             planning_rationality=0.7,
             overall_score=0.78,
             model_used="mock-model",
@@ -68,7 +67,6 @@ class TestBasicEvaluationRuns:
         mock_tier2 = Tier2Result(
             technical_accuracy=0.8,
             constructiveness=0.75,
-            clarity=0.85,
             planning_rationality=0.7,
             overall_score=0.78,
             model_used="mock-model",
