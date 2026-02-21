@@ -139,7 +139,6 @@ class TestSetupLlmEnvironmentRemoved:
 
     def test_setup_llm_environment_does_not_exist_or_is_no_op(self):
         """setup_llm_environment must be removed or must not write to os.environ (AC1)."""
-        import importlib
 
         import app.llms.providers as providers_module
 
@@ -160,16 +159,16 @@ class TestSetupLlmEnvironmentRemoved:
 
         import app.llms.providers
 
+        # Snapshot env keys before reload
+        keys_before = {k for k in os.environ if k.endswith("_API_KEY")}
+
         importlib.reload(app.llms.providers)
 
-        # No provider API key env vars should be set by the module itself
-        api_key_vars = [k for k in os.environ if k.endswith("_API_KEY")]
-        # This just verifies that the module reload doesn't inject keys
-        # (the actual key values from .env are irrelevant here — we just
-        # check that import doesn't side-effect os.environ with secrets)
-        # We can't assert empty since tests may run with keys set in environment.
-        # What we CAN assert: setup_llm_environment is not called at import time.
-        assert True  # Structural test — presence of side-effects caught in other tests
+        # Reload must not inject new API key env vars
+        keys_after = {k for k in os.environ if k.endswith("_API_KEY")}
+        assert keys_after == keys_before, (
+            f"providers module reload injected new API key env vars: {keys_after - keys_before}"
+        )
 
 
 class TestSetupAgentEnvNoOsEnviron:
@@ -192,7 +191,10 @@ class TestSetupAgentEnvNoOsEnviron:
                 "app.agents.agent_system.get_provider_config",
                 return_value=mock_provider_config,
             ),
-            patch("app.agents.agent_system.get_api_key", return_value=(True, "sk-secret-key-for-openai")),
+            patch(
+                "app.agents.agent_system.get_api_key",
+                return_value=(True, "sk-secret-key-for-openai"),
+            ),
             patch("app.agents.agent_system.EndpointConfig"),
             patch.dict(os.environ, {}, clear=True),
         ):
@@ -216,7 +218,6 @@ class TestSetupAgentEnvNoOsEnviron:
         from unittest.mock import MagicMock
 
         import app.agents.agent_system as agent_system_module
-
         from app.agents.agent_system import setup_agent_env
         from app.data_models.app_models import ChatConfig
 
@@ -231,7 +232,9 @@ class TestSetupAgentEnvNoOsEnviron:
                 "app.agents.agent_system.get_provider_config",
                 return_value=mock_provider_config,
             ),
-            patch("app.agents.agent_system.get_api_key", return_value=(True, "cerebras-secret-key")),
+            patch(
+                "app.agents.agent_system.get_api_key", return_value=(True, "cerebras-secret-key")
+            ),
             patch("app.agents.agent_system.EndpointConfig"),
         ):
             chat_config = MagicMock()
@@ -247,8 +250,9 @@ class TestSetupAgentEnvNoOsEnviron:
                         chat_config=chat_config,
                         chat_env_config=env_config,
                     )
-                    mock_setup.assert_not_called(), (
-                        "setup_llm_environment must not be called from setup_agent_env (AC3)"
+                    (
+                        mock_setup.assert_not_called(),
+                        ("setup_llm_environment must not be called from setup_agent_env (AC3)"),
                     )
             else:
                 # setup_llm_environment is fully removed from agent_system — AC3 satisfied
@@ -298,13 +302,17 @@ class TestGeminiApiKeyViaConstructor:
 
         with (
             patch.dict(os.environ, {}, clear=True),
-            patch.dict(sys.modules, {
-                "pydantic_ai.models.google": mock_google_models_mod,
-                "pydantic_ai.providers.google": mock_google_provider_mod,
-            }),
+            patch.dict(
+                sys.modules,
+                {
+                    "pydantic_ai.models.google": mock_google_models_mod,
+                    "pydantic_ai.providers.google": mock_google_provider_mod,
+                },
+            ),
         ):
             # Reload models to pick up mocked modules
             import app.llms.models as models_mod
+
             importlib.reload(models_mod)
 
             try:
