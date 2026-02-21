@@ -234,7 +234,11 @@ def test_ac2_async_tests_mock_llm_calls() -> None:
                 continue
             # Check decorators and body for patch.object or AsyncMock usage
             source_segment = ast.dump(node)
-            has_mock = "AsyncMock" in source_segment or "patch.object" in source_segment or "patch(" in ast.dump(node)
+            has_mock = (
+                "AsyncMock" in source_segment
+                or "patch.object" in source_segment
+                or "patch(" in ast.dump(node)
+            )
             if not has_mock:
                 unmocked.append(func_name)
             break

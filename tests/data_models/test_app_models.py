@@ -135,9 +135,7 @@ class TestCreateOptionalAgentToolsType:
         sig = inspect.signature(_create_optional_agent)
         tools_param = sig.parameters["tools"]
         annotation_str = str(tools_param.annotation)
-        assert "Tool" in annotation_str, (
-            f"Expected list[Tool[Any]] | None but got {annotation_str}"
-        )
+        assert "Tool" in annotation_str, f"Expected list[Tool[Any]] | None but got {annotation_str}"
 
     def test_plain_dict_rejected(self, test_model):
         """Plain dict in tools list must be rejected by validate_tools."""
