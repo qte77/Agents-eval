@@ -16,7 +16,7 @@
 	lint_links lint_md \
 	app_cli app_gui app_sweep app_profile \
 	cc_run_solo cc_collect_teams cc_run_teams \
-	lint_src lint_tests complexity duplication \
+	lint_src lint_tests complexity duplication lint_hardcoded_paths \
 	test test_rerun test_coverage type_check validate quick_validate \
 	setup_phoenix phoenix_start phoenix_stop phoenix_status \
 	ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run \
@@ -394,6 +394,12 @@ duplication:  ## Detect copy-paste duplication with jscpd
 		echo "jscpd not installed — skipping duplication check (run 'make setup_npm_tools' to enable)"
 	fi
 
+lint_hardcoded_paths:  ## Check for hardcoded /workspaces/ paths in tests
+	if grep -rn --include='*.py' '/workspaces/' tests/; then
+		echo "ERROR: Hardcoded /workspaces/ paths found in tests (breaks GHA). Use relative paths or inspect.getfile()."
+		exit 1
+	fi
+
 test:  ## Run all tests
 	uv run pytest
 
@@ -424,6 +430,7 @@ quick_validate:  ## Fast development cycle validation
 	$(MAKE) -s type_check
 	$(MAKE) -s complexity
 	$(MAKE) -s duplication
+	$(MAKE) -s lint_hardcoded_paths
 	echo "Quick validation completed (check output for any failures)"
 
 
