@@ -721,6 +721,76 @@ print_progress() {
     log_info "Progress: $pct% ($passing/$total stories) | remaining: $remaining$eta_suffix"
 }
 
+# Verify teammate stories after primary story passes (teams mode).
+# Runs TDD commit check and scoped quality checks for each wave-peer story.
+# Args:
+#   $1 - primary story ID (to exclude from verification)
+#   $2 - commits_before count (for TDD attribution)
+verify_teammate_stories() {
+    local primary_id="$1"
+    local commits_before="$2"
+
+    local teammate_stories
+    teammate_stories=$(get_unblocked_stories | grep -v "^${primary_id}$" || true)
+
+    if [ -z "$teammate_stories" ]; then
+        return 0
+    fi
+
+    log_info "===== Verifying Teammate Stories ====="
+
+    local type_check_needed=false
+    local sid
+
+    for sid in $teammate_stories; do
+        log_info "Verifying teammate story: $sid"
+
+        # TDD commit check (hybrid attribution)
+        if ! check_tdd_commits "$sid" "$commits_before"; then
+            log_warn "Teammate story $sid: TDD verification failed"
+            update_story_status "$sid" "failed"
+            continue
+        fi
+
+        # Scoped quality checks (ruff, complexity, tests)
+        local sid_failed=false
+
+        if ! run_ruff_scoped "$sid" "$PRD_JSON"; then
+            log_warn "Teammate story $sid: ruff check failed"
+            sid_failed=true
+        fi
+
+        if ! run_complexity_scoped "$sid" "$PRD_JSON"; then
+            log_warn "Teammate story $sid: complexity check failed"
+            sid_failed=true
+        fi
+
+        local teammate_test_log="/tmp/claude/ralph_teammate_${sid}_tests.log"
+        if ! run_tests_scoped "$sid" "$PRD_JSON" "$teammate_test_log"; then
+            log_warn "Teammate story $sid: tests failed"
+            sid_failed=true
+        fi
+
+        if [ "$sid_failed" = "true" ]; then
+            update_story_status "$sid" "failed"
+        else
+            update_story_status "$sid" "passed"
+            log_info "Teammate story $sid marked as PASSED"
+            type_check_needed=true
+        fi
+    done
+
+    # Run type_check once for the whole batch (not per-story)
+    if [ "$type_check_needed" = "true" ]; then
+        log_info "Running type check for teammate batch..."
+        if ! make --no-print-directory type_check 2>&1; then
+            log_warn "Type check failed for teammate batch (non-blocking)"
+        fi
+    fi
+
+    log_info "===== Teammate Verification Complete ====="
+}
+
 # Main loop
 main() {
     log_info "Starting Ralph Loop"

@@ -807,6 +807,22 @@ def main() -> int:
     print(f"\nGenerated {output_path}")
     _print_wave_summary(all_stories)
 
+    # Reason: Show per-wave grouping for visibility into execution plan
+    waves: dict[int, list[str]] = {}
+    for s in all_stories:
+        waves.setdefault(s["wave"], []).append(s["id"])
+    for wave_num in sorted(waves):
+        if wave_num == 0:
+            ids = [
+                sid
+                for sid in waves[0]
+                if any(st["id"] == sid and st.get("status") == "passed" for st in all_stories)
+            ]
+            if ids:
+                print(f"  Completed: {', '.join(ids)}")
+        else:
+            print(f"  Wave {wave_num}: {', '.join(waves[wave_num])}")
+
     return 0
 
 
