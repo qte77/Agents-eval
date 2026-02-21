@@ -66,12 +66,17 @@ def get_provider_config(provider: str, providers: dict[str, ProviderConfig]) -> 
 def setup_llm_environment(api_keys: dict[str, str]) -> None:
     """No-op: retained for backward compatibility only.
 
-    Previously wrote API keys to os.environ, exposing them to child processes,
-    crash reporters, and debug dumps. Keys are now passed directly to provider
-    constructors in models.py. This function is deprecated and will be removed.
+    Previously wrote API keys to ``os.environ``, exposing them to child
+    processes, crash reporters, and debug dumps (Sprint 5 Finding 10,
+    Review F1 HIGH). Keys are now passed directly via provider constructors
+    in ``models.py``. This stub will be removed once all call sites are
+    confirmed migrated.
 
     Args:
         api_keys: Ignored. Dictionary mapping provider names to API keys.
+
+    .. deprecated::
+        Use provider constructor ``api_key`` parameter instead.
     """
     logger.debug("setup_llm_environment: no-op (keys passed via constructor, not os.environ)")
 
