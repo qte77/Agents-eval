@@ -356,9 +356,10 @@ def _load_and_format_template(
         sanitized_abstract = sanitize_paper_abstract(paper_abstract)
         sanitized_content = sanitize_paper_content(truncated_content)
 
-        # Safe to use .format() here since all user inputs are sanitized:
-        # - title/abstract: XML-wrapped
+        # Reason: Safe to use .format() — adversary-controlled inputs are sanitized:
+        # - title/abstract: XML-wrapped (length-limited)
         # - paper content: braces escaped + XML-wrapped (prevents format string injection)
+        # - tone/review_focus: agent-controlled, not adversary input
         return template_content.format(
             paper_title=sanitized_title,
             paper_abstract=sanitized_abstract,
