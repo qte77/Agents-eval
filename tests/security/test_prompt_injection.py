@@ -278,10 +278,14 @@ class TestPaperContentFormatStringInjection:
         result = sanitize_paper_content(malicious)
 
         # Braces must be doubled so .format() treats them as literals
-        assert "{tone}" not in result
-        assert "{review_focus}" not in result
         assert "{{tone}}" in result
         assert "{{review_focus}}" in result
+
+        # Verify .format() treats escaped braces as literals, not substitution targets
+        inner = result.replace("<paper_content>", "").replace("</paper_content>", "")
+        formatted = inner.format(tone="INJECTED", review_focus="INJECTED")
+        assert "INJECTED" not in formatted
+        assert "{tone}" in formatted  # Doubled braces become single literal braces
 
     def test_sanitize_paper_content_wraps_in_xml(self):
         """sanitize_paper_content must wrap in <paper_content> XML delimiters."""
