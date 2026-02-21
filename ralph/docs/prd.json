@@ -226,9 +226,9 @@
         "tests/judge/test_traditional_metrics.py",
         "tests/judge/test_baseline_comparison.py"
       ],
-      "status": "failed",
+      "status": "passed",
       "wave": 3,
-      "completed_at": null,
+      "completed_at": "2026-02-21T21:32:11Z",
       "content_hash": "b3d33f54b2429853c1a6bfe69119f7787ebaafdb18e6f4f114504cfa758ce2d6",
       "depends_on": [
         "STORY-001",
