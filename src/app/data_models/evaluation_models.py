@@ -69,7 +69,9 @@ class Tier2Result(BaseModel):
     planning_rationality: float = Field(ge=0.0, le=1.0, description="Planning quality score")
     overall_score: float = Field(ge=0.0, le=1.0, description="Weighted LLM judge score")
     model_used: str = Field(description="LLM model used for evaluation")
-    api_cost: float | None = Field(description="Estimated API cost in USD")
+    api_cost: float | None = Field(
+        default=None, description="Estimated API cost in USD; None when cost is unavailable"
+    )
     fallback_used: bool = Field(default=False, description="Whether fallback was used")
 
 
