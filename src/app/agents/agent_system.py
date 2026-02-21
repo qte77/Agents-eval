@@ -35,6 +35,7 @@ from pydantic_ai.common_tools.duckduckgo import (
     duckduckgo_search_tool,  # type: ignore[reportUnknownVariableType]
 )
 from pydantic_ai.exceptions import ModelHTTPError, UsageLimitExceeded
+from pydantic_ai.tools import Tool
 from pydantic_ai.usage import UsageLimits
 
 from app.agents.logfire_instrumentation import initialize_logfire_instrumentation
@@ -287,7 +288,7 @@ def _create_optional_agent(
     model: Any,
     output_type: type[BaseModel],
     system_prompt: str,
-    tools: list[Any] | None = None,
+    tools: list[Tool[Any]] | None = None,
 ) -> Agent[None, BaseModel] | None:
     """Create an agent if model is provided, otherwise return None.
 
