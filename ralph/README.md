@@ -248,8 +248,8 @@ ralph/
 ├── README.md                  # This file
 ├── docs/
 │   ├── LEARNINGS.md           # Patterns and lessons
-│   ├── prd.json               # Story tracking (gitignored)
-│   ├── progress.txt           # Execution log (gitignored)
+│   ├── prd.json               # Story tracking (committed)
+│   ├── progress.txt           # Execution log (committed)
 │   ├── TEMPLATE_USAGE.md      # Setup guide
 │   └── templates/             # Project templates
 │       ├── prd.json.template

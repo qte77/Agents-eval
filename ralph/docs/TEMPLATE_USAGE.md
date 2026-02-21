@@ -122,8 +122,8 @@ your-project/
 │   ├── docs/
 │   │   ├── TEMPLATE_USAGE.md  # This file
 │   │   ├── LEARNINGS.md        # Patterns and lessons
-│   │   ├── prd.json            # Parsed stories (gitignored)
-│   │   ├── progress.txt        # Execution log (gitignored)
+│   │   ├── prd.json            # Parsed stories (committed)
+│   │   ├── progress.txt        # Execution log (committed)
 │   │   └── templates/          # Project templates
 │   └── scripts/
 │       ├── ralph.sh               # Main orchestration
