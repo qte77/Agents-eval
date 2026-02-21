@@ -19,7 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Impact Scan Prompt**: Agent instruction in `prompt.md` to grep test tree for consumers before implementing renames
 - **Pycache Cleanup**: `clean_test_pycache()` — removes `__pycache__` dirs and `.pyc` files under `tests/` before test runs
 - **Known Failure Mode #6**: Incomplete PRD file lists causing stale tests (Sprint 8 post-mortem)
-- **Worktree Launcher**: `ralph-in-worktree.sh` + `make ralph_worktree` — create branch, setup git worktree, run Ralph (same env var contract as `ralph_run`)
+- **Worktree Launcher**: `ralph-in-worktree.sh` + `make ralph_worktree` — create branch, setup git worktree, print `cd` path
+- **Worktree Runner**: `make ralph_run_worktree` — create worktree + run Ralph in it (same args as `ralph_run`)
+- **Worktree Workflow Docs**: README "Git Worktree Workflow" section — setup, sibling directory layout, `.venv` symlink, key practices, sandbox note
 - **PRD Parser Constraints**: Documented 4 parser gotchas in `LEARNINGS.md` (table) and `prd.md.template` (inline comments)
 - **Merge Strategy**: Squash merge pattern and conflict prevention rule in `LEARNINGS.md`
 - **Wave Terminology**: Defined "wave" (dependency graph frontier) in `ralph.sh` and `README.md`

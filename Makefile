@@ -20,7 +20,7 @@
 	test test_rerun test_coverage type_check validate quick_validate \
 	setup_phoenix phoenix_start phoenix_stop phoenix_status \
 	ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run \
-	ralph_worktree ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean \
+	ralph_worktree ralph_run_worktree ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean \
 	clean_results clean_logs \
 	help
 .DEFAULT_GOAL := help
@@ -494,14 +494,18 @@ ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_
 		bash ralph/scripts/ralph.sh \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph loop timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
 
-ralph_worktree:  ## Run Ralph in a git worktree (BRANCH=required, TEAMS=true|false, MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds)
-	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_worktree BRANCH=ralph/sprint8-name))
-	echo "Starting Ralph in worktree for branch '$(BRANCH)' ..."
+ralph_worktree:  ## Create a git worktree for Ralph and cd into it (BRANCH=required)
+	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_worktree BRANCH=ralph/sprint-name))
+	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)"
+
+ralph_run_worktree:  ## Create worktree + run Ralph in it (BRANCH=required, MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false)
+	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_run_worktree BRANCH=ralph/sprint-name))
+	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)"
 	$(if $(RALPH_TIMEOUT),timeout $(RALPH_TIMEOUT)) \
 		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) \
 		RALPH_TEAMS=$(TEAMS) \
 		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \
-		bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)" \
+		bash -c 'cd "../$$(basename $(BRANCH))" && bash ralph/scripts/ralph.sh' \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph worktree timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
 
 ralph_stop:  ## Stop all running Ralph loops (keeps state and data)
