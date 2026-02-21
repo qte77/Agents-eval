@@ -2,7 +2,7 @@
   "project": "Product Requirements Document - Agents-eval Sprint 9",
   "description": "\"Sprint 9: 9 features \u2014 dead code deletion, format string sanitization, PDF size guard, API key env cleanup, security hardening, judge accuracy, AgentConfig typing, type safety + quick fixes, test suite quality sweep.\"",
   "source": "PRD.md",
-  "generated": "2026-02-21 15:46:39",
+  "generated": "2026-02-21 18:57:20",
   "stories": [
     {
       "id": "STORY-001",
@@ -21,8 +21,9 @@
         "src/app/agents/orchestration.py",
         "tests/agents/test_orchestration.py"
       ],
-      "passes": false,
-      "completed_at": null,
+      "status": "completed",
+      "wave": 1,
+      "completed_at": "2026-02-21T19:00:00",
       "content_hash": "ca3ca48dc085ebf2a19f1823a372c28403c29bb3f42d4dc098debf4da3f496bf",
       "depends_on": []
     },
@@ -42,7 +43,8 @@
         "src/app/tools/peerread_tools.py",
         "tests/security/test_prompt_injection.py"
       ],
-      "passes": false,
+      "status": "pending",
+      "wave": 2,
       "completed_at": null,
       "content_hash": "8b67d9855f3a488aab463df2b4f0435d7df011ce0dbb6918601791efe0b02262",
       "depends_on": [
@@ -67,7 +69,8 @@
         "src/app/tools/peerread_tools.py",
         "tests/tools/test_peerread_tools.py"
       ],
-      "passes": false,
+      "status": "pending",
+      "wave": 3,
       "completed_at": null,
       "content_hash": "4a623a4491fb283690fa0b0b730cdb421a9dc226dcdc3bb27a6b43b42ada1e62",
       "depends_on": [
@@ -98,7 +101,8 @@
         "tests/agents/test_agent_system.py",
         "tests/llms/test_providers.py"
       ],
-      "passes": false,
+      "status": "pending",
+      "wave": 2,
       "completed_at": null,
       "content_hash": "438d1781513690f5fced483cb105170f679c2ad83aefc05f8febc5174c7429dc",
       "depends_on": [
@@ -126,7 +130,8 @@
         "src/app/tools/peerread_tools.py",
         "tests/security/test_tool_registration.py"
       ],
-      "passes": false,
+      "status": "pending",
+      "wave": 4,
       "completed_at": null,
       "content_hash": "95eb0c287dcfa34914124652175064470c5763016dc0192ca8053624e8af0296",
       "depends_on": [
@@ -156,7 +161,8 @@
         "tests/judge/test_llm_evaluation_managers.py",
         "tests/judge/test_traditional_metrics.py"
       ],
-      "passes": false,
+      "status": "pending",
+      "wave": 2,
       "completed_at": null,
       "content_hash": "5a03da60c33033ff9f114b916c582e264c0889adad6147be080da08a63d30846",
       "depends_on": [
@@ -181,8 +187,9 @@
         "src/app/data_models/app_models.py",
         "tests/data_models/test_app_models.py"
       ],
-      "passes": true,
-      "completed_at": "2026-02-21T18:45:00",
+      "status": "completed",
+      "wave": 1,
+      "completed_at": "2026-02-21T19:00:00",
       "content_hash": "cf2d54c19da9166d0a5af570983d01330992438fcb26f9a95128f08e48038d4d",
       "depends_on": []
     },
@@ -219,7 +226,8 @@
         "tests/judge/test_traditional_metrics.py",
         "tests/judge/test_baseline_comparison.py"
       ],
-      "passes": false,
+      "status": "pending",
+      "wave": 3,
       "completed_at": null,
       "content_hash": "b3d33f54b2429853c1a6bfe69119f7787ebaafdb18e6f4f114504cfa758ce2d6",
       "depends_on": [
@@ -281,8 +289,9 @@
         "tests/data_utils/test_datasets_peerread.py",
         "tests/data_utils/test_datasets_peerread_coverage.py"
       ],
-      "passes": true,
-      "completed_at": "2026-02-21T18:45:00",
+      "status": "completed",
+      "wave": 1,
+      "completed_at": "2026-02-21T19:00:00",
       "content_hash": "7e5b3e2a2bffb987c3b82637367aaaa7b8f41be970e040a9d750ef0376ed9123",
       "depends_on": []
     }

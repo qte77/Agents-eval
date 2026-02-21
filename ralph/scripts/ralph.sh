@@ -122,18 +122,25 @@ validate_environment() {
         exit 1
     fi
 
+    # Legacy schema guard: detect old `passes` field without `status`
+    if jq -e '.stories[0] | has("passes") and (has("status") | not)' "$PRD_JSON" >/dev/null 2>&1; then
+        log_error "prd.json uses legacy 'passes' field. Migrate by running: python ralph/scripts/generate_prd_json.py"
+        exit 1
+    fi
+
     log_info "Environment validated successfully"
 }
 
 # Get next incomplete story from prd.json (respects depends_on)
 get_next_story() {
     # Get all completed story IDs
-    local completed=$(jq -r '[.stories[] | select(.passes == true) | .id] | @json' "$PRD_JSON")
+    local completed=$(jq -r '[.stories[] | select(.status == "passed") | .id] | @json' "$PRD_JSON")
 
     # Find first incomplete story where all depends_on are satisfied
+    # Reason: "in_progress" included so Ralph resumes interrupted stories after a crash
     jq -r --argjson completed "$completed" '
       .stories[]
-      | select(.passes == false)
+      | select(.status == "pending" or .status == "failed" or .status == "in_progress")
       | select((.depends_on // []) - $completed | length == 0)
       | .id
     ' "$PRD_JSON" | sed -n '1p'
@@ -145,11 +152,12 @@ get_next_story() {
 # Within a wave, stories run in parallel (one teammate each); the next
 # wave starts after the current one completes.
 get_unblocked_stories() {
-    local completed=$(jq -r '[.stories[] | select(.passes == true) | .id] | @json' "$PRD_JSON")
+    local completed=$(jq -r '[.stories[] | select(.status == "passed") | .id] | @json' "$PRD_JSON")
 
+    # Reason: "in_progress" included so Ralph resumes interrupted stories after a crash
     jq -r --argjson completed "$completed" '
       .stories[]
-      | select(.passes == false)
+      | select(.status == "pending" or .status == "failed" or .status == "in_progress")
       | select((.depends_on // []) - $completed | length == 0)
       | .id
     ' "$PRD_JSON"
@@ -160,13 +168,13 @@ get_unblocked_stories() {
 # Output goes to both log and progress file for visibility.
 print_dependency_tree() {
     local completed_ids
-    completed_ids=$(jq -r '[.stories[] | select(.passes == true) | .id]' "$PRD_JSON")
+    completed_ids=$(jq -r '[.stories[] | select(.status == "passed") | .id]' "$PRD_JSON")
     local completed_count
     completed_count=$(echo "$completed_ids" | jq 'length')
 
     # Get all incomplete stories as JSON array of {id, depends_on}
     local incomplete
-    incomplete=$(jq '[.stories[] | select(.passes == false) | {id, depends_on: (.depends_on // [])}]' "$PRD_JSON")
+    incomplete=$(jq '[.stories[] | select(.status != "passed") | {id, depends_on: (.depends_on // [])}]' "$PRD_JSON")
     local incomplete_count
     incomplete_count=$(echo "$incomplete" | jq 'length')
 
@@ -244,7 +252,7 @@ print_dependency_tree() {
 
     # Build blocking relationships (reverse depends_on)
     local all_incomplete
-    all_incomplete=$(jq '[.stories[] | select(.passes == false) | {id, depends_on: (.depends_on // [])}]' "$PRD_JSON")
+    all_incomplete=$(jq '[.stories[] | select(.status != "passed") | {id, depends_on: (.depends_on // [])}]' "$PRD_JSON")
     local blocker_ids
     blocker_ids=$(echo "$all_incomplete" | jq -r '[.[].depends_on[]] | unique | .[]' 2>/dev/null || true)
 
@@ -272,14 +280,14 @@ print_dependency_tree() {
 
     log_info "$header"
     echo "$tree_output" | while IFS= read -r line; do
-        [ -n "$line" ] && log_info "$line"
+        [ -n "$line" ] && log_info "$line" || true
     done
 
     if [ -n "$blocking_output" ]; then
         log_info ""
         log_info "  Blocking relationships:"
         echo "$blocking_output" | while IFS= read -r line; do
-            [ -n "$line" ] && log_info "$line"
+            [ -n "$line" ] && log_info "$line" || true
         done
     fi
 
@@ -322,6 +330,7 @@ get_story_details() {
 }
 
 # Update story status in prd.json
+# Args: $1=story_id, $2=status ("pending"|"in_progress"|"passed"|"failed")
 update_story_status() {
     local story_id="$1"
     local status="$2"
@@ -330,8 +339,8 @@ update_story_status() {
     jq --arg id "$story_id" \
        --arg status "$status" \
        --arg timestamp "$timestamp" \
-       '(.stories[] | select(.id == $id) | .passes) |= ($status == "true") |
-        (.stories[] | select(.id == $id) | .completed_at) |= (if $status == "true" then $timestamp else null end)' \
+       '(.stories[] | select(.id == $id) | .status) = $status |
+        (.stories[] | select(.id == $id) | .completed_at) = (if $status == "passed" then $timestamp else null end)' \
        "$PRD_JSON" > "${PRD_JSON}.tmp"
 
     mv "${PRD_JSON}.tmp" "$PRD_JSON"
@@ -357,9 +366,9 @@ log_progress() {
 # in background. Scans commits for phase and tails log file for recent output
 # (agent output streams to LOG_FILE via tee on line 76).
 # Args:
-#   $1 - story ID
+#   $@ - one or more story IDs to track (teams mode passes all wave stories)
 monitor_story_progress() {
-    local story_id="$1"
+    local story_ids=("$@")
     local sprint_start
     sprint_start=$(jq -r '.generated' "$PRD_JSON")
     # Reason: Track byte offset to read only new log content per cycle,
@@ -369,17 +378,21 @@ monitor_story_progress() {
 
     while sleep 30; do
         local elapsed=$(($(date +%s) - RALPH_STORY_START))
-        local phase="RED"
-        local story_commits
-        story_commits=$(git log --grep="$story_id" --since="$sprint_start" --oneline 2>/dev/null)
 
-        if [ -n "$story_commits" ]; then
-            if echo "$story_commits" | grep -q "\[GREEN\]"; then phase="REFACTOR"
-            elif echo "$story_commits" | grep -q "\[RED\]"; then phase="GREEN"
+        for sid in "${story_ids[@]}"; do
+            local phase="RED"
+            local story_commits
+            story_commits=$(git log --grep="$sid" --since="$sprint_start" --oneline 2>/dev/null)
+
+            if [ -n "$story_commits" ]; then
+                if echo "$story_commits" | grep -q "\[GREEN\]"; then phase="REFACTOR"
+                elif echo "$story_commits" | grep -q "\[RED\]"; then phase="GREEN"
+                fi
             fi
-        fi
 
-        log_info "  >> [$story_id] phase: $phase | elapsed: $(fmt_elapsed $elapsed)"
+            log_info "  >> [$sid] phase: $phase | elapsed: $(fmt_elapsed $elapsed)"
+        done
+
         # Show recent agent activity from log (new content only, via byte offset)
         local activity=""
         local current_size
@@ -483,8 +496,18 @@ execute_story() {
     log_info "  Prompt: $iteration_prompt ($(wc -l < "$iteration_prompt") lines)"
     log_info "  PRD: $PRD_JSON"
 
-    # Start background progress monitor
-    monitor_story_progress "$story_id" &
+    # Start background progress monitor (track all wave stories in teams mode)
+    local monitor_stories=("$story_id")
+    if [ "$RALPH_TEAMS" = "true" ]; then
+        local wave_others
+        wave_others=$(get_unblocked_stories | grep -v "^${story_id}$" || true)
+        if [ -n "$wave_others" ]; then
+            while IFS= read -r ws; do
+                monitor_stories+=("$ws")
+            done <<< "$wave_others"
+        fi
+    fi
+    monitor_story_progress "${monitor_stories[@]}" &
     local monitor_pid=$!
 
     local claude_exit=0
@@ -579,25 +602,30 @@ check_tdd_commits() {
 
     local recent_commits=$(git log --oneline -n $new_commits)
 
-    # Teams mode (Solution 2A): file-scoped commit attribution.
-    # Instead of grepping commit messages for story ID (fragile — agents write
-    # generic messages), check which files each commit touches against the
-    # story's files array from prd.json. Falls back to message grep if no
-    # files array exists.
+    # Teams mode (Solution 2B): hybrid commit attribution.
+    # A commit belongs to a story if its message mentions the story ID OR it
+    # touches a file in the story's files array. File-only matching (2A) missed
+    # RED commits that create test files not listed in the files array.
     if [ "$RALPH_TEAMS" = "true" ]; then
         local story_files
         story_files=$(jq -r --arg id "$story_id" \
             '.stories[] | select(.id == $id) | .files // [] | .[]' "$PRD_JSON" 2>/dev/null || true)
 
-        if [ -n "$story_files" ]; then
-            # File-scoped attribution: keep commits that touch at least one story file
-            local filtered_commits=""
-            local commit_hash
-            while IFS= read -r line; do
-                commit_hash=$(echo "$line" | cut -d' ' -f1)
+        local filtered_commits=""
+        local commit_hash
+        while IFS= read -r line; do
+            commit_hash=$(echo "$line" | cut -d' ' -f1)
+            local match=false
+
+            # Check 1: commit message mentions story ID
+            if echo "$line" | grep -qF "$story_id"; then
+                match=true
+            fi
+
+            # Check 2: commit touches a file in the story's files array
+            if [ "$match" = "false" ] && [ -n "$story_files" ]; then
                 local changed_files
                 changed_files=$(git diff-tree --no-commit-id --name-only -r "$commit_hash" 2>/dev/null || true)
-                local match=false
                 local sf
                 while IFS= read -r sf; do
                     if echo "$changed_files" | grep -qF "$sf"; then
@@ -605,21 +633,18 @@ check_tdd_commits() {
                         break
                     fi
                 done <<< "$story_files"
-                if [ "$match" = "true" ]; then
-                    filtered_commits="${filtered_commits:+$filtered_commits
+            fi
+
+            if [ "$match" = "true" ]; then
+                filtered_commits="${filtered_commits:+$filtered_commits
 }$line"
-                fi
-            done <<< "$recent_commits"
-            recent_commits="$filtered_commits"
-        else
-            # Fallback: no files array in prd.json, use original message grep
-            log_warn "No files array for $story_id — falling back to message grep"
-            recent_commits=$(echo "$recent_commits" | grep "$story_id" || true)
-        fi
+            fi
+        done <<< "$recent_commits"
+        recent_commits="$filtered_commits"
 
         new_commits=$(echo "$recent_commits" | grep -c . || true)
         if [ "$new_commits" -eq 0 ]; then
-            log_error "No commits for $story_id in team batch (file-scoped)"
+            log_error "No commits for $story_id in team batch (hybrid attribution)"
             return 1
         fi
     fi
@@ -703,7 +728,7 @@ check_tdd_commits() {
 # ETA is only shown when at least one story has completed this run
 print_progress() {
     local total=$(jq '.stories | length' "$PRD_JSON")
-    local passing=$(jq '[.stories[] | select(.passes == true)] | length' "$PRD_JSON")
+    local passing=$(jq '[.stories[] | select(.status == "passed")] | length' "$PRD_JSON")
     local remaining=$((total - passing))
     local pct=0
     if [ "$total" -gt 0 ]; then
@@ -722,6 +747,76 @@ print_progress() {
     log_info "Progress: $pct% ($passing/$total stories) | remaining: $remaining$eta_suffix"
 }
 
+# Verify teammate stories after primary story passes (teams mode).
+# Runs TDD commit check and scoped quality checks for each wave-peer story.
+# Args:
+#   $1 - primary story ID (to exclude from verification)
+#   $2 - commits_before count (for TDD attribution)
+verify_teammate_stories() {
+    local primary_id="$1"
+    local commits_before="$2"
+
+    local teammate_stories
+    teammate_stories=$(get_unblocked_stories | grep -v "^${primary_id}$" || true)
+
+    if [ -z "$teammate_stories" ]; then
+        return 0
+    fi
+
+    log_info "===== Verifying Teammate Stories ====="
+
+    local type_check_needed=false
+    local sid
+
+    for sid in $teammate_stories; do
+        log_info "Verifying teammate story: $sid"
+
+        # TDD commit check (hybrid attribution)
+        if ! check_tdd_commits "$sid" "$commits_before"; then
+            log_warn "Teammate story $sid: TDD verification failed"
+            update_story_status "$sid" "failed"
+            continue
+        fi
+
+        # Scoped quality checks (ruff, complexity, tests)
+        local sid_failed=false
+
+        if ! run_ruff_scoped "$sid" "$PRD_JSON"; then
+            log_warn "Teammate story $sid: ruff check failed"
+            sid_failed=true
+        fi
+
+        if ! run_complexity_scoped "$sid" "$PRD_JSON"; then
+            log_warn "Teammate story $sid: complexity check failed"
+            sid_failed=true
+        fi
+
+        local teammate_test_log="/tmp/claude/ralph_teammate_${sid}_tests.log"
+        if ! run_tests_scoped "$sid" "$PRD_JSON" "$teammate_test_log"; then
+            log_warn "Teammate story $sid: tests failed"
+            sid_failed=true
+        fi
+
+        if [ "$sid_failed" = "true" ]; then
+            update_story_status "$sid" "failed"
+        else
+            update_story_status "$sid" "passed"
+            log_info "Teammate story $sid marked as PASSED"
+            type_check_needed=true
+        fi
+    done
+
+    # Run type_check once for the whole batch (not per-story)
+    if [ "$type_check_needed" = "true" ]; then
+        log_info "Running type check for teammate batch..."
+        if ! make --no-print-directory type_check 2>&1; then
+            log_warn "Type check failed for teammate batch (non-blocking)"
+        fi
+    fi
+
+    log_info "===== Teammate Verification Complete ====="
+}
+
 # Main loop
 main() {
     log_info "Starting Ralph Loop"
@@ -735,7 +830,7 @@ main() {
 
     # Track timing for ETA calculation
     RALPH_START_TIME=$(date +%s)
-    RALPH_START_PASSING=$(jq '[.stories[] | select(.passes == true)] | length' "$PRD_JSON")
+    RALPH_START_PASSING=$(jq '[.stories[] | select(.status == "passed")] | length' "$PRD_JSON")
 
     local iteration=0
 
@@ -773,6 +868,9 @@ main() {
             capture_test_baseline "$BASELINE_FILE" "$story_id"
         fi
 
+        # Mark story as in-progress
+        update_story_status "$story_id" "in_progress"
+
         # Record commit count and untracked files before execution
         local commits_before=$(commit_count)
         local untracked_before
@@ -792,10 +890,15 @@ main() {
             log_info "Story already complete - verifying with quality checks"
 
             if run_quality_checks "$story_id"; then
-                # Mark as passing
-                update_story_status "$story_id" "true"
+                # Mark as passed
+                update_story_status "$story_id" "passed"
                 log_progress "$iteration" "$story_id" "PASS" "Already complete, verified by quality checks"
-                log_info "Story $story_id marked as PASSING (pre-existing implementation)"
+                log_info "Story $story_id marked as PASSED (pre-existing implementation)"
+
+                # Verify teammate stories in teams mode
+                if [ "$RALPH_TEAMS" = "true" ]; then
+                    verify_teammate_stories "$story_id" "$commits_before"
+                fi
 
                 commit_state_files "chore: Update Ralph state after verifying $story_id (already complete)"
                 story_passed=true
@@ -806,6 +909,7 @@ main() {
                 retry_count=$((retry_count + 1))
                 if [ $retry_count -ge $MAX_RETRIES ]; then
                     log_error "Max retries reached for story $story_id"
+                    update_story_status "$story_id" "failed"
                     exit 1
                 fi
                 continue
@@ -849,6 +953,7 @@ main() {
 
                 if [ $retry_count -ge $MAX_RETRIES ]; then
                     log_error "Max retries reached for story $story_id"
+                    update_story_status "$story_id" "failed"
                     exit 1
                 fi
                 continue  # Retry same story (get_next_story returns same incomplete story)
@@ -866,12 +971,17 @@ main() {
 
             # Run quality checks
             if run_quality_checks "$story_id"; then
-                # Mark as passing
-                update_story_status "$story_id" "true"
+                # Mark as passed
+                update_story_status "$story_id" "passed"
                 log_progress "$iteration" "$story_id" "PASS" "Completed successfully with TDD commits"
-                log_info "Story $story_id marked as PASSING"
+                log_info "Story $story_id marked as PASSED"
                 rm -f "$RETRY_CONTEXT_FILE"
                 clear_tdd_verified "$story_id"
+
+                # Verify teammate stories in teams mode
+                if [ "$RALPH_TEAMS" = "true" ]; then
+                    verify_teammate_stories "$story_id" "$commits_before"
+                fi
 
                 commit_state_files "chore: Update Ralph state after completing $story_id"
                 story_passed=true
@@ -884,6 +994,7 @@ main() {
 
                 if [ $retry_count -ge $MAX_RETRIES ]; then
                     log_error "Max retries reached for story $story_id"
+                    update_story_status "$story_id" "failed"
                     exit 1
                 fi
                 continue

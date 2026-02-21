@@ -14,11 +14,13 @@ iteratively improving until completion.
 
 ```text
 while stories remain:
-  1. Read prd.json, pick next story (passes: false)
-  2. Implement story (TDD: red → green → refactor)
+  1. Read prd.json, pick next story (status: "pending"/"failed")
+  2. Mark story "in_progress", implement (TDD: red → green → refactor)
   3. Run typecheck + tests
-  4. If passing: commit, mark done, log learnings
-  5. Repeat until all pass (or context limit)
+  4. If passing: mark "passed", commit, log learnings
+  5. On max retries: mark "failed"
+  6. In teams mode: verify teammate stories in same wave
+  7. Repeat until all pass (or context limit)
 ```
 
 **Memory persists only through:**
@@ -32,6 +34,7 @@ while stories remain:
 ```bash
 make ralph_run MAX_ITERATIONS=25              # Run autonomous development
 make ralph_run MAX_ITERATIONS=25 TEAMS=true   # EXPERIMENTAL: parallel story delegation
+make ralph_worktree BRANCH=ralph/sprintN      # Run in isolated git worktree
 make ralph_status                             # Check progress
 ```
 
@@ -126,6 +129,50 @@ STORY-012... in Sprint 3). Unique IDs across project lifetime.
 
 **prd.json**: Fresh start per sprint. Archive before transition.
 
+### Git Worktree Workflow
+
+Run Ralph in an isolated worktree to keep the source branch clean.
+
+**Setup and run:**
+
+```bash
+make ralph_worktree BRANCH=ralph/<branch-name>
+```
+
+This creates a sibling worktree at `../<branch-basename>`, symlinks
+`.venv` from the source repo, and starts Ralph. Reuses an existing
+branch and worktree if one exists.
+
+**Directory layout** (sibling pattern):
+
+```text
+parent-dir/
+├── your-project/                   # Source repo (working branch)
+│   ├── .venv/                      # Shared virtual environment
+│   └── ralph/docs/prd.json
+└── <branch-basename>/              # Worktree (ralph branch)
+    ├── .venv → ../your-project/.venv   # Symlinked, not copied
+    └── ralph/docs/prd.json
+```
+
+**Key practices:**
+
+- **One worktree per sprint branch** — keeps TDD noise off the source branch
+- **`.venv` is symlinked**, not duplicated — never run `uv sync` in the worktree
+- **Don't edit overlapping files** in the source repo while Ralph runs —
+  files listed in `prd.json` `files` arrays belong to the worktree
+- **Clean up when done** — use `git worktree remove`, not `rm -rf`
+
+**Configuration** (same env vars as `ralph_run`):
+
+```bash
+make ralph_worktree BRANCH=ralph/<name> TEAMS=true MAX_ITERATIONS=50 MODEL=opus
+```
+
+**Sandbox note:** If your environment restricts writes outside the repo
+directory (e.g., DevContainers), add the parent directory to the sandbox
+write allowlist so worktrees can be created as siblings.
+
 ### Merging Back
 
 Squash merge from source repo (not worktree). TDD commits are implementation noise — final state is what matters.
@@ -201,8 +248,8 @@ ralph/
 ├── README.md                  # This file
 ├── docs/
 │   ├── LEARNINGS.md           # Patterns and lessons
-│   ├── prd.json               # Story tracking (gitignored)
-│   ├── progress.txt           # Execution log (gitignored)
+│   ├── prd.json               # Story tracking (committed)
+│   ├── progress.txt           # Execution log (committed)
 │   ├── TEMPLATE_USAGE.md      # Setup guide
 │   └── templates/             # Project templates
 │       ├── prd.json.template
