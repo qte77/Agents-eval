@@ -379,3 +379,19 @@ class TestPaperContentFormatStringInjection:
         # Benign content should appear in the output (inside XML wrapper and with Abstract prefix)
         assert "Normal paper about neural networks" in result
         assert "Tone: professional" in result
+
+    @given(content=st.text(min_size=0, max_size=5000))
+    def test_sanitize_paper_content_always_safe_for_format(self, content: str):
+        """Property: sanitized paper content must never cause format string substitution."""
+        result = sanitize_paper_content(content)
+        inner = result.replace("<paper_content>", "").replace("</paper_content>", "")
+
+        # .format() with common template kwargs must not raise or substitute
+        formatted = inner.format(
+            tone="INJECTED",
+            review_focus="INJECTED",
+            paper_title="INJECTED",
+            paper_abstract="INJECTED",
+            paper_full_content="INJECTED",
+        )
+        assert "INJECTED" not in formatted
