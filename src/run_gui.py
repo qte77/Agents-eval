@@ -47,7 +47,6 @@ chat_config_file = Path(__file__).parent / APP_CONFIG_PATH / CHAT_CONFIG_FILE
 chat_config = load_config(chat_config_file, ChatConfig)
 common_settings = CommonSettings()
 judge_settings = JudgeSettings()
-logger.info(f"Default provider in GUI: {CHAT_DEFAULT_PROVIDER}")
 
 
 def get_session_state_defaults() -> dict[str, str | bool]:
