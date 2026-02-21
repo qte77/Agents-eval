@@ -59,6 +59,26 @@ def sanitize_paper_abstract(abstract: str) -> str:
     return sanitize_for_prompt(abstract, max_length=5000, delimiter="paper_abstract")
 
 
+def sanitize_paper_content(content: str, max_length: int = 50000) -> str:
+    """Sanitize paper body content with format string injection protection.
+
+    Unlike other sanitize functions, this also escapes curly braces to prevent
+    Python str.format() injection when the content is interpolated into templates.
+    Paper body content is adversary-controlled (raw PDF text) and may contain
+    format string placeholders like {tone} or {0.__class__}.
+
+    Args:
+        content: Paper body content from PDF extraction.
+        max_length: Maximum content length before truncation (default: 50000).
+
+    Returns:
+        str: Content with braces escaped, wrapped in <paper_content> delimiters.
+    """
+    # Reason: Escape braces BEFORE truncation to prevent splitting a {{ pair
+    escaped = content.replace("{", "{{").replace("}", "}}")
+    return sanitize_for_prompt(escaped, max_length=max_length, delimiter="paper_content")
+
+
 def sanitize_review_text(review: str) -> str:
     """Sanitize review text with 50000 character limit.
 
