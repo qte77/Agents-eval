@@ -68,3 +68,37 @@ package.json
 
 # Frontend libraries (Pyvis uses CDN, not local lib/)
 /lib/
+
+# Claude Code sandbox bug — bwrap creates 0-byte phantom files in working dir
+# Root cause: bwrap bind-mounts resolve paths against cwd instead of $HOME,
+#   and denyWithinAllow strips .git/ prefix from git internals.
+# Mitigation options (pick one):
+#   1. This .gitignore block (cosmetic — hides from git status)
+#   2. Disable sandbox: "sandbox": {"enabled": false} in .claude/settings.json
+#      (devcontainer already provides container-level isolation)
+#   3. PostToolUse cleanup hook in .claude/settings.json:
+#      "hooks": {"PostToolUse": [{"matcher": "Bash",
+#        "hooks": [{"type": "command", "command": "rm -f HEAD config ..."}]}]}
+# Tracking: https://github.com/anthropics/claude-code/issues/17727 (open)
+# Closed incomplete: https://github.com/anthropics/claude-code/issues/17087
+#
+# git internals (denyWithinAllow drops .git/ prefix)
+/HEAD
+/config
+/hooks
+/objects
+/refs
+# shell dotfiles (cwd instead of $HOME)
+/.bash_profile
+/.bashrc
+/.profile
+/.zprofile
+/.zshrc
+/.gitconfig
+/.gitmodules
+/.ripgreprc
+# created as empty files, not dirs — bypass trailing-slash gitignore patterns
+/.claude/agents
+/.claude/commands
+/.idea
+/.vscode
