@@ -21,7 +21,7 @@
         "src/app/agents/orchestration.py",
         "tests/agents/test_orchestration.py"
       ],
-      "status": "completed",
+      "status": "passed",
       "wave": 1,
       "completed_at": "2026-02-21T19:00:00",
       "content_hash": "ca3ca48dc085ebf2a19f1823a372c28403c29bb3f42d4dc098debf4da3f496bf",
@@ -187,7 +187,7 @@
         "src/app/data_models/app_models.py",
         "tests/data_models/test_app_models.py"
       ],
-      "status": "completed",
+      "status": "passed",
       "wave": 1,
       "completed_at": "2026-02-21T19:00:00",
       "content_hash": "cf2d54c19da9166d0a5af570983d01330992438fcb26f9a95128f08e48038d4d",
@@ -289,7 +289,7 @@
         "tests/data_utils/test_datasets_peerread.py",
         "tests/data_utils/test_datasets_peerread_coverage.py"
       ],
-      "status": "completed",
+      "status": "passed",
       "wave": 1,
       "completed_at": "2026-02-21T19:00:00",
       "content_hash": "7e5b3e2a2bffb987c3b82637367aaaa7b8f41be970e040a9d750ef0376ed9123",
