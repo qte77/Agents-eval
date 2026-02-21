@@ -50,7 +50,19 @@ def get_api_key(
 
 
 def get_provider_config(provider: str, providers: dict[str, ProviderConfig]) -> ProviderConfig:
-    """Retrieve configuration settings for the specified provider."""
+    """Retrieve configuration settings for the specified provider.
+
+    Args:
+        provider: Provider name key used to look up the configuration.
+        providers: Mapping of provider name to ProviderConfig instances.
+
+    Returns:
+        ProviderConfig for the requested provider.
+
+    Raises:
+        KeyError: If the provider is not found in the providers mapping.
+        Exception: On unexpected lookup failures.
+    """
     try:
         return providers[provider]
     except KeyError as e:
