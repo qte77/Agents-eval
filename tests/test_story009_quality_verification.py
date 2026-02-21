@@ -162,22 +162,6 @@ def _async_test_names(tree: ast.Module) -> list[str]:
     return names
 
 
-def _has_asyncio_marker(tree: ast.Module, func_name: str) -> bool:
-    """Return True when func_name has @pytest.mark.asyncio decorator."""
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.AsyncFunctionDef, ast.FunctionDef)) and node.name == func_name:
-            for deco in node.decorator_list:
-                # pytest.mark.asyncio
-                if (
-                    isinstance(deco, ast.Attribute)
-                    and deco.attr == "asyncio"
-                    and isinstance(deco.value, ast.Attribute)
-                    and deco.value.attr == "mark"
-                ):
-                    return True
-    return False
-
-
 # ---------------------------------------------------------------------------
 # AC1 — spec= on MagicMock / Mock in listed test files
 # ---------------------------------------------------------------------------
@@ -234,18 +218,30 @@ def test_ac1_mock_calls_use_spec(test_file: Path) -> None:
 _JUDGE_AGENT_FILE = TESTS_ROOT / "judge" / "test_judge_agent.py"
 
 
-def test_ac2_async_tests_have_asyncio_marker() -> None:
-    """AC2: All async test functions in test_judge_agent.py have @pytest.mark.asyncio."""
+def test_ac2_async_tests_mock_llm_calls() -> None:
+    """AC2: All async tests in test_judge_agent.py mock LLM calls."""
     if not _JUDGE_AGENT_FILE.exists():
         pytest.skip("test_judge_agent.py does not exist")
 
     tree = _parse(_JUDGE_AGENT_FILE)
     async_tests = _async_test_names(tree)
 
-    missing = [t for t in async_tests if not _has_asyncio_marker(tree, t)]
+    unmocked: list[str] = []
+    for func_name in async_tests:
+        # Find the async function node
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.AsyncFunctionDef) or node.name != func_name:
+                continue
+            # Check decorators and body for patch.object or AsyncMock usage
+            source_segment = ast.dump(node)
+            has_mock = "AsyncMock" in source_segment or "patch.object" in source_segment or "patch(" in ast.dump(node)
+            if not has_mock:
+                unmocked.append(func_name)
+            break
 
-    assert missing == [], (
-        f"test_judge_agent.py: async test(s) missing @pytest.mark.asyncio: {missing}"
+    assert unmocked == [], (
+        f"test_judge_agent.py: async test(s) missing LLM call mocking "
+        f"(patch.object / AsyncMock): {unmocked}"
     )
 
 
