@@ -194,11 +194,10 @@ _AC1_FILES = [
     TESTS_ROOT / "gui" / "test_story013_ux_fixes.py",
     TESTS_ROOT / "gui" / "test_story007_gui_polish.py",
     TESTS_ROOT / "benchmark" / "test_sweep_runner.py",
+    TESTS_ROOT / "agents" / "test_logfire_instrumentation.py",
+    TESTS_ROOT / "judge" / "test_trace_skip_warning.py",
+    TESTS_ROOT / "app" / "test_cli_token_limit.py",
 ]
-
-# Exceptions: call sites where spec= is intentionally omitted (mock the mock itself)
-# Each entry is (filename_stem, approximate_lineno_tolerance) — kept minimal.
-_AC1_KNOWN_SPECLESS_OK: set[str] = set()
 
 
 @pytest.mark.parametrize("test_file", _AC1_FILES, ids=lambda p: p.name)
