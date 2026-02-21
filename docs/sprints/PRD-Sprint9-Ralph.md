@@ -1,9 +1,9 @@
 ---
 title: Product Requirements Document - Agents-eval Sprint 9
-description: "Sprint 8 features (8 features, 14 stories) fully delivered. Sprint 9 scope TBD — sweep results UI and new work to be defined."
-version: 0.2.0
+description: "Sprint 9: 4 features — CC engine GUI wiring, deprecated manager.run() fix, AgentConfig typing, GUI layout refactor."
+version: 0.3.0
 created: 2026-02-19
-updated: 2026-02-19
+updated: 2026-02-21
 ---
 
 ## Project Overview
@@ -86,6 +86,86 @@ Sprint 8 features (8 features, 14 stories) have been fully implemented: tool bug
 - `src/gui/pages/run_app.py` (edit — CC branch in `_execute_query_background`)
 - `src/app/app.py` (edit — CC branch in `main()` or delegate to caller)
 - `tests/test_gui/test_session_state_wiring.py` (edit — CC engine path tests)
+
+---
+
+### Feature 2: Fix Deprecated `manager.run()` Call and Type Suppressions
+
+**Description**: `agent_system.py:543-551` uses the deprecated `manager.run()` PydanticAI API with 3 FIXME markers and broad `type: ignore` directives (`reportDeprecated`, `reportUnknownArgumentType`, `reportCallOverload`, `call-overload`). The `result.usage()` call also requires `type: ignore`. Migrate to the current PydanticAI `Agent.run()` API to remove all suppressions.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `manager.run()` replaced with current PydanticAI API (non-deprecated call)
+- [ ] AC2: All `type: ignore` comments on lines 548 and 551 removed — pyright passes cleanly
+- [ ] AC3: All 3 FIXME comments (lines 543-544, 550) removed
+- [ ] AC4: Agent execution produces identical results (same `execution_id`, same `result.output`)
+- [ ] AC5: `make validate` passes with no new type errors or test failures
+
+**Technical Requirements**:
+
+- Research current PydanticAI `Agent.run()` signature and migrate `mgr_cfg` dict unpacking accordingly
+- Verify `result.usage()` return type is properly typed after migration
+- Preserve `trace_collector` start/end calls and error handling structure
+- Mock PydanticAI agent in tests — never call real LLM providers
+
+**Files**:
+
+- `src/app/agents/agent_system.py` (edit — lines 538-551, migrate `manager.run()` call)
+- `tests/agents/test_agent_system.py` (edit — update/add tests for migrated call)
+
+---
+
+### Feature 3: Add Proper Type Annotation to `AgentConfig.tools` Field
+
+**Description**: `app_models.py:105-106` has a FIXME noting that `tools: list[Any]` should be `list[Callable[..., Awaitable[Any]]]`. The `Any` type bypasses static analysis and allows invalid tool registrations to pass silently. The correct type is known but was deferred due to Pydantic schema generation issues with callable types.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `tools` field uses `list[Callable[..., Awaitable[Any]]]` (or narrower type if feasible)
+- [ ] AC2: FIXME comment on line 105 removed
+- [ ] AC3: Pydantic schema generation still works (no `PydanticSchemaGenerationError`)
+- [ ] AC4: All existing agent creation paths pass type checking with the new annotation
+- [ ] AC5: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- May require adding `Callable` to `arbitrary_types_allowed` or using a Pydantic `TypeAdapter`/custom validator
+- Verify all call sites that populate `tools` pass the correct callable types
+- If `Callable[..., Awaitable[Any]]` causes schema generation errors, use `Annotated` with a custom `BeforeValidator` or `SkipValidation`
+
+**Files**:
+
+- `src/app/data_models/app_models.py` (edit — line 105-106, fix type annotation)
+- `tests/data_models/test_app_models.py` (edit — add test for tools field type validation)
+
+---
+
+### Feature 4: GUI Layout Refactor — Sidebar Tabs and Page Separation
+
+**Description**: `run_gui.py:43-44` has a TODO to restructure the GUI layout: create sidebar tabs, move settings to its own page, set `README.md` as the home page, and separate prompts into a dedicated page. Currently all pages are rendered inline without tab-based navigation.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: Sidebar uses `st.tabs` or equivalent navigation for page switching
+- [ ] AC2: Settings renders as a standalone page accessible from sidebar (not inline)
+- [ ] AC3: Home page displays project README.md content
+- [ ] AC4: Prompts renders as a standalone page accessible from sidebar (not inline)
+- [ ] AC5: All existing page functionality (Run App, Evaluation Results, Agent Graph) preserved
+- [ ] AC6: TODO comment on lines 43-44 removed
+- [ ] AC7: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- Use Streamlit's `st.navigation` / `st.Page` (Streamlit 1.36+) or `st.sidebar` radio/selectbox pattern matching existing codebase conventions
+- Preserve session state across page switches (existing `get_session_state_defaults()` must still work)
+- Load README.md via `pathlib.Path` read — no external fetch
+- Mock file reads in tests
+
+**Files**:
+
+- `src/run_gui.py` (edit — replace inline rendering with tab/page navigation)
+- `src/gui/pages/home.py` (edit — render README.md content)
+- `tests/test_gui/test_gui_navigation.py` (new — sidebar navigation and page rendering tests)
 
 ---
 
