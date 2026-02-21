@@ -317,7 +317,7 @@ class TestGeminiApiKeyViaConstructor:
 
             try:
                 models_mod.create_llm_model(endpoint_config)
-            except Exception:
+            except (ValueError, RuntimeError, ImportError):
                 pass  # We only care about the constructor args
 
             # Restore module

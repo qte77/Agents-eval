@@ -144,7 +144,7 @@ class TestRecommendationMatching:
         """AC3: 'not good' review must not be treated as positive recommendation."""
         reviews = [self._make_review("4", "not good enough for acceptance")]
 
-        result = create_evaluation_result(
+        create_evaluation_result(
             paper_id="p1",
             agent_review="not good enough for acceptance",
             ground_truth_reviews=reviews,

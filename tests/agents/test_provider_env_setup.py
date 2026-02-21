@@ -8,7 +8,6 @@ These tests verify the registry metadata and that no keys leak to os.environ.
 
 from app.data_models.app_models import PROVIDER_REGISTRY, AppEnv
 
-
 # MARK: --- Unit Tests: registry metadata ---
 
 
@@ -84,11 +83,13 @@ class TestSetupLlmEnvironmentIsNoOp:
         from app.llms.providers import setup_llm_environment
 
         with patch.dict(os.environ, {}, clear=True):
-            setup_llm_environment({
-                "cerebras": "cerebras-key-123",
-                "github": "github-key-456",
-                "openai": "openai-key-789",
-            })
+            setup_llm_environment(
+                {
+                    "cerebras": "cerebras-key-123",
+                    "github": "github-key-456",
+                    "openai": "openai-key-789",
+                }
+            )
 
             assert "CEREBRAS_API_KEY" not in os.environ
             assert "GITHUB_API_KEY" not in os.environ
