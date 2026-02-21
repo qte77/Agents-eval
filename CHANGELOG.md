@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docs: Sprint 9 PRD expanded to 13 features incorporating review findings
 - Commit skill updated for stats ordering and GPG signing
 - pytest CI workflow: replaced pip+Python 3.12 with uv+Python 3.13, added project deps install and `pull_request` trigger
+- `.claude/scripts/statusline.sh`: consolidated 12 separate `jq` invocations into single tab-delimited call; fixed threshold comments (`<` → `≤` to match `<=` operators); added POSIX trailing newline
 
 ### Removed
 
@@ -35,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `test_no_agentops_commented_code_in_login` hardcoded `/workspaces/` path broke pytest in GHA; replaced with `inspect.getfile()` for portability
+- Sprint 9 Out of Scope stale link: `PRD-Sprint10.md` → `PRD-Sprint10-Ralph.md` after file rename
 - 24 broken URLs across landscape docs, further_reading, security-advisories (paper-qa repo, OWASP MAESTRO, StableToolBench org, OpenAI Operator, MatterGen publication)
 - `lychee.toml`: accept 400/415/500 status codes, exclude `.venv` and `.github/workflows`, add `allenai.org` and Springer DOI to excludes
 - Broken local file links: `architecture.md` landscape refs, `agent_eval_metrics.md` further_reading ref, `landscape.md` trace_processors path, `roadmap.md` sprint archive paths, `src/examples/README.md` relative paths

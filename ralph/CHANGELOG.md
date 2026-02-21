@@ -51,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **PRD Parser Compliance**: Removed 45 blank lines between section headers (`**Acceptance Criteria**:`, `**Technical Requirements**:`, `**Files**:`) and first list items across Sprint 9 (27) and Sprint 10 (18) — parser was producing `AC: 0, files: 0` for every story
+- **PRD Template Conformance**: Both Sprint 9/10 PRDs — nested `#### File-Conflict Dependencies` inside `### Notes for CC Agent Teams`, replaced inline `- **Orchestration Waves**:` bullet with `####` heading, removed duplicate `### Story Breakdown` heading, moved `## Non-Functional Requirements` after `## Functional Requirements`
+- **STORY-009 Wave Conflict**: Moved STORY-009 from Wave 1 to Wave 4 (undeclared file conflict with STORY-006 on `test_llm_evaluation_managers.py`); updated file-conflict table to STORY-NNN notation with new conflict row
 - **Pytest Collection ERRORs**: `compare_test_failures` and `capture_test_baseline` now detect `ERROR` lines in addition to `FAILED` lines — collection errors no longer invisible to baseline comparison
 - **Missing ruff_tests in Baseline**: Solo mode baseline pipeline now runs `make ruff` + `make ruff_tests` (previously only `make ruff`)
 - **Killed Pytest Detection**: Exit 137/143 (OOM/SIGTERM) now returns hard failure with retry context — no longer treated as valid test result with partial output
