@@ -16,7 +16,7 @@ Information disclosure via Server-Side Request Forgery (SSRF) through malicious 
 
 **Impact**:
 
-- Agents could be tricked into accessing internal AWS metadata (http://169.254.169.254/latest/meta-data/)
+- Agents could be tricked into accessing internal AWS metadata (<http://169.254.169.254/latest/meta-data/>)
 - External service enumeration and port scanning
 - Bypass of network access controls
 - Information disclosure from internal services

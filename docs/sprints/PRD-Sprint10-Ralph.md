@@ -33,6 +33,7 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 **Description**: The "Claude Code" radio button in `run_app.py` sets `engine="cc"` and passes it to `app.main()`, but `main()` only logs the value and unconditionally runs the MAS PydanticAI pipeline. The CLI (`run_cli.py:126-138`) correctly branches to `cc_engine.run_cc_solo`/`run_cc_teams` — the GUI must do the same.
 
 **Acceptance Criteria**:
+
 - [ ] AC1: Selecting "Claude Code" in the GUI radio button invokes `cc_engine.run_cc_solo()` (or `run_cc_teams()` if teams enabled) instead of the MAS pipeline
 - [ ] AC2: CC engine results are stored in session state and available to Evaluation Results and Agent Graph pages
 - [ ] AC3: MAS-specific controls (sub-agents, provider, token limit) remain hidden when CC engine is selected (existing behavior preserved)
@@ -41,6 +42,7 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 - [ ] AC6: `run_cc_teams` respects `timeout` parameter — process is killed after timeout expires (Review F13)
 
 **Technical Requirements**:
+
 - Add CC engine branch in `_execute_query_background()` or `app.main()` mirroring `run_cli.py:126-138` logic
 - Handle subprocess execution within Streamlit's threading model (background thread already exists)
 - Wire CC results back through `_prepare_result_dict()` to populate `execution_graph` and `composite_result` in session state
@@ -48,6 +50,7 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 - Mock `subprocess.run` in tests — never call real `claude` CLI
 
 **Files**:
+
 - `src/gui/pages/run_app.py` (edit — CC branch in `_execute_query_background`)
 - `src/app/app.py` (edit — CC branch in `main()` or delegate to caller)
 - `src/app/engines/cc_engine.py` (edit — enforce timeout in `run_cc_teams`)
@@ -62,6 +65,7 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 **Description**: `agent_system.py:543-551` uses the deprecated `manager.run()` PydanticAI API with 3 FIXME markers and broad `type: ignore` directives (`reportDeprecated`, `reportUnknownArgumentType`, `reportCallOverload`, `call-overload`). The `result.usage()` call also requires `type: ignore`. Additionally, `RunContext` may be deprecated in the installed PydanticAI version (Review F6), and `_model_name` private attribute access at `agent_system.py:537` should use the public `model_name` API (Review F23). Migrate all three patterns in one pass.
 
 **Acceptance Criteria**:
+
 - [ ] AC1: `manager.run()` replaced with current PydanticAI API (non-deprecated call)
 - [ ] AC2: All `type: ignore` comments on lines 548 and 551 removed — pyright passes cleanly
 - [ ] AC3: All 3 FIXME comments (lines 543-544, 550) removed
@@ -71,6 +75,7 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 - [ ] AC7: `make validate` passes with no new type errors or test failures
 
 **Technical Requirements**:
+
 - Research current PydanticAI `Agent.run()` signature and migrate `mgr_cfg` dict unpacking accordingly
 - Verify `result.usage()` return type is properly typed after migration
 - Verify `RunContext` deprecation status: `python -c "from pydantic_ai import RunContext; print(RunContext)"`. If deprecated, update all tool function signatures in `agent_system.py` and `peerread_tools.py` (note: `orchestration.py` is deleted by Sprint 9 Feature 1)
@@ -79,6 +84,7 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 - Mock PydanticAI agent in tests — never call real LLM providers
 
 **Files**:
+
 - `src/app/agents/agent_system.py` (edit — lines 537-551, migrate `manager.run()`, fix `_model_name`, check `RunContext`)
 - `src/app/tools/peerread_tools.py` (edit — update `RunContext` import if deprecated)
 - `tests/agents/test_agent_system.py` (edit — update/add tests for migrated call)
@@ -90,6 +96,7 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 **Description**: `run_gui.py:43-44` has a TODO to restructure the GUI layout: create sidebar tabs, move settings to its own page, set `README.md` as the home page, and separate prompts into a dedicated page. Currently all pages are rendered inline without tab-based navigation.
 
 **Acceptance Criteria**:
+
 - [ ] AC1: Sidebar uses `st.tabs` or equivalent navigation for page switching
 - [ ] AC2: Settings renders as a standalone page accessible from sidebar (not inline)
 - [ ] AC3: Home page displays project README.md content
@@ -99,12 +106,14 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 - [ ] AC7: `make validate` passes with no regressions
 
 **Technical Requirements**:
+
 - Use Streamlit's `st.navigation` / `st.Page` (Streamlit 1.36+) or `st.sidebar` radio/selectbox pattern matching existing codebase conventions
 - Preserve session state across page switches (existing `get_session_state_defaults()` must still work)
 - Load README.md via `pathlib.Path` read — no external fetch
 - Mock file reads in tests
 
 **Files**:
+
 - `src/run_gui.py` (edit — replace inline rendering with tab/page navigation)
 - `src/gui/pages/home.py` (edit — render README.md content)
 - `tests/test_gui/test_gui_navigation.py` (new — sidebar navigation and page rendering tests)
@@ -116,6 +125,7 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 **Description**: Two data layer findings: (1) `_validate_papers()` and `load_papers()` use `except Exception` covering all failure modes — `KeyError`, `ValidationError`, and `OSError` all land in the same handler (Review F9), (2) `_validate_download_results` logs "continuing" then immediately raises, contradicting the log message (Review F17).
 
 **Acceptance Criteria**:
+
 - [ ] AC1: `_validate_papers()` separates `KeyError`/`ValidationError` (expected data quality) from `OSError`/`JSONDecodeError` (infrastructure failures) — infrastructure failures are re-raised (Review F9)
 - [ ] AC2: `load_papers()` exception handling similarly narrowed (Review F9)
 - [ ] AC3: `_validate_download_results` either removes the misleading "continuing" warning or makes the raise conditional (only raise if ALL downloads failed) (Review F17)
@@ -123,10 +133,12 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 - [ ] AC5: `make validate` passes with no regressions
 
 **Technical Requirements**:
+
 - F9: Split exception handlers: `except (KeyError, ValidationError) as e: logger.warning(...)` + `except (OSError, JSONDecodeError) as e: raise`
 - F17: Either `logger.warning("Some downloads failed, continuing with partial data")` without raise (if partial success is acceptable), or remove the warning and just raise
 
 **Files**:
+
 - `src/app/data_utils/datasets_peerread.py` (edit — lines 109-112, 734, 793-795)
 - `tests/data_utils/test_datasets_peerread.py` (edit — test narrowed exception paths)
 
@@ -139,6 +151,7 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 **Description**: Four methods (`_construct_url`, `_extract_paper_id_from_filename`, `_get_cache_filename`, `_save_file_data`) each independently dispatch on the same three `data_type` values (`"reviews"`, `"parsed_pdfs"`, `"pdfs"`) via `if/elif/else` chains. This is the pattern documented in AGENT_LEARNINGS.md as "Repeated Dispatch Chains Inflate File Complexity" (Review F10).
 
 **Acceptance Criteria**:
+
 - [ ] AC1: A `DATA_TYPE_SPECS` registry dict replaces all four dispatch chains
 - [ ] AC2: Adding a new data type requires only a dict entry, not changes to four methods
 - [ ] AC3: Invalid `data_type` values are caught at entry with a descriptive error
@@ -146,12 +159,14 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 - [ ] AC5: `make validate` passes with no regressions
 
 **Technical Requirements**:
+
 - Define `@dataclass class DataTypeSpec` with fields: `url_suffix`, `filename_pattern`, `cache_prefix`, `is_json`, `save_handler`
 - Create `DATA_TYPE_SPECS: dict[str, DataTypeSpec]` with entries for `"reviews"`, `"parsed_pdfs"`, `"pdfs"`
 - Replace each `if/elif/else` chain with `spec = DATA_TYPE_SPECS[data_type]` lookup
 - Validate `data_type` once at `download_venue_split` entry point
 
 **Files**:
+
 - `src/app/data_utils/datasets_peerread.py` (edit — lines 245-254, 272-278, 416-424, 439-444)
 - `tests/data_utils/test_datasets_peerread.py` (edit — test registry lookup and invalid data_type)
 
@@ -162,6 +177,7 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 **Description**: Six test files use `inspect.getsource(module)` then assert string presence (e.g., `'engine != "cc"' in source`). This pattern breaks on code reformatting, passes if the string appears anywhere in source, and couples tests to implementation rather than behavior. Identified as a top-3 anti-pattern by prevalence in the tests parallel review (H5, H6, M14, M15 — ~20 occurrences across 6 files).
 
 **Acceptance Criteria**:
+
 - [ ] AC1: `tests/utils/test_weave_optional.py` — `inspect.getsource` replaced with behavioral test: import module with weave absent, verify `op()` is a callable no-op decorator (tests-review H5)
 - [ ] AC2: `tests/gui/test_story012_a11y_fixes.py` — all 11 `inspect.getsource` occurrences replaced with Streamlit mock-based assertions (tests-review H6)
 - [ ] AC3: `tests/gui/test_story013_ux_fixes.py` — source inspection replaced with behavioral widget assertions (tests-review H6)
@@ -172,12 +188,14 @@ Same TDD workflow and mandatory practices as Sprint 9. See [PRD-Sprint9-Ralph.md
 - [ ] AC8: `make validate` passes with no regressions
 
 **Technical Requirements**:
+
 - Replace source-level string assertions with behavioral tests: call the function with relevant inputs and assert outputs
 - For UI tests, verify widgets called via Streamlit mocks instead of inspecting source
 - For CLI tests, remove redundant source inspections where behavioral `parse_args` tests already cover the logic
 - Run `grep -r "inspect.getsource" tests/` to verify zero remaining occurrences
 
 **Files**:
+
 - `tests/utils/test_weave_optional.py` (edit)
 - `tests/gui/test_story012_a11y_fixes.py` (edit)
 - `tests/gui/test_story013_ux_fixes.py` (edit)

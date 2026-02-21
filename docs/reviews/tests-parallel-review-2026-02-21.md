@@ -382,24 +382,24 @@ references:
 
 ### High Priority (next sprint)
 
-3. **Add `spec=` to all `MagicMock()`** across the codebase (H1-H3, H13) -- grep for `MagicMock()` and `Mock()` without `spec=`, add appropriate class specs. Start with security tests, then judge/, then gui/.
-4. **Replace `inspect.getsource` tests** with behavioral tests (H5, H6) -- 6 files, ~20 occurrences
-5. **Delete dead test code** -- stub test in `test_peerread_tools.py` (H7), empty class in `test_composite_scorer.py` (M9)
-6. **Add `@pytest.mark.asyncio`** to async tests in `test_judge_agent.py` (H10)
-7. **Fix thread-safety test** in `test_trace_store.py` (H9)
-8. **Merge duplicate test files** -- `test_agent_factories_coverage.py` into `test_agent_factories.py` (H12), `test_datasets_peerread_coverage.py` into main (L6)
+1. **Add `spec=` to all `MagicMock()`** across the codebase (H1-H3, H13) -- grep for `MagicMock()` and `Mock()` without `spec=`, add appropriate class specs. Start with security tests, then judge/, then gui/.
+2. **Replace `inspect.getsource` tests** with behavioral tests (H5, H6) -- 6 files, ~20 occurrences
+3. **Delete dead test code** -- stub test in `test_peerread_tools.py` (H7), empty class in `test_composite_scorer.py` (M9)
+4. **Add `@pytest.mark.asyncio`** to async tests in `test_judge_agent.py` (H10)
+5. **Fix thread-safety test** in `test_trace_store.py` (H9)
+6. **Merge duplicate test files** -- `test_agent_factories_coverage.py` into `test_agent_factories.py` (H12), `test_datasets_peerread_coverage.py` into main (L6)
 
 ### Medium Priority (subsequent sprint)
 
-9. **Create subdirectory `conftest.py` files** for `tests/agents/`, `tests/tools/`, `tests/evals/`, `tests/judge/` (M5, M6)
-10. **Add `@pytest.mark.parametrize`** for repetitive tests in `test_models.py`, `test_composite_scorer.py`, `test_paper_selection.py` (M7, M8, M2)
-11. **Replace `assert isinstance()`** with behavioral assertions (H4, M1, M2)
-12. **Remove `sys.path.insert` hacks** from integration tests (M13)
-13. **Strengthen weak assertions** in `test_suggestion_engine.py` and `test_report_generator.py` (M18, L5)
+1. **Create subdirectory `conftest.py` files** for `tests/agents/`, `tests/tools/`, `tests/evals/`, `tests/judge/` (M5, M6)
+2. **Add `@pytest.mark.parametrize`** for repetitive tests in `test_models.py`, `test_composite_scorer.py`, `test_paper_selection.py` (M7, M8, M2)
+3. **Replace `assert isinstance()`** with behavioral assertions (H4, M1, M2)
+4. **Remove `sys.path.insert` hacks** from integration tests (M13)
+5. **Strengthen weak assertions** in `test_suggestion_engine.py` and `test_report_generator.py` (M18, L5)
 
 ### Low Priority (backlog)
 
-14. Replace `hasattr()` checks with behavioral tests (M4)
-15. Add missing test coverage for sparse files (`test_common_settings.py`, `test_logfire_config.py`) (L2, L3)
-16. Replace `tempfile` with `tmp_path` in integration tests (L7, L8)
-17. Add `@pytest.mark.slow` to performance baselines (L10)
+1. Replace `hasattr()` checks with behavioral tests (M4)
+2. Add missing test coverage for sparse files (`test_common_settings.py`, `test_logfire_config.py`) (L2, L3)
+3. Replace `tempfile` with `tmp_path` in integration tests (L7, L8)
+4. Add `@pytest.mark.slow` to performance baselines (L10)

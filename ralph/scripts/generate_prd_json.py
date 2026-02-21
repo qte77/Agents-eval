@@ -140,8 +140,9 @@ def _extract_acceptance(content: str) -> list[str]:
     """
     acceptance: list[str] = []
     # Reason: PRD uses varying indentation (0 or 2 spaces) before "- [ ]"
+    # \n? tolerates optional blank line between header and first item (markdownlint)
     acceptance_match = re.search(
-        r"\*\*Acceptance Criteria\*\*:\s*\n((?:\s*- \[[x ]\][^\n]+\n)+)",
+        r"\*\*Acceptance Criteria\*\*:\s*\n\n?((?:\s*- \[[x ]\][^\n]+\n)+)",
         content,
         re.DOTALL,
     )
@@ -165,8 +166,9 @@ def _extract_files(content: str) -> list[str]:
     """
     files: list[str] = []
     # Reason: PRD uses varying indentation (0 or 2 spaces) before "- `path`"
+    # \n? tolerates optional blank line between header and first item (markdownlint)
     files_match = re.search(
-        r"\*\*Files(?:\s+Implemented)?\*\*:\s*\n((?:\s*- `[^`]+`[^\n]*\n?)+)",
+        r"\*\*Files(?:\s+Implemented)?\*\*:\s*\n\n?((?:\s*- `[^`]+`[^\n]*\n?)+)",
         content,
         re.DOTALL,
     )
@@ -195,8 +197,9 @@ def _extract_tech_requirements(content: str) -> list[str]:
     """
     requirements: list[str] = []
     # Reason: Match consecutive "- " lines, stopping at code fences or non-list lines
+    # \n? tolerates optional blank line between header and first item (markdownlint)
     match = re.search(
-        r"\*\*Technical Requirements\*\*:\s*\n((?:- [^\n]+\n)+)",
+        r"\*\*Technical Requirements\*\*:\s*\n\n?((?:- [^\n]+\n)+)",
         content,
         re.DOTALL,
     )
