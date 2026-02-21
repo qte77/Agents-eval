@@ -606,9 +606,7 @@ def compute_waves(stories: list[Story]) -> None:
     while remaining:
         wave_num += 1
         frontier: list[Story] = [
-            s
-            for s in remaining
-            if all(d in placed or d not in story_map for d in s["depends_on"])
+            s for s in remaining if all(d in placed or d not in story_map for d in s["depends_on"])
         ]
         if not frontier:
             # Circular dependency or unresolvable — assign wave 0
@@ -764,9 +762,11 @@ def main() -> int:
         waves.setdefault(s["wave"], []).append(s["id"])
     for wave_num in sorted(waves):
         if wave_num == 0:
-            ids = [sid for sid in waves[0] if any(
-                st["id"] == sid and st.get("status") == "passed" for st in all_stories
-            )]
+            ids = [
+                sid
+                for sid in waves[0]
+                if any(st["id"] == sid and st.get("status") == "passed" for st in all_stories)
+            ]
             if ids:
                 print(f"  Completed: {', '.join(ids)}")
         else:
