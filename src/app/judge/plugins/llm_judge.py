@@ -113,7 +113,6 @@ class LLMJudgePlugin(EvaluatorPlugin):
             "tier2_quality_metrics": {
                 "technical_accuracy": result.technical_accuracy,
                 "constructiveness": result.constructiveness,
-                "clarity": result.clarity,
                 "planning_rationality": result.planning_rationality,
             },
             "tier2_model_used": result.model_used,

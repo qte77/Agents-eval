@@ -66,7 +66,6 @@ class Tier2Result(BaseModel):
 
     technical_accuracy: float = Field(ge=0.0, le=1.0, description="Technical accuracy score")
     constructiveness: float = Field(ge=0.0, le=1.0, description="Constructiveness score")
-    clarity: float = Field(ge=0.0, le=1.0, description="Clarity and coherence score")
     planning_rationality: float = Field(ge=0.0, le=1.0, description="Planning quality score")
     overall_score: float = Field(ge=0.0, le=1.0, description="Weighted LLM judge score")
     model_used: str = Field(description="LLM model used for evaluation")

@@ -425,7 +425,6 @@ Provide scores and brief explanation."""
             return Tier2Result(
                 technical_accuracy=technical_score_float,
                 constructiveness=constructiveness_score_float,
-                clarity=constructiveness_score_float,
                 planning_rationality=planning_score_float,
                 overall_score=overall_score,
                 model_used=f"{self.provider}/{self.model}",
@@ -453,7 +452,8 @@ Provide scores and brief explanation."""
 
             return summary[:500]  # Limit length for API efficiency
 
-        except Exception:
+        except (AttributeError, KeyError, TypeError) as e:
+            logger.debug(f"_extract_planning_decisions failed: {e}", exc_info=True)
             return "Limited trace data available"
 
     def _fallback_constructiveness_check(self, review: str) -> float:
@@ -526,7 +526,6 @@ Provide scores and brief explanation."""
         return Tier2Result(
             technical_accuracy=semantic_score,
             constructiveness=constructiveness_score,
-            clarity=constructiveness_score,
             planning_rationality=planning_score,
             overall_score=overall_score,
             model_used="fallback_traditional",
