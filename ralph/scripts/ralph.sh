@@ -45,6 +45,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Source libraries
 source "$SCRIPT_DIR/lib/common.sh"
 source "$SCRIPT_DIR/lib/baseline.sh"
+source "$SCRIPT_DIR/lib/teams.sh"
 
 # Helpers
 commit_count() { git rev-list --count HEAD -- 2>/dev/null || echo 0; }
@@ -163,18 +164,6 @@ get_next_story() {
 # of the dependency graph defined by each story's depends_on array.
 # Within a wave, stories run in parallel (one teammate each); the next
 # wave starts after the current one completes.
-get_unblocked_stories() {
-    local completed=$(jq -r '[.stories[] | select(.status == "passed") | .id] | @json' "$PRD_JSON")
-
-    # Reason: "in_progress" included so Ralph resumes interrupted stories after a crash
-    jq -r --argjson completed "$completed" '
-      .stories[]
-      | select(.status == "pending" or .status == "failed" or .status == "in_progress")
-      | select((.depends_on // []) - $completed | length == 0)
-      | .id
-    ' "$PRD_JSON"
-}
-
 # Print dependency wave plan and blocking tree for remaining stories.
 # Uses iterative BFS: each wave is the frontier of unblocked incomplete stories.
 # Output goes to both log and progress file for visibility.
@@ -324,17 +313,6 @@ print_dependency_tree() {
 # Run full validation at wave boundaries (teams mode only).
 # Non-blocking: cross-story issues are logged but don't halt the pipeline.
 # The next wave's stories will address any issues found here.
-run_wave_checkpoint() {
-    log_info "===== Wave Checkpoint: Full Validation ====="
-    if make --no-print-directory validate 2>&1 | tee /tmp/claude/ralph_wave_checkpoint.log; then
-        log_info "Wave checkpoint PASSED"
-        return 0
-    else
-        log_warn "Wave checkpoint found cross-story issues (non-blocking, logged for next wave)"
-        return 0  # Non-blocking — issues logged, next wave's stories will fix them
-    fi
-}
-
 # Get story details
 get_story_details() {
     local story_id="$1"
@@ -461,35 +439,9 @@ execute_story() {
 
     # Teams mode: append current wave (independent unblocked stories) for delegation
     if [ "$RALPH_TEAMS" = "true" ]; then
-        local other_stories
-        other_stories=$(get_unblocked_stories | grep -v "^${story_id}$" || true)
-        if [ -n "$other_stories" ]; then
-            {
-                echo ""
-                echo "## Team Mode: Delegate Independent Stories"
-                echo "Spawn one teammate per story using the Task tool."
-                echo "Each follows TDD: RED [RED] → GREEN [GREEN] → REFACTOR [REFACTOR]."
-                echo "Skills: \`testing-python\`, \`implementing-python\`, \`reviewing-code\`."
-                echo ""
-            } >> "$iteration_prompt"
-            local sid
-            for sid in $other_stories; do
-                local sdetails
-                sdetails=$(get_story_details "$sid")
-                local stitle
-                stitle=$(echo "$sdetails" | cut -d'|' -f1)
-                local sdesc
-                sdesc=$(echo "$sdetails" | cut -d'|' -f2)
-                {
-                    echo "### $sid: $stitle"
-                    echo "$sdesc"
-                    echo ""
-                } >> "$iteration_prompt"
-            done
-            local delegate_count
-            delegate_count=$(echo "$other_stories" | wc -l)
-            log_info "Team mode: delegating $delegate_count additional story(ies)"
-        fi
+        local delegate_count
+        delegate_count=$(teams_append_delegation_prompt "$story_id" "$iteration_prompt")
+        [ "$delegate_count" -gt 0 ] && log_info "Team mode: delegating $delegate_count additional story(ies)"
     fi
 
     # Mark log position before agent execution
@@ -512,7 +464,7 @@ execute_story() {
     local monitor_stories=("$story_id")
     if [ "$RALPH_TEAMS" = "true" ]; then
         local wave_others
-        wave_others=$(get_unblocked_stories | grep -v "^${story_id}$" || true)
+        wave_others=$(teams_get_wave_peers "$story_id")
         if [ -n "$wave_others" ]; then
             while IFS= read -r ws; do
                 monitor_stories+=("$ws")
@@ -637,40 +589,7 @@ check_tdd_commits() {
     # touches a file in the story's files array. File-only matching (2A) missed
     # RED commits that create test files not listed in the files array.
     if [ "$RALPH_TEAMS" = "true" ]; then
-        local story_files
-        story_files=$(jq -r --arg id "$story_id" \
-            '.stories[] | select(.id == $id) | .files // [] | .[]' "$PRD_JSON" 2>/dev/null || true)
-
-        local filtered_commits=""
-        local commit_hash
-        while IFS= read -r line; do
-            commit_hash=$(echo "$line" | cut -d' ' -f1)
-            local match=false
-
-            # Check 1: commit message mentions story ID
-            if echo "$line" | grep -qF "$story_id"; then
-                match=true
-            fi
-
-            # Check 2: commit touches a file in the story's files array
-            if [ "$match" = "false" ] && [ -n "$story_files" ]; then
-                local changed_files
-                changed_files=$(git diff-tree --no-commit-id --name-only -r "$commit_hash" 2>/dev/null || true)
-                local sf
-                while IFS= read -r sf; do
-                    if echo "$changed_files" | grep -qF "$sf"; then
-                        match=true
-                        break
-                    fi
-                done <<< "$story_files"
-            fi
-
-            if [ "$match" = "true" ]; then
-                filtered_commits="${filtered_commits:+$filtered_commits
-}$line"
-            fi
-        done <<< "$recent_commits"
-        recent_commits="$filtered_commits"
+        recent_commits=$(teams_filter_commits_for_story "$story_id" "$recent_commits" "$PRD_JSON")
 
         new_commits=$(echo "$recent_commits" | grep -c . || true)
         if [ "$new_commits" -eq 0 ]; then
@@ -791,76 +710,6 @@ print_progress() {
     log_info "Progress: $pct% ($passing/$total stories) | remaining: $remaining$eta_suffix"
 }
 
-# Verify teammate stories after primary story passes (teams mode).
-# Runs TDD commit check and scoped quality checks for each wave-peer story.
-# Args:
-#   $1 - primary story ID (to exclude from verification)
-#   $2 - commits_before count (for TDD attribution)
-verify_teammate_stories() {
-    local primary_id="$1"
-    local commits_before="$2"
-
-    local teammate_stories
-    teammate_stories=$(get_unblocked_stories | grep -v "^${primary_id}$" || true)
-
-    if [ -z "$teammate_stories" ]; then
-        return 0
-    fi
-
-    log_info "===== Verifying Teammate Stories ====="
-
-    local type_check_needed=false
-    local sid
-
-    for sid in $teammate_stories; do
-        log_info "Verifying teammate story: $sid"
-
-        # TDD commit check (hybrid attribution)
-        if ! check_tdd_commits "$sid" "$commits_before"; then
-            log_warn "Teammate story $sid: TDD verification failed"
-            update_story_status "$sid" "failed"
-            continue
-        fi
-
-        # Scoped quality checks (ruff, complexity, tests)
-        local sid_failed=false
-
-        if ! run_ruff_scoped "$sid" "$PRD_JSON"; then
-            log_warn "Teammate story $sid: ruff check failed"
-            sid_failed=true
-        fi
-
-        if ! run_complexity_scoped "$sid" "$PRD_JSON"; then
-            log_warn "Teammate story $sid: complexity check failed"
-            sid_failed=true
-        fi
-
-        local teammate_test_log="/tmp/claude/ralph_teammate_${sid}_tests.log"
-        if ! run_tests_scoped "$sid" "$PRD_JSON" "$teammate_test_log"; then
-            log_warn "Teammate story $sid: tests failed"
-            sid_failed=true
-        fi
-
-        if [ "$sid_failed" = "true" ]; then
-            update_story_status "$sid" "failed"
-        else
-            update_story_status "$sid" "passed"
-            log_info "Teammate story $sid marked as PASSED"
-            type_check_needed=true
-        fi
-    done
-
-    # Run type_check once for the whole batch (not per-story)
-    if [ "$type_check_needed" = "true" ]; then
-        log_info "Running type check for teammate batch..."
-        if ! make --no-print-directory type_check 2>&1; then
-            log_warn "Type check failed for teammate batch (non-blocking)"
-        fi
-    fi
-
-    log_info "===== Teammate Verification Complete ====="
-}
-
 # Main loop
 main() {
     log_info "Starting Ralph Loop"
@@ -975,35 +824,9 @@ main() {
                 local new_commits=$((commits_after - commits_before))
                 if [ $new_commits -gt 0 ]; then
                     if [ "$RALPH_TEAMS" = "true" ]; then
-                        # Selectively revert only primary-story commits
-                        local reverted=0
-                        local story_files
-                        story_files=$(jq -r --arg id "$story_id" \
-                            '.stories[] | select(.id == $id) | .files // [] | .[]' "$PRD_JSON" 2>/dev/null || true)
-                        for hash in $(git log --format="%h" -n $new_commits); do
-                            local msg
-                            msg=$(git log --format="%s" -1 "$hash")
-                            local is_primary=false
-                            # Same hybrid attribution as check_tdd_commits
-                            if echo "$msg" | grep -qF "$story_id"; then
-                                is_primary=true
-                            elif [ -n "$story_files" ]; then
-                                local changed
-                                changed=$(git diff-tree --no-commit-id --name-only -r "$hash" 2>/dev/null || true)
-                                local sf
-                                while IFS= read -r sf; do
-                                    if echo "$changed" | grep -qF "$sf"; then
-                                        is_primary=true
-                                        break
-                                    fi
-                                done <<< "$story_files"
-                            fi
-                            if [ "$is_primary" = "true" ]; then
-                                git revert --no-edit "$hash" >/dev/null 2>&1 || true
-                                reverted=$((reverted + 1))
-                            fi
-                        done
-                        if [ $reverted -gt 0 ]; then
+                        local reverted
+                        reverted=$(teams_revert_primary_commits "$story_id" "$new_commits" "$PRD_JSON")
+                        if [ "$reverted" -gt 0 ]; then
                             log_warn "Reverted $reverted primary-story commit(s), preserved teammate commits"
                         else
                             log_warn "No primary-story commits to revert"
