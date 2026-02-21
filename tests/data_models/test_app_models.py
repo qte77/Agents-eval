@@ -122,6 +122,23 @@ class TestAgentConfigToolsValidation:
                 }
             )
 
+
+class TestCreateOptionalAgentToolsType:
+    """Verify _create_optional_agent propagates Tool[Any] typing."""
+
+    def test_tools_param_typed_as_tool_any(self) -> None:
+        """tools parameter should be list[Tool[Any]] | None, not list[Any] | None."""
+        import inspect
+
+        from app.agents.agent_system import _create_optional_agent
+
+        sig = inspect.signature(_create_optional_agent)
+        tools_param = sig.parameters["tools"]
+        annotation_str = str(tools_param.annotation)
+        assert "Tool" in annotation_str, (
+            f"Expected list[Tool[Any]] | None but got {annotation_str}"
+        )
+
     def test_plain_dict_rejected(self, test_model):
         """Plain dict in tools list must be rejected by validate_tools."""
         with pytest.raises(ValidationError, match="All tools must be Tool instances"):
