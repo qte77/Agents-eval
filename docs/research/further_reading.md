@@ -1056,7 +1056,7 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2023-12
 
-- [[2312.07559] PaperQA: Open-Source RAG Agent for Scientific Literature Question Answering](https://arxiv.org/abs/2312.07559), [gh/whitead/paper-qa](https://github.com/whitead/paper-qa) `[RESEARCH]` `[TOOL]`
+- [[2312.07559] PaperQA: Open-Source RAG Agent for Scientific Literature Question Answering](https://arxiv.org/abs/2312.07559), [gh/Future-House/paper-qa](https://github.com/Future-House/paper-qa) `[RESEARCH]` `[TOOL]`
   - RAG agent for answering questions over scientific literature with hallucination reduction and provenance tracking
   - Information retrieval across full-text articles with source attribution for transparent evaluation evidence
   - Cross-ref: 2505.18705 (AI-Researcher), 2501.10120 (PaSa), 2509.06917 (Paper2Agent)

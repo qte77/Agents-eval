@@ -13,7 +13,7 @@
 	ollama_start ollama_stop \
 	plantuml_serve plantuml_render \
 	pandoc_run writeup writeup_generate \
-	lint_md \
+	lint_links lint_md \
 	app_cli app_gui app_sweep app_profile \
 	cc_run_solo cc_collect_teams cc_run_teams \
 	lint_src lint_tests complexity duplication \
@@ -149,11 +149,12 @@ setup_pdf_converter:  ## Setup PDF converter tools. Usage: make setup_pdf_conver
 	fi
 
 # TODO: evaluate Python-native alternatives (pymarkdownlnt, mdformat, pylint R0801) to reduce npm dependency
-setup_npm_tools:  ## Setup npm-based dev tools (markdownlint, jscpd). Requires node.js and npm
+setup_npm_tools:  ## Setup npm-based dev tools (markdownlint, jscpd, lychee). Requires node.js and npm
 	echo "Setting up npm dev tools ..."
-	npm install -gs markdownlint-cli jscpd
+	npm install -gs markdownlint-cli jscpd lychee
 	echo "markdownlint version: $$(markdownlint --version)"
 	echo "jscpd version: $$(jscpd --version)"
+	echo "lychee version: $$(lychee --version)"
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin
 setup_ollama:  ## Download Ollama, script does start local Ollama server
@@ -280,6 +281,13 @@ writeup_generate:  ## Generate writeup markdown via CC teams. Usage: make writeu
 
 # MARK: markdown
 
+
+lint_links:  ## Check for broken links with lychee. Usage: make lint_links [INPUT_FILES="docs/**/*.md"]
+	if command -v lychee > /dev/null 2>&1; then
+		lychee $(or $(INPUT_FILES),.)
+	else
+		echo "lychee not installed — skipping link check (run 'make setup_npm_tools' to enable)"
+	fi
 
 lint_md:  ## Lint markdown files. Usage: make lint_md INPUT_FILES="docs/**/*.md"
 	if [ -z "$(INPUT_FILES)" ]; then
