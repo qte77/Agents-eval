@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`-X ours` Merge Blind Spot**: Documented in README.md and LEARNINGS.md — files added exclusively by the other branch are auto-merged as clean additions, not conflicts; must `git rm` after merge
+- **Sprint 8 Archive**: `ralph/docs/archive/sprint8/` with completed `prd.json` and `progress.txt`
 - **Scoped Ruff Checks**: `run_ruff_scoped()` in teams mode — only lint story files from prd.json, preventing cross-story lint false positives
 - **Scoped Test Execution**: `run_tests_scoped()` in teams mode — only run story's test files from prd.json
 - **Wave Checkpoint Validation**: `run_wave_checkpoint()` — full `make validate` at wave boundaries in teams mode to catch cross-story breakage
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **init.sh**: `initialize_progress()` and `check_prd_json()` substitute `{{PROJECT}}` placeholder from `RALPH_PROJECT` env var or git repo name (was hardcoded project name)
 - **LEARNINGS.md**: Condensed from 114 to ~55 lines, added frontmatter, replaced verbose prose with actionable table and checklists
 - **PRD-Sprint8**: Flattened AC sub-items, added sub-feature Files sections, merged compound sub-features, added file-conflict peer deps
 - **Documentation Structure**: Reorganized ralph/ directory structure and moved TEMPLATE_USAGE.md to ralph root
@@ -41,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Default Configuration**: Increased max iterations to 25, set REQUIRE_REFACTOR to false by default
 - **State Files**: Consolidated Ralph script utilities and simplified story processing
 - **PRD Format**: Updated to v3.0 with A2A protocol and AgentBeats competition details
+
+### Removed
+
+- **`reorganize_prd.sh`**: Deleted stale PRD reorganization script leaked from old `main` during squash merge
 
 ### Fixed
 
