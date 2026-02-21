@@ -68,15 +68,15 @@ def setup_llm_environment(api_keys: dict[str, str]) -> None:
 
     Previously wrote API keys to ``os.environ``, exposing them to child
     processes, crash reporters, and debug dumps (Sprint 5 Finding 10,
-    Review F1 HIGH). Keys are now passed directly via provider constructors
-    in ``models.py``. This stub will be removed once all call sites are
-    confirmed migrated.
+    Review F1 HIGH). All call sites have been migrated — keys are now
+    passed directly via provider constructors in ``models.py``.
 
     Args:
         api_keys: Ignored. Dictionary mapping provider names to API keys.
 
     .. deprecated::
         Use provider constructor ``api_key`` parameter instead.
+        This function is scheduled for removal.
     """
     logger.debug("setup_llm_environment: no-op (keys passed via constructor, not os.environ)")
 
