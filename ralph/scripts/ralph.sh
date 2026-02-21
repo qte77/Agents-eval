@@ -37,7 +37,12 @@
 # forks an Explore agent; prefer inline file reads in the prompt template instead.
 #
 
-set -euo pipefail
+# -E: propagate ERR traps into functions  -e: exit on error
+# -u: error on unset variables  -o pipefail: pipeline fails on any non-zero
+set -Eeuo pipefail
+
+# Trap unexpected exits: log the failing command, line, and function for diagnosis
+trap '_exit_code=$?; if [ $_exit_code -ne 0 ]; then echo -e "\033[0;31m[FATAL]\033[0m $(date -u +%Y-%m-%dT%H:%M:%SZ) Unexpected exit (code=$_exit_code) at ${BASH_SOURCE[0]:-unknown}:${LINENO} in ${FUNCNAME[0]:-main}() — command: ${BASH_COMMAND}" >&2; fi' ERR
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -866,10 +871,11 @@ main() {
 
             # Persist TDD phases so quality-failure reset doesn't lose them (Solution 1A)
             local red_hash green_hash
+            # Reason: grep exits 1 when no match; || true prevents pipefail from killing the script
             red_hash=$(git log --oneline -n $(($(commit_count) - commits_before)) \
-                | grep "\[RED\]" | sed -n '1p' | cut -d' ' -f1)
+                | grep "\[RED\]" | sed -n '1p' | cut -d' ' -f1 || true)
             green_hash=$(git log --oneline -n $(($(commit_count) - commits_before)) \
-                | grep "\[GREEN\]" | sed -n '1p' | cut -d' ' -f1)
+                | grep "\[GREEN\]" | sed -n '1p' | cut -d' ' -f1 || true)
             if [ -n "$red_hash" ] && [ -n "$green_hash" ]; then
                 persist_tdd_verified "$story_id" "$red_hash" "$green_hash"
             fi
