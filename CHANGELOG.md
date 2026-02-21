@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `test_no_agentops_commented_code_in_login` hardcoded `/workspaces/` path broke pytest in GHA; replaced with `inspect.getfile()` for portability
 - 24 broken URLs across landscape docs, further_reading, security-advisories (paper-qa repo, OWASP MAESTRO, StableToolBench org, OpenAI Operator, MatterGen publication)
 - `lychee.toml`: accept 400/415/500 status codes, exclude `.venv` and `.github/workflows`, add `allenai.org` and Springer DOI to excludes
 - Broken local file links: `architecture.md` landscape refs, `agent_eval_metrics.md` further_reading ref, `landscape.md` trace_processors path, `roadmap.md` sprint archive paths, `src/examples/README.md` relative paths

@@ -176,7 +176,11 @@ def test_no_agentops_commented_code_in_login():
     Tests STORY-014 acceptance: "Dead agentops commented code removed from login.py:
     commented import at line 7 and commented code block at lines 30-37"
     """
-    with open("/workspaces/Agents-eval/src/app/utils/login.py") as f:
+    import inspect
+
+    from app.utils import login
+
+    with open(inspect.getfile(login)) as f:
         content = f.read()
 
     # Should not contain any agentops references (commented or otherwise)
