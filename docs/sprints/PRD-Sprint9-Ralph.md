@@ -374,7 +374,7 @@ Sprint 8 features (8 features, 14 stories) have been fully implemented: tool bug
 
 ## Out of Scope
 
-**Deferred to Sprint 10 (see [PRD-Sprint10-Ralph.md](PRD-Sprint10-Ralph.md)):**
+**Deferred to Sprint 10 (see [PRD-Sprint10-Ralph.md](./PRD-Sprint10-Ralph.md)):**
 
 - Feature 1: Wire CC Engine to GUI Execution Path
 - Feature 2: PydanticAI API Migration

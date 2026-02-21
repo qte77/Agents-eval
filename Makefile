@@ -7,7 +7,7 @@
 .ONESHELL:
 .PHONY: \
 	setup_prod setup_dev setup_claude_code setup_sandbox \
-	setup_plantuml setup_pdf_converter setup_npm_tools \
+	setup_plantuml setup_pdf_converter setup_npm_tools setup_lychee \
 	setup_ollama clean_ollama setup_dataset \
 	dataset_smallest app_quickstart \
 	ollama_start ollama_stop \
@@ -93,7 +93,7 @@ setup_prod:  ## Install uv and deps. Flags: OLLAMA=1
 	uv sync --frozen
 	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s ollama_start)
 
-setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, plantuml. Flags: OLLAMA=1
+setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, lychee, plantuml. Flags: OLLAMA=1
 	echo "Setting up dev environment ..."
 	# sudo apt-get install -y gh
 	pip install uv -q
@@ -101,6 +101,7 @@ setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, plantuml. Flags:
 	echo "npm version: $$(npm --version)"
 	$(MAKE) -s setup_claude_code
 	$(MAKE) -s setup_npm_tools
+	$(MAKE) -s setup_lychee
 	$(MAKE) -s setup_plantuml
 	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s ollama_start)
 
@@ -149,11 +150,14 @@ setup_pdf_converter:  ## Setup PDF converter tools. Usage: make setup_pdf_conver
 	fi
 
 # TODO: evaluate Python-native alternatives (pymarkdownlnt, mdformat, pylint R0801) to reduce npm dependency
-setup_npm_tools:  ## Setup npm-based dev tools (markdownlint, jscpd, lychee). Requires node.js and npm
+setup_npm_tools:  ## Setup npm-based dev tools (markdownlint, jscpd). Requires node.js and npm
 	echo "Setting up npm dev tools ..."
-	npm install -gs markdownlint-cli jscpd lychee
+	npm install -gs markdownlint-cli jscpd
 	echo "markdownlint version: $$(markdownlint --version)"
 	echo "jscpd version: $$(jscpd --version)"
+
+setup_lychee:  ## Install lychee link checker (Rust binary, requires sudo)
+	curl -sL https://github.com/lycheeverse/lychee/releases/latest/download/lychee-x86_64-unknown-linux-gnu.tar.gz | sudo tar xz -C /usr/local/bin lychee
 	echo "lychee version: $$(lychee --version)"
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin
@@ -286,7 +290,7 @@ lint_links:  ## Check for broken links with lychee. Usage: make lint_links [INPU
 	if command -v lychee > /dev/null 2>&1; then
 		lychee $(or $(INPUT_FILES),.)
 	else
-		echo "lychee not installed — skipping link check (run 'make setup_npm_tools' to enable)"
+		echo "lychee not installed — skipping link check (run 'make setup_lychee' to install)"
 	fi
 
 lint_md:  ## Lint markdown files. Usage: make lint_md INPUT_FILES="docs/**/*.md"
