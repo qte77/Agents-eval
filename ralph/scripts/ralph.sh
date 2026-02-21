@@ -562,9 +562,11 @@ detect_already_complete() {
     fi
 
     # Fallback: scan agent output for completion phrases
-    # Reason: agents use varied phrasing — match broadly to avoid false negatives
+    # Reason: agents use varied phrasing — match broadly to avoid false negatives.
+    # Uses extended regex (-E) with word-gap-tolerant patterns (.*) so insertions
+    # like "already fully committed" still match "already.*committed".
     tail -n +$((start_line + 1)) "$LOG_FILE" 2>/dev/null \
-        | grep -qi "already complete\|already implemented\|no further implementation.*required\|stories are done\|already committed\|no new commits needed\|all.*already.*done\|work is.*done\|changes already exist" || return 1
+        | grep -qiE "already.*(complete|committed|implemented|done)|no further implementation.*required|stories.*(done|complete)|no new commits needed|all.*already.*done|work is.*done|changes already exist" || return 1
 }
 
 # Run quality checks (dispatches to baseline-aware or original mode)
@@ -672,6 +674,20 @@ check_tdd_commits() {
 
         new_commits=$(echo "$recent_commits" | grep -c . || true)
         if [ "$new_commits" -eq 0 ]; then
+            # Reason: teammate commits exist but none attributed to primary story.
+            # Check git history — primary story may already have TDD from a prior run.
+            local prior_red prior_green
+            prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
+            prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
+
+            if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+                log_info "No new commits for $story_id in team batch, but prior TDD found:"
+                log_info "  [RED]   $prior_red"
+                log_info "  [GREEN] $prior_green"
+                log_info "TDD verified via git history (teams fallback)"
+                return 0
+            fi
+
             log_error "No commits for $story_id in team batch (hybrid attribution)"
             return 1
         fi
@@ -952,12 +968,50 @@ main() {
                 log_info "Quality retry — skipping TDD verification (prior RED+GREEN exist)"
                 rm -f "$RETRY_CONTEXT_FILE"
             elif ! check_tdd_commits "$story_id" "$commits_before"; then
-                # Clean up invalid commits and files before retry
+                # Clean up invalid commits and files before retry.
+                # Reason: in teams mode, only revert commits attributed to the
+                # primary story — teammate commits are valid and must survive.
                 local commits_after=$(commit_count)
                 local new_commits=$((commits_after - commits_before))
                 if [ $new_commits -gt 0 ]; then
-                    log_warn "Resetting $new_commits invalid commit(s)"
-                    git reset --hard HEAD~$new_commits
+                    if [ "$RALPH_TEAMS" = "true" ]; then
+                        # Selectively revert only primary-story commits
+                        local reverted=0
+                        local story_files
+                        story_files=$(jq -r --arg id "$story_id" \
+                            '.stories[] | select(.id == $id) | .files // [] | .[]' "$PRD_JSON" 2>/dev/null || true)
+                        for hash in $(git log --format="%h" -n $new_commits); do
+                            local msg
+                            msg=$(git log --format="%s" -1 "$hash")
+                            local is_primary=false
+                            # Same hybrid attribution as check_tdd_commits
+                            if echo "$msg" | grep -qF "$story_id"; then
+                                is_primary=true
+                            elif [ -n "$story_files" ]; then
+                                local changed
+                                changed=$(git diff-tree --no-commit-id --name-only -r "$hash" 2>/dev/null || true)
+                                local sf
+                                while IFS= read -r sf; do
+                                    if echo "$changed" | grep -qF "$sf"; then
+                                        is_primary=true
+                                        break
+                                    fi
+                                done <<< "$story_files"
+                            fi
+                            if [ "$is_primary" = "true" ]; then
+                                git revert --no-edit "$hash" >/dev/null 2>&1 || true
+                                reverted=$((reverted + 1))
+                            fi
+                        done
+                        if [ $reverted -gt 0 ]; then
+                            log_warn "Reverted $reverted primary-story commit(s), preserved teammate commits"
+                        else
+                            log_warn "No primary-story commits to revert"
+                        fi
+                    else
+                        log_warn "Resetting $new_commits invalid commit(s)"
+                        git reset --hard HEAD~$new_commits
+                    fi
                 fi
                 # Scoped clean: only remove files created during story execution
                 local untracked_after
