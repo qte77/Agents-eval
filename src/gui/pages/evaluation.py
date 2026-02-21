@@ -25,6 +25,23 @@ METRIC_LABELS: dict[str, str] = {
 }
 
 
+def _safe_resolve_dir(user_path: str) -> Path | None:
+    """Resolve and validate a user-provided directory path.
+
+    Args:
+        user_path: Raw path string from user input.
+
+    Returns:
+        Resolved Path if valid directory, None otherwise.
+    """
+    if "\x00" in user_path:
+        return None
+    resolved = Path(user_path).resolve()
+    if not resolved.is_dir():
+        return None
+    return resolved
+
+
 def format_metric_label(metric_key: str) -> str:
     """Return a human-readable label for a metric key.
 
@@ -291,16 +308,20 @@ def _render_empty_state() -> None:
             value=default_value,
             help="Path to Claude Code solo session export directory",
         )
-        if cc_solo_dir and not Path(cc_solo_dir).is_dir():
-            st.error(f"Directory not found: {cc_solo_dir}")
+        if cc_solo_dir:
+            cc_solo_path = _safe_resolve_dir(cc_solo_dir)
+            if cc_solo_path is None:
+                st.error(f"Directory not found: {cc_solo_dir}")
 
         cc_teams_dir = st.text_input(
             "Claude Code Teams Directory",
             key="cc_teams_dir_input",
             help="Path to Claude Code Agent Teams artifacts directory",
         )
-        if cc_teams_dir and not Path(cc_teams_dir).is_dir():
-            st.error(f"Directory not found: {cc_teams_dir}")
+        if cc_teams_dir:
+            cc_teams_path = _safe_resolve_dir(cc_teams_dir)
+            if cc_teams_path is None:
+                st.error(f"Directory not found: {cc_teams_dir}")
 
 
 def _render_evaluation_details(result: CompositeResult) -> None:
