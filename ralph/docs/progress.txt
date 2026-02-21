@@ -117,3 +117,19 @@ Story: STORY-002
 Status: PASS
 Notes: Already complete, verified by quality checks
 
+
+===== Dependency Wave Plan =====
+  Wave 1: STORY-004,STORY-008
+  Wave 2 (after STORY-004): STORY-005
+
+  Blocking relationships:
+    STORY-004 -> STORY-005
+
+  (Note: 6/9 stories already complete and excluded from waves)
+=============================
+
+## Iteration 1 - 2026-02-21T21:14:46Z
+Story: STORY-004
+Status: PASS
+Notes: Already complete, verified by quality checks
+

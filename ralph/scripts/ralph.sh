@@ -781,9 +781,20 @@ main() {
 
         print_progress
 
-        # Execute story and capture return code (use || true to prevent set -e from exiting on non-zero)
+        # Pre-flight: skip agent execution if story already has TDD in git history
         local exec_status=0
-        execute_story "$story_id" "$details" || exec_status=$?
+        DELEGATED_TEAMMATES=""
+        local prior_red=$(git log --grep="\[RED\]" --grep="$story_id" \
+            --all-match --format="%h" -1 2>/dev/null || true)
+        local prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" \
+            --all-match --format="%h" -1 2>/dev/null || true)
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+            log_info "Story $story_id has prior TDD (RED: $prior_red, GREEN: $prior_green) — skipping agent"
+            exec_status=2
+        else
+            # Execute story and capture return code (|| true prevents set -e exit on non-zero)
+            execute_story "$story_id" "$details" || exec_status=$?
+        fi
 
         local story_passed=false
 

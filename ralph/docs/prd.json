@@ -101,9 +101,9 @@
         "tests/agents/test_agent_system.py",
         "tests/llms/test_providers.py"
       ],
-      "status": "failed",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-02-21T21:14:46Z",
       "content_hash": "438d1781513690f5fced483cb105170f679c2ad83aefc05f8febc5174c7429dc",
       "depends_on": [
         "STORY-001"
@@ -130,9 +130,9 @@
         "src/app/tools/peerread_tools.py",
         "tests/security/test_tool_registration.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 4,
-      "completed_at": null,
+      "completed_at": "2026-02-21T21:14:51Z",
       "content_hash": "95eb0c287dcfa34914124652175064470c5763016dc0192ca8053624e8af0296",
       "depends_on": [
         "STORY-003",
@@ -226,7 +226,7 @@
         "tests/judge/test_traditional_metrics.py",
         "tests/judge/test_baseline_comparison.py"
       ],
-      "status": "pending",
+      "status": "failed",
       "wave": 3,
       "completed_at": null,
       "content_hash": "b3d33f54b2429853c1a6bfe69119f7787ebaafdb18e6f4f114504cfa758ce2d6",
