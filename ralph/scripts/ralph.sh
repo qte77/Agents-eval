@@ -272,14 +272,14 @@ print_dependency_tree() {
 
     log_info "$header"
     echo "$tree_output" | while IFS= read -r line; do
-        [ -n "$line" ] && log_info "$line"
+        [ -n "$line" ] && log_info "$line" || true
     done
 
     if [ -n "$blocking_output" ]; then
         log_info ""
         log_info "  Blocking relationships:"
         echo "$blocking_output" | while IFS= read -r line; do
-            [ -n "$line" ] && log_info "$line"
+            [ -n "$line" ] && log_info "$line" || true
         done
     fi
 

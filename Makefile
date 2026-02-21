@@ -500,12 +500,13 @@ ralph_worktree:  ## Create a git worktree for Ralph and cd into it (BRANCH=requi
 
 ralph_run_worktree:  ## Create worktree + run Ralph in it (BRANCH=required, MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false)
 	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_run_worktree BRANCH=ralph/sprint-name))
-	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)"
+	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)" && \
+	cd "../$$(basename $(BRANCH))" && \
 	$(if $(RALPH_TIMEOUT),timeout $(RALPH_TIMEOUT)) \
 		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) \
 		RALPH_TEAMS=$(TEAMS) \
 		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \
-		bash -c 'cd "../$$(basename $(BRANCH))" && bash ralph/scripts/ralph.sh' \
+		bash ralph/scripts/ralph.sh \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph worktree timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
 
 ralph_stop:  ## Stop all running Ralph loops (keeps state and data)
