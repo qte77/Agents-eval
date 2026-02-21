@@ -47,7 +47,6 @@ chat_config_file = Path(__file__).parent / APP_CONFIG_PATH / CHAT_CONFIG_FILE
 chat_config = load_config(chat_config_file, ChatConfig)
 common_settings = CommonSettings()
 judge_settings = JudgeSettings()
-provider = CHAT_DEFAULT_PROVIDER
 logger.info(f"Default provider in GUI: {CHAT_DEFAULT_PROVIDER}")
 
 
@@ -94,8 +93,9 @@ async def main():
     elif selected_page == "Prompts":
         render_prompts(chat_config)
     elif selected_page == "App":
-        logger.info(f"Page 'App' provider: {CHAT_DEFAULT_PROVIDER}")
-        await render_app(CHAT_DEFAULT_PROVIDER, chat_config_file)
+        active_provider = st.session_state.get("chat_provider", CHAT_DEFAULT_PROVIDER)
+        logger.info(f"Page 'App' provider: {active_provider}")
+        await render_app(active_provider, chat_config_file)
     elif selected_page == "Evaluation Results":
         # Pass composite result from session state if available
         composite_result = st.session_state.get("execution_composite_result", None)
