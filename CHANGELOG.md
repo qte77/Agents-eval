@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `AgentConfig.tools` typed as `list[Tool[Any]]` with type propagated to `_create_optional_agent`
 - Docs: `security-advisories.md` Related Frameworks section restructured into Threat Modeling and AI Risk & Governance subsections; added NIST AI RMF 1.0, ISO 23894, ISO 42001
 - Docs: Sprint 9 PRD expanded to 13 features incorporating review findings
 - Commit skill updated for stats ordering and GPG signing
