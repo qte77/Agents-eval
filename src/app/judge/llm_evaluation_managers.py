@@ -437,7 +437,14 @@ Provide scores and brief explanation."""
             return self._complete_fallback(paper, review, execution_trace)
 
     def _extract_planning_decisions(self, execution_trace: dict[str, Any]) -> str:
-        """Extract key planning decisions from execution trace."""
+        """Extract key planning decisions from execution trace.
+
+        Args:
+            execution_trace: Dictionary with ``agent_interactions`` and ``tool_calls`` keys.
+
+        Returns:
+            str: Summary string truncated to 500 chars, or stub on parse failure.
+        """
         try:
             decisions = execution_trace.get("agent_interactions", [])
             tool_calls = execution_trace.get("tool_calls", [])
