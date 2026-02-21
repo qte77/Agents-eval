@@ -46,6 +46,8 @@ updated: 2026-02-16
 | `make quick_validate` | Fast development validation | Ruff, pyright, complexipy, jscpd installed | Run `make lint_src && make type_check && make complexity && make duplication` |
 | `make duplication` | Detect copy-paste duplication in src/ | jscpd installed | Try `jscpd src/ --min-lines 5 --min-tokens 50` |
 | `make setup_npm_tools` | Setup npm dev tools (markdownlint, jscpd) | Node.js and npm installed | Try `npm install -gs markdownlint-cli jscpd` |
+| `make setup_lychee` | Install lychee link checker (Rust binary) | curl, sudo | Download from GitHub releases |
+| `make lint_links` | Check for broken links with lychee | lychee installed | Run `make setup_lychee` to install |
 | `make lint_md INPUT_FILES="docs/**/*.md"` | Lint and fix markdown files | markdownlint installed | Try `markdownlint docs/**/*.md --fix` |
 | `make pandoc_run` | Convert MD to PDF with citations. See `make pandoc_run HELP=1` | pandoc + texlive installed | Try `make setup_pdf_converter CONVERTER=pandoc` |
 | `uv run pytest <path>` | Run specific test file/function | Pytest available | Check test file exists and syntax |
