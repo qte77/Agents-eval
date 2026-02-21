@@ -344,12 +344,15 @@ class TestPaperContentFormatStringInjection:
                     max_content_length=50000,
                 )
 
-        # The malicious placeholders must NOT be substituted
-        assert (
-            "professional" not in result.split("Content: ")[1].split(" Tone:")[0]
-            or "{tone}" not in result.split("Content: ")[1]
-        )
-        # Tone and focus should appear in their proper template positions
+        # Extract the content section (between "Content: " and " Tone:")
+        content_section = result.split("Content: ")[1].split(" Tone:")[0]
+
+        # Literal {tone} must survive in content (doubled braces resolved to singles)
+        assert "{tone}" in content_section
+        # "professional" must NOT leak into content via format substitution
+        assert "professional" not in content_section
+
+        # Tone and focus should appear only in their proper template positions
         assert "Tone: professional" in result
         assert "Focus: comprehensive" in result
 
