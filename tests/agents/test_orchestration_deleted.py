@@ -9,7 +9,6 @@ import pathlib
 
 import pytest
 
-
 # Root directories for scanning
 SRC_ROOT = pathlib.Path(__file__).resolve().parents[2] / "src"
 TESTS_ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests"
@@ -41,9 +40,7 @@ class TestOrchestrationModuleDeleted:
                     stripped = line.strip()
                     if not stripped.startswith("#"):
                         violations.append(f"{py_file}:{i}: {stripped}")
-        assert not violations, (
-            f"Found orchestration imports in src/:\n" + "\n".join(violations)
-        )
+        assert not violations, "Found orchestration imports in src/:\n" + "\n".join(violations)
 
     def test_no_orchestration_imports_in_tests(self):
         """AC2: No imports of orchestration remain in tests/.
@@ -62,6 +59,4 @@ class TestOrchestrationModuleDeleted:
                     stripped = line.strip()
                     if not stripped.startswith("#"):
                         violations.append(f"{py_file}:{i}: {stripped}")
-        assert not violations, (
-            f"Found orchestration imports in tests/:\n" + "\n".join(violations)
-        )
+        assert not violations, "Found orchestration imports in tests/:\n" + "\n".join(violations)

@@ -9,9 +9,11 @@ and GraphTraceData is properly constructed and passed to evaluation.
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from pydantic_ai import AgentRunResult
+from pydantic_ai import Agent, AgentRunResult
 
 from app.data_models.evaluation_models import GraphTraceData
+from app.judge.evaluation_pipeline import EvaluationPipeline
+from app.judge.trace_processors import TraceCollector
 
 
 @pytest.mark.asyncio
@@ -20,7 +22,7 @@ async def test_trace_collector_initialized_in_run_manager():
     with (
         patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
     ):
-        mock_collector = MagicMock()
+        mock_collector = MagicMock(spec=TraceCollector)
         mock_collector.start_execution = MagicMock()
         mock_collector.end_execution = MagicMock()
         mock_get_collector.return_value = mock_collector
@@ -28,7 +30,7 @@ async def test_trace_collector_initialized_in_run_manager():
         from app.agents.agent_system import run_manager
 
         # Mock the manager and its run method
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_manager.model._model_name = "test-model"
         mock_result = MagicMock(spec=AgentRunResult)
         mock_result.output = MagicMock()
@@ -55,7 +57,7 @@ async def test_trace_execution_started_for_each_run():
     with (
         patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
     ):
-        mock_collector = MagicMock()
+        mock_collector = MagicMock(spec=TraceCollector)
         mock_collector.start_execution = MagicMock()
         mock_collector.end_execution = MagicMock()
         mock_get_collector.return_value = mock_collector
@@ -63,7 +65,7 @@ async def test_trace_execution_started_for_each_run():
         from app.agents.agent_system import run_manager
 
         # Mock the manager and its run method
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_manager.model._model_name = "test-model"
         mock_result = MagicMock(spec=AgentRunResult)
         mock_result.output = MagicMock()
@@ -91,7 +93,7 @@ async def test_timing_data_captured_during_execution():
     with (
         patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
     ):
-        mock_collector = MagicMock()
+        mock_collector = MagicMock(spec=TraceCollector)
         mock_collector.start_execution = MagicMock()
         mock_collector.end_execution = MagicMock(
             return_value=MagicMock(
@@ -107,7 +109,7 @@ async def test_timing_data_captured_during_execution():
         from app.agents.agent_system import run_manager
 
         # Mock the manager and its run method
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_manager.model._model_name = "test-model"
         mock_result = MagicMock(spec=AgentRunResult)
         mock_result.output = MagicMock()
@@ -169,11 +171,11 @@ async def test_graph_trace_data_passed_to_evaluation():
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
 
         # Mock trace collector with real GraphTraceData
-        mock_collector = MagicMock()
+        mock_collector = MagicMock(spec=TraceCollector)
         mock_trace_data = GraphTraceData(
             execution_id="test_exec_123",
             agent_interactions=[{"from": "manager", "to": "researcher", "type": "delegation"}],
@@ -187,7 +189,7 @@ async def test_graph_trace_data_passed_to_evaluation():
         mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
 
         # Mock pipeline
-        mock_pipeline = MagicMock()
+        mock_pipeline = MagicMock(spec=EvaluationPipeline)
         mock_pipeline.evaluate_comprehensive = AsyncMock()
         mock_pipeline_class.return_value = mock_pipeline
 

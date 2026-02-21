@@ -10,11 +10,13 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pydantic_ai import Agent
 from pydantic_ai.exceptions import ModelHTTPError
 
 from app.benchmark.sweep_config import AgentComposition, SweepConfig
 from app.benchmark.sweep_runner import SweepRunner
 from app.data_models.evaluation_models import CompositeResult
+from app.judge.trace_processors import TraceCollector
 
 
 @pytest.fixture
@@ -507,11 +509,11 @@ class TestStory013bHandleModelHttpError:
 
         rate_limit_error = ModelHTTPError(status_code=429, model_name="test-model", body={})
 
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_manager.model._model_name = "test-model"
         mock_manager.run = AsyncMock(side_effect=rate_limit_error)
 
-        mock_trace_collector = MagicMock()
+        mock_trace_collector = MagicMock(spec=TraceCollector)
         mock_trace_collector.start_execution = MagicMock()
         mock_trace_collector.end_execution = MagicMock()
 

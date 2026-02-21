@@ -9,15 +9,11 @@ the existing datasets_peerread.py infrastructure and verifies data integrity.
 
 import asyncio
 import json
-import sys
 import tempfile
 import time
 from pathlib import Path
 
 import pytest
-
-# Ensure src directory is available for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from app.data_models.peerread_models import PeerReadConfig, PeerReadPaper
 from app.data_utils.datasets_peerread import (

@@ -10,7 +10,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import networkx as nx
 import pytest
 
-from app.data_models.evaluation_models import CompositeResult
+from app.data_models.evaluation_models import CompositeResult, GraphTraceData
+from app.data_utils.datasets_peerread import PeerReadLoader
+from app.judge.cc_trace_adapter import CCTraceAdapter
+from app.judge.evaluation_pipeline import EvaluationPipeline
+from app.judge.trace_processors import TraceCollector
 
 # MARK: --- build_graph_from_trace ---
 
@@ -35,7 +39,7 @@ class TestBuildGraphFromTrace:
     def test_returns_none_when_trace_not_found(self):
         """Returns None when trace collector has no data for execution_id."""
         with patch("app.judge.trace_processors.get_trace_collector") as mock_get:
-            mock_collector = MagicMock()
+            mock_collector = MagicMock(spec=TraceCollector)
             mock_collector.load_trace.return_value = None
             mock_get.return_value = mock_collector
 
@@ -55,7 +59,7 @@ class TestBuildGraphFromTrace:
             patch("app.judge.trace_processors.get_trace_collector") as mock_get,
             patch("app.judge.evaluation_runner.build_interaction_graph", return_value=mock_graph),
         ):
-            mock_collector = MagicMock()
+            mock_collector = MagicMock(spec=TraceCollector)
             mock_collector.load_trace.return_value = MagicMock()
             mock_get.return_value = mock_collector
 
@@ -99,7 +103,7 @@ class TestRunEvaluationIfEnabled:
             evaluation_complete=True,
         )
         with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
-            mock_pipeline = MagicMock()
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
             mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
             mock_pipeline_class.return_value = mock_pipeline
 
@@ -118,7 +122,7 @@ class TestRunEvaluationIfEnabled:
     async def test_passes_chat_provider_to_pipeline(self):
         """chat_provider must be forwarded to EvaluationPipeline constructor."""
         with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
-            mock_pipeline = MagicMock()
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
             mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
             mock_pipeline_class.return_value = mock_pipeline
 
@@ -136,7 +140,7 @@ class TestRunEvaluationIfEnabled:
     @pytest.mark.asyncio
     async def test_loads_trace_when_execution_id_provided(self):
         """Trace data must be loaded and passed to evaluate_comprehensive."""
-        mock_trace = MagicMock()
+        mock_trace = MagicMock(spec=GraphTraceData)
         mock_trace.agent_interactions = [{"from": "a", "to": "b"}]
         mock_trace.tool_calls = [{"tool": "t"}]
 
@@ -144,11 +148,11 @@ class TestRunEvaluationIfEnabled:
             patch("app.judge.trace_processors.get_trace_collector") as mock_get,
             patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         ):
-            mock_collector = MagicMock()
+            mock_collector = MagicMock(spec=TraceCollector)
             mock_collector.load_trace.return_value = mock_trace
             mock_get.return_value = mock_collector
 
-            mock_pipeline = MagicMock()
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
             mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
             mock_pipeline_class.return_value = mock_pipeline
 
@@ -177,7 +181,7 @@ class TestRunBaselineComparisons:
         with patch("app.judge.evaluation_runner.compare_all") as mock_compare:
             from app.judge.evaluation_runner import run_baseline_comparisons
 
-            pipeline = MagicMock()
+            pipeline = MagicMock(spec=EvaluationPipeline)
             await run_baseline_comparisons(pipeline, None, None, None, None)
             mock_compare.assert_not_called()
 
@@ -198,13 +202,13 @@ class TestRunBaselineComparisons:
             patch("app.judge.evaluation_runner.CCTraceAdapter") as mock_adapter_class,
             patch("app.judge.evaluation_runner.compare_all", return_value=[]),
         ):
-            mock_adapter = MagicMock()
+            mock_adapter = MagicMock(spec=CCTraceAdapter)
             mock_adapter.parse.return_value = MagicMock()
             mock_adapter_class.return_value = mock_adapter
 
             from app.judge.evaluation_runner import run_baseline_comparisons
 
-            pipeline = MagicMock()
+            pipeline = MagicMock(spec=EvaluationPipeline)
             pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
 
             await run_baseline_comparisons(pipeline, None, str(tmp_path / "solo"), None, None)
@@ -224,7 +228,7 @@ class TestRunBaselineComparisons:
         ):
             from app.judge.evaluation_runner import run_baseline_comparisons
 
-            pipeline = MagicMock()
+            pipeline = MagicMock(spec=EvaluationPipeline)
             await run_baseline_comparisons(pipeline, None, str(tmp_path / "solo"), None, None)
 
             mock_logger.warning.assert_called_once()
@@ -266,11 +270,11 @@ class TestPaperAndReviewExtraction:
             patch("app.judge.trace_processors.get_trace_collector") as mock_get,
             patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         ):
-            mock_collector = MagicMock()
+            mock_collector = MagicMock(spec=TraceCollector)
             mock_collector.load_trace.return_value = MagicMock()
             mock_get.return_value = mock_collector
 
-            mock_pipeline = MagicMock()
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
             mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
             mock_pipeline_class.return_value = mock_pipeline
 
@@ -317,16 +321,16 @@ class TestPaperAndReviewExtraction:
             patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
             patch("app.data_utils.datasets_peerread.PeerReadLoader") as mock_loader_class,
         ):
-            mock_collector = MagicMock()
+            mock_collector = MagicMock(spec=TraceCollector)
             mock_collector.load_trace.return_value = MagicMock()
             mock_get.return_value = mock_collector
 
-            mock_pipeline = MagicMock()
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
             mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
             mock_pipeline_class.return_value = mock_pipeline
 
             # Mock PeerReadLoader to return paper content
-            mock_loader = MagicMock()
+            mock_loader = MagicMock(spec=PeerReadLoader)
             mock_loader.load_parsed_pdf_content.return_value = "Full paper content from PDF"
             mock_loader_class.return_value = mock_loader
 
@@ -374,16 +378,16 @@ class TestPaperAndReviewExtraction:
             patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
             patch("app.data_utils.datasets_peerread.PeerReadLoader") as mock_loader_class,
         ):
-            mock_collector = MagicMock()
+            mock_collector = MagicMock(spec=TraceCollector)
             mock_collector.load_trace.return_value = MagicMock()
             mock_get.return_value = mock_collector
 
-            mock_pipeline = MagicMock()
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
             mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
             mock_pipeline_class.return_value = mock_pipeline
 
             # Mock PeerReadLoader to return None for PDF, then paper with abstract
-            mock_loader = MagicMock()
+            mock_loader = MagicMock(spec=PeerReadLoader)
             mock_loader.load_parsed_pdf_content.return_value = None
             mock_paper = MagicMock()
             mock_paper.abstract = "This is the paper abstract as fallback content."
@@ -410,11 +414,11 @@ class TestPaperAndReviewExtraction:
             patch("app.judge.trace_processors.get_trace_collector") as mock_get,
             patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         ):
-            mock_collector = MagicMock()
+            mock_collector = MagicMock(spec=TraceCollector)
             mock_collector.load_trace.return_value = MagicMock()
             mock_get.return_value = mock_collector
 
-            mock_pipeline = MagicMock()
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
             mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
             mock_pipeline_class.return_value = mock_pipeline
 

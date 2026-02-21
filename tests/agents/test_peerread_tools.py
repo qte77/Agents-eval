@@ -309,12 +309,6 @@ class TestContentTruncation:
         finally:
             logger.remove(handler_id)
 
-    def test_generate_review_template_with_truncation(self):
-        """Test that generate_paper_review_content_from_template truncates long content."""
-        # This test will validate the integration with the actual tool
-        # Will be implemented after _truncate_paper_content is added
-        pass
-
 
 class TestToolRegistration:
     """Test tool registration and initialization."""

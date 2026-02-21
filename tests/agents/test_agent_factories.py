@@ -233,3 +233,121 @@ class TestAgentFactoryWithoutConfig:
         assert models.model_researcher is None
         assert models.model_analyst is None
         assert models.model_synthesiser is None
+
+
+# ---------------------------------------------------------------------------
+# Merged from test_agent_factories_coverage.py (AC5: STORY-009)
+# ---------------------------------------------------------------------------
+
+
+class TestCreateEvaluationAgent:
+    """Test create_evaluation_agent function."""
+
+    def test_create_evaluation_agent_technical_accuracy(self):
+        """Test creating evaluation agent for technical_accuracy assessment."""
+        from app.agents.agent_factories import create_evaluation_agent
+
+        with patch("app.agents.agent_factories.create_simple_model") as mock_create_model:
+            mock_model = Mock()
+            mock_create_model.return_value = mock_model
+
+            with patch("app.agents.agent_factories.Agent") as mock_agent_class:
+                create_evaluation_agent(
+                    provider="openai",
+                    model_name="gpt-4",
+                    assessment_type="technical_accuracy",
+                    api_key="test-key",
+                )
+
+                mock_create_model.assert_called_once_with("openai", "gpt-4", "test-key")
+                mock_agent_class.assert_called_once()
+                call_args = mock_agent_class.call_args
+                assert "technical accuracy" in call_args[1]["system_prompt"].lower()
+
+    def test_create_evaluation_agent_constructiveness(self):
+        """Test creating evaluation agent for constructiveness assessment."""
+        from app.agents.agent_factories import create_evaluation_agent
+
+        with patch("app.agents.agent_factories.create_simple_model") as mock_create_model:
+            mock_model = Mock()
+            mock_create_model.return_value = mock_model
+
+            with patch("app.agents.agent_factories.Agent") as mock_agent_class:
+                create_evaluation_agent(
+                    provider="openai",
+                    model_name="gpt-4",
+                    assessment_type="constructiveness",
+                    api_key="test-key",
+                )
+
+                call_args = mock_agent_class.call_args
+                assert "constructiveness" in call_args[1]["system_prompt"].lower()
+
+    def test_create_evaluation_agent_planning_rationality(self):
+        """Test creating evaluation agent for planning_rationality assessment."""
+        from app.agents.agent_factories import create_evaluation_agent
+
+        with patch("app.agents.agent_factories.create_simple_model") as mock_create_model:
+            mock_model = Mock()
+            mock_create_model.return_value = mock_model
+
+            with patch("app.agents.agent_factories.Agent") as mock_agent_class:
+                create_evaluation_agent(
+                    provider="openai",
+                    model_name="gpt-4",
+                    assessment_type="planning_rationality",
+                    api_key="test-key",
+                )
+
+                call_args = mock_agent_class.call_args
+                assert "planning" in call_args[1]["system_prompt"].lower()
+
+    def test_create_evaluation_agent_with_custom_prompt(self):
+        """Test creating evaluation agent with custom system prompt."""
+        from app.agents.agent_factories import create_evaluation_agent
+
+        custom_prompt = "Custom evaluation prompt"
+
+        with (
+            patch("app.agents.agent_factories.create_simple_model") as mock_create_model,
+            patch("app.agents.agent_factories.Agent") as mock_agent_class,
+        ):
+            mock_model = Mock()
+            mock_create_model.return_value = mock_model
+
+            create_evaluation_agent(
+                provider="openai",
+                model_name="gpt-4",
+                assessment_type="technical_accuracy",
+                api_key="test-key",
+                system_prompt=custom_prompt,
+            )
+
+            call_args = mock_agent_class.call_args
+            assert call_args[1]["system_prompt"] == custom_prompt
+
+    def test_create_evaluation_agent_with_prompts_config(self):
+        """Test creating evaluation agent using prompts from config."""
+        from app.agents.agent_factories import create_evaluation_agent
+
+        prompts = {
+            "system_prompt_evaluator_technical_accuracy": "Config prompt for technical accuracy"
+        }
+
+        with (
+            patch("app.agents.agent_factories.create_simple_model") as mock_create_model,
+            patch("app.agents.agent_factories.Agent") as mock_agent_class,
+        ):
+            mock_model = Mock()
+            mock_create_model.return_value = mock_model
+
+            create_evaluation_agent(
+                provider="openai",
+                model_name="gpt-4",
+                assessment_type="technical_accuracy",
+                api_key="test-key",
+                prompts=prompts,
+            )
+
+            call_args = mock_agent_class.call_args
+            assert call_args[1]["system_prompt"] == "Config prompt for technical accuracy"

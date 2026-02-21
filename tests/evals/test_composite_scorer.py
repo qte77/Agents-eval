@@ -72,10 +72,6 @@ def sample_tier_results():
     return EvaluationResults(tier1=tier1, tier2=tier2, tier3=tier3)
 
 
-class TestCompositeScorer:
-    """Test suite for CompositeScorer functionality."""
-
-
 class TestCompositeScorerMetricExtraction:
     """Test metric extraction from tier results."""
 

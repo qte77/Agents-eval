@@ -8,6 +8,7 @@ regardless of evaluation success (composite_result can be None).
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pydantic_ai import Agent
 
 
 @pytest.mark.asyncio
@@ -31,7 +32,7 @@ async def test_graph_built_when_skip_eval_and_execution_id_exists():
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
         mock_run_manager.return_value = ("test_exec_123", None)  # (execution_id, manager_output)
         mock_eval.return_value = None  # No evaluation result (skipped)
@@ -73,7 +74,7 @@ async def test_graph_built_when_evaluation_fails():
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
         mock_run_manager.return_value = ("test_exec_456", None)  # (execution_id, manager_output)
         mock_eval.return_value = None  # Evaluation failed
@@ -115,7 +116,7 @@ async def test_graph_not_built_when_no_execution_id():
             query="test query",
             usage_limits=None,
         )
-        mock_manager = MagicMock()
+        mock_manager = MagicMock(spec=Agent)
         mock_get_manager.return_value = mock_manager
         mock_run_manager.return_value = (None, None)  # No execution_id
         mock_eval.return_value = None

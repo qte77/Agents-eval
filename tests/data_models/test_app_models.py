@@ -25,7 +25,7 @@ class TestAgentConfigToolsAnnotation:
 
     def test_tools_field_annotation_is_tool_list(self):
         """AC1: tools field annotation must be list[Tool[Any]], not list[Any]."""
-        from typing import Any, get_args, get_origin
+        from typing import get_args, get_origin
 
         tools_field = AgentConfig.model_fields["tools"]
         annotation = tools_field.annotation

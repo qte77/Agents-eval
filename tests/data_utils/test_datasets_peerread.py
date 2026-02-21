@@ -1497,3 +1497,382 @@ class TestCacheOperations:
         # Act & Assert
         with pytest.raises(ValueError, match="Invalid data_type"):
             downloader._construct_url("acl_2017", "train", "invalid_type", "104")
+
+
+# ---------------------------------------------------------------------------
+# Merged from test_datasets_peerread_coverage.py (AC9: STORY-009)
+# ---------------------------------------------------------------------------
+
+
+class TestPeerReadDownloaderErrorHandling:
+    """Test error handling and retry logic in PeerReadDownloader."""
+
+    @patch("app.data_utils.datasets_peerread.Client")
+    def test_download_file_handles_429_rate_limit(self, mock_client_class):
+        """Test that 429 rate limit errors trigger retry with delay."""
+        from unittest.mock import Mock
+
+        import httpx
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        mock_client = Mock()
+        mock_client_class.return_value = mock_client
+
+        mock_response_429 = Mock()
+        mock_response_429.status_code = 429
+        mock_response_429.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "Rate limited", request=Mock(), response=mock_response_429
+        )
+
+        mock_response_ok = Mock()
+        mock_response_ok.status_code = 200
+        mock_response_ok.json.return_value = {"id": "104", "title": "Test"}
+
+        mock_client.get.side_effect = [mock_response_429, mock_response_ok]
+
+        downloader = PeerReadDownloader(config)
+
+        with patch("app.data_utils.datasets_peerread.sleep") as mock_sleep:
+            result = downloader.download_file("acl_2017", "train", "reviews", "104")
+
+        assert mock_sleep.called
+        assert result is not None
+
+    @patch("app.data_utils.datasets_peerread.Client")
+    def test_download_file_returns_none_on_persistent_error(self, mock_client_class):
+        """Test that persistent download errors return None after max retries."""
+        from unittest.mock import Mock
+
+        import httpx
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig(max_retries=3)
+        mock_client = Mock()
+        mock_client_class.return_value = mock_client
+
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "Not found", request=Mock(), response=mock_response
+        )
+        mock_client.get.return_value = mock_response
+
+        downloader = PeerReadDownloader(config)
+        result = downloader.download_file("acl_2017", "train", "reviews", "nonexistent")
+
+        assert result is None
+        assert mock_client.get.call_count >= 1
+
+    @patch("app.data_utils.datasets_peerread.Client")
+    def test_download_file_handles_json_decode_error(self, mock_client_class):
+        """Test that malformed JSON raises JSONDecodeError."""
+        from json import JSONDecodeError
+        from unittest.mock import Mock
+
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        mock_client = Mock()
+        mock_client_class.return_value = mock_client
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.side_effect = JSONDecodeError("Invalid JSON", "", 0)
+        mock_client.get.return_value = mock_response
+
+        downloader = PeerReadDownloader(config)
+        result = downloader.download_file("acl_2017", "train", "reviews", "104")
+
+        assert result is None
+
+
+class TestPeerReadLoaderEdgeCasesFromCoverage:
+    """Additional PeerRead loader edge cases merged from coverage file."""
+
+    def test_validate_papers_with_empty_list(self):
+        """Test paper validation with empty input list."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+        validated = loader._validate_papers([])
+        assert validated == []
+
+    def test_validate_papers_with_missing_required_fields(self):
+        """Test that papers missing required fields are logged and skipped."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+
+        invalid_papers = [
+            {
+                "id": "invalid_001",
+                # Missing: "title"
+                "abstract": "Abstract without title",
+                "reviews": [],
+                "histories": [],
+            }
+        ]
+
+        result = loader._validate_papers(invalid_papers)
+        assert len(result) == 0
+
+    def test_load_parsed_pdf_content_with_nonexistent_paper(self):
+        """Test loading PDF content for nonexistent paper returns None."""
+        from app.data_utils.datasets_peerread import PeerReadLoader
+
+        config = PeerReadConfig()
+        loader = PeerReadLoader(config)
+        result = loader.load_parsed_pdf_content("nonexistent_paper_id")
+        assert result is None
+
+
+class TestConfigurationLoading:
+    """Test configuration loading and error handling."""
+
+    def test_load_peerread_config_success(self):
+        """Test successful config loading."""
+        from app.data_utils.datasets_peerread import load_peerread_config
+
+        config = load_peerread_config()
+        assert isinstance(config, PeerReadConfig)
+        assert config.base_url is not None
+        assert config.venues is not None
+        assert len(config.venues) > 0
+        assert config.max_retries > 0
+
+    @patch("app.data_utils.datasets_peerread.resolve_config_path")
+    def test_load_peerread_config_handles_missing_file(self, mock_resolve):
+        """Test config loading with missing config file."""
+        from app.data_utils.datasets_peerread import load_peerread_config
+
+        mock_resolve.return_value = "/nonexistent/path.json"
+        with pytest.raises(Exception):
+            load_peerread_config()
+
+
+class TestURLExtraction:
+    """Test paper ID extraction from filenames."""
+
+    def test_extract_paper_id_from_review_filename(self):
+        """Test extracting paper ID from review JSON filename."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+        paper_id = downloader._extract_paper_id_from_filename("104.json", "reviews")
+        assert paper_id == "104"
+
+    def test_extract_paper_id_from_parsed_pdf_filename(self):
+        """Test extracting paper ID from parsed PDF filename."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+        paper_id = downloader._extract_paper_id_from_filename("104.pdf.json", "parsed_pdfs")
+        assert paper_id == "104"
+
+    def test_extract_paper_id_from_pdf_filename(self):
+        """Test extracting paper ID from PDF filename."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+        paper_id = downloader._extract_paper_id_from_filename("104.pdf", "pdfs")
+        assert paper_id == "104"
+
+    def test_extract_paper_id_returns_none_for_mismatched_extension(self):
+        """Test that mismatched file extension returns None."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+        paper_id = downloader._extract_paper_id_from_filename("104.txt", "reviews")
+        assert paper_id is None
+
+
+class TestPerformDownloads:
+    """Test _perform_downloads orchestration function."""
+
+    def test_perform_downloads_success(self):
+        """Test successful download orchestration."""
+        from app.data_models.peerread_models import DownloadResult
+        from app.data_utils.datasets_peerread import PeerReadDownloader, _perform_downloads
+
+        config = PeerReadConfig()
+        config.venues = ["acl_2017"]
+        config.splits = ["train"]
+        downloader = PeerReadDownloader(config)
+
+        with patch.object(downloader, "download_venue_split") as mock_download:
+            mock_download.return_value = DownloadResult(
+                success=True,
+                cache_path="/fake/path",
+                papers_downloaded=5,
+                error_message=None,
+            )
+
+            total_downloaded, failed_downloads = _perform_downloads(
+                downloader, config, max_papers=10
+            )
+
+            assert total_downloaded == 5
+            assert len(failed_downloads) == 0
+            mock_download.assert_called_once_with("acl_2017", "train", max_papers=10)
+
+    def test_perform_downloads_with_failures(self):
+        """Test download orchestration with some failures."""
+        from app.data_models.peerread_models import DownloadResult
+        from app.data_utils.datasets_peerread import PeerReadDownloader, _perform_downloads
+
+        config = PeerReadConfig()
+        config.venues = ["acl_2017", "conll_2016"]
+        config.splits = ["train"]
+        downloader = PeerReadDownloader(config)
+
+        with patch.object(downloader, "download_venue_split") as mock_download:
+            mock_download.side_effect = [
+                DownloadResult(
+                    success=True,
+                    cache_path="/fake/path/acl",
+                    papers_downloaded=3,
+                    error_message=None,
+                ),
+                DownloadResult(
+                    success=False,
+                    cache_path="/fake/path/conll",
+                    papers_downloaded=0,
+                    error_message="Network error",
+                ),
+            ]
+
+            total_downloaded, failed_downloads = _perform_downloads(
+                downloader, config, max_papers=10
+            )
+
+            assert total_downloaded == 3
+            assert len(failed_downloads) == 1
+            assert "conll_2016/train" in failed_downloads[0]
+
+
+class TestVerifyDownloads:
+    """Test _verify_downloads function."""
+
+    def test_verify_downloads_success(self):
+        """Test successful download verification."""
+        from app.data_models.peerread_models import PeerReadPaper
+        from app.data_utils.datasets_peerread import PeerReadLoader, _verify_downloads
+
+        config = PeerReadConfig()
+        config.venues = ["acl_2017"]
+        config.splits = ["train"]
+        loader = PeerReadLoader(config)
+        failed_downloads: list[str] = []
+
+        test_papers = [
+            PeerReadPaper(
+                paper_id="test_001",
+                title="Test",
+                abstract="Abstract",
+                reviews=[],
+                review_histories=[],
+            )
+        ]
+
+        with patch.object(loader, "load_papers", return_value=test_papers):
+            verification_count = _verify_downloads(loader, config, failed_downloads)
+            assert verification_count == 1
+            assert len(failed_downloads) == 0
+
+    def test_verify_downloads_with_failure(self):
+        """Test verification with loader failure."""
+        from app.data_utils.datasets_peerread import PeerReadLoader, _verify_downloads
+
+        config = PeerReadConfig()
+        config.venues = ["acl_2017"]
+        config.splits = ["train"]
+        loader = PeerReadLoader(config)
+        failed_downloads: list[str] = []
+
+        with patch.object(loader, "load_papers", side_effect=Exception("Load failed")):
+            verification_count = _verify_downloads(loader, config, failed_downloads)
+            assert verification_count == 0
+            assert len(failed_downloads) == 1
+            assert "verification" in failed_downloads[0]
+
+
+class TestValidateDownloadResults:
+    """Test _validate_download_results function."""
+
+    def test_validate_download_results_success(self):
+        """Test validation passes with successful downloads."""
+        from app.data_utils.datasets_peerread import _validate_download_results
+
+        _validate_download_results(
+            total_downloaded=10,
+            verification_count=10,
+            failed_downloads=[],
+        )
+
+    def test_validate_download_results_with_failures(self):
+        """Test validation raises with failed downloads."""
+        from app.data_utils.datasets_peerread import _validate_download_results
+
+        with pytest.raises(Exception, match="Failed to download from"):
+            _validate_download_results(
+                total_downloaded=5,
+                verification_count=5,
+                failed_downloads=["acl_2017/train", "conll_2016/dev"],
+            )
+
+    def test_validate_download_results_no_papers(self):
+        """Test validation raises when no papers downloaded or verified."""
+        from app.data_utils.datasets_peerread import _validate_download_results
+
+        with pytest.raises(Exception, match="No papers were downloaded or verified"):
+            _validate_download_results(
+                total_downloaded=0,
+                verification_count=0,
+                failed_downloads=[],
+            )
+
+
+class TestDownloadPeerreadDataset:
+    """Test download_peerread_dataset entry point function."""
+
+    def test_download_peerread_dataset_success(self):
+        """Test successful dataset download flow."""
+        from app.data_utils.datasets_peerread import download_peerread_dataset
+
+        with (
+            patch("app.data_utils.datasets_peerread.load_peerread_config") as mock_load_config,
+            patch("app.data_utils.datasets_peerread._perform_downloads") as mock_perform,
+            patch("app.data_utils.datasets_peerread._verify_downloads") as mock_verify,
+            patch("app.data_utils.datasets_peerread._validate_download_results") as mock_validate,
+        ):
+            mock_config = PeerReadConfig()
+            mock_load_config.return_value = mock_config
+            mock_perform.return_value = (5, [])
+            mock_verify.return_value = 5
+
+            download_peerread_dataset(peerread_max_papers_per_sample_download=10)
+
+            mock_load_config.assert_called_once()
+            mock_perform.assert_called_once()
+            mock_verify.assert_called_once()
+            mock_validate.assert_called_once_with(5, 5, [])
+
+    def test_download_peerread_dataset_failure(self):
+        """Test dataset download with failure."""
+        from app.data_utils.datasets_peerread import download_peerread_dataset
+
+        with patch("app.data_utils.datasets_peerread.load_peerread_config") as mock_load_config:
+            mock_load_config.side_effect = Exception("Config load failed")
+
+            with pytest.raises(Exception, match="PeerRead dataset download failed"):
+                download_peerread_dataset()

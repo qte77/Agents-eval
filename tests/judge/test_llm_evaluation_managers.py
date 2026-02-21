@@ -102,7 +102,7 @@ class TestLLMJudgeEngine:
         mock_result = Mock()
         mock_result.output = mock_assessment_output
 
-        mock_agent = Mock()
+        mock_agent = Mock(spec=Agent)
         mock_agent.run = AsyncMock(return_value=mock_result)
 
         with patch.object(engine, "create_judge_agent", return_value=mock_agent):
@@ -118,7 +118,7 @@ class TestLLMJudgeEngine:
     @pytest.mark.asyncio
     async def test_assess_technical_accuracy_timeout(self, engine, sample_data):
         """Given LLM timeout, should fallback to semantic similarity."""
-        mock_agent = Mock()
+        mock_agent = Mock(spec=Agent)
         mock_agent.run = AsyncMock(return_value=Mock())
 
         async def timeout_wait_for(coro, **kwargs):
@@ -153,7 +153,7 @@ class TestLLMJudgeEngine:
         mock_result = Mock()
         mock_result.output = mock_assessment_output
 
-        mock_agent = Mock()
+        mock_agent = Mock(spec=Agent)
         mock_agent.run = AsyncMock(return_value=mock_result)
 
         with patch.object(engine, "create_judge_agent", return_value=mock_agent):
@@ -207,7 +207,7 @@ class TestLLMJudgeEngine:
         mock_result = Mock()
         mock_result.output = mock_assessment_output
 
-        mock_agent = Mock()
+        mock_agent = Mock(spec=Agent)
         mock_agent.run = AsyncMock(return_value=mock_result)
 
         with patch.object(engine, "create_judge_agent", return_value=mock_agent):
@@ -483,7 +483,7 @@ class TestPipelineIntegration:
 
         # Patch LLMJudgeEngine to verify chat_provider is passed
         with patch("app.judge.evaluation_pipeline.LLMJudgeEngine") as mock_engine_class:
-            mock_engine = Mock()
+            mock_engine = Mock(spec=LLMJudgeEngine)
             mock_engine.tier2_available = True
             mock_engine_class.return_value = mock_engine
 
@@ -777,7 +777,7 @@ class TestLLMJudgePerformance:
         mock_result = Mock()
         mock_result.output = mock_assessment_output
 
-        mock_agent = Mock()
+        mock_agent = Mock(spec=Agent)
         mock_agent.run = AsyncMock(return_value=mock_result)
 
         with patch.object(engine, "create_judge_agent", return_value=mock_agent):
@@ -808,7 +808,7 @@ class TestLLMJudgePerformance:
     @pytest.mark.asyncio
     async def test_timeout_handling(self, engine, sample_data):
         """Should handle LLM request timeouts gracefully."""
-        mock_agent = Mock()
+        mock_agent = Mock(spec=Agent)
         mock_agent.run = AsyncMock(return_value=Mock())
 
         async def timeout_wait_for(coro, **kwargs):
@@ -943,7 +943,7 @@ class TestStory002ChatModelInheritance:
         settings = JudgeSettings(tier2_provider="openai")
 
         with patch("app.judge.evaluation_pipeline.LLMJudgeEngine") as mock_engine_class:
-            mock_engine = Mock()
+            mock_engine = Mock(spec=LLMJudgeEngine)
             mock_engine.tier2_available = True
             mock_engine_class.return_value = mock_engine
 
