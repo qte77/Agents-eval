@@ -335,7 +335,24 @@ Provide scores and brief explanation."""
         review: str,
         execution_trace: dict[str, Any],
     ) -> tuple[float, float, float, bool]:
-        """Handle individual assessment failures with fallbacks."""
+        """Handle individual assessment failures with fallbacks.
+
+        Called after ``asyncio.gather(return_exceptions=True)`` so each score may
+        be either the float result or an exception instance. Replaces any exception
+        with its corresponding fallback value and sets ``fallback_used``.
+
+        Args:
+            technical_score: Technical accuracy score or exception from gather.
+            constructiveness_score: Constructiveness score or exception from gather.
+            planning_score: Planning rationality score or exception from gather.
+            paper: Original paper text used for semantic similarity fallback.
+            review: Review text used for constructiveness fallback.
+            execution_trace: Execution trace dict used for planning fallback.
+
+        Returns:
+            Tuple of (technical_float, constructiveness_float, planning_float,
+            fallback_used) where fallback_used is True if any score was replaced.
+        """
         fallback_used = False
 
         if isinstance(technical_score, BaseException):
