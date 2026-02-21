@@ -64,20 +64,16 @@ def get_provider_config(provider: str, providers: dict[str, ProviderConfig]) -> 
 
 
 def setup_llm_environment(api_keys: dict[str, str]) -> None:
-    """
-    Set up LLM environment variables for API keys.
+    """No-op: retained for backward compatibility only.
+
+    Previously wrote API keys to os.environ, exposing them to child processes,
+    crash reporters, and debug dumps. Keys are now passed directly to provider
+    constructors in models.py. This function is deprecated and will be removed.
 
     Args:
-        api_keys: Dictionary mapping provider names to API keys.
+        api_keys: Ignored. Dictionary mapping provider names to API keys.
     """
-    import os
-
-    # Set environment variables for LLM
-    for provider, api_key in api_keys.items():
-        if api_key and api_key.strip():
-            env_var = f"{provider.upper()}_API_KEY"
-            os.environ[env_var] = api_key
-            logger.debug(f"Set environment variable: {env_var}")
+    logger.debug("setup_llm_environment: no-op (keys passed via constructor, not os.environ)")
 
 
 def get_supported_providers() -> list[str]:

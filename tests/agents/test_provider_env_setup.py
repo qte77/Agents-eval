@@ -1,42 +1,19 @@
 """
-Tests for dynamic provider environment setup (STORY-008).
+Tests for dynamic provider environment setup.
 
-Expected behavior:
-- Only the selected provider's API key is set as env var
-- Other provider keys are NOT set, even if configured in AppEnv
-- Providers without env_key (e.g. ollama) are excluded
-- New providers added to PROVIDER_REGISTRY are picked up automatically
-- setup_agent_env passes only selected provider's key to setup_llm_environment
+After STORY-004: setup_llm_environment() is a no-op.
+API keys are passed directly to provider constructors in models.py.
+These tests verify the registry metadata and that no keys leak to os.environ.
 """
-
-from unittest.mock import patch
 
 from app.data_models.app_models import PROVIDER_REGISTRY, AppEnv
 
-# MARK: --- Unit Tests: setup_llm_environment ---
+
+# MARK: --- Unit Tests: registry metadata ---
 
 
-class TestProviderEnvSetup:
-    """Test that setup_llm_environment uses PROVIDER_REGISTRY dynamically."""
-
-    def test_selected_provider_key_set_in_env(self):
-        """Selected provider's API key MUST be set as env var."""
-        env_config = AppEnv(CEREBRAS_API_KEY="test-cerebras-key")
-
-        with patch.dict("os.environ", {}, clear=True):
-            import os
-
-            from app.llms.providers import setup_llm_environment
-
-            selected = PROVIDER_REGISTRY["cerebras"]
-            api_keys = (
-                {selected.name: getattr(env_config, selected.env_key, "")}
-                if selected.env_key
-                else {}
-            )
-            setup_llm_environment(api_keys)
-
-            assert os.environ.get("CEREBRAS_API_KEY") == "test-cerebras-key"
+class TestProviderRegistry:
+    """Test that PROVIDER_REGISTRY metadata is correct and consistent with AppEnv."""
 
     def test_all_registry_providers_have_valid_metadata(self):
         """Every PROVIDER_REGISTRY entry with env_key MUST be resolvable from AppEnv."""
@@ -54,40 +31,66 @@ class TestProviderEnvSetup:
         assert ollama_meta is not None
         assert ollama_meta.env_key is None
 
-    def test_empty_key_not_set_as_env_var(self):
-        """Empty API key MUST NOT be set as environment variable."""
-        with patch.dict("os.environ", {}, clear=True):
-            import os
+    def test_openai_has_env_key(self):
+        """OpenAI provider must have a valid env_key."""
+        openai_meta = PROVIDER_REGISTRY.get("openai")
+        assert openai_meta is not None
+        assert openai_meta.env_key is not None
 
-            from app.llms.providers import setup_llm_environment
+    def test_anthropic_has_env_key(self):
+        """Anthropic provider must have a valid env_key."""
+        anthropic_meta = PROVIDER_REGISTRY.get("anthropic")
+        assert anthropic_meta is not None
+        assert anthropic_meta.env_key is not None
 
+
+# MARK: --- Unit Tests: setup_llm_environment is no-op ---
+
+
+class TestSetupLlmEnvironmentIsNoOp:
+    """After STORY-004: setup_llm_environment must NOT write to os.environ."""
+
+    def test_setup_llm_environment_does_not_write_to_environ(self):
+        """setup_llm_environment is a no-op and must not write to os.environ."""
+        import os
+        from unittest.mock import patch
+
+        from app.llms.providers import setup_llm_environment
+
+        with patch.dict(os.environ, {}, clear=True):
+            setup_llm_environment({"openai": "sk-test-key", "cerebras": "csk-test-key"})
+
+            # No keys must appear in os.environ after the call
+            assert "OPENAI_API_KEY" not in os.environ
+            assert "CEREBRAS_API_KEY" not in os.environ
+
+    def test_setup_llm_environment_empty_key_no_write(self):
+        """Empty keys must not write to os.environ (was the old behavior too, now still true)."""
+        import os
+        from unittest.mock import patch
+
+        from app.llms.providers import setup_llm_environment
+
+        with patch.dict(os.environ, {}, clear=True):
             setup_llm_environment({"cerebras": ""})
 
             assert "CEREBRAS_API_KEY" not in os.environ
 
-    def test_only_selected_provider_key_set(self):
-        """Only the selected provider's key MUST be set, others MUST NOT."""
-        with patch.dict("os.environ", {}, clear=True):
-            import os
+    def test_setup_llm_environment_only_selected_provider_no_write(self):
+        """No provider keys must be written to os.environ regardless of input."""
+        import os
+        from unittest.mock import patch
 
-            from app.llms.providers import setup_llm_environment
+        from app.llms.providers import setup_llm_environment
 
-            env_config = AppEnv(
-                CEREBRAS_API_KEY="cerebras-key-123",
-                GITHUB_API_KEY="github-key-456",
-                OPENAI_API_KEY="openai-key-789",
-            )
+        with patch.dict(os.environ, {}, clear=True):
+            setup_llm_environment({
+                "cerebras": "cerebras-key-123",
+                "github": "github-key-456",
+                "openai": "openai-key-789",
+            })
 
-            # Simulate selecting cerebras as provider
-            selected = PROVIDER_REGISTRY["cerebras"]
-            api_keys = (
-                {selected.name: getattr(env_config, selected.env_key, "")}
-                if selected.env_key
-                else {}
-            )
-            setup_llm_environment(api_keys)
-
-            assert os.environ.get("CEREBRAS_API_KEY") == "cerebras-key-123"
+            assert "CEREBRAS_API_KEY" not in os.environ
             assert "GITHUB_API_KEY" not in os.environ
             assert "OPENAI_API_KEY" not in os.environ
 
@@ -96,11 +99,15 @@ class TestProviderEnvSetup:
 
 
 class TestSetupAgentEnvProviderFiltering:
-    """Test that setup_agent_env passes only the selected provider's key."""
+    """Test that setup_agent_env does not write API keys to os.environ (STORY-004)."""
 
-    def test_setup_agent_env_only_passes_selected_provider_key(self):
-        """setup_agent_env MUST pass only the selected provider's API key."""
-        from unittest.mock import MagicMock
+    def test_setup_agent_env_does_not_write_api_key_to_environ(self):
+        """setup_agent_env MUST NOT write any provider API key to os.environ."""
+        import os
+        from unittest.mock import MagicMock, patch
+
+        from app.agents.agent_system import setup_agent_env
+        from app.data_models.app_models import ChatConfig
 
         env_config = AppEnv(
             CEREBRAS_API_KEY="cerebras-key",
@@ -112,18 +119,11 @@ class TestSetupAgentEnvProviderFiltering:
         mock_provider_config.usage_limits = 60000
 
         with (
-            patch("app.agents.agent_system.setup_llm_environment") as mock_setup_llm,
-            patch(
-                "app.agents.agent_system.get_provider_config",
-                return_value=mock_provider_config,
-            ),
+            patch("app.agents.agent_system.get_provider_config", return_value=mock_provider_config),
             patch("app.agents.agent_system.get_api_key", return_value=(True, "cerebras-key")),
             patch("app.agents.agent_system.EndpointConfig"),
+            patch.dict(os.environ, {}, clear=True),
         ):
-            from app.agents.agent_system import setup_agent_env
-            from app.data_models.app_models import ChatConfig
-
-            # Reason: setup_agent_env checks isinstance(chat_config, ChatConfig)
             chat_config = MagicMock()
             chat_config.__class__ = ChatConfig
 
@@ -134,9 +134,16 @@ class TestSetupAgentEnvProviderFiltering:
                 chat_env_config=env_config,
             )
 
-            mock_setup_llm.assert_called_once()
-            api_keys = mock_setup_llm.call_args[0][0]
-            assert "cerebras" in api_keys
-            assert api_keys["cerebras"] == "cerebras-key"
-            assert "github" not in api_keys, f"github key should not be passed, got: {api_keys}"
-            assert "openai" not in api_keys, f"openai key should not be passed, got: {api_keys}"
+            # No API keys must appear in os.environ
+            assert "CEREBRAS_API_KEY" not in os.environ
+            assert "GITHUB_API_KEY" not in os.environ
+            assert "OPENAI_API_KEY" not in os.environ
+
+    def test_setup_agent_env_does_not_import_setup_llm_environment(self):
+        """agent_system must not import or call setup_llm_environment (AC3)."""
+        import app.agents.agent_system as agent_system_module
+
+        # setup_llm_environment must not be an attribute of agent_system
+        assert not hasattr(agent_system_module, "setup_llm_environment"), (
+            "setup_llm_environment must be removed from agent_system imports (AC3)"
+        )
