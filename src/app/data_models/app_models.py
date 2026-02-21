@@ -12,7 +12,10 @@ from typing import Any, TypeVar
 from pydantic import BaseModel, ConfigDict, HttpUrl, field_validator
 from pydantic_ai.messages import ModelRequest
 from pydantic_ai.models import Model
-from pydantic_ai.tools import ObjectJsonSchema, Tool  # ObjectJsonSchema needed for Pydantic schema resolution
+from pydantic_ai.tools import (
+    ObjectJsonSchema,
+    Tool,
+)  # ObjectJsonSchema needed for Pydantic schema resolution
 from pydantic_ai.usage import UsageLimits
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
