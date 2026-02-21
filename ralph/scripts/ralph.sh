@@ -93,6 +93,8 @@ PROMPT_FILE="ralph/docs/templates/prompt.md"
 MAX_RETRIES=3
 RALPH_TEAMS=${RALPH_TEAMS:-false}  # EXPERIMENTAL: cross-story interference causes false rejections (see ralph/README.md)
 RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
+# TODO: these /tmp paths collide when multiple worktrees run concurrently.
+# Namespace by worktree (e.g., /tmp/claude/ralph_$(git rev-parse --show-toplevel | md5sum | cut -c1-8)/).
 BASELINE_FILE="/tmp/claude/ralph_baseline_failures.txt"
 RETRY_CONTEXT_FILE="/tmp/claude/ralph_retry_context.txt"
 TDD_VERIFIED_DIR="/tmp/claude/ralph_tdd_verified"
