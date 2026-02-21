@@ -788,7 +788,7 @@ main() {
             --all-match --format="%h" -1 2>/dev/null || true)
         local prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" \
             --all-match --format="%h" -1 2>/dev/null || true)
-        if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ ! -f "$RETRY_CONTEXT_FILE" ]; then
             log_info "Story $story_id has prior TDD (RED: $prior_red, GREEN: $prior_green) — skipping agent"
             exec_status=2
         else
@@ -819,6 +819,8 @@ main() {
             else
                 log_error "Story reported as complete but quality checks failed"
                 log_progress "$iteration" "$story_id" "FAIL" "Quality checks failed despite reported completion"
+                # Reason: write retry context so pre-flight yields and agent runs to fix the issue
+                [ ! -f "$RETRY_CONTEXT_FILE" ] && echo "quality (already-complete path)" > "$RETRY_CONTEXT_FILE"
                 retry_count=$((retry_count + 1))
                 if [ $retry_count -ge $MAX_RETRIES ]; then
                     log_error "Max retries reached for story $story_id"
