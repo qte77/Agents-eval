@@ -520,7 +520,9 @@ class TestStory012ConfigChatUpdates:
     @pytest.fixture
     def config_chat(self) -> dict:
         """Load config_chat.json."""
-        config_path = Path(__file__).resolve().parents[2] / "src" / "app" / "config" / "config_chat.json"
+        config_path = (
+            Path(__file__).resolve().parents[2] / "src" / "app" / "config" / "config_chat.json"
+        )
         return json.loads(config_path.read_text())
 
     # AC3: Each new provider has a matching entry in config_chat.json
@@ -544,9 +546,7 @@ class TestStory012ConfigChatUpdates:
     def test_together_model_updated(self, config_chat: dict):
         """Together model must not use removed free model."""
         together = config_chat["providers"]["together"]
-        assert "Free" not in together["model_name"], (
-            "Together still uses removed free model"
-        )
+        assert "Free" not in together["model_name"], "Together still uses removed free model"
         assert together["model_name"] == "meta-llama/Llama-3.3-70B-Instruct-Turbo"
 
     # AC6: Existing stale entries updated
@@ -572,7 +572,10 @@ class TestStory012ConfigChatUpdates:
 
     def test_openrouter_model_updated(self, config_chat: dict):
         """OpenRouter must use qwen3 free model."""
-        assert config_chat["providers"]["openrouter"]["model_name"] == "qwen/qwen3-next-80b-a3b-instruct:free"
+        assert (
+            config_chat["providers"]["openrouter"]["model_name"]
+            == "qwen/qwen3-next-80b-a3b-instruct:free"
+        )
 
     def test_ollama_model_updated(self, config_chat: dict):
         """Ollama must use llama3.3:latest."""
@@ -597,6 +600,8 @@ class TestStory012AnthropicNativeModel:
 
     def test_anthropic_returns_anthropic_model(self):
         """create_llm_model() for anthropic must NOT return OpenAIChatModel."""
+        import sys
+
         endpoint_config = EndpointConfig(
             prompts={"manager": "You are a manager"},
             provider="anthropic",
@@ -607,17 +612,27 @@ class TestStory012AnthropicNativeModel:
             ),
         )
 
-        with patch("app.llms.models.AnthropicModel") as mock_anthropic_cls:
-            mock_instance = MagicMock()
-            mock_anthropic_cls.return_value = mock_instance
+        # Reason: The `anthropic` SDK is not installed in this environment,
+        # so we inject fake modules to test the native-Anthropic code path.
+        mock_anthropic_model = MagicMock()
+        mock_anthropic_provider = MagicMock()
+        fake_models_mod = MagicMock(AnthropicModel=mock_anthropic_model)
+        fake_providers_mod = MagicMock(AnthropicProvider=mock_anthropic_provider)
 
+        with patch.dict(
+            sys.modules,
+            {
+                "pydantic_ai.models.anthropic": fake_models_mod,
+                "pydantic_ai.providers.anthropic": fake_providers_mod,
+            },
+        ):
             model = create_llm_model(endpoint_config)
 
         # Must use AnthropicModel, not OpenAIChatModel
         assert not isinstance(model, OpenAIChatModel), (
             "Anthropic provider should use native AnthropicModel, not OpenAIChatModel"
         )
-        mock_anthropic_cls.assert_called_once()
+        mock_anthropic_model.assert_called_once()
 
 
 class TestStory012GroqStrictTools:
@@ -660,9 +675,7 @@ class TestStory012AppEnvKeys:
     )
     def test_appenv_has_new_provider_key(self, env_key: str):
         """AppEnv must have a field for each new provider's API key."""
-        assert env_key in AppEnv.model_fields, (
-            f"AppEnv missing field '{env_key}'"
-        )
+        assert env_key in AppEnv.model_fields, f"AppEnv missing field '{env_key}'"
 
 
 class TestStory012CLIProviderValidation:
