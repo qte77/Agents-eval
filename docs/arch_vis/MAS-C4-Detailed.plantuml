@@ -25,6 +25,13 @@ System_Boundary(agents_eval, "Agents-eval Platform") {
 
     Container(agent_system, "Agent System", "Python/PydanticAI", "Multi-agent orchestration (Manager/Researcher/Analyst/Synthesizer)\nor Claude Code headless (--engine=cc)")
 
+    note right of agent_system
+      Sprint 10 CC path:
+      extract_cc_review_text() + cc_result_to_graph_trace()
+      feed evaluate_comprehensive() directly.
+      CompositeResult.engine_type = "cc_solo"|"cc_teams"
+    end note
+
     Container(benchmark, "Benchmark", "Python", "SweepRunner: compositions × papers × repetitions\nSweepAnalyzer: mean/stddev per composition\nresults.json + summary.md")
 
     Container(datasets, "Dataset Integration", "Python+JSON", "Loads and provides access to benchmark datasets (e.g., PeerRead)")

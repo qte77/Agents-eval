@@ -41,11 +41,14 @@ group Composition Sweep [compositions × papers × repetitions]
 
                 else engine = "cc" (Claude Code headless)
 
-                    SR -> SR: Verify: shutil.which("claude")
-                    SR -> AS: claude -p "prompt" (subprocess)
-                    AS -> AS: Collect artifacts\n(~/.claude/teams/, raw_stream.jsonl)
-                    AS -> EP: CCTraceAdapter.parse(artifacts)\n→ GraphTraceData → evaluation
-                    EP --> AS: CompositeResult
+                    SR -> AS: run_cc_solo(query) or\nrun_cc_teams(query)
+                    note right of AS
+                      teams: parse_stream_json() on JSONL stream
+                      solo: --output-format json
+                    end note
+                    AS -> AS: extract_cc_review_text(cc_result)\n+ cc_result_to_graph_trace(cc_result)
+                    AS -> EP: evaluate_comprehensive(\nreview_text=...,\ngraph_trace=GraphTraceData)
+                    EP --> AS: CompositeResult\n(engine_type="cc_solo"|"cc_teams")
                     AS --> SR: CompositeResult
                     SR -> RS: Append result\n(incremental save)
 

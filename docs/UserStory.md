@@ -52,6 +52,9 @@ For implementation details, see [architecture.md](architecture.md). For sprint s
 - ~~Plugin architecture — restructuring `evals/` to `judge/` with `EvaluatorPlugin` interface.~~ (delivered Sprint 3)
 - ~~Claude Code OTel tracing — standalone Claude Code telemetry plugin.~~ (delivered Sprint 3)
 - ~~Evaluation baselines — Claude Code solo and teams comparison.~~ (delivered Sprint 4)
+- ~~CC evaluation pipeline parity — review text wiring, `engine_type` field, GUI CC execution.~~ (delivered Sprint 10)
+- ~~Graph visualization polish — mode-specific empty-state messages, Tier 3 informational label.~~ (delivered Sprint 10)
+- ~~Reference reviews loaded from PeerRead for all engine modes.~~ (delivered Sprint 10)
 - Multi-channel deployment — FastAPI REST and MCP server endpoints.
 - Model-aware content truncation — token-limit-aware truncation for provider rate limits.
 - Migration cleanup — removing backward-compatibility shims.

@@ -282,15 +282,15 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 10 - In Progress)
+### Current Implementation (Sprint 10 - Substantially Delivered)
 
 **Sprint 10 Scope**: E2E CLI/GUI parity for CC engine, graph visualization, test quality.
 
-- **CC Evaluation Pipeline Parity** (STORY-010): CC engine results (solo and teams) now flow through the same `evaluate_comprehensive()` pipeline as MAS. `extract_cc_review_text()` extracts review text from CC output; `cc_result_to_graph_trace()` builds `GraphTraceData` from team events. `main()` branches on `engine="cc"` to skip MAS agent execution and wire CC artifacts directly. `CompositeResult.engine_type` field distinguishes `"mas"`, `"cc_solo"`, `"cc_teams"`.
+- **CC Evaluation Pipeline Parity** (STORY-010): `main()` decomposes into `_run_cc_engine_path()` and `_run_mas_engine_path()`. CC branch calls `extract_cc_review_text()` and `cc_result_to_graph_trace()`, then feeds both into `evaluate_comprehensive()`. `CompositeResult.engine_type` set to `"cc_solo"` or `"cc_teams"`. `_load_reference_reviews(paper_id)` loads ground-truth for all modes (was hardcoded `None`).
 - **Graph Visualization Polish** (STORY-011): `render_agent_graph()` accepts `composite_result` for mode-specific empty-state messages (solo/teams/MAS). Tier 3 informational label on Evaluation page when engine is CC.
 - **inspect.getsource Removal** (STORY-015): 7 occurrences of `inspect.getsource` in tests replaced with behavioral assertions. Zero remaining.
 - **Reference Reviews from PeerRead**: `_load_reference_reviews(paper_id)` loads ground-truth reviews via `PeerReadLoader`, replacing hardcoded `None`.
-- **Process Group Kill**: CC teams subprocess uses `start_new_session=True` with `os.killpg()` on timeout to cleanly terminate teammate child processes.
+- **Process Group Kill**: CC teams subprocess uses `start_new_session=True` with `os.killpg()` on timeout to cleanly terminate teammate child processes. Test fix: `os.killpg`/`os.getpgid` mocked in timeout test to prevent real SIGTERM to container process group.
 - **GUI CC Execution**: `_execute_query_background()` calls `run_cc_solo()`/`run_cc_teams()` when CC engine selected, passing `cc_result` to `main()`.
 
 ### Sprint 9 Key Deliverables (Delivered)
@@ -463,7 +463,7 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 7**: Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine -- Delivered
 - **Sprint 8**: Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, report generation, GUI a11y/UX -- Delivered
 - **Sprint 9**: Correctness & security hardening — dead code, format string sanitization, PDF guard, API key cleanup, judge accuracy, type safety, test quality -- Delivered
-- **Sprint 10**: E2E CLI/GUI parity for CC engine (pipeline parity, review text wiring, engine_type, GUI CC execution), graph visualization polish (mode-specific messages, Tier 3 informational label), test quality (inspect.getsource removal, reference reviews) -- In Progress
+- **Sprint 10**: E2E CLI/GUI parity for CC engine (pipeline parity, review text wiring, engine_type, GUI CC execution), graph visualization polish (mode-specific messages, Tier 3 informational label), test quality (inspect.getsource removal, reference reviews) -- Substantially Delivered (STORY-012/013/014 not started)
 
 For sprint details, see [roadmap.md](roadmap.md).
 

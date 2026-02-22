@@ -9,31 +9,51 @@ participant "PeerRead Loader" as Loader
 participant "Review Storage Manager" as Storage
 participant "PeerRead Downloader" as Downloader
 participant "PeerRead Dataset\n(GitHub)" as ExternalDataset
+participant "CC Engine" as CCEngine
 participant "LLM Providers" as LLM
 
 User -> MainApp: Request task
 activate MainApp
 
-MainApp -> Manager: Orchestrate review process
-activate Manager
+alt engine = "mas"
 
-Manager -> Loader: get_peerread_paper(paper_id)
-activate Loader
-Loader --> Manager: PeerReadPaper
-deactivate Loader
+    MainApp -> Manager: Orchestrate review process
+    activate Manager
 
-Manager -> LLM: Generate review
-activate LLM
-LLM --> Manager: Review content
-deactivate LLM
+    Manager -> Loader: get_peerread_paper(paper_id)
+    activate Loader
+    Loader --> Manager: PeerReadPaper
+    deactivate Loader
 
-Manager -> Storage: save_structured_review()
-activate Storage
-Storage --> Manager: File path
-deactivate Storage
+    Manager -> LLM: Generate review
+    activate LLM
+    LLM --> Manager: Review content
+    deactivate LLM
 
-Manager --> MainApp: Return result
-deactivate Manager
+    Manager -> Storage: save_structured_review()
+    activate Storage
+    Storage --> Manager: File path
+    deactivate Storage
+
+    Manager --> MainApp: Return result
+    deactivate Manager
+
+else engine = "cc"
+
+    MainApp -> CCEngine: run_cc_solo() / run_cc_teams()
+    activate CCEngine
+    CCEngine --> MainApp: cc_result (JSON / stream)
+    deactivate CCEngine
+    MainApp -> MainApp: extract_cc_review_text(cc_result)\n+ cc_result_to_graph_trace(cc_result)
+
+end
+
+note over MainApp
+  Sprint 10: main() decomposes into
+  _run_cc_engine_path() / _run_mas_engine_path().
+  CompositeResult.engine_type distinguishes
+  "mas", "cc_solo", "cc_teams".
+end note
 
 MainApp -> Evaluator: Evaluate review quality (three-tier pipeline)
 activate Evaluator
