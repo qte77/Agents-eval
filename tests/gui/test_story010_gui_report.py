@@ -11,7 +11,7 @@ Covers:
 Mock strategy:
 - Streamlit widgets patched throughout (no real Streamlit runtime needed)
 - report_generator.generate_report patched to avoid real evaluation
-- inspect.signature / inspect.getsource for structural assertions
+- inspect.signature for parameter presence checks; behavioral assertions for wiring
 """
 
 import inspect
@@ -205,30 +205,38 @@ class TestReportDownloadButton:
 
 
 class TestReportSectionWiredIntoRenderApp:
-    """Verify _render_report_section is called from render_app source.
+    """Verify _render_report_section is accessible on run_app and generate_report is wired in.
 
     The report section must be integrated into the app flow,
     appearing after execution completes.
     """
 
-    def test_render_app_source_references_render_report_section(self) -> None:
-        """render_app source must call _render_report_section.
+    def test_render_report_section_is_callable_on_run_app(self) -> None:
+        """run_app module must expose _render_report_section as a callable.
 
-        Inspects source code to verify the report section is wired into
-        the main app flow.
+        Behavioral: import run_app and verify _render_report_section attribute exists
+        and is callable (STORY-010 wiring check without source inspection).
         """
-        import gui.pages.run_app as run_app_mod
+        from gui.pages import run_app
 
-        source = inspect.getsource(run_app_mod)
-        assert "_render_report_section" in source, (
-            "render_app must call _render_report_section (STORY-010)"
+        assert hasattr(run_app, "_render_report_section"), (
+            "run_app must define _render_report_section (STORY-010)"
+        )
+        assert callable(run_app._render_report_section), (
+            "_render_report_section must be callable"
         )
 
-    def test_generate_report_imported_in_run_app(self) -> None:
-        """run_app must import generate_report from app.reports.report_generator."""
-        import gui.pages.run_app as run_app_mod
+    def test_generate_report_is_accessible_from_run_app(self) -> None:
+        """run_app module must have generate_report as a callable attribute.
 
-        source = inspect.getsource(run_app_mod)
-        assert "generate_report" in source, (
-            "run_app must import/use generate_report from report_generator (STORY-010)"
+        Behavioral: verify generate_report is importable from run_app's namespace,
+        confirming it is wired into the module.
+        """
+        from gui.pages import run_app
+
+        assert hasattr(run_app, "generate_report"), (
+            "run_app must import generate_report from report_generator (STORY-010)"
+        )
+        assert callable(run_app.generate_report), (
+            "generate_report must be callable on run_app"
         )
