@@ -155,9 +155,9 @@
         "src/app/tools/peerread_tools.py",
         "tests/agents/test_agent_system.py"
       ],
-      "status": "failed",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-02-22T15:17:36Z",
       "content_hash": "23a6f0f85dc97651a94291727c2098dd0ca4eea51d3862a4644b8f4de3d9929e",
       "depends_on": [
         "STORY-010",
@@ -190,9 +190,9 @@
         "tests/cli/test_cc_engine_wiring.py",
         "tests/gui/test_prompts_integration.py"
       ],
-      "status": "failed",
+      "status": "passed",
       "wave": 1,
-      "completed_at": null,
+      "completed_at": "2026-02-22T15:17:41Z",
       "content_hash": "996492ac084d304e0fd23d39570fa716262ff2e2af8f556c8d79ad615a8a7a29",
       "depends_on": []
     }
