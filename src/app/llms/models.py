@@ -87,8 +87,28 @@ def create_llm_model(endpoint_config: EndpointConfig) -> Model:
                 api_key=api_key,
             ),
         )
-    elif provider == "cerebras":
-        # Reason: Cerebras rejects requests with mixed strict values on tools.
+    elif provider == "anthropic":
+        # Reason: Anthropic has native PydanticAI support; using the OpenAI-compatible
+        # fallback loses Anthropic-specific features (caching, extended thinking).
+        try:
+            from pydantic_ai.models.anthropic import AnthropicModel
+            from pydantic_ai.providers.anthropic import AnthropicProvider
+
+            return AnthropicModel(
+                model_name=model_name,
+                provider=AnthropicProvider(api_key=api_key),
+            )
+        except ImportError:
+            logger.warning("AnthropicModel not available, falling back to OpenAI format")
+            return OpenAIChatModel(
+                model_name=model_name,
+                provider=OpenAIProvider(
+                    base_url=base_url,
+                    api_key=api_key,
+                ),
+            )
+    elif provider in ["cerebras", "groq", "fireworks", "together", "sambanova"]:
+        # Reason: These providers reject requests with mixed strict values on tools.
         # Disabling strict tool definitions prevents PydanticAI from adding
         # the 'strict' field to some tools but not others.
         return OpenAIChatModel(

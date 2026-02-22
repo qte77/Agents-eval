@@ -1,46 +1,106 @@
 {
     "providers": {
-        "huggingface": {
-            "model_name": "facebook/bart-large-mnli",
-            "base_url": "https://router.huggingface.co/hf-inference/models",
-            "usage_limits": 25000,
-            "max_content_length": 15000
-        },
         "gemini": {
-            "model_name": "gemini-1.5-pro",
+            "model_name": "gemini-2.0-flash",
             "base_url": "https://generativelanguage.googleapis.com/v1beta",
             "usage_limits": 25000,
             "max_content_length": 1000000
         },
         "github": {
-            "model_name": "gpt-4.1",
+            "model_name": "gpt-4.1-mini",
             "base_url": "https://models.inference.ai.azure.com",
             "usage_limits": 25000,
             "max_content_length": 128000
         },
-        "grok": {
-            "model_name": "grok-2-1212",
-            "base_url": "https://api.x.ai/v1",
-            "usage_limits": 25000,
-            "max_content_length": 15000
+        "cerebras": {
+            "model_name": "gpt-oss-120b",
+            "base_url": "https://api.cerebras.ai/v1",
+            "usage_limits": 60000,
+            "max_content_length": 128000
         },
-        "ollama": {
-            "model_name": "granite3-dense",
-            "base_url": "http://localhost:11434/v1",
-            "usage_limits": 100000,
-            "max_content_length": 15000
+        "groq": {
+            "model_name": "llama-3.3-70b-versatile",
+            "base_url": "https://api.groq.com/openai/v1",
+            "usage_limits": 25000,
+            "max_content_length": 131000
+        },
+        "mistral": {
+            "model_name": "open-mistral-nemo",
+            "base_url": "https://api.mistral.ai/v1",
+            "usage_limits": 25000,
+            "max_content_length": 128000
         },
         "openrouter": {
-            "model_name": "google/gemini-2.0-flash-exp:free",
+            "model_name": "qwen/qwen3-next-80b-a3b-instruct:free",
             "base_url": "https://openrouter.ai/api/v1",
             "usage_limits": 25000,
-            "max_content_length": 15000
+            "max_content_length": 262000
+        },
+        "cohere": {
+            "model_name": "command-a-03-2025",
+            "base_url": "https://api.cohere.com/v2",
+            "usage_limits": 25000,
+            "max_content_length": 256000
+        },
+        "deepseek": {
+            "model_name": "deepseek-chat",
+            "base_url": "https://api.deepseek.com/v1",
+            "usage_limits": 25000,
+            "max_content_length": 128000
+        },
+        "grok": {
+            "model_name": "grok-3-mini",
+            "base_url": "https://api.x.ai/v1",
+            "usage_limits": 25000,
+            "max_content_length": 131000
+        },
+        "sambanova": {
+            "model_name": "Meta-Llama-3.3-70B-Instruct",
+            "base_url": "https://api.sambanova.ai/v1",
+            "usage_limits": 25000,
+            "max_content_length": 128000
+        },
+        "nebius": {
+            "model_name": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+            "base_url": "https://api.studio.nebius.ai/v1",
+            "usage_limits": 25000,
+            "max_content_length": 128000
+        },
+        "fireworks": {
+            "model_name": "accounts/fireworks/models/llama-v3p3-70b-instruct",
+            "base_url": "https://api.fireworks.ai/inference/v1",
+            "usage_limits": 25000,
+            "max_content_length": 131000
+        },
+        "openai": {
+            "model_name": "gpt-4.1-mini",
+            "base_url": "https://api.openai.com/v1",
+            "usage_limits": 25000,
+            "max_content_length": 1000000
+        },
+        "anthropic": {
+            "model_name": "claude-sonnet-4-20250514",
+            "base_url": "https://api.anthropic.com",
+            "usage_limits": 25000,
+            "max_content_length": 200000
+        },
+        "together": {
+            "model_name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+            "base_url": "https://api.together.xyz/v1",
+            "usage_limits": 25000,
+            "max_content_length": 128000
         },
         "perplexity": {
             "model_name": "sonar",
             "base_url": "https://api.perplexity.ai",
             "usage_limits": 25000,
-            "max_content_length": 15000
+            "max_content_length": 127000
+        },
+        "huggingface": {
+            "model_name": "meta-llama/Meta-Llama-3.3-70B-Instruct",
+            "base_url": "https://router.huggingface.co/v1",
+            "usage_limits": 25000,
+            "max_content_length": 128000
         },
         "restack": {
             "model_name": "deepseek-chat",
@@ -48,35 +108,14 @@
             "usage_limits": 25000,
             "max_content_length": 15000
         },
-        "together": {
-            "model_name": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
-            "base_url": "https://api.together.xyz/v1",
-            "usage_limits": 25000,
-            "max_content_length": 15000
-        },
-        "openai": {
-            "model_name": "gpt-4-turbo",
-            "base_url": "https://api.openai.com/v1",
-            "usage_limits": 25000,
+        "ollama": {
+            "model_name": "llama3.3:latest",
+            "base_url": "http://localhost:11434/v1",
+            "usage_limits": 100000,
             "max_content_length": 128000
-        },
-        "anthropic": {
-            "model_name": "claude-3-5-sonnet-20241022",
-            "base_url": "https://api.anthropic.com",
-            "usage_limits": 25000,
-            "max_content_length": 200000
-        },
-        "cerebras": {
-            "model_name": "gpt-oss-120b",
-            "base_url": "https://api.cerebras.ai/v1",
-            "usage_limits": 60000,
-            "max_content_length": 8192
         }
     },
-    "inference": {
-        "result_retries": 3,
-        "result_retries_ollama": 3
-    },
+    "inference": {"result_retries": 3, "result_retries_ollama": 3},
     "prompts": {
         "system_prompt_manager": "CRITICAL RULE: Do NOT call any tools unless the user explicitly asks about a specific paper, a review, or the PeerRead dataset. If the user sends a greeting, a general question, or anything not about papers, respond conversationally in plain text without calling any tools.\n\nYou are a manager overseeing research and analysis tasks. Your role is to coordinate the efforts of the research, analysis and synthesiser agents to provide comprehensive answers to user queries. The researcher should gather and analyze data relevant to the topic. The whole result must be handed to the analyst, who will check it for accuracy of the assumptions, facts, and conclusions. If an analyst is present the researchers output has to be approved by the analyst. If the analyst does not approve of the researcher's result, all of the analyst's response and the topic must be handed back to the researcher to be refined. Repeat this loop until the analyst approves. If a sysnthesiser is present and once the analyst approves, the synthesiser should output a well formatted scientific report using the data given.",
         "system_prompt_researcher": "You are a researcher. Gather and analyze data relevant to the topic. Use the search tool to gather data. Always check accuracy of assumptions, facts, and conclusions.",

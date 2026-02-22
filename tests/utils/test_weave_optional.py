@@ -69,32 +69,44 @@ def test_weave_not_imported_when_api_key_absent():
 
 
 def test_app_op_decorator_without_weave():
-    """Test that @op() decorator fallback is correctly defined in app.py."""
+    """Test that op() fallback in app.app is a callable no-op decorator when weave is absent."""
+    import sys
 
-    def op_fallback():  # type: ignore[reportRedeclaration]
-        """No-op decorator fallback when weave is unavailable."""
+    # Remove weave from sys.modules to simulate absence, then reimport app.app
+    original_weave = sys.modules.pop("weave", None)
+    original_app_app = sys.modules.pop("app.app", None)
 
-        def decorator(func):
-            return func
+    try:
+        # Simulate ImportError for weave so the fallback branch executes
+        sys.modules["weave"] = None  # type: ignore[assignment]
 
-        return decorator
+        # Reimport to trigger the try/except ImportError branch
+        import importlib
 
-    @op_fallback()
-    def test_func():
-        return "test"
+        import app.app as app_mod
 
-    assert test_func() == "test"
-    assert callable(test_func)
+        importlib.reload(app_mod)
 
-    import inspect
+        # Behavioral assertion: op() must return a decorator that is a no-op
+        op = app_mod.op
+        assert callable(op), "op must be callable"
 
-    from app import app
+        decorator = op()
+        assert callable(decorator), "op() must return a callable decorator"
 
-    source = inspect.getsource(app)
-    assert "try:" in source
-    assert "from weave import op" in source
-    assert "except ImportError:" in source
-    assert "def op() ->" in source
+        def sample_func():
+            return "expected"
+
+        wrapped = decorator(sample_func)
+        assert wrapped() == "expected", "no-op decorator must return the original function result"
+        assert callable(wrapped), "wrapped function must be callable"
+    finally:
+        # Restore original state
+        del sys.modules["weave"]
+        if original_weave is not None:
+            sys.modules["weave"] = original_weave
+        if original_app_app is not None:
+            sys.modules["app.app"] = original_app_app
 
 
 @given(st.text(min_size=1, max_size=50))

@@ -11,6 +11,8 @@ import shutil
 from sys import argv, exit
 from typing import Any
 
+from app.data_models.app_models import PROVIDER_REGISTRY
+
 _parser = argparse.ArgumentParser(description="Agents-eval CLI — run MAS evaluation pipeline")
 
 for _flag, _help in [
@@ -56,8 +58,13 @@ _review_group.add_argument(
 )
 _parser.set_defaults(enable_review_tools=None)
 
+_parser.add_argument(
+    "--chat-provider",
+    choices=sorted(PROVIDER_REGISTRY.keys()),
+    help="Specify the chat provider to use",
+)
+
 for _flag, _help in [
-    ("--chat-provider", "Specify the chat provider to use"),
     ("--query", "Specify the query to process"),
     ("--chat-config-file", "Path to the chat configuration file"),
     ("--paper-id", "Paper ID for PeerRead review (supports arxiv IDs like '1105.1072')"),
@@ -123,19 +130,21 @@ if __name__ == "__main__":
 
     logger.info(f"Used arguments: {args}")
 
+    # S10-F1: run CC engine then pass result to main() instead of discarding it
+    cc_result_obj = None
     if engine == "cc":
         from app.engines.cc_engine import run_cc_solo, run_cc_teams
 
         query = args.get("query", "")
         if cc_teams:
-            cc_result = run_cc_teams(query, timeout=600)
+            cc_result_obj = run_cc_teams(query, timeout=600)
         else:
-            cc_result = run_cc_solo(query, timeout=600)
+            cc_result_obj = run_cc_solo(query, timeout=600)
 
-        if cc_result.session_dir:
-            args["cc_solo_dir"] = cc_result.session_dir
+        if cc_result_obj.session_dir:
+            args["cc_solo_dir"] = cc_result_obj.session_dir
 
-    result_dict = run(main(**args))
+    result_dict = run(main(**args, engine=engine, cc_result=cc_result_obj))
 
     # S8-F6.1: generate report after evaluation if requested
     if generate_report_flag and result_dict:

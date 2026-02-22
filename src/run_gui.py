@@ -47,7 +47,6 @@ chat_config_file = Path(__file__).parent / APP_CONFIG_PATH / CHAT_CONFIG_FILE
 chat_config = load_config(chat_config_file, ChatConfig)
 common_settings = CommonSettings()
 judge_settings = JudgeSettings()
-logger.info(f"Default provider in GUI: {CHAT_DEFAULT_PROVIDER}")
 
 
 def get_session_state_defaults() -> dict[str, str | bool]:
@@ -101,9 +100,10 @@ async def main():
         composite_result = st.session_state.get("execution_composite_result", None)
         render_evaluation(composite_result)
     elif selected_page == "Agent Graph":
-        # Pass graph from session state if available
+        # S10-F2: pass graph and composite_result for mode-specific messages
         graph = st.session_state.get("execution_graph", None)
-        render_agent_graph(graph)
+        composite_result = st.session_state.get("execution_composite_result", None)
+        render_agent_graph(graph, composite_result=composite_result)
 
 
 if __name__ == "__main__":

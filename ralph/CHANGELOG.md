@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Story Status Enum**: Replaced binary `passes: bool` with `status: str` enum (`"pending"` | `"in_progress"` | `"passed"` | `"failed"`) across prd.json schema, shell scripts, and templates — enables observable story state and distinguishes not-started from running from failed
 - **Wave Field in prd.json**: `wave: int` (1-indexed BFS level) computed by `compute_waves()` in `generate_prd_json.py` — makes dependency execution plan visible in prd.json without runtime computation
+- **Sprint 9 Archive**: `ralph/docs/archive/sprint9/` with completed prd.json and progress.txt (all 9 stories passed)
+
+### Removed
+
+- **Duplicate `verify_teammate_stories`**: Deleted stale copy in `ralph.sh` that shadowed `lib/teams.sh` authoritative version — stale copy ignored `$3` (DELEGATED_TEAMMATES), using `get_unblocked_stories` instead which could pick up Wave N+1 stories never delegated
+
+### Fixed
+
+- **Worktree Directory Guard**: `ralph-in-worktree.sh` checks `[ -d "$WORKTREE_DIR" ]` alongside branch grep to prevent false positive when main checkout matches branch name in `git worktree list --porcelain` output
 - **Teammate Verification**: `verify_teammate_stories()` in `ralph.sh` — after primary story passes in teams mode, runs TDD commit check + scoped quality checks (ruff, complexity, tests) on each wave-peer story and marks them `"passed"` or `"failed"`
 - **Legacy Schema Guard**: `validate_environment()` detects old `passes` field without `status` and exits with migration instructions
 - **`-X ours` Merge Blind Spot**: Documented in README.md and LEARNINGS.md — files added exclusively by the other branch are auto-merged as clean additions, not conflicts; must `git rm` after merge

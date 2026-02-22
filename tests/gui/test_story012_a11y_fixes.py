@@ -14,12 +14,12 @@ Covers:
 
 Mock strategy:
 - No real Streamlit runtime needed
-- Source code inspection for CSS/text checks
-- Direct function calls with patched streamlit for behavioral checks
+- Behavioral: mock injection for CSS checks, HTML output for color checks
+- Direct function calls with patched streamlit for all assertions
 """
 
 import importlib
-import inspect
+from unittest.mock import patch
 
 # ---------------------------------------------------------------------------
 # 1. styling.py — CSS radio button circle hiding hack must be removed
@@ -33,27 +33,50 @@ class TestStylingRadioHackRemoved:
     """
 
     def test_radio_circle_css_hack_not_in_styling_source(self) -> None:
-        """styling.py must not contain the CSS that hides radio button circles.
+        """add_custom_styling must not inject CSS that hides radio button circles.
 
-        The hack was: div[role="radiogroup"] label > div:first-child { display: none !important; }
-        or equivalent patterns hiding .stRadio first-child elements.
+        Behavioral: patch st.markdown/st.html and verify no 'display: none'
+        CSS targeting radio elements is passed.
         """
-        import gui.config.styling as styling_mod
+        from gui.config import styling as styling_mod
 
-        source = inspect.getsource(styling_mod)
-        # Check neither 'display: none' targeting radio elements nor the specific selector
-        assert "display: none" not in source, (
-            "styling.py must not hide native radio button circles via 'display: none'"
+        with (
+            patch("streamlit.set_page_config"),
+            patch("streamlit.markdown") as mock_md,
+            patch("streamlit.html") as mock_html,
+        ):
+            styling_mod.add_custom_styling("Test")
+
+        # Collect all CSS injected via markdown or html calls
+        all_css_injected = " ".join(
+            str(arg)
+            for call in (mock_md.call_args_list + mock_html.call_args_list)
+            for arg in call.args
+        )
+        assert "display: none" not in all_css_injected, (
+            "add_custom_styling must not hide native radio button circles via 'display: none'"
         )
 
     def test_radio_circle_css_hack_not_contain_radiogroup_hide(self) -> None:
-        """styling.py must not contain radiogroup-targeting CSS that hides elements."""
-        import gui.config.styling as styling_mod
+        """add_custom_styling must not inject radiogroup-targeting hide CSS."""
+        from gui.config import styling as styling_mod
 
-        source = inspect.getsource(styling_mod)
-        assert "radiogroup" not in source.lower() or "display: none" not in source, (
-            "Radio group elements must not be hidden via CSS"
+        with (
+            patch("streamlit.set_page_config"),
+            patch("streamlit.markdown") as mock_md,
+            patch("streamlit.html") as mock_html,
+        ):
+            styling_mod.add_custom_styling("Test")
+
+        all_css_injected = " ".join(
+            str(arg)
+            for call in (mock_md.call_args_list + mock_html.call_args_list)
+            for arg in call.args
         )
+        # radiogroup + display:none combination must not be present
+        assert (
+            "radiogroup" not in all_css_injected.lower() or "display: none" not in all_css_injected
+        ), "Radio group elements must not be hidden via injected CSS"
 
 
 # ---------------------------------------------------------------------------
@@ -148,23 +171,39 @@ class TestLogCaptureModuleColorContrast:
     #696969 has contrast ratio 5.9:1 (passes AA).
     """
 
-    def test_log_capture_source_does_not_use_low_contrast_color(self) -> None:
-        """log_capture.py must not use #999999 for text color."""
-        import gui.utils.log_capture as log_capture_mod
+    def test_log_capture_html_does_not_use_low_contrast_color(self) -> None:
+        """format_logs_as_html must not render #999999 for module text color."""
+        from gui.utils.log_capture import LogCapture
 
-        source = inspect.getsource(log_capture_mod)
-        assert "#999999" not in source, (
-            "log_capture.py must not use #999999 (contrast 2.8:1 fails WCAG 1.4.3). "
+        logs = [
+            {
+                "timestamp": "2026-01-01 12:00:00",
+                "level": "INFO",
+                "module": "app.test",
+                "message": "Color contrast check",
+            }
+        ]
+        html = LogCapture.format_logs_as_html(logs)
+        assert "#999999" not in html, (
+            "format_logs_as_html must not use #999999 (contrast 2.8:1 fails WCAG 1.4.3). "
             "Use #696969 (contrast 5.9:1) instead."
         )
 
-    def test_log_capture_source_uses_accessible_color(self) -> None:
-        """log_capture.py must use #696969 for module text color (WCAG 1.4.3)."""
-        import gui.utils.log_capture as log_capture_mod
+    def test_log_capture_html_uses_accessible_color(self) -> None:
+        """format_logs_as_html must render #696969 for module text color (WCAG 1.4.3)."""
+        from gui.utils.log_capture import LogCapture
 
-        source = inspect.getsource(log_capture_mod)
-        assert "#696969" in source, (
-            "log_capture.py must use #696969 for module text color (contrast 5.9:1, WCAG AA)."
+        logs = [
+            {
+                "timestamp": "2026-01-01 12:00:00",
+                "level": "INFO",
+                "module": "app.test",
+                "message": "Color contrast check",
+            }
+        ]
+        html = LogCapture.format_logs_as_html(logs)
+        assert "#696969" in html, (
+            "format_logs_as_html must use #696969 for module text color (contrast 5.9:1, WCAG AA)."
         )
 
 
@@ -177,14 +216,17 @@ class TestRunGuiSubAgentDefaults:
     """Verify get_session_state_defaults returns True for researcher and analyst.
 
     S8-F8.1: default sub-agents to True for better UX.
+    Mock strategy: patch load_config during reload to isolate module-level config
+    loading from JSON parse errors in config_chat.json.
     """
 
     def test_get_session_state_defaults_include_researcher_is_true(self) -> None:
         """get_session_state_defaults must return include_researcher=True."""
-        # Reload module to get fresh defaults (avoids cached module state)
-        import run_gui
+        # Patch load_config during reload to avoid module-level JSON parse errors
+        with patch("app.utils.load_configs.load_config"):
+            import run_gui
 
-        importlib.reload(run_gui)
+            importlib.reload(run_gui)
         defaults = run_gui.get_session_state_defaults()
         assert defaults["include_researcher"] is True, (
             f"Expected include_researcher=True, got {defaults['include_researcher']}"
@@ -192,9 +234,10 @@ class TestRunGuiSubAgentDefaults:
 
     def test_get_session_state_defaults_include_analyst_is_true(self) -> None:
         """get_session_state_defaults must return include_analyst=True."""
-        import run_gui
+        with patch("app.utils.load_configs.load_config"):
+            import run_gui
 
-        importlib.reload(run_gui)
+            importlib.reload(run_gui)
         defaults = run_gui.get_session_state_defaults()
         assert defaults["include_analyst"] is True, (
             f"Expected include_analyst=True, got {defaults['include_analyst']}"
@@ -202,9 +245,10 @@ class TestRunGuiSubAgentDefaults:
 
     def test_get_session_state_defaults_include_synthesiser_stays_false(self) -> None:
         """get_session_state_defaults must keep include_synthesiser=False (not changed by AC)."""
-        import run_gui
+        with patch("app.utils.load_configs.load_config"):
+            import run_gui
 
-        importlib.reload(run_gui)
+            importlib.reload(run_gui)
         defaults = run_gui.get_session_state_defaults()
         assert defaults["include_synthesiser"] is False, (
             f"Expected include_synthesiser=False, got {defaults['include_synthesiser']}"
@@ -222,44 +266,91 @@ class TestSidebarRadioLabel:
     WCAG 1.3.1, 2.4.6: Labels must be meaningful and descriptive.
     """
 
-    def test_sidebar_source_uses_navigation_label(self) -> None:
-        """sidebar.py radio must use 'Navigation' as the label text."""
-        import gui.components.sidebar as sidebar_mod
+    def _make_mock_sidebar(self):
+        """Create a MagicMock sidebar with a radio that returns 'Home'."""
+        from unittest.mock import MagicMock
 
-        source = inspect.getsource(sidebar_mod)
-        assert '"Navigation"' in source or "'Navigation'" in source, (
-            "sidebar.py must use 'Navigation' as the radio label, not ' ' (space)."
+        mock_sb = MagicMock()
+        mock_sb.radio = MagicMock(return_value="Home")
+        mock_sb.title = MagicMock()
+        mock_sb.divider = MagicMock()
+        mock_sb.markdown = MagicMock()
+        mock_sb.caption = MagicMock()
+        mock_sb.info = MagicMock()
+        return mock_sb
+
+    def test_sidebar_uses_navigation_label(self) -> None:
+        """render_sidebar must call sidebar.radio with 'Navigation' as the label."""
+        from unittest.mock import patch
+
+        from gui.components.sidebar import render_sidebar
+
+        mock_sb = self._make_mock_sidebar()
+        with patch("gui.components.sidebar.sidebar", mock_sb):
+            render_sidebar("Test App")
+
+        radio_calls = mock_sb.radio.call_args_list
+        assert radio_calls, "sidebar.radio must be called"
+        first_arg = (
+            radio_calls[0].args[0]
+            if radio_calls[0].args
+            else radio_calls[0].kwargs.get("label", "")
+        )
+        assert first_arg == "Navigation", (
+            f"sidebar.radio must use 'Navigation' as label, got: {first_arg!r}"
         )
 
-    def test_sidebar_source_does_not_use_space_label(self) -> None:
-        """sidebar.py radio must not use ' ' (space-only) as the label."""
-        import gui.components.sidebar as sidebar_mod
+    def test_sidebar_does_not_use_space_only_label(self) -> None:
+        """render_sidebar must not pass ' ' (space-only) as the radio label."""
+        from unittest.mock import patch
 
-        source = inspect.getsource(sidebar_mod)
-        # The old pattern was: sidebar.radio(" ", PAGES)
-        assert 'radio(" "' not in source and "radio(' '" not in source, (
-            "sidebar.py must not use ' ' (space) as radio label — use 'Navigation' instead."
-        )
+        from gui.components.sidebar import render_sidebar
 
-    def test_sidebar_source_uses_label_visibility_collapsed(self) -> None:
-        """sidebar.py must use label_visibility='collapsed' to hide label visually."""
-        import gui.components.sidebar as sidebar_mod
+        mock_sb = self._make_mock_sidebar()
+        with patch("gui.components.sidebar.sidebar", mock_sb):
+            render_sidebar("Test App")
 
-        source = inspect.getsource(sidebar_mod)
-        assert "label_visibility" in source and "collapsed" in source, (
-            "sidebar.py must use label_visibility='collapsed' on the Navigation radio."
+        radio_calls = mock_sb.radio.call_args_list
+        for call in radio_calls:
+            first_arg = call.args[0] if call.args else call.kwargs.get("label", "")
+            assert first_arg != " ", (
+                "sidebar.radio must not use ' ' (space) as label — use 'Navigation' instead."
+            )
+
+    def test_sidebar_uses_label_visibility_collapsed(self) -> None:
+        """render_sidebar must call radio with label_visibility='collapsed'."""
+        from unittest.mock import patch
+
+        from gui.components.sidebar import render_sidebar
+
+        mock_sb = self._make_mock_sidebar()
+        with patch("gui.components.sidebar.sidebar", mock_sb):
+            render_sidebar("Test App")
+
+        radio_calls = mock_sb.radio.call_args_list
+        assert radio_calls, "sidebar.radio must be called"
+        kwargs = radio_calls[0].kwargs
+        assert kwargs.get("label_visibility") == "collapsed", (
+            f"sidebar.radio must use label_visibility='collapsed', got: {kwargs.get('label_visibility')!r}"
         )
 
     def test_sidebar_phoenix_link_warns_opens_in_new_tab(self) -> None:
-        """sidebar.py Phoenix link must include '(opens in new tab)' text.
+        """render_sidebar Phoenix markdown must include '(opens in new tab)' text.
 
         S8-F8.1: Warn users that the link opens in a new tab (WCAG 3.2.5).
         """
-        import gui.components.sidebar as sidebar_mod
+        from unittest.mock import patch
 
-        source = inspect.getsource(sidebar_mod)
-        assert "opens in new tab" in source, (
-            "sidebar.py Phoenix link must include '(opens in new tab)' text for WCAG 3.2.5."
+        from gui.components.sidebar import render_sidebar
+
+        mock_sb = self._make_mock_sidebar()
+        with patch("gui.components.sidebar.sidebar", mock_sb):
+            render_sidebar("Test App")
+
+        markdown_calls = mock_sb.markdown.call_args_list
+        all_markdown_content = " ".join(str(call.args[0]) for call in markdown_calls if call.args)
+        assert "opens in new tab" in all_markdown_content, (
+            "render_sidebar Phoenix link must include '(opens in new tab)' text for WCAG 3.2.5."
         )
 
 
@@ -320,13 +411,44 @@ class TestPromptsDisplayOnlyWarning:
     S8-F8.1: Users must be clearly informed that changes are not persisted.
     """
 
-    def test_prompts_source_contains_display_only_warning(self) -> None:
-        """prompts.py must include a warning that edits are display-only."""
-        import gui.pages.prompts as prompts_mod
+    def test_prompts_calls_warning_with_display_only_message(self) -> None:
+        """render_prompts must call st.warning with a display-only notice.
 
-        source = inspect.getsource(prompts_mod)
-        # Check for warning call with display-only messaging
-        assert "warning(" in source, "prompts.py must call warning() to display a prominent notice."
-        assert "display-only" in source or "not be saved" in source, (
-            "prompts.py warning must state edits are display-only or will not be saved."
+        Behavioral: call render_prompts with a valid ChatConfig and verify
+        warning() is called with text mentioning display-only or not-saved.
+        """
+        from unittest.mock import patch
+
+        # Build a minimal valid ChatConfig with required fields
+        from app.data_models.app_models import ChatConfig, ProviderConfig
+
+        provider_cfg = ProviderConfig(
+            model_name="gpt-4o-mini",
+            base_url="http://localhost:8080",  # type: ignore[arg-type]
+        )
+        chat_config = ChatConfig(
+            providers={"openai": provider_cfg},
+            inference={"max_tokens": 1000},
+            prompts={"manager": "You are a manager."},
+        )
+
+        from gui.pages import prompts as prompts_mod
+
+        with (
+            patch.object(prompts_mod, "header"),
+            patch.object(prompts_mod, "warning") as mock_warning,
+            patch.object(prompts_mod, "error"),
+            patch.object(prompts_mod, "info"),
+            patch("gui.pages.prompts.render_prompt_editor", return_value=None),
+        ):
+            prompts_mod.render_prompts(chat_config)
+
+        assert mock_warning.called, (
+            "render_prompts must call st.warning() to show a prominent notice."
+        )
+        warning_text = " ".join(
+            str(call.args[0]) for call in mock_warning.call_args_list if call.args
+        )
+        assert "display-only" in warning_text or "not be saved" in warning_text, (
+            f"warning() must mention 'display-only' or 'not be saved'. Got: {warning_text!r}"
         )

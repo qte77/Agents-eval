@@ -17,8 +17,8 @@ This directory contains PlantUML source files for the project's architecture dia
 | `MAS-C4-Detailed.plantuml` | C4 | All containers: agents, evaluation tiers, benchmark, security, providers |
 | `MAS-Review-Workflow.plantuml` | Sequence | Full evaluation workflow with security boundaries: URL validation (SSRF), prompt sanitization (MAESTRO L3), log scrubbing (MAESTRO L5) |
 | `mas-workflow.plantuml` | Sequence | Agent tool usage: Manager → Researcher/Analyst/Synthesizer delegation |
-| `mas-enhanced-workflow.plantuml` | Sequence | Separation of concerns: Loader, Evaluator, Manager (SRP/SoC) |
-| `metrics-eval-sweep.plantuml` | Sequence | Benchmarking sweep: SweepConfig → SweepRunner → compositions × papers × repetitions → SweepAnalysis → results.json/summary.md; optional CC headless path (CCTraceAdapter) |
+| `mas-enhanced-workflow.plantuml` | Sequence | Separation of concerns: Loader, Evaluator, Manager (SRP/SoC); CC engine branch (extract_cc_review_text, cc_result_to_graph_trace) |
+| `metrics-eval-sweep.plantuml` | Sequence | Benchmarking sweep: SweepConfig → SweepRunner → compositions × papers × repetitions → SweepAnalysis → results.json/summary.md; CC headless path (run_cc_solo/run_cc_teams → extract_cc_review_text → cc_result_to_graph_trace → evaluate_comprehensive) |
 | `customer-journey-activity.plantuml` | Activity | End-to-end user journey: CLI/GUI → evaluation → sweep |
 | `documentation-hierarchy.plantuml` | Component | Doc authority hierarchy: agent vs human flows |
 | `AI-agent-landscape-visualization.puml` | Landscape | AI agent ecosystem snapshot (informational) |

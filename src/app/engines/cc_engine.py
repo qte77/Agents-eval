@@ -17,7 +17,10 @@ import os
 import shutil
 import subprocess
 from collections.abc import Iterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from app.data_models.evaluation_models import GraphTraceData
 
 from pydantic import BaseModel, Field
 
@@ -82,7 +85,8 @@ def _parse_jsonl_line(line: str) -> dict[str, Any] | None:
         return None
 
 
-_RESULT_KEYS = ("duration_ms", "total_cost_usd", "num_turns")
+# S10-F1: include "result" so CC review text is captured in output_data
+_RESULT_KEYS = ("duration_ms", "total_cost_usd", "num_turns", "result")
 
 
 def _apply_event(
@@ -149,6 +153,63 @@ def parse_stream_json(stream: Iterator[str]) -> CCResult:
         execution_id=state["execution_id"],
         output_data=state["output_data"],
         team_artifacts=state["team_artifacts"],
+    )
+
+
+def extract_cc_review_text(cc_result: CCResult) -> str:
+    """Extract review text from a CC execution result.
+
+    Args:
+        cc_result: CCResult from solo or teams execution.
+
+    Returns:
+        Review text string, or empty string if not present.
+
+    Example:
+        >>> result = CCResult(execution_id="x", output_data={"result": "Good paper."})
+        >>> extract_cc_review_text(result)
+        'Good paper.'
+    """
+    return str(cc_result.output_data.get("result", ""))
+
+
+def cc_result_to_graph_trace(cc_result: CCResult) -> GraphTraceData:
+    """Build GraphTraceData from a CCResult for graph-based analysis.
+
+    Solo mode: returns minimal GraphTraceData with empty lists (the composite
+    scorer detects single_agent_mode and redistributes weights).
+
+    Teams mode: maps Task events to agent_interactions and TeamCreate events
+    to coordination_events.
+
+    Args:
+        cc_result: CCResult from solo or teams execution.
+
+    Returns:
+        GraphTraceData populated from CC artifacts.
+
+    Example:
+        >>> result = CCResult(execution_id="solo-1", output_data={})
+        >>> trace = cc_result_to_graph_trace(result)
+        >>> trace.execution_id
+        'solo-1'
+    """
+    from app.data_models.evaluation_models import GraphTraceData
+
+    agent_interactions: list[dict[str, Any]] = []
+    coordination_events: list[dict[str, Any]] = []
+
+    for artifact in cc_result.team_artifacts:
+        event_type = artifact.get("type", "")
+        if event_type == "Task":
+            agent_interactions.append(artifact)
+        elif event_type == "TeamCreate":
+            coordination_events.append(artifact)
+
+    return GraphTraceData(
+        execution_id=cc_result.execution_id,
+        agent_interactions=agent_interactions,
+        coordination_events=coordination_events,
     )
 
 
@@ -240,10 +301,16 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
             stderr=subprocess.PIPE,
             text=True,
             env=env,
+            # S10-F1: new session so killpg can reach teammate child processes
+            start_new_session=True,
         ) as proc:
             try:
                 result = parse_stream_json(iter(proc.stdout or []))
             except subprocess.TimeoutExpired as e:
+                # S10-F1: kill entire process group, not just the lead process
+                import signal
+
+                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                 proc.kill()
                 raise RuntimeError(f"CC timed out after {e.timeout}s") from e
 

@@ -31,7 +31,7 @@ async def test_trace_collector_initialized_in_run_manager():
 
         # Mock the manager and its run method
         mock_manager = MagicMock(spec=Agent)
-        mock_manager.model._model_name = "test-model"
+        mock_manager.model.model_name = "test-model"
         mock_result = MagicMock(spec=AgentRunResult)
         mock_result.output = MagicMock()
         mock_result.usage = MagicMock(return_value={})
@@ -66,7 +66,7 @@ async def test_trace_execution_started_for_each_run():
 
         # Mock the manager and its run method
         mock_manager = MagicMock(spec=Agent)
-        mock_manager.model._model_name = "test-model"
+        mock_manager.model.model_name = "test-model"
         mock_result = MagicMock(spec=AgentRunResult)
         mock_result.output = MagicMock()
         mock_result.usage = MagicMock(return_value={})
@@ -110,7 +110,7 @@ async def test_timing_data_captured_during_execution():
 
         # Mock the manager and its run method
         mock_manager = MagicMock(spec=Agent)
-        mock_manager.model._model_name = "test-model"
+        mock_manager.model.model_name = "test-model"
         mock_result = MagicMock(spec=AgentRunResult)
         mock_result.output = MagicMock()
         mock_result.usage = MagicMock(return_value={})

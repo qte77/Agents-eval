@@ -196,6 +196,138 @@ def _prepare_result_dict(
 
 
 @op()  # type: ignore[reportUntypedFunctionDecorator]
+def _extract_cc_artifacts(cc_result: Any) -> tuple[str, Any]:
+    """Extract execution ID and graph from a CC engine result.
+
+    Args:
+        cc_result: CCResult from solo or teams execution.
+
+    Returns:
+        Tuple of (execution_id, interaction_graph).
+    """
+    from app.engines.cc_engine import cc_result_to_graph_trace
+    from app.judge.graph_builder import build_interaction_graph
+
+    graph_trace = cc_result_to_graph_trace(cc_result)
+    return cc_result.execution_id, build_interaction_graph(graph_trace)
+
+
+async def _run_cc_engine_path(
+    cc_result: Any,
+    skip_eval: bool,
+    paper_id: str | None,
+    cc_solo_dir: str | None,
+    cc_teams_dir: str | None,
+    cc_teams_tasks_dir: str | None,
+    chat_provider: str,
+    judge_settings: JudgeSettings | None,
+) -> tuple[Any, Any, str | None]:
+    """Execute CC engine path: extract artifacts, evaluate, set engine_type.
+
+    Args:
+        cc_result: CCResult from solo or teams execution.
+        skip_eval: Whether to skip evaluation.
+        paper_id: Optional PeerRead paper ID.
+        cc_solo_dir: CC solo trace directory.
+        cc_teams_dir: CC teams trace directory.
+        cc_teams_tasks_dir: CC teams tasks directory.
+        chat_provider: LLM provider name.
+        judge_settings: Optional judge settings.
+
+    Returns:
+        Tuple of (composite_result, graph, execution_id).
+    """
+    from app.engines.cc_engine import extract_cc_review_text
+
+    execution_id, graph = _extract_cc_artifacts(cc_result)
+    # S10-AC2: extract review text from CC output for evaluation
+    cc_review_text = extract_cc_review_text(cc_result)
+    composite_result = await _run_evaluation_if_enabled(
+        skip_eval,
+        paper_id,
+        execution_id,
+        cc_solo_dir,
+        cc_teams_dir,
+        cc_teams_tasks_dir,
+        chat_provider,
+        judge_settings,
+        manager_output=None,
+        review_text=cc_review_text,
+    )
+    # S10-AC7: set engine_type based on CC mode
+    if composite_result is not None:
+        composite_result.engine_type = "cc_teams" if cc_result.team_artifacts else "cc_solo"
+    return composite_result, graph, execution_id
+
+
+async def _run_mas_engine_path(
+    chat_config_file: str | Path,
+    chat_provider: str,
+    query: str,
+    paper_id: str | None,
+    enable_review_tools: bool,
+    include_researcher: bool,
+    include_analyst: bool,
+    include_synthesiser: bool,
+    token_limit: int | None,
+    skip_eval: bool,
+    cc_solo_dir: str | None,
+    cc_teams_dir: str | None,
+    cc_teams_tasks_dir: str | None,
+    judge_settings: JudgeSettings | None,
+) -> tuple[Any, Any, str | None]:
+    """Execute MAS engine path: run agents, evaluate, build graph.
+
+    Args:
+        chat_config_file: Path to chat configuration file.
+        chat_provider: LLM provider name.
+        query: User query string.
+        paper_id: Optional PeerRead paper ID.
+        enable_review_tools: Whether to enable review tools.
+        include_researcher: Whether to include researcher agent.
+        include_analyst: Whether to include analyst agent.
+        include_synthesiser: Whether to include synthesiser agent.
+        token_limit: Optional token limit override.
+        skip_eval: Whether to skip evaluation.
+        cc_solo_dir: CC solo trace directory.
+        cc_teams_dir: CC teams trace directory.
+        cc_teams_tasks_dir: CC teams tasks directory.
+        judge_settings: Optional judge settings.
+
+    Returns:
+        Tuple of (composite_result, graph, execution_id).
+    """
+    if not chat_provider:
+        chat_provider = input("Which inference chat_provider to use? ")
+
+    execution_id, _, manager_output = await _run_agent_execution(
+        chat_config_file,
+        chat_provider,
+        query,
+        paper_id,
+        enable_review_tools,
+        include_researcher,
+        include_analyst,
+        include_synthesiser,
+        token_limit,
+    )
+
+    composite_result = await _run_evaluation_if_enabled(
+        skip_eval,
+        paper_id,
+        execution_id,
+        cc_solo_dir,
+        cc_teams_dir,
+        cc_teams_tasks_dir,
+        chat_provider,
+        judge_settings,
+        manager_output,
+    )
+
+    graph = _build_graph_from_trace(execution_id) if execution_id else None
+    return composite_result, graph, execution_id
+
+
 async def main(
     chat_provider: str = CHAT_DEFAULT_PROVIDER,
     query: str = "",
@@ -215,6 +347,7 @@ async def main(
     token_limit: int | None = None,
     judge_settings: JudgeSettings | None = None,
     engine: str = "mas",
+    cc_result: Any | None = None,
 ) -> dict[str, Any] | None:
     """Main entry point for the application.
 
@@ -227,13 +360,12 @@ async def main(
     """
     logger.info(f"Starting app '{PROJECT_NAME}' v{__version__} (engine={engine})")
 
-    # Handle download-only mode (setup phase)
     if _handle_download_mode(
         download_peerread_full_only,
         download_peerread_samples_only,
         peerread_max_papers_per_sample_download,
     ):
-        return
+        return None
 
     try:
         if chat_config_file is None:
@@ -241,40 +373,37 @@ async def main(
         logger.info(f"Chat config file: {chat_config_file}")
 
         with span("main()"):
-            if not chat_provider:
-                chat_provider = input("Which inference chat_provider to use? ")
-
-            execution_id, _, manager_output = await _run_agent_execution(
-                chat_config_file,
-                chat_provider,
-                query,
-                paper_id,
-                enable_review_tools,
-                include_researcher,
-                include_analyst,
-                include_synthesiser,
-                token_limit,
-            )
-
-            # Run evaluation after manager completes
-            composite_result = await _run_evaluation_if_enabled(
-                skip_eval,
-                paper_id,
-                execution_id,
-                cc_solo_dir,
-                cc_teams_dir,
-                cc_teams_tasks_dir,
-                chat_provider,
-                judge_settings,
-                manager_output,
-            )
-
-            # Build interaction graph from trace data for visualization
-            graph = _build_graph_from_trace(execution_id) if execution_id else None
+            # S10-F1: CC engine branch — skip MAS, use CC result directly
+            if engine == "cc" and cc_result is not None:
+                composite_result, graph, execution_id = await _run_cc_engine_path(
+                    cc_result,
+                    skip_eval,
+                    paper_id,
+                    cc_solo_dir,
+                    cc_teams_dir,
+                    cc_teams_tasks_dir,
+                    chat_provider,
+                    judge_settings,
+                )
+            else:
+                composite_result, graph, execution_id = await _run_mas_engine_path(
+                    chat_config_file,
+                    chat_provider,
+                    query,
+                    paper_id,
+                    enable_review_tools,
+                    include_researcher,
+                    include_analyst,
+                    include_synthesiser,
+                    token_limit,
+                    skip_eval,
+                    cc_solo_dir,
+                    cc_teams_dir,
+                    cc_teams_tasks_dir,
+                    judge_settings,
+                )
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")
-
-            # Return data for GUI usage (include execution_id for Evaluation page)
             return _prepare_result_dict(composite_result, graph, execution_id)
 
     except Exception as e:

@@ -256,5 +256,6 @@ class TestEvaluationWiringSnapshots:
                 "weights_used": None,
                 "tiers_enabled": None,
                 "agent_assessment_scores": None,
+                "engine_type": "mas",
             }
         )

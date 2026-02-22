@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-TESTS_ROOT = Path(__file__).parent
+TESTS_ROOT = Path(__file__).parent.parent
 
 
 # ---------------------------------------------------------------------------
@@ -171,7 +171,7 @@ _AC1_FILES = [
     TESTS_ROOT / "agents" / "test_trace_collection_integration.py",
     TESTS_ROOT / "judge" / "test_evaluation_runner.py",
     TESTS_ROOT / "judge" / "test_llm_evaluation_managers.py",
-    TESTS_ROOT / "judge" / "test_graph_analysis.py",
+    TESTS_ROOT / "evals" / "test_graph_analysis.py",
     TESTS_ROOT / "evals" / "test_evaluation_pipeline.py",
     TESTS_ROOT / "app" / "test_cli_baseline.py",
     TESTS_ROOT / "app" / "test_app.py",

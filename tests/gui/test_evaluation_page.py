@@ -288,6 +288,7 @@ class TestEvaluationPageRenderingSnapshots:
                 "weights_used": {"tier1": 0.3, "tier2": 0.4, "tier3": 0.3},
                 "tiers_enabled": None,
                 "agent_assessment_scores": None,
+                "engine_type": "mas",
             }
         )
 

@@ -510,7 +510,7 @@ class TestStory013bHandleModelHttpError:
         rate_limit_error = ModelHTTPError(status_code=429, model_name="test-model", body={})
 
         mock_manager = MagicMock(spec=Agent)
-        mock_manager.model._model_name = "test-model"
+        mock_manager.model.model_name = "test-model"
         mock_manager.run = AsyncMock(side_effect=rate_limit_error)
 
         mock_trace_collector = MagicMock(spec=TraceCollector)

@@ -177,3 +177,169 @@ class TestAgentGraphPage:
 
             # Should render edge information
             assert mock_html.called
+
+
+# MARK: --- mode-specific empty-state messages (STORY-011) ---
+
+
+class TestAgentGraphEmptyStateMessages:
+    """Tests for mode-specific empty state messages in Agent Graph page."""
+
+    def test_none_graph_shows_no_execution_message(self):
+        """None graph shows generic 'no execution' message."""
+        from gui.pages.agent_graph import render_agent_graph
+
+        with patch("streamlit.info") as mock_info, patch("streamlit.header"):
+            render_agent_graph(None)
+            call_text = mock_info.call_args[0][0]
+            assert "no" in call_text.lower() or "run" in call_text.lower()
+
+    def test_empty_graph_cc_solo_shows_solo_message(self):
+        """Empty graph with cc_solo engine shows CC solo message."""
+        from app.data_models.evaluation_models import CompositeResult
+        from gui.pages.agent_graph import render_agent_graph
+
+        empty_graph = nx.DiGraph()
+        composite = CompositeResult(
+            composite_score=0.5,
+            recommendation="accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.0,
+            evaluation_complete=True,
+            engine_type="cc_solo",
+        )
+
+        with patch("streamlit.info") as mock_info, patch("streamlit.header"):
+            render_agent_graph(empty_graph, composite_result=composite)
+            call_text = mock_info.call_args[0][0]
+            assert "solo" in call_text.lower()
+
+    def test_empty_graph_cc_teams_shows_teams_message(self):
+        """Empty graph with cc_teams engine shows CC teams message."""
+        from app.data_models.evaluation_models import CompositeResult
+        from gui.pages.agent_graph import render_agent_graph
+
+        empty_graph = nx.DiGraph()
+        composite = CompositeResult(
+            composite_score=0.5,
+            recommendation="accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.0,
+            evaluation_complete=True,
+            engine_type="cc_teams",
+        )
+
+        with patch("streamlit.info") as mock_info, patch("streamlit.header"):
+            render_agent_graph(empty_graph, composite_result=composite)
+            call_text = mock_info.call_args[0][0]
+            assert "teams" in call_text.lower()
+
+    def test_empty_graph_mas_shows_generic_message(self):
+        """Empty graph with MAS engine shows generic multi-agent message."""
+        from app.data_models.evaluation_models import CompositeResult
+        from gui.pages.agent_graph import render_agent_graph
+
+        empty_graph = nx.DiGraph()
+        composite = CompositeResult(
+            composite_score=0.5,
+            recommendation="accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.0,
+            evaluation_complete=True,
+            engine_type="mas",
+        )
+
+        with patch("streamlit.info") as mock_info, patch("streamlit.header"):
+            render_agent_graph(empty_graph, composite_result=composite)
+            call_text = mock_info.call_args[0][0]
+            # MAS message should not mention "solo" or "teams"
+            assert "solo" not in call_text.lower()
+            assert "teams" not in call_text.lower()
+
+    def test_render_agent_graph_accepts_composite_result(self):
+        """render_agent_graph accepts composite_result parameter."""
+        import inspect
+
+        from gui.pages.agent_graph import render_agent_graph
+
+        sig = inspect.signature(render_agent_graph)
+        assert "composite_result" in sig.parameters
+
+
+# MARK: --- Tier 3 informational label (STORY-011) ---
+
+
+class TestTier3InformationalLabel:
+    """Tests for Tier 3 informational label when engine is CC."""
+
+    def test_cc_tier3_shows_informational_note(self):
+        """CC engine shows 'informational' caption on Tier 3 scores."""
+        from app.data_models.evaluation_models import CompositeResult
+        from gui.pages.evaluation import _render_tier_scores
+
+        result = CompositeResult(
+            composite_score=0.5,
+            recommendation="accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.3,
+            evaluation_complete=True,
+            engine_type="cc_solo",
+        )
+
+        with (
+            patch("streamlit.subheader"),
+            patch("streamlit.columns") as mock_cols,
+            patch("streamlit.caption") as mock_caption,
+        ):
+            # Mock columns to return context managers
+            patch("streamlit.metric").__enter__()
+            mock_cols.return_value = [
+                type("CM", (), {"__enter__": lambda s: s, "__exit__": lambda *a: None})(),
+                type("CM", (), {"__enter__": lambda s: s, "__exit__": lambda *a: None})(),
+                type("CM", (), {"__enter__": lambda s: s, "__exit__": lambda *a: None})(),
+            ]
+
+            _render_tier_scores(result)
+
+            mock_caption.assert_called_once()
+            caption_text = mock_caption.call_args[0][0]
+            assert "informational" in caption_text.lower()
+
+    def test_mas_tier3_no_informational_note(self):
+        """MAS engine does NOT show informational caption on Tier 3 scores."""
+        from app.data_models.evaluation_models import CompositeResult
+        from gui.pages.evaluation import _render_tier_scores
+
+        result = CompositeResult(
+            composite_score=0.5,
+            recommendation="accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.3,
+            evaluation_complete=True,
+            engine_type="mas",
+        )
+
+        with (
+            patch("streamlit.subheader"),
+            patch("streamlit.columns") as mock_cols,
+            patch("streamlit.caption") as mock_caption,
+        ):
+            mock_cols.return_value = [
+                type("CM", (), {"__enter__": lambda s: s, "__exit__": lambda *a: None})(),
+                type("CM", (), {"__enter__": lambda s: s, "__exit__": lambda *a: None})(),
+                type("CM", (), {"__enter__": lambda s: s, "__exit__": lambda *a: None})(),
+            ]
+
+            _render_tier_scores(result)
+
+            mock_caption.assert_not_called()

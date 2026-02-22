@@ -498,13 +498,13 @@ def add_peerread_review_tools_to_agent(
         """
 
         # Reason: derive model_info from actual model name instead of hardcoding
-        _agent_model = agent.model
-        _model_name = (
-            _agent_model
-            if isinstance(_agent_model, str)
-            else (getattr(_agent_model, "model_name", "unknown") if _agent_model else "unknown")
+        agent_model = agent.model
+        resolved_name = (
+            agent_model
+            if isinstance(agent_model, str)
+            else (getattr(agent_model, "model_name", "unknown") if agent_model else "unknown")
         )
-        _model_info = f"{_model_name} via PydanticAI"
+        model_info = f"{resolved_name} via PydanticAI"
 
         async def _fn() -> str:
             from datetime import UTC, datetime
@@ -520,7 +520,7 @@ def add_peerread_review_tools_to_agent(
                 paper_id=paper_id,
                 review=structured_review,
                 timestamp=timestamp,
-                model_info=_model_info,
+                model_info=model_info,
             )
 
             structured_path = filepath.replace(".json", "_structured.json")

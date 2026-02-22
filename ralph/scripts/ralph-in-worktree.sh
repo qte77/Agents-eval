@@ -21,9 +21,13 @@ SOURCE_DIR="$PWD"
 # Default: .venv (Python). Override for other stacks, e.g. "node_modules .venv"
 RALPH_WORKTREE_SYMLINKS="${RALPH_WORKTREE_SYMLINKS:-.venv}"
 
-# Reuse existing worktree, or set up branch + worktree
+# Reuse existing worktree, or set up branch + worktree.
+# Check both: branch has a worktree entry AND the target directory exists.
+# Reason: the main checkout also appears in `git worktree list --porcelain`
+# with the branch name, so matching branch alone is a false positive when
+# the current repo is already on that branch.
 WORKTREE_EXISTS=false
-if git worktree list --porcelain | grep -q "branch refs/heads/${BRANCH}$"; then
+if git worktree list --porcelain | grep -q "branch refs/heads/${BRANCH}$" && [ -d "$WORKTREE_DIR" ]; then
     WORKTREE_EXISTS=true
 fi
 

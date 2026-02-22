@@ -63,6 +63,7 @@ teams_append_delegation_prompt() {
         echo ""
         echo "## Team Mode: Delegate Independent Stories"
         echo "Spawn one teammate per story using the Task tool."
+        echo "Do NOT use isolation: \"worktree\" — all commits must land on the current branch."
         echo "Each follows TDD: RED [RED] → GREEN [GREEN] → REFACTOR [REFACTOR]."
         echo "Skills: \`testing-python\`, \`implementing-python\`, \`reviewing-code\`."
         echo ""

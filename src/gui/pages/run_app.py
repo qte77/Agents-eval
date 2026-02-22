@@ -17,6 +17,7 @@ downloaded PeerRead papers via a dropdown with abstract preview.
 
 import shutil
 from pathlib import Path
+from typing import Any
 
 import streamlit as st
 from streamlit import button, exception, header, info, spinner, subheader, text_input, warning
@@ -27,6 +28,7 @@ from app.config.config_app import CHAT_DEFAULT_PROVIDER
 from app.data_models.evaluation_models import CompositeResult
 from app.data_models.peerread_models import PeerReadPaper
 from app.data_utils.datasets_peerread import PeerReadLoader
+from app.engines.cc_engine import run_cc_solo, run_cc_teams
 from app.judge.settings import JudgeSettings
 from app.reports.report_generator import generate_report
 from app.utils.log import logger
@@ -232,6 +234,43 @@ def _render_debug_log_panel() -> None:
             st.markdown(html, unsafe_allow_html=True)
 
 
+def _prepare_cc_result(engine: str, cc_teams: bool, query: str) -> Any | None:
+    """Run CC engine if selected, return CCResult or None for MAS."""
+    if engine != "cc":
+        return None
+    return run_cc_teams(query) if cc_teams else run_cc_solo(query)
+
+
+def _store_successful_result(result: dict[str, Any] | None) -> None:
+    """Store execution result in session state and transition to completed."""
+    st.session_state.execution_state = "completed"
+
+    if result is not None:
+        st.session_state.execution_composite_result = result.get("composite_result")
+        st.session_state.execution_graph = result.get("graph")
+        st.session_state.execution_result = result.get("composite_result")
+        # S8-F8.2: store execution_id for Evaluation Results page display
+        st.session_state["execution_id"] = result.get("execution_id")
+    else:
+        st.session_state.execution_composite_result = None
+        st.session_state.execution_graph = None
+        st.session_state.execution_result = None
+        st.session_state["execution_id"] = None
+
+    # Clear error if previously set
+    if hasattr(st.session_state, "execution_error"):
+        delattr(st.session_state, "execution_error")
+
+
+def _store_execution_error(e: Exception) -> None:
+    """Store execution error in session state and transition to error state."""
+    st.session_state.execution_state = "error"
+    st.session_state.execution_error = str(e)
+    if hasattr(st.session_state, "execution_result"):
+        delattr(st.session_state, "execution_result")
+    logger.exception(e)
+
+
 async def _execute_query_background(
     query: str,
     provider: str,
@@ -244,6 +283,7 @@ async def _execute_query_background(
     paper_id: str | None = None,
     common_settings: CommonSettings | None = None,
     engine: str = "mas",
+    cc_teams: bool = False,
 ) -> None:
     """Execute agent query in background with session state persistence.
 
@@ -262,6 +302,7 @@ async def _execute_query_background(
         paper_id: Optional PeerRead paper ID for paper selection mode
         common_settings: Optional CommonSettings override from GUI settings page
         engine: Execution engine — 'mas' (PydanticAI) or 'cc' (Claude Code)
+        cc_teams: Whether to use CC Teams mode (only applies when engine='cc')
     """
     # Set running state
     st.session_state.execution_state = "running"
@@ -273,6 +314,9 @@ async def _execute_query_background(
     handler_id = capture.attach_to_logger()
 
     try:
+        # S10-AC9: CC engine — run CC solo/teams and pass result to main
+        cc_result = _prepare_cc_result(engine, cc_teams, query)
+
         # Execute query
         result = await main(
             chat_provider=provider,
@@ -285,43 +329,15 @@ async def _execute_query_background(
             judge_settings=judge_settings,
             paper_id=paper_id,
             engine=engine,
+            cc_result=cc_result,
         )
 
-        # Store result and transition to completed
-        st.session_state.execution_state = "completed"
-
-        # Extract CompositeResult and graph from result dict
-        if result is not None:
-            st.session_state.execution_composite_result = result.get("composite_result")
-            st.session_state.execution_graph = result.get("graph")
-            # Keep legacy execution_result for backward compatibility
-            st.session_state.execution_result = result.get("composite_result")
-            # S8-F8.2: store execution_id for Evaluation Results page display
-            st.session_state["execution_id"] = result.get("execution_id")
-        else:
-            # No evaluation result (e.g., skip_eval=True)
-            st.session_state.execution_composite_result = None
-            st.session_state.execution_graph = None
-            st.session_state.execution_result = None
-            st.session_state["execution_id"] = None
-
-        # Clear error if previously set
-        if hasattr(st.session_state, "execution_error"):
-            delattr(st.session_state, "execution_error")
+        _store_successful_result(result)
 
     except Exception as e:
-        # Store error and transition to error state
-        st.session_state.execution_state = "error"
-        st.session_state.execution_error = str(e)
-
-        # Clear result if previously set
-        if hasattr(st.session_state, "execution_result"):
-            delattr(st.session_state, "execution_result")
-
-        logger.exception(e)
+        _store_execution_error(e)
 
     finally:
-        # Capture and store logs
         _capture_execution_logs(capture)
         capture.detach_from_logger(handler_id)
 
@@ -438,6 +454,7 @@ async def _handle_query_submission(
     chat_config_file: str | Path | None,
     token_limit: int | None,
     engine: str = "mas",
+    cc_teams: bool = False,
 ) -> None:
     """Validate input and execute the agent query in background.
 
@@ -455,6 +472,7 @@ async def _handle_query_submission(
         chat_config_file: Path to chat configuration file.
         token_limit: Optional token limit override from GUI.
         engine: Execution engine — 'mas' (PydanticAI) or 'cc' (Claude Code).
+        cc_teams: Whether to use CC Teams mode (only applies when engine='cc').
     """
     if not (query or selected_paper_id):
         warning(RUN_APP_QUERY_WARNING)
@@ -475,6 +493,7 @@ async def _handle_query_submission(
         paper_id=selected_paper_id,
         common_settings=common_settings,
         engine=engine,
+        cc_teams=cc_teams,
     )
     st.rerun()
 
@@ -549,6 +568,11 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     engine = "cc" if engine_label == "Claude Code" else "mas"
     st.session_state.engine = engine
 
+    # S10-F1: CC Teams checkbox — only shown when CC engine selected
+    cc_teams = False
+    if engine == "cc":
+        cc_teams = st.checkbox("Use CC Teams", key="cc_teams_mode")
+
     if engine == "cc" and not cc_available:
         st.warning(
             "Claude Code CLI (`claude`) not found on PATH. "
@@ -591,6 +615,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
             chat_config_file,
             token_limit,
             engine=engine,
+            cc_teams=cc_teams,
         )
 
     # S8-F8.1: subheader placed after run button so output section follows user action

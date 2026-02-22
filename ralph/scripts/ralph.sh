@@ -581,7 +581,8 @@ check_tdd_commits() {
         prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
         prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
 
-        if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+        # Reason: reject same-hash match — squash merges contain multiple story [RED]/[GREEN] markers
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ "$prior_red" != "$prior_green" ]; then
             log_info "No new commits, but prior TDD commits found in history:"
             log_info "  [RED]   $prior_red"
             log_info "  [GREEN] $prior_green"
@@ -589,6 +590,8 @@ check_tdd_commits() {
             return 0
         fi
 
+        [ -n "$prior_red" ] && [ "$prior_red" = "$prior_green" ] && \
+            log_warn "Ignoring squash commit $prior_red (RED == GREEN hash)"
         log_error "No commits made during story execution"
         return 1
     fi
@@ -610,7 +613,8 @@ check_tdd_commits() {
             prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
             prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
 
-            if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+            # Reason: reject same-hash match — squash merges contain multiple story [RED]/[GREEN] markers
+            if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ "$prior_red" != "$prior_green" ]; then
                 log_info "No new commits for $story_id in team batch, but prior TDD found:"
                 log_info "  [RED]   $prior_red"
                 log_info "  [GREEN] $prior_green"
@@ -618,6 +622,8 @@ check_tdd_commits() {
                 return 0
             fi
 
+            [ -n "$prior_red" ] && [ "$prior_red" = "$prior_green" ] && \
+                log_warn "Ignoring squash commit $prior_red (RED == GREEN hash)"
             log_error "No commits for $story_id in team batch (hybrid attribution)"
             return 1
         fi
@@ -641,14 +647,17 @@ check_tdd_commits() {
 
     # REFACTOR-only iteration: agent is fixing quality issues after a prior RED+GREEN
     if [ -z "$red_commit" ] && [ -z "$green_commit" ] && [ -n "$refactor_commit" ]; then
-        # Reason: --grep + --all-match requires both patterns in the same commit message
+        # Reason: --grep + --all-match requires both patterns in the same commit message.
+        # Reject same-hash match — squash merges contain multiple story [RED]/[GREEN] markers.
         local prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
         local prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
 
-        if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ "$prior_red" != "$prior_green" ]; then
             log_info "REFACTOR-only: prior RED ($prior_red) + GREEN ($prior_green) found"
             return 0
         fi
+        [ -n "$prior_red" ] && [ "$prior_red" = "$prior_green" ] && \
+            log_warn "Ignoring squash commit $prior_red (RED == GREEN hash)"
         log_error "REFACTOR-only commit but no prior [RED]+[GREEN] for $story_id"
         return 1
     fi
@@ -721,76 +730,6 @@ print_progress() {
     log_info "Progress: $pct% ($passing/$total stories) | remaining: $remaining$eta_suffix"
 }
 
-# Verify teammate stories after primary story passes (teams mode).
-# Runs TDD commit check and scoped quality checks for each wave-peer story.
-# Args:
-#   $1 - primary story ID (to exclude from verification)
-#   $2 - commits_before count (for TDD attribution)
-verify_teammate_stories() {
-    local primary_id="$1"
-    local commits_before="$2"
-
-    local teammate_stories
-    teammate_stories=$(get_unblocked_stories | grep -v "^${primary_id}$" || true)
-
-    if [ -z "$teammate_stories" ]; then
-        return 0
-    fi
-
-    log_info "===== Verifying Teammate Stories ====="
-
-    local type_check_needed=false
-    local sid
-
-    for sid in $teammate_stories; do
-        log_info "Verifying teammate story: $sid"
-
-        # TDD commit check (hybrid attribution)
-        if ! check_tdd_commits "$sid" "$commits_before"; then
-            log_warn "Teammate story $sid: TDD verification failed"
-            update_story_status "$sid" "failed"
-            continue
-        fi
-
-        # Scoped quality checks (ruff, complexity, tests)
-        local sid_failed=false
-
-        if ! run_ruff_scoped "$sid" "$PRD_JSON"; then
-            log_warn "Teammate story $sid: ruff check failed"
-            sid_failed=true
-        fi
-
-        if ! run_complexity_scoped "$sid" "$PRD_JSON"; then
-            log_warn "Teammate story $sid: complexity check failed"
-            sid_failed=true
-        fi
-
-        local teammate_test_log="/tmp/claude/ralph_teammate_${sid}_tests.log"
-        if ! run_tests_scoped "$sid" "$PRD_JSON" "$teammate_test_log"; then
-            log_warn "Teammate story $sid: tests failed"
-            sid_failed=true
-        fi
-
-        if [ "$sid_failed" = "true" ]; then
-            update_story_status "$sid" "failed"
-        else
-            update_story_status "$sid" "passed"
-            log_info "Teammate story $sid marked as PASSED"
-            type_check_needed=true
-        fi
-    done
-
-    # Run type_check once for the whole batch (not per-story)
-    if [ "$type_check_needed" = "true" ]; then
-        log_info "Running type check for teammate batch..."
-        if ! make --no-print-directory type_check 2>&1; then
-            log_warn "Type check failed for teammate batch (non-blocking)"
-        fi
-    fi
-
-    log_info "===== Teammate Verification Complete ====="
-}
-
 # Main loop
 main() {
     log_info "Starting Ralph Loop"
@@ -860,7 +799,8 @@ main() {
             --all-match --format="%h" -1 2>/dev/null || true)
         local prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" \
             --all-match --format="%h" -1 2>/dev/null || true)
-        if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ ! -f "$RETRY_CONTEXT_FILE" ]; then
+        # Reason: reject same-hash match — squash merges contain multiple story [RED]/[GREEN] markers
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ "$prior_red" != "$prior_green" ] && [ ! -f "$RETRY_CONTEXT_FILE" ]; then
             log_info "Story $story_id has prior TDD (RED: $prior_red, GREEN: $prior_green) — skipping agent"
             exec_status=2
         else

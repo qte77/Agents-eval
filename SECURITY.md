@@ -13,7 +13,7 @@ Only the latest release receives security patches.
 
 If you discover a security vulnerability, please report it by creating a
 [private security advisory](https://github.com/qte77/Agents-eval/security/advisories)
-on GitHub or by emailing the maintainers directly at qte@77.gh.
+on GitHub or by emailing the maintainers directly at <qte@77.gh>.
 
 **Please do not disclose security vulnerabilities publicly until they have been addressed.**
 

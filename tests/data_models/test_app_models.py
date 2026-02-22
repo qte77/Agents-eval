@@ -44,17 +44,6 @@ class TestAgentConfigToolsAnnotation:
             "tools field must be list[Tool[Any]], not list[Any]."
         )
 
-    def test_fixme_comment_removed(self):
-        """AC2: The FIXME comment on line 105 must be removed from app_models.py."""
-        import inspect
-
-        import app.data_models.app_models as mod
-
-        source = inspect.getsource(mod)
-        assert "FIXME tools" not in source, (
-            "FIXME comment about tools field must be removed from app_models.py"
-        )
-
 
 class TestAgentConfigSchemaGeneration:
     """AC3: Pydantic schema generation must not raise PydanticSchemaGenerationError."""

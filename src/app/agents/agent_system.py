@@ -533,21 +533,21 @@ async def run_manager(
     execution_id = f"exec_{uuid.uuid4().hex[:12]}"
     trace_collector.start_execution(execution_id)
 
-    model_name = getattr(manager, "model")._model_name
-    mgr_cfg = {"user_prompt": query, "usage_limits": usage_limits}
+    model_obj = getattr(manager, "model", None)
+    model_name = (
+        model_obj
+        if isinstance(model_obj, str)
+        else (getattr(model_obj, "model_name", "unknown") if model_obj else "unknown")
+    )
     logger.info(f"Researching with {provider}({model_name}) and Topic: {query} ...")
 
     try:
         logger.info("Waiting for model response ...")
-        # FIXME deprecated warning manager.run(), query unknown type
-        # FIXME [call-overload] error: No overload variant of "run" of "Agent"
-        # matches argument type "dict[str, list[dict[str, str]] |
-        # Sequence[str | ImageUrl | AudioUrl | DocumentUrl | VideoUrl |
-        # BinaryContent] | UsageLimits | None]"
-        result = await manager.run(**mgr_cfg)  # type: ignore[reportDeprecated,reportUnknownArgumentType,reportCallOverload,call-overload]
+        # Narrow query type for PydanticAI Agent.run() compatibility
+        user_prompt: str | None = query if isinstance(query, str | None) else str(query)
+        result = await manager.run(user_prompt=user_prompt, usage_limits=usage_limits)
         logger.info(f"Result: {result}")
-        # FIXME  # type: ignore
-        logger.info(f"Usage statistics: {result.usage()}")  # type: ignore
+        logger.info(f"Usage statistics: {result.usage()}")
 
         # Finalize trace collection
         trace_collector.end_execution()

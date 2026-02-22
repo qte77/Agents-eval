@@ -2,7 +2,7 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-02-19
+updated: 2026-02-22
 category: architecture
 version: 3.7.0
 ---
@@ -222,14 +222,16 @@ SweepConfig → SweepRunner → (compositions × papers × repetitions) → Swee
 
 ### CC Headless Integration
 
-An optional CC path feeds real Claude Code agent artifacts into the same evaluation pipeline:
+The CC path feeds Claude Code agent artifacts into the same evaluation pipeline as MAS:
 
 ```text
-Solo:  claude -p "prompt" --output-format json        → CCResult → CCTraceAdapter → GraphTraceData → evaluation
-Teams: claude -p "prompt" --output-format stream-json  → Popen JSONL stream → CCResult → CCTraceAdapter → GraphTraceData → evaluation
+Solo:  claude -p "prompt" --output-format json        → CCResult → extract_cc_review_text → evaluate_comprehensive
+Teams: claude -p "prompt" --output-format stream-json  → Popen JSONL stream → CCResult → cc_result_to_graph_trace → evaluate_comprehensive
 ```
 
 `check_cc_available()` (`src/app/engines/cc_engine.py`) wraps `shutil.which("claude")` for fail-fast validation. Teams mode sets `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` and parses `init`, `result`, `TeamCreate`, and `Task` events from the live JSONL stream via `Popen`, since CC teams artifacts (`~/.claude/teams/`, `~/.claude/tasks/`) are ephemeral in print mode (see AGENT_LEARNINGS.md).
+
+Sprint 10 added full pipeline parity: `extract_cc_review_text()` feeds review text to `evaluate_comprehensive()` via the `review_text` parameter on `run_evaluation_if_enabled()`. `cc_result_to_graph_trace()` builds `GraphTraceData` from team events for graph visualization. `CompositeResult.engine_type` is set to `"cc_solo"` or `"cc_teams"` after evaluation.
 
 ### Output Files
 
@@ -280,18 +282,24 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 8 - Delivered)
+### Current Implementation (Sprint 10 - Substantially Delivered)
 
-**Sprint 8 Scope** (8 features, 14 stories):
+**Sprint 10 Scope**: E2E CLI/GUI parity for CC engine, graph visualization, test quality.
 
-- **Tool Fix**: Replace `read_paper_pdf_tool` with `get_paper_content(paper_id)` using parsed JSON fallback chain (fixes sweep-crashing `FileNotFoundError`)
-- **API Key Cleanup**: Remove `"not-required"` sentinel from `create_llm_model()` (5 call sites); fix judge auto-mode model inheritance (`chat_model` parameter)
-- **CC Engine Consolidation**: New `src/app/engines/cc_engine.py` module with `run_cc_solo()` + `run_cc_teams()`, replacing inline subprocess code and shell scripts
-- **Graph Alignment**: Fix `node_type` → `type` attribute mismatch between `graph_analysis.py` and `agent_graph.py`
-- **Dead Code Removal**: Remove `pydantic_ai_stream` parameter (upstream still unsupported) from 8 call sites
-- **Report Generation**: New `src/app/reports/` module — `report_generator.py` (CLI `--generate-report` + GUI button) and `suggestion_engine.py` (rule-based + optional LLM suggestions)
-- **Judge Settings UX**: Replace 4 free-text inputs with `selectbox` dropdowns populated from `PROVIDER_REGISTRY` and `config_chat.json`
-- **GUI A11y/UX**: WCAG fixes (contrast, ARIA, radio labels), environment-aware URL resolution, run ID display, baseline path validation
+- **CC Evaluation Pipeline Parity** (STORY-010): `main()` decomposes into `_run_cc_engine_path()` and `_run_mas_engine_path()`. CC branch calls `extract_cc_review_text()` and `cc_result_to_graph_trace()`, then feeds both into `evaluate_comprehensive()`. `CompositeResult.engine_type` set to `"cc_solo"` or `"cc_teams"`. `_load_reference_reviews(paper_id)` loads ground-truth for all modes (was hardcoded `None`).
+- **Graph Visualization Polish** (STORY-011): `render_agent_graph()` accepts `composite_result` for mode-specific empty-state messages (solo/teams/MAS). Tier 3 informational label on Evaluation page when engine is CC.
+- **inspect.getsource Removal** (STORY-015): 7 occurrences of `inspect.getsource` in tests replaced with behavioral assertions. Zero remaining.
+- **Reference Reviews from PeerRead**: `_load_reference_reviews(paper_id)` loads ground-truth reviews via `PeerReadLoader`, replacing hardcoded `None`.
+- **Process Group Kill**: CC teams subprocess uses `start_new_session=True` with `os.killpg()` on timeout to cleanly terminate teammate child processes. Test fix: `os.killpg`/`os.getpgid` mocked in timeout test to prevent real SIGTERM to container process group.
+- **GUI CC Execution**: `_execute_query_background()` calls `run_cc_solo()`/`run_cc_teams()` when CC engine selected, passing `cc_result` to `main()`.
+
+### Sprint 9 Key Deliverables (Delivered)
+
+- Dead code deletion, format string sanitization, PDF size guard, API key env cleanup, security hardening, judge accuracy, AgentConfig typing, type safety fixes, test suite quality sweep
+
+**Sprint 8 Key Deliverables** (Delivered):
+
+- Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, dead code removal, report generation, judge settings UX, GUI a11y/UX
 
 **Sprint 7 Key Deliverables** (Delivered):
 
@@ -454,7 +462,8 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 6**: Benchmarking infrastructure, CC baseline completion, security hardening, test quality -- Delivered
 - **Sprint 7**: Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine -- Delivered
 - **Sprint 8**: Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, report generation, GUI a11y/UX -- Delivered
-- **Sprint 9**: Sweep results UI, Sprint 8 carry-forward cleanup -- In Progress
+- **Sprint 9**: Correctness & security hardening — dead code, format string sanitization, PDF guard, API key cleanup, judge accuracy, type safety, test quality -- Delivered
+- **Sprint 10**: E2E CLI/GUI parity for CC engine (pipeline parity, review text wiring, engine_type, GUI CC execution), graph visualization polish (mode-specific messages, Tier 3 informational label), test quality (inspect.getsource removal, reference reviews) -- Substantially Delivered (STORY-012/013/014 not started)
 
 For sprint details, see [roadmap.md](roadmap.md).
 
