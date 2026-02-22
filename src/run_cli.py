@@ -11,6 +11,8 @@ import shutil
 from sys import argv, exit
 from typing import Any
 
+from app.data_models.app_models import PROVIDER_REGISTRY
+
 _parser = argparse.ArgumentParser(description="Agents-eval CLI — run MAS evaluation pipeline")
 
 for _flag, _help in [
@@ -56,8 +58,13 @@ _review_group.add_argument(
 )
 _parser.set_defaults(enable_review_tools=None)
 
+_parser.add_argument(
+    "--chat-provider",
+    choices=sorted(PROVIDER_REGISTRY.keys()),
+    help="Specify the chat provider to use",
+)
+
 for _flag, _help in [
-    ("--chat-provider", "Specify the chat provider to use"),
     ("--query", "Specify the query to process"),
     ("--chat-config-file", "Path to the chat configuration file"),
     ("--paper-id", "Paper ID for PeerRead review (supports arxiv IDs like '1105.1072')"),

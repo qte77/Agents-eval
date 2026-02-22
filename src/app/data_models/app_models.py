@@ -213,6 +213,48 @@ PROVIDER_REGISTRY: dict[str, ProviderMetadata] = {
         default_base_url="https://api.cerebras.ai/v1",
         default_model="gpt-oss-120b",
     ),
+    "groq": ProviderMetadata(
+        name="groq",
+        env_key="GROQ_API_KEY",
+        model_prefix="groq/",
+        default_base_url="https://api.groq.com/openai/v1",
+    ),
+    "fireworks": ProviderMetadata(
+        name="fireworks",
+        env_key="FIREWORKS_API_KEY",
+        model_prefix="fireworks/",
+        default_base_url="https://api.fireworks.ai/inference/v1",
+    ),
+    "deepseek": ProviderMetadata(
+        name="deepseek",
+        env_key="DEEPSEEK_API_KEY",
+        model_prefix="deepseek/",
+        default_base_url="https://api.deepseek.com/v1",
+    ),
+    "mistral": ProviderMetadata(
+        name="mistral",
+        env_key="MISTRAL_API_KEY",
+        model_prefix="mistral/",
+        default_base_url="https://api.mistral.ai/v1",
+    ),
+    "sambanova": ProviderMetadata(
+        name="sambanova",
+        env_key="SAMBANOVA_API_KEY",
+        model_prefix="sambanova/",
+        default_base_url="https://api.sambanova.ai/v1",
+    ),
+    "nebius": ProviderMetadata(
+        name="nebius",
+        env_key="NEBIUS_API_KEY",
+        model_prefix="nebius/",
+        default_base_url="https://api.studio.nebius.ai/v1",
+    ),
+    "cohere": ProviderMetadata(
+        name="cohere",
+        env_key="COHERE_API_KEY",
+        model_prefix="cohere/",
+        default_base_url="https://api.cohere.com/v2",
+    ),
     "ollama": ProviderMetadata(
         name="ollama",
         env_key=None,
@@ -234,14 +276,21 @@ class AppEnv(BaseSettings):
     # Inference endpoints
     ANTHROPIC_API_KEY: str = ""
     CEREBRAS_API_KEY: str = ""
+    COHERE_API_KEY: str = ""
+    DEEPSEEK_API_KEY: str = ""
+    FIREWORKS_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
     GITHUB_API_KEY: str = ""
     GROK_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
     HUGGINGFACE_API_KEY: str = ""
+    MISTRAL_API_KEY: str = ""
+    NEBIUS_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
     OPENROUTER_API_KEY: str = ""
     PERPLEXITY_API_KEY: str = ""
     RESTACK_API_KEY: str = ""
+    SAMBANOVA_API_KEY: str = ""
     TOGETHER_API_KEY: str = ""
 
     # Tools
