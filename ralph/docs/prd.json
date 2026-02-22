@@ -1,35 +1,35 @@
 {
   "project": "Product Requirements Document - Agents-eval Sprint 10",
-  "description": "\"Sprint 10: 6 features \u2014 E2E CLI/GUI parity for CC engine (solo + teams), graph visualization for all modes, expanded providers, judge UX, PydanticAI migration, test quality.\"",
+  "description": "\"Sprint 10: 6 features — E2E CLI/GUI parity for CC engine (solo + teams), graph visualization for all modes, expanded providers, judge UX, PydanticAI migration, test quality.\"",
   "source": "PRD.md",
   "generated": "2026-02-22 13:57:41",
   "stories": [
     {
       "id": "STORY-010",
       "title": "Connect all execution modes to the same three-tier evaluation pipeline",
-      "description": "All execution modes (MAS, CC solo, CC teams) must produce comparable evaluation results through the same `evaluate_comprehensive()` call. The evaluation pipeline interface is already engine-agnostic \u2014 all three tiers operate on plain strings and dicts, not MAS types:",
+      "description": "All execution modes (MAS, CC solo, CC teams) must produce comparable evaluation results through the same `evaluate_comprehensive()` call. The evaluation pipeline interface is already engine-agnostic — all three tiers operate on plain strings and dicts, not MAS types:",
       "acceptance": [
-        "AC1: `evaluate_comprehensive()` is the sole evaluation entry point for MAS, CC solo, and CC teams \u2014 no mode-specific evaluation logic exists outside it",
+        "AC1: `evaluate_comprehensive()` is the sole evaluation entry point for MAS, CC solo, and CC teams — no mode-specific evaluation logic exists outside it",
         "AC2: CC solo and CC teams produce non-empty `review` text passed to the pipeline (extracted from `CCResult.output_data[\"result\"]`)",
-        "AC3: All modes load `reference_reviews` from PeerRead when `paper_id` is set \u2014 Tier 1 scores against actual ground truth, not empty strings",
+        "AC3: All modes load `reference_reviews` from PeerRead when `paper_id` is set — Tier 1 scores against actual ground truth, not empty strings",
         "AC4: CC solo produces a `GraphTraceData` (minimal or from `CCTraceAdapter`); composite scorer detects `single_agent_mode=True` and redistributes `coordination_quality` weight",
         "AC5: CC teams produces a `GraphTraceData` with `agent_interactions` mapped from `team_artifacts` Task events",
-        "AC6: `run_cc_teams` uses process group kill (`os.killpg`) after timeout \u2014 not just `proc.kill()` \u2014 to clean up teammate child processes",
+        "AC6: `run_cc_teams` uses process group kill (`os.killpg`) after timeout — not just `proc.kill()` — to clean up teammate child processes",
         "AC7: `CompositeResult.engine_type` is set to `\"mas\"`, `\"cc_solo\"`, or `\"cc_teams\"` for all results",
-        "AC8: CLI `--engine=cc` does NOT run the MAS pipeline \u2014 `_run_agent_execution()` is not called",
+        "AC8: CLI `--engine=cc` does NOT run the MAS pipeline — `_run_agent_execution()` is not called",
         "AC9: GUI \"Claude Code\" radio invokes CC engine, not MAS; a \"CC Teams\" checkbox appears when CC is selected",
         "AC10: For the same `paper_id`, MAS and CC Tier 1 scores use identical `reference_reviews` (same ground truth)",
         "AC11: All existing MAS tests continue to pass; new tests cover the CC path (solo and teams)",
         "AC12: `make validate` passes with no regressions",
         "**Capture CC review text**: Add `\"result\"` to `_RESULT_KEYS` in `cc_engine.py:85` so `cc_result.output_data[\"result\"]` contains the review text. Add `extract_cc_review_text(cc_result) -> str` helper",
-        "**Build `GraphTraceData` from CC artifacts**: Add `cc_result_to_graph_trace(cc_result) -> GraphTraceData` that maps `team_artifacts` Task/TeamCreate events to `agent_interactions`, `tool_calls`, and `coordination_events`. CC solo: minimal `GraphTraceData(execution_id=cc_result.execution_id)` with empty lists \u2014 `CompositeScorer._detect_single_agent_mode()` already redistributes `coordination_quality` weight. CC teams: `Task.owner` -> delegation interactions, completed tasks -> `tool_calls`, `TeamCreate` -> `coordination_events`",
+        "**Build `GraphTraceData` from CC artifacts**: Add `cc_result_to_graph_trace(cc_result) -> GraphTraceData` that maps `team_artifacts` Task/TeamCreate events to `agent_interactions`, `tool_calls`, and `coordination_events`. CC solo: minimal `GraphTraceData(execution_id=cc_result.execution_id)` with empty lists — `CompositeScorer._detect_single_agent_mode()` already redistributes `coordination_quality` weight. CC teams: `Task.owner` -> delegation interactions, completed tasks -> `tool_calls`, `TeamCreate` -> `coordination_events`",
         "**Load reference reviews for all modes**: In `evaluation_runner.py`, before `evaluate_comprehensive()`, load from PeerRead: `paper.reviews[*].comments` when `paper_id` is set. This fixes the existing bug for ALL modes (MAS included)",
-        "**Add `engine_type` to `CompositeResult`**: `engine_type: str = Field(default=\"mas\")` \u2014 enables downstream consumers to know the source engine. Backward-compatible default",
+        "**Add `engine_type` to `CompositeResult`**: `engine_type: str = Field(default=\"mas\")` — enables downstream consumers to know the source engine. Backward-compatible default",
         "**Wire `main()` to branch on engine**: Add `cc_result: CCResult | None = None` param. When `engine == \"cc\"`: skip `_run_agent_execution()` entirely, extract review text via `extract_cc_review_text()`, build `GraphTraceData` via `cc_result_to_graph_trace()`, load paper content + reference reviews from PeerRead, call `evaluate_comprehensive()` with same 4 parameters as MAS, build `nx.DiGraph` via `build_interaction_graph()`",
         "**Fix CLI wiring**: Pass `engine` and `cc_result` explicitly to `main()`: `run(main(**args, engine=engine, cc_result=cc_result))`. Remove pattern where CC runs first then MAS runs anyway",
         "**Fix GUI wiring**: In `_execute_query_background()`, add CC branch that calls `run_cc_solo()` / `run_cc_teams()` before calling `main()` with `cc_result`. Add CC teams checkbox visible when engine is CC",
         "**Fix `run_cc_teams` timeout**: Use `start_new_session=True` + `os.killpg(os.getpgid(proc.pid), signal.SIGTERM)` then `proc.kill()` to clean up teammate child processes",
-        "Mock `subprocess.run` and `subprocess.Popen` in tests \u2014 never call real `claude` CLI"
+        "Mock `subprocess.run` and `subprocess.Popen` in tests — never call real `claude` CLI"
       ],
       "files": [
         "src/app/engines/cc_engine.py",
@@ -42,9 +42,9 @@
         "tests/cli/test_cc_engine_wiring.py",
         "tests/judge/test_evaluation_runner.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 1,
-      "completed_at": null,
+      "completed_at": "2026-02-22T14:01:25Z",
       "content_hash": "677e6f39cc431e68a755182cde7c16a454617b377e50ce136fc322e097263d9e",
       "depends_on": []
     },
@@ -53,13 +53,13 @@
       "title": "Graph visualization polish for all execution modes",
       "description": "Feature 1 builds `GraphTraceData` and `nx.DiGraph` for CC runs. This feature handles the visualization layer: the Agent Graph page must distinguish between no-execution-yet, empty graph (CC solo), and populated graph (MAS or CC teams). CC Tier 3 graph metrics need \"informational\" labeling since they aren't comparable to MAS scores. `CCResult.team_artifacts` already retains parsed events from the JSONL stream (per `cc_engine.py:111-112`).",
       "acceptance": [
-        "AC1: CC solo produces an `nx.DiGraph` (may be minimal \u2014 single node) displayed on Agent Graph page",
+        "AC1: CC solo produces an `nx.DiGraph` (may be minimal — single node) displayed on Agent Graph page",
         "AC2: CC teams produces an `nx.DiGraph` showing team member nodes and delegation edges",
-        "AC3: Empty graphs (0 nodes, 0 edges) display a descriptive warning (e.g., \"CC solo mode \u2014 no agent interactions to display\") instead of generic \"No agent interaction data available\"",
+        "AC3: Empty graphs (0 nodes, 0 edges) display a descriptive warning (e.g., \"CC solo mode — no agent interactions to display\") instead of generic \"No agent interaction data available\"",
         "AC4: MAS graph visualization continues to work unchanged",
-        "AC5: Tier 3 graph metrics from CC runs are labeled \"informational \u2014 not comparable to MAS scores\" in evaluation display",
+        "AC5: Tier 3 graph metrics from CC runs are labeled \"informational — not comparable to MAS scores\" in evaluation display",
         "AC6: `make validate` passes with no regressions",
-        "In `agent_graph.py`: distinguish between `graph is None` (no execution yet), empty graph (execution produced no interactions \u2014 show mode-specific message using `CompositeResult.engine_type`), and populated graph",
+        "In `agent_graph.py`: distinguish between `graph is None` (no execution yet), empty graph (execution produced no interactions — show mode-specific message using `CompositeResult.engine_type`), and populated graph",
         "For Tier 3 metrics on CC runs: when `engine_type` starts with `\"cc\"`, prefix metric labels with \"Informational\" in evaluation display",
         "Graph building itself is handled by Feature 1 (`cc_result_to_graph_trace()` + `build_interaction_graph()`)"
       ],
@@ -68,9 +68,9 @@
         "src/gui/pages/evaluation_results.py",
         "tests/test_gui/test_agent_graph.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-02-22T14:01:59Z",
       "content_hash": "3c3a6648868d6789cae0f3ffeffbd05ba95668d421d3c46d980346440342c974",
       "depends_on": [
         "STORY-010"
@@ -101,7 +101,7 @@
         "src/run_cli.py",
         "tests/llms/test_models.py"
       ],
-      "status": "pending",
+      "status": "failed",
       "wave": 1,
       "completed_at": null,
       "content_hash": "39ea0dc3a3a21688669abae679b0aaec8e4b4d912332def2afabf84b8bb4e101",
@@ -125,7 +125,7 @@
         "src/gui/pages/settings.py",
         "tests/test_gui/test_settings_judge_auto.py"
       ],
-      "status": "pending",
+      "status": "failed",
       "wave": 1,
       "completed_at": null,
       "content_hash": "9ffd217007bc28c171c7a9327ebea7bf8d8e2723aed355fd1bb51ab118bcb6f4",
@@ -190,7 +190,7 @@
         "tests/cli/test_cc_engine_wiring.py",
         "tests/gui/test_prompts_integration.py"
       ],
-      "status": "pending",
+      "status": "failed",
       "wave": 1,
       "completed_at": null,
       "content_hash": "996492ac084d304e0fd23d39570fa716262ff2e2af8f556c8d79ad615a8a7a29",
