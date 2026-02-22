@@ -61,6 +61,8 @@ git branch -d ralph/<branch>
 
 **`-X ours` blind spot**: `-X ours`/`-X theirs` only applies to conflicted hunks. Files added exclusively by the other branch are auto-merged as clean additions — no conflict, no strategy override. After resolving conflicts with `-X ours`, diff against the pre-merge state and `git rm` any files the other branch introduced that shouldn't exist.
 
+**Missing GPG signatures**: If push is rejected due to unsigned commits, re-sign from the earliest unsigned commit: `git rebase --exec 'git commit --amend --no-edit --gpg-sign' <commit-id>~1` then `git push --force-with-lease`. Rebase replays commits after the given base — `~1` targets the parent so `<commit-id>` itself is included. `--exec` runs the amend-sign after each replayed commit. `--force-with-lease` safely pushes the rewritten history.
+
 ## 5. Story Scope Must Include All Consumers of Changed Interfaces
 
 PRD `files` lists are authored manually and often miss pre-existing tests that assert on renamed symbols, changed output formats, or widget counts.
