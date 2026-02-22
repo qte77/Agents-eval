@@ -301,12 +301,19 @@ class TestRunCCTeams:
         mock_proc = MagicMock()
         mock_proc.__enter__ = MagicMock(return_value=mock_proc)
         mock_proc.__exit__ = MagicMock(return_value=False)
+        mock_proc.pid = 99999
         mock_proc.stdout = MagicMock()
         mock_proc.stdout.__iter__ = MagicMock(
             side_effect=subprocess.TimeoutExpired(cmd=["claude"], timeout=600)
         )
 
-        with patch("subprocess.Popen", return_value=mock_proc):
+        # Reason: os.killpg/os.getpgid must be mocked — run_cc_teams calls them on
+        # timeout, and unmocked calls send real SIGTERM to the container process group.
+        with (
+            patch("subprocess.Popen", return_value=mock_proc),
+            patch("os.killpg"),
+            patch("os.getpgid", return_value=99999),
+        ):
             with pytest.raises(RuntimeError, match="timed out"):
                 run_cc_teams("test query")
 

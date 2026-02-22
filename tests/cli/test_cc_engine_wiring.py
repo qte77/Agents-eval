@@ -591,9 +591,7 @@ class TestGUICCExecution:
             patch("gui.pages.run_app.st") as mock_st,
             patch("gui.pages.run_app.LogCapture") as mock_log_capture,
             patch("gui.pages.run_app.main", new_callable=AsyncMock, return_value=None) as mock_main,
-            patch(
-                "gui.pages.run_app.run_cc_solo", return_value=mock_cc_result
-            ) as mock_solo,
+            patch("gui.pages.run_app.run_cc_solo", return_value=mock_cc_result) as mock_solo,
         ):
             mock_capture = MagicMock()
             mock_capture.get_logs.return_value = []
@@ -634,9 +632,7 @@ class TestGUICCExecution:
             patch("gui.pages.run_app.st") as mock_st,
             patch("gui.pages.run_app.LogCapture") as mock_log_capture,
             patch("gui.pages.run_app.main", new_callable=AsyncMock, return_value=None) as mock_main,
-            patch(
-                "gui.pages.run_app.run_cc_teams", return_value=mock_cc_result
-            ) as mock_teams,
+            patch("gui.pages.run_app.run_cc_teams", return_value=mock_cc_result) as mock_teams,
         ):
             mock_capture = MagicMock()
             mock_capture.get_logs.return_value = []

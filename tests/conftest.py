@@ -55,9 +55,12 @@ from unittest.mock import Mock
 # Neutralize sentry_sdk.init before any library can call it.
 os.environ.setdefault("WEAVE_DISABLED", "true")
 os.environ.setdefault("SENTRY_DSN", "")
-import sentry_sdk  # noqa: E402
+try:
+    import sentry_sdk  # noqa: E402
 
-sentry_sdk.init(dsn="")
+    sentry_sdk.init(dsn="")
+except ModuleNotFoundError:
+    pass
 
 # Add src directory to Python path for imports
 project_root = Path(__file__).parent.parent
