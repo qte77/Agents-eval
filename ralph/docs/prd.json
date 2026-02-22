@@ -101,9 +101,9 @@
         "src/run_cli.py",
         "tests/llms/test_models.py"
       ],
-      "status": "failed",
+      "status": "passed",
       "wave": 1,
-      "completed_at": null,
+      "completed_at": "2026-02-22T15:05:42Z",
       "content_hash": "39ea0dc3a3a21688669abae679b0aaec8e4b4d912332def2afabf84b8bb4e101",
       "depends_on": []
     },
@@ -125,9 +125,9 @@
         "src/gui/pages/settings.py",
         "tests/test_gui/test_settings_judge_auto.py"
       ],
-      "status": "failed",
+      "status": "passed",
       "wave": 1,
-      "completed_at": null,
+      "completed_at": "2026-02-22T15:05:47Z",
       "content_hash": "9ffd217007bc28c171c7a9327ebea7bf8d8e2723aed355fd1bb51ab118bcb6f4",
       "depends_on": []
     },
@@ -155,7 +155,7 @@
         "src/app/tools/peerread_tools.py",
         "tests/agents/test_agent_system.py"
       ],
-      "status": "pending",
+      "status": "failed",
       "wave": 2,
       "completed_at": null,
       "content_hash": "23a6f0f85dc97651a94291727c2098dd0ca4eea51d3862a4644b8f4de3d9929e",
