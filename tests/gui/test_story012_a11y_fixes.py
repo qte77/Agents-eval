@@ -216,14 +216,17 @@ class TestRunGuiSubAgentDefaults:
     """Verify get_session_state_defaults returns True for researcher and analyst.
 
     S8-F8.1: default sub-agents to True for better UX.
+    Mock strategy: patch load_config during reload to isolate module-level config
+    loading from JSON parse errors in config_chat.json.
     """
 
     def test_get_session_state_defaults_include_researcher_is_true(self) -> None:
         """get_session_state_defaults must return include_researcher=True."""
-        # Reload module to get fresh defaults (avoids cached module state)
-        import run_gui
+        # Patch load_config during reload to avoid module-level JSON parse errors
+        with patch("app.utils.load_configs.load_config"):
+            import run_gui
 
-        importlib.reload(run_gui)
+            importlib.reload(run_gui)
         defaults = run_gui.get_session_state_defaults()
         assert defaults["include_researcher"] is True, (
             f"Expected include_researcher=True, got {defaults['include_researcher']}"
@@ -231,9 +234,10 @@ class TestRunGuiSubAgentDefaults:
 
     def test_get_session_state_defaults_include_analyst_is_true(self) -> None:
         """get_session_state_defaults must return include_analyst=True."""
-        import run_gui
+        with patch("app.utils.load_configs.load_config"):
+            import run_gui
 
-        importlib.reload(run_gui)
+            importlib.reload(run_gui)
         defaults = run_gui.get_session_state_defaults()
         assert defaults["include_analyst"] is True, (
             f"Expected include_analyst=True, got {defaults['include_analyst']}"
@@ -241,9 +245,10 @@ class TestRunGuiSubAgentDefaults:
 
     def test_get_session_state_defaults_include_synthesiser_stays_false(self) -> None:
         """get_session_state_defaults must keep include_synthesiser=False (not changed by AC)."""
-        import run_gui
+        with patch("app.utils.load_configs.load_config"):
+            import run_gui
 
-        importlib.reload(run_gui)
+            importlib.reload(run_gui)
         defaults = run_gui.get_session_state_defaults()
         assert defaults["include_synthesiser"] is False, (
             f"Expected include_synthesiser=False, got {defaults['include_synthesiser']}"
