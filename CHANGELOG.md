@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WakaTime extension to devcontainer VS Code configurations
 - `lychee.toml` link checker config accepting bot-blocked status codes (403/401/429), excluding archived sprints and unreachable domains
 - AGENT_LEARNINGS.md: "Stale Test Fixtures Cause Cross-File Pollution" pattern
+- Sprint 10 PRD v3.0.0 — E2E CLI/GUI parity for CC engine, graph visualization, expanded providers, PydanticAI migration
+- `docs/analysis/Inference-Providers.md`: free-tier analysis for 19 providers with recommended models, context windows, rate limits
+- `docs/reviews/sprint10-prd-review.md`: post-task review with 17 findings and resolution status
 
 ### Changed
 
@@ -28,12 +31,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Commit skill updated for stats ordering and GPG signing
 - pytest CI workflow: replaced pip+Python 3.12 with uv+Python 3.13, added project deps install and `pull_request` trigger
 - `.claude/scripts/statusline.sh`: consolidated 12 separate `jq` invocations into single tab-delimited call; fixed threshold comments (`<` → `≤` to match `<=` operators); added POSIX trailing newline
+- Sprint 9 archived: PRD, prd.json, progress.txt moved to `docs/sprints/archive/` and `ralph/docs/archive/sprint9/`
+- README badges reordered: docs + llms.txt first, CI/CD second; "DevEx" label removed
+- Docs: `roadmap.md` v4.4.0 — Sprint 9 Delivered, Sprint 10 In Progress
+- Docs: `architecture.md` — Sprint 9 implementation status, development timeline updated
 
 ### Removed
 
 - 5 stale review documents from `docs/reviews/` (evaluation-pipeline-parallel-review, gui-comprehensive-audit, sprint5-code-review, sprint5-test-audit, test-audit)
 - `.cline/config.json` and `.gemini/config.json` — unused agent configs (project standardized on Claude Code)
 - 72 stale files leaked from old `main` during squash merge: `.claude/agents/` (9), `opik/` (3), `docs/sprints/` (15), `src/app/evals/` (8), `scripts/citation-styles/` (4), `assets/images/` (4), `tests/` (8), `src/examples/` (2), `docker-compose.opik.yaml`
+- Noisy `CHAT_DEFAULT_PROVIDER` module-level log line from GUI config
 
 ### Fixed
 
@@ -44,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broken local file links: `architecture.md` landscape refs, `agent_eval_metrics.md` further_reading ref, `landscape.md` trace_processors path, `roadmap.md` sprint archive paths, `src/examples/README.md` relative paths
 - Claude Code sandbox phantom files added to `.gitignore`
 - Content diffs from stale merge fixed in `.gitignore`, `Makefile`, `pyproject.toml`, `agent_system.py`, `peerread_models.py`, `datasets_peerread.py`, `review_persistence.py`
+- README/SECURITY formatting: extra blank lines between badge sections, email angle brackets for markdown linking
 
 ## [4.0.0] - 2026-02-19
 

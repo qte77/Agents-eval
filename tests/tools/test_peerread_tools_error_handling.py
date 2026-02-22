@@ -11,26 +11,7 @@ from unittest.mock import Mock, patch
 import pytest
 from pydantic_ai import ModelRetry
 
-
-def _register_tools(register_fn):
-    """Register PeerRead tools via a capture decorator and return them by name.
-
-    Args:
-        register_fn: The add_*_tools_to_agent function to call.
-
-    Returns:
-        dict: Mapping of tool function name to the captured function.
-    """
-    mock_agent = Mock()
-    captured: list = []
-
-    def capture_tool(func):
-        captured.append(func)
-        return func
-
-    mock_agent.tool = capture_tool
-    register_fn(mock_agent, agent_id="test")
-    return {fn.__name__: fn for fn in captured}
+from conftest import capture_registered_tools
 
 
 class TestGetPeerreadPaperModelRetry:
@@ -41,7 +22,7 @@ class TestGetPeerreadPaperModelRetry:
         """Paper not found -> ModelRetry so the LLM can recover."""
         from app.tools.peerread_tools import add_peerread_tools_to_agent
 
-        tools = _register_tools(add_peerread_tools_to_agent)
+        tools = capture_registered_tools(add_peerread_tools_to_agent)
         get_paper = tools["get_peerread_paper"]
 
         with (
@@ -60,7 +41,7 @@ class TestGetPeerreadPaperModelRetry:
         """Loader throws an exception -> ModelRetry, not ValueError."""
         from app.tools.peerread_tools import add_peerread_tools_to_agent
 
-        tools = _register_tools(add_peerread_tools_to_agent)
+        tools = capture_registered_tools(add_peerread_tools_to_agent)
         get_paper = tools["get_peerread_paper"]
 
         with (
@@ -82,7 +63,7 @@ class TestQueryPeerreadPapersModelRetry:
         """Query failure -> ModelRetry."""
         from app.tools.peerread_tools import add_peerread_tools_to_agent
 
-        tools = _register_tools(add_peerread_tools_to_agent)
+        tools = capture_registered_tools(add_peerread_tools_to_agent)
         query = tools["query_peerread_papers"]
 
         with (
@@ -105,7 +86,7 @@ class TestGenerateReviewTemplateModelRetry:
         """Paper not found during review generation -> ModelRetry."""
         from app.tools.peerread_tools import add_peerread_review_tools_to_agent
 
-        tools = _register_tools(add_peerread_review_tools_to_agent)
+        tools = capture_registered_tools(add_peerread_review_tools_to_agent)
         generate = tools["generate_paper_review_content_from_template"]
 
         with (

@@ -3,8 +3,8 @@ title: Development Roadmap
 description: Sprint roadmap and implementation status for the Agents-eval project
 category: roadmap
 created: 2025-09-04
-updated: 2026-02-18
-version: 4.3.0
+updated: 2026-02-22
+version: 4.4.0
 ---
 
 Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for technical decisions (ADRs).
@@ -19,4 +19,5 @@ Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for tech
 | **Sprint 6** | Delivered | Benchmarking infrastructure, CC baseline completion, security hardening, test quality | [PRD Sprint 6](sprints/archive/PRD-Sprint6-Ralph.md) |
 | **Sprint 7** | Delivered | Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine | [PRD Sprint 7](sprints/archive/PRD-Sprint7-Ralph.md) |
 | **Sprint 8** | Delivered | Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, dead code removal, report generation, judge settings UX, GUI a11y/UX | [PRD Sprint 8](sprints/archive/PRD-Sprint8-Ralph.md) |
-| **Sprint 9** | In Progress | Sprint 8 carry-forward (14 stories) + sweep results UI | [PRD Sprint 9](sprints/PRD-Sprint9-Ralph.md) |
+| **Sprint 9** | Delivered | Correctness & security hardening — dead code deletion, format string sanitization, PDF size guard, API key env cleanup, security hardening, judge accuracy, AgentConfig typing, type safety fixes, test suite quality sweep | [PRD Sprint 9](sprints/archive/PRD-Sprint9-Ralph.md) |
+| **Sprint 10** | In Progress | E2E CLI/GUI parity for CC engine (solo + teams), graph visualization for all modes, expanded providers, judge UX, PydanticAI migration, test quality | [PRD Sprint 10](sprints/PRD-Sprint10-Ralph.md) |

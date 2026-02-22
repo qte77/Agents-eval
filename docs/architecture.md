@@ -2,7 +2,7 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-02-19
+updated: 2026-02-22
 category: architecture
 version: 3.7.0
 ---
@@ -280,18 +280,23 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 8 - Delivered)
+### Current Implementation (Sprint 9 - Delivered)
 
-**Sprint 8 Scope** (8 features, 14 stories):
+**Sprint 9 Scope** (9 features, 9 stories):
 
-- **Tool Fix**: Replace `read_paper_pdf_tool` with `get_paper_content(paper_id)` using parsed JSON fallback chain (fixes sweep-crashing `FileNotFoundError`)
-- **API Key Cleanup**: Remove `"not-required"` sentinel from `create_llm_model()` (5 call sites); fix judge auto-mode model inheritance (`chat_model` parameter)
-- **CC Engine Consolidation**: New `src/app/engines/cc_engine.py` module with `run_cc_solo()` + `run_cc_teams()`, replacing inline subprocess code and shell scripts
-- **Graph Alignment**: Fix `node_type` → `type` attribute mismatch between `graph_analysis.py` and `agent_graph.py`
-- **Dead Code Removal**: Remove `pydantic_ai_stream` parameter (upstream still unsupported) from 8 call sites
-- **Report Generation**: New `src/app/reports/` module — `report_generator.py` (CLI `--generate-report` + GUI button) and `suggestion_engine.py` (rule-based + optional LLM suggestions)
-- **Judge Settings UX**: Replace 4 free-text inputs with `selectbox` dropdowns populated from `PROVIDER_REGISTRY` and `config_chat.json`
-- **GUI A11y/UX**: WCAG fixes (contrast, ARIA, radio labels), environment-aware URL resolution, run ID display, baseline path validation
+- **Dead Code Deletion**: Removed `orchestration.py` (~317 lines) — unused `EvaluationOrchestrator`, `PeerReviewOrchestrator`, `DelegationOrchestrator` with stub `asyncio.sleep()` methods
+- **Format String Sanitization**: `paper_full_content` sanitized before `.format()` in `peerread_tools.py` — prevents format string injection from adversarial PDF content (MAESTRO L1)
+- **PDF Size Guard**: File size check before `MarkItDown().convert()` — rejects PDFs exceeding configurable `MAX_PDF_SIZE_BYTES` (default 50MB) before extraction
+- **API Key Env Cleanup**: `setup_llm_environment()` no longer writes API keys to `os.environ` — keys passed via constructor injection, eliminating exposure to child processes and crash reporters
+- **Security Hardening Bundle**: DuckDuckGo SSRF bypass documented, Phoenix endpoint validated at config time, PeerRead tool registration made idempotent
+- **Judge Pipeline Accuracy**: `clarity` field removed from `Tier2Result` (was copy of `constructiveness`); `_extract_planning_decisions` errors logged and narrowed; cosine score clamped to `min(1.0, score)`
+- **AgentConfig Typing**: `tools: list[Any]` → `list[Tool[Any]]` with type propagated to `_create_optional_agent`
+- **Type Safety + Quick Fixes**: 7 fixes — `sweep_runner` TypedDict return, `cc_engine` cast, generic `load_config[T]`, dynamic `model_info`, removed artificial `time.sleep`, `ZeroDivisionError` guard, `repetitions` default
+- **Test Suite Quality Sweep**: spec-constrained mocks across 14 files, async test markers, thread-safety fixes, duplicate test file merges, `sys.path.insert` removal, dead test code deletion
+
+**Sprint 8 Key Deliverables** (Delivered):
+
+- Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, dead code removal, report generation, judge settings UX, GUI a11y/UX
 
 **Sprint 7 Key Deliverables** (Delivered):
 
@@ -454,7 +459,8 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 6**: Benchmarking infrastructure, CC baseline completion, security hardening, test quality -- Delivered
 - **Sprint 7**: Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine -- Delivered
 - **Sprint 8**: Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, report generation, GUI a11y/UX -- Delivered
-- **Sprint 9**: Sweep results UI, Sprint 8 carry-forward cleanup -- In Progress
+- **Sprint 9**: Correctness & security hardening — dead code, format string sanitization, PDF guard, API key cleanup, judge accuracy, type safety, test quality -- Delivered
+- **Sprint 10**: E2E CLI/GUI parity for CC engine, graph visualization for all modes, expanded providers, PydanticAI migration -- In Progress
 
 For sprint details, see [roadmap.md](roadmap.md).
 

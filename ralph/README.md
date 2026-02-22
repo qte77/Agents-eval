@@ -225,6 +225,23 @@ git diff HEAD <feat-branch-pre-merge-sha> --name-only --diff-filter=A | xargs gi
 git commit --amend --no-edit
 ```
 
+**Missing GPG signatures**: If a push is rejected because commits lack GPG signatures (e.g., GitHub branch protection requires signed commits), retroactively sign all unsigned commits and force-push:
+
+```bash
+# Re-sign all commits from <commit-id> onward (use the parent of the first unsigned commit)
+git rebase --exec 'git commit --amend --no-edit --gpg-sign' <commit-id>~1
+git push --force-with-lease
+```
+
+Replace `<commit-id>` with the actual hash of the earliest unsigned commit.
+
+How this works:
+
+- **`rebase`** replays commits one at a time onto a new base, rewriting history. Here the base doesn't change — we rebase onto the same parent — so the only effect is the `--exec` side-effect on each commit.
+- **`<commit-id>~1`** means "the parent of `<commit-id>`". Rebase operates on commits *after* the given base, so `~1` ensures `<commit-id>` itself is included in the replay range.
+- **`--exec '<cmd>'`** runs `<cmd>` after each commit is replayed. Here it amends each replayed commit to add a GPG signature without changing the message (`--no-edit`) or content.
+- **`--force-with-lease`** force-pushes the rewritten history but fails if the remote has new commits you haven't fetched — a safety check against overwriting others' work.
+
 ## Security
 
 **Ralph runs with `--dangerously-skip-permissions`** - all operations
