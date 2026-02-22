@@ -331,3 +331,123 @@ class TestPydanticAiStreamRemoval:
         assert "pydantic_ai_stream" not in sig.parameters, (
             "pydantic_ai_stream is dead code and must be removed from main()"
         )
+
+
+class TestPydanticAiApiMigration:
+    """Verify PydanticAI API migration (STORY-014).
+
+    Tests that deprecated patterns are replaced with current PydanticAI API:
+    - model_name (public) instead of _model_name (private)
+    - Direct keyword args to Agent.run() instead of dict unpacking
+    - No FIXME markers or broad type: ignore directives
+    - RunContext is the current import name
+    """
+
+    @pytest.mark.asyncio
+    async def test_run_manager_uses_public_model_name(self):
+        """run_manager must use public model_name attribute, not _model_name."""
+        with patch("app.agents.agent_system.get_trace_collector") as mock_get_collector:
+            mock_collector = Mock()
+            mock_collector.start_execution = Mock()
+            mock_collector.end_execution = Mock()
+            mock_get_collector.return_value = mock_collector
+
+            mock_manager = Mock()
+            # Only set model_name (public), NOT _model_name (private)
+            mock_model = Mock(spec=[])
+            mock_model.model_name = "test-model"
+            mock_manager.model = mock_model
+
+            mock_result = Mock()
+            mock_result.output = "test output"
+            mock_result.usage = Mock(return_value={})
+            mock_manager.run = AsyncMock(return_value=mock_result)
+
+            execution_id, output = await run_manager(
+                manager=mock_manager,
+                query="test query",
+                provider="openai",
+                usage_limits=None,
+            )
+
+            assert output == "test output"
+            assert execution_id.startswith("exec_")
+
+    @pytest.mark.asyncio
+    async def test_run_manager_calls_agent_run_with_keyword_args(self):
+        """run_manager must call manager.run() with explicit keyword args."""
+        with patch("app.agents.agent_system.get_trace_collector") as mock_get_collector:
+            mock_collector = Mock()
+            mock_collector.start_execution = Mock()
+            mock_collector.end_execution = Mock()
+            mock_get_collector.return_value = mock_collector
+
+            mock_manager = Mock()
+            mock_model = Mock(spec=[])
+            mock_model.model_name = "test-model"
+            mock_manager.model = mock_model
+
+            mock_result = Mock()
+            mock_result.output = "result"
+            mock_result.usage = Mock(return_value={})
+            mock_manager.run = AsyncMock(return_value=mock_result)
+
+            from pydantic_ai.usage import UsageLimits
+
+            limits = UsageLimits(request_limit=5)
+
+            await run_manager(
+                manager=mock_manager,
+                query="test query",
+                provider="openai",
+                usage_limits=limits,
+            )
+
+            # Verify run was called with user_prompt and usage_limits as keyword args
+            mock_manager.run.assert_called_once()
+            call_kwargs = mock_manager.run.call_args
+            assert call_kwargs.kwargs.get("user_prompt") == "test query"
+            assert call_kwargs.kwargs.get("usage_limits") is limits
+
+    def test_no_fixme_comments_in_run_manager(self):
+        """run_manager source must contain zero FIXME comments after migration."""
+        source = inspect.getsource(run_manager)
+        fixme_count = source.count("FIXME")
+        assert fixme_count == 0, (
+            f"Found {fixme_count} FIXME comment(s) in run_manager — "
+            "all should be resolved by API migration"
+        )
+
+    def test_no_broad_type_ignore_on_manager_run(self):
+        """run_manager source must not have broad type: ignore on the .run() call."""
+        source = inspect.getsource(run_manager)
+        # Check for the old pattern with multiple type: ignore directives
+        assert "reportDeprecated" not in source, (
+            "reportDeprecated type: ignore should be removed after API migration"
+        )
+        assert "reportCallOverload" not in source, (
+            "reportCallOverload type: ignore should be removed after API migration"
+        )
+        assert "call-overload" not in source, (
+            "call-overload type: ignore should be removed after API migration"
+        )
+
+    def test_runcontext_is_current_import(self):
+        """RunContext must be importable from pydantic_ai (not deprecated)."""
+        from pydantic_ai import RunContext
+
+        assert RunContext is not None
+        # Verify it's used in agent_system.py
+        import app.agents.agent_system as mod
+
+        source = inspect.getsource(mod)
+        assert "RunContext" in source
+
+    def test_peerread_tools_uses_public_model_name(self):
+        """peerread_tools must use public model_name, not _model_name."""
+        import app.tools.peerread_tools as mod
+
+        source = inspect.getsource(mod)
+        assert "_model_name" not in source, (
+            "peerread_tools should use public model_name, not private _model_name"
+        )
