@@ -28,7 +28,7 @@ async def test_rate_limit_exits_cleanly():
         from app.agents.agent_system import run_manager
 
         mock_manager = MagicMock(spec=Agent)
-        mock_manager.model._model_name = "gpt-4.1"
+        mock_manager.model.model_name = "gpt-4.1"
         mock_manager.run = AsyncMock(
             side_effect=ModelHTTPError(
                 status_code=429,
@@ -64,7 +64,7 @@ async def test_rate_limit_logs_provider_and_wait_time():
         from app.agents.agent_system import run_manager
 
         mock_manager = MagicMock(spec=Agent)
-        mock_manager.model._model_name = "gpt-4.1"
+        mock_manager.model.model_name = "gpt-4.1"
         detail_msg = "Rate limit of 50 per 86400s exceeded. Please wait 34796 seconds."
         mock_manager.run = AsyncMock(
             side_effect=ModelHTTPError(
@@ -100,7 +100,7 @@ async def test_rate_limit_finalizes_trace_collection():
         from app.agents.agent_system import run_manager
 
         mock_manager = MagicMock(spec=Agent)
-        mock_manager.model._model_name = "test-model"
+        mock_manager.model.model_name = "test-model"
         mock_manager.run = AsyncMock(
             side_effect=ModelHTTPError(
                 status_code=429,
@@ -130,7 +130,7 @@ async def test_non_429_http_error_re_raises():
         from app.agents.agent_system import run_manager
 
         mock_manager = MagicMock(spec=Agent)
-        mock_manager.model._model_name = "test-model"
+        mock_manager.model.model_name = "test-model"
         mock_manager.run = AsyncMock(
             side_effect=ModelHTTPError(
                 status_code=500,
@@ -158,7 +158,7 @@ async def test_usage_limit_exceeded_exits_cleanly():
         from app.agents.agent_system import run_manager
 
         mock_manager = MagicMock(spec=Agent)
-        mock_manager.model._model_name = "gpt-oss-120b"
+        mock_manager.model.model_name = "gpt-oss-120b"
         mock_manager.run = AsyncMock(
             side_effect=UsageLimitExceeded(
                 "Exceeded the total_tokens_limit of 60000 (total_tokens=60339)"
