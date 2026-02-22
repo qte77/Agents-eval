@@ -5,11 +5,19 @@ Tests for model creation with different providers, error handling,
 and configuration validation.
 """
 
+import json
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 from pydantic_ai.models.openai import OpenAIChatModel
 
-from app.data_models.app_models import EndpointConfig, ProviderConfig
+from app.data_models.app_models import (
+    PROVIDER_REGISTRY,
+    AppEnv,
+    EndpointConfig,
+    ProviderConfig,
+)
 from app.llms.models import create_llm_model, get_llm_model_name
 
 
@@ -444,3 +452,233 @@ class TestSentinelRemoval:
         call_kwargs = mock_provider.call_args.kwargs
         # Ollama must use "not-required" since it has no auth
         assert call_kwargs.get("api_key") == "not-required"
+
+
+# ---------------------------------------------------------------------------
+# STORY-012: Expand inference provider registry and update stale models
+# ---------------------------------------------------------------------------
+
+# New providers to add per AC1/AC2
+_NEW_PROVIDERS = {
+    "groq": {
+        "env_key": "GROQ_API_KEY",
+        "base_url": "https://api.groq.com/openai/v1",
+    },
+    "fireworks": {
+        "env_key": "FIREWORKS_API_KEY",
+        "base_url": "https://api.fireworks.ai/inference/v1",
+    },
+    "deepseek": {
+        "env_key": "DEEPSEEK_API_KEY",
+        "base_url": "https://api.deepseek.com/v1",
+    },
+    "mistral": {
+        "env_key": "MISTRAL_API_KEY",
+        "base_url": "https://api.mistral.ai/v1",
+    },
+    "sambanova": {
+        "env_key": "SAMBANOVA_API_KEY",
+        "base_url": "https://api.sambanova.ai/v1",
+    },
+    "nebius": {
+        "env_key": "NEBIUS_API_KEY",
+        "base_url": "https://api.studio.nebius.ai/v1",
+    },
+    "cohere": {
+        "env_key": "COHERE_API_KEY",
+        "base_url": "https://api.cohere.com/v2",
+    },
+}
+
+
+class TestStory012ProviderRegistryExpansion:
+    """AC1/AC2: New providers exist in PROVIDER_REGISTRY with correct metadata."""
+
+    @pytest.mark.parametrize("provider_name", list(_NEW_PROVIDERS.keys()))
+    def test_new_provider_in_registry(self, provider_name: str):
+        """Each new provider must exist in PROVIDER_REGISTRY."""
+        assert provider_name in PROVIDER_REGISTRY, (
+            f"Provider '{provider_name}' missing from PROVIDER_REGISTRY"
+        )
+
+    @pytest.mark.parametrize("provider_name,expected", list(_NEW_PROVIDERS.items()))
+    def test_new_provider_env_key(self, provider_name: str, expected: dict):
+        """Each new provider must have the correct env_key."""
+        metadata = PROVIDER_REGISTRY[provider_name]
+        assert metadata.env_key == expected["env_key"]
+
+    @pytest.mark.parametrize("provider_name,expected", list(_NEW_PROVIDERS.items()))
+    def test_new_provider_base_url(self, provider_name: str, expected: dict):
+        """Each new provider must have the correct default_base_url."""
+        metadata = PROVIDER_REGISTRY[provider_name]
+        assert metadata.default_base_url == expected["base_url"]
+
+
+class TestStory012ConfigChatUpdates:
+    """AC3-AC7: config_chat.json entries updated with correct models and limits."""
+
+    @pytest.fixture
+    def config_chat(self) -> dict:
+        """Load config_chat.json."""
+        config_path = Path(__file__).resolve().parents[2] / "src" / "app" / "config" / "config_chat.json"
+        return json.loads(config_path.read_text())
+
+    # AC3: Each new provider has a matching entry in config_chat.json
+    @pytest.mark.parametrize("provider_name", list(_NEW_PROVIDERS.keys()))
+    def test_new_provider_in_config_chat(self, config_chat: dict, provider_name: str):
+        """Each new provider must have an entry in config_chat.json."""
+        assert provider_name in config_chat["providers"], (
+            f"Provider '{provider_name}' missing from config_chat.json"
+        )
+
+    # AC4: HuggingFace model fixed
+    def test_huggingface_model_updated(self, config_chat: dict):
+        """HuggingFace model must not be bart-large-mnli (classification, not chat)."""
+        hf = config_chat["providers"]["huggingface"]
+        assert hf["model_name"] != "facebook/bart-large-mnli", (
+            "HuggingFace still uses classification model"
+        )
+        assert hf["model_name"] == "meta-llama/Meta-Llama-3.3-70B-Instruct"
+
+    # AC5: Together model fixed
+    def test_together_model_updated(self, config_chat: dict):
+        """Together model must not use removed free model."""
+        together = config_chat["providers"]["together"]
+        assert "Free" not in together["model_name"], (
+            "Together still uses removed free model"
+        )
+        assert together["model_name"] == "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+
+    # AC6: Existing stale entries updated
+    def test_gemini_model_updated(self, config_chat: dict):
+        """Gemini must use gemini-2.0-flash (free tier)."""
+        assert config_chat["providers"]["gemini"]["model_name"] == "gemini-2.0-flash"
+
+    def test_openai_model_updated(self, config_chat: dict):
+        """OpenAI must use gpt-4.1-mini (current generation)."""
+        assert config_chat["providers"]["openai"]["model_name"] == "gpt-4.1-mini"
+
+    def test_github_model_updated(self, config_chat: dict):
+        """GitHub must use gpt-4.1-mini."""
+        assert config_chat["providers"]["github"]["model_name"] == "gpt-4.1-mini"
+
+    def test_grok_model_updated(self, config_chat: dict):
+        """Grok must use grok-3-mini."""
+        assert config_chat["providers"]["grok"]["model_name"] == "grok-3-mini"
+
+    def test_anthropic_model_updated(self, config_chat: dict):
+        """Anthropic must use claude-sonnet-4-20250514."""
+        assert config_chat["providers"]["anthropic"]["model_name"] == "claude-sonnet-4-20250514"
+
+    def test_openrouter_model_updated(self, config_chat: dict):
+        """OpenRouter must use qwen3 free model."""
+        assert config_chat["providers"]["openrouter"]["model_name"] == "qwen/qwen3-next-80b-a3b-instruct:free"
+
+    def test_ollama_model_updated(self, config_chat: dict):
+        """Ollama must use llama3.3:latest."""
+        assert config_chat["providers"]["ollama"]["model_name"] == "llama3.3:latest"
+
+    # AC7: max_content_length reflects free tier limits
+    def test_cerebras_max_content_length(self, config_chat: dict):
+        """Cerebras gpt-oss-120b has 128K context."""
+        assert config_chat["providers"]["cerebras"]["max_content_length"] == 128000
+
+    def test_grok_max_content_length(self, config_chat: dict):
+        """Grok grok-3-mini has 131K context."""
+        assert config_chat["providers"]["grok"]["max_content_length"] == 131000
+
+    def test_groq_max_content_length(self, config_chat: dict):
+        """Groq llama-3.3-70b has 131K context."""
+        assert config_chat["providers"]["groq"]["max_content_length"] == 131000
+
+
+class TestStory012AnthropicNativeModel:
+    """AC8: Anthropic provider uses PydanticAI native AnthropicModel."""
+
+    def test_anthropic_returns_anthropic_model(self):
+        """create_llm_model() for anthropic must NOT return OpenAIChatModel."""
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "You are a manager"},
+            provider="anthropic",
+            api_key="test-key",
+            provider_config=ProviderConfig(
+                model_name="claude-sonnet-4-20250514",
+                base_url="https://api.anthropic.com",
+            ),
+        )
+
+        with patch("app.llms.models.AnthropicModel") as mock_anthropic_cls:
+            mock_instance = MagicMock()
+            mock_anthropic_cls.return_value = mock_instance
+
+            model = create_llm_model(endpoint_config)
+
+        # Must use AnthropicModel, not OpenAIChatModel
+        assert not isinstance(model, OpenAIChatModel), (
+            "Anthropic provider should use native AnthropicModel, not OpenAIChatModel"
+        )
+        mock_anthropic_cls.assert_called_once()
+
+
+class TestStory012GroqStrictTools:
+    """AC9: Groq provider disables strict tool definitions (like cerebras)."""
+
+    def test_groq_strict_tool_definition_disabled(self):
+        """Groq model must have openai_supports_strict_tool_definition=False."""
+        endpoint_config = EndpointConfig(
+            prompts={"manager": "You are a manager"},
+            provider="groq",
+            api_key="test-key",
+            provider_config=ProviderConfig(
+                model_name="llama-3.3-70b-versatile",
+                base_url="https://api.groq.com/openai/v1",
+            ),
+        )
+
+        model = create_llm_model(endpoint_config)
+
+        assert isinstance(model, OpenAIChatModel)
+        assert model.profile.openai_supports_strict_tool_definition is False, (
+            "Groq must disable strict tool definitions"
+        )
+
+
+class TestStory012AppEnvKeys:
+    """AC1/AC2: AppEnv has environment variable fields for new providers."""
+
+    @pytest.mark.parametrize(
+        "env_key",
+        [
+            "GROQ_API_KEY",
+            "FIREWORKS_API_KEY",
+            "DEEPSEEK_API_KEY",
+            "MISTRAL_API_KEY",
+            "SAMBANOVA_API_KEY",
+            "NEBIUS_API_KEY",
+            "COHERE_API_KEY",
+        ],
+    )
+    def test_appenv_has_new_provider_key(self, env_key: str):
+        """AppEnv must have a field for each new provider's API key."""
+        assert env_key in AppEnv.model_fields, (
+            f"AppEnv missing field '{env_key}'"
+        )
+
+
+class TestStory012CLIProviderValidation:
+    """AC11: CLI --chat-provider validates against PROVIDER_REGISTRY."""
+
+    def test_chat_provider_rejects_invalid_provider(self):
+        """--chat-provider with an invalid name must be rejected."""
+        from run_cli import parse_args
+
+        with pytest.raises(SystemExit):
+            parse_args(["--chat-provider=invalid_nonexistent_provider"])
+
+    def test_chat_provider_accepts_new_providers(self):
+        """--chat-provider must accept all new provider names."""
+        from run_cli import parse_args
+
+        for provider_name in _NEW_PROVIDERS:
+            args = parse_args([f"--chat-provider={provider_name}"])
+            assert args.get("chat_provider") == provider_name
