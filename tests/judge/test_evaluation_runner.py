@@ -573,3 +573,64 @@ class TestPaperAndReviewExtraction:
             call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
             assert call_kwargs["paper"] == ""
             assert call_kwargs["review"] == ""
+
+
+# MARK: --- review_text override for CC engine (STORY-010 AC2) ---
+
+
+class TestReviewTextOverride:
+    """Verify run_evaluation_if_enabled accepts review_text that overrides extraction."""
+
+    def test_run_evaluation_if_enabled_accepts_review_text_parameter(self):
+        """run_evaluation_if_enabled signature includes review_text parameter."""
+        import inspect
+
+        from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+        sig = inspect.signature(run_evaluation_if_enabled)
+        assert "review_text" in sig.parameters, (
+            "run_evaluation_if_enabled must accept 'review_text' parameter for CC review text"
+        )
+
+    @pytest.mark.asyncio
+    async def test_review_text_override_passed_to_pipeline(self):
+        """When review_text is provided, it is used instead of extracting from manager_output."""
+        with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id=None,
+                manager_output=None,
+                review_text="CC generated review text from solo mode",
+            )
+
+            call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+            assert call_kwargs["review"] == "CC generated review text from solo mode"
+
+    @pytest.mark.asyncio
+    async def test_review_text_none_falls_back_to_extraction(self):
+        """When review_text is None, extraction from manager_output is used as before."""
+        with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id=None,
+                manager_output=None,
+                review_text=None,
+            )
+
+            call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+            # Falls back to extraction which yields "" for None manager_output
+            assert call_kwargs["review"] == ""

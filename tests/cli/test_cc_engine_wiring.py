@@ -240,6 +240,7 @@ class TestRunAppPassesEngine:
         """
         import asyncio
 
+        from app.engines.cc_engine import CCResult
         from gui.pages import run_app
 
         mock_session_state = MagicMock()
@@ -249,8 +250,11 @@ class TestRunAppPassesEngine:
             captured_main_kwargs.update(kwargs)
             return None
 
+        mock_cc_result = CCResult(execution_id="pass-engine", output_data={})
+
         with (
             patch("gui.pages.run_app.main", side_effect=fake_main),
+            patch("gui.pages.run_app.run_cc_solo", return_value=mock_cc_result),
             patch("gui.pages.run_app.LogCapture") as mock_log_capture,
             patch("gui.pages.run_app.st") as mock_st,
         ):
@@ -417,6 +421,244 @@ class TestMainCCBranch:
             await main(engine="mas", query="test", chat_provider="openai")
 
             mock_run_agent.assert_called_once()
+
+
+# MARK: --- AC2: CC review text wired to evaluation pipeline ---
+
+
+class TestCCReviewTextWiring:
+    """CC review text must reach the evaluation pipeline (STORY-010 AC2)."""
+
+    @pytest.mark.asyncio
+    async def test_cc_branch_passes_review_text_to_evaluation(self):
+        """When engine='cc', extract_cc_review_text output reaches _run_evaluation_if_enabled."""
+        from app.engines.cc_engine import CCResult
+
+        cc_result = CCResult(
+            execution_id="cc-review-wire",
+            output_data={"result": "Strong methodology and clear results."},
+        )
+
+        with (
+            patch("app.app._extract_cc_artifacts", return_value=("cc-review-wire", None)),
+            patch(
+                "app.app._run_evaluation_if_enabled",
+                new_callable=AsyncMock,
+                return_value=None,
+            ) as mock_eval,
+        ):
+            from app.app import main
+
+            await main(engine="cc", cc_result=cc_result, query="test")
+
+            call_kwargs = mock_eval.call_args.kwargs
+            assert call_kwargs.get("review_text") == "Strong methodology and clear results."
+
+
+# MARK: --- AC7: engine_type set on CompositeResult ---
+
+
+class TestEngineTypeSetOnResult:
+    """CompositeResult.engine_type set by main() based on engine (STORY-010 AC7)."""
+
+    @pytest.mark.asyncio
+    async def test_cc_solo_sets_engine_type(self):
+        """CC solo (no team_artifacts) sets engine_type='cc_solo' on CompositeResult."""
+        from app.data_models.evaluation_models import CompositeResult
+        from app.engines.cc_engine import CCResult
+
+        cc_result = CCResult(
+            execution_id="cc-solo-type",
+            output_data={},
+            team_artifacts=[],
+        )
+        mock_composite = CompositeResult(
+            composite_score=0.5,
+            recommendation="accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.3,
+            evaluation_complete=True,
+        )
+
+        with (
+            patch("app.app._extract_cc_artifacts", return_value=("cc-solo-type", None)),
+            patch(
+                "app.app._run_evaluation_if_enabled",
+                new_callable=AsyncMock,
+                return_value=mock_composite,
+            ),
+        ):
+            from app.app import main
+
+            result = await main(engine="cc", cc_result=cc_result, query="test")
+
+            assert result is not None
+            assert result["composite_result"].engine_type == "cc_solo"
+
+    @pytest.mark.asyncio
+    async def test_cc_teams_sets_engine_type(self):
+        """CC teams (has team_artifacts) sets engine_type='cc_teams' on CompositeResult."""
+        from app.data_models.evaluation_models import CompositeResult
+        from app.engines.cc_engine import CCResult
+
+        cc_result = CCResult(
+            execution_id="cc-teams-type",
+            output_data={},
+            team_artifacts=[{"type": "TeamCreate", "name": "test"}],
+        )
+        mock_composite = CompositeResult(
+            composite_score=0.5,
+            recommendation="accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.3,
+            evaluation_complete=True,
+        )
+
+        with (
+            patch("app.app._extract_cc_artifacts", return_value=("cc-teams-type", None)),
+            patch(
+                "app.app._run_evaluation_if_enabled",
+                new_callable=AsyncMock,
+                return_value=mock_composite,
+            ),
+        ):
+            from app.app import main
+
+            result = await main(engine="cc", cc_result=cc_result, query="test")
+
+            assert result is not None
+            assert result["composite_result"].engine_type == "cc_teams"
+
+    @pytest.mark.asyncio
+    async def test_mas_engine_keeps_default_engine_type(self):
+        """MAS engine leaves engine_type as default 'mas'."""
+        from app.data_models.evaluation_models import CompositeResult
+
+        mock_composite = CompositeResult(
+            composite_score=0.5,
+            recommendation="accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.3,
+            evaluation_complete=True,
+        )
+
+        with (
+            patch(
+                "app.app._run_agent_execution",
+                new_callable=AsyncMock,
+                return_value=("exec-id", {}, None),
+            ),
+            patch(
+                "app.app._run_evaluation_if_enabled",
+                new_callable=AsyncMock,
+                return_value=mock_composite,
+            ),
+            patch("app.app._build_graph_from_trace", return_value=None),
+        ):
+            from app.app import main
+
+            result = await main(engine="mas", query="test", chat_provider="openai")
+
+            assert result is not None
+            assert result["composite_result"].engine_type == "mas"
+
+
+# MARK: --- AC9: GUI creates CC result and passes to main ---
+
+
+class TestGUICCExecution:
+    """GUI _execute_query_background creates cc_result for CC engine (STORY-010 AC9)."""
+
+    @pytest.mark.asyncio
+    async def test_gui_cc_solo_calls_run_cc_solo(self):
+        """When engine='cc' and cc_teams=False, GUI calls run_cc_solo."""
+        from app.engines.cc_engine import CCResult
+
+        mock_cc_result = CCResult(
+            execution_id="gui-solo",
+            output_data={"result": "GUI solo review"},
+        )
+
+        mock_state = MagicMock()
+
+        with (
+            patch("gui.pages.run_app.st") as mock_st,
+            patch("gui.pages.run_app.LogCapture") as mock_log_capture,
+            patch("gui.pages.run_app.main", new_callable=AsyncMock, return_value=None) as mock_main,
+            patch(
+                "gui.pages.run_app.run_cc_solo", return_value=mock_cc_result
+            ) as mock_solo,
+        ):
+            mock_capture = MagicMock()
+            mock_capture.get_logs.return_value = []
+            mock_capture.attach_to_logger.return_value = "h"
+            mock_log_capture.return_value = mock_capture
+            mock_st.session_state = mock_state
+
+            from gui.pages.run_app import _execute_query_background
+
+            await _execute_query_background(
+                query="test solo",
+                provider="openai",
+                include_researcher=False,
+                include_analyst=False,
+                include_synthesiser=False,
+                chat_config_file=None,
+                engine="cc",
+                cc_teams=False,
+            )
+
+            mock_solo.assert_called_once_with("test solo")
+            assert mock_main.call_args.kwargs.get("cc_result") is mock_cc_result
+
+    @pytest.mark.asyncio
+    async def test_gui_cc_teams_calls_run_cc_teams(self):
+        """When engine='cc' and cc_teams=True, GUI calls run_cc_teams."""
+        from app.engines.cc_engine import CCResult
+
+        mock_cc_result = CCResult(
+            execution_id="gui-teams",
+            output_data={},
+            team_artifacts=[{"type": "TeamCreate"}],
+        )
+
+        mock_state = MagicMock()
+
+        with (
+            patch("gui.pages.run_app.st") as mock_st,
+            patch("gui.pages.run_app.LogCapture") as mock_log_capture,
+            patch("gui.pages.run_app.main", new_callable=AsyncMock, return_value=None) as mock_main,
+            patch(
+                "gui.pages.run_app.run_cc_teams", return_value=mock_cc_result
+            ) as mock_teams,
+        ):
+            mock_capture = MagicMock()
+            mock_capture.get_logs.return_value = []
+            mock_capture.attach_to_logger.return_value = "h"
+            mock_log_capture.return_value = mock_capture
+            mock_st.session_state = mock_state
+
+            from gui.pages.run_app import _execute_query_background
+
+            await _execute_query_background(
+                query="test teams",
+                provider="openai",
+                include_researcher=False,
+                include_analyst=False,
+                include_synthesiser=False,
+                chat_config_file=None,
+                engine="cc",
+                cc_teams=True,
+            )
+
+            mock_teams.assert_called_once_with("test teams")
+            assert mock_main.call_args.kwargs.get("cc_result") is mock_cc_result
 
 
 class TestShellScriptsRemoved:

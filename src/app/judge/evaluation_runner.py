@@ -122,6 +122,7 @@ async def run_evaluation_if_enabled(
     chat_provider: str | None = None,
     judge_settings: JudgeSettings | None = None,
     manager_output: Any = None,
+    review_text: str | None = None,
 ) -> CompositeResult | None:
     """Run evaluation pipeline after manager completes if enabled.
 
@@ -136,6 +137,8 @@ async def run_evaluation_if_enabled(
         chat_provider: Active chat provider from agent system.
         judge_settings: Optional JudgeSettings override from GUI or programmatic calls.
         manager_output: Manager result output containing ReviewGenerationResult (optional).
+        review_text: Pre-extracted review text (e.g. from CC engine). When provided,
+            overrides text extraction from manager_output.
 
     Returns:
         CompositeResult from PydanticAI evaluation or None if skipped.
@@ -166,8 +169,11 @@ async def run_evaluation_if_enabled(
         else:
             logger.warning(f"No trace data found for execution: {execution_id}")
 
-    # Extract paper and review content from manager_output
-    paper_content, review_text = _extract_paper_and_review_content(manager_output)
+    # Extract paper and review content from manager_output (or use override)
+    paper_content, extracted_review = _extract_paper_and_review_content(manager_output)
+    # S10-F1: CC engine passes review_text directly, overriding extraction
+    if review_text is None:
+        review_text = extracted_review
 
     # S10-F1: load reference reviews from PeerRead for all modes (fixes hardcoded None)
     reference_reviews = _load_reference_reviews(paper_id)

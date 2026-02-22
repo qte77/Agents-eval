@@ -27,6 +27,7 @@ from app.config.config_app import CHAT_DEFAULT_PROVIDER
 from app.data_models.evaluation_models import CompositeResult
 from app.data_models.peerread_models import PeerReadPaper
 from app.data_utils.datasets_peerread import PeerReadLoader
+from app.engines.cc_engine import run_cc_solo, run_cc_teams
 from app.judge.settings import JudgeSettings
 from app.reports.report_generator import generate_report
 from app.utils.log import logger
@@ -275,6 +276,11 @@ async def _execute_query_background(
     handler_id = capture.attach_to_logger()
 
     try:
+        # S10-AC9: CC engine — run CC solo/teams and pass result to main
+        cc_result = None
+        if engine == "cc":
+            cc_result = run_cc_teams(query) if cc_teams else run_cc_solo(query)
+
         # Execute query
         result = await main(
             chat_provider=provider,
@@ -287,6 +293,7 @@ async def _execute_query_background(
             judge_settings=judge_settings,
             paper_id=paper_id,
             engine=engine,
+            cc_result=cc_result,
         )
 
         # Store result and transition to completed

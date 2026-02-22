@@ -260,7 +260,11 @@ async def main(
         with span("main()"):
             # S10-F1: CC engine branch — skip MAS, use CC result directly
             if engine == "cc" and cc_result is not None:
+                from app.engines.cc_engine import extract_cc_review_text
+
                 execution_id, graph = _extract_cc_artifacts(cc_result)
+                # S10-AC2: extract review text from CC output for evaluation
+                cc_review_text = extract_cc_review_text(cc_result)
                 composite_result = await _run_evaluation_if_enabled(
                     skip_eval,
                     paper_id,
@@ -271,7 +275,13 @@ async def main(
                     chat_provider,
                     judge_settings,
                     manager_output=None,
+                    review_text=cc_review_text,
                 )
+                # S10-AC7: set engine_type based on CC mode
+                if composite_result is not None:
+                    composite_result.engine_type = (
+                        "cc_teams" if cc_result.team_artifacts else "cc_solo"
+                    )
             else:
                 # MAS engine — existing path
                 if not chat_provider:
