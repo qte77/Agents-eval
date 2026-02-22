@@ -581,7 +581,8 @@ check_tdd_commits() {
         prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
         prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
 
-        if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+        # Reason: reject same-hash match — squash merges contain multiple story [RED]/[GREEN] markers
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ "$prior_red" != "$prior_green" ]; then
             log_info "No new commits, but prior TDD commits found in history:"
             log_info "  [RED]   $prior_red"
             log_info "  [GREEN] $prior_green"
@@ -589,6 +590,8 @@ check_tdd_commits() {
             return 0
         fi
 
+        [ -n "$prior_red" ] && [ "$prior_red" = "$prior_green" ] && \
+            log_warn "Ignoring squash commit $prior_red (RED == GREEN hash)"
         log_error "No commits made during story execution"
         return 1
     fi
@@ -610,7 +613,8 @@ check_tdd_commits() {
             prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
             prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
 
-            if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+            # Reason: reject same-hash match — squash merges contain multiple story [RED]/[GREEN] markers
+            if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ "$prior_red" != "$prior_green" ]; then
                 log_info "No new commits for $story_id in team batch, but prior TDD found:"
                 log_info "  [RED]   $prior_red"
                 log_info "  [GREEN] $prior_green"
@@ -618,6 +622,8 @@ check_tdd_commits() {
                 return 0
             fi
 
+            [ -n "$prior_red" ] && [ "$prior_red" = "$prior_green" ] && \
+                log_warn "Ignoring squash commit $prior_red (RED == GREEN hash)"
             log_error "No commits for $story_id in team batch (hybrid attribution)"
             return 1
         fi
@@ -641,14 +647,17 @@ check_tdd_commits() {
 
     # REFACTOR-only iteration: agent is fixing quality issues after a prior RED+GREEN
     if [ -z "$red_commit" ] && [ -z "$green_commit" ] && [ -n "$refactor_commit" ]; then
-        # Reason: --grep + --all-match requires both patterns in the same commit message
+        # Reason: --grep + --all-match requires both patterns in the same commit message.
+        # Reject same-hash match — squash merges contain multiple story [RED]/[GREEN] markers.
         local prior_red=$(git log --grep="\[RED\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
         local prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" --all-match --format="%h" -1 2>/dev/null)
 
-        if [ -n "$prior_red" ] && [ -n "$prior_green" ]; then
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ "$prior_red" != "$prior_green" ]; then
             log_info "REFACTOR-only: prior RED ($prior_red) + GREEN ($prior_green) found"
             return 0
         fi
+        [ -n "$prior_red" ] && [ "$prior_red" = "$prior_green" ] && \
+            log_warn "Ignoring squash commit $prior_red (RED == GREEN hash)"
         log_error "REFACTOR-only commit but no prior [RED]+[GREEN] for $story_id"
         return 1
     fi
@@ -790,7 +799,8 @@ main() {
             --all-match --format="%h" -1 2>/dev/null || true)
         local prior_green=$(git log --grep="\[GREEN\]" --grep="$story_id" \
             --all-match --format="%h" -1 2>/dev/null || true)
-        if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ ! -f "$RETRY_CONTEXT_FILE" ]; then
+        # Reason: reject same-hash match — squash merges contain multiple story [RED]/[GREEN] markers
+        if [ -n "$prior_red" ] && [ -n "$prior_green" ] && [ "$prior_red" != "$prior_green" ] && [ ! -f "$RETRY_CONTEXT_FILE" ]; then
             log_info "Story $story_id has prior TDD (RED: $prior_red, GREEN: $prior_green) — skipping agent"
             exec_status=2
         else
