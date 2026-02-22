@@ -222,14 +222,16 @@ SweepConfig → SweepRunner → (compositions × papers × repetitions) → Swee
 
 ### CC Headless Integration
 
-An optional CC path feeds real Claude Code agent artifacts into the same evaluation pipeline:
+The CC path feeds Claude Code agent artifacts into the same evaluation pipeline as MAS:
 
 ```text
-Solo:  claude -p "prompt" --output-format json        → CCResult → CCTraceAdapter → GraphTraceData → evaluation
-Teams: claude -p "prompt" --output-format stream-json  → Popen JSONL stream → CCResult → CCTraceAdapter → GraphTraceData → evaluation
+Solo:  claude -p "prompt" --output-format json        → CCResult → extract_cc_review_text → evaluate_comprehensive
+Teams: claude -p "prompt" --output-format stream-json  → Popen JSONL stream → CCResult → cc_result_to_graph_trace → evaluate_comprehensive
 ```
 
 `check_cc_available()` (`src/app/engines/cc_engine.py`) wraps `shutil.which("claude")` for fail-fast validation. Teams mode sets `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` and parses `init`, `result`, `TeamCreate`, and `Task` events from the live JSONL stream via `Popen`, since CC teams artifacts (`~/.claude/teams/`, `~/.claude/tasks/`) are ephemeral in print mode (see AGENT_LEARNINGS.md).
+
+Sprint 10 added full pipeline parity: `extract_cc_review_text()` feeds review text to `evaluate_comprehensive()` via the `review_text` parameter on `run_evaluation_if_enabled()`. `cc_result_to_graph_trace()` builds `GraphTraceData` from team events for graph visualization. `CompositeResult.engine_type` is set to `"cc_solo"` or `"cc_teams"` after evaluation.
 
 ### Output Files
 
@@ -280,19 +282,20 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 9 - Delivered)
+### Current Implementation (Sprint 10 - In Progress)
 
-**Sprint 9 Scope** (9 features, 9 stories):
+**Sprint 10 Scope**: E2E CLI/GUI parity for CC engine, graph visualization, test quality.
 
-- **Dead Code Deletion**: Removed `orchestration.py` (~317 lines) — unused `EvaluationOrchestrator`, `PeerReviewOrchestrator`, `DelegationOrchestrator` with stub `asyncio.sleep()` methods
-- **Format String Sanitization**: `paper_full_content` sanitized before `.format()` in `peerread_tools.py` — prevents format string injection from adversarial PDF content (MAESTRO L1)
-- **PDF Size Guard**: File size check before `MarkItDown().convert()` — rejects PDFs exceeding configurable `MAX_PDF_SIZE_BYTES` (default 50MB) before extraction
-- **API Key Env Cleanup**: `setup_llm_environment()` no longer writes API keys to `os.environ` — keys passed via constructor injection, eliminating exposure to child processes and crash reporters
-- **Security Hardening Bundle**: DuckDuckGo SSRF bypass documented, Phoenix endpoint validated at config time, PeerRead tool registration made idempotent
-- **Judge Pipeline Accuracy**: `clarity` field removed from `Tier2Result` (was copy of `constructiveness`); `_extract_planning_decisions` errors logged and narrowed; cosine score clamped to `min(1.0, score)`
-- **AgentConfig Typing**: `tools: list[Any]` → `list[Tool[Any]]` with type propagated to `_create_optional_agent`
-- **Type Safety + Quick Fixes**: 7 fixes — `sweep_runner` TypedDict return, `cc_engine` cast, generic `load_config[T]`, dynamic `model_info`, removed artificial `time.sleep`, `ZeroDivisionError` guard, `repetitions` default
-- **Test Suite Quality Sweep**: spec-constrained mocks across 14 files, async test markers, thread-safety fixes, duplicate test file merges, `sys.path.insert` removal, dead test code deletion
+- **CC Evaluation Pipeline Parity** (STORY-010): CC engine results (solo and teams) now flow through the same `evaluate_comprehensive()` pipeline as MAS. `extract_cc_review_text()` extracts review text from CC output; `cc_result_to_graph_trace()` builds `GraphTraceData` from team events. `main()` branches on `engine="cc"` to skip MAS agent execution and wire CC artifacts directly. `CompositeResult.engine_type` field distinguishes `"mas"`, `"cc_solo"`, `"cc_teams"`.
+- **Graph Visualization Polish** (STORY-011): `render_agent_graph()` accepts `composite_result` for mode-specific empty-state messages (solo/teams/MAS). Tier 3 informational label on Evaluation page when engine is CC.
+- **inspect.getsource Removal** (STORY-015): 7 occurrences of `inspect.getsource` in tests replaced with behavioral assertions. Zero remaining.
+- **Reference Reviews from PeerRead**: `_load_reference_reviews(paper_id)` loads ground-truth reviews via `PeerReadLoader`, replacing hardcoded `None`.
+- **Process Group Kill**: CC teams subprocess uses `start_new_session=True` with `os.killpg()` on timeout to cleanly terminate teammate child processes.
+- **GUI CC Execution**: `_execute_query_background()` calls `run_cc_solo()`/`run_cc_teams()` when CC engine selected, passing `cc_result` to `main()`.
+
+### Sprint 9 Key Deliverables (Delivered)
+
+- Dead code deletion, format string sanitization, PDF size guard, API key env cleanup, security hardening, judge accuracy, AgentConfig typing, type safety fixes, test suite quality sweep
 
 **Sprint 8 Key Deliverables** (Delivered):
 
@@ -460,7 +463,7 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 7**: Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine -- Delivered
 - **Sprint 8**: Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, report generation, GUI a11y/UX -- Delivered
 - **Sprint 9**: Correctness & security hardening — dead code, format string sanitization, PDF guard, API key cleanup, judge accuracy, type safety, test quality -- Delivered
-- **Sprint 10**: E2E CLI/GUI parity for CC engine, graph visualization for all modes, expanded providers, PydanticAI migration -- In Progress
+- **Sprint 10**: E2E CLI/GUI parity for CC engine (pipeline parity, review text wiring, engine_type, GUI CC execution), graph visualization polish (mode-specific messages, Tier 3 informational label), test quality (inspect.getsource removal, reference reviews) -- In Progress
 
 For sprint details, see [roadmap.md](roadmap.md).
 
