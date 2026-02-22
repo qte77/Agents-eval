@@ -334,6 +334,7 @@ class TestCompareFunction:
                     "weights_used": None,
                     "tiers_enabled": None,
                     "agent_assessment_scores": None,
+                    "engine_type": "mas",
                 },  # Full CompositeResult
                 "result_b": {
                     "composite_score": 0.65,
@@ -357,6 +358,7 @@ class TestCompareFunction:
                     "weights_used": None,
                     "tiers_enabled": None,
                     "agent_assessment_scores": None,
+                    "engine_type": "mas",
                 },  # Full CompositeResult
                 "metric_deltas": {
                     "time_taken": 0.10000000000000009,

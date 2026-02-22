@@ -11,6 +11,7 @@ import networkx as nx
 import pytest
 
 from app.data_models.evaluation_models import CompositeResult, GraphTraceData
+from app.data_models.peerread_models import PeerReadPaper, PeerReadReview
 from app.data_utils.datasets_peerread import PeerReadLoader
 from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
@@ -233,6 +234,144 @@ class TestRunBaselineComparisons:
 
             mock_logger.warning.assert_called_once()
             assert "parse error" in str(mock_logger.warning.call_args)
+
+
+# MARK: --- CompositeResult.engine_type (STORY-010) ---
+
+
+class TestCompositeResultEngineType:
+    """Tests for CompositeResult.engine_type field."""
+
+    def test_default_engine_type_is_mas(self):
+        """CompositeResult defaults to engine_type='mas'."""
+        result = CompositeResult(
+            composite_score=0.5,
+            recommendation="weak_accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.0,
+            evaluation_complete=True,
+        )
+        assert result.engine_type == "mas"
+
+    def test_engine_type_cc_solo(self):
+        """CompositeResult accepts engine_type='cc_solo'."""
+        result = CompositeResult(
+            composite_score=0.5,
+            recommendation="weak_accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.0,
+            evaluation_complete=True,
+            engine_type="cc_solo",
+        )
+        assert result.engine_type == "cc_solo"
+
+    def test_engine_type_cc_teams(self):
+        """CompositeResult accepts engine_type='cc_teams'."""
+        result = CompositeResult(
+            composite_score=0.5,
+            recommendation="weak_accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier3_score=0.0,
+            evaluation_complete=True,
+            engine_type="cc_teams",
+        )
+        assert result.engine_type == "cc_teams"
+
+
+# MARK: --- reference reviews loading (STORY-010) ---
+
+
+class TestReferenceReviewsLoading:
+    """Tests for _load_reference_reviews in evaluation_runner."""
+
+    @pytest.mark.asyncio
+    async def test_loads_reference_reviews_when_paper_id_set(self):
+        """reference_reviews populated from PeerRead when paper_id is set."""
+        mock_paper = MagicMock(spec=PeerReadPaper)
+        mock_review_1 = MagicMock(spec=PeerReadReview)
+        mock_review_1.comments = "Ground truth review one"
+        mock_review_2 = MagicMock(spec=PeerReadReview)
+        mock_review_2.comments = "Ground truth review two"
+        mock_paper.reviews = [mock_review_1, mock_review_2]
+
+        with (
+            patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
+            patch("app.judge.evaluation_runner.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            mock_loader = MagicMock(spec=PeerReadLoader)
+            mock_loader.get_paper_by_id.return_value = mock_paper
+            mock_loader_class.return_value = mock_loader
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id="001",
+                execution_id=None,
+            )
+
+            call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+            assert call_kwargs["reference_reviews"] is not None
+            assert len(call_kwargs["reference_reviews"]) == 2
+            assert "Ground truth review one" in call_kwargs["reference_reviews"]
+
+    @pytest.mark.asyncio
+    async def test_reference_reviews_none_when_no_paper_id(self):
+        """reference_reviews is None when paper_id is not set."""
+        with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id=None,
+            )
+
+            call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+            assert call_kwargs["reference_reviews"] is None
+
+    @pytest.mark.asyncio
+    async def test_reference_reviews_empty_when_paper_has_no_reviews(self):
+        """reference_reviews is empty list when paper exists but has no reviews."""
+        mock_paper = MagicMock(spec=PeerReadPaper)
+        mock_paper.reviews = []
+
+        with (
+            patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
+            patch("app.judge.evaluation_runner.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            mock_loader = MagicMock(spec=PeerReadLoader)
+            mock_loader.get_paper_by_id.return_value = mock_paper
+            mock_loader_class.return_value = mock_loader
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id="001",
+                execution_id=None,
+            )
+
+            call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+            assert call_kwargs["reference_reviews"] == []
 
 
 # MARK: --- paper and review extraction (STORY-005) ---

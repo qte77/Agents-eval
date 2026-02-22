@@ -436,6 +436,7 @@ class TestCompositeResultStructure:
                 },
                 "tiers_enabled": [1, 2, 3],
                 "agent_assessment_scores": None,
+                "engine_type": "mas",
             }
         )
 
@@ -503,6 +504,7 @@ class TestCompositeResultStructure:
                 },
                 "tiers_enabled": [1, 2, 3],
                 "agent_assessment_scores": None,
+                "engine_type": "mas",
             }
         )
 

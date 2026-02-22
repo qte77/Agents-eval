@@ -405,3 +405,155 @@ class TestParseStreamJson:
         ]
         result = parse_stream_json(iter(lines))
         assert len(result.team_artifacts) == 3
+
+
+# MARK: --- extract_cc_review_text (STORY-010) ---
+
+
+class TestExtractCCReviewText:
+    """Tests for extract_cc_review_text() — extracts review text from CCResult."""
+
+    def test_returns_result_field_from_output_data(self):
+        """extract_cc_review_text returns output_data['result'] as string."""
+        from app.engines.cc_engine import CCResult, extract_cc_review_text
+
+        cc_result = CCResult(
+            execution_id="test-id",
+            output_data={"result": "This paper has strong methodology."},
+        )
+        assert extract_cc_review_text(cc_result) == "This paper has strong methodology."
+
+    def test_returns_empty_string_when_no_result_key(self):
+        """extract_cc_review_text returns '' when output_data has no 'result' key."""
+        from app.engines.cc_engine import CCResult, extract_cc_review_text
+
+        cc_result = CCResult(execution_id="test-id", output_data={"cost": 0.01})
+        assert extract_cc_review_text(cc_result) == ""
+
+    def test_returns_empty_string_for_empty_output_data(self):
+        """extract_cc_review_text returns '' for empty output_data."""
+        from app.engines.cc_engine import CCResult, extract_cc_review_text
+
+        cc_result = CCResult(execution_id="test-id", output_data={})
+        assert extract_cc_review_text(cc_result) == ""
+
+    def test_coerces_non_string_result_to_string(self):
+        """extract_cc_review_text coerces non-string result values to str."""
+        from app.engines.cc_engine import CCResult, extract_cc_review_text
+
+        cc_result = CCResult(execution_id="test-id", output_data={"result": 42})
+        assert extract_cc_review_text(cc_result) == "42"
+
+
+# MARK: --- cc_result_to_graph_trace (STORY-010) ---
+
+
+class TestCCResultToGraphTrace:
+    """Tests for cc_result_to_graph_trace() — builds GraphTraceData from CCResult."""
+
+    def test_solo_returns_minimal_graph_trace(self):
+        """CC solo (no team_artifacts) returns GraphTraceData with empty lists."""
+        from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
+
+        cc_result = CCResult(execution_id="solo-001", output_data={}, team_artifacts=[])
+        trace = cc_result_to_graph_trace(cc_result)
+
+        from app.data_models.evaluation_models import GraphTraceData
+
+        assert isinstance(trace, GraphTraceData)
+        assert trace.execution_id == "solo-001"
+        assert trace.agent_interactions == []
+        assert trace.coordination_events == []
+
+    def test_teams_maps_task_events_to_agent_interactions(self):
+        """CC teams Task events are mapped to agent_interactions."""
+        from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
+
+        cc_result = CCResult(
+            execution_id="teams-001",
+            output_data={},
+            team_artifacts=[
+                {"type": "Task", "id": "task-1", "subject": "Review intro", "owner": "teammate-1"},
+                {
+                    "type": "Task",
+                    "id": "task-2",
+                    "subject": "Review methods",
+                    "owner": "teammate-2",
+                },
+            ],
+        )
+        trace = cc_result_to_graph_trace(cc_result)
+        assert len(trace.agent_interactions) == 2
+
+    def test_teams_maps_team_create_to_coordination_events(self):
+        """CC teams TeamCreate events are mapped to coordination_events."""
+        from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
+
+        cc_result = CCResult(
+            execution_id="teams-002",
+            output_data={},
+            team_artifacts=[
+                {"type": "TeamCreate", "team_name": "review-team"},
+            ],
+        )
+        trace = cc_result_to_graph_trace(cc_result)
+        assert len(trace.coordination_events) == 1
+        assert trace.coordination_events[0]["team_name"] == "review-team"
+
+    def test_returns_graph_trace_data_type(self):
+        """cc_result_to_graph_trace always returns a GraphTraceData instance."""
+        from app.data_models.evaluation_models import GraphTraceData
+        from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
+
+        cc_result = CCResult(execution_id="x", output_data={})
+        assert isinstance(cc_result_to_graph_trace(cc_result), GraphTraceData)
+
+
+# MARK: --- run_cc_teams process group kill (STORY-010) ---
+
+
+class TestRunCCTeamsProcessGroupKill:
+    """Tests for run_cc_teams process group kill behavior."""
+
+    def test_popen_uses_start_new_session(self):
+        """run_cc_teams passes start_new_session=True to Popen."""
+        from app.engines.cc_engine import run_cc_teams
+
+        mock_proc = MagicMock()
+        mock_proc.returncode = 0
+        mock_proc.stdout = iter([])
+        mock_proc.wait.return_value = 0
+        mock_proc.__enter__ = MagicMock(return_value=mock_proc)
+        mock_proc.__exit__ = MagicMock(return_value=False)
+
+        with patch("subprocess.Popen", return_value=mock_proc) as mock_popen:
+            run_cc_teams("test query")
+
+        call_kwargs = mock_popen.call_args[1]
+        assert call_kwargs.get("start_new_session") is True
+
+    def test_timeout_calls_killpg(self):
+        """run_cc_teams uses os.killpg on timeout instead of bare proc.kill()."""
+        import signal
+
+        from app.engines.cc_engine import run_cc_teams
+
+        mock_proc = MagicMock()
+        mock_proc.__enter__ = MagicMock(return_value=mock_proc)
+        mock_proc.__exit__ = MagicMock(return_value=False)
+        mock_proc.pid = 12345
+        mock_proc.stdout = MagicMock()
+        mock_proc.stdout.__iter__ = MagicMock(
+            side_effect=subprocess.TimeoutExpired(cmd=["claude"], timeout=600)
+        )
+
+        with (
+            patch("subprocess.Popen", return_value=mock_proc),
+            patch("os.killpg") as mock_killpg,
+            patch("os.getpgid", return_value=12345) as mock_getpgid,
+        ):
+            with pytest.raises(RuntimeError, match="timed out"):
+                run_cc_teams("test query")
+
+            mock_getpgid.assert_called_once_with(12345)
+            mock_killpg.assert_called_once_with(12345, signal.SIGTERM)

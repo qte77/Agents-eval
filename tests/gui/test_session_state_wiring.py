@@ -166,7 +166,7 @@ class TestRunGuiWiring:
 
             await main()
 
-            mock_render.assert_called_once_with(sample_graph)
+            mock_render.assert_called_once_with(sample_graph, composite_result=None)
 
     @pytest.mark.asyncio
     async def test_evaluation_page_gets_none_when_no_execution(self):
@@ -202,7 +202,7 @@ class TestRunGuiWiring:
 
             await main()
 
-            mock_render.assert_called_once_with(None)
+            mock_render.assert_called_once_with(None, composite_result=None)
 
 
 # MARK: --- Behavioral: main() returns result dict ---

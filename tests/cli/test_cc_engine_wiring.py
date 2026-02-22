@@ -352,6 +352,73 @@ class TestRunCCBaselinesWired:
                 await runner._run_cc_baselines()
 
 
+class TestGUICCTeamsCheckbox:
+    """GUI CC Teams checkbox visible when CC engine selected (STORY-010)."""
+
+    def test_execute_query_background_accepts_cc_teams_parameter(self):
+        """_execute_query_background signature accepts cc_teams parameter."""
+        import inspect
+
+        from gui.pages.run_app import _execute_query_background
+
+        sig = inspect.signature(_execute_query_background)
+        assert "cc_teams" in sig.parameters, (
+            "_execute_query_background must accept 'cc_teams' parameter"
+        )
+
+
+class TestMainCCBranch:
+    """main() CC branch skips MAS and uses CC result (STORY-010)."""
+
+    def test_main_accepts_cc_result_parameter(self):
+        """main() signature includes cc_result parameter."""
+        import inspect
+
+        from app.app import main
+
+        sig = inspect.signature(main)
+        assert "cc_result" in sig.parameters, "main() must accept cc_result parameter"
+
+    @pytest.mark.asyncio
+    async def test_main_cc_engine_skips_run_agent_execution(self):
+        """When engine='cc' and cc_result provided, _run_agent_execution is not called."""
+        from app.engines.cc_engine import CCResult
+
+        cc_result = CCResult(
+            execution_id="cc-test-001",
+            output_data={"result": "CC review text"},
+        )
+
+        with (
+            patch("app.app._run_agent_execution") as mock_run_agent,
+            patch("app.app._run_evaluation_if_enabled", new_callable=AsyncMock, return_value=None),
+            patch("app.app._build_graph_from_trace", return_value=None),
+        ):
+            from app.app import main
+
+            await main(engine="cc", cc_result=cc_result, query="test")
+
+            mock_run_agent.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_main_mas_engine_calls_run_agent_execution(self):
+        """When engine='mas', _run_agent_execution is called normally."""
+        with (
+            patch(
+                "app.app._run_agent_execution",
+                new_callable=AsyncMock,
+                return_value=("exec-id", {}, None),
+            ) as mock_run_agent,
+            patch("app.app._run_evaluation_if_enabled", new_callable=AsyncMock, return_value=None),
+            patch("app.app._build_graph_from_trace", return_value=None),
+        ):
+            from app.app import main
+
+            await main(engine="mas", query="test", chat_provider="openai")
+
+            mock_run_agent.assert_called_once()
+
+
 class TestShellScriptsRemoved:
     """scripts/collect-cc-traces/ directory should not exist."""
 
