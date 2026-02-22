@@ -2,8 +2,6 @@
 Tests for STORY-013: App page UX + Evaluation page UX fixes.
 
 Covers:
-- run_app.py: MAS controls hidden (not just disabled) when engine == "cc"
-- run_app.py: custom query text_input visible in both modes (refactor)
 - output.py: rename `type` → `output_type` parameter (shadows built-in)
 - run_app.py: _execute_query_background stores execution_id in session state
 - evaluation.py: _render_overall_results displays execution_id caption
@@ -50,90 +48,7 @@ class TestOutputTypeParameterRename:
 
 
 # ---------------------------------------------------------------------------
-# 2. run_app.py — CC engine hides MAS-specific controls
-# ---------------------------------------------------------------------------
-
-
-class TestCCEngineHidesMASControls:
-    """Verify _display_configuration is not called when engine == 'cc'.
-
-    When engine == 'cc', MAS-specific controls must be hidden entirely,
-    not just shown with disabled=True (current behavior).
-    """
-
-    def test_display_configuration_skipped_when_cc_engine(self) -> None:
-        """_display_configuration must NOT be called when engine is 'cc'.
-
-        Arrange: Mock session_state with engine='cc', mock all streamlit calls
-        Act: Call render_app-level logic for CC engine
-        Expected: _display_configuration is never invoked
-        """
-        from gui.pages import run_app
-
-        # Verify _display_configuration does not render when engine == "cc"
-        with (
-            patch.object(run_app, "_display_configuration") as mock_display_cfg,
-            patch("streamlit.markdown"),
-            patch("streamlit.info"),
-        ):
-            # Simulate CC engine selected path
-            if "cc" == "cc":  # engine == "cc"
-                # The guard should prevent _display_configuration from being called
-                # We test the function directly
-                pass
-
-            # The actual test: simulate what render_app does when engine="cc"
-            # _display_configuration should be inside `if engine != "cc":` guard
-            engine = "cc"
-            if engine != "cc":
-                mock_display_cfg("provider", None, "agents")
-
-            # When engine is "cc", _display_configuration should not have been called
-            mock_display_cfg.assert_not_called()
-
-    def test_mas_controls_visible_when_mas_engine(self) -> None:
-        """_display_configuration IS called when engine is 'mas'.
-
-        Arrange: Mock session_state with engine='mas'
-        Act: Simulate mas engine path
-        Expected: _display_configuration is invoked
-        """
-        from gui.pages import run_app
-
-        with patch.object(run_app, "_display_configuration") as mock_display_cfg:
-            # Simulate MAS engine path
-            engine = "mas"
-            if engine != "cc":
-                mock_display_cfg("provider", None, "agents_text")
-
-            mock_display_cfg.assert_called_once()
-
-    def test_display_configuration_not_called_when_cc_engine_live(self) -> None:
-        """_display_configuration must NOT be called when render_app runs with engine='cc'.
-
-        Behavioral: patch session_state to set engine='cc', call the guard logic
-        directly and verify _display_configuration is not invoked.
-        """
-        from gui.pages import run_app
-
-        with patch.object(run_app, "_display_configuration") as mock_display_cfg:
-            # Simulate the engine guard that run_app uses
-            engine = "cc"
-            agents_text = "researcher, analyst"
-            provider = "openai"
-            token_limit = None
-
-            # Replicate the guard: only call _display_configuration when engine != "cc"
-            if engine == "cc":
-                pass  # MAS controls hidden
-            else:
-                mock_display_cfg(provider, token_limit, agents_text)
-
-            mock_display_cfg.assert_not_called()
-
-
-# ---------------------------------------------------------------------------
-# 3. run_app.py — execution_id stored in session state
+# 2. run_app.py — execution_id stored in session state
 # ---------------------------------------------------------------------------
 
 

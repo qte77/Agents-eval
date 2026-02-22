@@ -1,88 +1,14 @@
 """
-Tests for engine selector UI, CC availability check, MAS controls disable, and
-CCTraceAdapter coordination events fix.
+Tests for engine selector UI: CCTraceAdapter coordination events fix
+and engine integration in run_app render flow.
 
 Mock strategy:
-- shutil.which mocked for CC availability checks
-- st.session_state tested via unit tests on helper functions
 - CCTraceAdapter._extract_coordination_events tested directly
 - inboxes/ directory structure mocked via tmp_path fixtures
 """
 
 import json
-import shutil
 from pathlib import Path
-from unittest.mock import patch
-
-
-class TestCCAvailabilityCheck:
-    """Tests for CC (Claude Code) CLI availability detection.
-
-    Arrange: Mock shutil.which to simulate claude presence or absence
-    Act: Check cc_available via the logic used in the App page
-    Expected: cc_available reflects actual claude CLI presence
-    """
-
-    def test_cc_available_when_claude_found(self) -> None:
-        """cc_available is True when claude CLI is on PATH."""
-        with patch("shutil.which", return_value="/usr/local/bin/claude"):
-            result = shutil.which("claude")
-        assert result is not None
-
-    def test_cc_not_available_when_claude_missing(self) -> None:
-        """cc_available is False when claude CLI not on PATH."""
-        with patch("shutil.which", return_value=None):
-            result = shutil.which("claude")
-        assert result is None
-
-    def test_cc_available_computation_uses_which(self) -> None:
-        """CC availability is computed via shutil.which('claude')."""
-        with patch("shutil.which") as mock_which:
-            mock_which.return_value = "/usr/bin/claude"
-            cc_available = shutil.which("claude") is not None
-            mock_which.assert_called_once_with("claude")
-        assert cc_available is True
-
-    def test_cc_not_available_computation_uses_which(self) -> None:
-        """cc_available=False computed correctly via shutil.which('claude') == None."""
-        with patch("shutil.which") as mock_which:
-            mock_which.return_value = None
-            cc_available = shutil.which("claude") is not None
-        assert cc_available is False
-
-
-class TestEngineSessionState:
-    """Tests for engine selection stored in session state.
-
-    Arrange: Simulate st.session_state with engine key
-    Act: Read engine from session state
-    Expected: Correct engine string is stored and retrieved
-    """
-
-    def test_engine_defaults_to_mas(self) -> None:
-        """Engine defaults to 'mas' when not explicitly set."""
-        session_state: dict = {}
-        engine = session_state.get("engine", "mas")
-        assert engine == "mas"
-
-    def test_engine_can_be_set_to_cc(self) -> None:
-        """Engine can be set to 'cc' for Claude Code execution."""
-        session_state: dict = {"engine": "cc"}
-        engine = session_state.get("engine", "mas")
-        assert engine == "cc"
-
-    def test_engine_mas_enables_mas_controls(self) -> None:
-        """MAS agent controls are enabled (not disabled) when engine is 'mas'."""
-        engine = "mas"
-        # disabled flag for MAS controls when engine == 'cc'
-        disabled = engine == "cc"
-        assert disabled is False
-
-    def test_engine_cc_disables_mas_controls(self) -> None:
-        """MAS agent controls are disabled when engine is 'cc'."""
-        engine = "cc"
-        disabled = engine == "cc"
-        assert disabled is True
 
 
 class TestCCCoordinationEventsExtraction:

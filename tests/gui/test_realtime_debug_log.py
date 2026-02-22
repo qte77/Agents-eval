@@ -15,6 +15,9 @@ import threading
 import time
 from unittest.mock import patch
 
+from inline_snapshot import snapshot
+from loguru import logger
+
 
 class TestLogCapturePollingInterface:
     """Tests for LogCapture.get_new_logs_since() incremental polling.
@@ -285,3 +288,106 @@ class TestIncrementalLogStreaming:
         # All emitted messages should eventually be visible
         our_messages = [m for m in seen_messages if m.startswith("step")]
         assert len(our_messages) == 3, f"Expected 3 step messages, got: {seen_messages}"
+
+
+class TestLogCaptureEntryFormat:
+    """Tests for the dict structure of stored log entries."""
+
+    def test_log_capture_formats_entries(self) -> None:
+        """Log entry stored as dict with timestamp, level, module, and message keys."""
+        from gui.utils.log_capture import LogCapture
+
+        capture = LogCapture()
+
+        capture.add_log_entry(
+            timestamp="2026-02-15 10:00:00",
+            level="WARNING",
+            module="app.judge.evaluation_pipeline",
+            message="Tier 2 timeout after 60s",
+        )
+
+        logs = capture.get_logs()
+        assert len(logs) == snapshot(1)
+        assert logs[0] == snapshot(
+            {
+                "timestamp": "2026-02-15 10:00:00",
+                "level": "WARNING",
+                "module": "app.judge.evaluation_pipeline",
+                "message": "Tier 2 timeout after 60s",
+            }
+        )
+
+
+class TestLogCaptureHtmlOutput:
+    """Tests for HTML rendering of log entries with color-coded severity levels."""
+
+    def test_log_capture_formats_html_output(self) -> None:
+        """Log entries rendered as color-coded HTML: INFO=default, WARNING=yellow, ERROR=red."""
+        from gui.utils.log_capture import LogCapture
+
+        capture = LogCapture()
+        capture.add_log_entry(
+            timestamp="2026-02-15 10:00:00",
+            level="INFO",
+            module="app.app",
+            message="Execution started",
+        )
+        capture.add_log_entry(
+            timestamp="2026-02-15 10:00:01",
+            level="WARNING",
+            module="app.judge.evaluation_pipeline",
+            message="Tier 2 skipped",
+        )
+        capture.add_log_entry(
+            timestamp="2026-02-15 10:00:02",
+            level="ERROR",
+            module="app.judge.llm_evaluation_managers",
+            message="Provider unavailable",
+        )
+
+        html = capture.format_html()
+
+        assert html == snapshot(
+            '<div style="margin-bottom: 8px; font-family: monospace; font-size: 12px;"><span style="color: #666;">2026-02-15 10:00:00</span> <span style="color: #666666; font-weight: bold;">[INFO]</span> <span style="color: #696969;">app.app</span> <span>Execution started</span></div><div style="margin-bottom: 8px; font-family: monospace; font-size: 12px;"><span style="color: #666;">2026-02-15 10:00:01</span> <span style="color: #DAA520; font-weight: bold;">[WARN]</span> <span style="color: #696969;">app.judge.evaluation_pipeline</span> <span>Tier 2 skipped</span></div><div style="margin-bottom: 8px; font-family: monospace; font-size: 12px;"><span style="color: #666;">2026-02-15 10:00:02</span> <span style="color: #F44336; font-weight: bold;">[ERR]</span> <span style="color: #696969;">app.judge.llm_evaluation_managers</span> <span>Provider unavailable</span></div>'
+        )
+
+
+class TestLogCaptureLoggerAttachment:
+    """Tests for attaching and detaching LogCapture as a loguru sink."""
+
+    def test_log_capture_sink_integration(self) -> None:
+        """LogCapture can be attached to loguru and captures entries added directly."""
+        from gui.utils.log_capture import LogCapture
+
+        capture = LogCapture()
+        handler_id = capture.attach_to_logger()
+
+        try:
+            capture.add_log_entry(
+                timestamp="2026-02-15 10:00:00",
+                level="INFO",
+                module="app.test",
+                message="Test message",
+            )
+
+            logs = capture.get_logs()
+            assert len(logs) >= 1
+            test_logs = [log for log in logs if log.get("message") == "Test message"]
+            assert len(test_logs) == snapshot(1)
+        finally:
+            logger.remove(handler_id)
+
+    def test_log_capture_detach(self) -> None:
+        """After detaching, new loguru emissions are not captured."""
+        from gui.utils.log_capture import LogCapture
+
+        capture = LogCapture()
+        handler_id = capture.attach_to_logger()
+
+        capture.detach_from_logger(handler_id)
+
+        initial_count = len(capture.get_logs())
+        logger.bind(module="app.test").info("Should not be captured")
+        final_count = len(capture.get_logs())
+
+        assert final_count == snapshot(initial_count)

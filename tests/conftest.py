@@ -44,11 +44,48 @@ Mock strategy guidelines:
     - Use tmp_path fixture for tests that write to disk
 """
 
+import os
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from unittest.mock import Mock
+
+# Reason: weave bundles sentry_sdk and calls sentry_sdk.init() with a hardcoded
+# DSN at import time, causing network requests to o151352.ingest.us.sentry.io.
+# Neutralize sentry_sdk.init before any library can call it.
+os.environ.setdefault("WEAVE_DISABLED", "true")
+os.environ.setdefault("SENTRY_DSN", "")
+import sentry_sdk  # noqa: E402
+
+sentry_sdk.init(dsn="")
 
 # Add src directory to Python path for imports
 project_root = Path(__file__).parent.parent
 src_path = project_root / "src"
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
+
+
+def capture_registered_tools(register_fn: Callable, agent_id: str = "test") -> dict:
+    """Register agent tools via a capture decorator and return them by name.
+
+    Shared helper for tests that need to capture tools registered by
+    add_peerread_tools_to_agent or add_peerread_review_tools_to_agent.
+
+    Args:
+        register_fn: The add_*_tools_to_agent function to call.
+        agent_id: Agent ID passed to the registration function.
+
+    Returns:
+        dict: Mapping of tool function name to the captured function.
+    """
+    mock_agent = Mock()
+    captured: list = []
+
+    def capture_tool(func):
+        captured.append(func)
+        return func
+
+    mock_agent.tool = capture_tool
+    register_fn(mock_agent, agent_id=agent_id)
+    return {fn.__name__: fn for fn in captured}
