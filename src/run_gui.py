@@ -100,9 +100,10 @@ async def main():
         composite_result = st.session_state.get("execution_composite_result", None)
         render_evaluation(composite_result)
     elif selected_page == "Agent Graph":
-        # Pass graph from session state if available
+        # S10-F2: pass graph and composite_result for mode-specific messages
         graph = st.session_state.get("execution_graph", None)
-        render_agent_graph(graph)
+        composite_result = st.session_state.get("execution_composite_result", None)
+        render_agent_graph(graph, composite_result=composite_result)
 
 
 if __name__ == "__main__":

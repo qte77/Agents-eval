@@ -196,6 +196,22 @@ def _prepare_result_dict(
 
 
 @op()  # type: ignore[reportUntypedFunctionDecorator]
+def _extract_cc_artifacts(cc_result: Any) -> tuple[str, Any]:
+    """Extract execution ID and graph from a CC engine result.
+
+    Args:
+        cc_result: CCResult from solo or teams execution.
+
+    Returns:
+        Tuple of (execution_id, interaction_graph).
+    """
+    from app.engines.cc_engine import cc_result_to_graph_trace
+    from app.judge.graph_builder import build_interaction_graph
+
+    graph_trace = cc_result_to_graph_trace(cc_result)
+    return cc_result.execution_id, build_interaction_graph(graph_trace)
+
+
 async def main(
     chat_provider: str = CHAT_DEFAULT_PROVIDER,
     query: str = "",
@@ -215,6 +231,7 @@ async def main(
     token_limit: int | None = None,
     judge_settings: JudgeSettings | None = None,
     engine: str = "mas",
+    cc_result: Any | None = None,
 ) -> dict[str, Any] | None:
     """Main entry point for the application.
 
@@ -241,36 +258,52 @@ async def main(
         logger.info(f"Chat config file: {chat_config_file}")
 
         with span("main()"):
-            if not chat_provider:
-                chat_provider = input("Which inference chat_provider to use? ")
+            # S10-F1: CC engine branch — skip MAS, use CC result directly
+            if engine == "cc" and cc_result is not None:
+                execution_id, graph = _extract_cc_artifacts(cc_result)
+                composite_result = await _run_evaluation_if_enabled(
+                    skip_eval,
+                    paper_id,
+                    execution_id,
+                    cc_solo_dir,
+                    cc_teams_dir,
+                    cc_teams_tasks_dir,
+                    chat_provider,
+                    judge_settings,
+                    manager_output=None,
+                )
+            else:
+                # MAS engine — existing path
+                if not chat_provider:
+                    chat_provider = input("Which inference chat_provider to use? ")
 
-            execution_id, _, manager_output = await _run_agent_execution(
-                chat_config_file,
-                chat_provider,
-                query,
-                paper_id,
-                enable_review_tools,
-                include_researcher,
-                include_analyst,
-                include_synthesiser,
-                token_limit,
-            )
+                execution_id, _, manager_output = await _run_agent_execution(
+                    chat_config_file,
+                    chat_provider,
+                    query,
+                    paper_id,
+                    enable_review_tools,
+                    include_researcher,
+                    include_analyst,
+                    include_synthesiser,
+                    token_limit,
+                )
 
-            # Run evaluation after manager completes
-            composite_result = await _run_evaluation_if_enabled(
-                skip_eval,
-                paper_id,
-                execution_id,
-                cc_solo_dir,
-                cc_teams_dir,
-                cc_teams_tasks_dir,
-                chat_provider,
-                judge_settings,
-                manager_output,
-            )
+                # Run evaluation after manager completes
+                composite_result = await _run_evaluation_if_enabled(
+                    skip_eval,
+                    paper_id,
+                    execution_id,
+                    cc_solo_dir,
+                    cc_teams_dir,
+                    cc_teams_tasks_dir,
+                    chat_provider,
+                    judge_settings,
+                    manager_output,
+                )
 
-            # Build interaction graph from trace data for visualization
-            graph = _build_graph_from_trace(execution_id) if execution_id else None
+                # Build interaction graph from trace data for visualization
+                graph = _build_graph_from_trace(execution_id) if execution_id else None
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")
 

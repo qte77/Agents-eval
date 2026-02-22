@@ -167,6 +167,12 @@ class CompositeResult(BaseModel):
         description="Optional agent-level assessment scores", default=None
     )
 
+    # S10-F1: track source engine for downstream display and comparability labeling
+    engine_type: str = Field(
+        default="mas",
+        description="Source engine: 'mas', 'cc_solo', or 'cc_teams'",
+    )
+
 
 class GraphTraceData(BaseModel):
     """Trace data structure for graph-based analysis.

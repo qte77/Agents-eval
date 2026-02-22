@@ -13,12 +13,34 @@ from typing import Any
 import networkx as nx
 
 from app.data_models.evaluation_models import CompositeResult
+from app.data_utils.datasets_peerread import PeerReadLoader
 from app.judge.baseline_comparison import compare_all
 from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
 from app.judge.graph_builder import build_interaction_graph
 from app.judge.settings import JudgeSettings
 from app.utils.log import logger
+
+
+def _load_reference_reviews(paper_id: str | None) -> list[str] | None:
+    """Load ground-truth reference reviews from PeerRead for a given paper.
+
+    Args:
+        paper_id: PeerRead paper identifier, or None.
+
+    Returns:
+        List of review comment strings if paper found, empty list if paper has
+        no reviews, None if paper_id is None or paper not found.
+    """
+    if not paper_id:
+        return None
+
+    loader = PeerReadLoader()
+    paper = loader.get_paper_by_id(paper_id)
+    if paper is None:
+        return None
+
+    return [r.comments for r in paper.reviews]
 
 
 def _extract_paper_and_review_content(manager_output: Any) -> tuple[str, str]:
@@ -147,11 +169,14 @@ async def run_evaluation_if_enabled(
     # Extract paper and review content from manager_output
     paper_content, review_text = _extract_paper_and_review_content(manager_output)
 
+    # S10-F1: load reference reviews from PeerRead for all modes (fixes hardcoded None)
+    reference_reviews = _load_reference_reviews(paper_id)
+
     pydantic_result = await pipeline.evaluate_comprehensive(
         paper=paper_content,
         review=review_text,
         execution_trace=execution_trace,
-        reference_reviews=None,
+        reference_reviews=reference_reviews,
     )
 
     # Run baseline comparisons if Claude Code directories provided

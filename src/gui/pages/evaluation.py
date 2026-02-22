@@ -163,6 +163,11 @@ def _render_tier_scores(result: CompositeResult) -> None:
         else:
             st.metric("Tier 3: Graph Analysis", "N/A", help="Not evaluated")
 
+    # S10-F2: informational label for CC engine Tier 3 scores
+    engine_type = getattr(result, "engine_type", "mas")
+    if engine_type.startswith("cc"):
+        st.caption("Informational — Tier 3 graph metrics are not comparable to MAS scores.")
+
     if not result.evaluation_complete:
         st.warning(
             "⚠️ Evaluation incomplete: Some tiers were not executed. "

@@ -244,6 +244,7 @@ async def _execute_query_background(
     paper_id: str | None = None,
     common_settings: CommonSettings | None = None,
     engine: str = "mas",
+    cc_teams: bool = False,
 ) -> None:
     """Execute agent query in background with session state persistence.
 
@@ -262,6 +263,7 @@ async def _execute_query_background(
         paper_id: Optional PeerRead paper ID for paper selection mode
         common_settings: Optional CommonSettings override from GUI settings page
         engine: Execution engine — 'mas' (PydanticAI) or 'cc' (Claude Code)
+        cc_teams: Whether to use CC Teams mode (only applies when engine='cc')
     """
     # Set running state
     st.session_state.execution_state = "running"
@@ -438,6 +440,7 @@ async def _handle_query_submission(
     chat_config_file: str | Path | None,
     token_limit: int | None,
     engine: str = "mas",
+    cc_teams: bool = False,
 ) -> None:
     """Validate input and execute the agent query in background.
 
@@ -455,6 +458,7 @@ async def _handle_query_submission(
         chat_config_file: Path to chat configuration file.
         token_limit: Optional token limit override from GUI.
         engine: Execution engine — 'mas' (PydanticAI) or 'cc' (Claude Code).
+        cc_teams: Whether to use CC Teams mode (only applies when engine='cc').
     """
     if not (query or selected_paper_id):
         warning(RUN_APP_QUERY_WARNING)
@@ -475,6 +479,7 @@ async def _handle_query_submission(
         paper_id=selected_paper_id,
         common_settings=common_settings,
         engine=engine,
+        cc_teams=cc_teams,
     )
     st.rerun()
 
@@ -549,6 +554,11 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     engine = "cc" if engine_label == "Claude Code" else "mas"
     st.session_state.engine = engine
 
+    # S10-F1: CC Teams checkbox — only shown when CC engine selected
+    cc_teams = False
+    if engine == "cc":
+        cc_teams = st.checkbox("Use CC Teams", key="cc_teams_mode")
+
     if engine == "cc" and not cc_available:
         st.warning(
             "Claude Code CLI (`claude`) not found on PATH. "
@@ -591,6 +601,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
             chat_config_file,
             token_limit,
             engine=engine,
+            cc_teams=cc_teams,
         )
 
     # S8-F8.1: subheader placed after run button so output section follows user action

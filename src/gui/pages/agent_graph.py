@@ -22,7 +22,26 @@ except ImportError:
     Network = None  # type: ignore[assignment,misc]
 
 
-def render_agent_graph(graph: nx.DiGraph[str] | None = None) -> None:
+_EMPTY_GRAPH_MESSAGES: dict[str, str] = {
+    "cc_solo": (
+        "CC solo mode produces no agent interaction graph. "
+        "Evaluation scores are available on the Evaluation Results page."
+    ),
+    "cc_teams": (
+        "CC teams mode produced an empty interaction graph. "
+        "Check the Evaluation Results page for coordination metrics."
+    ),
+}
+
+_EMPTY_GRAPH_DEFAULT = (
+    "No agent interaction data available. Run a multi-agent task to see the graph here."
+)
+
+
+def render_agent_graph(
+    graph: nx.DiGraph[str] | None = None,
+    composite_result: Any | None = None,
+) -> None:
     """Render agent interaction graph as interactive Pyvis visualization.
 
     Displays:
@@ -33,13 +52,17 @@ def render_agent_graph(graph: nx.DiGraph[str] | None = None) -> None:
 
     Args:
         graph: NetworkX DiGraph with agent and tool nodes, or None for empty state.
+        composite_result: Optional CompositeResult for mode-specific empty messages.
     """
     st.header("🕸️ Agent Interaction Graph")
 
-    if graph is None or graph.number_of_nodes() == 0:
-        st.info(
-            "No agent interaction data available. Run a multi-agent task to see the graph here."
-        )
+    if graph is None:
+        st.info("No agent interaction data available. Run a query to see the graph here.")
+        return
+
+    if graph.number_of_nodes() == 0:
+        engine_type = getattr(composite_result, "engine_type", "mas") if composite_result else "mas"
+        st.info(_EMPTY_GRAPH_MESSAGES.get(engine_type, _EMPTY_GRAPH_DEFAULT))
         return
 
     st.subheader("Interactive Agent Network Visualization")
