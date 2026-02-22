@@ -4,116 +4,116 @@
             "model_name": "gemini-2.0-flash",
             "base_url": "https://generativelanguage.googleapis.com/v1beta",
             "usage_limits": 25000,
-            "max_content_length": 1000000
+            "max_content_length": 1000000,
         },
         "github": {
             "model_name": "gpt-4.1-mini",
             "base_url": "https://models.inference.ai.azure.com",
             "usage_limits": 25000,
-            "max_content_length": 128000
+            "max_content_length": 128000,
         },
         "cerebras": {
             "model_name": "gpt-oss-120b",
             "base_url": "https://api.cerebras.ai/v1",
             "usage_limits": 60000,
-            "max_content_length": 128000
+            "max_content_length": 128000,
         },
         "groq": {
             "model_name": "llama-3.3-70b-versatile",
             "base_url": "https://api.groq.com/openai/v1",
             "usage_limits": 25000,
-            "max_content_length": 131000
+            "max_content_length": 131000,
         },
         "mistral": {
             "model_name": "open-mistral-nemo",
             "base_url": "https://api.mistral.ai/v1",
             "usage_limits": 25000,
-            "max_content_length": 128000
+            "max_content_length": 128000,
         },
         "openrouter": {
             "model_name": "qwen/qwen3-next-80b-a3b-instruct:free",
             "base_url": "https://openrouter.ai/api/v1",
             "usage_limits": 25000,
-            "max_content_length": 262000
+            "max_content_length": 262000,
         },
         "cohere": {
             "model_name": "command-a-03-2025",
             "base_url": "https://api.cohere.com/v2",
             "usage_limits": 25000,
-            "max_content_length": 256000
+            "max_content_length": 256000,
         },
         "deepseek": {
             "model_name": "deepseek-chat",
             "base_url": "https://api.deepseek.com/v1",
             "usage_limits": 25000,
-            "max_content_length": 128000
+            "max_content_length": 128000,
         },
         "grok": {
             "model_name": "grok-3-mini",
             "base_url": "https://api.x.ai/v1",
             "usage_limits": 25000,
-            "max_content_length": 131000
+            "max_content_length": 131000,
         },
         "sambanova": {
             "model_name": "Meta-Llama-3.3-70B-Instruct",
             "base_url": "https://api.sambanova.ai/v1",
             "usage_limits": 25000,
-            "max_content_length": 128000
+            "max_content_length": 128000,
         },
         "nebius": {
             "model_name": "meta-llama/Meta-Llama-3.1-70B-Instruct",
             "base_url": "https://api.studio.nebius.ai/v1",
             "usage_limits": 25000,
-            "max_content_length": 128000
+            "max_content_length": 128000,
         },
         "fireworks": {
             "model_name": "accounts/fireworks/models/llama-v3p3-70b-instruct",
             "base_url": "https://api.fireworks.ai/inference/v1",
             "usage_limits": 25000,
-            "max_content_length": 131000
+            "max_content_length": 131000,
         },
         "openai": {
             "model_name": "gpt-4.1-mini",
             "base_url": "https://api.openai.com/v1",
             "usage_limits": 25000,
-            "max_content_length": 1000000
+            "max_content_length": 1000000,
         },
         "anthropic": {
             "model_name": "claude-sonnet-4-20250514",
             "base_url": "https://api.anthropic.com",
             "usage_limits": 25000,
-            "max_content_length": 200000
+            "max_content_length": 200000,
         },
         "together": {
             "model_name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
             "base_url": "https://api.together.xyz/v1",
             "usage_limits": 25000,
-            "max_content_length": 128000
+            "max_content_length": 128000,
         },
         "perplexity": {
             "model_name": "sonar",
             "base_url": "https://api.perplexity.ai",
             "usage_limits": 25000,
-            "max_content_length": 127000
+            "max_content_length": 127000,
         },
         "huggingface": {
             "model_name": "meta-llama/Meta-Llama-3.3-70B-Instruct",
             "base_url": "https://router.huggingface.co/v1",
             "usage_limits": 25000,
-            "max_content_length": 128000
+            "max_content_length": 128000,
         },
         "restack": {
             "model_name": "deepseek-chat",
             "base_url": "https://ai.restack.io",
             "usage_limits": 25000,
-            "max_content_length": 15000
+            "max_content_length": 15000,
         },
         "ollama": {
             "model_name": "llama3.3:latest",
             "base_url": "http://localhost:11434/v1",
             "usage_limits": 100000,
-            "max_content_length": 128000
-        }
+            "max_content_length": 128000,
+        },
     },
     "inference": {"result_retries": 3, "result_retries_ollama": 3},
     "prompts": {
@@ -126,6 +126,6 @@
         "system_prompt_evaluator_planning_rationality": "You are an expert at evaluating planning quality of agent executions. Focus on logical flow and decision quality.",
         "system_prompt_evaluator_general": "You are an expert evaluator providing structured assessments of text quality and content.",
         "paper_review_query": "Generate a structured peer review for paper '{paper_id}' from PeerRead dataset. Follow these steps:\\n1. Call get_peerread_paper with paper_id='{paper_id}'\\n2. Call generate_paper_review_content_from_template with paper_id='{paper_id}'\\n3. Call save_structured_review with the generated review\\nUse exact paper_id '{paper_id}' in all tool calls. The review must follow structured format with ratings.",
-        "default_query": "What would you like to research today?"
-    }
+        "default_query": "What would you like to research today?",
+    },
 }
