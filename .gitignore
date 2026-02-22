@@ -44,6 +44,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Claude Code local settings (user-specific, not shared)
+.claude/settings.local.json
+
 # mkdocs
 reference/
 site/
