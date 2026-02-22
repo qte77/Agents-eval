@@ -191,14 +191,27 @@ git branch -d ralph/<branch>
 - On main, merging Ralph in: `-X theirs` keeps Ralph's version
 - On feat branch, merging main in: `-X ours` keeps feat's version
 
-**Protected main with conflicting PR** (only valid when feat branch is the single source of truth and main's conflicting changes are already incorporated or superseded):
+**Protected main with conflicting PR** (when feat is the source of truth and main has diverged with conflicting or superseded changes — merge main into feat keeping feat's versions, clean up main-only files, then squash-merge the PR):
+
+1. Push any local unpushed commits to origin/\<branch\>
+2. `git merge -X ours --allow-unrelated-histories origin/main` — keep feat's version on all conflicts
+3. `git rm` the main-only files — per the docs below, `-X ours` won't auto-delete files added by the incoming branch
+4. Push the merge commit
+5. `gh pr merge <pr-number> --squash` — squash merge the PR
 
 ```bash
-# Merge main into feat, resolve conflicts keeping ours
+# Step 1: push local commits
+git push origin <branch>
+# Step 2: merge main into feat, resolve conflicts keeping ours
 git fetch origin
 git checkout <branch>
-git merge -X ours origin/main
+git merge -X ours --allow-unrelated-histories origin/main
+# Step 3: remove main-only files (see "-X ours does NOT delete" below)
+git diff HEAD <pre-merge-sha> --name-only --diff-filter=A | xargs git rm
+git commit --amend --no-edit
+# Step 4: push the merge commit
 git push origin <branch>
+# Step 5: squash merge the PR
 gh pr merge <pr-number> --squash
 ```
 
