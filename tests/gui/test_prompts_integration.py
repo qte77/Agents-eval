@@ -32,7 +32,7 @@ class TestPromptsIntegration:
         Behavioral: call render_prompts and verify it loads prompts from ChatConfig
         directly rather than falling back to a PROMPTS_DEFAULT constant.
         """
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import patch
 
         from app.data_models.app_models import ChatConfig, ProviderConfig
 

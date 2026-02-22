@@ -222,9 +222,7 @@ class TestReportSectionWiredIntoRenderApp:
         assert hasattr(run_app, "_render_report_section"), (
             "run_app must define _render_report_section (STORY-010)"
         )
-        assert callable(run_app._render_report_section), (
-            "_render_report_section must be callable"
-        )
+        assert callable(run_app._render_report_section), "_render_report_section must be callable"
 
     def test_generate_report_is_accessible_from_run_app(self) -> None:
         """run_app module must have generate_report as a callable attribute.
@@ -237,6 +235,4 @@ class TestReportSectionWiredIntoRenderApp:
         assert hasattr(run_app, "generate_report"), (
             "run_app must import generate_report from report_generator (STORY-010)"
         )
-        assert callable(run_app.generate_report), (
-            "generate_report must be callable on run_app"
-        )
+        assert callable(run_app.generate_report), "generate_report must be callable on run_app"

@@ -49,7 +49,8 @@ class TestStylingRadioHackRemoved:
 
         # Collect all CSS injected via markdown or html calls
         all_css_injected = " ".join(
-            str(arg) for call in (mock_md.call_args_list + mock_html.call_args_list)
+            str(arg)
+            for call in (mock_md.call_args_list + mock_html.call_args_list)
             for arg in call.args
         )
         assert "display: none" not in all_css_injected, (
@@ -68,13 +69,14 @@ class TestStylingRadioHackRemoved:
             styling_mod.add_custom_styling("Test")
 
         all_css_injected = " ".join(
-            str(arg) for call in (mock_md.call_args_list + mock_html.call_args_list)
+            str(arg)
+            for call in (mock_md.call_args_list + mock_html.call_args_list)
             for arg in call.args
         )
         # radiogroup + display:none combination must not be present
-        assert "radiogroup" not in all_css_injected.lower() or "display: none" not in all_css_injected, (
-            "Radio group elements must not be hidden via injected CSS"
-        )
+        assert (
+            "radiogroup" not in all_css_injected.lower() or "display: none" not in all_css_injected
+        ), "Radio group elements must not be hidden via injected CSS"
 
 
 # ---------------------------------------------------------------------------
@@ -284,7 +286,11 @@ class TestSidebarRadioLabel:
 
         radio_calls = mock_sb.radio.call_args_list
         assert radio_calls, "sidebar.radio must be called"
-        first_arg = radio_calls[0].args[0] if radio_calls[0].args else radio_calls[0].kwargs.get("label", "")
+        first_arg = (
+            radio_calls[0].args[0]
+            if radio_calls[0].args
+            else radio_calls[0].kwargs.get("label", "")
+        )
         assert first_arg == "Navigation", (
             f"sidebar.radio must use 'Navigation' as label, got: {first_arg!r}"
         )
@@ -337,9 +343,7 @@ class TestSidebarRadioLabel:
             render_sidebar("Test App")
 
         markdown_calls = mock_sb.markdown.call_args_list
-        all_markdown_content = " ".join(
-            str(call.args[0]) for call in markdown_calls if call.args
-        )
+        all_markdown_content = " ".join(str(call.args[0]) for call in markdown_calls if call.args)
         assert "opens in new tab" in all_markdown_content, (
             "render_sidebar Phoenix link must include '(opens in new tab)' text for WCAG 3.2.5."
         )
@@ -408,12 +412,10 @@ class TestPromptsDisplayOnlyWarning:
         Behavioral: call render_prompts with a valid ChatConfig and verify
         warning() is called with text mentioning display-only or not-saved.
         """
-        from unittest.mock import MagicMock, patch
-
-        from app.data_models.app_models import ChatConfig
+        from unittest.mock import patch
 
         # Build a minimal valid ChatConfig with required fields
-        from app.data_models.app_models import ProviderConfig
+        from app.data_models.app_models import ChatConfig, ProviderConfig
 
         provider_cfg = ProviderConfig(
             model_name="gpt-4o-mini",
@@ -436,8 +438,12 @@ class TestPromptsDisplayOnlyWarning:
         ):
             prompts_mod.render_prompts(chat_config)
 
-        assert mock_warning.called, "render_prompts must call st.warning() to show a prominent notice."
-        warning_text = " ".join(str(call.args[0]) for call in mock_warning.call_args_list if call.args)
+        assert mock_warning.called, (
+            "render_prompts must call st.warning() to show a prominent notice."
+        )
+        warning_text = " ".join(
+            str(call.args[0]) for call in mock_warning.call_args_list if call.args
+        )
         assert "display-only" in warning_text or "not be saved" in warning_text, (
             f"warning() must mention 'display-only' or 'not be saved'. Got: {warning_text!r}"
         )
