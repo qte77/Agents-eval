@@ -40,7 +40,10 @@ def _call_render_tier2(session_state: dict, provider: str = "openai") -> list[st
 
     def capture_selectbox(*args, **kwargs):  # noqa: ANN002
         rendered_keys.append(kwargs.get("key", ""))
-        return kwargs.get("options", [""])[0]
+        options = kwargs.get("options", [""])
+        # Reason: return the option at the requested index to simulate real Streamlit behaviour
+        idx = kwargs.get("index", 0)
+        return options[idx] if options else ""
 
     def capture_number_input(*args, **kwargs):  # noqa: ANN002
         rendered_keys.append(kwargs.get("key", ""))

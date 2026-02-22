@@ -197,6 +197,7 @@ def _render_provider_model_selectboxes(
     provider_help: str,
     model_help: str,
     fallback_provider_for_auto: str = "",
+    skip_model: bool = False,
 ) -> str:
     """Render a provider selectbox and a dependent model selectbox.
 
@@ -214,6 +215,7 @@ def _render_provider_model_selectboxes(
         provider_help: Help text for provider selectbox.
         model_help: Help text for model selectbox.
         fallback_provider_for_auto: Provider to use for model lookup when "auto" is selected.
+        skip_model: When True, render only the provider selectbox and skip the model selectbox.
 
     Returns:
         Selected provider string.
@@ -230,6 +232,9 @@ def _render_provider_model_selectboxes(
         help=provider_help,
     )
     st.session_state[provider_state_key] = selected_provider
+
+    if skip_model:
+        return selected_provider
 
     # Resolve which provider to use for model lookup (handle "auto" alias)
     lookup_provider = (
@@ -252,7 +257,13 @@ def _render_provider_model_selectboxes(
 
 
 def _render_tier2_llm_judge(judge_settings: JudgeSettings) -> None:
-    """Render Tier 2 LLM judge section with editable provider/model fields."""
+    """Render Tier 2 LLM judge section with editable provider/model fields.
+
+    When the selected provider is "auto", downstream controls (model, fallback
+    provider, fallback model, fallback strategy) are hidden because "auto"
+    delegates provider selection to the runtime and manual overrides are
+    logically redundant. Timeout remains visible regardless of provider.
+    """
     # S8-F7: replace text_input with selectbox for provider/model discovery
     from app.config.config_app import CHAT_CONFIG_FILE
     from app.data_models.app_models import ChatConfig
@@ -265,7 +276,12 @@ def _render_tier2_llm_judge(judge_settings: JudgeSettings) -> None:
     fallback_strategies = ["tier1_only"]
 
     with expander("Judge Settings - Tier 2 LLM Judge", expanded=False):
-        _render_provider_model_selectboxes(
+        # Reason: read current provider from session state to determine whether to skip model
+        # The selectbox return drives the NEXT render; session state drives THIS render's layout
+        current_tier2_provider = st.session_state.get(
+            "judge_tier2_provider", judge_settings.tier2_provider
+        )
+        selected_provider = _render_provider_model_selectboxes(
             chat_config=chat_config,
             provider_options=provider_options,
             provider_state_key="judge_tier2_provider",
@@ -279,39 +295,43 @@ def _render_tier2_llm_judge(judge_settings: JudgeSettings) -> None:
             provider_help="LLM provider for Tier 2 evaluation. 'auto' selects best available.",
             model_help="LLM model for Tier 2 evaluation.",
             fallback_provider_for_auto=judge_settings.tier2_fallback_provider,
+            skip_model=current_tier2_provider == "auto",
         )
 
-        _render_provider_model_selectboxes(
-            chat_config=chat_config,
-            provider_options=fallback_provider_options,
-            provider_state_key="judge_tier2_fallback_provider",
-            model_state_key="judge_tier2_fallback_model",
-            default_provider=judge_settings.tier2_fallback_provider,
-            default_model=judge_settings.tier2_fallback_model,
-            provider_label="Fallback Provider",
-            model_label="Fallback Model",
-            provider_key="tier2_fallback_provider_input",
-            model_key="tier2_fallback_model_input",
-            provider_help="Fallback LLM provider if primary fails.",
-            model_help="Fallback LLM model if primary fails.",
-        )
+        # Reason: hide manual overrides when "auto" delegates provider to runtime
+        if selected_provider != "auto":
+            _render_provider_model_selectboxes(
+                chat_config=chat_config,
+                provider_options=fallback_provider_options,
+                provider_state_key="judge_tier2_fallback_provider",
+                model_state_key="judge_tier2_fallback_model",
+                default_provider=judge_settings.tier2_fallback_provider,
+                default_model=judge_settings.tier2_fallback_model,
+                provider_label="Fallback Provider",
+                model_label="Fallback Model",
+                provider_key="tier2_fallback_provider_input",
+                model_key="tier2_fallback_model_input",
+                provider_help="Fallback LLM provider if primary fails.",
+                model_help="Fallback LLM model if primary fails.",
+            )
 
-        current_strategy = st.session_state.get(
-            "judge_fallback_strategy", judge_settings.fallback_strategy
-        )
-        strategy_idx = (
-            fallback_strategies.index(current_strategy)
-            if current_strategy in fallback_strategies
-            else 0
-        )
-        st.session_state["judge_fallback_strategy"] = selectbox(
-            "Fallback Strategy",
-            options=fallback_strategies,
-            index=strategy_idx,
-            key="fallback_strategy_input",
-            help="Strategy used when evaluation tiers fail.",
-        )
+            current_strategy = st.session_state.get(
+                "judge_fallback_strategy", judge_settings.fallback_strategy
+            )
+            strategy_idx = (
+                fallback_strategies.index(current_strategy)
+                if current_strategy in fallback_strategies
+                else 0
+            )
+            st.session_state["judge_fallback_strategy"] = selectbox(
+                "Fallback Strategy",
+                options=fallback_strategies,
+                index=strategy_idx,
+                key="fallback_strategy_input",
+                help="Strategy used when evaluation tiers fail.",
+            )
 
+        # Timeout applies to all modes — always visible
         st.session_state["judge_tier2_timeout_seconds"] = number_input(
             "Timeout Seconds",
             min_value=0.1,
