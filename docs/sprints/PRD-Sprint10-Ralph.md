@@ -1,8 +1,9 @@
 ---
 title: Product Requirements Document - Agents-eval Sprint 10
 description: "Sprint 10: 6 features — E2E CLI/GUI parity for CC engine (solo + teams), graph visualization for all modes, expanded providers, judge UX, PydanticAI migration, test quality."
-version: 3.0.0
+version: 3.1.0
 created: 2026-02-21
+updated: 2026-02-22
 ---
 
 ## Project Overview
@@ -17,10 +18,11 @@ created: 2026-02-21
 | --- | --- | --- | --- |
 | Free-text query (MAS) | Works | Works | None |
 | Paper review (MAS) | Works (`--paper-id`) | Works (dropdown) | None |
-| CC solo | Works (`--engine=cc`) | Radio exists, but `app.main()` ignores `engine` — runs MAS | **Broken** |
-| CC teams | Works (`--engine=cc --cc-teams`) | No toggle exists | **Missing** |
+| CC solo | **Broken** — `args.pop("engine")` removes it before `main()`, MAS always runs after CC | Radio exists, but `app.main()` ignores `engine` — runs MAS | **Broken (both)** |
+| CC teams | **Broken** — same CLI bug as solo | No toggle exists | **Broken + Missing** |
 | Graph visualization | N/A (CLI) | Works for MAS; CC produces no graph data | **Partial** |
-| CC evaluation | Tier 1/2 expect `GeneratedReview` -- CC produces raw text, needs wrapping | Not wired | **No path** |
+| CC evaluation | Pipeline is engine-agnostic (plain strings), but CC review text discarded (`_RESULT_KEYS` omits `"result"`) | Not wired | **No path** |
+| Reference reviews | `reference_reviews=None` for ALL modes (MAS included) — Tier 1 scores against empty | Same | **Bug (all modes)** |
 
 ---
 
@@ -69,73 +71,109 @@ created: 2026-02-21
 <!-- PARSER REQUIREMENT: Flatten AC items — no indented sub-items under a checkbox -->
 <!-- PARSER REQUIREMENT: Each sub-feature MUST have its own **Files**: section -->
 
-#### Feature 1: Wire CC Engine to GUI Execution Path (Solo + Teams)
+#### Feature 1: Connect All Execution Modes to the Same Three-Tier Evaluation Pipeline
 
-**Description**: The "Claude Code" radio button in `run_app.py` sets `engine="cc"` and passes it to `app.main()`, but `main()` only logs the value and unconditionally runs the MAS PydanticAI pipeline. The CLI (`run_cli.py:126-138`) correctly branches to `cc_engine.run_cc_solo`/`run_cc_teams` -- the GUI must do the same. Additionally, there is no CC teams toggle in the GUI at all. CC-only runs have no defined evaluation path: the three-tier pipeline expects `GeneratedReview` + `GraphTraceData` from the MAS trace collector, but CC produces `CCResult` with a different shape. The evaluation page must handle CC output gracefully.
+**Description**: All execution modes (MAS, CC solo, CC teams) must produce comparable evaluation results through the same `evaluate_comprehensive()` call. The evaluation pipeline interface is already engine-agnostic — all three tiers operate on plain strings and dicts, not MAS types:
+
+```
+evaluate_comprehensive(
+    paper: str,                    # Tier 1 + Tier 2
+    review: str,                   # Tier 1 + Tier 2
+    execution_trace: GraphTraceData | dict | None,  # Tier 2 (dict) + Tier 3 (GraphTraceData)
+    reference_reviews: list[str] | None,            # Tier 1
+) -> CompositeResult
+```
+
+No `GeneratedReview` wrapping needed — the pipeline already accepts plain strings. The work is building an adapter layer that translates each mode's output into these 4 parameters, plus fixing 4 bugs discovered during analysis:
+
+| Bug | Location | Impact |
+| --- | --- | --- |
+| CLI `engine` pop | `run_cli.py:107` — `args.pop("engine")` removes engine before `main()` | MAS always runs after CC |
+| `main()` ignores engine | `app.py:228` — logs value, unconditionally calls `_run_agent_execution()` | CC engine has no effect |
+| CC review text discarded | `cc_engine.py:85` — `_RESULT_KEYS` omits `"result"` | CC response text lost |
+| Reference reviews never loaded | `evaluation_runner.py:154` — `reference_reviews=None` for ALL modes | Tier 1 scores empty strings |
 
 **Acceptance Criteria**:
 
-- [ ] AC1: Selecting "Claude Code" in the GUI radio button invokes `cc_engine.run_cc_solo()` instead of the MAS pipeline
-- [ ] AC2: A "CC Teams" checkbox appears when CC engine is selected; when enabled, `run_cc_teams()` is invoked instead of `run_cc_solo()`
-- [ ] AC3: CC engine results are stored in session state and available to Evaluation Results and Agent Graph pages
-- [ ] AC4: MAS-specific controls (sub-agents, provider, token limit) remain hidden when CC engine is selected (existing behavior preserved)
-- [ ] AC5: Error handling for missing `claude` CLI binary shows user-friendly message in GUI
+- [ ] AC1: `evaluate_comprehensive()` is the sole evaluation entry point for MAS, CC solo, and CC teams — no mode-specific evaluation logic exists outside it
+- [ ] AC2: CC solo and CC teams produce non-empty `review` text passed to the pipeline (extracted from `CCResult.output_data["result"]`)
+- [ ] AC3: All modes load `reference_reviews` from PeerRead when `paper_id` is set — Tier 1 scores against actual ground truth, not empty strings
+- [ ] AC4: CC solo produces a `GraphTraceData` (minimal or from `CCTraceAdapter`); composite scorer detects `single_agent_mode=True` and redistributes `coordination_quality` weight
+- [ ] AC5: CC teams produces a `GraphTraceData` with `agent_interactions` mapped from `team_artifacts` Task events
 - [ ] AC6: `run_cc_teams` uses process group kill (`os.killpg`) after timeout — not just `proc.kill()` — to clean up teammate child processes
-- [ ] AC7: CC-only runs produce all three evaluation tiers: CC raw text output is wrapped into a `GeneratedReview`-compatible structure so Tier 1 (traditional metrics) and Tier 2 (LLM-as-Judge) can score it; Tier 3 graph analysis uses CC artifacts
-- [ ] AC8: When engine is CC, the Evaluation Results page shows all three tiers with a banner noting "CC engine output — review text extracted from raw CC response"
-- [ ] AC9: All existing MAS tests continue to pass; new tests cover the CC GUI path (solo and teams)
-- [ ] AC10: `make validate` passes with no regressions
+- [ ] AC7: `CompositeResult.engine_type` is set to `"mas"`, `"cc_solo"`, or `"cc_teams"` for all results
+- [ ] AC8: CLI `--engine=cc` does NOT run the MAS pipeline — `_run_agent_execution()` is not called
+- [ ] AC9: GUI "Claude Code" radio invokes CC engine, not MAS; a "CC Teams" checkbox appears when CC is selected
+- [ ] AC10: For the same `paper_id`, MAS and CC Tier 1 scores use identical `reference_reviews` (same ground truth)
+- [ ] AC11: All existing MAS tests continue to pass; new tests cover the CC path (solo and teams)
+- [ ] AC12: `make validate` passes with no regressions
 
 **Technical Requirements**:
 
-- Add CC engine branch in `_execute_query_background()` mirroring `run_cli.py:126-138` logic
-- Add `cc_teams` checkbox in `render_app()` -- visible only when `engine == "cc"`
-- Handle subprocess execution within Streamlit's threading model (background thread already exists)
-- Define `CCResultDict` shape for `_prepare_result_dict()`: `{"engine": "cc", "raw_response": str, "token_count": int, "latency_seconds": float, "cc_result": CCResult, "graph_trace": GraphTraceData | None, "composite_result": CompositeResult}`. MAS result dict keeps existing shape with `"engine": "mas"`
-- Wrap CC raw text output into a `GeneratedReview` structure: extract the review text from `CCResult.output_data`, populate `review_text` field, set metadata fields (model="claude-code", provider="cc"). This allows Tier 1 and Tier 2 to score CC output using the same pipeline as MAS
-- Fix `run_cc_teams` timeout: start subprocess with `start_new_session=True`, then on timeout use `os.killpg(os.getpgid(proc.pid), signal.SIGTERM)` followed by `proc.kill()` to ensure teammate child processes are cleaned up (`cc_engine.py:236-256`)
-- Wire evaluation page to check `result["engine"]` and render CC-specific layout when `engine == "cc"`
-- Mock `subprocess.run` and `subprocess.Popen` in tests -- never call real `claude` CLI
+- **Capture CC review text**: Add `"result"` to `_RESULT_KEYS` in `cc_engine.py:85` so `cc_result.output_data["result"]` contains the review text. Add `extract_cc_review_text(cc_result) -> str` helper
+- **Build `GraphTraceData` from CC artifacts**: Add `cc_result_to_graph_trace(cc_result) -> GraphTraceData` that maps `team_artifacts` Task/TeamCreate events to `agent_interactions`, `tool_calls`, and `coordination_events`. CC solo: minimal `GraphTraceData(execution_id=cc_result.execution_id)` with empty lists — `CompositeScorer._detect_single_agent_mode()` already redistributes `coordination_quality` weight. CC teams: `Task.owner` -> delegation interactions, completed tasks -> `tool_calls`, `TeamCreate` -> `coordination_events`
+- **Load reference reviews for all modes**: In `evaluation_runner.py`, before `evaluate_comprehensive()`, load from PeerRead: `paper.reviews[*].comments` when `paper_id` is set. This fixes the existing bug for ALL modes (MAS included)
+- **Add `engine_type` to `CompositeResult`**: `engine_type: str = Field(default="mas")` — enables downstream consumers to know the source engine. Backward-compatible default
+- **Wire `main()` to branch on engine**: Add `cc_result: CCResult | None = None` param. When `engine == "cc"`: skip `_run_agent_execution()` entirely, extract review text via `extract_cc_review_text()`, build `GraphTraceData` via `cc_result_to_graph_trace()`, load paper content + reference reviews from PeerRead, call `evaluate_comprehensive()` with same 4 parameters as MAS, build `nx.DiGraph` via `build_interaction_graph()`
+- **Fix CLI wiring**: Pass `engine` and `cc_result` explicitly to `main()`: `run(main(**args, engine=engine, cc_result=cc_result))`. Remove pattern where CC runs first then MAS runs anyway
+- **Fix GUI wiring**: In `_execute_query_background()`, add CC branch that calls `run_cc_solo()` / `run_cc_teams()` before calling `main()` with `cc_result`. Add CC teams checkbox visible when engine is CC
+- **Fix `run_cc_teams` timeout**: Use `start_new_session=True` + `os.killpg(os.getpgid(proc.pid), signal.SIGTERM)` then `proc.kill()` to clean up teammate child processes
+- Mock `subprocess.run` and `subprocess.Popen` in tests — never call real `claude` CLI
+
+**Comparability Matrix**:
+
+| Metric | Tier | MAS vs CC | Rationale |
+| --- | --- | --- | --- |
+| `output_similarity` | 1 | **Comparable** | Same review text vs same references |
+| `task_success` | 1 | **Comparable** | Same threshold on same similarity scores |
+| `time_taken` | 1 | **Comparable** | Wall-clock time for both |
+| `technical_accuracy` | 2 | **Comparable** | LLM judges review text quality |
+| `constructiveness` | 2 | **Comparable** | LLM judges review text quality |
+| `planning_rationality` | 2 | **Partial** | CC has sparse trace -> less signal |
+| `coordination_centrality` | 3 | **Not comparable** | MAS: rich delegation graph; CC solo: empty; CC teams: flat |
+| `tool_selection_accuracy` | 3 | **Partial** | CC teams: task completions as proxy |
+| `path_convergence` | 3 | **Not comparable** | Structurally different graphs |
+| `task_distribution_balance` | 3 | **Partial** | CC teams has distribution data |
+
+Tier 1 + Tier 2 (review quality) are directly comparable. Tier 3 (graph/coordination) is structurally different but still computed — the composite scorer handles this via `single_agent_mode` weight redistribution for CC solo.
 
 **Files**:
 
-- `src/gui/pages/run_app.py` (edit -- CC branch in `_execute_query_background`, add CC teams checkbox, CC result dict handling)
-- `src/app/engines/cc_engine.py` (edit -- enforce timeout with process group kill in `run_cc_teams`)
-- `src/gui/pages/evaluation_results.py` (edit -- CC-specific layout when engine is CC)
-- `tests/test_gui/test_session_state_wiring.py` (edit -- CC engine path tests, solo + teams, CC eval page)
+- `src/app/engines/cc_engine.py` (edit -- add `"result"` to `_RESULT_KEYS`, add `extract_cc_review_text()`, add `cc_result_to_graph_trace()`, fix `run_cc_teams` process group kill)
+- `src/app/data_models/evaluation_models.py` (edit -- add `engine_type` field to `CompositeResult`)
+- `src/app/judge/evaluation_runner.py` (edit -- load reference reviews from PeerRead for all modes, accept `cc_result`/`engine_type` params, CC adapter branch)
+- `src/app/app.py` (edit -- add `cc_result` param to `main()`, CC engine branch that skips `_run_agent_execution()`)
+- `src/run_cli.py` (edit -- pass `engine=engine, cc_result=cc_result` to `main()`, remove MAS-after-CC pattern)
+- `src/gui/pages/run_app.py` (edit -- CC branch in `_execute_query_background()`, add CC teams checkbox)
+- `tests/engines/test_cc_engine.py` (edit -- tests for `extract_cc_review_text`, `cc_result_to_graph_trace`, `"result"` in `_RESULT_KEYS`)
+- `tests/cli/test_cc_engine_wiring.py` (edit -- test CLI passes `engine`+`cc_result` to main, CC does not invoke MAS)
+- `tests/judge/test_evaluation_runner.py` (edit -- test reference reviews loaded for all modes, CC result adapter path)
 
 ---
 
-#### Feature 2: Graph Building and Visualization for All Execution Modes
+#### Feature 2: Graph Visualization Polish for All Execution Modes
 
-**Description**: NetworkX graphs are only built from MAS trace data. When CC engine runs, no graph is produced -- `CCTraceAdapter.parse()` returns `GraphTraceData` for evaluation scoring but it is never converted to an `nx.DiGraph` for the Agent Graph page. The graph shape depends on whether the run is single-agent or multi-agent: single-agent runs (MAS solo query or CC solo) show a tool-call graph (agent -> tool1 -> tool2 -> ...); multi-agent runs (MAS 4-agent pipeline or CC teams) show tool calls plus team delegation and inter-agent communication edges. CC teams parse `TeamCreate`/`Task` JSONL events during execution but the stream data may not persist in `CCResult`. Tier 3 graph metrics assume MAS delegation patterns; CC teams produce flat delegation which yields non-comparable scores.
+**Description**: Feature 1 builds `GraphTraceData` and `nx.DiGraph` for CC runs. This feature handles the visualization layer: the Agent Graph page must distinguish between no-execution-yet, empty graph (CC solo), and populated graph (MAS or CC teams). CC Tier 3 graph metrics need "informational" labeling since they aren't comparable to MAS scores. `CCResult.team_artifacts` already retains parsed events from the JSONL stream (per `cc_engine.py:111-112`).
 
 **Acceptance Criteria**:
 
-- [ ] AC1: Single-agent runs (MAS solo or CC solo) produce an `nx.DiGraph` showing a tool-call chain: agent node -> tool_call_1 -> tool_call_2 -> ... (extracted from trace data or CC output)
-- [ ] AC2: Multi-agent runs (MAS 4-agent or CC teams) produce an `nx.DiGraph` showing agent/team member nodes, tool-call edges, and delegation/communication edges between agents
-- [ ] AC3: `CCTraceAdapter.parse()` output (`GraphTraceData`) is converted to `nx.DiGraph` via `build_interaction_graph()`
-- [ ] AC4: `cc_result_to_graph_trace()` maps CC team artifacts to `GraphTraceData` format: `members[].name` -> nodes, `tasks[].owner` -> delegation edges (lead -> owner), `tasks[].blockedBy` -> dependency edges
-- [ ] AC5: `CCResult.team_artifacts` retains parsed team members and task delegation edges from the JSONL stream so graph data survives after execution
-- [ ] AC6: Empty graphs (0 nodes, 0 edges) display a descriptive warning instead of the generic "No agent interaction data available" message
-- [ ] AC7: MAS graph visualization continues to work unchanged
-- [ ] AC8: Tier 3 graph metrics are documented as MAS-specific; CC graph metrics are labeled "informational -- not comparable to MAS scores" in evaluation output
-- [ ] AC9: `make validate` passes with no regressions
+- [ ] AC1: CC solo produces an `nx.DiGraph` (may be minimal — single node) displayed on Agent Graph page
+- [ ] AC2: CC teams produces an `nx.DiGraph` showing team member nodes and delegation edges
+- [ ] AC3: Empty graphs (0 nodes, 0 edges) display a descriptive warning (e.g., "CC solo mode — no agent interactions to display") instead of generic "No agent interaction data available"
+- [ ] AC4: MAS graph visualization continues to work unchanged
+- [ ] AC5: Tier 3 graph metrics from CC runs are labeled "informational — not comparable to MAS scores" in evaluation display
+- [ ] AC6: `make validate` passes with no regressions
 
 **Technical Requirements**:
 
-- In the CC branch added by Feature 1, after CC execution: call `CCTraceAdapter` on CC result artifacts, then `build_interaction_graph()` to produce `nx.DiGraph`, store in `st.session_state.execution_graph`
-- **Single-agent graph** (MAS solo query or CC solo): parse tool calls from trace data or `CCResult.output_data`; build linear chain graph (agent node -> tool_call_1 -> tool_call_2 -> ...). If no tool calls, show single agent node with info message
-- **Multi-agent graph** (MAS 4-agent or CC teams): include tool-call edges (agent -> tool) plus inter-agent edges. For MAS: delegation edges from trace collector (manager -> researcher, etc.). For CC teams: map `TeamCreate` members to nodes, `Task` owner assignments to delegation edges (lead -> teammate), `Task` blockedBy to dependency edges, teammate tool calls to tool-call edges
-- `build_interaction_graph()` expects `agent_interactions` with `from`/`source_agent` and `to`/`target_agent` keys. `cc_result_to_graph_trace()` must translate: team lead -> task owner = delegation edge (edge type "delegation"), task blockedBy = dependency edge (edge type "dependency")
-- In `agent_graph.py`: distinguish between `graph is None` (no execution yet), empty graph (execution produced no interactions), and populated graph -- show appropriate messages for each
-- For Tier 3 metrics on CC runs: add `engine_type` field to graph metric output; when `engine_type == "cc"`, prefix metric labels with "Informational" in evaluation display
+- In `agent_graph.py`: distinguish between `graph is None` (no execution yet), empty graph (execution produced no interactions — show mode-specific message using `CompositeResult.engine_type`), and populated graph
+- For Tier 3 metrics on CC runs: when `engine_type` starts with `"cc"`, prefix metric labels with "Informational" in evaluation display
+- Graph building itself is handled by Feature 1 (`cc_result_to_graph_trace()` + `build_interaction_graph()`)
 
 **Files**:
 
-- `src/app/engines/cc_engine.py` (edit -- add `cc_result_to_graph_trace()` helper with CC solo and CC teams graph mapping)
-- `src/gui/pages/run_app.py` (edit -- wire CC graph into session state after Feature 1 CC branch)
 - `src/gui/pages/agent_graph.py` (edit -- differentiate empty vs missing graph messages, CC graph labeling)
+- `src/gui/pages/evaluation_results.py` (edit -- CC-specific Tier 3 labeling when `engine_type` is CC)
 - `tests/test_gui/test_agent_graph.py` (new -- graph rendering for MAS, CC solo, CC teams)
 
 ---
@@ -316,7 +354,6 @@ created: 2026-02-21
 - Hardcoded Settings Audit -- continuation of Sprint 7
 - Time Tracking Consistency Across Tiers -- low urgency
 - BDD Scenario Tests for Evaluation Pipeline -- useful but not blocking
-- Tier 1 Reference Comparison Fix -- requires ground-truth review integration
 - Cerebras Structured Output Validation Retries -- provider-specific edge case
 - PlantUML Diagram Audit -- cosmetic, no user impact
 
@@ -326,9 +363,39 @@ created: 2026-02-21
 
 ### Priority Order
 
-- **P1 (E2E parity)**: STORY-010 (CC engine GUI), STORY-011 (graph visualization)
+- **P1 (E2E parity)**: STORY-010 (CC eval pipeline parity — biggest story, most files), STORY-011 (graph viz polish)
 - **P2 (infrastructure)**: STORY-012 (providers), STORY-013 (judge auto UX)
 - **P3 (code health)**: STORY-014 (PydanticAI migration), STORY-015 (source inspection tests)
+
+### Running Ralph in CC Agent Teams Mode
+
+Ralph supports CC Agent Teams for inter-story parallelism. Use this when multiple stories can run concurrently (different files, no conflicts).
+
+```bash
+# Teams mode: lead coordinates, 2 teammates implement in parallel
+make ralph_run TEAMS=true MAX_ITERATIONS=12 MODEL=opus
+
+# Worktree + teams (isolated branch):
+make ralph_run_worktree BRANCH=ralph/sprint10-e2e-parity TEAMS=true MAX_ITERATIONS=12
+```
+
+**How teams mode works in Ralph** (see [CC-agent-teams-orchestration.md](../analysis/CC-agent-teams-orchestration.md)):
+
+- Sets `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` automatically when `TEAMS=true`
+- Lead picks primary story, delegates wave peers to teammates via the shared task list
+- Teammates implement in parallel; each runs `make quick_validate` on their story's files
+- Lead runs `make validate` at wave boundaries before advancing to next wave
+- Scoped lint/tests in teams mode: only story-specific files are checked per teammate
+- Wave boundary detection: when primary story passes, Ralph checks if next story is in a new wave
+
+**Key limitations** (from orchestration analysis):
+
+- No session resumption — if Ralph times out, restart from scratch
+- Task status can lag — teammates sometimes don't mark tasks complete, blocking dependents
+- Linear token cost — each teammate is a separate Claude instance (~3x cost for 2 teammates)
+- Cross-story interference possible in teams mode — scoped validation mitigates but doesn't eliminate
+
+**Recommendation for Sprint 10**: Use `TEAMS=true` for Wave 1 (STORY-010 + STORY-012 are independent). Run Wave 2 sequentially — both stories depend on Wave 1 and share indirect file conflicts.
 
 ### Notes for CC Agent Teams
 
@@ -341,7 +408,7 @@ Stories sharing files need `blockedBy` deps beyond logical `depends_on`.
 
 | Story | Logical Dep | + File-Conflict Dep | Shared File | Reason |
 | --- | --- | --- | --- | --- |
-| STORY-011 | STORY-010 | -- | `run_app.py`, `cc_engine.py` | Graph viz wires into CC branch added by F1 |
+| STORY-011 | STORY-010 | -- | `cc_engine.py`, `evaluation_runner.py` | Graph viz polish uses `cc_result_to_graph_trace()` added by F1 |
 | STORY-014 | STORY-010 | + STORY-012 | `models.py` (via `agent_system.py` provider usage) | PydanticAI migration touches agent_system.py which imports from models.py; provider changes in STORY-012 must land first |
 
 #### Orchestration Waves
@@ -349,11 +416,11 @@ Stories sharing files need `blockedBy` deps beyond logical `depends_on`.
 ```text
 Wave 1 (independent, no file conflicts):
   teammate-1: STORY-012 (F3 providers) then STORY-013 (F4 judge auto)
-  teammate-2: STORY-010 (F1 CC engine GUI) then STORY-015 (F6 source inspection)
+  teammate-2: STORY-010 (F1 CC eval pipeline parity) — largest story, give full wave
 
 Wave 2 (after Wave 1 completes):
-  teammate-1: STORY-011 (F2 graph viz, depends: STORY-010)
-  teammate-2: STORY-014 (F5 PydanticAI, depends: STORY-010, STORY-012)
+  teammate-1: STORY-011 (F2 graph viz polish, depends: STORY-010) then STORY-015 (F6 source inspection)
+  teammate-2: STORY-014 (F5 PydanticAI migration, depends: STORY-010, STORY-012)
 ```
 
 - **Quality Gates**: Teammate runs `make quick_validate`; lead runs `make validate` after each wave
@@ -361,20 +428,20 @@ Wave 2 (after Wave 1 completes):
 
 Story Breakdown - Phase 1 (6 stories total):
 
-- **Feature 1** -> STORY-010: Wire CC engine to GUI execution path (solo + teams)
-  Add CC engine branch in `_execute_query_background()` mirroring CLI logic. Add CC teams checkbox. Fix `run_cc_teams` timeout with process group kill. Define CCResultDict shape. Wrap CC raw text into `GeneratedReview` structure so all three evaluation tiers work. Wire evaluation page with CC banner. Files: `src/gui/pages/run_app.py`, `src/app/engines/cc_engine.py`, `src/gui/pages/evaluation_results.py`, `tests/test_gui/test_session_state_wiring.py`.
+- **Feature 1** → STORY-010: Connect all execution modes to the same three-tier evaluation pipeline
+  Fix 4 bugs (CLI engine pop, main() ignores engine, CC review text discarded, reference reviews never loaded). Add adapter layer: `extract_cc_review_text()`, `cc_result_to_graph_trace()` in cc_engine.py. Add `engine_type` to CompositeResult. Wire `main()` CC branch (skip MAS, pass cc_result). Fix CLI to pass `engine+cc_result` to main(). Fix GUI to run CC before main(). Load reference reviews from PeerRead for all modes. Files: `src/app/engines/cc_engine.py`, `src/app/data_models/evaluation_models.py`, `src/app/judge/evaluation_runner.py`, `src/app/app.py`, `src/run_cli.py`, `src/gui/pages/run_app.py`, `tests/engines/test_cc_engine.py`, `tests/cli/test_cc_engine_wiring.py`, `tests/judge/test_evaluation_runner.py`.
 
-- **Feature 2** -> STORY-011: Graph building and visualization for all execution modes (depends: STORY-010)
-  Convert CC artifacts to `GraphTraceData` -> `nx.DiGraph`. Single-agent runs (MAS solo or CC solo): tool-call chain graph. Multi-agent runs (MAS 4-agent or CC teams): tool calls + team delegation + inter-agent edges. Differentiate empty vs missing graphs. Label CC Tier 3 metrics as "informational." Files: `src/app/engines/cc_engine.py`, `src/gui/pages/run_app.py`, `src/gui/pages/agent_graph.py`, `tests/test_gui/test_agent_graph.py`.
+- **Feature 2** → STORY-011: Graph visualization polish for all execution modes (depends: STORY-010)
+  Handle empty vs missing graphs on Agent Graph page. Label CC Tier 3 metrics as "informational." Graph building itself is done by Feature 1. Files: `src/gui/pages/agent_graph.py`, `src/gui/pages/evaluation_results.py`, `tests/test_gui/test_agent_graph.py`.
 
-- **Feature 3** -> STORY-012: Expand inference provider registry and update stale models
+- **Feature 3** → STORY-012: Expand inference provider registry and update stale models
   Add 7 new providers (Groq, Fireworks, DeepSeek, Mistral, SambaNova, Nebius, Cohere). Fix 2 live bugs (huggingface classification model, together removed free model). Update 7 stale model IDs. Set `max_content_length` to free-tier token limits. Fix Anthropic to use native PydanticAI model. See `docs/analysis/Inference-Providers.md`. Files: `src/app/data_models/app_models.py`, `src/app/llms/models.py`, `src/app/config/config_chat.json`, `src/run_cli.py`, `tests/llms/test_models.py`.
 
-- **Feature 4** -> STORY-013: Judge auto mode -- conditional settings display
+- **Feature 4** → STORY-013: Judge auto mode -- conditional settings display
   Hide downstream Tier 2 controls when provider is "auto". Files: `src/gui/pages/settings.py`, `tests/test_gui/test_settings_judge_auto.py`.
 
-- **Feature 5** -> STORY-014: PydanticAI API migration (depends: STORY-010, STORY-012)
+- **Feature 5** → STORY-014: PydanticAI API migration (depends: STORY-010, STORY-012)
   Migrate `manager.run()`, fix `RunContext`, replace `_model_name`. Files: `src/app/agents/agent_system.py`, `src/app/tools/peerread_tools.py`, `tests/agents/test_agent_system.py`.
 
-- **Feature 6** -> STORY-015: Replace inspect.getsource tests with behavioral tests
+- **Feature 6** → STORY-015: Replace inspect.getsource tests with behavioral tests
   Rewrite ~20 `inspect.getsource` assertions across 6 test files. Files: `tests/utils/test_weave_optional.py`, `tests/gui/test_story012_a11y_fixes.py`, `tests/gui/test_story013_ux_fixes.py`, `tests/gui/test_story010_gui_report.py`, `tests/cli/test_cc_engine_wiring.py`, `tests/gui/test_prompts_integration.py`.
