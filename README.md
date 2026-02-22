@@ -9,7 +9,7 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 **I am a:** [**User/Researcher**](#userresearcher) | [**Human Developer**](#human-developer) | [**AI Agent**](#ai-agent)
 
 [![License](https://img.shields.io/badge/license-BSD3Clause-58f4c2.svg)](LICENSE.md)
-![Version](https://img.shields.io/badge/version-4.0.0-58f4c2.svg)
+![Version](https://img.shields.io/badge/version-4.1.0-58f4c2.svg)
 [![Deploy Docs](https://github.com/qte77/Agents-eval/actions/workflows/generate-deploy-mkdocs-ghpages.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/generate-deploy-mkdocs-ghpages.yaml)
 [![llms.txt (UitHub)](https://img.shields.io/badge/llms.txt-uithub-800080.svg)](https://uithub.com/qte77/Agents-eval)
 [![llms.txt (GitToDoc)](https://img.shields.io/badge/llms.txt-GitToDoc-fe4a60.svg)](https://gittodoc.com/qte77/Agents-eval)
