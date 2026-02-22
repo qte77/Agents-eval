@@ -14,8 +14,8 @@ Covers:
 
 Mock strategy:
 - No real Streamlit runtime needed
-- Source code inspection for CSS/text checks
-- Direct function calls with patched streamlit for behavioral checks
+- Behavioral: mock injection for CSS checks, HTML output for color checks
+- Direct function calls with patched streamlit for all assertions
 """
 
 import importlib
