@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-02-22
+
 ### Added
 
 - `make lint_links` recipe and lychee link checker npm dependency for dead-link detection in docs
