@@ -32,6 +32,28 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 3. **Graph-Based Analysis**: Tool call complexity, agent interaction mapping
 4. **Composite Scoring**: Final score calculation using formula: (Agentic Results / Execution Time / Graph Complexity)
 
+### Tier Result Data Flow and Persistence
+
+No disk persistence for individual tier results. The pipeline is in-memory only:
+
+1. **Tier execution** (`evaluation_pipeline.py:512-515`): Each tier runs and returns a typed result object (`Tier1Result`, `Tier2Result`, `Tier3Result`).
+2. **Assembly** (`evaluation_pipeline.py:520-523`): Results are packed into an `EvaluationResults` dataclass (with fallback fill-in if tiers are missing).
+3. **Composite scoring** (`evaluation_pipeline.py:531`): `CompositeScorer` combines tier results into a single `CompositeResult` — this is the only object returned to callers.
+
+**`CompositeResult` consumers:**
+
+| Consumer | Location | Purpose |
+| --- | --- | --- |
+| `run_evaluation_if_enabled()` | `evaluation_runner.py:181` | Main entry point, returns up to `app.py` |
+| `SweepRunner._evaluate_single()` | `sweep_runner.py:105` | Collects into `self.results` for batch analysis |
+| `_render_report_section()` | `run_app.py:501` | Renders in Streamlit GUI |
+| `generate_report()` | `report_generator.py:26` | Generates Markdown report |
+| `compare_pair()` | `baseline_comparison.py:47` | Diffs two `CompositeResult` objects |
+
+**What is preserved:** Individual tier scores (`tier1_score`, `tier2_score`, `tier3_score`) and the full `metric_scores` breakdown are fields on `CompositeResult`. The per-tier `Tier1Result`/`Tier2Result`/`Tier3Result` objects are consumed by the composite scorer and not persisted separately.
+
+**Persistence paths:** Logger output (`_log_metric_comparison`), Markdown report via `report_generator.py`, sweep `results.json` via `SweepRunner`. No database or artifact store for evaluation results.
+
 ### Three-Tier Validation Strategy
 
 **Core Principle:** Tiers validate and enhance each other for robust evaluation.
