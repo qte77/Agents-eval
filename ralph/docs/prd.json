@@ -62,9 +62,9 @@
         "src/gui/pages/run_app.py",
         "tests/gui/test_sidebar_navigation.py"
       ],
-      "status": "failed",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-02-24T23:28:11Z",
       "content_hash": "9dd3e7973d9e1e24bd34a3bb5a1773ee32db790324b8351bdaf675a2d8c8540a",
       "depends_on": [
         "STORY-006",
@@ -100,9 +100,9 @@
         "tests/reports/test_suggestion_engine.py",
         "tests/tools/test_peerread_tools_error_handling.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 3,
-      "completed_at": null,
+      "completed_at": "2026-02-24T23:28:17Z",
       "content_hash": "2bf2386f426f2f2c216893d854e985fe4bda1aa19e62bf1cb5f996e15b65ae12",
       "depends_on": [
         "STORY-001"
@@ -160,9 +160,9 @@
         "src/app/data_utils/datasets_peerread.py",
         "tests/data_utils/test_datasets_peerread.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 3,
-      "completed_at": null,
+      "completed_at": "2026-02-24T23:28:24Z",
       "content_hash": "8ef1c66a99faec6a6e8e236ba36c0f2b8a0a4796bf7eb395120796d2e841825c",
       "depends_on": [
         "STORY-001"
@@ -283,9 +283,9 @@
         "tests/data_utils/test_datasets_peerread.py",
         "tests/integration/test_peerread_real_dataset_validation.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 3,
-      "completed_at": null,
+      "completed_at": "2026-02-24T23:28:38Z",
       "content_hash": "259d45234d9d9652564e9658ef0e859749ee4efe5589a729bca189cc7d7d61d9",
       "depends_on": [
         "STORY-001"
