@@ -16,9 +16,13 @@ and provider-specific settings.
 from app.config.app_env import AppEnv
 from app.config.common_settings import CommonSettings
 from app.config.judge_settings import JudgeSettings
+from app.config.logfire_config import LogfireConfig
+from app.config.peerread_config import PeerReadConfig
 
 __all__ = [
     "AppEnv",
     "CommonSettings",
     "JudgeSettings",
+    "LogfireConfig",
+    "PeerReadConfig",
 ]

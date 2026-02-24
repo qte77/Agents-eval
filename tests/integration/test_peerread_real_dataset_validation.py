@@ -15,7 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from app.data_models.peerread_models import PeerReadConfig, PeerReadPaper
+from app.config.peerread_config import PeerReadConfig
+from app.data_models.peerread_models import PeerReadPaper
 from app.data_utils.datasets_peerread import (
     PeerReadDownloader,
     PeerReadLoader,

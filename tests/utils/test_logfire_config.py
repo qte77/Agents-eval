@@ -5,7 +5,7 @@ for Logfire + Phoenix tracing integration.
 """
 
 from app.config.judge_settings import JudgeSettings
-from app.utils.load_configs import LogfireConfig
+from app.config.logfire_config import LogfireConfig
 
 
 def test_logfire_config_from_settings_custom():

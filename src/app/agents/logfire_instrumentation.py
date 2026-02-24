@@ -6,7 +6,7 @@ logfire.instrument_pydantic_ai(). No manual decorators or wrappers needed.
 
 import requests
 
-from app.utils.load_configs import LogfireConfig
+from app.config.logfire_config import LogfireConfig
 from app.utils.log import logger
 
 # Set up Logfire imports with fallback

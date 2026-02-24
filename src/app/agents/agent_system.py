@@ -43,6 +43,7 @@ from pydantic_ai.usage import UsageLimits
 from app.agents.logfire_instrumentation import initialize_logfire_instrumentation
 from app.config.app_env import AppEnv
 from app.config.judge_settings import JudgeSettings
+from app.config.logfire_config import LogfireConfig
 from app.data_models.app_models import (
     AgentConfig,
     AnalysisResult,
@@ -65,7 +66,6 @@ from app.llms.providers import (
 )
 from app.tools.peerread_tools import add_peerread_tools_to_agent
 from app.utils.error_messages import generic_exception, invalid_data_model_format
-from app.utils.load_configs import LogfireConfig
 from app.utils.log import logger
 
 

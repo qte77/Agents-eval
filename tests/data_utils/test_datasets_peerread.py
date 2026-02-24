@@ -15,8 +15,8 @@ from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
+from app.config.peerread_config import PeerReadConfig
 from app.data_models.peerread_models import (
-    PeerReadConfig,
     PeerReadPaper,
     PeerReadReview,
 )
