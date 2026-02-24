@@ -88,7 +88,7 @@ def get_artifact_registry() -> ArtifactRegistry:
         return _global_registry
 
 
-def _reset_global_registry() -> None:
+def _reset_global_registry() -> None:  # pyright: ignore[reportUnusedFunction]
     """Reset the global registry (for testing only)."""
     global _global_registry
     with _registry_lock:
