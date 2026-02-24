@@ -27,8 +27,10 @@ Functions:
 
 import time
 import uuid
+from collections.abc import Callable
 from typing import Any, NoReturn
 
+import httpx
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.common_tools.duckduckgo import (
@@ -86,6 +88,60 @@ def initialize_logfire_instrumentation_from_settings(
         logger.info(f"Logfire instrumentation initialized: enabled={logfire_config.enabled}")
     except Exception as e:
         logger.warning(f"Failed to initialize Logfire instrumentation: {e}")
+
+
+def resilient_tool_wrapper(tool: Tool[Any]) -> Tool[Any]:
+    """Wrap a PydanticAI Tool so HTTP and network errors return error strings.
+
+    Search tools are supplementary — when they fail, the agent should receive a
+    descriptive error message and continue generating output from paper content
+    and model knowledge. This prevents a search outage from crashing the run.
+
+    Catches:
+        - httpx.HTTPStatusError (403 Forbidden, 429 Too Many Requests, etc.)
+        - httpx.HTTPError (broader httpx network errors)
+        - Exception (any other network or library failure)
+
+    Args:
+        tool: The original PydanticAI Tool to wrap.
+
+    Returns:
+        A new Tool with the same name and description, but with a resilient
+        function that catches search errors and returns a descriptive string.
+    """
+    original_fn: Callable[..., Any] = tool.function
+
+    async def _resilient(*args: Any, **kwargs: Any) -> Any:
+        try:
+            return await original_fn(*args, **kwargs)
+        except httpx.HTTPStatusError as exc:
+            status = exc.response.status_code
+            url = str(exc.request.url) if exc.request else "unknown"
+            logger.warning(
+                f"Search tool '{tool.name}' HTTP {status} error for URL {url}: {exc}"
+            )
+            return (
+                f"Search tool '{tool.name}' is currently unavailable "
+                f"(HTTP {status}). Proceed using paper content and model knowledge."
+            )
+        except httpx.HTTPError as exc:
+            logger.warning(f"Search tool '{tool.name}' network error: {exc}")
+            return (
+                f"Search tool '{tool.name}' is currently unavailable "
+                f"(network error). Proceed using paper content and model knowledge."
+            )
+        except Exception as exc:
+            logger.warning(f"Search tool '{tool.name}' failed: {type(exc).__name__}: {exc}")
+            return (
+                f"Search tool '{tool.name}' is currently unavailable "
+                f"({type(exc).__name__}). Proceed using paper content and model knowledge."
+            )
+
+    return Tool(
+        _resilient,
+        name=tool.name,
+        description=tool.description,
+    )
 
 
 def _validate_model_return(
@@ -398,7 +454,7 @@ def _create_manager(
         models.model_researcher,
         result_type,
         prompts["system_prompt_researcher"] if models.model_researcher else "",
-        tools=[duckduckgo_search_tool()],
+        tools=[resilient_tool_wrapper(duckduckgo_search_tool())],
     )
     analyst = _create_optional_agent(
         models.model_analyst,
