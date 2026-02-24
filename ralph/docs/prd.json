@@ -132,9 +132,9 @@
         "tests/tools/conftest.py",
         "tests/evals/conftest.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 4,
-      "completed_at": null,
+      "completed_at": "2026-02-24T23:43:43Z",
       "content_hash": "e24abd30ebe1ddf8ce795c2860286d27737541847e8b87b71d80e272687908e4",
       "depends_on": [
         "STORY-003"
