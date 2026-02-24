@@ -361,7 +361,7 @@ class TestNoTodoComment:
 
         assert not lines_with_todo, (
             "run_gui.py must not contain TODO comments. Found:\n"
-            + "\n".join(f"  Line {n}: {l}" for n, l in lines_with_todo)
+            + "\n".join(f"  Line {n}: {line}" for n, line in lines_with_todo)
         )
 
 
