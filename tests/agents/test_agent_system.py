@@ -120,21 +120,6 @@ class TestDelegationFlow:
 class TestSingleAgentFallback:
     """Test single-agent mode fallback behavior."""
 
-    @pytest.fixture
-    def mock_endpoint_config(self):
-        """Create mock endpoint configuration."""
-        from app.data_models.app_models import EndpointConfig, ProviderConfig
-
-        return EndpointConfig(
-            provider="openai",
-            api_key="test-key",
-            prompts={"manager": "You are a manager"},
-            provider_config=ProviderConfig(
-                model_name="gpt-4",
-                base_url="https://api.openai.com/v1",
-            ),
-        )
-
     def test_single_agent_mode_has_no_delegation_tools(self, mock_endpoint_config):
         """Test that single-agent mode doesn't add delegation tools."""
         # In single-agent mode, manager should not have delegation tools

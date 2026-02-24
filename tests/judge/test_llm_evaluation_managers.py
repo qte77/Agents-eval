@@ -19,13 +19,7 @@ from app.judge.llm_evaluation_managers import LLMJudgeEngine
 
 
 @pytest.fixture
-def settings():
-    """Fixture providing JudgeSettings for LLM judge."""
-    return JudgeSettings()
-
-
-@pytest.fixture
-def engine(settings):
+def engine():
     """Fixture providing LLMJudgeEngine instance with controlled environment."""
     env_config = AppEnv(OPENAI_API_KEY="sk-test-key", GITHUB_API_KEY="")
     # Explicitly set openai to test LLM evaluation behavior; default is now "auto"

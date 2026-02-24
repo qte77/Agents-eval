@@ -5,9 +5,6 @@ Validates pipeline initialization, tier execution, error handling,
 and performance characteristics with comprehensive coverage.
 """
 
-import json
-import tempfile
-from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -21,72 +18,6 @@ from app.data_models.evaluation_models import (
     Tier3Result,
 )
 from app.judge.evaluation_pipeline import EvaluationPipeline
-
-
-@pytest.fixture
-def sample_config():
-    """Sample configuration for pipeline testing."""
-    return {
-        "version": "1.0.0",
-        "evaluation_system": {
-            "tiers_enabled": [1, 2, 3],
-            "performance_targets": {
-                "tier1_max_seconds": 1.0,
-                "tier2_max_seconds": 10.0,
-                "tier3_max_seconds": 15.0,
-                "total_max_seconds": 25.0,
-            },
-        },
-        "tier1_traditional": {
-            "similarity_metrics": ["cosine", "jaccard", "semantic"],
-            "confidence_threshold": 0.8,
-        },
-        "tier2_llm_judge": {
-            "model": "gpt-4o-mini",
-            "max_retries": 2,
-            "timeout_seconds": 30.0,
-        },
-        "tier3_graph": {
-            "min_nodes_for_analysis": 2,
-            "centrality_measures": ["betweenness", "closeness", "degree"],
-        },
-        "composite_scoring": {
-            "metrics_and_weights": {
-                "time_taken": 0.167,
-                "task_success": 0.167,
-                "coordination_quality": 0.167,
-                "tool_efficiency": 0.167,
-                "planning_rationality": 0.167,
-                "output_similarity": 0.167,
-            },
-            "recommendation_thresholds": {
-                "accept": 0.8,
-                "weak_accept": 0.6,
-                "weak_reject": 0.4,
-                "reject": 0.0,
-            },
-            "recommendation_weights": {
-                "accept": 1.0,
-                "weak_accept": 0.7,
-                "weak_reject": -0.7,
-                "reject": -1.0,
-            },
-            "fallback_strategy": "tier1_only",
-        },
-    }
-
-
-@pytest.fixture
-def config_file(sample_config):
-    """Temporary configuration file for testing."""
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-        json.dump(sample_config, f)
-        config_path = Path(f.name)
-
-    yield config_path
-
-    # Cleanup
-    config_path.unlink()
 
 
 @pytest.fixture
@@ -155,11 +86,6 @@ def sample_composite_result():
 
 class TestTierExecution:
     """Test individual tier execution methods."""
-
-    @pytest.fixture
-    def pipeline(self):
-        """Pipeline instance for testing."""
-        return EvaluationPipeline()
 
     @pytest.mark.asyncio
     async def test_execute_tier1_success(self, pipeline, sample_tier1_result):
@@ -268,11 +194,6 @@ class TestTierExecution:
 
 class TestFallbackStrategy:
     """Test fallback strategy implementation."""
-
-    @pytest.fixture
-    def pipeline(self):
-        """Pipeline instance for testing."""
-        return EvaluationPipeline()
 
     def test_fallback_tier1_only_success(self, pipeline, sample_tier1_result):
         """Test tier1_only fallback with successful Tier 1."""

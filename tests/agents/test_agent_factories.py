@@ -45,19 +45,6 @@ class TestAgentCreationWithToggles:
     """Test agent creation with various toggle combinations."""
 
     @pytest.fixture
-    def mock_endpoint_config(self):
-        """Create mock endpoint configuration."""
-        return EndpointConfig(
-            provider="openai",
-            api_key="test-key",
-            prompts={"manager": "You are a manager"},
-            provider_config=ProviderConfig(
-                model_name="gpt-4",
-                base_url="https://api.openai.com/v1",
-            ),
-        )
-
-    @pytest.fixture
     def mock_models(self):
         """Create mock ModelDict."""
         from pydantic_ai.models import Model
@@ -155,19 +142,6 @@ class TestAgentCreationErrorHandling:
 
 class TestModelsCaching:
     """Test model caching in AgentFactory."""
-
-    @pytest.fixture
-    def mock_endpoint_config(self):
-        """Create mock endpoint configuration."""
-        return EndpointConfig(
-            provider="openai",
-            api_key="test-key",
-            prompts={"manager": "You are a manager"},
-            provider_config=ProviderConfig(
-                model_name="gpt-4",
-                base_url="https://api.openai.com/v1",
-            ),
-        )
 
     def test_get_models_caches_result(self, mock_endpoint_config):
         """Test that get_models caches the ModelDict."""
