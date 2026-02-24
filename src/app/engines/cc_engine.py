@@ -17,6 +17,8 @@ import os
 import shutil
 import subprocess
 from collections.abc import Iterator
+from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -24,7 +26,8 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from app.config.config_app import DEFAULT_REVIEW_PROMPT_TEMPLATE
+from app.config.config_app import CC_STREAMS_PATH, DEFAULT_REVIEW_PROMPT_TEMPLATE
+from app.utils.artifact_registry import get_artifact_registry
 from app.utils.log import logger
 
 # Team-related event types captured from the live JSONL stream
@@ -252,6 +255,60 @@ def cc_result_to_graph_trace(cc_result: CCResult) -> GraphTraceData:
     )
 
 
+def _tee_stream(stream: Iterator[str], path: Path) -> Iterator[str]:
+    """Yield lines from ``stream`` while writing each to ``path`` incrementally.
+
+    Opens ``path`` for writing on first call and closes after the stream is
+    exhausted. This ensures lines are persisted as they arrive (tee pattern)
+    rather than buffered until the process exits.
+
+    Args:
+        stream: Iterator of raw lines from CC stdout.
+        path: Destination file path for the JSONL copy.
+
+    Yields:
+        Each line from ``stream`` unchanged.
+    """
+    with path.open("w", encoding="utf-8") as fh:
+        for line in stream:
+            fh.write(line if line.endswith("\n") else line + "\n")
+            fh.flush()
+            yield line
+
+
+def _rename_stream_file(src: Path, new_name: str) -> Path:
+    """Rename ``src`` to ``src.parent / new_name``, returning the new path.
+
+    Args:
+        src: Existing file path.
+        new_name: New filename (basename only).
+
+    Returns:
+        New Path after rename.
+    """
+    dest = src.parent / new_name
+    src.rename(dest)
+    return dest
+
+
+def _persist_solo_stream(raw_stdout: str, execution_id: str) -> None:
+    """Write raw solo JSON stdout to ``CC_STREAMS_PATH`` and register artifact.
+
+    Creates the target directory lazily. Filename pattern:
+    ``cc_solo_{execution_id}_{timestamp}.json``.
+
+    Args:
+        raw_stdout: Raw stdout string from the CC solo subprocess.
+        execution_id: Execution ID extracted from parsed JSON (may be "unknown").
+    """
+    ts = datetime.now().strftime("%Y%m%dT%H%M%S")
+    streams_dir = Path(CC_STREAMS_PATH)
+    streams_dir.mkdir(parents=True, exist_ok=True)
+    out_path = streams_dir / f"cc_solo_{execution_id}_{ts}.json"
+    out_path.write_text(raw_stdout, encoding="utf-8")
+    get_artifact_registry().register("CC solo stream", out_path)
+
+
 def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
     """Run Claude Code in solo (headless print) mode.
 
@@ -297,6 +354,8 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
     execution_id = data.get("execution_id", data.get("session_id", "unknown"))
     session_dir: str | None = data.get("session_dir")
 
+    _persist_solo_stream(proc.stdout, execution_id)
+
     logger.info(f"CC solo completed: execution_id={execution_id}")
     return CCResult(
         execution_id=execution_id,
@@ -333,6 +392,12 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
     cmd = ["claude", "-p", query, "--output-format", "stream-json", "--verbose"]
     logger.info(f"CC teams: running query (timeout={timeout}s)")
 
+    ts = datetime.now().strftime("%Y%m%dT%H%M%S")
+    # Reason: filename uses a placeholder timestamp; renamed after execution_id is known
+    streams_dir = Path(CC_STREAMS_PATH)
+    streams_dir.mkdir(parents=True, exist_ok=True)
+    stream_path = streams_dir / f"cc_teams_{ts}.jsonl"
+
     try:
         with subprocess.Popen(
             cmd,
@@ -344,7 +409,8 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
             start_new_session=True,
         ) as proc:
             try:
-                result = parse_stream_json(iter(proc.stdout or []))
+                tee_stream = _tee_stream(iter(proc.stdout or []), stream_path)
+                result = parse_stream_json(tee_stream)
             except subprocess.TimeoutExpired as e:
                 # S10-F1: kill entire process group, not just the lead process
                 import signal
@@ -359,6 +425,10 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
 
     except subprocess.TimeoutExpired as e:
         raise RuntimeError(f"CC timed out after {e.timeout}s") from e
+
+    # Rename to include execution_id now that it is known
+    final_path = _rename_stream_file(stream_path, f"cc_teams_{result.execution_id}_{ts}.jsonl")
+    get_artifact_registry().register("CC teams stream", final_path)
 
     logger.info(f"CC teams completed: execution_id={result.execution_id}")
     return result
