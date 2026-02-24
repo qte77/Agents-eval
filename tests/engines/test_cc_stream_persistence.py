@@ -12,10 +12,9 @@ Covers:
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -140,7 +139,9 @@ class TestRunCCSoloPersistence:
             run_cc_solo("test query")
 
         files = list(tmp_path.glob("cc_solo_*my-exec-id-123*.json"))
-        assert len(files) == 1, f"Expected filename with execution_id, found {list(tmp_path.iterdir())}"
+        assert len(files) == 1, (
+            f"Expected filename with execution_id, found {list(tmp_path.iterdir())}"
+        )
 
     def test_solo_creates_output_directory_lazily(self, tmp_path):
         """run_cc_solo creates CC_STREAMS_PATH if it does not exist."""
