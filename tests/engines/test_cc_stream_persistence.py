@@ -281,7 +281,7 @@ class TestRunCCTeamsPersistence:
 
         files = list(tmp_path.glob("cc_teams_*.jsonl"))
         assert len(files) == 1
-        written_lines = [l for l in files[0].read_text().splitlines() if l.strip()]
+        written_lines = [line for line in files[0].read_text().splitlines() if line.strip()]
         assert len(written_lines) == 3
 
     def test_teams_filename_includes_execution_id(self, tmp_path):
@@ -375,9 +375,6 @@ class TestRunCCTeamsPersistence:
     def test_teams_incremental_write_not_buffered(self, tmp_path):
         """Stream is written line-by-line (tee pattern), not buffered until end."""
         from app.engines.cc_engine import run_cc_teams
-
-        written_during_iteration: list[int] = []
-        line_count = 0
 
         original_lines = [
             json.dumps({"type": "system", "subtype": "init", "session_id": "sess-tee"}),
