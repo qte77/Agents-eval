@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-
 TESTS_ROOT = Path(__file__).parent
 
 
@@ -107,16 +106,12 @@ class TestEvalsConftestFixtures:
     def test_pipeline_fixture_available(self):
         """The pipeline fixture should be defined in evals conftest."""
         mod = _load_conftest("evals")
-        assert hasattr(mod, "pipeline"), (
-            "evals/conftest.py must define pipeline fixture"
-        )
+        assert hasattr(mod, "pipeline"), "evals/conftest.py must define pipeline fixture"
 
     def test_config_file_fixture_available(self):
         """The config_file fixture should use tmp_path not tempfile."""
         mod = _load_conftest("evals")
-        assert hasattr(mod, "config_file"), (
-            "evals/conftest.py must define config_file fixture"
-        )
+        assert hasattr(mod, "config_file"), "evals/conftest.py must define config_file fixture"
 
 
 class TestNoTempfileUsage:
