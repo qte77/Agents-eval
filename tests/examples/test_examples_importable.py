@@ -99,7 +99,11 @@ class TestAllExampleModulesImportable:
             module_name: Name of the example module to test.
         """
         # Original three examples are exempt from strict section check
-        original_examples = {"basic_evaluation", "judge_settings_customization", "engine_comparison"}
+        original_examples = {
+            "basic_evaluation",
+            "judge_settings_customization",
+            "engine_comparison",
+        }
         if module_name in original_examples:
             pytest.skip(f"{module_name} is a legacy example — section check skipped")
 
@@ -108,9 +112,7 @@ class TestAllExampleModulesImportable:
 
         required_sections = ["Purpose", "Prerequisites", "Expected output", "Usage"]
         for section in required_sections:
-            assert section in docstring, (
-                f"{module_name} docstring is missing '{section}' section"
-            )
+            assert section in docstring, f"{module_name} docstring is missing '{section}' section"
 
     @pytest.mark.parametrize("module_name", _EXAMPLE_MODULES)
     def test_module_has_run_example_or_main(self, module_name: str) -> None:
@@ -194,6 +196,4 @@ class TestNewExampleFiles:
             "sweep_benchmark",
         ]
         for name in expected_names:
-            assert name in readme_content, (
-                f"README.md is missing documentation for '{name}'"
-            )
+            assert name in readme_content, f"README.md is missing documentation for '{name}'"
