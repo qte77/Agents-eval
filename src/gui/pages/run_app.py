@@ -29,7 +29,7 @@ from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import CompositeResult
 from app.data_models.peerread_models import PeerReadPaper
 from app.data_utils.datasets_peerread import PeerReadLoader
-from app.engines.cc_engine import run_cc_solo, run_cc_teams
+from app.engines.cc_engine import build_cc_query, run_cc_solo, run_cc_teams
 from app.reports.report_generator import generate_report
 from app.utils.log import logger
 from gui.components.output import render_output
