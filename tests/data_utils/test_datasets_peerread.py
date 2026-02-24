@@ -1876,3 +1876,155 @@ class TestDownloadPeerreadDataset:
 
             with pytest.raises(Exception, match="PeerRead dataset download failed"):
                 download_peerread_dataset()
+
+
+# ---------------------------------------------------------------------------
+# STORY-005: DATA_TYPE_SPECS registry tests
+# ---------------------------------------------------------------------------
+
+
+class TestDataTypeSpecsRegistry:
+    """Tests for the DATA_TYPE_SPECS module-level registry dict (STORY-005).
+
+    These tests verify AC1 (registry exists with correct keys/values),
+    AC2 (dispatch methods use registry), and AC3 (ValueError at single point).
+    """
+
+    def test_registry_exists_and_has_expected_keys(self):
+        """AC1: DATA_TYPE_SPECS maps each valid data_type to a spec object."""
+        from app.data_utils.datasets_peerread import DATA_TYPE_SPECS
+
+        expected_keys = {"reviews", "parsed_pdfs", "pdfs"}
+        assert set(DATA_TYPE_SPECS.keys()) == expected_keys
+
+    def test_registry_reviews_extension(self):
+        """AC1: 'reviews' spec has file extension '.json'."""
+        from app.data_utils.datasets_peerread import DATA_TYPE_SPECS
+
+        spec = DATA_TYPE_SPECS["reviews"]
+        assert spec.extension == ".json"
+
+    def test_registry_parsed_pdfs_extension(self):
+        """AC1: 'parsed_pdfs' spec has file extension '.pdf.json'."""
+        from app.data_utils.datasets_peerread import DATA_TYPE_SPECS
+
+        spec = DATA_TYPE_SPECS["parsed_pdfs"]
+        assert spec.extension == ".pdf.json"
+
+    def test_registry_pdfs_extension(self):
+        """AC1: 'pdfs' spec has file extension '.pdf'."""
+        from app.data_utils.datasets_peerread import DATA_TYPE_SPECS
+
+        spec = DATA_TYPE_SPECS["pdfs"]
+        assert spec.extension == ".pdf"
+
+    def test_registry_is_json_flag_reviews(self):
+        """AC1: 'reviews' spec marks is_json=True."""
+        from app.data_utils.datasets_peerread import DATA_TYPE_SPECS
+
+        assert DATA_TYPE_SPECS["reviews"].is_json is True
+
+    def test_registry_is_json_flag_parsed_pdfs(self):
+        """AC1: 'parsed_pdfs' spec marks is_json=True."""
+        from app.data_utils.datasets_peerread import DATA_TYPE_SPECS
+
+        assert DATA_TYPE_SPECS["parsed_pdfs"].is_json is True
+
+    def test_registry_is_json_flag_pdfs(self):
+        """AC1: 'pdfs' spec marks is_json=False (binary)."""
+        from app.data_utils.datasets_peerread import DATA_TYPE_SPECS
+
+        assert DATA_TYPE_SPECS["pdfs"].is_json is False
+
+    def test_invalid_data_type_raises_value_error_in_construct_url(self):
+        """AC3: _construct_url raises ValueError for invalid data_type."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        with pytest.raises(ValueError, match="Invalid data_type"):
+            downloader._construct_url("acl_2017", "train", "unknown_type", "104")
+
+    def test_invalid_data_type_raises_value_error_in_extract_paper_id(self):
+        """AC3: _extract_paper_id_from_filename returns None for unknown data_type.
+
+        The method should not raise; unknown extension simply won't match.
+        """
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        result = downloader._extract_paper_id_from_filename("104.json", "unknown_type")
+        assert result is None
+
+    def test_invalid_data_type_raises_value_error_in_get_cache_filename(self):
+        """AC3: _get_cache_filename raises ValueError for invalid data_type."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        with pytest.raises(ValueError, match="Invalid data_type"):
+            downloader._get_cache_filename("unknown_type", "104")
+
+    def test_construct_url_reviews_uses_registry_extension(self):
+        """AC2: _construct_url for 'reviews' appends '.json' via registry."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        url = downloader._construct_url("acl_2017", "train", "reviews", "104")
+        assert url.endswith("104.json")
+
+    def test_construct_url_parsed_pdfs_uses_registry_extension(self):
+        """AC2: _construct_url for 'parsed_pdfs' appends '.pdf.json' via registry."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        url = downloader._construct_url("acl_2017", "train", "parsed_pdfs", "104")
+        assert url.endswith("104.pdf.json")
+
+    def test_construct_url_pdfs_uses_registry_extension(self):
+        """AC2: _construct_url for 'pdfs' appends '.pdf' via registry."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        url = downloader._construct_url("acl_2017", "train", "pdfs", "104")
+        assert url.endswith("104.pdf")
+
+    def test_get_cache_filename_reviews_uses_registry(self):
+        """AC2: _get_cache_filename for 'reviews' returns '<id>.json' via registry."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        result = downloader._get_cache_filename("reviews", "104")
+        assert result == "104.json"
+
+    def test_get_cache_filename_parsed_pdfs_uses_registry(self):
+        """AC2: _get_cache_filename for 'parsed_pdfs' returns '<id>.pdf.json' via registry."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        result = downloader._get_cache_filename("parsed_pdfs", "104")
+        assert result == "104.pdf.json"
+
+    def test_get_cache_filename_pdfs_uses_registry(self):
+        """AC2: _get_cache_filename for 'pdfs' returns '<id>.pdf' via registry."""
+        from app.data_utils.datasets_peerread import PeerReadDownloader
+
+        config = PeerReadConfig()
+        downloader = PeerReadDownloader(config)
+
+        result = downloader._get_cache_filename("pdfs", "104")
+        assert result == "104.pdf"
