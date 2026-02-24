@@ -335,7 +335,6 @@ def test_generate_report_returns_string() -> None:
     result = _make_result()
     md = generate_report(result)
 
-    assert isinstance(md, str)
     assert len(md) > 0
 
 

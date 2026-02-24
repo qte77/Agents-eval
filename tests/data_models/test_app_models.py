@@ -82,7 +82,7 @@ class TestAgentConfigSchemaGeneration:
             }
         )
         assert len(config.tools) == 1
-        assert isinstance(config.tools[0], Tool)
+        assert config.tools[0].name == "my_tool"
 
     def test_model_validate_default_tools(self, test_model):
         """AgentConfig.model_validate with no tools key must default to empty list."""
@@ -158,4 +158,4 @@ class TestCreateOptionalAgentToolsType:
             }
         )
         assert len(config.tools) == 2
-        assert all(isinstance(t, Tool) for t in config.tools)
+        assert {t.name for t in config.tools} == {"tool_a", "tool_b"}

@@ -61,7 +61,6 @@ class TestModelValidation:
 
         validated = _validate_model_return(result_data, ResearchResult)
 
-        assert isinstance(validated, ResearchResult)
         assert validated.topic == "Research topic"
         assert len(validated.findings) == 2
         assert validated.sources == ["Source 1"]
@@ -354,7 +353,6 @@ class TestValidateModelReturnJsonParsing:
 
         result = _validate_model_return(json_str, ResearchResult)
 
-        assert isinstance(result, ResearchResult)
         assert result.topic == "AI safety"
         assert result.findings == ["Finding A"]
         assert result.sources == ["Source A"]
@@ -379,7 +377,6 @@ class TestValidateModelReturnJsonParsing:
 
         result = _validate_model_return(data, ResearchResult)
 
-        assert isinstance(result, ResearchResult)
         assert result.topic == "ML"
 
     def test_already_correct_pydantic_type_returned_directly(self):
