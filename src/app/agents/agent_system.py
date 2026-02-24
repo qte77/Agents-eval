@@ -117,9 +117,7 @@ def resilient_tool_wrapper(tool: Tool[Any]) -> Tool[Any]:
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code
             url = str(exc.request.url) if exc.request else "unknown"
-            logger.warning(
-                f"Search tool '{tool.name}' HTTP {status} error for URL {url}: {exc}"
-            )
+            logger.warning(f"Search tool '{tool.name}' HTTP {status} error for URL {url}: {exc}")
             return (
                 f"Search tool '{tool.name}' is currently unavailable "
                 f"(HTTP {status}). Proceed using paper content and model knowledge."
@@ -145,16 +143,47 @@ def resilient_tool_wrapper(tool: Tool[Any]) -> Tool[Any]:
 
 
 def _validate_model_return(
-    result_output: str,
+    result_output: Any,
     result_model: type[ResultBaseType],
 ) -> ResultBaseType:
-    """Validates the output against the expected model."""
+    """Validates the output against the expected model.
+
+    When result_output is a str (e.g. from OpenAI-compatible providers that
+    return plain text instead of structured output), tries model_validate_json()
+    first. This correctly handles valid JSON strings that model_validate() would
+    reject as "not a dict". Invalid JSON strings raise with the original content
+    included in the error message for easier debugging.
+
+    When result_output is a dict or already the correct Pydantic type,
+    model_validate() is used as before.
+
+    Args:
+        result_output: The output to validate. May be a JSON string, dict, or
+            existing Pydantic model instance.
+        result_model: The Pydantic model class to validate against.
+
+    Returns:
+        A validated instance of result_model.
+
+    Raises:
+        ValidationError: If the input cannot be parsed into result_model.
+        Exception: For unexpected errors during validation.
+    """
     try:
+        if isinstance(result_output, str):
+            # Reason: model_validate() rejects str inputs even when valid JSON;
+            # model_validate_json() handles the JSON string path correctly.
+            try:
+                return result_model.model_validate_json(result_output)
+            except ValidationError as e:
+                msg = invalid_data_model_format(
+                    f"JSON parsing failed for input '{result_output}': {e}"
+                )
+                logger.error(msg)
+                raise ValueError(msg) from e
         return result_model.model_validate(result_output)
-    except ValidationError as e:
-        msg = invalid_data_model_format(str(e))
-        logger.error(msg)
-        raise e
+    except (ValidationError, ValueError):
+        raise
     except Exception as e:
         msg = generic_exception(str(e))
         logger.exception(msg)
@@ -238,7 +267,7 @@ def _add_research_tool(
             ResearchResult | ResearchResultSimple | ReviewGenerationResult,
         ):
             return result.output
-        return _validate_model_return(str(result.output), result_type)
+        return _validate_model_return(result.output, result_type)
 
 
 def _add_analysis_tool(
@@ -265,7 +294,7 @@ def _add_analysis_tool(
         )
         if isinstance(result.output, AnalysisResult):
             return result.output
-        return _validate_model_return(str(result.output), AnalysisResult)
+        return _validate_model_return(result.output, AnalysisResult)
 
 
 def _add_synthesis_tool(
@@ -292,7 +321,7 @@ def _add_synthesis_tool(
         )
         if isinstance(result.output, ResearchSummary):
             return result.output
-        return _validate_model_return(str(result.output), ResearchSummary)
+        return _validate_model_return(result.output, ResearchSummary)
 
 
 def _add_tools_to_manager_agent(
