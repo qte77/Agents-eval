@@ -1,6 +1,6 @@
 # Examples
 
-Self-contained demonstrations of Agents-eval Sprint 5-6 features using current APIs.
+Self-contained demonstrations of Agents-eval Sprint 5-11 features using current APIs.
 
 ## Examples
 
@@ -83,16 +83,134 @@ specify. Set the `cc_artifacts_dir` variable in the script if your path differs.
 
 ---
 
+### `mas_single_agent.py` — MAS manager-only mode
+
+Demonstrates the minimal MAS execution mode where only the manager agent runs
+(no sub-agents). All `include_*` flags are `False`.
+
+**What it shows:**
+
+- Running `app.main()` in manager-only (single-agent) mode
+- How to set `include_researcher=False`, `include_analyst=False`, `include_synthesiser=False`
+- Interpreting `CompositeResult` from the single-agent run
+
+**Usage:**
+
+```bash
+uv run python src/examples/mas_single_agent.py
+```
+
+**Prerequisites:** API key for the default LLM provider in `.env`. PeerRead sample
+dataset downloaded (`make setup_dataset`).
+
+---
+
+### `mas_multi_agent.py` — MAS full 4-agent delegation
+
+Demonstrates the full MAS execution mode with manager delegating to all three
+sub-agents: researcher, analyst, and synthesiser.
+
+**What it shows:**
+
+- Running `app.main()` with all `include_*` flags set to `True`
+- Full 4-agent delegation workflow (manager → researcher → analyst → synthesiser)
+- Composite score comparison vs. single-agent mode
+
+**Usage:**
+
+```bash
+uv run python src/examples/mas_multi_agent.py
+```
+
+**Prerequisites:** API key for the default LLM provider in `.env`. PeerRead sample
+dataset downloaded (`make setup_dataset`).
+
+---
+
+### `cc_solo.py` — Claude Code solo (headless) mode
+
+Demonstrates running Claude Code in solo headless mode via `run_cc_solo()` with
+a `check_cc_available()` guard and `build_cc_query()` for query construction.
+
+**What it shows:**
+
+- Checking CC availability with `check_cc_available()`
+- Building a query with `build_cc_query()`
+- Invoking `run_cc_solo()` and inspecting the `CCResult`
+- Graceful handling when `claude` CLI is not on PATH
+
+**Usage:**
+
+```bash
+uv run python src/examples/cc_solo.py
+```
+
+**Prerequisites:** Claude Code CLI installed (`claude --version`) and authenticated
+(`claude` interactive session). No LLM API keys required.
+
+---
+
+### `cc_teams.py` — Claude Code agent-teams mode
+
+Demonstrates running Claude Code in agent-teams orchestration mode via
+`run_cc_teams()`, which sets `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`.
+
+**What it shows:**
+
+- Building a teams-mode query with `build_cc_query(cc_teams=True)`
+- Invoking `run_cc_teams()` and inspecting `TeamCreate`/`Task` events in `CCResult`
+- How team artifacts are captured from the live JSONL stream
+- Graceful handling when `claude` CLI is not on PATH
+
+**Usage:**
+
+```bash
+uv run python src/examples/cc_teams.py
+```
+
+**Prerequisites:** Claude Code CLI installed (`claude --version`) and authenticated.
+Teams mode requires Claude Max or API subscription with agent teams enabled.
+
+---
+
+### `sweep_benchmark.py` — Composition sweep benchmark
+
+Demonstrates running a multi-composition sweep using `SweepRunner` and
+`SweepConfig`. Evaluates 3 compositions on 1 paper with 1 repetition.
+
+**What it shows:**
+
+- Configuring `SweepConfig` with multiple `AgentComposition` instances
+- Running `SweepRunner.run()` across all compositions
+- Using a temporary directory for `output_dir` (auto-cleaned up)
+- Comparing composite scores across compositions
+
+**Usage:**
+
+```bash
+uv run python src/examples/sweep_benchmark.py
+```
+
+**Prerequisites:** API key for the default LLM provider in `.env`. PeerRead sample
+dataset downloaded (`make setup_dataset`). Runs 3 LLM calls (one per composition).
+
+---
+
 ## Integration with CLI and GUI
 
-These examples use the same `EvaluationPipeline`, `JudgeSettings`, and
-`CCTraceAdapter` as the main application.
+These examples use the same `EvaluationPipeline`, `JudgeSettings`, `CCTraceAdapter`,
+`SweepRunner`, and `app.main()` as the main application.
 
 | Example topic | CLI equivalent | GUI page |
 |---|---|---|
 | Run evaluation | `make app_cli ARGS="--paper-id=123"` | App → Run |
 | Settings customization | `JUDGE_TIER2_PROVIDER=anthropic make app_cli ...` | App → Settings |
 | Engine comparison | `make app_sweep ARGS="--engine=cc"` | App → Run (engine selector) |
+| MAS single-agent | `make app_cli ARGS="--paper-id=1105.1072"` | App → Run |
+| MAS multi-agent | `make app_cli ARGS="--paper-id=1105.1072 --researcher --analyst --synthesiser"` | App → Run |
+| CC solo | `make app_cli ARGS="--engine=cc --paper-id=1105.1072"` | App → Run |
+| CC teams | `make app_cli ARGS="--engine=cc --cc-teams --paper-id=1105.1072"` | App → Run |
+| Sweep benchmark | `make app_sweep ARGS="--paper-id=1105.1072 --repetitions=1"` | App → Sweep |
 
 For full usage, see the [main README](../../README.md) and the
 [CLI reference](../../CONTRIBUTING.md).
