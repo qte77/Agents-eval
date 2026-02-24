@@ -40,9 +40,6 @@ from gui.pages.prompts import render_prompts
 from gui.pages.run_app import render_app
 from gui.pages.settings import render_settings
 
-# TODO create sidebar tabs, move settings to page,
-# set readme.md as home, separate prompts into page
-
 chat_config_file = Path(__file__).parent / APP_CONFIG_PATH / CHAT_CONFIG_FILE
 chat_config = load_config(chat_config_file, ChatConfig)
 common_settings = CommonSettings()
