@@ -6,6 +6,7 @@ loading the PeerRead scientific paper review dataset. It contains no evaluation
 logic - only data access and management.
 """
 
+from dataclasses import dataclass
 from json import JSONDecodeError, dump, load
 from pathlib import Path
 from time import sleep
@@ -15,15 +16,35 @@ from httpx import Client, HTTPStatusError, RequestError
 
 from app.config.app_env import AppEnv
 from app.config.config_app import DATASETS_CONFIG_FILE
+from app.config.peerread_config import PeerReadConfig
 from app.data_models.peerread_models import (
     DownloadResult,
-    PeerReadConfig,
     PeerReadPaper,
     PeerReadReview,
 )
 from app.utils.log import logger
 from app.utils.paths import resolve_config_path, resolve_project_path
 from app.utils.url_validation import validate_url
+
+
+@dataclass(frozen=True)
+class DataTypeSpec:
+    """Specification for a PeerRead data type.
+
+    Attributes:
+        extension: File extension including leading dot(s), e.g. '.json'.
+        is_json: True if the file content is JSON, False for binary (PDF).
+    """
+
+    extension: str
+    is_json: bool
+
+
+DATA_TYPE_SPECS: dict[str, DataTypeSpec] = {
+    "reviews": DataTypeSpec(extension=".json", is_json=True),
+    "parsed_pdfs": DataTypeSpec(extension=".pdf.json", is_json=True),
+    "pdfs": DataTypeSpec(extension=".pdf", is_json=False),
+}
 
 
 def _perform_downloads(
@@ -241,18 +262,13 @@ class PeerReadDownloader:
         if split not in self.config.splits:
             raise ValueError(f"Invalid split: {split}. Valid splits: {self.config.splits}")
 
-        # Construct filename based on data type
-        if data_type == "reviews":
-            filename = f"{paper_id}.json"
-        elif data_type == "parsed_pdfs":
-            filename = f"{paper_id}.pdf.json"
-        elif data_type == "pdfs":
-            filename = f"{paper_id}.pdf"
-        else:
+        if data_type not in DATA_TYPE_SPECS:
             raise ValueError(
-                f"Invalid data_type: {data_type}. Valid types: reviews, parsed_pdfs, pdfs"
+                f"Invalid data_type: {data_type}. Valid types: {sorted(DATA_TYPE_SPECS)}"
             )
 
+        spec = DATA_TYPE_SPECS[data_type]
+        filename = f"{paper_id}{spec.extension}"
         return f"{self.config.raw_github_base_url}/{venue}/{split}/{data_type}/{filename}"
 
     def _extract_paper_id_from_filename(
@@ -269,13 +285,10 @@ class PeerReadDownloader:
         Returns:
             Paper ID without extension, or None if filename doesn't match.
         """
-        if data_type == "reviews" and filename.endswith(".json"):
-            return filename[:-5]  # Remove .json extension
-        elif data_type == "parsed_pdfs" and filename.endswith(".pdf.json"):
-            return filename[:-9]  # Remove .pdf.json extension
-        elif data_type == "pdfs" and filename.endswith(".pdf"):
-            return filename[:-4]  # Remove .pdf extension
-        return None
+        spec = DATA_TYPE_SPECS.get(data_type)
+        if spec is None or not filename.endswith(spec.extension):
+            return None
+        return filename[: -len(spec.extension)]
 
     def _discover_available_files(
         self,
@@ -389,7 +402,7 @@ class PeerReadDownloader:
                 response = self.client.get(validated_url, timeout=self.config.download_timeout)
                 response.raise_for_status()
 
-                if data_type in ["reviews", "parsed_pdfs"]:
+                if DATA_TYPE_SPECS[data_type].is_json:
                     return response.json()
                 return response.content
 
@@ -413,15 +426,11 @@ class PeerReadDownloader:
         Returns:
             Cache filename.
         """
-        if data_type == "reviews":
-            return f"{paper_id}.json"
-        elif data_type == "parsed_pdfs":
-            return f"{paper_id}.pdf.json"
-        elif data_type == "pdfs":
-            return f"{paper_id}.pdf"
-        else:
-            logger.warning(f"Unsupported data_type: {data_type}")
-            return ""
+        if data_type not in DATA_TYPE_SPECS:
+            raise ValueError(
+                f"Invalid data_type: {data_type}. Valid types: {sorted(DATA_TYPE_SPECS)}"
+            )
+        return f"{paper_id}{DATA_TYPE_SPECS[data_type].extension}"
 
     def _save_file_data(
         self,
@@ -436,7 +445,8 @@ class PeerReadDownloader:
             cache_file: Path to cache file.
             data_type: Type of data being saved.
         """
-        if data_type in ["reviews", "parsed_pdfs"]:
+        spec = DATA_TYPE_SPECS.get(data_type)
+        if spec is not None and spec.is_json:
             with open(cache_file, "w", encoding="utf-8") as f:
                 dump(file_data, f, indent=2)
         elif isinstance(file_data, bytes):
