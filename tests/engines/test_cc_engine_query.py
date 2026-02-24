@@ -35,8 +35,7 @@ class TestBuildCcQuery:
 
         result = build_cc_query(query="", paper_id="1105.1072", cc_teams=True)
         assert result == (
-            "Use a team of agents. "
-            "Generate a structured peer review for paper '1105.1072'."
+            "Use a team of agents. Generate a structured peer review for paper '1105.1072'."
         )
 
     def test_teams_mode_with_explicit_query_no_prepend(self):
