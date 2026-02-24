@@ -109,7 +109,9 @@ class TestSystemPromptContainsToolGuidance:
         to only use paper tools for paper-related queries."""
         import pathlib
 
-        config_path = pathlib.Path(__file__).parents[2] / "src" / "app" / "config" / "config_chat.json"
+        config_path = (
+            pathlib.Path(__file__).parents[2] / "src" / "app" / "config" / "config_chat.json"
+        )
         with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
 
