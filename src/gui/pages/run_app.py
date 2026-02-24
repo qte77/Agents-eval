@@ -423,7 +423,7 @@ def _render_paper_selection_input() -> tuple[str, str | None]:
             "No papers downloaded yet. "
             "Run `make setup_dataset_sample` in your terminal to fetch the PeerRead dataset."
         )
-        return text_input(RUN_APP_QUERY_PLACEHOLDER), None
+        return text_input(RUN_APP_QUERY_PLACEHOLDER, key="freeform_query_fallback"), None
 
     selected_paper: PeerReadPaper = st.selectbox(
         "Select a paper",
@@ -599,7 +599,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     )
 
     if input_mode == "Free-form query":
-        query = text_input(RUN_APP_QUERY_PLACEHOLDER)
+        query = text_input(RUN_APP_QUERY_PLACEHOLDER, key="freeform_query")
         selected_paper_id: str | None = None
     else:
         query, selected_paper_id = _render_paper_selection_input()
