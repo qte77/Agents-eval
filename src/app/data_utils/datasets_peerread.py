@@ -13,8 +13,8 @@ from typing import Any
 
 from httpx import Client, HTTPStatusError, RequestError
 
+from app.config.app_env import AppEnv
 from app.config.config_app import DATASETS_CONFIG_FILE
-from app.data_models.app_models import AppEnv
 from app.data_models.peerread_models import (
     DownloadResult,
     PeerReadConfig,

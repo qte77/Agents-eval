@@ -12,8 +12,7 @@ import pytest
 from inline_snapshot import snapshot
 from pydantic_ai import Agent
 
-from app.data_models.evaluation_models import CompositeResult
-from app.judge.baseline_comparison import BaselineComparison
+from app.data_models.evaluation_models import BaselineComparison, CompositeResult
 from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
 

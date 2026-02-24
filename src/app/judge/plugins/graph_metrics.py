@@ -11,10 +11,10 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import Tier3Result
 from app.judge.graph_analysis import GraphAnalysisEngine
 from app.judge.plugins.base import EvaluatorPlugin
-from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
 

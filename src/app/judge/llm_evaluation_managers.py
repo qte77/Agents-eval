@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic_ai import Agent
 
 from app.agents.agent_factories import create_evaluation_agent
-from app.data_models.app_models import AppEnv
+from app.config.app_env import AppEnv
 from app.data_models.evaluation_models import (
     ConstructivenessAssessment,
     PlanningRationalityAssessment,
@@ -27,7 +27,7 @@ from app.utils.log import logger
 from app.utils.prompt_sanitization import sanitize_for_prompt, sanitize_review_text
 
 if TYPE_CHECKING:
-    from app.judge.settings import JudgeSettings
+    from app.config.judge_settings import JudgeSettings
 
 
 class LLMJudgeEngine:

@@ -11,7 +11,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from app.judge.settings import JudgeSettings
+from app.config.judge_settings import JudgeSettings
 from app.judge.trace_processors import TraceCollector
 
 

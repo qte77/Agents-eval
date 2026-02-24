@@ -201,7 +201,7 @@ class TestTraditionalMetricsEngine:
         time.sleep(0.01)  # Small delay to measure
         end_time = time.perf_counter()
 
-        from app.judge.settings import JudgeSettings
+        from app.config.judge_settings import JudgeSettings
 
         settings = JudgeSettings(tier1_confidence_threshold=0.7)
 

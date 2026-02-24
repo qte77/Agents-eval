@@ -20,10 +20,10 @@ Usage:
 
 import asyncio
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import CompositeResult, GraphTraceData
 from app.data_models.peerread_models import PeerReadPaper, PeerReadReview
 from app.judge.evaluation_pipeline import EvaluationPipeline
-from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
 

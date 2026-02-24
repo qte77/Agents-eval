@@ -15,12 +15,12 @@ from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import GraphTraceData, Tier3Result
 from app.judge.graph_analysis import (
     GraphAnalysisEngine,
     evaluate_single_graph_analysis,
 )
-from app.judge.settings import JudgeSettings
 
 
 def _make_trace_data(

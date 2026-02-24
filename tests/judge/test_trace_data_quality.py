@@ -18,8 +18,8 @@ from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import GraphTraceData
-from app.judge.settings import JudgeSettings
 from app.judge.trace_processors import ProcessedTrace, TraceCollector, TraceEvent
 
 

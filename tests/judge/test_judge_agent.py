@@ -59,7 +59,7 @@ class TestJudgeAgent:
     def test_judge_agent_initializes_with_settings(self):
         """JudgeAgent initializes with JudgeSettings."""
         # This will fail until JudgeAgent is implemented
-        from app.judge.settings import JudgeSettings
+        from app.config.judge_settings import JudgeSettings
 
         settings = JudgeSettings()
         agent = JudgeAgent(settings=settings)

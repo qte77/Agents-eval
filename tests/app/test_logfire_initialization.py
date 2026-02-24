@@ -65,7 +65,7 @@ class TestLogfireGracefulDegradation:
             from app.agents.logfire_instrumentation import (
                 initialize_logfire_instrumentation_from_settings,
             )
-            from app.judge.settings import JudgeSettings
+            from app.config.judge_settings import JudgeSettings
 
             settings = JudgeSettings(logfire_enabled=True)
             # Should not raise even if logfire is unavailable

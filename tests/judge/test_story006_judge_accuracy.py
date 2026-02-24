@@ -17,10 +17,10 @@ from hypothesis import given
 from hypothesis import settings as hyp_settings
 from hypothesis import strategies as st
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import Tier1Result
 from app.data_models.peerread_models import PeerReadReview
 from app.judge.llm_evaluation_managers import LLMJudgeEngine
-from app.judge.settings import JudgeSettings
 from app.judge.traditional_metrics import TraditionalMetricsEngine, create_evaluation_result
 
 # ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ class TestTier2ResultClarityField:
     """F8 — clarity field must not silently alias constructiveness."""
 
     def _make_engine(self) -> LLMJudgeEngine:
-        from app.data_models.app_models import AppEnv
+        from app.config.app_env import AppEnv
 
         return LLMJudgeEngine(
             JudgeSettings(tier2_provider="openai"),
@@ -86,7 +86,7 @@ class TestExtractPlanningDecisionsExceptionHandling:
     """F18 — exception must be logged and type narrowed."""
 
     def _make_engine(self) -> LLMJudgeEngine:
-        from app.data_models.app_models import AppEnv
+        from app.config.app_env import AppEnv
 
         return LLMJudgeEngine(
             JudgeSettings(tier2_provider="openai"),

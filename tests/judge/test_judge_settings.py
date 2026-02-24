@@ -7,9 +7,9 @@ STORY-011: Change tier2_provider default to auto, fix fallback chain bug.
 import os
 from unittest.mock import patch
 
-from app.data_models.app_models import AppEnv
+from app.config.app_env import AppEnv
+from app.config.judge_settings import JudgeSettings
 from app.judge.llm_evaluation_managers import LLMJudgeEngine
-from app.judge.settings import JudgeSettings
 
 
 class TestTier2ProviderDefault:

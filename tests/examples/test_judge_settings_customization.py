@@ -11,7 +11,7 @@ Mock strategy: No mocking needed; JudgeSettings is local configuration only.
 
 from pathlib import Path
 
-from app.judge.settings import JudgeSettings
+from app.config.judge_settings import JudgeSettings
 
 
 class TestJudgeSettingsModifications:

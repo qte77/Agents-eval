@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.judge.settings import JudgeSettings
+from app.config.judge_settings import JudgeSettings
 
 # ---------------------------------------------------------------------------
 # Helpers

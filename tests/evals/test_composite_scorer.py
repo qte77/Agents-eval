@@ -22,11 +22,12 @@ from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import (
     CompositeResult,
+    EvaluationResults,
     Tier1Result,
     Tier2Result,
     Tier3Result,
 )
-from app.judge.composite_scorer import CompositeScorer, EvaluationResults
+from app.judge.composite_scorer import CompositeScorer
 
 
 @pytest.fixture

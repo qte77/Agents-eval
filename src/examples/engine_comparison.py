@@ -24,10 +24,10 @@ Usage:
 import asyncio
 from pathlib import Path
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import CompositeResult, GraphTraceData
 from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
-from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
 # Synthetic MAS trace representing a 3-agent review workflow

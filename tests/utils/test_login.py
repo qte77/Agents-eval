@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 from inline_snapshot import snapshot
 
-from app.data_models.app_models import AppEnv
+from app.config.app_env import AppEnv
 
 
 def test_login_succeeds_without_wandb_installed():

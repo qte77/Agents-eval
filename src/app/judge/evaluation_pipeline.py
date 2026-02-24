@@ -11,18 +11,19 @@ import time
 from pathlib import Path
 from typing import Any
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import (
     CompositeResult,
+    EvaluationResults,
     GraphTraceData,
     Tier1Result,
     Tier2Result,
     Tier3Result,
 )
-from app.judge.composite_scorer import CompositeScorer, EvaluationResults
+from app.judge.composite_scorer import CompositeScorer
 from app.judge.graph_analysis import GraphAnalysisEngine
 from app.judge.llm_evaluation_managers import LLMJudgeEngine
 from app.judge.performance_monitor import PerformanceMonitor
-from app.judge.settings import JudgeSettings
 from app.judge.traditional_metrics import TraditionalMetricsEngine
 from app.utils.log import logger
 

@@ -217,6 +217,68 @@ class GraphTraceData(BaseModel):
         return cls(execution_id=fallback_id)
 
 
+class AgentMetrics(BaseModel):
+    """Simple agent-level metrics for evaluation enhancement."""
+
+    tool_selection_score: float = 0.7  # Default neutral score
+    plan_coherence_score: float = 0.7  # Default neutral score
+    coordination_score: float = 0.7  # Default neutral score
+
+    def get_agent_composite_score(self) -> float:
+        """Calculate simple weighted composite score for agent metrics."""
+        weights = {
+            "tool_selection": 0.35,
+            "plan_coherence": 0.35,
+            "coordination": 0.30,
+        }
+        return (
+            self.tool_selection_score * weights["tool_selection"]
+            + self.plan_coherence_score * weights["plan_coherence"]
+            + self.coordination_score * weights["coordination"]
+        )
+
+
+class EvaluationResults(BaseModel):
+    """Container for all three evaluation tier results."""
+
+    tier1: Tier1Result | None = None
+    tier2: Tier2Result | None = None
+    tier3: Tier3Result | None = None
+
+    def is_complete(self) -> bool:
+        """Check if all required tiers have results."""
+        return all([self.tier1, self.tier2, self.tier3])
+
+
+class BaselineComparison(BaseModel):
+    """Pairwise comparison of two CompositeResult instances.
+
+    Captures metric-level and tier-level deltas between two evaluation results,
+    with human-readable summary for interpretation.
+    """
+
+    label_a: str = Field(description="Label for first result (e.g., 'PydanticAI')")
+    label_b: str = Field(description="Label for second result (e.g., 'Claude Code solo')")
+
+    result_a: CompositeResult = Field(description="First CompositeResult instance")
+    result_b: CompositeResult = Field(description="Second CompositeResult instance")
+
+    metric_deltas: dict[str, float] = Field(
+        description="Per-metric deltas (result_a - result_b) for 6 composite metrics"
+    )
+
+    tier_deltas: dict[str, float | None] = Field(
+        description="Tier-level score differences (Tier 1, Tier 2, Tier 3). None if tier missing."
+    )
+
+    summary: str = Field(
+        description=(
+            "Human-readable comparison summary "
+            "(e.g., 'PydanticAI scored +0.12 higher on technical_accuracy vs Claude Code solo')"
+        )
+    )
+
+
 class PeerReadEvalResult(BaseModel):
     """Result of evaluating agent review against PeerRead ground truth."""
 

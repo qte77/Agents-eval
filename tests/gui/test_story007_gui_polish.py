@@ -530,8 +530,7 @@ class TestEvaluationDeltaIndicators:
 
     def test_overall_results_metric_delta_populated_from_baseline(self) -> None:
         """Composite score metric has delta populated from BaselineComparison.tier_deltas."""
-        from app.data_models.evaluation_models import CompositeResult
-        from app.judge.baseline_comparison import BaselineComparison
+        from app.data_models.evaluation_models import BaselineComparison, CompositeResult
         from gui.pages.evaluation import _render_overall_results
 
         result = MagicMock(spec=CompositeResult)

@@ -6,7 +6,8 @@ API keys are passed directly to provider constructors in models.py.
 These tests verify the registry metadata and that no keys leak to os.environ.
 """
 
-from app.data_models.app_models import PROVIDER_REGISTRY, AppEnv
+from app.config.app_env import AppEnv
+from app.data_models.app_models import PROVIDER_REGISTRY
 
 # MARK: --- Unit Tests: registry metadata ---
 

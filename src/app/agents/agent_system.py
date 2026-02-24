@@ -39,10 +39,11 @@ from pydantic_ai.tools import Tool
 from pydantic_ai.usage import UsageLimits
 
 from app.agents.logfire_instrumentation import initialize_logfire_instrumentation
+from app.config.app_env import AppEnv
+from app.config.judge_settings import JudgeSettings
 from app.data_models.app_models import (
     AgentConfig,
     AnalysisResult,
-    AppEnv,
     ChatConfig,
     EndpointConfig,
     ModelDict,
@@ -54,7 +55,6 @@ from app.data_models.app_models import (
     UserPromptType,
 )
 from app.data_models.peerread_models import ReviewGenerationResult
-from app.judge.settings import JudgeSettings
 from app.judge.trace_processors import get_trace_collector
 from app.llms.models import create_agent_models
 from app.llms.providers import (

@@ -12,13 +12,13 @@ from typing import Any
 
 import networkx as nx
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import CompositeResult
 from app.data_utils.datasets_peerread import PeerReadLoader
 from app.judge.baseline_comparison import compare_all
 from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
 from app.judge.graph_builder import build_interaction_graph
-from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
 

@@ -14,8 +14,8 @@ from app.agents.agent_system import (
     initialize_logfire_instrumentation_from_settings,
     run_manager,
 )
+from app.config.judge_settings import JudgeSettings
 from app.data_models.app_models import ResearchResult
-from app.judge.settings import JudgeSettings
 
 
 class TestLogfireInstrumentation:

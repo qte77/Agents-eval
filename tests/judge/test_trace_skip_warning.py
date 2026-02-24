@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-from app.judge.settings import JudgeSettings
+from app.config.judge_settings import JudgeSettings
 from app.judge.trace_processors import TraceCollector
 
 

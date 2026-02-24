@@ -8,7 +8,7 @@ import os
 
 from logfire import configure as logfire_conf
 
-from app.data_models.app_models import AppEnv
+from app.config.app_env import AppEnv
 from app.llms.providers import get_api_key
 from app.utils.error_messages import generic_exception
 from app.utils.log import logger

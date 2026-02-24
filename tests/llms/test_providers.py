@@ -9,7 +9,7 @@ import os
 from io import StringIO
 from unittest.mock import patch
 
-from app.data_models.app_models import AppEnv
+from app.config.app_env import AppEnv
 from app.llms.providers import get_api_key
 from app.utils.log import logger
 

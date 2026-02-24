@@ -11,10 +11,11 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from app.data_models.app_models import AppEnv
-from app.judge.composite_scorer import CompositeScorer, EvaluationResults
+from app.config.app_env import AppEnv
+from app.config.judge_settings import JudgeSettings
+from app.data_models.evaluation_models import EvaluationResults
+from app.judge.composite_scorer import CompositeScorer
 from app.judge.llm_evaluation_managers import LLMJudgeEngine
-from app.judge.settings import JudgeSettings
 
 
 class TestProviderAPIKeyValidation:

@@ -12,10 +12,10 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import Tier2Result
 from app.judge.llm_evaluation_managers import LLMJudgeEngine
 from app.judge.plugins.base import EvaluatorPlugin
-from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
 

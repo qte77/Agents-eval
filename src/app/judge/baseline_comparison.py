@@ -9,38 +9,7 @@ Provides pairwise comparison of CompositeResult instances across three systems:
 Reuses existing CompositeResult model and CompositeScorer.extract_metric_values().
 """
 
-from pydantic import BaseModel, Field
-
-from app.data_models.evaluation_models import CompositeResult
-
-
-class BaselineComparison(BaseModel):
-    """Pairwise comparison of two CompositeResult instances.
-
-    Captures metric-level and tier-level deltas between two evaluation results,
-    with human-readable summary for interpretation.
-    """
-
-    label_a: str = Field(description="Label for first result (e.g., 'PydanticAI')")
-    label_b: str = Field(description="Label for second result (e.g., 'Claude Code solo')")
-
-    result_a: CompositeResult = Field(description="First CompositeResult instance")
-    result_b: CompositeResult = Field(description="Second CompositeResult instance")
-
-    metric_deltas: dict[str, float] = Field(
-        description="Per-metric deltas (result_a - result_b) for 6 composite metrics"
-    )
-
-    tier_deltas: dict[str, float | None] = Field(
-        description="Tier-level score differences (Tier 1, Tier 2, Tier 3). None if tier missing."
-    )
-
-    summary: str = Field(
-        description=(
-            "Human-readable comparison summary "
-            "(e.g., 'PydanticAI scored +0.12 higher on technical_accuracy vs Claude Code solo')"
-        )
-    )
+from app.data_models.evaluation_models import BaselineComparison, CompositeResult
 
 
 def compare(

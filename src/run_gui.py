@@ -20,13 +20,13 @@ from pathlib import Path
 
 import streamlit as st
 
-from app.common.settings import CommonSettings
+from app.config.common_settings import CommonSettings
 from app.config.config_app import (
     CHAT_CONFIG_FILE,
     CHAT_DEFAULT_PROVIDER,
 )
+from app.config.judge_settings import JudgeSettings
 from app.data_models.app_models import ChatConfig
-from app.judge.settings import JudgeSettings
 from app.utils.load_configs import load_config
 from app.utils.log import logger
 from gui.components.sidebar import render_sidebar

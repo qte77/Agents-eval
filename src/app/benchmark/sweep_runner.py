@@ -14,10 +14,10 @@ from pydantic_ai.exceptions import ModelHTTPError
 from app.app import main
 from app.benchmark.sweep_analysis import SweepAnalyzer, generate_markdown_summary
 from app.benchmark.sweep_config import AgentComposition, SweepConfig
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import CompositeResult
 from app.engines.cc_engine import CCResult, check_cc_available, run_cc_solo, run_cc_teams
 from app.judge.cc_trace_adapter import CCTraceAdapter
-from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
 _MAX_RETRIES = 3

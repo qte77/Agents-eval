@@ -12,14 +12,15 @@ from hypothesis import settings as hypothesis_settings
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import (
+    EvaluationResults,
     GraphTraceData,
     Tier1Result,
     Tier2Result,
     Tier3Result,
 )
-from app.judge.composite_scorer import CompositeScorer, EvaluationResults
-from app.judge.settings import JudgeSettings
+from app.judge.composite_scorer import CompositeScorer
 
 
 @pytest.fixture

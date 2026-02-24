@@ -23,13 +23,13 @@ import streamlit as st
 from streamlit import button, exception, header, info, spinner, subheader, text_input, warning
 
 from app.app import main
-from app.common.settings import CommonSettings
+from app.config.common_settings import CommonSettings
 from app.config.config_app import CHAT_DEFAULT_PROVIDER
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import CompositeResult
 from app.data_models.peerread_models import PeerReadPaper
 from app.data_utils.datasets_peerread import PeerReadLoader
 from app.engines.cc_engine import run_cc_solo, run_cc_teams
-from app.judge.settings import JudgeSettings
 from app.reports.report_generator import generate_report
 from app.utils.log import logger
 from gui.components.output import render_output

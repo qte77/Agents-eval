@@ -7,52 +7,18 @@ Graph Analysis (Tier 3) into unified scoring system with recommendation mapping.
 
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel
-
 from app.data_models.evaluation_models import (
+    AgentMetrics,
     CompositeResult,
+    EvaluationResults,
     GraphTraceData,
     Tier1Result,
-    Tier2Result,
     Tier3Result,
 )
 from app.utils.log import logger
 
 if TYPE_CHECKING:
-    from app.judge.settings import JudgeSettings
-
-
-class AgentMetrics(BaseModel):
-    """Simple agent-level metrics for evaluation enhancement."""
-
-    tool_selection_score: float = 0.7  # Default neutral score
-    plan_coherence_score: float = 0.7  # Default neutral score
-    coordination_score: float = 0.7  # Default neutral score
-
-    def get_agent_composite_score(self) -> float:
-        """Calculate simple weighted composite score for agent metrics."""
-        weights = {
-            "tool_selection": 0.35,
-            "plan_coherence": 0.35,
-            "coordination": 0.30,
-        }
-        return (
-            self.tool_selection_score * weights["tool_selection"]
-            + self.plan_coherence_score * weights["plan_coherence"]
-            + self.coordination_score * weights["coordination"]
-        )
-
-
-class EvaluationResults(BaseModel):
-    """Container for all three evaluation tier results."""
-
-    tier1: Tier1Result | None = None
-    tier2: Tier2Result | None = None
-    tier3: Tier3Result | None = None
-
-    def is_complete(self) -> bool:
-        """Check if all required tiers have results."""
-        return all([self.tier1, self.tier2, self.tier3])
+    from app.config.judge_settings import JudgeSettings
 
 
 class CompositeScorer:
@@ -81,7 +47,7 @@ class CompositeScorer:
         """
         # Import here to avoid circular dependency
         if settings is None:
-            from app.judge.settings import JudgeSettings
+            from app.config.judge_settings import JudgeSettings
 
             settings = JudgeSettings()
 

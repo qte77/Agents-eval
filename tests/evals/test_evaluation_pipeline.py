@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import (
     CompositeResult,
     GraphTraceData,
@@ -20,7 +21,6 @@ from app.data_models.evaluation_models import (
     Tier3Result,
 )
 from app.judge.evaluation_pipeline import EvaluationPipeline
-from app.judge.settings import JudgeSettings
 
 
 @pytest.fixture
@@ -276,7 +276,7 @@ class TestFallbackStrategy:
 
     def test_fallback_tier1_only_success(self, pipeline, sample_tier1_result):
         """Test tier1_only fallback with successful Tier 1."""
-        from app.judge.composite_scorer import EvaluationResults
+        from app.data_models.evaluation_models import EvaluationResults
 
         results = EvaluationResults(tier1=sample_tier1_result)
         assert not results.is_complete()
@@ -293,7 +293,7 @@ class TestFallbackStrategy:
 
     def test_fallback_no_tier1(self, pipeline):
         """Test fallback strategy when Tier 1 fails."""
-        from app.judge.composite_scorer import EvaluationResults
+        from app.data_models.evaluation_models import EvaluationResults
 
         results = EvaluationResults()
         assert not results.is_complete()

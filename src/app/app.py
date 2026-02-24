@@ -42,12 +42,14 @@ from app.agents.agent_system import (
     run_manager,
     setup_agent_env,
 )
+from app.config.app_env import AppEnv
 from app.config.config_app import (
     CHAT_CONFIG_FILE,
     CHAT_DEFAULT_PROVIDER,
     PROJECT_NAME,
 )
-from app.data_models.app_models import AppEnv, ChatConfig
+from app.config.judge_settings import JudgeSettings
+from app.data_models.app_models import ChatConfig
 from app.data_utils.datasets_peerread import (
     download_peerread_dataset,
 )
@@ -57,7 +59,6 @@ from app.judge.evaluation_runner import (
 from app.judge.evaluation_runner import (
     run_evaluation_if_enabled as _run_evaluation_if_enabled,
 )
-from app.judge.settings import JudgeSettings
 from app.utils.error_messages import generic_exception
 from app.utils.load_configs import load_config
 from app.utils.log import logger
