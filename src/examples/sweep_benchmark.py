@@ -104,10 +104,4 @@ if __name__ == "__main__":
     print(f"\n=== Sweep Results ({len(results)} runs) ===")
     for composition, result in results:
         name = composition.get_name()
-        if hasattr(result, "composite_score"):
-            print(
-                f"  {name:30s}  score={result.composite_score:.3f}  "  # type: ignore[union-attr]
-                f"rec={result.recommendation}"  # type: ignore[union-attr]
-            )
-        else:
-            print(f"  {name:30s}  (no result)")
+        print(f"  {name:30s}  score={result.composite_score:.3f}  rec={result.recommendation}")
