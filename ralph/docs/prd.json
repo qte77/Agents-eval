@@ -32,9 +32,9 @@
         "src/run_cli.py",
         "tests/utils/test_artifact_registry.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-02-24T23:13:21Z",
       "content_hash": "6f8f8e92369ff8337ed410180fa68dedd08d6d9daabfc6ce3cc2c94daeca9d9e",
       "depends_on": [
         "STORY-006"
@@ -62,7 +62,7 @@
         "src/gui/pages/run_app.py",
         "tests/gui/test_sidebar_navigation.py"
       ],
-      "status": "pending",
+      "status": "failed",
       "wave": 2,
       "completed_at": null,
       "content_hash": "9dd3e7973d9e1e24bd34a3bb5a1773ee32db790324b8351bdaf675a2d8c8540a",
@@ -226,7 +226,7 @@
         "src/app/engines/cc_engine.py",
         "tests/engines/test_cc_stream_persistence.py"
       ],
-      "status": "pending",
+      "status": "failed",
       "wave": 2,
       "completed_at": null,
       "content_hash": "0d32a9ecc3cce6a1e39495c29025ace0cb9f4f86dfe24770f87284ab3fad9fdf",
@@ -336,9 +336,9 @@
         "src/app/agents/agent_system.py",
         "tests/agents/test_agent_system.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-02-24T23:13:40Z",
       "content_hash": "7277fdc74799597f186267f09bb82812f3b98c2a31830fe6295ae6fbe4d20967",
       "depends_on": [
         "STORY-010"
@@ -376,7 +376,7 @@
         "src/examples/README.md",
         "tests/examples/test_examples_importable.py"
       ],
-      "status": "pending",
+      "status": "failed",
       "wave": 2,
       "completed_at": null,
       "content_hash": "065f65e5415703ba2e1e2df1664f7779035a6a520e200b5b0e1f416ed8ce35dc",
