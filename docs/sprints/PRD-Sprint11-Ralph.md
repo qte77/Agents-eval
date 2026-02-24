@@ -26,13 +26,17 @@ updated: 2026-02-24
 
 ## Development Methodology
 
-**All implementation stories MUST follow these practices. Ralph Loop enforces this order.**
+**All implementation stories MUST follow these practices. Ralph Loop and CC Agent Teams enforce this order.**
+
+Full references: `docs/best-practices/tdd-best-practices.md`, `docs/best-practices/testing-strategy.md`, `.claude/skills/testing-python/SKILL.md`.
 
 ### TDD Workflow (Mandatory for all features)
 
-1. **RED**: Write failing tests first using `testing-python` skill. Tests define expected behavior before any implementation code exists.
-2. **GREEN**: Implement minimal code to pass tests using `implementing-python` skill. No extra functionality.
-3. **REFACTOR**: Clean up while keeping tests green. Run `make validate` before marking complete.
+Every feature follows the Red-Green-Refactor cycle. Invoke `testing-python` skill for RED phase, `implementing-python` skill for GREEN phase.
+
+1. **RED**: Write failing tests first using `testing-python` skill. Tests define expected behavior before any implementation code exists. Use Arrange-Act-Assert (AAA) structure. Name tests `test_{module}_{component}_{behavior}`.
+2. **GREEN**: Implement minimal code to pass tests using `implementing-python` skill. No extra functionality beyond what tests require.
+3. **REFACTOR**: Clean up while keeping tests green. Run `make quick_validate` (teammate) or `make validate` (lead/wave boundary) before marking complete.
 
 ### Test Tool Selection
 
@@ -42,23 +46,40 @@ updated: 2026-02-24
 | **Hypothesis** | Property invariants, bounds, all-input guarantees | Snapshots, known cases |
 | **inline-snapshot** | Regression, model dumps, complex structures | TDD red-green, ranges |
 
-**Decision rule**: If the test wouldn't catch a real bug, don't write it. Test behavior, not implementation.
+**Decision rule**: If the test wouldn't catch a real bug, don't write it. Test behavior, not implementation. See `testing-strategy.md` "Patterns to Remove" for anti-patterns.
 
 ### Mandatory Practices
 
-- **Mock external dependencies** (HTTP, LLM providers, file systems, subprocess) using `@patch`. Never call real APIs in unit tests.
-- **Test behavior, not implementation** -- test observable outcomes (return values, side effects, error messages), not internal structure.
+- **Mock external dependencies** (HTTP, LLM providers, file systems, subprocess) using `@patch` with `spec=RealClass`. Never call real APIs in unit tests. Bare `MagicMock()` silently accepts any attribute — use `spec=` to constrain to the real interface.
+- **Test behavior, not implementation** -- test observable outcomes (return values, side effects, error messages), not internal structure. Avoid `assert isinstance()`, `hasattr()`, trivial `is not None` checks (see Feature 3).
+- **Use `tmp_path` fixture** for all test filesystem operations. Never use `tempfile.mkdtemp()` or hardcoded paths (see AGENT_LEARNINGS "Test Filesystem Isolation").
 - **Google-style docstrings** for every new file, function, class, and method.
 - **`# Reason:` comments** for non-obvious logic.
+- **`# S11-F{N}:` change comments** for non-trivial code changes.
 - **`make validate` MUST pass** before any story is marked complete. No exceptions.
 
 ### Skills Usage
 
 | Story type | Skills to invoke |
 |------------|-----------------|
-| Implementation (all features) | `testing-python` (RED) -> `implementing-python` (GREEN) |
+| Implementation (all features) | `testing-python` (RED) → `implementing-python` (GREEN) |
 | Codebase research | `researching-codebase` (before non-trivial implementation) |
-| Design phase | `researching-codebase` -> `designing-backend` |
+| Design phase | `researching-codebase` → `designing-backend` |
+
+### Quality Gates (Per Story and Per Wave)
+
+**Teammate (per story)**:
+
+- [ ] Tests written FIRST (RED phase) using `testing-python` skill
+- [ ] Tests fail for the right reason before implementation begins
+- [ ] Minimal implementation passes all tests (GREEN phase)
+- [ ] `make quick_validate` passes (lint + type check + complexity + duplication)
+
+**Lead (per wave boundary)**:
+
+- [ ] `make validate` passes (lint + type check + full test suite)
+- [ ] No regressions in existing tests
+- [ ] All story ACs verified before advancing to next wave
 
 ---
 
@@ -396,8 +417,8 @@ Observed errors:
 - [ ] AC2: When a search tool fails, the agent receives a descriptive error message (e.g., `"Web search unavailable: HTTP 403. Proceed with available information."`) instead of an unhandled exception
 - [ ] AC3: A warning is logged at `logger.warning` level when search fails, including the HTTP status code and URL
 - [ ] AC4: The review is still generated using paper content and agent knowledge when search is unavailable
-- [ ] AC6: The resilient wrapper applies to both DuckDuckGo and Tavily tools — same error-catching pattern for both
-- [ ] AC5: `make validate` passes with no regressions
+- [ ] AC5: The resilient wrapper applies to both DuckDuckGo and Tavily tools — same error-catching pattern for both
+- [ ] AC6: `make validate` passes with no regressions
 
 **Technical Requirements**:
 
@@ -471,8 +492,8 @@ Invalid pydantic data model format: 1 validation error for ResearchSummary
 
 **Picked up from Sprint 10 deferrals into Sprint 11:**
 
-- Hardcoded relative path fix in `test_peerread_tools_error_handling.py` (H8) → F3/STORY-018
-- `tempfile` -> `tmp_path` in integration tests (L7, L8) → F4/STORY-019
+- Hardcoded relative path fix in `test_peerread_tools_error_handling.py` (H8) → Feature 3 / STORY-003
+- `tempfile` → `tmp_path` in integration tests (L7, L8) → Feature 4 / STORY-004
 
 **Deferred to future sprint (TBD acceptance criteria, low urgency):**
 
@@ -482,7 +503,7 @@ Invalid pydantic data model format: 1 validation error for ResearchSummary
 - Configuration Path Traversal Protection (MAESTRO) -- TBD acceptance criteria
 - GraphTraceData Construction Simplification (`model_validate()`) -- TBD acceptance criteria
 - Timeout Bounds Enforcement -- low urgency
-- Hardcoded Settings Audit -- continuation of Sprint 7 (partially addressed by F9/STORY-024)
+- Hardcoded Settings Audit -- continuation of Sprint 7 (partially addressed by Feature 9 / STORY-009)
 - BDD Scenario Tests for Evaluation Pipeline -- useful but not blocking
 
 ---
@@ -491,75 +512,94 @@ Invalid pydantic data model format: 1 validation error for ResearchSummary
 
 ### Priority Order
 
-- **P0 (bug fix)**: STORY-021 (CC engine empty query fix), STORY-023 (App page query persistence fix), STORY-025 (search tool HTTP error resilience -- blocks MAS runs), STORY-026 (sub-agent result validation fix -- blocks non-OpenAI providers)
-- **P1 (observability)**: STORY-016 (artifact summary -- new capability, standalone), STORY-022 (CC stream persistence -- trace data for post-hoc analysis)
-- **P2 (UX)**: STORY-017 (GUI sidebar refactor -- user-facing improvement)
-- **P3 (code health)**: STORY-018 (isinstance replacements), STORY-019 (conftest consolidation), STORY-020 (dispatch refactor), STORY-024 (config model consolidation)
+- **P0 (bug fix)**: STORY-006 (CC engine empty query fix), STORY-008 (App page query persistence fix), STORY-010 (search tool HTTP error resilience -- blocks MAS runs), STORY-011 (sub-agent result validation fix -- blocks non-OpenAI providers)
+- **P1 (observability)**: STORY-001 (artifact summary -- new capability, standalone), STORY-007 (CC stream persistence -- trace data for post-hoc analysis)
+- **P2 (UX)**: STORY-002 (GUI sidebar refactor -- user-facing improvement)
+- **P3 (code health)**: STORY-003 (isinstance replacements), STORY-004 (conftest consolidation), STORY-005 (dispatch refactor), STORY-009 (config model consolidation)
 
-### File-Conflict Dependencies
+### Story Breakdown (11 stories total):
 
-| Story | Logical Dep | Shared File | Reason |
-| --- | --- | --- | --- |
-| STORY-021 | none | `cc_engine.py`, `run_cli.py`, `run_app.py` | Bug fix, touches run_app.py (coordinate with STORY-017) |
-| STORY-022 | STORY-021 | `cc_engine.py`, `config_app.py` | Stream persistence depends on query fix; shares cc_engine.py with STORY-021 |
-| STORY-023 | none | `run_app.py` | Trivial fix, coordinate with STORY-017 and STORY-021 (all touch run_app.py) |
-| STORY-017 | STORY-021 | `run_gui.py`, `run_app.py` | GUI refactor should apply after run_app.py query fix |
-| STORY-018 | none | various test files | Test-only changes, no src/ conflicts |
-| STORY-019 | STORY-018 | test files in same subdirectories | Conftest extraction should happen after isinstance cleanup to avoid moving fixtures that get rewritten |
-| STORY-020 | none | `datasets_peerread.py` | Standalone src/ refactor |
-| STORY-024 | none | `load_configs.py`, `peerread_models.py`, `config/__init__.py` | Standalone config consolidation, no src/ conflicts with other stories |
-| STORY-025 | none | `agent_system.py` | Standalone fix, no file conflicts with other stories |
-| STORY-026 | none | `agent_system.py` | Shares file with STORY-025 but different functions; coordinate in same wave |
+- **Feature 6** → STORY-006: CC engine empty query fix
+  Add `build_cc_query()` in `cc_engine.py`. Wire into CLI (`run_cli.py`) and GUI (`run_app.py:_prepare_cc_result`). TDD: `testing-python` for `build_cc_query()` three branches (solo, teams, ValueError), then `implementing-python`. Files: `src/app/config/config_app.py`, `src/app/engines/cc_engine.py`, `src/app/app.py`, `src/run_cli.py`, `src/gui/pages/run_app.py`, `tests/engines/test_cc_engine_query.py` (new).
 
-### Orchestration Waves
+- **Feature 7** → STORY-007: Persist CC JSONL stream to disk (depends: STORY-006)
+  Tee raw JSONL stream to `{LOGS_BASE_PATH}/cc_streams/` during CC execution. Solo writes JSON, teams writes JSONL incrementally. TDD: test file creation, incremental write, content parity. Files: `src/app/config/config_app.py`, `src/app/engines/cc_engine.py`, `tests/engines/test_cc_stream_persistence.py` (new).
+
+- **Feature 8** → STORY-008: App page free-form query persistence fix
+  Add `key` parameter to two `text_input` calls in `run_app.py`. Trivial fix, no dedicated test. Files: `src/gui/pages/run_app.py`.
+
+- **Feature 1** → STORY-001: End-of-run artifact path summary
+  New `ArtifactRegistry` singleton. Register paths in 7 components. Print summary in CLI and sweep. TDD: `testing-python` for registry behavior (register, summary, reset, empty state), then `implementing-python`. Files: `src/app/utils/artifact_registry.py` (new), `src/app/utils/log.py`, `src/app/judge/trace_processors.py`, `src/app/data_utils/review_persistence.py`, `src/app/tools/peerread_tools.py`, `src/app/reports/report_generator.py`, `src/app/benchmark/sweep_runner.py`, `src/run_cli.py`, `tests/utils/test_artifact_registry.py` (new).
+
+- **Feature 2** → STORY-002: GUI layout refactor -- sidebar tabs (depends: STORY-006, STORY-008)
+  Add sidebar navigation to `run_gui.py`. Separate Run and Settings into distinct tabs. Remove `run_gui.py:43` TODO. TDD: test tab rendering, persistence, navigation. Files: `src/run_gui.py`, `src/gui/pages/run_app.py`, `tests/gui/test_sidebar_navigation.py` (new).
+
+- **Feature 3** → STORY-003: Replace `assert isinstance` tests with behavioral assertions
+  ~30 occurrences across 12 test files. Replace type checks with field/method assertions per `testing-strategy.md` "Patterns to Remove". Files: `tests/agents/test_agent_system.py`, `tests/judge/test_evaluation_pipeline.py`, `tests/judge/test_composite_scorer.py`, `tests/data_models/test_evaluation_models.py`, `tests/data_models/test_app_models.py`, `tests/reports/test_report_generator.py`, `tests/reports/test_suggestion_engine.py`, `tests/tools/test_peerread_tools_error_handling.py`.
+
+- **Feature 4** → STORY-004: Test organization -- subdirectory conftest.py files (depends: STORY-003)
+  Add `conftest.py` to `tests/agents/`, `tests/judge/`, `tests/tools/`, `tests/evals/`. Deduplicate shared fixtures. Replace `tempfile` with `tmp_path`. Files: `tests/agents/conftest.py` (new), `tests/judge/conftest.py` (new), `tests/tools/conftest.py` (new), `tests/evals/conftest.py` (new).
+
+- **Feature 5** → STORY-005: Data layer -- dispatch chain registry refactor
+  Replace 4 dispatch chains in `datasets_peerread.py` with `DATA_TYPE_SPECS` registry. Target -8 CC points. TDD: test invalid data_type ValueError, then refactor. Files: `src/app/data_utils/datasets_peerread.py`, `tests/data_utils/test_datasets_peerread.py`.
+
+- **Feature 9** → STORY-009: Move remaining config models to `src/app/config/`
+  Move `LogfireConfig` from `utils/load_configs.py` and `PeerReadConfig` from `data_models/peerread_models.py` into `config/`. Update imports in 5 src files + 5 test files. Files: `src/app/config/logfire_config.py` (new), `src/app/config/peerread_config.py` (new), `src/app/utils/load_configs.py`, `src/app/data_models/peerread_models.py`, `src/app/config/__init__.py`, `src/app/data_utils/datasets_peerread.py`.
+
+- **Feature 10** → STORY-010: Search tool HTTP error resilience
+  Wrap `duckduckgo_search_tool()` with error-catching wrapper that returns descriptive string on HTTP 403/429. Add `tavily_search_tool()` as secondary search tool. Trivial wrapper, manual validation. Files: `src/app/agents/agent_system.py`.
+
+- **Feature 11** → STORY-011: Sub-agent result validation JSON parsing fix (depends: STORY-010)
+  Fix `_validate_model_return()` to try `model_validate_json()` for string inputs. Remove `str()` wrapping at 3 call sites. TDD: test JSON string parsing, repr string error, dict/model passthrough. Files: `src/app/agents/agent_system.py`, `tests/agents/test_agent_system.py`.
+
+### Notes for CC Agent Teams
+
+Reference: `docs/analysis/CC-agent-teams-orchestration.md`
+
+#### Teammate Definitions
+
+| Teammate | Role | Model | Permissions | TDD Responsibility |
+|----------|------|-------|-------------|-------------------|
+| Lead | Coordination, wave gates, `make validate` | sonnet | delegate mode | Runs full validation at wave boundaries |
+| teammate-1 | Developer (src/ features) | opus | acceptEdits | `testing-python` (RED) → `implementing-python` (GREEN) → `make quick_validate` |
+| teammate-2 | Developer (src/ + tests/) | opus | acceptEdits | `testing-python` (RED) → `implementing-python` (GREEN) → `make quick_validate` |
+
+All teammates load project context (CLAUDE.md, AGENTS.md, skills) automatically. Lead's conversation history does NOT carry over to teammates — each story description must be self-contained.
+
+#### File-Conflict Dependencies
+
+<!-- Stories sharing files need blockedBy deps beyond logical depends_on -->
+
+| Story | Logical Dep | + File-Conflict Dep | Shared File |
+|---|---|---|---|
+| STORY-007 | STORY-006 | (same) | `cc_engine.py`, `config_app.py` |
+| STORY-002 | STORY-006 | + STORY-008 | `run_app.py` |
+| STORY-004 | STORY-003 | (same) | test files in same subdirectories |
+| STORY-011 | none | + STORY-010 | `agent_system.py` |
+
+#### Orchestration Waves
 
 ```text
-Wave 0 (bug fixes, fast):
-  teammate-1: STORY-021 (F6 CC engine empty query fix)
-  teammate-2: STORY-023 (F8 App page query persistence -- trivial, 2 lines) then STORY-025 (F10 search tool resilience) then STORY-026 (F11 result validation fix -- same file as STORY-025)
+Wave 0 (P0 bug fixes — parallel, no file conflicts):
+  teammate-1: STORY-006 (F6 CC engine empty query fix)
+  teammate-2: STORY-008 (F8 App page query persistence) → STORY-010 (F10 search tool resilience) → STORY-011 (F11 result validation fix)
+  gate: lead runs `make validate`
 
-Wave 1 (independent, no file conflicts -- after Wave 0):
-  teammate-1: STORY-016 (F1 artifact summary) then STORY-022 (F7 CC stream persistence, depends: STORY-021)
-  teammate-2: STORY-017 (F2 GUI sidebar refactor, depends: STORY-021 for run_app.py)
+Wave 1 (P1 observability + P2 UX — parallel, no file conflicts after Wave 0):
+  teammate-1: STORY-001 (F1 artifact summary) → STORY-007 (F7 CC stream persistence)
+  teammate-2: STORY-002 (F2 GUI sidebar refactor)
+  gate: lead runs `make validate`
 
-Wave 2 (after Wave 1):
-  teammate-1: STORY-018 (F3 isinstance replacements) then STORY-019 (F4 conftest, depends: STORY-018)
-  teammate-2: STORY-020 (F5 dispatch refactor) then STORY-024 (F9 config model consolidation)
+Wave 2 (P3 code health — parallel, no file conflicts after Wave 1):
+  teammate-1: STORY-003 (F3 isinstance replacements) → STORY-004 (F4 conftest consolidation)
+  teammate-2: STORY-005 (F5 dispatch refactor) → STORY-009 (F9 config model consolidation)
+  gate: lead runs `make validate`
 ```
 
-- **Quality Gates**: Teammate runs `make quick_validate`; lead runs `make validate` after each wave
+#### Quality Gate Workflow
 
-### Story Breakdown (11 stories total)
-
-- **Feature 6** -> STORY-021: CC engine empty query fix
-  Add `build_cc_query()` in `cc_engine.py`. Wire into CLI (`run_cli.py`) and GUI (`run_app.py:_prepare_cc_result`). Files: `src/app/engines/cc_engine.py`, `src/run_cli.py`, `src/gui/pages/run_app.py`, `tests/engines/test_cc_engine_query.py` (new).
-
-- **Feature 7** -> STORY-022: Persist CC JSONL stream to disk (depends: STORY-021)
-  Tee raw JSONL stream to `{LOGS_BASE_PATH}/cc_streams/` during CC execution. Solo writes JSON, teams writes JSONL incrementally. Files: `src/app/config/config_app.py`, `src/app/engines/cc_engine.py`, `tests/engines/test_cc_stream_persistence.py` (new).
-
-- **Feature 8** -> STORY-023: App page free-form query persistence fix
-  Add `key` parameter to two `text_input` calls in `run_app.py`. Files: `src/gui/pages/run_app.py`.
-
-- **Feature 1** -> STORY-016: End-of-run artifact path summary
-  New `ArtifactRegistry` singleton. Register paths in 7 components. Print summary in CLI and sweep. Files: `src/app/utils/artifact_registry.py` (new), `src/app/utils/log.py`, `src/app/judge/trace_processors.py`, `src/app/data_utils/review_persistence.py`, `src/app/tools/peerread_tools.py`, `src/app/reports/report_generator.py`, `src/app/benchmark/sweep_runner.py`, `src/run_cli.py`, `tests/utils/test_artifact_registry.py` (new).
-
-- **Feature 2** -> STORY-017: GUI layout refactor -- sidebar tabs
-  Add sidebar navigation to `run_gui.py`. Separate Run and Settings into distinct tabs. Remove `run_gui.py:43` TODO. Files: `src/run_gui.py`, `src/gui/pages/run_app.py`, `tests/gui/test_sidebar_navigation.py` (new).
-
-- **Feature 3** -> STORY-018: Replace `assert isinstance` tests with behavioral assertions
-  ~30 occurrences across 12 test files. Replace type checks with field/method assertions. Files: `tests/agents/test_agent_system.py`, `tests/judge/test_evaluation_pipeline.py`, `tests/judge/test_composite_scorer.py`, `tests/data_models/test_evaluation_models.py`, `tests/data_models/test_app_models.py`, `tests/reports/test_report_generator.py`, `tests/reports/test_suggestion_engine.py`, + others.
-
-- **Feature 4** -> STORY-019: Test organization -- subdirectory conftest.py files (depends: STORY-018)
-  Add `conftest.py` to `tests/agents/`, `tests/judge/`, `tests/tools/`, `tests/evals/`. Deduplicate shared fixtures.
-
-- **Feature 5** -> STORY-020: Data layer -- dispatch chain registry refactor
-  Replace 4 dispatch chains in `datasets_peerread.py` with `DATA_TYPE_SPECS` registry. Target -8 CC points. Files: `src/app/data_utils/datasets_peerread.py`, `tests/data_utils/test_datasets_peerread.py`.
-
-- **Feature 9** -> STORY-024: Move remaining config models to `src/app/config/`
-  Move `LogfireConfig` from `utils/load_configs.py` and `PeerReadConfig` from `data_models/peerread_models.py` into `config/`. Update imports in 5 src files + 5 test files. Files: `src/app/config/logfire_config.py` (new), `src/app/config/peerread_config.py` (new), `src/app/utils/load_configs.py`, `src/app/data_models/peerread_models.py`, `src/app/config/__init__.py`, `src/app/data_utils/datasets_peerread.py`, + 5 test files.
-
-- **Feature 10** -> STORY-025: Search tool HTTP error resilience
-  Wrap `duckduckgo_search_tool()` with error-catching wrapper that returns descriptive string on HTTP 403/429 instead of crashing the app. Add `tavily_search_tool()` as secondary search tool (requires `TAVILY_API_KEY`). No dedicated test file — trivial wrapper, manual validation. Files: `src/app/agents/agent_system.py`.
-
-- **Feature 11** -> STORY-026: Sub-agent result validation JSON parsing fix
-  Fix `_validate_model_return()` to try `model_validate_json()` for string inputs instead of `model_validate(str(...))`. Remove `str()` wrapping at 3 call sites. Fixes Cerebras/Groq providers returning string instead of structured output. Files: `src/app/agents/agent_system.py`, `tests/agents/test_agent_system.py`.
+1. **Teammate completes story**: runs `make quick_validate`, marks task completed via `TaskUpdate`
+2. **Teammate picks next story**: checks `TaskList` for unblocked pending tasks, claims via `TaskUpdate` with `owner`
+3. **Wave boundary**: when all stories in a wave are completed, lead runs `make validate` (full suite)
+4. **Lead advances**: if `make validate` passes, lead unblocks next wave's stories; if it fails, lead assigns fix tasks
+5. **Shutdown**: after Wave 2, lead sends `shutdown_request` to all teammates, then `TeamDelete`

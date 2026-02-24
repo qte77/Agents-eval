@@ -1,0 +1,340 @@
+{
+  "project": "Product Requirements Document - Agents-eval Sprint 11",
+  "description": "\"Sprint 11: Observability, UX polish, and test quality \u2014 end-of-run artifact summary, GUI layout refactor, test hardening, data layer cleanup.\"",
+  "source": "PRD-Sprint11-Ralph.md",
+  "generated": "2026-02-24 22:30:45",
+  "stories": [
+    {
+      "id": "STORY-001",
+      "title": "End-of-run artifact path summary",
+      "description": "CLI runs produce artifacts across multiple directories (logs, traces, reviews, reports) with no consolidated output. Operators must know the codebase or grep logs to find where outputs landed. Add a lightweight artifact registry that components register paths into during execution, and print a summary block at the end of each CLI run listing all artifacts written and their paths.",
+      "acceptance": [
+        "AC1: An `ArtifactRegistry` singleton exists with `register(label: str, path: Path)` and `summary() -> list[tuple[str, Path]]` methods",
+        "AC2: Each component that writes to disk registers its output path via `ArtifactRegistry.register()` \u2014 log setup, trace collector, review persistence, report generator, sweep runner",
+        "AC3: At the end of every CLI run (`run_cli.py`), a summary block is printed to stdout listing all artifacts written during the run, grouped by category",
+        "AC4: When no artifacts were written (e.g., `--skip-eval` with no report), the summary prints \"No artifacts written\"",
+        "AC5: Artifact paths are printed as absolute paths so they can be copy-pasted into shell commands",
+        "AC6: The summary is also logged via loguru at INFO level for inclusion in log files",
+        "AC7: Sweep mode (`run_sweep.py`) also prints the artifact summary at the end of the sweep",
+        "AC8: Existing tests continue to pass \u2014 registration is a no-op side effect that doesn't change return values",
+        "AC9: New tests verify registry behavior: register, summary, reset, empty state",
+        "AC10: `make validate` passes with no regressions",
+        "Add `ArtifactRegistry` class in `src/app/utils/artifact_registry.py` \u2014 singleton with thread-safe `register()`, `summary()`, and `reset()` methods. Use module-level `_global_registry` pattern (same as `get_trace_collector()` in `trace_processors.py`)"
+      ],
+      "files": [
+        "src/app/utils/artifact_registry.py",
+        "src/app/utils/log.py",
+        "src/app/judge/trace_processors.py",
+        "src/app/data_utils/review_persistence.py",
+        "src/app/tools/peerread_tools.py",
+        "src/app/reports/report_generator.py",
+        "src/app/benchmark/sweep_runner.py",
+        "src/run_cli.py",
+        "tests/utils/test_artifact_registry.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "6f8f8e92369ff8337ed410180fa68dedd08d6d9daabfc6ce3cc2c94daeca9d9e",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-002",
+      "title": "GUI layout refactor -- sidebar tabs",
+      "description": "The GUI currently renders all settings on a single page with no sidebar navigation. The `run_gui.py:43` TODO (\"create sidebar tabs, move settings to page\") has been deferred since Sprint 8. Refactor the Streamlit layout to use sidebar tabs separating Run, Settings, Evaluation Results, and Agent Graph into distinct navigation sections. This improves discoverability and reduces visual clutter.",
+      "acceptance": [
+        "AC1: Sidebar contains navigation tabs for: Run, Settings, Evaluation, Agent Graph",
+        "AC2: Settings page is accessible via its own sidebar tab (not inline on the Run page)",
+        "AC3: Run page shows only execution controls (provider, engine, paper, query, run button)",
+        "AC4: Tab selection persists across Streamlit reruns within a session",
+        "AC5: All existing GUI functionality works unchanged after layout refactor",
+        "AC6: The TODO comment at `run_gui.py:43` is removed",
+        "AC7: `make validate` passes with no regressions",
+        "Use `st.sidebar` with `st.radio` or `st.selectbox` for tab navigation (Streamlit's native `st.tabs` is for inline tabs, not sidebar navigation)",
+        "Move settings rendering from inline position to a dedicated conditional block",
+        "Preserve session state across tab switches \u2014 settings values must not reset",
+        "Keep page module structure (`src/gui/pages/`) unchanged \u2014 refactor is in `run_gui.py` layout orchestration only"
+      ],
+      "files": [
+        "src/run_gui.py",
+        "src/gui/pages/run_app.py",
+        "tests/gui/test_sidebar_navigation.py"
+      ],
+      "status": "pending",
+      "wave": 2,
+      "completed_at": null,
+      "content_hash": "9dd3e7973d9e1e24bd34a3bb5a1773ee32db790324b8351bdaf675a2d8c8540a",
+      "depends_on": [
+        "STORY-006",
+        "STORY-008"
+      ]
+    },
+    {
+      "id": "STORY-003",
+      "title": "Replace `assert isinstance` tests with behavioral assertions",
+      "description": "~30 occurrences of `assert isinstance(obj, Type)` across 12 test files (identified as H4, M1-M3 in the Sprint 10 tests review). These assertions verify type identity rather than behavior \u2014 they pass even if the object has wrong values, missing fields, or broken methods. Replace with assertions on observable behavior: return values, field access, method outputs.",
+      "acceptance": [
+        "AC1: All `assert isinstance()` occurrences in `tests/agents/` replaced with behavioral assertions",
+        "AC2: All `assert isinstance()` occurrences in `tests/judge/` replaced with behavioral assertions",
+        "AC3: All `assert isinstance()` occurrences in `tests/data_models/` replaced with behavioral assertions",
+        "AC4: All `assert isinstance()` occurrences in `tests/reports/` replaced with behavioral assertions",
+        "AC5: Remaining `assert isinstance()` in other test directories replaced or explicitly justified with `# Reason:` comment",
+        "AC6: Zero unjustified `assert isinstance()` occurrences remain in `tests/`",
+        "AC7: Hardcoded relative path in `test_peerread_tools_error_handling.py` replaced with `tmp_path` fixture (H8 from Sprint 10 test review)",
+        "AC8: `make validate` passes with no regressions",
+        "Replace pattern: `assert isinstance(result, CompositeResult)` -> `assert result.composite_score >= 0.0` (test a real field)",
+        "Replace pattern: `assert isinstance(items, list)` -> `assert len(items) >= 0` or assert on element content",
+        "Preserve test intent \u2014 if the test was checking \"function returns correct type\", replace with \"function returns object with expected properties\"",
+        "Some `isinstance` checks may be justified (e.g., testing polymorphic return types) \u2014 keep those with `# Reason:` comment",
+        "H8 fix: replace hardcoded path string with `tmp_path` fixture to avoid Bandit B108 and disk pollution (see AGENT_LEARNINGS \"Test Filesystem Isolation\" pattern)"
+      ],
+      "files": [
+        "tests/agents/test_agent_system.py",
+        "tests/judge/test_evaluation_pipeline.py",
+        "tests/judge/test_composite_scorer.py",
+        "tests/data_models/test_evaluation_models.py",
+        "tests/data_models/test_app_models.py",
+        "tests/reports/test_report_generator.py",
+        "tests/reports/test_suggestion_engine.py",
+        "tests/tools/test_peerread_tools_error_handling.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "2bf2386f426f2f2c216893d854e985fe4bda1aa19e62bf1cb5f996e15b65ae12",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-004",
+      "title": "Test organization -- subdirectory conftest.py files",
+      "description": "Test fixtures are either duplicated across test files or centralized in the root `tests/conftest.py`. Subdirectories like `tests/agents/`, `tests/judge/`, `tests/tools/`, and `tests/evals/` lack their own `conftest.py`, forcing tests to recreate common fixtures locally. Add subdirectory-level conftest files to share domain-specific fixtures (identified as M5, M6 in Sprint 10 tests review).",
+      "acceptance": [
+        "AC1: `tests/agents/conftest.py` exists with shared agent test fixtures (mock agent, mock run context)",
+        "AC2: `tests/judge/conftest.py` exists with shared evaluation fixtures (sample CompositeResult, sample EvaluationResults, mock pipeline)",
+        "AC3: `tests/tools/conftest.py` exists with shared tool test fixtures (mock PeerRead config, mock loader)",
+        "AC4: `tests/evals/conftest.py` exists with shared evaluation engine fixtures",
+        "AC5: Duplicate fixture definitions removed from individual test files in favor of conftest imports",
+        "AC6: All `tempfile.mkdtemp()` / `tempfile.NamedTemporaryFile()` usages in integration tests replaced with pytest `tmp_path` fixture (L7, L8 from Sprint 10 test review)",
+        "AC7: No test behavior changes \u2014 all tests produce identical results",
+        "AC8: `make validate` passes with no regressions",
+        "Identify duplicate fixtures by searching for identical `@pytest.fixture` definitions across test files in each subdirectory",
+        "Move shared fixtures to subdirectory `conftest.py` \u2014 pytest auto-discovers these",
+        "Keep test-specific one-off fixtures in their respective test files",
+        "Do not move fixtures that are only used by a single test file"
+      ],
+      "files": [
+        "tests/agents/conftest.py",
+        "tests/judge/conftest.py",
+        "tests/tools/conftest.py",
+        "tests/evals/conftest.py"
+      ],
+      "status": "pending",
+      "wave": 2,
+      "completed_at": null,
+      "content_hash": "e24abd30ebe1ddf8ce795c2860286d27737541847e8b87b71d80e272687908e4",
+      "depends_on": [
+        "STORY-003"
+      ]
+    },
+    {
+      "id": "STORY-005",
+      "title": "Data layer -- dispatch chain registry refactor",
+      "description": "`datasets_peerread.py` has 4 methods each with `if/elif/else` chains dispatching on `data_type` (\"reviews\"/\"parsed_pdfs\"/\"pdfs\"). Each chain adds 3 cognitive complexity points = 12 total from one repeated pattern. Replace with a `DATA_TYPE_SPECS` registry dict for single-lookup dispatch. Identified as Review F10 in Sprint 10, deferred for scope reasons.",
+      "acceptance": [
+        "AC1: A `DATA_TYPE_SPECS` dict maps each `data_type` string to its type-specific configuration (file extension, parser, URL path component)",
+        "AC2: All 4 dispatch chains in `datasets_peerread.py` replaced with registry lookups",
+        "AC3: Invalid `data_type` values raise `ValueError` at a single validation point instead of falling through to `else` branches",
+        "AC4: Module cognitive complexity reduced (target: net -8 CC points or more)",
+        "AC5: All existing `tests/data_utils/test_datasets_peerread.py` tests pass unchanged",
+        "AC6: `make validate` passes with no regressions",
+        "Define `DATA_TYPE_SPECS: dict[str, DataTypeSpec]` at module level with a simple dataclass or TypedDict for the spec",
+        "Validate `data_type` once at method entry, not per-branch",
+        "Keep the public method signatures unchanged \u2014 this is an internal refactor",
+        "Run `make complexity` before and after to measure CC reduction"
+      ],
+      "files": [
+        "src/app/data_utils/datasets_peerread.py",
+        "tests/data_utils/test_datasets_peerread.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "8ef1c66a99faec6a6e8e236ba36c0f2b8a0a4796bf7eb395120796d2e841825c",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-006",
+      "title": "CC engine empty query fix",
+      "description": "When `--engine=cc` is used with `--paper-id` but no `--query`, the CC engine receives an empty string and crashes with `\"Input must be provided either through stdin or as a prompt argument when using --print\"`. The MAS engine avoids this because `app.py:_prepare_query()` auto-generates a default prompt from `paper_id` \u2014 but the CC path in both CLI (`run_cli.py`) and GUI (`run_app.py`) bypasses `_prepare_query()` and passes the raw empty query directly to `run_cc_solo()`/`run_cc_teams()`. Add a shared `build_cc_query()` function in `cc_engine.py` that both CLI and GUI call before invoking the CC subprocess.",
+      "acceptance": [
+        "AC1: `make app_cli ARGS=\"--paper-id=1105.1072 --engine=cc\"` no longer crashes with empty query error",
+        "AC2: A `build_cc_query(query, paper_id)` function exists in `cc_engine.py` that returns a non-empty prompt when `paper_id` is provided",
+        "AC3: The default prompt template for solo mode matches `app.py:_prepare_query()` \u2014 `\"Generate a structured peer review for paper '{paper_id}'.\"`",
+        "AC3a: The default prompt template for teams mode (`--cc-teams`) prepends `\"Use a team of agents.\"` \u2014 `\"Use a team of agents. Generate a structured peer review for paper '{paper_id}'.\"` to increase likelihood of CC spawning teammates",
+        "AC4: When both `query` and `paper_id` are empty, `build_cc_query()` raises `ValueError` with a clear message",
+        "AC5: CLI (`run_cli.py`) calls `build_cc_query()` before `run_cc_solo()`/`run_cc_teams()`",
+        "AC6: GUI (`run_app.py:_prepare_cc_result`) calls `build_cc_query()` before `run_cc_solo()`/`run_cc_teams()`, receiving `paper_id` from `_execute_query_background()`",
+        "AC7: Explicit `--query` still takes precedence over auto-generated prompt",
+        "AC8: `make validate` passes with no regressions",
+        "Add `DEFAULT_REVIEW_PROMPT_TEMPLATE = \"Generate a structured peer review for paper '{paper_id}'.\"` as a constant in `src/app/config/config_app.py`. Both `build_cc_query()` and `app.py:_prepare_query()` reference this constant instead of duplicating the string (DRY).",
+        "Add `build_cc_query(query: str, paper_id: str | None = None, cc_teams: bool = False) -> str` in `src/app/engines/cc_engine.py`. When `cc_teams=True` and no explicit query, prepend `\"Use a team of agents.\"` to the generated prompt.",
+        "Update `app.py:_prepare_query()` to use `DEFAULT_REVIEW_PROMPT_TEMPLATE` from `config_app.py` instead of its hardcoded `default_tmpl` string.",
+        "CLI fix: `run_cli.py:138` \u2014 replace `query = args.get(\"query\", \"\")` with `build_cc_query(args.get(\"query\", \"\"), args.get(\"paper_id\"))`",
+        "GUI fix: `run_app.py:_prepare_cc_result()` \u2014 add `paper_id` parameter, call `build_cc_query()` before dispatch",
+        "GUI fix: `run_app.py:_execute_query_background()` line 318 \u2014 pass `paper_id` to `_prepare_cc_result()`"
+      ],
+      "files": [
+        "src/app/config/config_app.py",
+        "src/app/engines/cc_engine.py",
+        "src/app/app.py",
+        "src/run_cli.py",
+        "src/gui/pages/run_app.py",
+        "tests/engines/test_cc_engine_query.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "3faeb254c5affe4184f3c33569a7ffe9cce82e44b3035f7300620c25247f58a0",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-007",
+      "title": "Persist CC JSONL stream to disk",
+      "description": "The CC teams JSONL stream (`--output-format stream-json`) is consumed live from stdout via `parse_stream_json()` and discarded after parsing. If the process crashes, or if post-hoc analysis is needed, the raw stream data is lost. Persist the raw JSONL stream to `{LOGS_BASE_PATH}/cc_streams/` during execution, consistent with how MAS traces are stored under `{LOGS_BASE_PATH}/traces/`. Solo mode (`--output-format json`) should also persist its raw JSON response for parity.",
+      "acceptance": [
+        "AC1: CC teams mode writes raw JSONL stream to `{LOGS_BASE_PATH}/cc_streams/cc_teams_{execution_id}_{timestamp}.jsonl` during execution",
+        "AC2: CC solo mode writes raw JSON response to `{LOGS_BASE_PATH}/cc_streams/cc_solo_{execution_id}_{timestamp}.json` after completion",
+        "AC3: Stream persistence uses `LOGS_BASE_PATH` from `config_app.py`, not a hardcoded path",
+        "AC4: Stream is written incrementally (line-by-line tee) during teams execution, not buffered until process exit \u2014 partial data is preserved if the process crashes or times out",
+        "AC5: `parse_stream_json()` behavior is unchanged \u2014 persistence is a side effect, not a replacement for live parsing",
+        "AC6: Persisted files are registered with `ArtifactRegistry` (Feature 1) when both features are implemented",
+        "AC7: `make validate` passes with no regressions",
+        "Add `CC_STREAMS_PATH = f\"{LOGS_BASE_PATH}/cc_streams\"` to `src/app/config/config_app.py`",
+        "In `run_cc_teams()`: wrap `proc.stdout` iterator with a tee that writes each line to the JSONL file before yielding to `parse_stream_json()`",
+        "In `run_cc_solo()`: write `proc.stdout` (raw JSON) to file after successful parse",
+        "Create output directory lazily (`Path.mkdir(parents=True, exist_ok=True)`) on first write",
+        "Use `execution_id` from parsed result for filename; fall back to timestamp-only if `execution_id` is `\"unknown\"`"
+      ],
+      "files": [
+        "src/app/config/config_app.py",
+        "src/app/engines/cc_engine.py",
+        "tests/engines/test_cc_stream_persistence.py"
+      ],
+      "status": "pending",
+      "wave": 2,
+      "completed_at": null,
+      "content_hash": "0d32a9ecc3cce6a1e39495c29025ace0cb9f4f86dfe24770f87284ab3fad9fdf",
+      "depends_on": [
+        "STORY-006"
+      ]
+    },
+    {
+      "id": "STORY-008",
+      "title": "App page free-form query persistence fix",
+      "description": "The free-form query `text_input` on the App page (`run_app.py:602`) has no Streamlit `key` parameter. When the user types a query, navigates to another page (Settings, Evaluation, etc.), and returns to App, the query field is empty. All other App page widgets (engine radio, input mode radio, paper selection, CC Teams checkbox) have explicit keys and persist correctly. The fallback query input at `run_app.py:426` (shown when no papers are downloaded) has the same issue.",
+      "acceptance": [
+        "AC1: Free-form query text persists when navigating away from App page and returning",
+        "AC2: Fallback query input (no papers available) also persists across page navigation",
+        "AC3: No widget key conflicts with existing keys on the App or Settings pages",
+        "AC4: `make validate` passes with no regressions",
+        "`run_app.py:602`: Add `key=\"freeform_query\"` to `text_input(RUN_APP_QUERY_PLACEHOLDER)`",
+        "`run_app.py:426`: Add `key=\"freeform_query_fallback\"` to `text_input(RUN_APP_QUERY_PLACEHOLDER)`",
+        "No other changes needed \u2014 Streamlit auto-persists widget values when a `key` is provided"
+      ],
+      "files": [
+        "src/gui/pages/run_app.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "f0a0774a045023509835573c8d687857f76bab8ecb7fa7e2000977a42398dc1e",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-009",
+      "title": "Move remaining config models to `src/app/config/`",
+      "description": "`LogfireConfig` and `PeerReadConfig` are config-shaped `BaseModel` subclasses living outside `src/app/config/`. Sprint 11 already consolidated `JudgeSettings`, `CommonSettings`, and `AppEnv` into `config/`. Move these two to complete the consolidation. Same mechanical pattern: move class, update imports, delete if source file becomes empty.",
+      "acceptance": [
+        "AC1: `LogfireConfig` lives in `src/app/config/logfire_config.py`",
+        "AC2: `PeerReadConfig` lives in `src/app/config/peerread_config.py`",
+        "AC3: All import sites (src + tests) updated to new paths",
+        "AC4: `src/app/config/__init__.py` exports both classes",
+        "AC5: `make validate` passes with no regressions",
+        "Move `LogfireConfig` from `src/app/utils/load_configs.py:63` to `src/app/config/logfire_config.py` (new). Keep `load_config()` in `load_configs.py`, update its import.",
+        "Move `PeerReadConfig` from `src/app/data_models/peerread_models.py:114` to `src/app/config/peerread_config.py` (new). Update import in `peerread_models.py` if other models reference it, otherwise just update external import sites.",
+        "Update `src/app/config/__init__.py` exports."
+      ],
+      "files": [
+        "src/app/config/logfire_config.py",
+        "src/app/config/peerread_config.py",
+        "src/app/utils/load_configs.py",
+        "src/app/data_models/peerread_models.py",
+        "src/app/config/__init__.py",
+        "src/app/data_utils/datasets_peerread.py",
+        "tests/agents/test_logfire_instrumentation.py",
+        "tests/utils/test_logfire_config.py",
+        "tests/agents/test_peerread_tools.py",
+        "tests/data_utils/test_datasets_peerread.py",
+        "tests/integration/test_peerread_real_dataset_validation.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "259d45234d9d9652564e9658ef0e859749ee4efe5589a729bca189cc7d7d61d9",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-010",
+      "title": "Search tool HTTP error resilience",
+      "description": "The Researcher agent uses `duckduckgo_search_tool()` from PydanticAI, backed by the `ddgs 9.10.0` library. This library routes searches through third-party backends (Mojeek, Brave) that frequently block automated requests with HTTP 403 (Forbidden) and HTTP 429 (Too Many Requests). When the search tool raises an `HTTPError`, the exception propagates uncaught through PydanticAI agent execution up to `app.py:410`, which wraps it as `\"Aborting app\"` and crashes the entire run. The review can still be generated without web search results \u2014 the search is supplementary, not required.",
+      "acceptance": [
+        "AC1: HTTP 403/429 errors from either search tool do not crash the app",
+        "AC2: When a search tool fails, the agent receives a descriptive error message (e.g., `\"Web search unavailable: HTTP 403. Proceed with available information.\"`) instead of an unhandled exception",
+        "AC3: A warning is logged at `logger.warning` level when search fails, including the HTTP status code and URL",
+        "AC4: The review is still generated using paper content and agent knowledge when search is unavailable",
+        "AC5: The resilient wrapper applies to both DuckDuckGo and Tavily tools \u2014 same error-catching pattern for both",
+        "AC6: `make validate` passes with no regressions",
+        "Create a generic `resilient_tool_wrapper` that takes any PydanticAI tool and catches `HTTPError` (and broader `Exception` for network failures), returning an error string to the agent instead of raising. PydanticAI tools can return strings \u2014 the agent treats them as tool output and adapts.",
+        "Apply the wrapper to both `duckduckgo_search_tool()` and `tavily_search_tool()` \u2014 same pattern, no duplication.",
+        "Register both wrapped tools: `tools=[wrapped_ddg_tool, wrapped_tavily_tool]`. The agent sees both and can fall back between them. Requires `TAVILY_API_KEY` env var (already configured).",
+        "No dedicated test file \u2014 the wrapper is a trivial try/except (~5 lines). Validation is manual: run `make app_cli ARGS=\"--paper-id=1105.1072\"` and confirm the review completes without crashing."
+      ],
+      "files": [
+        "src/app/agents/agent_system.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "5b34fa9e70a264ff594bc35d7c895a85ccb399c61b27105cdbf04c4913cdad0e",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-011",
+      "title": "Sub-agent result validation JSON parsing fix",
+      "description": "When OpenAI-compatible providers (Cerebras, Groq, etc.) fail to return structured output, PydanticAI's `result.output` is a plain string instead of a Pydantic model instance. The fallback path in `_validate_model_return()` calls `str(result.output)` and passes the result to `model_validate()`. This produces a Python repr string (e.g., `\"insights=['User requests...'] approval=True\"`) which is neither valid JSON nor a dict \u2014 `model_validate()` rejects it with `Input should be a valid dictionary or instance of ResearchSummary`. The error repeats on every sub-agent delegation (synthesis, analysis), causing the entire run to fail.",
+      "acceptance": [
+        "AC1: `_validate_model_return()` attempts `model_validate_json()` first when `result.output` is a string, falling back to `model_validate()` for dict/model inputs",
+        "AC2: When the string is valid JSON (e.g., `'{\"insights\": [], \"approval\": false}'`), the model is successfully parsed",
+        "AC3: When the string is not valid JSON (Python repr), the error message includes the actual string content to aid debugging",
+        "AC4: The delegation tools (`delegate_research`, `delegate_analysis`, `delegate_synthesis`) pass `result.output` directly to `_validate_model_return()` instead of wrapping in `str()`",
+        "AC5: When `result.output` is already the correct Pydantic type, it is returned directly (existing behavior preserved)",
+        "AC6: `make validate` passes with no regressions",
+        "Change `_validate_model_return()` signature from `result_output: str` to `result_output: Any` to accept string, dict, or model instances",
+        "Inside `_validate_model_return()`: if input is `str`, try `result_model.model_validate_json(result_output)` first; if that raises `ValidationError`, re-raise with clear context. If input is dict or model, use `result_model.model_validate(result_output)` as before.",
+        "Remove `str()` wrapping at call sites (lines 185, 212, 239) \u2014 pass `result.output` directly",
+        "No new dependencies \u2014 `model_validate_json()` is built into Pydantic `BaseModel`"
+      ],
+      "files": [
+        "src/app/agents/agent_system.py",
+        "tests/agents/test_agent_system.py"
+      ],
+      "status": "pending",
+      "wave": 2,
+      "completed_at": null,
+      "content_hash": "7277fdc74799597f186267f09bb82812f3b98c2a31830fe6295ae6fbe4d20967",
+      "depends_on": [
+        "STORY-010"
+      ]
+    }
+  ]
+}
