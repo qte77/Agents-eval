@@ -413,9 +413,7 @@ class TestValidateModelReturnJsonParsing:
         import ast
         import pathlib
 
-        source = pathlib.Path(
-            "/workspaces/Agents-eval/src/app/agents/agent_system.py"
-        ).read_text()
+        source = pathlib.Path("/workspaces/Agents-eval/src/app/agents/agent_system.py").read_text()
         tree = ast.parse(source)
 
         # Find the delegate_research inner function
@@ -436,9 +434,7 @@ class TestValidateModelReturnJsonParsing:
         import ast
         import pathlib
 
-        source = pathlib.Path(
-            "/workspaces/Agents-eval/src/app/agents/agent_system.py"
-        ).read_text()
+        source = pathlib.Path("/workspaces/Agents-eval/src/app/agents/agent_system.py").read_text()
         tree = ast.parse(source)
 
         for node in ast.walk(tree):
@@ -457,9 +453,7 @@ class TestValidateModelReturnJsonParsing:
         import ast
         import pathlib
 
-        source = pathlib.Path(
-            "/workspaces/Agents-eval/src/app/agents/agent_system.py"
-        ).read_text()
+        source = pathlib.Path("/workspaces/Agents-eval/src/app/agents/agent_system.py").read_text()
         tree = ast.parse(source)
 
         for node in ast.walk(tree):

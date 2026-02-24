@@ -9,7 +9,7 @@ Expected behavior:
 - Wrapper applies to both DuckDuckGo and Tavily tools
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic_ai.tools import Tool
@@ -116,9 +116,9 @@ async def test_resilient_wrapper_logs_warning_with_http_status(make_tool):
     with patch("app.agents.agent_system.logger") as mock_logger:
         await wrapped.function("test query")
         warning_calls = [str(call) for call in mock_logger.warning.call_args_list]
-        assert any(
-            "403" in msg for msg in warning_calls
-        ), f"Expected 403 in warning log, got: {warning_calls}"
+        assert any("403" in msg for msg in warning_calls), (
+            f"Expected 403 in warning log, got: {warning_calls}"
+        )
 
 
 @pytest.mark.asyncio
