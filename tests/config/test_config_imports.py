@@ -29,13 +29,13 @@ def test_peerread_config_module_path():
 
 def test_logfire_config_direct_import():
     """LogfireConfig must be directly importable from app.config.logfire_config."""
-    from app.config.logfire_config import LogfireConfig as LFC  # noqa: PLC0415
+    from app.config.logfire_config import LogfireConfig as LogfireConfigDirect  # noqa: PLC0415
 
-    assert LFC is LogfireConfig
+    assert LogfireConfigDirect is LogfireConfig
 
 
 def test_peerread_config_direct_import():
     """PeerReadConfig must be directly importable from app.config.peerread_config."""
-    from app.config.peerread_config import PeerReadConfig as PRC  # noqa: PLC0415
+    from app.config.peerread_config import PeerReadConfig as PeerReadConfigDirect  # noqa: PLC0415
 
-    assert PRC is PeerReadConfig
+    assert PeerReadConfigDirect is PeerReadConfig
