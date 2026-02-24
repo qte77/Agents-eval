@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
+from app.config.config_app import DEFAULT_REVIEW_PROMPT_TEMPLATE
 from app.utils.log import logger
 
 # Team-related event types captured from the live JSONL stream
@@ -50,6 +51,44 @@ class CCResult(BaseModel):
     team_artifacts: list[dict[str, Any]] = Field(
         default_factory=list, description="Team events parsed from stream-json output"
     )
+
+
+def build_cc_query(query: str, paper_id: str | None = None, cc_teams: bool = False) -> str:
+    """Build a non-empty query for CC engine execution.
+
+    When no explicit query is provided but a paper_id is available, generates
+    a default review prompt using DEFAULT_REVIEW_PROMPT_TEMPLATE. In teams mode,
+    prepends a team instruction to increase likelihood of CC spawning teammates.
+
+    Args:
+        query: User-provided query string (may be empty).
+        paper_id: Optional PeerRead paper ID for auto-generating a prompt.
+        cc_teams: Whether CC teams mode is enabled.
+
+    Returns:
+        Non-empty query string for CC subprocess.
+
+    Raises:
+        ValueError: When both query and paper_id are empty/None.
+
+    Example:
+        >>> build_cc_query("", paper_id="1105.1072")
+        "Generate a structured peer review for paper '1105.1072'."
+        >>> build_cc_query("", paper_id="1105.1072", cc_teams=True)
+        "Use a team of agents. Generate a structured peer review for paper '1105.1072'."
+    """
+    if query:
+        return query
+
+    if not paper_id:
+        raise ValueError(
+            "Either query or paper_id must be provided. Use --query or --paper-id to specify input."
+        )
+
+    generated = DEFAULT_REVIEW_PROMPT_TEMPLATE.format(paper_id=paper_id)
+    if cc_teams:
+        return f"Use a team of agents. {generated}"
+    return generated
 
 
 def check_cc_available() -> bool:

@@ -234,11 +234,24 @@ def _render_debug_log_panel() -> None:
             st.markdown(html, unsafe_allow_html=True)
 
 
-def _prepare_cc_result(engine: str, cc_teams: bool, query: str) -> Any | None:
-    """Run CC engine if selected, return CCResult or None for MAS."""
+def _prepare_cc_result(
+    engine: str, cc_teams: bool, query: str, paper_id: str | None = None
+) -> Any | None:
+    """Run CC engine if selected, return CCResult or None for MAS.
+
+    Args:
+        engine: Execution engine ('mas' or 'cc').
+        cc_teams: Whether to use CC Teams mode.
+        query: User query string (may be empty).
+        paper_id: Optional PeerRead paper ID for auto-generating a prompt.
+
+    Returns:
+        CCResult if engine is 'cc', None otherwise.
+    """
     if engine != "cc":
         return None
-    return run_cc_teams(query) if cc_teams else run_cc_solo(query)
+    resolved_query = build_cc_query(query, paper_id, cc_teams=cc_teams)
+    return run_cc_teams(resolved_query) if cc_teams else run_cc_solo(resolved_query)
 
 
 def _store_successful_result(result: dict[str, Any] | None) -> None:
@@ -315,7 +328,7 @@ async def _execute_query_background(
 
     try:
         # S10-AC9: CC engine — run CC solo/teams and pass result to main
-        cc_result = _prepare_cc_result(engine, cc_teams, query)
+        cc_result = _prepare_cc_result(engine, cc_teams, query, paper_id=paper_id)
 
         # Execute query
         result = await main(

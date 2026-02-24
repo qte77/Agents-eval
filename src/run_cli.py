@@ -133,9 +133,9 @@ if __name__ == "__main__":
     # S10-F1: run CC engine then pass result to main() instead of discarding it
     cc_result_obj = None
     if engine == "cc":
-        from app.engines.cc_engine import run_cc_solo, run_cc_teams
+        from app.engines.cc_engine import build_cc_query, run_cc_solo, run_cc_teams
 
-        query = args.get("query", "")
+        query = build_cc_query(args.get("query", ""), args.get("paper_id"), cc_teams=cc_teams)
         if cc_teams:
             cc_result_obj = run_cc_teams(query, timeout=600)
         else:

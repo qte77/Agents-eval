@@ -46,6 +46,7 @@ from app.config.app_env import AppEnv
 from app.config.config_app import (
     CHAT_CONFIG_FILE,
     CHAT_DEFAULT_PROVIDER,
+    DEFAULT_REVIEW_PROMPT_TEMPLATE,
     PROJECT_NAME,
 )
 from app.config.judge_settings import JudgeSettings
@@ -157,8 +158,9 @@ def _prepare_query(paper_id: str | None, query: str, prompts: dict[str, str]) ->
     """Prepare query and determine if review tools should be enabled."""
     if paper_id:
         if not query:
-            default_tmpl = "Generate a structured peer review for paper '{paper_id}'."
-            paper_review_template = prompts.get("paper_review_query", default_tmpl)
+            paper_review_template = prompts.get(
+                "paper_review_query", DEFAULT_REVIEW_PROMPT_TEMPLATE
+            )
             query = paper_review_template.format(paper_id=paper_id)
         logger.info(f"Paper review mode enabled for paper {paper_id}")
         return query, True
