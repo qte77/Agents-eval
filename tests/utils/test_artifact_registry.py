@@ -6,8 +6,6 @@ of the artifact path registry used for end-of-run summaries.
 
 from pathlib import Path
 
-import pytest
-
 
 class TestArtifactRegistry:
     """Tests for ArtifactRegistry behavior."""
@@ -109,9 +107,7 @@ class TestArtifactRegistry:
             except Exception as e:
                 errors.append(e)
 
-        threads = [
-            threading.Thread(target=register_batch, args=(f"t{t}", 50)) for t in range(4)
-        ]
+        threads = [threading.Thread(target=register_batch, args=(f"t{t}", 50)) for t in range(4)]
         for t in threads:
             t.start()
         for t in threads:
