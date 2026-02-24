@@ -1,6 +1,6 @@
 ---
 title: Product Requirements Document - Agents-eval Sprint 11
-description: "Sprint 11: Observability, UX polish, and test quality — end-of-run artifact summary, GUI layout refactor, test hardening, data layer cleanup."
+description: Sprint 11 — Observability, UX polish, and test quality. End-of-run artifact summary, GUI layout refactor, test hardening, data layer cleanup.
 version: 4.2.0
 created: 2026-02-24
 updated: 2026-02-24
@@ -468,6 +468,45 @@ Invalid pydantic data model format: 1 validation error for ResearchSummary
 
 ---
 
+#### Feature 12: Modernize Examples to Cover All Execution Modes
+
+**Description**: The `src/examples/` directory contains three examples from Sprint 5-6 covering basic evaluation, engine comparison, and settings customization. The system has since gained CC solo mode (Sprint 8), CC teams mode (Sprint 8), sweep benchmarking (Sprint 9), and full E2E parity (Sprint 10). New contributors have no runnable examples for these modes. Add five new examples covering: MAS single-agent (manager-only), MAS multi-agent (all agents), CC solo, CC teams, and sweep mode. Update the existing examples README to document all eight examples as an onboarding guide.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `src/examples/mas_single_agent.py` exists and demonstrates manager-only mode via `app.main()` with all `include_*` flags `False`, using `paper_id="1105.1072"`
+- [ ] AC2: `src/examples/mas_multi_agent.py` exists and demonstrates full 4-agent delegation via `app.main()` with all `include_*` flags `True`, using `paper_id="1105.1072"`
+- [ ] AC3: `src/examples/cc_solo.py` exists and demonstrates `run_cc_solo()` with `check_cc_available()` guard and `build_cc_query()` for prompt construction
+- [ ] AC4: `src/examples/cc_teams.py` exists and demonstrates `run_cc_teams()` with teams env var and `build_cc_query(cc_teams=True)` for prompt construction
+- [ ] AC5: `src/examples/sweep_benchmark.py` exists and demonstrates `SweepRunner` with a `SweepConfig` containing 2-3 compositions, 1 paper, 1 repetition
+- [ ] AC6: Each new example has a module docstring with Purpose, Prerequisites, Expected output, and Usage sections (matching existing example style)
+- [ ] AC7: Each new example is self-contained and runnable via `uv run python src/examples/<name>.py`
+- [ ] AC8: CC examples include a guard that prints a helpful message and exits if `claude` CLI is not on PATH
+- [ ] AC9: Sweep example uses a temp directory for `output_dir` (not hardcoded path)
+- [ ] AC10: `src/examples/README.md` updated to document all 8 examples (3 existing + 5 new) with usage, prerequisites, and CLI equivalent table
+- [ ] AC11: `tests/examples/test_examples_importable.py` verifies all 8 example modules import without error and have a callable entry point
+- [ ] AC12: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- New examples follow the same structure as `basic_evaluation.py`: module docstring, helper functions, `async def run_example()` (or sync for CC), `if __name__ == "__main__":` block
+- MAS examples call `app.main()` directly with explicit keyword arguments
+- CC examples call `run_cc_solo()`/`run_cc_teams()` directly from `app.engines.cc_engine` and use `build_cc_query()` (Feature 6 / STORY-006) for prompt construction
+- Sweep example instantiates `SweepConfig` and `SweepRunner` programmatically
+- All examples catch common errors (`RuntimeError`, `FileNotFoundError`) with helpful messages
+
+**Files**:
+
+- `src/examples/mas_single_agent.py` (new)
+- `src/examples/mas_multi_agent.py` (new)
+- `src/examples/cc_solo.py` (new)
+- `src/examples/cc_teams.py` (new)
+- `src/examples/sweep_benchmark.py` (new)
+- `src/examples/README.md` (edit)
+- `tests/examples/test_examples_importable.py` (new)
+
+---
+
 ## Non-Functional Requirements
 
 - No new external dependencies without PRD validation
@@ -516,8 +555,24 @@ Invalid pydantic data model format: 1 validation error for ResearchSummary
 - **P1 (observability)**: STORY-001 (artifact summary -- new capability, standalone), STORY-007 (CC stream persistence -- trace data for post-hoc analysis)
 - **P2 (UX)**: STORY-002 (GUI sidebar refactor -- user-facing improvement)
 - **P3 (code health)**: STORY-003 (isinstance replacements), STORY-004 (conftest consolidation), STORY-005 (dispatch refactor), STORY-009 (config model consolidation)
+- **P4 (developer experience)**: STORY-012 (examples modernization -- onboarding, no file conflicts)
 
-### Story Breakdown (11 stories total):
+### Story Breakdown (12 stories total):
+
+- **Feature 1** → STORY-001: End-of-run artifact path summary (depends: STORY-006)
+  New `ArtifactRegistry` singleton. Register paths in 7 components. Print summary in CLI and sweep. TDD: `testing-python` for registry behavior (register, summary, reset, empty state), then `implementing-python`. Files: `src/app/utils/artifact_registry.py` (new), `src/app/utils/log.py`, `src/app/judge/trace_processors.py`, `src/app/data_utils/review_persistence.py`, `src/app/tools/peerread_tools.py`, `src/app/reports/report_generator.py`, `src/app/benchmark/sweep_runner.py`, `src/run_cli.py`, `tests/utils/test_artifact_registry.py` (new).
+
+- **Feature 2** → STORY-002: GUI layout refactor -- sidebar tabs (depends: STORY-006, STORY-008)
+  Add sidebar navigation to `run_gui.py`. Separate Run and Settings into distinct tabs. Remove `run_gui.py:43` TODO. TDD: test tab rendering, persistence, navigation. Files: `src/run_gui.py`, `src/gui/pages/run_app.py`, `tests/gui/test_sidebar_navigation.py` (new).
+
+- **Feature 3** → STORY-003: Replace `assert isinstance` tests with behavioral assertions (depends: STORY-001)
+  ~30 occurrences across 12 test files. Replace type checks with field/method assertions per `testing-strategy.md` "Patterns to Remove". Files: `tests/agents/test_agent_system.py`, `tests/judge/test_evaluation_pipeline.py`, `tests/judge/test_composite_scorer.py`, `tests/data_models/test_evaluation_models.py`, `tests/data_models/test_app_models.py`, `tests/reports/test_report_generator.py`, `tests/reports/test_suggestion_engine.py`, `tests/tools/test_peerread_tools_error_handling.py`.
+
+- **Feature 4** → STORY-004: Test organization -- subdirectory conftest.py files (depends: STORY-003)
+  Add `conftest.py` to `tests/agents/`, `tests/judge/`, `tests/tools/`, `tests/evals/`. Deduplicate shared fixtures. Replace `tempfile` with `tmp_path`. Files: `tests/agents/conftest.py` (new), `tests/judge/conftest.py` (new), `tests/tools/conftest.py` (new), `tests/evals/conftest.py` (new).
+
+- **Feature 5** → STORY-005: Data layer -- dispatch chain registry refactor (depends: STORY-001)
+  Replace 4 dispatch chains in `datasets_peerread.py` with `DATA_TYPE_SPECS` registry. Target -8 CC points. TDD: test invalid data_type ValueError, then refactor. Files: `src/app/data_utils/datasets_peerread.py`, `tests/data_utils/test_datasets_peerread.py`.
 
 - **Feature 6** → STORY-006: CC engine empty query fix
   Add `build_cc_query()` in `cc_engine.py`. Wire into CLI (`run_cli.py`) and GUI (`run_app.py:_prepare_cc_result`). TDD: `testing-python` for `build_cc_query()` three branches (solo, teams, ValueError), then `implementing-python`. Files: `src/app/config/config_app.py`, `src/app/engines/cc_engine.py`, `src/app/app.py`, `src/run_cli.py`, `src/gui/pages/run_app.py`, `tests/engines/test_cc_engine_query.py` (new).
@@ -528,22 +583,7 @@ Invalid pydantic data model format: 1 validation error for ResearchSummary
 - **Feature 8** → STORY-008: App page free-form query persistence fix
   Add `key` parameter to two `text_input` calls in `run_app.py`. Trivial fix, no dedicated test. Files: `src/gui/pages/run_app.py`.
 
-- **Feature 1** → STORY-001: End-of-run artifact path summary
-  New `ArtifactRegistry` singleton. Register paths in 7 components. Print summary in CLI and sweep. TDD: `testing-python` for registry behavior (register, summary, reset, empty state), then `implementing-python`. Files: `src/app/utils/artifact_registry.py` (new), `src/app/utils/log.py`, `src/app/judge/trace_processors.py`, `src/app/data_utils/review_persistence.py`, `src/app/tools/peerread_tools.py`, `src/app/reports/report_generator.py`, `src/app/benchmark/sweep_runner.py`, `src/run_cli.py`, `tests/utils/test_artifact_registry.py` (new).
-
-- **Feature 2** → STORY-002: GUI layout refactor -- sidebar tabs (depends: STORY-006, STORY-008)
-  Add sidebar navigation to `run_gui.py`. Separate Run and Settings into distinct tabs. Remove `run_gui.py:43` TODO. TDD: test tab rendering, persistence, navigation. Files: `src/run_gui.py`, `src/gui/pages/run_app.py`, `tests/gui/test_sidebar_navigation.py` (new).
-
-- **Feature 3** → STORY-003: Replace `assert isinstance` tests with behavioral assertions
-  ~30 occurrences across 12 test files. Replace type checks with field/method assertions per `testing-strategy.md` "Patterns to Remove". Files: `tests/agents/test_agent_system.py`, `tests/judge/test_evaluation_pipeline.py`, `tests/judge/test_composite_scorer.py`, `tests/data_models/test_evaluation_models.py`, `tests/data_models/test_app_models.py`, `tests/reports/test_report_generator.py`, `tests/reports/test_suggestion_engine.py`, `tests/tools/test_peerread_tools_error_handling.py`.
-
-- **Feature 4** → STORY-004: Test organization -- subdirectory conftest.py files (depends: STORY-003)
-  Add `conftest.py` to `tests/agents/`, `tests/judge/`, `tests/tools/`, `tests/evals/`. Deduplicate shared fixtures. Replace `tempfile` with `tmp_path`. Files: `tests/agents/conftest.py` (new), `tests/judge/conftest.py` (new), `tests/tools/conftest.py` (new), `tests/evals/conftest.py` (new).
-
-- **Feature 5** → STORY-005: Data layer -- dispatch chain registry refactor
-  Replace 4 dispatch chains in `datasets_peerread.py` with `DATA_TYPE_SPECS` registry. Target -8 CC points. TDD: test invalid data_type ValueError, then refactor. Files: `src/app/data_utils/datasets_peerread.py`, `tests/data_utils/test_datasets_peerread.py`.
-
-- **Feature 9** → STORY-009: Move remaining config models to `src/app/config/`
+- **Feature 9** → STORY-009: Move remaining config models to `src/app/config/` (depends: STORY-001)
   Move `LogfireConfig` from `utils/load_configs.py` and `PeerReadConfig` from `data_models/peerread_models.py` into `config/`. Update imports in 5 src files + 5 test files. Files: `src/app/config/logfire_config.py` (new), `src/app/config/peerread_config.py` (new), `src/app/utils/load_configs.py`, `src/app/data_models/peerread_models.py`, `src/app/config/__init__.py`, `src/app/data_utils/datasets_peerread.py`.
 
 - **Feature 10** → STORY-010: Search tool HTTP error resilience
@@ -551,6 +591,9 @@ Invalid pydantic data model format: 1 validation error for ResearchSummary
 
 - **Feature 11** → STORY-011: Sub-agent result validation JSON parsing fix (depends: STORY-010)
   Fix `_validate_model_return()` to try `model_validate_json()` for string inputs. Remove `str()` wrapping at 3 call sites. TDD: test JSON string parsing, repr string error, dict/model passthrough. Files: `src/app/agents/agent_system.py`, `tests/agents/test_agent_system.py`.
+
+- **Feature 12** → STORY-012: Modernize examples to cover all execution modes (depends: STORY-006)
+  Add 5 new example scripts (MAS single-agent, MAS multi-agent, CC solo, CC teams, sweep). Update README. TDD: `testing-python` for import smoke tests, then `implementing-python` for examples. Files: `src/examples/mas_single_agent.py` (new), `src/examples/mas_multi_agent.py` (new), `src/examples/cc_solo.py` (new), `src/examples/cc_teams.py` (new), `src/examples/sweep_benchmark.py` (new), `src/examples/README.md`, `tests/examples/test_examples_importable.py` (new).
 
 ### Notes for CC Agent Teams
 
@@ -570,11 +613,15 @@ All teammates load project context (CLAUDE.md, AGENTS.md, skills) automatically.
 
 <!-- Stories sharing files need blockedBy deps beyond logical depends_on -->
 
-| Story | Logical Dep | + File-Conflict Dep | Shared File |
+| Story | Logical Dep | + Wave-Gate / File-Conflict Dep | Shared File / Reason |
 |---|---|---|---|
-| STORY-007 | STORY-006 | (same) | `cc_engine.py`, `config_app.py` |
+| STORY-001 | none | + STORY-006 | `run_cli.py`, Wave 1 gate |
 | STORY-002 | STORY-006 | + STORY-008 | `run_app.py` |
+| STORY-003 | none | + STORY-001 | Wave 2 gate |
 | STORY-004 | STORY-003 | (same) | test files in same subdirectories |
+| STORY-005 | none | + STORY-001 | Wave 2 gate |
+| STORY-007 | STORY-006 | (same) | `cc_engine.py`, `config_app.py` |
+| STORY-009 | none | + STORY-001 | Wave 2 gate |
 | STORY-011 | none | + STORY-010 | `agent_system.py` |
 
 #### Orchestration Waves
@@ -585,9 +632,9 @@ Wave 0 (P0 bug fixes — parallel, no file conflicts):
   teammate-2: STORY-008 (F8 App page query persistence) → STORY-010 (F10 search tool resilience) → STORY-011 (F11 result validation fix)
   gate: lead runs `make validate`
 
-Wave 1 (P1 observability + P2 UX — parallel, no file conflicts after Wave 0):
+Wave 1 (P1 observability + P2 UX + P4 devex — parallel, no file conflicts after Wave 0):
   teammate-1: STORY-001 (F1 artifact summary) → STORY-007 (F7 CC stream persistence)
-  teammate-2: STORY-002 (F2 GUI sidebar refactor)
+  teammate-2: STORY-002 (F2 GUI sidebar refactor) → STORY-012 (F12 examples modernization)
   gate: lead runs `make validate`
 
 Wave 2 (P3 code health — parallel, no file conflicts after Wave 1):
