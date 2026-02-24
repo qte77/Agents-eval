@@ -16,7 +16,6 @@ Mock strategy:
 - run_gui module imported with mocked dependencies
 """
 
-import inspect
 from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
@@ -59,9 +58,7 @@ class TestSidebarNavigationTabs:
         with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
-        assert "Run" in captured_options, (
-            "Sidebar navigation must include 'Run' tab"
-        )
+        assert "Run" in captured_options, "Sidebar navigation must include 'Run' tab"
 
     def test_sidebar_radio_includes_settings_tab(self) -> None:
         """Sidebar navigation must include a 'Settings' tab.
@@ -78,9 +75,7 @@ class TestSidebarNavigationTabs:
         with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
-        assert "Settings" in captured_options, (
-            "Sidebar navigation must include 'Settings' tab"
-        )
+        assert "Settings" in captured_options, "Sidebar navigation must include 'Settings' tab"
 
     def test_sidebar_radio_includes_evaluation_tab(self) -> None:
         """Sidebar navigation must include an 'Evaluation' tab.
@@ -97,9 +92,7 @@ class TestSidebarNavigationTabs:
         with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
-        assert "Evaluation" in captured_options, (
-            "Sidebar navigation must include 'Evaluation' tab"
-        )
+        assert "Evaluation" in captured_options, "Sidebar navigation must include 'Evaluation' tab"
 
     def test_sidebar_radio_includes_agent_graph_tab(self) -> None:
         """Sidebar navigation must include an 'Agent Graph' tab.
@@ -363,13 +356,11 @@ class TestNoTodoComment:
 
         source = Path(spec.origin).read_text()
         lines_with_todo = [
-            (i + 1, line.strip())
-            for i, line in enumerate(source.splitlines())
-            if "TODO" in line
+            (i + 1, line.strip()) for i, line in enumerate(source.splitlines()) if "TODO" in line
         ]
 
         assert not lines_with_todo, (
-            f"run_gui.py must not contain TODO comments. Found:\n"
+            "run_gui.py must not contain TODO comments. Found:\n"
             + "\n".join(f"  Line {n}: {l}" for n, l in lines_with_todo)
         )
 
