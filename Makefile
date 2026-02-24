@@ -565,19 +565,3 @@ help:  ## Show available recipes grouped by section
 	}' $(MAKEFILE_LIST)
 
 
-# MARK: FIXME backward-compat aliases
-
-
-ruff: lint_src
-ruff_tests: lint_tests
-test_all: test
-test_quick: test_rerun
-sweep: app_sweep
-quick_start: app_quickstart
-dataset_get_smallest: dataset_smallest
-run_puml_interactive: plantuml_serve
-run_puml_single: plantuml_render
-run_markdownlint: lint_md
-setup_prod_ollama: ; $(MAKE) setup_prod OLLAMA=1
-setup_dev_ollama: ; $(MAKE) setup_dev OLLAMA=1
-setup_devc_ollama: ; $(MAKE) setup_dev OLLAMA=1
