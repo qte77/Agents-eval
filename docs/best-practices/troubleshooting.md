@@ -48,7 +48,7 @@ echo $GROQ_API_KEY
 Update `JudgeSettings` to specify a fallback provider:
 
 ```python
-from app.judge.settings import JudgeSettings
+from app.config.judge_settings import JudgeSettings
 
 settings = JudgeSettings(
     tier2_provider="openai",
@@ -71,7 +71,7 @@ The evaluation engine follows this fallback chain:
 Use the `select_available_provider()` method to check which provider will be used:
 
 ```python
-from app.data_models.app_models import AppEnv
+from app.config.app_env import AppEnv
 from app.judge.llm_evaluation_managers import LLMJudgeEngine
 
 engine = LLMJudgeEngine(settings)

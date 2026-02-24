@@ -31,11 +31,19 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 - [**Codespace Dev**](https://github.com/codespaces/new?repo=qte77/Agents-eval) - Immediate access
 - **Quick Start:** `make setup_dev && make app_quickstart` (downloads sample data, evaluates smallest paper)
 - **Full Setup:** `make setup_dev` then `make app_cli ARGS="--help"`
+- **CC Engine:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc"` (requires `claude` CLI on PATH)
+- **CC Teams:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc --cc-teams"` (multi-agent orchestration)
+- **MAS Sweep:** `make app_sweep ARGS="--paper-ids 1105.1072 --repetitions 1 --all-compositions"` (benchmark all 8 agent compositions)
+
+> **Note:** All commands above use the default provider (`github`). Set your API key in `.env` or pass `--chat-provider=<provider>` to use a different one. See [.env.example](.env.example).
 
 ## Human Developer
 
 - **Quick Start:** `make setup_dev && make app_quickstart` (downloads sample data, evaluates smallest paper)
 - **Full Setup:** `make setup_dev` then `make app_cli ARGS="--help"`
+- **CC Engine:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc"` (requires `claude` CLI on PATH)
+- **CC Teams:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc --cc-teams"` (multi-agent orchestration)
+- **MAS Sweep:** `make app_sweep ARGS="--paper-ids 1105.1072 --repetitions 1 --all-compositions"` (benchmark all 8 agent compositions)
 - **Core Resources:**
   - [CONTRIBUTING.md](CONTRIBUTING.md) - Commands, workflows, coding patterns
   - [docs/architecture.md](docs/architecture.md) - Technical design and decisions

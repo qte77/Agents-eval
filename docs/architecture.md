@@ -255,6 +255,30 @@ Teams: claude -p "prompt" --output-format stream-json  → Popen JSONL stream �
 
 Sprint 10 added full pipeline parity: `extract_cc_review_text()` feeds review text to `evaluate_comprehensive()` via the `review_text` parameter on `run_evaluation_if_enabled()`. `cc_result_to_graph_trace()` builds `GraphTraceData` from team events for graph visualization. `CompositeResult.engine_type` is set to `"cc_solo"` or `"cc_teams"` after evaluation.
 
+#### CC Teams Trace Data Flow
+
+The JSONL stream from `claude -p --output-format stream-json` is consumed live from stdout and **not persisted to disk**. All trace data must be captured during execution or it is lost.
+
+```text
+Popen(stdout=PIPE)
+  → iter(proc.stdout)
+    → parse_stream_json()
+      → _parse_jsonl_line()     — skips blank/malformed lines
+      → _apply_event()          — dispatches by event type:
+          type=system,subtype=init  → execution_id
+          type=result               → output_data (duration, cost, turns, review text)
+          type=TeamCreate           → team_artifacts[] → coordination_events in GraphTraceData
+          type=Task                 → team_artifacts[] → agent_interactions in GraphTraceData
+    → CCResult
+      → cc_result_to_graph_trace()  — maps team_artifacts to GraphTraceData
+        → agent_interactions  (from Task events)
+        → coordination_events (from TeamCreate events)
+```
+
+**Stream filter**: `_TEAM_EVENT_TYPES = {"TeamCreate", "Task"}`. Other event types (`assistant`, `tool_use`, `tool_result`) are present in the stream but not captured. This means Tier 3 graph analysis produces 0 nodes/0 edges when CC handles the task without spawning a team.
+
+**Team spawning is not guaranteed**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` enables the capability but CC autonomously decides whether to create a team based on task complexity. Simple queries may be solved solo even in teams mode. The default prompt template uses `"Use a team of agents."` phrasing to increase the likelihood of team creation, but it is ultimately CC's decision.
+
 ### Output Files
 
 - `results.json` — raw per-evaluation scores (composition × paper × repetition)
