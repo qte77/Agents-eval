@@ -21,7 +21,10 @@ def render_sidebar(sidebar_title: str, execution_state: str = "idle") -> str:
         sidebar.info("⏳ Execution in progress…")
 
     # S8-F8.1: WCAG 1.3.1, 2.4.6 — meaningful label with visual collapse avoids empty label
-    selected_page = sidebar.radio("Navigation", PAGES, label_visibility="collapsed")
+    # key persists tab selection across Streamlit reruns within a session (AC4)
+    selected_page = sidebar.radio(
+        "Navigation", PAGES, label_visibility="collapsed", key="sidebar_tab"
+    )
 
     # Phoenix trace viewer link
     sidebar.divider()

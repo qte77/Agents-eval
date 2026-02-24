@@ -1,17 +1,16 @@
 """
 This module sets up and runs a Streamlit application for a Multi-Agent System.
 
-The application includes the following components:
-- Header
-- Sidebar for configuration options
-- Main content area for prompts
-- Footer
+The application uses a sidebar tab layout with four navigation sections:
+- Run: execution controls (provider, engine, paper, query, run button)
+- Settings: configuration options for provider and sub-agents
+- Evaluation: evaluation results and baseline comparison
+- Agent Graph: visual representation of agent interactions
 
 The main function loads the configuration, renders the UI components, and handles the
 execution of the Multi-Agent System based on user input.
 
 Functions:
-- run_app(): Placeholder function to run the main application logic.
 - main(): Main function to set up and run the Streamlit application.
 """
 
@@ -35,8 +34,6 @@ from gui.config.styling import add_custom_styling
 from gui.config.text import PAGE_TITLE
 from gui.pages.agent_graph import render_agent_graph
 from gui.pages.evaluation import render_evaluation
-from gui.pages.home import render_home
-from gui.pages.prompts import render_prompts
 from gui.pages.run_app import render_app
 from gui.pages.settings import render_settings
 
@@ -81,18 +78,14 @@ async def main():
     add_custom_styling(PAGE_TITLE)
     selected_page = render_sidebar(PAGE_TITLE)
 
-    if selected_page == "Home":
-        render_home()
+    if selected_page == "Run":
+        active_provider = st.session_state.get("chat_provider", CHAT_DEFAULT_PROVIDER)
+        logger.info(f"Page 'Run' provider: {active_provider}")
+        await render_app(active_provider, chat_config_file)
     elif selected_page == "Settings":
         # Display actual settings from pydantic-settings classes
         render_settings(common_settings, judge_settings)
-    elif selected_page == "Prompts":
-        render_prompts(chat_config)
-    elif selected_page == "App":
-        active_provider = st.session_state.get("chat_provider", CHAT_DEFAULT_PROVIDER)
-        logger.info(f"Page 'App' provider: {active_provider}")
-        await render_app(active_provider, chat_config_file)
-    elif selected_page == "Evaluation Results":
+    elif selected_page == "Evaluation":
         # Pass composite result from session state if available
         composite_result = st.session_state.get("execution_composite_result", None)
         render_evaluation(composite_result)

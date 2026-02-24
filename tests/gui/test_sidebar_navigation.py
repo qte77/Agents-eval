@@ -28,31 +28,35 @@ class TestSidebarNavigationTabs:
     """Verify sidebar contains the four required navigation tabs.
 
     AC1: Sidebar contains navigation tabs for: Run, Settings, Evaluation, Agent Graph
+
+    Note: sidebar.py imports `sidebar` directly from streamlit, so we patch
+    `gui.components.sidebar.sidebar` to intercept calls correctly.
     """
+
+    def _make_sidebar_mock(self, captured_options: list) -> MagicMock:
+        """Create a sidebar mock that captures radio options."""
+        mock_sidebar = MagicMock()
+
+        def capture_radio(label, options, **kwargs):
+            captured_options.extend(options)
+            return options[0] if options else ""
+
+        mock_sidebar.radio.side_effect = capture_radio
+        return mock_sidebar
 
     def test_sidebar_radio_includes_run_tab(self) -> None:
         """Sidebar navigation must include a 'Run' tab.
 
-        Arrange: Mock st.sidebar.radio to capture options
+        Arrange: Mock sidebar to capture options
         Act: Call render_sidebar
         Expected: 'Run' is in the options passed to sidebar.radio
         """
         from gui.components.sidebar import render_sidebar
 
         captured_options: list = []
+        mock_sidebar = self._make_sidebar_mock(captured_options)
 
-        def capture_radio(label, options, **kwargs):
-            captured_options.extend(options)
-            return options[0] if options else ""
-
-        with patch("streamlit.sidebar") as mock_sidebar:
-            mock_sidebar.radio.side_effect = capture_radio
-            mock_sidebar.title = MagicMock()
-            mock_sidebar.divider = MagicMock()
-            mock_sidebar.markdown = MagicMock()
-            mock_sidebar.caption = MagicMock()
-            mock_sidebar.info = MagicMock()
-
+        with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
         assert "Run" in captured_options, (
@@ -62,26 +66,16 @@ class TestSidebarNavigationTabs:
     def test_sidebar_radio_includes_settings_tab(self) -> None:
         """Sidebar navigation must include a 'Settings' tab.
 
-        Arrange: Mock st.sidebar.radio to capture options
+        Arrange: Mock sidebar to capture options
         Act: Call render_sidebar
         Expected: 'Settings' is in the options passed to sidebar.radio
         """
         from gui.components.sidebar import render_sidebar
 
         captured_options: list = []
+        mock_sidebar = self._make_sidebar_mock(captured_options)
 
-        def capture_radio(label, options, **kwargs):
-            captured_options.extend(options)
-            return options[0] if options else ""
-
-        with patch("streamlit.sidebar") as mock_sidebar:
-            mock_sidebar.radio.side_effect = capture_radio
-            mock_sidebar.title = MagicMock()
-            mock_sidebar.divider = MagicMock()
-            mock_sidebar.markdown = MagicMock()
-            mock_sidebar.caption = MagicMock()
-            mock_sidebar.info = MagicMock()
-
+        with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
         assert "Settings" in captured_options, (
@@ -91,26 +85,16 @@ class TestSidebarNavigationTabs:
     def test_sidebar_radio_includes_evaluation_tab(self) -> None:
         """Sidebar navigation must include an 'Evaluation' tab.
 
-        Arrange: Mock st.sidebar.radio to capture options
+        Arrange: Mock sidebar to capture options
         Act: Call render_sidebar
         Expected: 'Evaluation' is in the options passed to sidebar.radio
         """
         from gui.components.sidebar import render_sidebar
 
         captured_options: list = []
+        mock_sidebar = self._make_sidebar_mock(captured_options)
 
-        def capture_radio(label, options, **kwargs):
-            captured_options.extend(options)
-            return options[0] if options else ""
-
-        with patch("streamlit.sidebar") as mock_sidebar:
-            mock_sidebar.radio.side_effect = capture_radio
-            mock_sidebar.title = MagicMock()
-            mock_sidebar.divider = MagicMock()
-            mock_sidebar.markdown = MagicMock()
-            mock_sidebar.caption = MagicMock()
-            mock_sidebar.info = MagicMock()
-
+        with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
         assert "Evaluation" in captured_options, (
@@ -120,26 +104,16 @@ class TestSidebarNavigationTabs:
     def test_sidebar_radio_includes_agent_graph_tab(self) -> None:
         """Sidebar navigation must include an 'Agent Graph' tab.
 
-        Arrange: Mock st.sidebar.radio to capture options
+        Arrange: Mock sidebar to capture options
         Act: Call render_sidebar
         Expected: 'Agent Graph' is in the options passed to sidebar.radio
         """
         from gui.components.sidebar import render_sidebar
 
         captured_options: list = []
+        mock_sidebar = self._make_sidebar_mock(captured_options)
 
-        def capture_radio(label, options, **kwargs):
-            captured_options.extend(options)
-            return options[0] if options else ""
-
-        with patch("streamlit.sidebar") as mock_sidebar:
-            mock_sidebar.radio.side_effect = capture_radio
-            mock_sidebar.title = MagicMock()
-            mock_sidebar.divider = MagicMock()
-            mock_sidebar.markdown = MagicMock()
-            mock_sidebar.caption = MagicMock()
-            mock_sidebar.info = MagicMock()
-
+        with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
         assert "Agent Graph" in captured_options, (
@@ -154,19 +128,9 @@ class TestSidebarNavigationTabs:
         from gui.components.sidebar import render_sidebar
 
         captured_options: list = []
+        mock_sidebar = self._make_sidebar_mock(captured_options)
 
-        def capture_radio(label, options, **kwargs):
-            captured_options.extend(options)
-            return options[0] if options else ""
-
-        with patch("streamlit.sidebar") as mock_sidebar:
-            mock_sidebar.radio.side_effect = capture_radio
-            mock_sidebar.title = MagicMock()
-            mock_sidebar.divider = MagicMock()
-            mock_sidebar.markdown = MagicMock()
-            mock_sidebar.caption = MagicMock()
-            mock_sidebar.info = MagicMock()
-
+        with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
         assert set(captured_options) == {"Run", "Settings", "Evaluation", "Agent Graph"}, (
@@ -188,9 +152,12 @@ class TestTabSelectionPersistence:
     def test_sidebar_radio_uses_key_for_persistence(self) -> None:
         """Sidebar radio must use a `key` parameter so Streamlit persists selection.
 
-        Arrange: Mock st.sidebar.radio to capture kwargs
+        Arrange: Mock sidebar to capture kwargs
         Act: Call render_sidebar
         Expected: `key` kwarg is passed to sidebar.radio
+
+        Note: sidebar.py imports `sidebar` directly from streamlit, so we patch
+        `gui.components.sidebar.sidebar` to intercept calls correctly.
         """
         from gui.components.sidebar import render_sidebar
 
@@ -200,14 +167,10 @@ class TestTabSelectionPersistence:
             captured_kwargs.update(kwargs)
             return options[0] if options else ""
 
-        with patch("streamlit.sidebar") as mock_sidebar:
-            mock_sidebar.radio.side_effect = capture_radio
-            mock_sidebar.title = MagicMock()
-            mock_sidebar.divider = MagicMock()
-            mock_sidebar.markdown = MagicMock()
-            mock_sidebar.caption = MagicMock()
-            mock_sidebar.info = MagicMock()
+        mock_sidebar = MagicMock()
+        mock_sidebar.radio.side_effect = capture_radio
 
+        with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
         assert "key" in captured_kwargs, (
