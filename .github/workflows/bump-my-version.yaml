@@ -24,14 +24,6 @@ env:
 
 jobs:
   bump_my_version:
-    # TODO bug? currently resulting in: Unrecognized named-value: 'env'.
-    # https://stackoverflow.com/questions/61238849/github-actions-if-contains-function-not-working-with-env-variable/61240761
-    # if: !contains(
-    #      github.event.pull_request.title,
-    #      ${{ env.SKIP_PR_HINT }}
-    #    )
-    # TODO check for PR closed by bot to avoid PR creation loop
-    # github.actor != 'github-actions'
     if: >
         github.event_name == 'workflow_dispatch' ||
         ( github.event.pull_request.merged == true &&
