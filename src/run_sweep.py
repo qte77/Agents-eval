@@ -192,6 +192,14 @@ async def main_async() -> int:
         logger.info(f"Sweep completed with {len(results)} total evaluations")
         logger.info(f"Results saved to {config.output_dir}")
 
+        # Print artifact summary at end of sweep (AC7)
+        from app.utils.artifact_registry import get_artifact_registry
+
+        registry = get_artifact_registry()
+        summary_block = registry.format_summary_block()
+        print(summary_block)
+        logger.info(summary_block)
+
         return 0
 
     except Exception as e:

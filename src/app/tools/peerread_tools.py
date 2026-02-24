@@ -530,6 +530,10 @@ def add_peerread_review_tools_to_agent(
             with open(structured_path, "w", encoding="utf-8") as f:
                 dump(result.model_dump(), f, indent=2, ensure_ascii=False)
 
+            from app.utils.artifact_registry import get_artifact_registry
+
+            get_artifact_registry().register("Structured review", Path(structured_path))
+
             logger.info(f"Saved structured review for paper {paper_id} to {filepath}")
             return filepath
 

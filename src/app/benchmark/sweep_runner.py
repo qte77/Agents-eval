@@ -254,6 +254,10 @@ class SweepRunner:
         with open(results_file, "w") as f:
             json.dump(json_data, f, indent=2)
 
+        from app.utils.artifact_registry import get_artifact_registry
+
+        get_artifact_registry().register("Sweep results", results_file)
+
         logger.info(f"Saved raw results to {results_file}")
 
     async def _save_results(self) -> None:
@@ -272,6 +276,10 @@ class SweepRunner:
         summary_file = self.config.output_dir / "summary.md"
         with open(summary_file, "w") as f:
             f.write(markdown)
+
+        from app.utils.artifact_registry import get_artifact_registry
+
+        get_artifact_registry().register("Sweep summary", summary_file)
 
         logger.info(f"Saved summary to {summary_file}")
 

@@ -60,6 +60,10 @@ def save_report(markdown: str, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(markdown, encoding="utf-8")
 
+    from app.utils.artifact_registry import get_artifact_registry
+
+    get_artifact_registry().register("Report", output_path)
+
 
 # ---------------------------------------------------------------------------
 # Internal section renderers

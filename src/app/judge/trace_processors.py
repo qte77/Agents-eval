@@ -367,6 +367,11 @@ class TraceCollector:
             finally:
                 conn.close()
 
+            # Register trace file with artifact registry
+            from app.utils.artifact_registry import get_artifact_registry
+
+            get_artifact_registry().register("Trace", json_file)
+
             if self.performance_logging:
                 logger.info(
                     f"Stored trace {trace.execution_id}: "

@@ -144,6 +144,8 @@ if __name__ == "__main__":
         if cc_result_obj.session_dir:
             args["cc_solo_dir"] = cc_result_obj.session_dir
 
+    from app.utils.artifact_registry import get_artifact_registry
+
     result_dict = run(main(**args, engine=engine, cc_result=cc_result_obj))
 
     # S8-F6.1: generate report after evaluation if requested
@@ -166,3 +168,9 @@ if __name__ == "__main__":
             print(f"Report saved: {output_path}")
         else:
             logger.warning("--generate-report requested but no evaluation result available")
+
+    # Print artifact summary at end of run (AC3, AC5, AC6)
+    registry = get_artifact_registry()
+    summary_block = registry.format_summary_block()
+    print(summary_block)
+    logger.info(summary_block)
