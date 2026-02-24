@@ -26,9 +26,11 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 
 ## User/Researcher
 
-- [**Codespace Dev**](https://github.com/codespaces/new?repo=qte77/Agents-eval) - Immediate access
-- [**Documentation Site**](https://qte77.github.io/Agents-eval) - Complete reference
 - **Understanding the System:** [UserStory.md](docs/UserStory.md) - User workflows, use cases, and acceptance criteria
+- [**Documentation Site**](https://qte77.github.io/Agents-eval) - Complete reference
+- [**Codespace Dev**](https://github.com/codespaces/new?repo=qte77/Agents-eval) - Immediate access
+- **Quick Start:** `make setup_dev && make app_quickstart` (downloads sample data, evaluates smallest paper)
+- **Full Setup:** `make setup_dev` then `make app_cli ARGS="--help"`
 
 ## Human Developer
 
@@ -45,7 +47,6 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 
 - **READ FIRST:** [AGENTS.md](AGENTS.md) - Behavioral rules and compliance requirements
 - **Technical Patterns:** [CONTRIBUTING.md](CONTRIBUTING.md) - Implementation standards and commands
-- **Agent Workflow:** AGENTS.md (rules) → CONTRIBUTING.md (patterns) → Execute
 
 ---
 
@@ -58,24 +59,13 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 
 (DRAFT) (WIP) ----> Not fully implemented yet
 
-**Current Release**: Version 3.3.0 - Sprint 8 (Delivered)
-
-- CC engine consolidation: `cc_engine.py` with solo + teams support, retired shell scripts
-- Report generation: CLI `--generate-report`, GUI button, rule-based suggestion engine with optional LLM
-- Tool fix: `get_paper_content(paper_id)` replaces crash-prone `read_paper_pdf_tool`
-- API key cleanup: removed `"not-required"` sentinel, fixed judge auto-mode model inheritance
-- GUI a11y/UX: WCAG fixes, judge settings dropdowns, environment-aware URL resolution
-- Graph alignment: unified `type` node attribute across export and rendering
-
-**Next**: Sprint 9 (In Progress) — sweep results UI ([PRD](docs/sprints/PRD-Sprint9-Ralph.md))
-
 For version history see the [CHANGELOG](CHANGELOG.md).
 
 ## Setup and Usage
 
 See [CONTRIBUTING.md](CONTRIBUTING.md#complete-command-reference) for all commands.
 
-Note: Chat configuration uses free inference endpoints and models which are subject to change by the providers. See [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) for alternatives. LLM-as-judge is also subject to the chat configuration.
+Note: Chat configuration uses inference endpoints and models which are subject to change by the providers. See [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) for alternatives. LLM-as-judge is also subject to the chat configuration.
 
 ## Project Outline
 
