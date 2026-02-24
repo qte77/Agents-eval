@@ -27,6 +27,7 @@ from pathlib import Path
 
 from app.benchmark.sweep_config import AgentComposition, SweepConfig
 from app.benchmark.sweep_runner import SweepRunner
+from app.data_models.evaluation_models import CompositeResult
 from app.utils.log import logger
 
 
@@ -70,7 +71,7 @@ def _build_sweep_config(output_dir: Path) -> SweepConfig:
     )
 
 
-async def run_example() -> list[tuple[AgentComposition, object]]:
+async def run_example() -> list[tuple[AgentComposition, CompositeResult]]:
     """Run the sweep benchmark with 3 compositions, 1 paper, 1 repetition.
 
     Results are written to a temporary directory that is cleaned up after
