@@ -9,7 +9,7 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 **I am a:** [**User/Researcher**](#userresearcher) | [**Human Developer**](#human-developer) | [**AI Agent**](#ai-agent)
 
 [![License](https://img.shields.io/badge/license-BSD3Clause-58f4c2.svg)](LICENSE.md)
-![Version](https://img.shields.io/badge/version-4.1.0-58f4c2.svg)
+![Version](https://img.shields.io/badge/version-4.2.0-58f4c2.svg)
 [![Deploy Docs](https://github.com/qte77/Agents-eval/actions/workflows/generate-deploy-mkdocs-ghpages.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/generate-deploy-mkdocs-ghpages.yaml)
 [![llms.txt (UitHub)](https://img.shields.io/badge/llms.txt-uithub-800080.svg)](https://uithub.com/qte77/Agents-eval)
 [![llms.txt (GitToDoc)](https://img.shields.io/badge/llms.txt-GitToDoc-fe4a60.svg)](https://gittodoc.com/qte77/Agents-eval)
@@ -105,8 +105,8 @@ Note: Chat configuration uses inference endpoints and models which are subject t
 
 ## Examples
 
-See [src/examples/README.md](src/examples/README.md) for self-contained demonstrations of Sprint 5-6 features:
-`basic_evaluation.py`, `judge_settings_customization.py`, `engine_comparison.py`.
+See [src/examples/README.md](src/examples/README.md) for 8 self-contained demonstrations covering all execution modes:
+`basic_evaluation.py`, `judge_settings_customization.py`, `engine_comparison.py`, `mas_single_agent.py`, `mas_multi_agent.py`, `cc_solo.py`, `cc_teams.py`, `sweep_benchmark.py`.
 
 ## References
 
