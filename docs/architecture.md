@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-02-22
+updated: 2026-02-25
 category: architecture
-version: 3.7.0
+version: 3.8.0
 ---
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -257,7 +257,7 @@ Sprint 10 added full pipeline parity: `extract_cc_review_text()` feeds review te
 
 #### CC Teams Trace Data Flow
 
-The JSONL stream from `claude -p --output-format stream-json` is consumed live from stdout and **not persisted to disk**. All trace data must be captured during execution or it is lost.
+The JSONL stream from `claude -p --output-format stream-json` is consumed live from stdout. Since Sprint 11, the raw stream is also persisted to `{LOGS_BASE_PATH}/cc_streams/` via incremental tee (crash-safe partial writes). Prior to Sprint 11, stream data was not persisted and all trace data had to be captured during execution.
 
 ```text
 Popen(stdout=PIPE)
@@ -328,7 +328,23 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 10 - Substantially Delivered)
+### Current Implementation (Sprint 11 - Delivered)
+
+**Sprint 11 Scope**: Observability, UX polish, test quality, and code health.
+
+- **End-of-Run Artifact Summary** (STORY-001): `ArtifactRegistry` singleton in `src/app/utils/artifact_registry.py` with thread-safe `register()`, `summary()`, and `reset()`. Seven components register artifact paths (log setup, trace collector, review persistence, structured review, report generator, sweep runner, CC stream persistence). CLI and sweep print summary at end of run.
+- **GUI Sidebar Tabs** (STORY-002): Streamlit layout refactored with sidebar navigation separating Run, Settings, Evaluation, and Agent Graph into distinct pages. Tab selection persists across reruns. `run_gui.py:43` TODO removed.
+- **CC Engine Empty Query Fix** (STORY-006): `build_cc_query()` in `cc_engine.py` generates default prompt from `paper_id` when query is empty. `DEFAULT_REVIEW_PROMPT_TEMPLATE` constant shared between CC and MAS paths (DRY). Teams mode prepends `"Use a team of agents."`.
+- **CC JSONL Stream Persistence** (STORY-007): Raw JSONL stream teed to `{LOGS_BASE_PATH}/cc_streams/` during CC execution. Solo writes JSON, teams writes JSONL incrementally (crash-safe). Files registered with `ArtifactRegistry`.
+- **Search Tool HTTP Resilience** (STORY-010): `resilient_tool_wrapper` catches HTTP 403/429 from DuckDuckGo and Tavily, returning descriptive error string to agent instead of crashing. Both tools registered for fallback.
+- **Sub-Agent Validation Fix** (STORY-011): `_validate_model_return()` accepts `Any` input, tries `model_validate_json()` for string inputs (fixes non-OpenAI providers returning JSON strings instead of model instances). `str()` wrapping removed from call sites.
+- **Query Persistence Fix** (STORY-008): `key` parameter added to free-form query `text_input` widgets for Streamlit session state persistence.
+- **Test Quality** (STORY-003, STORY-004): `assert isinstance()` replaced with behavioral assertions across 12 test files. Subdirectory `conftest.py` files added to `tests/agents/`, `tests/judge/`, `tests/tools/`, `tests/evals/` with shared fixtures.
+- **Data Layer Refactor** (STORY-005): `DATA_TYPE_SPECS` registry replaces 4 dispatch chains in `datasets_peerread.py`. Single validation point for `data_type`.
+- **Config Consolidation** (STORY-009): `LogfireConfig` and `PeerReadConfig` moved to `src/app/config/`.
+- **Examples Modernization** (STORY-012): 5 new examples (MAS single-agent, MAS multi-agent, CC solo, CC teams, sweep benchmark) added. README updated with all 8 examples.
+
+### Previous Implementation (Sprint 10 - Substantially Delivered)
 
 **Sprint 10 Scope**: E2E CLI/GUI parity for CC engine, graph visualization, test quality.
 
@@ -510,6 +526,7 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 8**: Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, report generation, GUI a11y/UX -- Delivered
 - **Sprint 9**: Correctness & security hardening — dead code, format string sanitization, PDF guard, API key cleanup, judge accuracy, type safety, test quality -- Delivered
 - **Sprint 10**: E2E CLI/GUI parity for CC engine (pipeline parity, review text wiring, engine_type, GUI CC execution), graph visualization polish (mode-specific messages, Tier 3 informational label), test quality (inspect.getsource removal, reference reviews) -- Substantially Delivered (STORY-012/013/014 not started)
+- **Sprint 11**: Observability and UX polish — artifact summary (ArtifactRegistry), GUI sidebar tabs, CC engine fixes (empty query, stream persistence), search tool resilience, sub-agent validation fix, test quality (isinstance→behavioral, conftest consolidation), data layer refactor, config consolidation, examples modernization -- Delivered
 
 For sprint details, see [roadmap.md](roadmap.md).
 
