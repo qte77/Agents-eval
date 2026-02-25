@@ -321,7 +321,7 @@
       "title": "Sub-agent result validation JSON parsing fix",
       "description": "When OpenAI-compatible providers (Cerebras, Groq, etc.) fail to return structured output, PydanticAI's `result.output` is a plain string instead of a Pydantic model instance. The fallback path in `_validate_model_return()` calls `str(result.output)` and passes the result to `model_validate()`. This produces a Python repr string (e.g., `\"insights=['User requests...'] approval=True\"`) which is neither valid JSON nor a dict — `model_validate()` rejects it with `Input should be a valid dictionary or instance of ResearchSummary`. The error repeats on every sub-agent delegation (synthesis, analysis), causing the entire run to fail.",
       "acceptance": [
-        "AC1: `_validate_model_return()` attempts `model_validate_json()` first when `result.output` is a string, falling back to `model_validate()` for dict/model inputs",
+        "AC1: `_validate_model_return()` attempts `model_validate_json()` first when `result.output` is a string, fallcing back to `model_validate()` for dict/model inputs",
         "AC2: When the string is valid JSON (e.g., `'{\"insights\": [], \"approval\": false}'`), the model is successfully parsed",
         "AC3: When the string is not valid JSON (Python repr), the error message includes the actual string content to aid debugging",
         "AC4: The delegation tools (`delegate_research`, `delegate_analysis`, `delegate_synthesis`) pass `result.output` directly to `_validate_model_return()` instead of wrapping in `str()`",
@@ -376,9 +376,9 @@
         "src/examples/README.md",
         "tests/examples/test_examples_importable.py"
       ],
-      "status": "failed",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-02-24T23:55:12Z",
       "content_hash": "065f65e5415703ba2e1e2df1664f7779035a6a520e200b5b0e1f416ed8ce35dc",
       "depends_on": [
         "STORY-006"
