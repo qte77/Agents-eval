@@ -33,6 +33,32 @@ from app.utils.log import logger
 # Team-related event types captured from the live JSONL stream
 _TEAM_EVENT_TYPES = {"TeamCreate", "Task"}
 
+# CWE-78 mitigation: max query length to prevent unbounded input to subprocess
+_CC_QUERY_MAX_LENGTH = 10_000
+
+
+def _sanitize_cc_query(query: str) -> str:
+    """Validate and sanitize a query string before passing to CC subprocess.
+
+    Mitigates CWE-78 argument injection by enforcing length limits and
+    rejecting empty input.
+
+    Args:
+        query: Raw query string from user input.
+
+    Returns:
+        Stripped query string.
+
+    Raises:
+        ValueError: If query is empty, whitespace-only, or exceeds max length.
+    """
+    cleaned = query.strip()
+    if not cleaned:
+        raise ValueError("Query must not be empty")
+    if len(cleaned) > _CC_QUERY_MAX_LENGTH:
+        raise ValueError(f"Query length {len(cleaned)} exceeds maximum {_CC_QUERY_MAX_LENGTH}")
+    return cleaned
+
 
 class CCResult(BaseModel):
     """Result of a Claude Code execution (solo or teams mode).
@@ -323,6 +349,7 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
         CCResult with output_data from parsed JSON stdout and session_dir if present.
 
     Raises:
+        ValueError: If query is empty, whitespace-only, or exceeds max length.
         RuntimeError: If the subprocess exits with non-zero code or times out.
         ValueError: If stdout cannot be parsed as JSON.
 
@@ -330,6 +357,7 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
         >>> result = run_cc_solo("Summarise this paper", timeout=300)
         >>> print(result.execution_id)
     """
+    query = _sanitize_cc_query(query)
     cmd = ["claude", "-p", query, "--output-format", "json"]
     logger.info(f"CC solo: running query (timeout={timeout}s)")
 
@@ -381,12 +409,14 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
         CCResult with team_artifacts populated from stream events.
 
     Raises:
+        ValueError: If query is empty, whitespace-only, or exceeds max length.
         RuntimeError: If the subprocess exits with non-zero code or times out.
 
     Example:
         >>> result = run_cc_teams("Review paper 1234 using a team", timeout=600)
         >>> print(len(result.team_artifacts))
     """
+    query = _sanitize_cc_query(query)
     # S8-F3: teams env var required for CC agent orchestration
     env = {**os.environ, "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}
     cmd = ["claude", "-p", query, "--output-format", "stream-json", "--verbose"]
