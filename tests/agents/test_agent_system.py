@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from app.agents import agent_system
 from app.agents.agent_system import (
     _validate_model_return,
     initialize_logfire_instrumentation_from_settings,
@@ -393,9 +394,9 @@ class TestValidateModelReturnJsonParsing:
     def test_str_wrapping_removed_from_research_delegation(self):
         """AC4: delegate_research passes result.output directly (no str() wrapping)."""
         import ast
-        import pathlib
+        import inspect
 
-        source = pathlib.Path("/workspaces/Agents-eval/src/app/agents/agent_system.py").read_text()
+        source = inspect.getsource(agent_system)
         tree = ast.parse(source)
 
         # Find the delegate_research inner function
@@ -414,9 +415,9 @@ class TestValidateModelReturnJsonParsing:
     def test_str_wrapping_removed_from_analysis_delegation(self):
         """AC4: delegate_analysis passes result.output directly (no str() wrapping)."""
         import ast
-        import pathlib
+        import inspect
 
-        source = pathlib.Path("/workspaces/Agents-eval/src/app/agents/agent_system.py").read_text()
+        source = inspect.getsource(agent_system)
         tree = ast.parse(source)
 
         for node in ast.walk(tree):
@@ -433,9 +434,9 @@ class TestValidateModelReturnJsonParsing:
     def test_str_wrapping_removed_from_synthesis_delegation(self):
         """AC4: delegate_synthesis passes result.output directly (no str() wrapping)."""
         import ast
-        import pathlib
+        import inspect
 
-        source = pathlib.Path("/workspaces/Agents-eval/src/app/agents/agent_system.py").read_text()
+        source = inspect.getsource(agent_system)
         tree = ast.parse(source)
 
         for node in ast.walk(tree):
