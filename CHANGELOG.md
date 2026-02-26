@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- `cc_engine.py`: add `_sanitize_cc_query()` — validates CC subprocess query input (empty, dash-prefix, length) to mitigate CWE-78 argument injection (CodeQL alerts #7, #8)
+- `test_artifact_registry.py`: replace hardcoded `/tmp` paths with pytest `tmp_path` fixture (Bandit B108)
+
 ## [4.1.0] - 2026-02-22
 
 ### Added

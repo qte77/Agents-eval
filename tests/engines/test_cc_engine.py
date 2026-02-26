@@ -592,6 +592,13 @@ class TestSanitizeCCQuery:
         with pytest.raises(ValueError, match="Query must not be empty"):
             _sanitize_cc_query("   ")
 
+    def test_sanitize_rejects_dash_prefix(self):
+        """_sanitize_cc_query raises ValueError on dash-prefixed query."""
+        from app.engines.cc_engine import _sanitize_cc_query
+
+        with pytest.raises(ValueError, match="must not start with"):
+            _sanitize_cc_query("--dangerously-skip-permissions")
+
     def test_sanitize_rejects_over_max_length(self):
         """_sanitize_cc_query raises ValueError when query exceeds max length."""
         from app.engines.cc_engine import _CC_QUERY_MAX_LENGTH, _sanitize_cc_query

@@ -40,8 +40,9 @@ _CC_QUERY_MAX_LENGTH = 10_000
 def _sanitize_cc_query(query: str) -> str:
     """Validate and sanitize a query string before passing to CC subprocess.
 
-    Mitigates CWE-78 argument injection by enforcing length limits and
-    rejecting empty input.
+    Mitigates CWE-78 argument injection by enforcing length limits,
+    rejecting empty input, and blocking dash-prefixed queries that could
+    smuggle CLI flags into the subprocess argument list.
 
     Args:
         query: Raw query string from user input.
@@ -50,11 +51,14 @@ def _sanitize_cc_query(query: str) -> str:
         Stripped query string.
 
     Raises:
-        ValueError: If query is empty, whitespace-only, or exceeds max length.
+        ValueError: If query is empty, whitespace-only, starts with ``-``,
+            or exceeds max length.
     """
     cleaned = query.strip()
     if not cleaned:
         raise ValueError("Query must not be empty")
+    if cleaned.startswith("-"):
+        raise ValueError("Query must not start with '-' (argument injection risk)")
     if len(cleaned) > _CC_QUERY_MAX_LENGTH:
         raise ValueError(f"Query length {len(cleaned)} exceeds maximum {_CC_QUERY_MAX_LENGTH}")
     return cleaned
@@ -349,9 +353,9 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
         CCResult with output_data from parsed JSON stdout and session_dir if present.
 
     Raises:
-        ValueError: If query is empty, whitespace-only, or exceeds max length.
+        ValueError: If query fails sanitization (empty, dash-prefixed, over-length)
+            or if stdout cannot be parsed as JSON.
         RuntimeError: If the subprocess exits with non-zero code or times out.
-        ValueError: If stdout cannot be parsed as JSON.
 
     Example:
         >>> result = run_cc_solo("Summarise this paper", timeout=300)
