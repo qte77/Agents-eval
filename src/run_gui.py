@@ -52,9 +52,8 @@ def get_session_state_defaults() -> dict[str, str | bool]:
     """
     return {
         "chat_provider": CHAT_DEFAULT_PROVIDER,
-        # S8-F8.1: default sub-agents to True for better UX
-        "include_researcher": True,
-        "include_analyst": True,
+        "include_researcher": False,
+        "include_analyst": False,
         "include_synthesiser": False,
     }
 
