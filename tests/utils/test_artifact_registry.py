@@ -16,18 +16,21 @@ class TestArtifactRegistry:
 
         _reset_global_registry()
 
-    def test_register_and_summary(self) -> None:
+    def test_register_and_summary(self, tmp_path: Path) -> None:
         """Registered artifacts appear in summary with label and absolute path."""
         from app.utils.artifact_registry import get_artifact_registry
 
+        log_path = tmp_path / "log.txt"
+        report_path = tmp_path / "report.md"
+
         registry = get_artifact_registry()
-        registry.register("Log file", Path("/tmp/test/log.txt"))
-        registry.register("Report", Path("/tmp/test/report.md"))
+        registry.register("Log file", log_path)
+        registry.register("Report", report_path)
 
         summary = registry.summary()
         assert len(summary) == 2
-        assert summary[0] == ("Log file", Path("/tmp/test/log.txt"))
-        assert summary[1] == ("Report", Path("/tmp/test/report.md"))
+        assert summary[0] == ("Log file", log_path)
+        assert summary[1] == ("Report", report_path)
 
     def test_summary_returns_absolute_paths(self) -> None:
         """Paths in summary are absolute (AC5)."""
@@ -49,12 +52,12 @@ class TestArtifactRegistry:
         registry = get_artifact_registry()
         assert registry.summary() == []
 
-    def test_reset_clears_entries(self) -> None:
+    def test_reset_clears_entries(self, tmp_path: Path) -> None:
         """Reset clears all registered artifacts."""
         from app.utils.artifact_registry import get_artifact_registry
 
         registry = get_artifact_registry()
-        registry.register("File", Path("/tmp/test/file.txt"))
+        registry.register("File", tmp_path / "file.txt")
         assert len(registry.summary()) == 1
 
         registry.reset()
@@ -91,7 +94,7 @@ class TestArtifactRegistry:
         block = registry.format_summary_block()
         assert "No artifacts written" in block
 
-    def test_thread_safety(self) -> None:
+    def test_thread_safety(self, tmp_path: Path) -> None:
         """Concurrent registration does not lose entries."""
         import threading
 
@@ -103,7 +106,7 @@ class TestArtifactRegistry:
         def register_batch(prefix: str, count: int) -> None:
             try:
                 for i in range(count):
-                    registry.register(f"{prefix}-{i}", Path(f"/tmp/{prefix}/{i}.txt"))
+                    registry.register(f"{prefix}-{i}", tmp_path / prefix / f"{i}.txt")
             except Exception as e:
                 errors.append(e)
 
