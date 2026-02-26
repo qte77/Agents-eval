@@ -366,6 +366,9 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
     logger.info(f"CC solo: running query (timeout={timeout}s)")
 
     try:
+        # Reason: query is sanitized by _sanitize_cc_query (empty, dash-prefix, length);
+        # shell=False (list args) prevents shell interpretation — no injection risk.
+        # codeql[py/command-line-injection]
         proc = subprocess.run(
             cmd,
             capture_output=True,
@@ -433,6 +436,9 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
     stream_path = streams_dir / f"cc_teams_{ts}.jsonl"
 
     try:
+        # Reason: query is sanitized by _sanitize_cc_query (empty, dash-prefix, length);
+        # shell=False (list args) prevents shell interpretation — no injection risk.
+        # codeql[py/command-line-injection]
         with subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
