@@ -1,9 +1,9 @@
 ---
 title: Product Requirements Document - Agents-eval Sprint 12
-description: Sprint 12 — CC teams mode bug fixes. Fix engine_type misclassification and team artifact parsing for CC teams execution.
+description: Sprint 12 — CC teams mode bug fixes and scoring system fixes. Fix engine_type misclassification, team artifact parsing, and 5 evaluation scoring bugs (time_taken, task_success, semantic duplication, Tier 3 fallback, single-agent weight redistribution).
 version: 4.3.0
 created: 2026-02-25
-updated: 2026-02-25
+updated: 2026-02-26
 ---
 
 ## Project Overview
@@ -11,6 +11,8 @@ updated: 2026-02-25
 **Agents-eval** evaluates multi-agent AI systems using the PeerRead dataset. The system generates scientific paper reviews via a 4-agent delegation pipeline (Manager -> Researcher -> Analyst -> Synthesizer) and evaluates them through three tiers: traditional metrics, LLM-as-Judge, and graph analysis.
 
 **Sprint 12 goal**: Fix CC teams mode classification and evaluation wiring. CC teams runs are misclassified as `cc_solo` because (1) the JSONL stream parser looks for event types (`TeamCreate`, `Task`) that CC never emits — real team events use `type=system, subtype=task_started`, and (2) `engine_type` is inferred from parsed artifacts instead of the user's explicit mode selection. This causes downstream evaluation failures: Tier 3 graph analysis is skipped, coordination/tool metrics default to 0, and the results JSON reports the wrong engine.
+
+Additionally, the composite scoring system has 5 bugs producing misleading evaluation results: (1) `time_taken` is always ~0.999 because `_execute_tier1` passes two near-identical timestamps instead of actual agent execution duration, (2) Tier 3 returns all-zeros for empty trace data instead of triggering fallback, (3) `evaluate_composite_with_trace` (single-agent weight redistribution) exists but is never called from production code, (4) `semantic_score` duplicates `cosine_score` because BERTScore is disabled and the fallback delegates to the same cosine function, (5) `task_success` is binary 0/1 with a harsh 0.8 threshold providing no gradient for generative tasks.
 
 ### Current State
 
@@ -20,6 +22,11 @@ updated: 2026-02-25
 | JSONL stream team event parsing | Broken | `_TEAM_EVENT_TYPES` expects `{"TeamCreate", "Task"}` but CC emits `{"type": "system", "subtype": "task_started"}` (`cc_engine.py:34`) |
 | CC teams evaluation scores | Degraded | Tier 3 N/A, `coordination_quality=0`, `tool_efficiency=0` because graph trace has no team artifacts |
 | `cc_teams` flag passthrough | Missing | `cc_teams` boolean consumed in CLI/GUI, never forwarded to `main()` or `_run_cc_engine_path()` |
+| Tier 3 empty-trace handling | Broken | Empty `tool_calls` + `agent_interactions` returns all-zero `Tier3Result` (not `None`), bypassing fallback (`graph_analysis.py:224-269`) |
+| Single-agent weight redistribution | Dead code | `evaluate_composite_with_trace` never called from production pipeline (`evaluation_pipeline.py:279-303`) |
+| `time_taken` metric | Broken | Always ~0.999 — `_execute_tier1` passes two `time.time()` calls microseconds apart (`evaluation_pipeline.py:161,173`) |
+| `semantic_score` duplication | Bug | `compute_semantic_similarity` delegates to `compute_cosine_similarity` — cosine gets 0.7 effective weight in Tier 1 formula (`traditional_metrics.py:232`) |
+| `task_success` binary cliff | Design flaw | Returns 0.0 or 1.0 at 0.8 threshold — no gradient for generative tasks (`traditional_metrics.py:278`) |
 
 ---
 
@@ -157,9 +164,157 @@ These events have `"type": "system"`, not `"TeamCreate"` or `"Task"`, so `_apply
 
 ---
 
+#### Feature 3: Skip Tier 3 for Empty Trace Data
+
+**Description**: When `GraphTraceData` has empty `tool_calls` and empty `agent_interactions` (e.g., CC solo runs with no trace artifacts), `evaluate_graph_metrics` returns an all-zero `Tier3Result`. This non-None result bypasses the fallback strategy (`_apply_fallback_strategy`), silently penalizing the composite score by 0.334 (two metrics × 0.167 weight). The fix: return `None` from `_execute_tier3` when trace data is empty, triggering the existing `tier1_only` fallback which creates neutral 0.5 scores.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `_execute_tier3` returns `(None, 0.0)` when `GraphTraceData` has empty `tool_calls` AND empty `agent_interactions`
+- [ ] AC2: A log message at INFO level is emitted when Tier 3 is skipped due to empty trace
+- [ ] AC3: `performance_monitor.record_tier_execution(3, 0.0)` is called for the skip case
+- [ ] AC4: Existing Tier 3 behavior is unchanged when trace data has tool_calls or agent_interactions
+- [ ] AC5: The `tier1_only` fallback strategy creates neutral Tier 3 result (0.5 scores) when Tier 3 returns None
+- [ ] AC6: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- In `_execute_tier3` (`evaluation_pipeline.py:323`), after `trace_data = self._create_trace_data(execution_trace)`, add early return guard checking `not trace_data.tool_calls and not trace_data.agent_interactions`
+- Record tier execution with 0.0 time before returning to keep performance stats consistent
+- The existing `_apply_fallback_strategy` (`evaluation_pipeline.py:369`) already handles `results.tier3 is None` by creating a `Tier3Result` with 0.5 scores — no changes needed there
+
+**Files**:
+
+- `src/app/judge/evaluation_pipeline.py` (edit -- add empty-trace early return in `_execute_tier3`)
+- `tests/evals/test_evaluation_pipeline.py` (edit -- add test for empty-trace skip behavior)
+
+---
+
+#### Feature 4: Wire `evaluate_composite_with_trace` into Production Pipeline
+
+**Description**: `CompositeScorer.evaluate_composite_with_trace` detects single-agent mode from `GraphTraceData` and redistributes `coordination_quality` weight to remaining metrics. However, it is never called from production code — `_generate_composite_score` only calls `evaluate_composite` or `evaluate_composite_with_optional_tier2`. This means CC solo runs (and any single-agent execution) never benefit from weight redistribution, and `coordination_quality=0` silently penalizes the composite score.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `_generate_composite_score` accepts an optional `trace_data: GraphTraceData | None` parameter
+- [ ] AC2: When `trace_data` is provided and `results.is_complete()`, `evaluate_composite_with_trace` is called
+- [ ] AC3: When `trace_data` is None, existing routing to `evaluate_composite` / `evaluate_composite_with_optional_tier2` is preserved
+- [ ] AC4: `evaluate_comprehensive` retains the `GraphTraceData` object and passes it to `_generate_composite_score`
+- [ ] AC5: CC solo runs with empty coordination_events trigger single-agent detection and weight redistribution
+- [ ] AC6: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- In `evaluate_comprehensive` (`evaluation_pipeline.py:476`), retain a `GraphTraceData` reference when converting `execution_trace` to dict — currently the object is discarded after conversion
+- Add `trace_data: GraphTraceData | None = None` parameter to `_generate_composite_score` (`evaluation_pipeline.py:279`)
+- New routing: if `trace_data is not None and results.is_complete()` → call `self.composite_scorer.evaluate_composite_with_trace(results, trace_data)`; otherwise fall through to existing logic
+- `evaluate_composite_with_trace` already handles both single-agent and multi-agent cases internally (`composite_scorer.py:456-517`)
+
+**Files**:
+
+- `src/app/judge/evaluation_pipeline.py` (edit -- update `_generate_composite_score` signature and routing, update `evaluate_comprehensive` to retain and pass trace data)
+- `tests/evals/test_evaluation_pipeline.py` (edit -- add test for trace-aware composite scoring path)
+- `tests/evals/test_composite_scorer.py` (edit -- add integration test for trace-aware path)
+
+---
+
+#### Feature 5: Propagate Actual Execution Timestamps to `time_taken` Metric
+
+**Description**: `time_taken` is always ~0.999 because `_execute_tier1` captures `start_evaluation = time.time()` and immediately passes `time.time()` as `end_time` — both timestamps are microseconds apart. The `measure_execution_time` formula `exp(-duration)` then returns `exp(~0) ≈ 0.999`. The actual agent execution (e.g., CC solo ran for 158 seconds) is never measured or propagated. The fix: capture wall-clock timestamps around the subprocess/agent execution and propagate them through the pipeline to `_execute_tier1`.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `CCResult` has `start_time: float` and `end_time: float` fields
+- [ ] AC2: `run_cc_solo` captures `time.time()` before and after `subprocess.run()` and stores on `CCResult`
+- [ ] AC3: `run_cc_teams` captures `time.time()` before and after `Popen` block and stores on `CCResult`
+- [ ] AC4: `run_evaluation_if_enabled` accepts `execution_start_time: float = 0.0` and `execution_end_time: float = 0.0`
+- [ ] AC5: `evaluate_comprehensive` accepts and forwards `execution_start_time`/`execution_end_time` to `_execute_tier1`
+- [ ] AC6: `_execute_tier1` uses external timestamps when non-zero, falls back to `time.time()` when zero
+- [ ] AC7: MAS engine path captures timing around `run_manager()` and passes to evaluation
+- [ ] AC8: CC engine path extracts `cc_result.start_time`/`cc_result.end_time` and passes to evaluation
+- [ ] AC9: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- Add `start_time: float = Field(default=0.0)` and `end_time: float = Field(default=0.0)` to `CCResult` (`cc_engine.py:67-87`)
+- Wrap `subprocess.run()` in `run_cc_solo` (`cc_engine.py:~380`) with `time.time()` before/after
+- Wrap `Popen` block in `run_cc_teams` (`cc_engine.py:~440`) with `time.time()` before/after; reconstruct `CCResult` with timing (Pydantic models are immutable)
+- Add `execution_start_time: float = 0.0` and `execution_end_time: float = 0.0` to `run_evaluation_if_enabled` (`evaluation_runner.py:115`); forward to `pipeline.evaluate_comprehensive`
+- Add same params to `evaluate_comprehensive` (`evaluation_pipeline.py:476`) and `_execute_tier1` (`evaluation_pipeline.py:138`)
+- In `_execute_tier1`, replace `start_evaluation = time.time()` / `time.time()` with external timestamps when non-zero
+- In `_run_cc_engine_path` (`app.py:218`): pass `cc_result.start_time`/`cc_result.end_time`
+- In `_run_mas_engine_path` (`app.py:266`): wrap `run_manager()` with `time.time()` before/after
+
+**Files**:
+
+- `src/app/engines/cc_engine.py` (edit -- add timing fields to `CCResult`, capture in `run_cc_solo`/`run_cc_teams`)
+- `src/app/app.py` (edit -- capture and pass timing from both engine paths)
+- `src/app/judge/evaluation_runner.py` (edit -- add timing params, forward to pipeline)
+- `src/app/judge/evaluation_pipeline.py` (edit -- accept and use external timestamps in `evaluate_comprehensive` and `_execute_tier1`)
+- `tests/evals/test_evaluation_pipeline.py` (edit -- add test for timestamp propagation)
+- `tests/judge/test_evaluation_runner.py` (edit -- add timing params to call sites, add forward-propagation test)
+- `tests/engines/test_cc_engine.py` (edit -- verify `CCResult` timing fields populated)
+
+---
+
+#### Feature 6: Deduplicate `semantic_score` from `cosine_score`
+
+**Description**: `compute_semantic_similarity` (`traditional_metrics.py:218`) delegates to `compute_cosine_similarity` because BERTScore is disabled due to build issues. This means `semantic_score == cosine_score` always, giving cosine 0.7 effective weight in the Tier 1 formula (`0.4 × semantic + 0.3 × cosine`) while Jaccard gets only 0.2. The fix: use Levenshtein similarity (already available via `textdistance` in `pyproject.toml`, with `compute_levenshtein_similarity` already implemented in the same class) as the semantic fallback. This provides a distinct character-level sequence similarity signal.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `compute_semantic_similarity` delegates to `compute_levenshtein_similarity` instead of `compute_cosine_similarity`
+- [ ] AC2: `semantic_score` and `cosine_score` produce different values for non-identical texts
+- [ ] AC3: `semantic_score` returns 1.0 for identical texts and 0.0 for empty-vs-nonempty texts
+- [ ] AC4: `Tier1Result.semantic_score` field description updated to reflect Levenshtein-based calculation
+- [ ] AC5: No new dependencies added — uses existing `textdistance` library
+- [ ] AC6: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- In `compute_semantic_similarity` (`traditional_metrics.py:218`), change `return self.compute_cosine_similarity(text1, text2)` to `return self.compute_levenshtein_similarity(text1, text2)`
+- Update the method's docstring and log message to say "Levenshtein" not "cosine similarity fallback"
+- In `evaluation_models.py`, update `Tier1Result.semantic_score` field description from "BERT-based" to "Levenshtein-based sequence similarity (BERTScore disabled)"
+- `compute_levenshtein_similarity` already exists at `traditional_metrics.py:190` with its own fallback chain
+
+**Files**:
+
+- `src/app/judge/traditional_metrics.py` (edit -- change `compute_semantic_similarity` delegation)
+- `src/app/data_models/evaluation_models.py` (edit -- update `semantic_score` field description)
+- `tests/evals/test_traditional_metrics.py` (edit -- update semantic similarity tests; remove any assertions that `semantic == cosine`)
+
+---
+
+#### Feature 7: Replace Binary `task_success` with Continuous Score
+
+**Description**: `assess_task_success` (`traditional_metrics.py:256`) returns exactly 1.0 or 0.0 based on whether weighted similarity meets the 0.8 threshold. For generative review tasks where typical text similarity ranges 0.3–0.6, this almost always returns 0.0, providing zero useful signal in the composite score. The fix: use proportional credit `min(1.0, similarity / threshold)` which gives linear gradient below threshold and full credit at/above threshold.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `assess_task_success` returns continuous float in `[0.0, 1.0]` instead of binary `{0.0, 1.0}`
+- [ ] AC2: When weighted similarity >= threshold, returns 1.0
+- [ ] AC3: When weighted similarity < threshold, returns `weighted_similarity / threshold` (proportional credit)
+- [ ] AC4: When weighted similarity is 0.0, returns 0.0
+- [ ] AC5: When threshold is 0.0, returns 0.0 (avoid division by zero)
+- [ ] AC6: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- In `assess_task_success` (`traditional_metrics.py:256`), replace `return 1.0 if overall_similarity >= threshold else 0.0` with `return min(1.0, overall_similarity / threshold) if threshold > 0.0 else 0.0`
+- Update the method's docstring to document continuous scoring behavior
+- No config changes — the 0.8 threshold still represents "full credit" target; the change is in how sub-threshold scores are handled
+
+**Files**:
+
+- `src/app/judge/traditional_metrics.py` (edit -- change `assess_task_success` return logic)
+- `tests/evals/test_traditional_metrics.py` (edit -- update tests from binary assertions to continuous range checks)
+
+---
+
 ## Non-Functional Requirements
 
 - No new external dependencies
+- **Scoring changes**: Features 3–7 change evaluation score behavior. Existing score comparisons against historical runs will not be directly comparable after these changes.
 - **Change comments**: Every non-trivial code change must include a concise inline comment with sprint, story, and reason. Format: `# S12-F{N}: {why}`. Keep comments to one line. Omit for trivial changes (string edits, config values).
 
 ## Out of Scope
@@ -168,6 +323,7 @@ These events have `"type": "system"`, not `"TeamCreate"` or `"Task"`, so `_apply
 - Richer CC stream event parsing (tool use events, assistant messages) — only task lifecycle events needed for now
 - GUI Sweep Page — deferred from Sprint 11
 - `create_llm_model()` registry pattern refactor — deferred from Sprint 11
+- BERTScore re-enablement — blocked by build issues, Levenshtein sufficient for deduplication
 
 ---
 
@@ -176,14 +332,30 @@ These events have `"type": "system"`, not `"TeamCreate"` or `"Task"`, so `_apply
 ### Priority Order
 
 - **P0 (bug fix)**: STORY-001 (stream event parsing — root cause), STORY-002 (cc_teams flag passthrough — enables correct engine_type)
+- **P1 (scoring fix)**: STORY-003 → STORY-004 (Tier 3 fallback + single-agent redistribution), STORY-005 (time_taken timestamps), STORY-006 (semantic dedup), STORY-007 (task_success continuous)
 
-### Story Breakdown (2 stories total):
+### Story Breakdown (7 stories total):
 
 - **Feature 1** → STORY-001: Fix CC teams stream event parsing
   Update `_apply_event` to capture `task_started`/`task_completed` system events as team artifacts. Remove stale `_TEAM_EVENT_TYPES` constant. TDD: update existing `parse_stream_json` tests to use real CC event format, add new tests for task lifecycle events. Files: `src/app/engines/cc_engine.py`, `tests/engines/test_cc_engine.py`.
 
 - **Feature 2** → STORY-002: Pass `cc_teams` flag through to `engine_type` assignment (depends: STORY-001)
   Add `cc_teams` param to `main()` and `_run_cc_engine_path()`. Wire from CLI and GUI. Change `engine_type` to use flag instead of `team_artifacts` inference. TDD: update `test_cc_engine_wiring.py` tests. Files: `src/app/app.py`, `src/run_cli.py`, `src/gui/pages/run_app.py`, `tests/cli/test_cc_engine_wiring.py`.
+
+- **Feature 3** → STORY-003: Skip Tier 3 for empty trace data
+  Add early return in `_execute_tier3` when trace has no tool_calls or agent_interactions. Triggers existing fallback (neutral 0.5 scores). Files: `src/app/judge/evaluation_pipeline.py`, `tests/evals/test_evaluation_pipeline.py`.
+
+- **Feature 4** → STORY-004: Wire `evaluate_composite_with_trace` into production (depends: STORY-003)
+  Update `_generate_composite_score` to accept trace data and route to `evaluate_composite_with_trace` for single-agent detection. Retain `GraphTraceData` ref in `evaluate_comprehensive`. Files: `src/app/judge/evaluation_pipeline.py`, `tests/evals/test_evaluation_pipeline.py`, `tests/evals/test_composite_scorer.py`.
+
+- **Feature 5** → STORY-005: Propagate actual execution timestamps to `time_taken` (depends: STORY-004)
+  Add timing to `CCResult`, capture around subprocess in `run_cc_solo`/`run_cc_teams`, propagate through `evaluation_runner` → `evaluation_pipeline` → `_execute_tier1`. Files: `src/app/engines/cc_engine.py`, `src/app/app.py`, `src/app/judge/evaluation_runner.py`, `src/app/judge/evaluation_pipeline.py`, tests.
+
+- **Feature 6** → STORY-006: Deduplicate `semantic_score` from `cosine_score`
+  Change `compute_semantic_similarity` to use Levenshtein instead of cosine. Uses existing `textdistance` library. Files: `src/app/judge/traditional_metrics.py`, `src/app/data_models/evaluation_models.py`, `tests/evals/test_traditional_metrics.py`.
+
+- **Feature 7** → STORY-007: Replace binary `task_success` with continuous score
+  Change `assess_task_success` from `0/1` to `min(1.0, similarity/threshold)`. Files: `src/app/judge/traditional_metrics.py`, `tests/evals/test_traditional_metrics.py`.
 
 ### Notes for CC Agent Teams
 
@@ -195,18 +367,26 @@ Reference: `docs/analysis/CC-agent-teams-orchestration.md`
 |----------|------|-------|-------------|-------------------|
 | Lead | Coordination, wave gates, `make validate` | sonnet | delegate mode | Runs full validation at wave boundaries |
 | teammate-1 | Developer (src/ + tests/) | opus | acceptEdits | `testing-python` (RED) → `implementing-python` (GREEN) → `make quick_validate` |
+| teammate-2 | Developer (traditional_metrics + tests) | opus | acceptEdits | `testing-python` (RED) → `implementing-python` (GREEN) → `make quick_validate` |
 
 #### File-Conflict Dependencies
 
 | Story | Logical Dep | Shared File / Reason |
 |---|---|---|
 | STORY-002 | STORY-001 | `cc_engine.py` (STORY-001 changes event parsing that STORY-002's tests depend on) |
+| STORY-004 | STORY-003 | `evaluation_pipeline.py` (STORY-003 changes `_execute_tier3`; STORY-004 changes `_generate_composite_score` in same file) |
+| STORY-005 | STORY-004 | `evaluation_pipeline.py` (STORY-005 adds timestamp params to methods STORY-004 modified) |
 
 #### Orchestration Waves
 
 ```text
 Wave 0 (P0 bug fixes — sequential due to shared cc_engine.py):
   teammate-1: STORY-001 (F1 stream event parsing fix) → STORY-002 (F2 cc_teams flag passthrough)
+  gate: lead runs `make validate`
+
+Wave 1 (P1 scoring fixes — sequential on evaluation_pipeline.py, parallel on traditional_metrics.py):
+  teammate-1: STORY-003 (F3 Tier 3 empty-trace skip) → STORY-004 (F4 wire composite_with_trace) → STORY-005 (F5 timestamp propagation)
+  teammate-2: STORY-006 (F6 semantic dedup) → STORY-007 (F7 task_success continuous)
   gate: lead runs `make validate`
 ```
 
@@ -216,4 +396,4 @@ Wave 0 (P0 bug fixes — sequential due to shared cc_engine.py):
 2. **Teammate picks next story**: checks `TaskList` for unblocked pending tasks, claims via `TaskUpdate` with `owner`
 3. **Wave boundary**: when all stories in a wave are completed, lead runs `make validate` (full suite)
 4. **Lead advances**: if `make validate` passes, lead confirms sprint complete; if it fails, lead assigns fix tasks
-5. **Shutdown**: after Wave 0, lead sends `shutdown_request` to all teammates, then `TeamDelete`
+5. **Shutdown**: after Wave 1, lead sends `shutdown_request` to all teammates, then `TeamDelete`
