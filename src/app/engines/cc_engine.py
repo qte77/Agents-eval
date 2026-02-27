@@ -30,8 +30,9 @@ from app.config.config_app import CC_STREAMS_PATH, DEFAULT_REVIEW_PROMPT_TEMPLAT
 from app.utils.artifact_registry import get_artifact_registry
 from app.utils.log import logger
 
-# Team-related event types captured from the live JSONL stream
-_TEAM_EVENT_TYPES = {"TeamCreate", "Task"}
+# Subtypes of system events that represent team sub-agent activity in the CC stream.
+# CC emits type=system with these subtypes for local_agent tasks (not "TeamCreate"/"Task").
+_TEAM_SUBTYPES = {"task_started", "task_completed"}
 
 # CWE-78 mitigation: max query length to prevent unbounded input to subprocess
 _CC_QUERY_MAX_LENGTH = 10_000
@@ -167,10 +168,10 @@ def _apply_event(
 ) -> None:
     """Mutate ``state`` in-place based on ``event`` type.
 
-    Recognised events:
-    - ``type=system, subtype=init`` → updates ``execution_id``
-    - ``type=result`` → updates ``output_data`` with timing/cost fields
-    - ``type`` in ``_TEAM_EVENT_TYPES`` → appends to ``team_artifacts``
+    Recognised events (checked in priority order):
+    1. ``type=system, subtype=init`` → updates ``execution_id``
+    2. ``type=result`` → updates ``output_data`` with timing/cost fields
+    3. ``type=system, subtype in {"task_started", "task_completed"}`` → appends to ``team_artifacts``
 
     Args:
         event: Parsed JSONL event dict.
@@ -178,13 +179,14 @@ def _apply_event(
             ``team_artifacts``.
     """
     event_type = event.get("type", "")
-    if event_type == "system" and event.get("subtype") == "init":
+    subtype = event.get("subtype", "")
+    if event_type == "system" and subtype == "init":  # (1) init — highest priority
         session_id = event.get("session_id")
         if session_id:
             state["execution_id"] = session_id
-    elif event_type == "result":
+    elif event_type == "result":  # (2) result
         state["output_data"].update({k: event[k] for k in _RESULT_KEYS if k in event})
-    elif event_type in _TEAM_EVENT_TYPES:
+    elif event_type == "system" and subtype in _TEAM_SUBTYPES:  # (3) team task events
         state["team_artifacts"].append(event)
 
 
@@ -194,7 +196,7 @@ def parse_stream_json(stream: Iterator[str]) -> CCResult:
     Extracts:
     - ``type=system, subtype=init`` → ``session_id`` becomes ``execution_id``
     - ``type=result`` → ``duration_ms``, ``total_cost_usd``, ``num_turns`` → ``output_data``
-    - ``type=TeamCreate`` or ``type=Task`` → appended to ``team_artifacts``
+    - ``type=system, subtype in {"task_started", "task_completed"}`` → appended to ``team_artifacts``
 
     Skips blank lines and malformed JSON without raising.
 
@@ -272,10 +274,10 @@ def cc_result_to_graph_trace(cc_result: CCResult) -> GraphTraceData:
     coordination_events: list[dict[str, Any]] = []
 
     for artifact in cc_result.team_artifacts:
-        event_type = artifact.get("type", "")
-        if event_type == "Task":
+        subtype = artifact.get("subtype", "")
+        if subtype == "task_started":
             agent_interactions.append(artifact)
-        elif event_type == "TeamCreate":
+        elif subtype == "task_completed":
             coordination_events.append(artifact)
 
     return GraphTraceData(
