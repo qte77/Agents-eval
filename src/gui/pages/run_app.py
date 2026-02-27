@@ -343,6 +343,7 @@ async def _execute_query_background(
             paper_id=paper_id,
             engine=engine,
             cc_result=cc_result,
+            cc_teams=cc_teams,
         )
 
         _store_successful_result(result)

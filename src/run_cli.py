@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     from app.utils.artifact_registry import get_artifact_registry
 
-    result_dict = run(main(**args, engine=engine, cc_result=cc_result_obj))
+    result_dict = run(main(**args, engine=engine, cc_result=cc_result_obj, cc_teams=cc_teams))
 
     # S8-F6.1: generate report after evaluation if requested
     if generate_report_flag and result_dict:

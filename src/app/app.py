@@ -224,6 +224,7 @@ async def _run_cc_engine_path(
     cc_teams_tasks_dir: str | None,
     chat_provider: str,
     judge_settings: JudgeSettings | None,
+    cc_teams: bool = False,
 ) -> tuple[Any, Any, str | None]:
     """Execute CC engine path: extract artifacts, evaluate, set engine_type.
 
@@ -236,6 +237,7 @@ async def _run_cc_engine_path(
         cc_teams_tasks_dir: CC teams tasks directory.
         chat_provider: LLM provider name.
         judge_settings: Optional judge settings.
+        cc_teams: Whether CC was run in teams mode (source of truth for engine_type).
 
     Returns:
         Tuple of (composite_result, graph, execution_id).
@@ -257,9 +259,9 @@ async def _run_cc_engine_path(
         manager_output=None,
         review_text=cc_review_text,
     )
-    # S10-AC7: set engine_type based on CC mode
+    # S12-STORY-002: set engine_type from explicit cc_teams flag (not team_artifacts)
     if composite_result is not None:
-        composite_result.engine_type = "cc_teams" if cc_result.team_artifacts else "cc_solo"
+        composite_result.engine_type = "cc_teams" if cc_teams else "cc_solo"
     return composite_result, graph, execution_id
 
 
@@ -351,6 +353,7 @@ async def main(
     judge_settings: JudgeSettings | None = None,
     engine: str = "mas",
     cc_result: Any | None = None,
+    cc_teams: bool = False,
 ) -> dict[str, Any] | None:
     """Main entry point for the application.
 
@@ -387,6 +390,7 @@ async def main(
                     cc_teams_tasks_dir,
                     chat_provider,
                     judge_settings,
+                    cc_teams=cc_teams,
                 )
             else:
                 composite_result, graph, execution_id = await _run_mas_engine_path(
