@@ -11,8 +11,8 @@ import pytest
 from pydantic import BaseModel
 from pydantic_ai import Agent, ModelRetry
 
+from app.config.peerread_config import PeerReadConfig
 from app.data_models.peerread_models import (
-    PeerReadConfig,
     PeerReadPaper,
     PeerReadReview,
 )

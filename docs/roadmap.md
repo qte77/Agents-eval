@@ -3,8 +3,8 @@ title: Development Roadmap
 description: Sprint roadmap and implementation status for the Agents-eval project
 category: roadmap
 created: 2025-09-04
-updated: 2026-02-22
-version: 4.4.0
+updated: 2026-02-25
+version: 4.5.0
 ---
 
 Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for technical decisions (ADRs).
@@ -20,4 +20,6 @@ Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for tech
 | **Sprint 7** | Delivered | Documentation, examples, test refactoring, GUI improvements, unified providers, CC engine | [PRD Sprint 7](sprints/archive/PRD-Sprint7-Ralph.md) |
 | **Sprint 8** | Delivered | Tool bug fix, API key/model cleanup, CC engine consolidation, graph alignment, dead code removal, report generation, judge settings UX, GUI a11y/UX | [PRD Sprint 8](sprints/archive/PRD-Sprint8-Ralph.md) |
 | **Sprint 9** | Delivered | Correctness & security hardening — dead code deletion, format string sanitization, PDF size guard, API key env cleanup, security hardening, judge accuracy, AgentConfig typing, type safety fixes, test suite quality sweep | [PRD Sprint 9](sprints/archive/PRD-Sprint9-Ralph.md) |
-| **Sprint 10** | Substantially Delivered | CC evaluation pipeline parity (STORY-010: main() CC/MAS branch, extract_cc_review_text, cc_result_to_graph_trace, engine_type, GUI CC execution, reference reviews, process group kill); graph viz polish (STORY-011); inspect.getsource removal (STORY-015). STORY-012/013/014 not started. | [PRD Sprint 10](sprints/PRD-Sprint10-Ralph.md) |
+| **Sprint 10** | Substantially Delivered | CC evaluation pipeline parity (STORY-010: main() CC/MAS branch, extract_cc_review_text, cc_result_to_graph_trace, engine_type, GUI CC execution, reference reviews, process group kill); graph viz polish (STORY-011); inspect.getsource removal (STORY-015). STORY-012/013/014 not started. | [PRD Sprint 10](sprints/archive/PRD-Sprint10-Ralph.md) |
+| **Sprint 11** | Delivered | Observability, UX polish, test quality: end-of-run artifact summary (ArtifactRegistry), GUI sidebar tabs, CC engine empty query fix (build_cc_query), CC JSONL stream persistence, search tool HTTP resilience, sub-agent validation JSON parsing fix, query persistence fix, assert isinstance→behavioral replacements, conftest consolidation, dispatch registry refactor, config model consolidation, examples modernization (8 total) | [PRD Sprint 11](sprints/archive/PRD-Sprint11-Ralph.md) |
+| **Sprint 12** | In Progress | CC teams mode bug fixes: fix JSONL stream team event parsing (`_TEAM_EVENT_TYPES` mismatch with real CC output), pass `cc_teams` flag through to `engine_type` assignment (eliminates `team_artifacts`-based inference) | [PRD Sprint 12](sprints/PRD-Sprint12-Ralph.md) |

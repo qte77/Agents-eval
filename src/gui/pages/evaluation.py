@@ -10,8 +10,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from app.data_models.evaluation_models import CompositeResult
-from app.judge.baseline_comparison import BaselineComparison
+from app.data_models.evaluation_models import BaselineComparison, CompositeResult
 
 # S8-F3.3: human-readable labels for metric snake_case keys (WCAG display clarity)
 METRIC_LABELS: dict[str, str] = {

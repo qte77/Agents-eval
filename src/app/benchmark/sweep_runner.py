@@ -14,10 +14,10 @@ from pydantic_ai.exceptions import ModelHTTPError
 from app.app import main
 from app.benchmark.sweep_analysis import SweepAnalyzer, generate_markdown_summary
 from app.benchmark.sweep_config import AgentComposition, SweepConfig
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import CompositeResult
 from app.engines.cc_engine import CCResult, check_cc_available, run_cc_solo, run_cc_teams
 from app.judge.cc_trace_adapter import CCTraceAdapter
-from app.judge.settings import JudgeSettings
 from app.utils.log import logger
 
 _MAX_RETRIES = 3
@@ -254,6 +254,10 @@ class SweepRunner:
         with open(results_file, "w") as f:
             json.dump(json_data, f, indent=2)
 
+        from app.utils.artifact_registry import get_artifact_registry
+
+        get_artifact_registry().register("Sweep results", results_file)
+
         logger.info(f"Saved raw results to {results_file}")
 
     async def _save_results(self) -> None:
@@ -272,6 +276,10 @@ class SweepRunner:
         summary_file = self.config.output_dir / "summary.md"
         with open(summary_file, "w") as f:
             f.write(markdown)
+
+        from app.utils.artifact_registry import get_artifact_registry
+
+        get_artifact_registry().register("Sweep summary", summary_file)
 
         logger.info(f"Saved summary to {summary_file}")
 

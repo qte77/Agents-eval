@@ -7,8 +7,8 @@ default values from CommonSettings and JudgeSettings classes.
 
 import pytest
 
-from app.common.settings import CommonSettings
-from app.judge.settings import JudgeSettings
+from app.config.common_settings import CommonSettings
+from app.config.judge_settings import JudgeSettings
 
 
 class TestSettingsIntegration:

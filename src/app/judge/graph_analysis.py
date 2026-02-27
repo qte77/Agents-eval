@@ -22,7 +22,7 @@ from app.data_models.evaluation_models import GraphTraceData, Tier3Result
 from app.utils.log import logger
 
 if TYPE_CHECKING:
-    from app.judge.settings import JudgeSettings
+    from app.config.judge_settings import JudgeSettings
 
 
 class GraphAnalysisEngine:
@@ -589,7 +589,7 @@ def evaluate_single_graph_analysis(
         >>> print(f"Overall score: {result.overall_score:.3f}")
     """
     if settings is None:
-        from app.judge.settings import JudgeSettings
+        from app.config.judge_settings import JudgeSettings
 
         settings = JudgeSettings()
     engine = GraphAnalysisEngine(settings)

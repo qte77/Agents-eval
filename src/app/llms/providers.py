@@ -5,7 +5,8 @@ This module provides pure provider abstraction without business logic.
 Handles API key retrieval, provider configurations, and environment setup.
 """
 
-from app.data_models.app_models import PROVIDER_REGISTRY, AppEnv, ProviderConfig
+from app.config.app_env import AppEnv
+from app.data_models.app_models import PROVIDER_REGISTRY, ProviderConfig
 from app.utils.error_messages import generic_exception, get_key_error
 from app.utils.log import logger
 

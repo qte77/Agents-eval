@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from app.common.settings import CommonSettings
+from app.config.common_settings import CommonSettings
 
 
 def test_common_settings_env_prefix(monkeypatch: pytest.MonkeyPatch):

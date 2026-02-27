@@ -50,6 +50,10 @@ class ReviewPersistence:
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(review_data, f, indent=2, ensure_ascii=False)
 
+        from app.utils.artifact_registry import get_artifact_registry
+
+        get_artifact_registry().register("Review", filepath)
+
         return str(filepath)
 
     def load_review(self, filepath: str) -> tuple[str, PeerReadReview]:

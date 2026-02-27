@@ -1,12 +1,11 @@
 """
-Common module for shared utilities, settings, and models.
+Common module for shared utilities and models.
 
-This module provides shared infrastructure following 12-Factor #3 (Config)
-principles using pydantic-settings for configuration management.
+This module provides shared infrastructure: logging, error messages,
+and common data models used across the application.
 """
 
 from app.common import error_messages
 from app.common.log import logger
-from app.common.settings import CommonSettings
 
-__all__ = ["CommonSettings", "error_messages", "logger"]
+__all__ = ["error_messages", "logger"]

@@ -10,11 +10,11 @@ from unittest.mock import patch
 import pytest
 from inline_snapshot import snapshot
 
-from app.data_models.app_models import AppEnv
-from app.data_models.evaluation_models import Tier1Result, Tier3Result
-from app.judge.composite_scorer import CompositeScorer, EvaluationResults
+from app.config.app_env import AppEnv
+from app.config.judge_settings import JudgeSettings
+from app.data_models.evaluation_models import EvaluationResults, Tier1Result, Tier3Result
+from app.judge.composite_scorer import CompositeScorer
 from app.judge.llm_evaluation_managers import LLMJudgeEngine
-from app.judge.settings import JudgeSettings
 
 
 class TestTier2ProviderFallbackIntegration:

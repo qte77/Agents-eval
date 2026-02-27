@@ -22,7 +22,7 @@ Usage:
     uv run python src/examples/judge_settings_customization.py
 """
 
-from app.judge.settings import JudgeSettings
+from app.config.judge_settings import JudgeSettings
 from app.utils.log import logger
 
 

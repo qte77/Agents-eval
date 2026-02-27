@@ -107,7 +107,11 @@ class TestSystemPromptContainsToolGuidance:
     def test_system_prompt_has_tool_usage_guidance(self):
         """config_chat.json system_prompt_manager should tell the LLM
         to only use paper tools for paper-related queries."""
-        config_path = "src/app/config/config_chat.json"
+        import pathlib
+
+        config_path = (
+            pathlib.Path(__file__).parents[2] / "src" / "app" / "config" / "config_chat.json"
+        )
         with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
 

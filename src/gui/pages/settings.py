@@ -12,9 +12,9 @@ with session state persistence.
 import streamlit as st
 from streamlit import button, checkbox, expander, header, number_input, selectbox, text_input
 
-from app.common.settings import CommonSettings
+from app.config.common_settings import CommonSettings
+from app.config.judge_settings import JudgeSettings
 from app.data_models.app_models import PROVIDER_REGISTRY
-from app.judge.settings import JudgeSettings
 from app.utils.load_configs import load_config
 from app.utils.log import logger
 from app.utils.paths import resolve_config_path

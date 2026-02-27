@@ -34,7 +34,7 @@ def test_weave_import_guard_when_api_key_present():
             (True, "test_wandb_key"),  # WANDB_API_KEY present
         ]
 
-        from app.data_models.app_models import AppEnv
+        from app.config.app_env import AppEnv
         from app.utils.login import login
 
         env = AppEnv()
@@ -58,7 +58,7 @@ def test_weave_not_imported_when_api_key_absent():
             (False, ""),  # WANDB_API_KEY not present
         ]
 
-        from app.data_models.app_models import AppEnv
+        from app.config.app_env import AppEnv
         from app.utils.login import login
 
         env = AppEnv()
@@ -124,7 +124,7 @@ def test_weave_optional_with_arbitrary_project_names(project_name: str):
             (True, "test_key"),  # WANDB_API_KEY
         ]
 
-        from app.data_models.app_models import AppEnv
+        from app.config.app_env import AppEnv
         from app.utils.login import login
 
         env = AppEnv()
@@ -148,7 +148,7 @@ def test_weave_import_guard_property(has_api_key: bool):
             (has_api_key, "test_key" if has_api_key else ""),  # WANDB_API_KEY
         ]
 
-        from app.data_models.app_models import AppEnv
+        from app.config.app_env import AppEnv
         from app.utils.login import login
 
         env = AppEnv()

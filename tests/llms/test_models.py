@@ -12,9 +12,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic_ai.models.openai import OpenAIChatModel
 
+from app.config.app_env import AppEnv
 from app.data_models.app_models import (
     PROVIDER_REGISTRY,
-    AppEnv,
     EndpointConfig,
     ProviderConfig,
 )

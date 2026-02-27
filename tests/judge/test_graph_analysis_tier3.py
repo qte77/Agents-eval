@@ -12,9 +12,9 @@ from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import GraphTraceData
 from app.judge.graph_analysis import GraphAnalysisEngine
-from app.judge.settings import JudgeSettings
 
 
 class TestToolSuccessRateAccumulation:

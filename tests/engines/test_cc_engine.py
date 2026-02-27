@@ -564,3 +564,75 @@ class TestRunCCTeamsProcessGroupKill:
 
             mock_getpgid.assert_called_once_with(12345)
             mock_killpg.assert_called_once_with(12345, signal.SIGTERM)
+
+
+# MARK: --- _sanitize_cc_query (CWE-78 mitigation) ---
+
+
+class TestSanitizeCCQuery:
+    """Tests for _sanitize_cc_query() — input validation before subprocess calls."""
+
+    def test_sanitize_strips_whitespace(self):
+        """_sanitize_cc_query strips leading/trailing whitespace."""
+        from app.engines.cc_engine import _sanitize_cc_query
+
+        assert _sanitize_cc_query("  hello  ") == "hello"
+
+    def test_sanitize_rejects_empty_string(self):
+        """_sanitize_cc_query raises ValueError on empty string."""
+        from app.engines.cc_engine import _sanitize_cc_query
+
+        with pytest.raises(ValueError, match="Query must not be empty"):
+            _sanitize_cc_query("")
+
+    def test_sanitize_rejects_whitespace_only(self):
+        """_sanitize_cc_query raises ValueError on whitespace-only string."""
+        from app.engines.cc_engine import _sanitize_cc_query
+
+        with pytest.raises(ValueError, match="Query must not be empty"):
+            _sanitize_cc_query("   ")
+
+    def test_sanitize_rejects_dash_prefix(self):
+        """_sanitize_cc_query raises ValueError on dash-prefixed query."""
+        from app.engines.cc_engine import _sanitize_cc_query
+
+        with pytest.raises(ValueError, match="must not start with"):
+            _sanitize_cc_query("--dangerously-skip-permissions")
+
+    def test_sanitize_rejects_over_max_length(self):
+        """_sanitize_cc_query raises ValueError when query exceeds max length."""
+        from app.engines.cc_engine import _CC_QUERY_MAX_LENGTH, _sanitize_cc_query
+
+        with pytest.raises(ValueError, match="exceeds maximum"):
+            _sanitize_cc_query("a" * (_CC_QUERY_MAX_LENGTH + 1))
+
+    def test_sanitize_accepts_max_length(self):
+        """_sanitize_cc_query accepts a query at exactly the max length."""
+        from app.engines.cc_engine import _CC_QUERY_MAX_LENGTH, _sanitize_cc_query
+
+        query = "a" * _CC_QUERY_MAX_LENGTH
+        assert _sanitize_cc_query(query) == query
+
+    def test_sanitize_passes_normal_query(self):
+        """_sanitize_cc_query returns normal text unchanged."""
+        from app.engines.cc_engine import _sanitize_cc_query
+
+        assert _sanitize_cc_query("Review this paper") == "Review this paper"
+
+
+class TestSanitizeCCQueryIntegration:
+    """Tests that run_cc_solo and run_cc_teams call _sanitize_cc_query."""
+
+    def test_solo_rejects_empty_query(self):
+        """run_cc_solo raises ValueError on empty query."""
+        from app.engines.cc_engine import run_cc_solo
+
+        with pytest.raises(ValueError, match="Query must not be empty"):
+            run_cc_solo("")
+
+    def test_teams_rejects_empty_query(self):
+        """run_cc_teams raises ValueError on empty query."""
+        from app.engines.cc_engine import run_cc_teams
+
+        with pytest.raises(ValueError, match="Query must not be empty"):
+            run_cc_teams("")

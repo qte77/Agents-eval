@@ -17,7 +17,7 @@ from app.agents.logfire_instrumentation import (
     get_instrumentation_manager,
     initialize_logfire_instrumentation,
 )
-from app.utils.load_configs import LogfireConfig
+from app.config.logfire_config import LogfireConfig
 
 
 @pytest.fixture

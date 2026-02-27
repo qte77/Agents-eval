@@ -134,7 +134,7 @@ def test_end_execution_idempotent_no_warning():
     then the trace_execution decorator calls it again. The second call
     should be a silent no-op, not a misleading warning.
     """
-    from app.judge.settings import JudgeSettings
+    from app.config.judge_settings import JudgeSettings
     from app.judge.trace_processors import TraceCollector
 
     collector = TraceCollector(JudgeSettings())
@@ -236,7 +236,7 @@ async def test_graph_trace_data_constructed_via_model_validate():
         graph_trace = GraphTraceData.model_validate(trace_dict)
         mock_load_trace.return_value = graph_trace
 
-        from app.judge.settings import JudgeSettings
+        from app.config.judge_settings import JudgeSettings
         from app.judge.trace_processors import TraceCollector
 
         collector = TraceCollector(JudgeSettings())

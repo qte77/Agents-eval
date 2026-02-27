@@ -7,7 +7,7 @@ Validates environment variable overrides and helper methods.
 import os
 from unittest.mock import patch
 
-from app.judge.settings import JudgeSettings
+from app.config.judge_settings import JudgeSettings
 
 
 class TestJudgeSettingsEnvOverrides:

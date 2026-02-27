@@ -12,20 +12,14 @@ from hypothesis import given
 from hypothesis import strategies as st
 from pydantic_ai import Agent
 
-from app.data_models.app_models import AppEnv
+from app.config.app_env import AppEnv
+from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import Tier2Result
 from app.judge.llm_evaluation_managers import LLMJudgeEngine
-from app.judge.settings import JudgeSettings
 
 
 @pytest.fixture
-def settings():
-    """Fixture providing JudgeSettings for LLM judge."""
-    return JudgeSettings()
-
-
-@pytest.fixture
-def engine(settings):
+def engine():
     """Fixture providing LLMJudgeEngine instance with controlled environment."""
     env_config = AppEnv(OPENAI_API_KEY="sk-test-key", GITHUB_API_KEY="")
     # Explicitly set openai to test LLM evaluation behavior; default is now "auto"
@@ -542,8 +536,7 @@ class TestStory001AcceptanceCriteria:
     @pytest.mark.asyncio
     async def test_tier2_skip_redistributes_weights_to_other_metrics(self):
         """When Tier 2 skipped, its 3 metrics excluded and weights redistributed (STORY-001)."""
-        from app.data_models.evaluation_models import Tier1Result, Tier3Result
-        from app.judge.composite_scorer import EvaluationResults
+        from app.data_models.evaluation_models import EvaluationResults, Tier1Result, Tier3Result
         from app.judge.evaluation_pipeline import EvaluationPipeline
 
         settings = JudgeSettings(tier2_provider="openai")

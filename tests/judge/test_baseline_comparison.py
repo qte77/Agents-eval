@@ -12,8 +12,8 @@ from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
-from app.data_models.evaluation_models import CompositeResult
-from app.judge.baseline_comparison import BaselineComparison, compare, compare_all
+from app.data_models.evaluation_models import BaselineComparison, CompositeResult
+from app.judge.baseline_comparison import compare, compare_all
 
 
 # Hypothesis strategies for generating valid CompositeResult instances

@@ -3,7 +3,7 @@
 import os
 
 APP_CONFIG_PATH = "app/config"
-PAGES = ["Home", "Settings", "Prompts", "App", "Evaluation Results", "Agent Graph"]
+PAGES = ["Run", "Settings", "Evaluation", "Agent Graph"]
 
 
 def resolve_service_url(port: int) -> str:

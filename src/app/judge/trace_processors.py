@@ -19,7 +19,7 @@ from app.data_models.evaluation_models import GraphTraceData
 from app.utils.log import logger
 
 if TYPE_CHECKING:
-    from app.judge.settings import JudgeSettings
+    from app.config.judge_settings import JudgeSettings
 
 
 @dataclass
@@ -367,6 +367,11 @@ class TraceCollector:
             finally:
                 conn.close()
 
+            # Register trace file with artifact registry
+            from app.utils.artifact_registry import get_artifact_registry
+
+            get_artifact_registry().register("Trace", json_file)
+
             if self.performance_logging:
                 logger.info(
                     f"Stored trace {trace.execution_id}: "
@@ -550,7 +555,7 @@ def get_trace_collector(settings: JudgeSettings | None = None) -> TraceCollector
 
     if _global_collector is None:
         if settings is None:
-            from app.judge.settings import JudgeSettings
+            from app.config.judge_settings import JudgeSettings
 
             settings = JudgeSettings()
         _global_collector = TraceCollector(settings)

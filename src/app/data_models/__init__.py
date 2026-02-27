@@ -13,3 +13,15 @@ Key model categories:
 All models follow Pydantic best practices for validation and serialization,
 ensuring data integrity across the entire evaluation pipeline.
 """
+
+from app.data_models.evaluation_models import (
+    AgentMetrics,
+    BaselineComparison,
+    EvaluationResults,
+)
+
+__all__ = [
+    "AgentMetrics",
+    "BaselineComparison",
+    "EvaluationResults",
+]

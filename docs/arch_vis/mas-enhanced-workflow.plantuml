@@ -53,6 +53,9 @@ note over MainApp
   _run_cc_engine_path() / _run_mas_engine_path().
   CompositeResult.engine_type distinguishes
   "mas", "cc_solo", "cc_teams".
+  Sprint 11: build_cc_query() for default prompts,
+  ArtifactRegistry prints summary at end of run,
+  CC JSONL stream persisted to cc_streams/.
 end note
 
 MainApp -> Evaluator: Evaluate review quality (three-tier pipeline)

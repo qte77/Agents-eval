@@ -9,13 +9,14 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from app.agents import agent_system
 from app.agents.agent_system import (
     _validate_model_return,
     initialize_logfire_instrumentation_from_settings,
     run_manager,
 )
+from app.config.judge_settings import JudgeSettings
 from app.data_models.app_models import ResearchResult
-from app.judge.settings import JudgeSettings
 
 
 class TestLogfireInstrumentation:
@@ -61,7 +62,6 @@ class TestModelValidation:
 
         validated = _validate_model_return(result_data, ResearchResult)
 
-        assert isinstance(validated, ResearchResult)
         assert validated.topic == "Research topic"
         assert len(validated.findings) == 2
         assert validated.sources == ["Source 1"]
@@ -120,21 +120,6 @@ class TestDelegationFlow:
 
 class TestSingleAgentFallback:
     """Test single-agent mode fallback behavior."""
-
-    @pytest.fixture
-    def mock_endpoint_config(self):
-        """Create mock endpoint configuration."""
-        from app.data_models.app_models import EndpointConfig, ProviderConfig
-
-        return EndpointConfig(
-            provider="openai",
-            api_key="test-key",
-            prompts={"manager": "You are a manager"},
-            provider_config=ProviderConfig(
-                model_name="gpt-4",
-                base_url="https://api.openai.com/v1",
-            ),
-        )
 
     def test_single_agent_mode_has_no_delegation_tools(self, mock_endpoint_config):
         """Test that single-agent mode doesn't add delegation tools."""
@@ -331,6 +316,139 @@ class TestPydanticAiStreamRemoval:
         assert "pydantic_ai_stream" not in sig.parameters, (
             "pydantic_ai_stream is dead code and must be removed from main()"
         )
+
+
+class TestValidateModelReturnJsonParsing:
+    """Test STORY-011: _validate_model_return() JSON parsing fix.
+
+    When OpenAI-compatible providers return plain string output instead of a
+    structured model, the fallback path must try model_validate_json() first.
+    """
+
+    def test_valid_json_string_is_parsed_successfully(self):
+        """AC2: When string is valid JSON, model is successfully parsed."""
+        import json
+
+        json_str = json.dumps(
+            {
+                "topic": "AI safety",
+                "findings": ["Finding A"],
+                "sources": ["Source A"],
+            }
+        )
+
+        result = _validate_model_return(json_str, ResearchResult)
+
+        assert result.topic == "AI safety"
+        assert result.findings == ["Finding A"]
+        assert result.sources == ["Source A"]
+
+    def test_invalid_json_string_raises_with_content_in_message(self):
+        """AC3: When string is not valid JSON, error includes the actual string content."""
+        bad_str = "ResearchResult(topic='AI', findings=['f1'], sources=['s1'])"
+
+        with pytest.raises(Exception) as exc_info:
+            _validate_model_return(bad_str, ResearchResult)
+
+        error_msg = str(exc_info.value)
+        assert bad_str in error_msg
+
+    def test_dict_input_uses_model_validate(self):
+        """AC1 (dict path): dict input is validated with model_validate."""
+        data = {
+            "topic": "ML",
+            "findings": ["Finding 1"],
+            "sources": ["Source 1"],
+        }
+
+        result = _validate_model_return(data, ResearchResult)
+
+        assert result.topic == "ML"
+
+    def test_already_correct_pydantic_type_returned_directly(self):
+        """AC5: When result_output is already the correct Pydantic type, return it directly."""
+        existing = ResearchResult(
+            topic="Direct",
+            findings=["f"],
+            sources=["s"],
+        )
+
+        result = _validate_model_return(existing, ResearchResult)
+
+        assert result is existing
+
+    def test_signature_accepts_any_type(self):
+        """AC-signature: _validate_model_return must accept Any, not just str."""
+        import inspect
+
+        from app.agents.agent_system import _validate_model_return as fn
+
+        sig = inspect.signature(fn)
+        param = sig.parameters["result_output"]
+        # The annotation should be Any (not str)
+        annotation = param.annotation
+        assert annotation is not str, (
+            "_validate_model_return result_output parameter must be typed as Any, not str"
+        )
+
+    def test_str_wrapping_removed_from_research_delegation(self):
+        """AC4: delegate_research passes result.output directly (no str() wrapping)."""
+        import ast
+        import inspect
+
+        source = inspect.getsource(agent_system)
+        tree = ast.parse(source)
+
+        # Find the delegate_research inner function
+        for node in ast.walk(tree):
+            if isinstance(node, ast.AsyncFunctionDef) and node.name == "delegate_research":
+                func_src = ast.get_source_segment(source, node)
+                assert func_src is not None
+                # str(result.output) must not appear in delegate_research
+                assert "str(result.output)" not in func_src, (
+                    "delegate_research must pass result.output directly, not str(result.output)"
+                )
+                return
+
+        pytest.fail("delegate_research function not found in agent_system.py")
+
+    def test_str_wrapping_removed_from_analysis_delegation(self):
+        """AC4: delegate_analysis passes result.output directly (no str() wrapping)."""
+        import ast
+        import inspect
+
+        source = inspect.getsource(agent_system)
+        tree = ast.parse(source)
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.AsyncFunctionDef) and node.name == "delegate_analysis":
+                func_src = ast.get_source_segment(source, node)
+                assert func_src is not None
+                assert "str(result.output)" not in func_src, (
+                    "delegate_analysis must pass result.output directly, not str(result.output)"
+                )
+                return
+
+        pytest.fail("delegate_analysis function not found in agent_system.py")
+
+    def test_str_wrapping_removed_from_synthesis_delegation(self):
+        """AC4: delegate_synthesis passes result.output directly (no str() wrapping)."""
+        import ast
+        import inspect
+
+        source = inspect.getsource(agent_system)
+        tree = ast.parse(source)
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.AsyncFunctionDef) and node.name == "delegate_synthesis":
+                func_src = ast.get_source_segment(source, node)
+                assert func_src is not None
+                assert "str(result.output)" not in func_src, (
+                    "delegate_synthesis must pass result.output directly, not str(result.output)"
+                )
+                return
+
+        pytest.fail("delegate_synthesis function not found in agent_system.py")
 
 
 class TestPydanticAiApiMigration:

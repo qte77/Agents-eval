@@ -207,7 +207,7 @@ class TestBaselineComparisonEmptyMetrics:
         comparison = compare(result_a, result_b, "A", "B")
 
         # Should return a valid BaselineComparison
-        from app.judge.baseline_comparison import BaselineComparison
+        from app.data_models.evaluation_models import BaselineComparison
 
         assert isinstance(comparison, BaselineComparison)
         assert comparison.metric_deltas == {}

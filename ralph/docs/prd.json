@@ -1,200 +1,309 @@
 {
-  "project": "Product Requirements Document - Agents-eval Sprint 10",
-  "description": "\"Sprint 10: 6 features — E2E CLI/GUI parity for CC engine (solo + teams), graph visualization for all modes, expanded providers, judge UX, PydanticAI migration, test quality.\"",
-  "source": "PRD.md",
-  "generated": "2026-02-22 13:57:41",
+  "project": "Product Requirements Document - Agents-eval Sprint 12",
+  "description": "Sprint 12 — CC teams mode bug fixes, scoring system fixes, and output directory restructuring. Fix engine_type misclassification, team artifact parsing, 5 evaluation scoring bugs, and consolidate all run artifacts into per-run directories.",
+  "source": "PRD-Sprint12-Ralph.md",
+  "generated": "2026-02-27 04:48:56",
   "stories": [
     {
-      "id": "STORY-010",
-      "title": "Connect all execution modes to the same three-tier evaluation pipeline",
-      "description": "All execution modes (MAS, CC solo, CC teams) must produce comparable evaluation results through the same `evaluate_comprehensive()` call. The evaluation pipeline interface is already engine-agnostic — all three tiers operate on plain strings and dicts, not MAS types:",
+      "id": "STORY-001",
+      "title": "Fix CC teams stream event parsing",
+      "description": "The JSONL stream parser (`parse_stream_json` via `_apply_event`) checks for `\"type\": \"TeamCreate\"` and `\"type\": \"Task\"` events via the `_TEAM_EVENT_TYPES` set (`cc_engine.py:34`). However, CC's actual stream-json output uses `\"type\": \"system\"` with `\"subtype\": \"task_started\"` (and `\"task_type\": \"local_agent\"`) for team sub-agent events. The parser never matches real team events, so `team_artifacts` is always empty in production.",
       "acceptance": [
-        "AC1: `evaluate_comprehensive()` is the sole evaluation entry point for MAS, CC solo, and CC teams — no mode-specific evaluation logic exists outside it",
-        "AC2: CC solo and CC teams produce non-empty `review` text passed to the pipeline (extracted from `CCResult.output_data[\"result\"]`)",
-        "AC3: All modes load `reference_reviews` from PeerRead when `paper_id` is set — Tier 1 scores against actual ground truth, not empty strings",
-        "AC4: CC solo produces a `GraphTraceData` (minimal or from `CCTraceAdapter`); composite scorer detects `single_agent_mode=True` and redistributes `coordination_quality` weight",
-        "AC5: CC teams produces a `GraphTraceData` with `agent_interactions` mapped from `team_artifacts` Task events",
-        "AC6: `run_cc_teams` uses process group kill (`os.killpg`) after timeout — not just `proc.kill()` — to clean up teammate child processes",
-        "AC7: `CompositeResult.engine_type` is set to `\"mas\"`, `\"cc_solo\"`, or `\"cc_teams\"` for all results",
-        "AC8: CLI `--engine=cc` does NOT run the MAS pipeline — `_run_agent_execution()` is not called",
-        "AC9: GUI \"Claude Code\" radio invokes CC engine, not MAS; a \"CC Teams\" checkbox appears when CC is selected",
-        "AC10: For the same `paper_id`, MAS and CC Tier 1 scores use identical `reference_reviews` (same ground truth)",
-        "AC11: All existing MAS tests continue to pass; new tests cover the CC path (solo and teams)",
-        "AC12: `make validate` passes with no regressions",
-        "**Capture CC review text**: Add `\"result\"` to `_RESULT_KEYS` in `cc_engine.py:85` so `cc_result.output_data[\"result\"]` contains the review text. Add `extract_cc_review_text(cc_result) -> str` helper",
-        "**Build `GraphTraceData` from CC artifacts**: Add `cc_result_to_graph_trace(cc_result) -> GraphTraceData` that maps `team_artifacts` Task/TeamCreate events to `agent_interactions`, `tool_calls`, and `coordination_events`. CC solo: minimal `GraphTraceData(execution_id=cc_result.execution_id)` with empty lists — `CompositeScorer._detect_single_agent_mode()` already redistributes `coordination_quality` weight. CC teams: `Task.owner` -> delegation interactions, completed tasks -> `tool_calls`, `TeamCreate` -> `coordination_events`",
-        "**Load reference reviews for all modes**: In `evaluation_runner.py`, before `evaluate_comprehensive()`, load from PeerRead: `paper.reviews[*].comments` when `paper_id` is set. This fixes the existing bug for ALL modes (MAS included)",
-        "**Add `engine_type` to `CompositeResult`**: `engine_type: str = Field(default=\"mas\")` — enables downstream consumers to know the source engine. Backward-compatible default",
-        "**Wire `main()` to branch on engine**: Add `cc_result: CCResult | None = None` param. When `engine == \"cc\"`: skip `_run_agent_execution()` entirely, extract review text via `extract_cc_review_text()`, build `GraphTraceData` via `cc_result_to_graph_trace()`, load paper content + reference reviews from PeerRead, call `evaluate_comprehensive()` with same 4 parameters as MAS, build `nx.DiGraph` via `build_interaction_graph()`",
-        "**Fix CLI wiring**: Pass `engine` and `cc_result` explicitly to `main()`: `run(main(**args, engine=engine, cc_result=cc_result))`. Remove pattern where CC runs first then MAS runs anyway",
-        "**Fix GUI wiring**: In `_execute_query_background()`, add CC branch that calls `run_cc_solo()` / `run_cc_teams()` before calling `main()` with `cc_result`. Add CC teams checkbox visible when engine is CC",
-        "**Fix `run_cc_teams` timeout**: Use `start_new_session=True` + `os.killpg(os.getpgid(proc.pid), signal.SIGTERM)` then `proc.kill()` to clean up teammate child processes",
-        "Mock `subprocess.run` and `subprocess.Popen` in tests — never call real `claude` CLI"
+        "AC1: `_apply_event` captures `\"type\": \"system\", \"subtype\": \"task_started\"` events as team artifacts",
+        "AC2: `_apply_event` captures `\"type\": \"system\", \"subtype\": \"task_completed\"` events as team artifacts",
+        "AC3: `_TEAM_EVENT_TYPES` is removed or updated to reflect actual CC stream event types",
+        "AC4: Existing `\"type\": \"system\", \"subtype\": \"init\"` handling is not broken (init events must NOT be captured as team artifacts)",
+        "AC5: `parse_stream_json` returns populated `team_artifacts` when given a real CC teams stream",
+        "AC6: `make validate` passes with no regressions",
+        "Update `_apply_event()` in `cc_engine.py` to detect team events by `type == \"system\"` AND `subtype in {\"task_started\", \"task_completed\"}` instead of checking `_TEAM_EVENT_TYPES`",
+        "Remove or repurpose `_TEAM_EVENT_TYPES` constant — the old values (`\"TeamCreate\"`, `\"Task\"`) do not appear in real CC output",
+        "Keep the existing `init` event handler (`type == \"system\" and subtype == \"init\"`) — it must take priority over the new team artifact handler",
+        "Order of checks in `_apply_event`: (1) init event, (2) result event, (3) team task events"
       ],
       "files": [
         "src/app/engines/cc_engine.py",
-        "src/app/data_models/evaluation_models.py",
-        "src/app/judge/evaluation_runner.py",
+        "tests/engines/test_cc_engine.py"
+      ],
+      "status": "in_progress",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "b0b75acf09fcabe32a94636c0b2cd0a5f500ab4f2b45bfba9a2382c818c5b292",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-002",
+      "title": "Pass `cc_teams` flag through to `engine_type` assignment",
+      "description": "`engine_type` is set at `app.py:262` based on whether `cc_result.team_artifacts` is non-empty: `\"cc_teams\" if cc_result.team_artifacts else \"cc_solo\"`. This is fragile — if CC runs in teams mode but emits no parseable team events (Bug 1, or a short run), `engine_type` is wrong. The user's explicit `cc_teams` flag is the source of truth for mode selection but is consumed in CLI (`run_cli.py:115`) and GUI (`run_app.py:331`) and never forwarded to `main()` or `_run_cc_engine_path()`.",
+      "acceptance": [
+        "AC1: `main()` accepts a `cc_teams: bool = False` parameter",
+        "AC2: `_run_cc_engine_path()` accepts a `cc_teams: bool` parameter",
+        "AC3: `engine_type` is set from `cc_teams` flag: `\"cc_teams\" if cc_teams else \"cc_solo\"` (not from `team_artifacts`)",
+        "AC4: CLI (`run_cli.py`) passes `cc_teams` to `main()`",
+        "AC5: GUI (`run_app.py:_execute_query_background`) passes `cc_teams` to `main()`",
+        "AC6: When `cc_teams=True` and `team_artifacts` is empty, `engine_type` is still `\"cc_teams\"`",
+        "AC7: When `cc_teams=False`, `engine_type` is `\"cc_solo\"` regardless of `team_artifacts` content",
+        "AC8: `make validate` passes with no regressions",
+        "Add `cc_teams: bool = False` parameter to `main()` signature (`app.py:334`)",
+        "Add `cc_teams: bool` parameter to `_run_cc_engine_path()` signature (`app.py:218`)",
+        "Change `app.py:262` from `\"cc_teams\" if cc_result.team_artifacts else \"cc_solo\"` to `\"cc_teams\" if cc_teams else \"cc_solo\"`",
+        "CLI fix (`run_cli.py:149`): pass `cc_teams=cc_teams` to `main()` call",
+        "GUI fix (`run_app.py:334`): pass `cc_teams=cc_teams` to `main()` call",
+        "Forward `cc_teams` from `main()` to `_run_cc_engine_path()` at the CC branch call site"
+      ],
+      "files": [
         "src/app/app.py",
         "src/run_cli.py",
         "src/gui/pages/run_app.py",
-        "tests/engines/test_cc_engine.py",
-        "tests/cli/test_cc_engine_wiring.py",
-        "tests/judge/test_evaluation_runner.py"
+        "tests/cli/test_cc_engine_wiring.py"
       ],
-      "status": "passed",
-      "wave": 1,
-      "completed_at": "2026-02-22T14:01:25Z",
-      "content_hash": "677e6f39cc431e68a755182cde7c16a454617b377e50ce136fc322e097263d9e",
-      "depends_on": []
-    },
-    {
-      "id": "STORY-011",
-      "title": "Graph visualization polish for all execution modes",
-      "description": "Feature 1 builds `GraphTraceData` and `nx.DiGraph` for CC runs. This feature handles the visualization layer: the Agent Graph page must distinguish between no-execution-yet, empty graph (CC solo), and populated graph (MAS or CC teams). CC Tier 3 graph metrics need \"informational\" labeling since they aren't comparable to MAS scores. `CCResult.team_artifacts` already retains parsed events from the JSONL stream (per `cc_engine.py:111-112`).",
-      "acceptance": [
-        "AC1: CC solo produces an `nx.DiGraph` (may be minimal — single node) displayed on Agent Graph page",
-        "AC2: CC teams produces an `nx.DiGraph` showing team member nodes and delegation edges",
-        "AC3: Empty graphs (0 nodes, 0 edges) display a descriptive warning (e.g., \"CC solo mode — no agent interactions to display\") instead of generic \"No agent interaction data available\"",
-        "AC4: MAS graph visualization continues to work unchanged",
-        "AC5: Tier 3 graph metrics from CC runs are labeled \"informational — not comparable to MAS scores\" in evaluation display",
-        "AC6: `make validate` passes with no regressions",
-        "In `agent_graph.py`: distinguish between `graph is None` (no execution yet), empty graph (execution produced no interactions — show mode-specific message using `CompositeResult.engine_type`), and populated graph",
-        "For Tier 3 metrics on CC runs: when `engine_type` starts with `\"cc\"`, prefix metric labels with \"Informational\" in evaluation display",
-        "Graph building itself is handled by Feature 1 (`cc_result_to_graph_trace()` + `build_interaction_graph()`)"
-      ],
-      "files": [
-        "src/gui/pages/agent_graph.py",
-        "src/gui/pages/evaluation_results.py",
-        "tests/test_gui/test_agent_graph.py"
-      ],
-      "status": "passed",
+      "status": "pending",
       "wave": 2,
-      "completed_at": "2026-02-22T14:01:59Z",
-      "content_hash": "3c3a6648868d6789cae0f3ffeffbd05ba95668d421d3c46d980346440342c974",
+      "completed_at": null,
+      "content_hash": "c3dcbf6f5bcfc7452d7a87e8566cb53291228f40d91cff611fac05ee66f87d23",
       "depends_on": [
-        "STORY-010"
+        "STORY-001"
       ]
     },
     {
-      "id": "STORY-012",
-      "title": "Expand inference provider registry and update stale models",
-      "description": "The current `PROVIDER_REGISTRY` has 12 providers but is missing many popular OpenAI-compatible inference providers. Key omissions: Groq, Fireworks AI, DeepSeek, Mistral, SambaNova, Nebius, Cohere. The `anthropic` provider entry falls through to the generic `OpenAIChatModel` handler in `create_llm_model()` instead of using PydanticAI's native Anthropic support. Several existing `config_chat.json` entries have stale/deprecated model IDs -- two are live bugs: `huggingface` uses `facebook/bart-large-mnli` (a classification model, not chat -- will fail immediately) and `together` uses `Llama-3.3-70B-Instruct-Turbo-Free` (removed Jul 2025 -- will fail silently). Multiple `max_content_length` values are wrong (e.g., `cerebras` says 8192 but `gpt-oss-120b` has 128K context; `grok` says 15000 but should be 131K). Values must reflect the maximum token usage allowed on each provider's free tier before requests get blocked. See [Inference-Providers.md](../analysis/Inference-Providers.md) for the full provider analysis.",
+      "id": "STORY-003",
+      "title": "Skip Tier 3 for empty trace data",
+      "description": "When `GraphTraceData` has empty `tool_calls` and empty `agent_interactions` (e.g., CC solo runs with no trace artifacts), `evaluate_graph_metrics` returns an all-zero `Tier3Result`. This non-None result bypasses the fallback strategy (`_apply_fallback_strategy`), silently penalizing the composite score by 0.334 (two metrics × 0.167 weight). The fix: return `None` from `_execute_tier3` when trace data is empty, triggering the existing `tier1_only` fallback which creates neutral 0.5 scores.",
       "acceptance": [
-        "AC1: `PROVIDER_REGISTRY` includes the following new providers: `groq`, `fireworks`, `deepseek`, `mistral`, `sambanova`, `nebius`, `cohere`",
-        "AC2: Each new provider has correct `env_key`, `base_url`, and `model_name_prefix` in `PROVIDER_REGISTRY`",
-        "AC3: Each new provider has a matching entry in `config_chat.json` with best free-tier model and correct `max_content_length`",
-        "AC4: Live bug fixed: `huggingface` model updated from `facebook/bart-large-mnli` (classification, not chat) to `meta-llama/Meta-Llama-3.3-70B-Instruct`",
-        "AC5: Live bug fixed: `together` model updated from removed `Llama-3.3-70B-Instruct-Turbo-Free` to `meta-llama/Llama-3.3-70B-Instruct-Turbo`",
-        "AC6: Existing stale `config_chat.json` entries updated to current models: `gemini-2.0-flash`, `gpt-4.1-mini` (openai + github), `grok-3-mini`, `claude-sonnet-4-20250514`, `qwen/qwen3-next-80b-a3b-instruct:free` (openrouter), `llama3.3:latest` (ollama)",
-        "AC7: `max_content_length` in `config_chat.json` reflects the maximum token usage allowed on each provider's free tier before requests get rate-limited or blocked (per [Inference-Providers.md](../analysis/Inference-Providers.md) \"Key Limit\" column)",
-        "AC8: `create_llm_model()` handles `anthropic` provider using PydanticAI's native `AnthropicModel` instead of the generic OpenAI-compatible fallback",
-        "AC9: `create_llm_model()` handles `groq` with `OpenAIModelProfile(openai_supports_strict_tool_definition=False)` (same as existing `cerebras` handling)",
-        "AC10: GUI Settings page provider dropdown automatically includes all new providers (already dynamic from `PROVIDER_REGISTRY.keys()`)",
-        "AC11: CLI `--chat-provider` accepts all new provider names and validates against `PROVIDER_REGISTRY` at argument parsing time",
+        "AC1: `_execute_tier3` returns `(None, 0.0)` when `GraphTraceData` has empty `tool_calls` AND empty `agent_interactions`",
+        "AC2: A log message at INFO level is emitted when Tier 3 is skipped due to empty trace",
+        "AC3: `performance_monitor.record_tier_execution(3, 0.0)` is called for the skip case",
+        "AC4: Existing Tier 3 behavior is unchanged when trace data has tool_calls or agent_interactions",
+        "AC5: The `tier1_only` fallback strategy creates neutral Tier 3 result (0.5 scores) when Tier 3 returns None",
+        "AC6: `make validate` passes with no regressions",
+        "In `_execute_tier3` (`evaluation_pipeline.py:323`), after `trace_data = self._create_trace_data(execution_trace)`, add early return guard checking `not trace_data.tool_calls and not trace_data.agent_interactions`",
+        "Record tier execution with 0.0 time before returning to keep performance stats consistent",
+        "The existing `_apply_fallback_strategy` (`evaluation_pipeline.py:369`) already handles `results.tier3 is None` by creating a `Tier3Result` with 0.5 scores — no changes needed there"
+      ],
+      "files": [
+        "src/app/judge/evaluation_pipeline.py",
+        "tests/evals/test_evaluation_pipeline.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "d727c1609790fb198b928636da56e768642af9cd17848d3020369a23991001ba",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-004",
+      "title": "Wire `evaluate_composite_with_trace` into production",
+      "description": "`CompositeScorer.evaluate_composite_with_trace` detects single-agent mode from `GraphTraceData` and redistributes `coordination_quality` weight to remaining metrics. However, it is never called from production code — `_generate_composite_score` only calls `evaluate_composite` or `evaluate_composite_with_optional_tier2`. This means CC solo runs (and any single-agent execution) never benefit from weight redistribution, and `coordination_quality=0` silently penalizes the composite score.",
+      "acceptance": [
+        "AC1: `_generate_composite_score` accepts an optional `trace_data: GraphTraceData | None` parameter",
+        "AC2: When `trace_data` is provided and `results.is_complete()`, `evaluate_composite_with_trace` is called",
+        "AC3: When `trace_data` is None, existing routing to `evaluate_composite` / `evaluate_composite_with_optional_tier2` is preserved",
+        "AC4: `evaluate_comprehensive` retains the `GraphTraceData` object and passes it to `_generate_composite_score`",
+        "AC5: CC solo runs with empty `agent_interactions` trigger single-agent detection and weight redistribution",
+        "AC6: `make validate` passes with no regressions",
+        "In `evaluate_comprehensive` (`evaluation_pipeline.py:476`), retain a `GraphTraceData` reference when converting `execution_trace` to dict — currently the object is discarded after conversion",
+        "Add `trace_data: GraphTraceData | None = None` parameter to `_generate_composite_score` (`evaluation_pipeline.py:279`)",
+        "New routing: if `trace_data is not None and results.is_complete()` → call `self.composite_scorer.evaluate_composite_with_trace(results, trace_data)`; otherwise fall through to existing logic",
+        "`evaluate_composite_with_trace` already handles both single-agent and multi-agent cases internally (`composite_scorer.py:456-517`)"
+      ],
+      "files": [
+        "src/app/judge/evaluation_pipeline.py",
+        "tests/evals/test_evaluation_pipeline.py",
+        "tests/evals/test_composite_scorer.py"
+      ],
+      "status": "pending",
+      "wave": 2,
+      "completed_at": null,
+      "content_hash": "73d748e7018702d7f0ea38610185eb1c9cad06e62cf3fe162c92e54da283cfc1",
+      "depends_on": [
+        "STORY-003"
+      ]
+    },
+    {
+      "id": "STORY-005",
+      "title": "Propagate actual execution timestamps to `time_taken`",
+      "description": "`time_taken` is always ~0.999 because `_execute_tier1` captures `start_evaluation = time.time()` and immediately passes `time.time()` as `end_time` — both timestamps are microseconds apart. The `measure_execution_time` formula `exp(-duration)` then returns `exp(~0) ≈ 0.999`. The actual agent execution (e.g., CC solo ran for 158 seconds) is never measured or propagated. The fix: capture wall-clock timestamps around the subprocess/agent execution and propagate them through the pipeline to `_execute_tier1`.",
+      "acceptance": [
+        "AC1: `CCResult` has `start_time: float` and `end_time: float` fields",
+        "AC2: `run_cc_solo` captures `time.time()` before and after `subprocess.run()` and stores on `CCResult`",
+        "AC3: `run_cc_teams` captures `time.time()` before and after `Popen` block and stores on `CCResult`",
+        "AC4: `run_evaluation_if_enabled` accepts `execution_start_time: float = 0.0` and `execution_end_time: float = 0.0`",
+        "AC5: `evaluate_comprehensive` accepts and forwards `execution_start_time`/`execution_end_time` to `_execute_tier1`",
+        "AC6: `_execute_tier1` uses external timestamps when non-zero, falls back to `time.time()` when zero",
+        "AC7: MAS engine path captures timing around `run_manager()` and passes to evaluation",
+        "AC8: CC engine path extracts `cc_result.start_time`/`cc_result.end_time` and passes to evaluation",
+        "AC9: `make validate` passes with no regressions",
+        "Add `start_time: float = Field(default=0.0)` and `end_time: float = Field(default=0.0)` to `CCResult` (`cc_engine.py:67-87`)",
+        "Wrap `subprocess.run()` in `run_cc_solo` (`cc_engine.py:~380`) with `time.time()` before/after",
+        "Wrap `Popen` block in `run_cc_teams` (`cc_engine.py:~440`) with `time.time()` before/after; set `start_time`/`end_time` on `CCResult` after construction",
+        "Add `execution_start_time: float = 0.0` and `execution_end_time: float = 0.0` to `run_evaluation_if_enabled` (`evaluation_runner.py:115`); forward to `pipeline.evaluate_comprehensive`",
+        "Add same params to `evaluate_comprehensive` (`evaluation_pipeline.py:476`) and `_execute_tier1` (`evaluation_pipeline.py:138`)",
+        "In `_execute_tier1`, replace `start_evaluation = time.time()` / `time.time()` with external timestamps when non-zero",
+        "In `_run_cc_engine_path` (`app.py:218`): pass `cc_result.start_time`/`cc_result.end_time`",
+        "In `_run_mas_engine_path` (`app.py:266`): wrap `run_manager()` with `time.time()` before/after"
+      ],
+      "files": [
+        "src/app/engines/cc_engine.py",
+        "src/app/app.py",
+        "src/app/judge/evaluation_runner.py",
+        "src/app/judge/evaluation_pipeline.py",
+        "tests/evals/test_evaluation_pipeline.py",
+        "tests/judge/test_evaluation_runner.py",
+        "tests/engines/test_cc_engine.py"
+      ],
+      "status": "pending",
+      "wave": 3,
+      "completed_at": null,
+      "content_hash": "29b0dc7646dd747c811f75940b9d1cdeeb16c2aee1fec08c6dacc98b3a622a6a",
+      "depends_on": [
+        "STORY-004"
+      ]
+    },
+    {
+      "id": "STORY-006",
+      "title": "Deduplicate `semantic_score` from `cosine_score`",
+      "description": "`compute_semantic_similarity` (`traditional_metrics.py:218`) delegates to `compute_cosine_similarity` because BERTScore is disabled due to build issues. This means `semantic_score == cosine_score` always, giving cosine 0.7 effective weight in the Tier 1 formula (`0.4 × semantic + 0.3 × cosine`) while Jaccard gets only 0.2. The fix: use Levenshtein similarity (already available via `textdistance` in `pyproject.toml`, with `compute_levenshtein_similarity` already implemented in the same class) as the semantic fallback. This provides a distinct character-level sequence similarity signal.",
+      "acceptance": [
+        "AC1: `compute_semantic_similarity` delegates to `compute_levenshtein_similarity` instead of `compute_cosine_similarity`",
+        "AC2: `semantic_score` and `cosine_score` produce different values for non-identical texts",
+        "AC3: `semantic_score` returns 1.0 for identical texts and 0.0 for empty-vs-nonempty texts",
+        "AC4: `Tier1Result.semantic_score` field description updated to reflect Levenshtein-based calculation",
+        "AC5: No new dependencies added — uses existing `textdistance` library",
+        "AC6: `make validate` passes with no regressions",
+        "In `compute_semantic_similarity` (`traditional_metrics.py:218`), change `return self.compute_cosine_similarity(text1, text2)` to `return self.compute_levenshtein_similarity(text1, text2)`",
+        "Update the method's docstring and log message to say \"Levenshtein\" not \"cosine similarity fallback\"",
+        "In `evaluation_models.py`, update `Tier1Result.semantic_score` field description from \"BERT-based\" to \"Levenshtein-based sequence similarity (BERTScore disabled)\"",
+        "`compute_levenshtein_similarity` already exists at `traditional_metrics.py:190` with its own fallback chain"
+      ],
+      "files": [
+        "src/app/judge/traditional_metrics.py",
+        "src/app/data_models/evaluation_models.py",
+        "tests/evals/test_traditional_metrics.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "aa72dd6a7a1de170eb8a35070361630be48fb826fff7d3c46ae3d8231790d49d",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-007",
+      "title": "Replace binary `task_success` with continuous score",
+      "description": "`assess_task_success` (`traditional_metrics.py:256`) returns exactly 1.0 or 0.0 based on whether weighted similarity meets the 0.8 threshold. For generative review tasks where typical text similarity ranges 0.3–0.6, this almost always returns 0.0, providing zero useful signal in the composite score. The fix: use proportional credit `min(1.0, similarity / threshold)` which gives linear gradient below threshold and full credit at/above threshold.",
+      "acceptance": [
+        "AC1: `assess_task_success` returns continuous float in `[0.0, 1.0]` instead of binary `{0.0, 1.0}`",
+        "AC2: When weighted similarity >= threshold, returns 1.0",
+        "AC3: When weighted similarity < threshold, returns `weighted_similarity / threshold` (proportional credit)",
+        "AC4: When weighted similarity is 0.0, returns 0.0",
+        "AC5: When threshold is 0.0, returns 0.0 (avoid division by zero)",
+        "AC6: `make validate` passes with no regressions",
+        "In `assess_task_success` (`traditional_metrics.py:256`), replace `return 1.0 if overall_similarity >= threshold else 0.0` with `return min(1.0, overall_similarity / threshold) if threshold > 0.0 else 0.0`",
+        "Update the method's docstring to document continuous scoring behavior",
+        "No config changes — the 0.8 threshold still represents \"full credit\" target; the change is in how sub-threshold scores are handled"
+      ],
+      "files": [
+        "src/app/judge/traditional_metrics.py",
+        "tests/evals/test_traditional_metrics.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "932b300e631439028ad1fc5984f00548307d3038324d92427d6b3500bd2ba3d3",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-008",
+      "title": "Introduce `RunContext` and per-run directory infrastructure",
+      "description": "Create a `RunContext` dataclass that owns the per-run output directory. It is created at the start of each `main()` invocation with the run's engine type, paper ID, and execution ID. It creates `output/runs/{YYYYMMDD_HHMMSS}_{engine}_{paper_id}_{exec_id_8}/`, writes `metadata.json`, and exposes path helpers (`stream_path`, `trace_path`, `review_path`, `report_path`, `evaluation_path`). Replace legacy path constants in `config_app.py` with single `OUTPUT_PATH`. Adopt unified timestamp format `%Y%m%dT%H%M%S` everywhere.",
+      "acceptance": [
+        "AC1: `RunContext` dataclass exists with fields: `engine_type`, `paper_id`, `execution_id`, `start_time`, `run_dir` (Path)",
+        "AC2: `RunContext.create(engine_type, paper_id, execution_id)` creates the directory `output/runs/{YYYYMMDD_HHMMSS}_{engine}_{paper_id}_{exec_id_8}/` and writes `metadata.json`",
+        "AC3: `metadata.json` contains: `engine_type`, `paper_id`, `execution_id`, `start_time` (ISO), `cli_args` (optional dict)",
+        "AC4: Path helpers return correct filenames: `stream_path` → `stream.json`/`stream.jsonl` (based on engine_type), `trace_path` → `trace.jsonl`, `review_path` → `review.json`, `report_path` → `report.md`, `evaluation_path` → `evaluation.json`",
+        "AC5: `OUTPUT_PATH = \"output\"` constant added to `config_app.py`",
+        "AC6: Legacy constants `CC_STREAMS_PATH`, `MAS_REVIEWS_PATH`, `RESULTS_PATH` removed from `config_app.py`",
+        "AC7: `LOGS_PATH` (Loguru logs) and `LOGS_BASE_PATH` remain unchanged — application logs are not per-run",
+        "AC8: `JudgeSettings.trace_storage_path` default changed from `logs/Agent_evals/traces` to `output/runs` (fallback when `run_dir` is None)",
+        "AC9: `main()` creates `RunContext` after engine execution completes (once `execution_id` is known) and passes it to evaluation and writer paths",
+        "AC10: `output/` added to `.gitignore` (`results/` entry kept for existing artifacts)",
+        "AC11: `make validate` passes with no regressions"
+      ],
+      "files": [
+        "src/app/utils/run_context.py",
+        "src/app/config/config_app.py",
+        "src/app/config/judge_settings.py",
+        "src/app/app.py",
+        "src/gui/pages/evaluation.py",
+        ".gitignore",
+        "tests/utils/test_run_context.py"
+      ],
+      "status": "pending",
+      "wave": 1,
+      "completed_at": null,
+      "content_hash": "a73dbb2bfb15428c3abee1efeb60563d5ea17fccaedb0ed5948c02897eb010ab",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-009",
+      "title": "Migrate all writers to per-run directories",
+      "description": "Update all 6 file writers to use `RunContext` path helpers instead of constructing paths from legacy constants. Each writer receives `RunContext` (or `run_dir: Path`) and writes to the run directory. Remove timestamp generation from individual writers — `RunContext` owns the timestamp. Remove `CC_STREAMS_PATH` usage from `cc_engine.py`, `LOGS_BASE_PATH/traces` from `trace_processors.py`, `MAS_REVIEWS_PATH` from `review_persistence.py`, and hardcoded `results/reports` from `run_cli.py`.",
+      "acceptance": [
+        "AC1: `run_cc_solo` writes stream to `run_context.stream_path` instead of `cc_streams/cc_solo_{exec_id}_{ts}.json`",
+        "AC2: `run_cc_teams` writes stream to `run_context.stream_path` instead of `cc_streams/cc_teams_{exec_id}_{ts}.jsonl`",
+        "AC3: `TraceCollector._store_trace()` writes to `run_context.trace_path` instead of `traces/trace_{exec_id}_{ts}.jsonl`",
+        "AC4: `ReviewPersistence.save_review()` writes to `run_context.review_path` instead of `MAS_reviews/{paper_id}_{ts}.json`",
+        "AC5: CLI report save writes to `run_context.report_path` instead of `results/reports/{ts}.md`",
+        "AC6: `traces.db` SQLite database writes to `output/runs/traces.db` (shared across runs, not per-run)",
+        "AC7: `review_loader.py` deleted — dead code (no imports in `src/`, no tests), references removed `MAS_REVIEWS_PATH`",
+        "AC8: No code references `CC_STREAMS_PATH`, `MAS_REVIEWS_PATH`, `RESULTS_PATH`, or `LOGS_BASE_PATH/traces` for file writes",
+        "AC9: `ArtifactRegistry` entries point to new per-run paths",
+        "AC10: Sweep runner default `output_dir` changed from `results/sweeps/{ts}` to `output/sweeps/{ts}`",
+        "AC11: `--output-dir` CLI override on `run_sweep.py` still works",
         "AC12: `make validate` passes with no regressions"
       ],
       "files": [
-        "src/app/data_models/app_models.py",
-        "src/app/llms/models.py",
-        "src/app/config/config_chat.json",
+        "src/app/engines/cc_engine.py",
+        "src/app/judge/trace_processors.py",
+        "src/app/data_utils/review_persistence.py",
+        "src/app/data_utils/review_loader.py",
         "src/run_cli.py",
-        "tests/llms/test_models.py"
+        "src/app/app.py",
+        "src/app/benchmark/sweep_runner.py",
+        "src/run_sweep.py",
+        "tests/engines/test_cc_engine.py",
+        "tests/judge/test_trace_processors.py",
+        "tests/data_utils/test_review_persistence.py"
       ],
-      "status": "passed",
-      "wave": 1,
-      "completed_at": "2026-02-22T15:05:42Z",
-      "content_hash": "39ea0dc3a3a21688669abae679b0aaec8e4b4d912332def2afabf84b8bb4e101",
-      "depends_on": []
-    },
-    {
-      "id": "STORY-013",
-      "title": "Judge auto mode -- conditional settings display",
-      "description": "When `tier2_provider` is set to `\"auto\"` in the GUI Settings page, the downstream Tier 2 LLM Judge controls (model, fallback provider, fallback model, fallback strategy, timeout) are still displayed. Since \"auto\" delegates provider selection to the runtime, these manual overrides are confusing and logically redundant. They should be hidden when \"auto\" is selected.",
-      "acceptance": [
-        "AC1: When `tier2_provider` is `\"auto\"`, the following controls are hidden: primary model selectbox, fallback provider, fallback model, fallback strategy",
-        "AC2: When `tier2_provider` is changed from `\"auto\"` to a specific provider, the hidden controls reappear immediately",
-        "AC3: Timeout and cost budget controls remain visible regardless of provider selection (they apply to all modes)",
-        "AC4: Session state values for hidden controls retain their defaults (not cleared when hidden)",
-        "AC5: `make validate` passes with no regressions",
-        "In `_render_tier2_llm_judge()` in `settings.py`, wrap the model/fallback controls in `if selected_provider != \"auto\":` conditional",
-        "Keep `tier2_timeout_seconds` and `tier2_cost_budget_usd` outside the conditional -- they apply regardless",
-        "Ensure `_build_judge_settings_from_session()` in `run_app.py` still constructs a valid `JudgeSettings` when auto is selected (fields use defaults from the model)"
-      ],
-      "files": [
-        "src/gui/pages/settings.py",
-        "tests/test_gui/test_settings_judge_auto.py"
-      ],
-      "status": "passed",
-      "wave": 1,
-      "completed_at": "2026-02-22T15:05:47Z",
-      "content_hash": "9ffd217007bc28c171c7a9327ebea7bf8d8e2723aed355fd1bb51ab118bcb6f4",
-      "depends_on": []
-    },
-    {
-      "id": "STORY-014",
-      "title": "PydanticAI API migration",
-      "description": "`agent_system.py:543-551` uses the deprecated `manager.run()` PydanticAI API with 3 FIXME markers and broad `type: ignore` directives (`reportDeprecated`, `reportUnknownArgumentType`, `reportCallOverload`, `call-overload`). The `result.usage()` call also requires `type: ignore`. Additionally, `RunContext` may be deprecated in the installed PydanticAI version (Review F6), and `_model_name` private attribute access at `agent_system.py:537` should use the public `model_name` API (Review F23). Migrate all three patterns in one pass.",
-      "acceptance": [
-        "AC1: `manager.run()` replaced with current PydanticAI API (non-deprecated call)",
-        "AC2: All `type: ignore` comments on lines 548 and 551 removed -- pyright passes cleanly",
-        "AC3: All 3 FIXME comments (lines 543-544, 550) removed",
-        "AC4: Agent execution produces identical results (same `execution_id`, same `result.output`)",
-        "AC5: `RunContext` verified against installed PydanticAI version; updated to current name (e.g., `AgentRunContext`) if deprecated (Review F6)",
-        "AC6: `_model_name` private attribute access replaced with public `model_name` API (Review F23)",
-        "AC7: `make validate` passes with no new type errors or test failures",
-        "Research current PydanticAI `Agent.run()` signature and migrate `mgr_cfg` dict unpacking accordingly",
-        "Verify `result.usage()` return type is properly typed after migration",
-        "Verify `RunContext` deprecation status: `python -c \"from pydantic_ai import RunContext; print(RunContext)\"`. If deprecated, update all tool function signatures in `agent_system.py` and `peerread_tools.py`",
-        "Replace `getattr(manager, \"model\")._model_name` with `getattr(manager, \"model\").model_name` (public attribute) with fallback to `\"unknown\"`",
-        "Preserve `trace_collector` start/end calls and error handling structure",
-        "Mock PydanticAI agent in tests -- never call real LLM providers"
-      ],
-      "files": [
-        "src/app/agents/agent_system.py",
-        "src/app/tools/peerread_tools.py",
-        "tests/agents/test_agent_system.py"
-      ],
-      "status": "passed",
-      "wave": 2,
-      "completed_at": "2026-02-22T15:17:36Z",
-      "content_hash": "23a6f0f85dc97651a94291727c2098dd0ca4eea51d3862a4644b8f4de3d9929e",
+      "status": "pending",
+      "wave": 4,
+      "completed_at": null,
+      "content_hash": "216a4f796df83cca6197d52c09fa90dce36267e6e901e0b0f0cf8dd761ab5ceb",
       "depends_on": [
-        "STORY-010",
-        "STORY-012"
+        "STORY-008",
+        "STORY-005"
       ]
     },
     {
-      "id": "STORY-015",
-      "title": "Replace inspect.getsource tests with behavioral tests",
-      "description": "Six test files use `inspect.getsource(module)` then assert string presence (e.g., `'engine != \"cc\"' in source`). This pattern breaks on code reformatting, passes if the string appears anywhere in source, and couples tests to implementation rather than behavior. Identified as a top-3 anti-pattern by prevalence in the tests parallel review (H5, H6, M14, M15 -- ~20 occurrences across 6 files).",
+      "id": "STORY-010",
+      "title": "Persist evaluation results to `evaluation.json`",
+      "description": "Evaluation pipeline results are currently returned in-memory and never written to disk (except indirectly via sweep `results.json`). With per-run directories, write the composite evaluation result to `run_dir/evaluation.json` after `evaluate_comprehensive` completes. This makes each run fully self-contained: stream/trace + review + evaluation + report all in one directory.",
       "acceptance": [
-        "AC1: `tests/utils/test_weave_optional.py` -- `inspect.getsource` replaced with behavioral test: import module with weave absent, verify `op()` is a callable no-op decorator (tests-review H5)",
-        "AC2: `tests/gui/test_story012_a11y_fixes.py` -- all 11 `inspect.getsource` occurrences replaced with Streamlit mock-based assertions (tests-review H6)",
-        "AC3: `tests/gui/test_story013_ux_fixes.py` -- source inspection replaced with behavioral widget assertions (tests-review H6)",
-        "AC4: `tests/gui/test_story010_gui_report.py` -- 2 source inspections replaced with output assertions (tests-review H6)",
-        "AC5: `tests/cli/test_cc_engine_wiring.py` -- 4 source inspections removed; behavioral tests already exist alongside (tests-review H6, M15)",
-        "AC6: `tests/gui/test_prompts_integration.py` -- source file read + string assertion replaced with render function mock test (tests-review M14)",
-        "AC7: Zero occurrences of `inspect.getsource` remain in `tests/` directory",
-        "AC8: `make validate` passes with no regressions",
-        "Replace source-level string assertions with behavioral tests: call the function with relevant inputs and assert outputs",
-        "For UI tests, verify widgets called via Streamlit mocks instead of inspecting source",
-        "For CLI tests, remove redundant source inspections where behavioral `parse_args` tests already cover the logic",
-        "Run `grep -r \"inspect.getsource\" tests/` to verify zero remaining occurrences"
+        "AC1: `evaluation.json` is written to `run_context.evaluation_path` after `evaluate_comprehensive` returns",
+        "AC2: `evaluation.json` contains the full `CompositeResult` (tier1, tier2, tier3, composite scores)",
+        "AC3: `evaluation.json` is only written when evaluation actually ran (not when `skip_eval=True`)",
+        "AC4: `ArtifactRegistry` registers `evaluation.json` as `\"Evaluation\"` artifact",
+        "AC5: `make validate` passes with no regressions"
       ],
       "files": [
-        "tests/utils/test_weave_optional.py",
-        "tests/gui/test_story012_a11y_fixes.py",
-        "tests/gui/test_story013_ux_fixes.py",
-        "tests/gui/test_story010_gui_report.py",
-        "tests/cli/test_cc_engine_wiring.py",
-        "tests/gui/test_prompts_integration.py"
+        "src/app/judge/evaluation_runner.py",
+        "tests/judge/test_evaluation_runner.py"
       ],
-      "status": "passed",
-      "wave": 1,
-      "completed_at": "2026-02-22T15:17:41Z",
-      "content_hash": "996492ac084d304e0fd23d39570fa716262ff2e2af8f556c8d79ad615a8a7a29",
-      "depends_on": []
+      "status": "pending",
+      "wave": 5,
+      "completed_at": null,
+      "content_hash": "7147b0f0a5d46d0cce2b29f273e35c6c0d7207b31c2eef8e41ec4899951ad88f",
+      "depends_on": [
+        "STORY-009"
+      ]
     }
   ]
 }
