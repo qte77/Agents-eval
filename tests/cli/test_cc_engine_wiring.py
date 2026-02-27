@@ -492,9 +492,7 @@ class TestEngineTypeSetOnResult:
         ):
             from app.app import main
 
-            result = await main(
-                engine="cc", cc_result=cc_result, cc_teams=False, query="test"
-            )
+            result = await main(engine="cc", cc_result=cc_result, cc_teams=False, query="test")
 
             assert result is not None
             assert result["composite_result"].engine_type == "cc_solo"
@@ -530,9 +528,7 @@ class TestEngineTypeSetOnResult:
         ):
             from app.app import main
 
-            result = await main(
-                engine="cc", cc_result=cc_result, cc_teams=True, query="test"
-            )
+            result = await main(engine="cc", cc_result=cc_result, cc_teams=True, query="test")
 
             assert result is not None
             assert result["composite_result"].engine_type == "cc_teams"
@@ -568,9 +564,7 @@ class TestEngineTypeSetOnResult:
         ):
             from app.app import main
 
-            result = await main(
-                engine="cc", cc_result=cc_result, cc_teams=True, query="test"
-            )
+            result = await main(engine="cc", cc_result=cc_result, cc_teams=True, query="test")
 
             assert result is not None
             assert result["composite_result"].engine_type == "cc_teams"
@@ -609,9 +603,7 @@ class TestEngineTypeSetOnResult:
         ):
             from app.app import main
 
-            result = await main(
-                engine="cc", cc_result=cc_result, cc_teams=False, query="test"
-            )
+            result = await main(engine="cc", cc_result=cc_result, cc_teams=False, query="test")
 
             assert result is not None
             assert result["composite_result"].engine_type == "cc_solo"
@@ -764,9 +756,7 @@ class TestCCTeamsFlagPassthrough:
         from app.app import _run_cc_engine_path
 
         sig = inspect.signature(_run_cc_engine_path)
-        assert "cc_teams" in sig.parameters, (
-            "_run_cc_engine_path() must accept cc_teams parameter"
-        )
+        assert "cc_teams" in sig.parameters, "_run_cc_engine_path() must accept cc_teams parameter"
 
     @pytest.mark.asyncio
     async def test_cli_passes_cc_teams_to_main(self):
@@ -784,7 +774,7 @@ class TestCCTeamsFlagPassthrough:
         with (
             patch("app.engines.cc_engine.run_cc_teams", return_value=mock_result),
             patch("app.engines.cc_engine.build_cc_query", return_value="query"),
-            patch("app.app.main", side_effect=capture_main) as mock_main,
+            patch("app.app.main", side_effect=capture_main),
             patch("app.utils.artifact_registry.get_artifact_registry") as mock_reg,
         ):
             mock_registry = MagicMock()
@@ -837,9 +827,7 @@ class TestCCTeamsFlagPassthrough:
                 cc_teams=True,
             )
 
-            assert captured_kwargs.get("cc_teams") is True, (
-                "GUI must pass cc_teams=True to main()"
-            )
+            assert captured_kwargs.get("cc_teams") is True, "GUI must pass cc_teams=True to main()"
 
     @pytest.mark.asyncio
     async def test_gui_passes_cc_teams_false_to_main(self):
