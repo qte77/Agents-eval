@@ -3,15 +3,17 @@
 import json
 from datetime import UTC, datetime
 
-from app.config.config_app import MAS_REVIEWS_PATH
 from app.data_models.peerread_models import PeerReadReview
 from app.utils.paths import resolve_project_path
+
+# Reason: legacy default path retained for backward compatibility during migration
+_DEFAULT_REVIEWS_DIR = "output/runs"
 
 
 class ReviewPersistence:
     """Handles saving and loading of MAS-generated reviews."""
 
-    def __init__(self, reviews_dir: str = MAS_REVIEWS_PATH):
+    def __init__(self, reviews_dir: str = _DEFAULT_REVIEWS_DIR):
         """Initialize with reviews directory path.
 
         Args:

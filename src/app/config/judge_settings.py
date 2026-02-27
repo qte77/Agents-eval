@@ -10,8 +10,6 @@ This module implements evaluation configuration following 12-Factor #3 (Config) 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.config.config_app import LOGS_BASE_PATH
-
 
 class JudgeSettings(BaseSettings):
     """
@@ -97,7 +95,7 @@ class JudgeSettings(BaseSettings):
 
     # Observability
     trace_collection: bool = Field(default=True)
-    trace_storage_path: str = Field(default=f"{LOGS_BASE_PATH}/traces")
+    trace_storage_path: str = Field(default="output/runs")
     logfire_enabled: bool = Field(default=True)
     logfire_send_to_cloud: bool = Field(default=False)
     phoenix_endpoint: str = Field(default="http://localhost:6006")

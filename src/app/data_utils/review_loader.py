@@ -2,15 +2,17 @@
 
 from pathlib import Path
 
-from app.config.config_app import MAS_REVIEWS_PATH
 from app.data_models.peerread_models import PeerReadReview
 from app.data_utils.review_persistence import ReviewPersistence
+
+# Reason: legacy default path retained for backward compatibility during migration
+_DEFAULT_REVIEWS_DIR = "output/runs"
 
 
 class ReviewLoader:
     """Loads MAS-generated reviews for external evaluation system."""
 
-    def __init__(self, reviews_dir: str = MAS_REVIEWS_PATH):
+    def __init__(self, reviews_dir: str = _DEFAULT_REVIEWS_DIR):
         """Initialize with reviews directory path.
 
         Args:

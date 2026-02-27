@@ -26,9 +26,13 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from app.config.config_app import CC_STREAMS_PATH, DEFAULT_REVIEW_PROMPT_TEMPLATE
+from app.config.config_app import DEFAULT_REVIEW_PROMPT_TEMPLATE
+from app.config.config_app import LOGS_BASE_PATH as _LOGS_BASE_PATH
 from app.utils.artifact_registry import get_artifact_registry
 from app.utils.log import logger
+
+# Reason: legacy stream storage path retained for backward compatibility during migration
+CC_STREAMS_PATH = f"{_LOGS_BASE_PATH}/cc_streams"
 
 # Subtypes of system events that represent team sub-agent activity in the CC stream.
 # CC emits type=system with these subtypes for local_agent tasks (not "TeamCreate"/"Task").
