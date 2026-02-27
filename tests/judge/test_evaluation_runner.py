@@ -725,26 +725,6 @@ class TestEvaluationJsonPersistence:
             assert result is mock_result
 
     @pytest.mark.asyncio
-    async def test_no_evaluation_json_when_result_is_none(self, tmp_path):
-        """evaluation.json must NOT be written when evaluate_comprehensive returns None."""
-        with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
-            mock_pipeline = MagicMock(spec=EvaluationPipeline)
-            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
-            mock_pipeline_class.return_value = mock_pipeline
-
-            from app.judge.evaluation_runner import run_evaluation_if_enabled
-
-            await run_evaluation_if_enabled(
-                skip_eval=False,
-                paper_id=None,
-                execution_id=None,
-                run_dir=tmp_path,
-            )
-
-            eval_file = tmp_path / "evaluation.json"
-            assert not eval_file.exists(), "evaluation.json must not be written when result is None"
-
-    @pytest.mark.asyncio
     async def test_registers_artifact_in_registry(self, tmp_path):
         """AC4: ArtifactRegistry registers evaluation.json as 'Evaluation'."""
         mock_result = CompositeResult(

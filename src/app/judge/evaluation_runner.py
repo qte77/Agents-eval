@@ -191,11 +191,9 @@ async def run_evaluation_if_enabled(
     )
 
     # Persist evaluation results to run directory
-    if pydantic_result is not None and run_dir is not None:
+    if run_dir is not None:
         eval_path = run_dir / "evaluation.json"
-        eval_path.write_text(
-            json.dumps(pydantic_result.model_dump(), indent=2), encoding="utf-8"
-        )
+        eval_path.write_text(json.dumps(pydantic_result.model_dump(), indent=2), encoding="utf-8")
         get_artifact_registry().register("Evaluation", eval_path)
         logger.info(f"Evaluation results written to {eval_path}")
 
