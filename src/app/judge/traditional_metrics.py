@@ -216,21 +216,21 @@ class TraditionalMetricsEngine:
                 return 0.0
 
     def compute_semantic_similarity(self, text1: str, text2: str) -> float:
-        """Compute semantic similarity using cosine similarity fallback.
+        """Compute semantic similarity using Levenshtein similarity fallback.
 
         Args:
             text1: Agent-generated review text
             text2: Reference review text
 
         Returns:
-            Cosine similarity between 0.0 and 1.0 (BERTScore disabled)
+            Levenshtein similarity between 0.0 and 1.0 (BERTScore disabled)
 
-        Performance: ~50ms using TF-IDF cosine similarity
+        Performance: ~20ms using textdistance Levenshtein similarity
         """
         try:
-            # BERTScore disabled due to build issues, use cosine similarity
-            logger.debug("Using cosine similarity fallback for semantic similarity")
-            return self.compute_cosine_similarity(text1, text2)
+            # BERTScore disabled due to build issues, use Levenshtein similarity
+            logger.debug("Using Levenshtein similarity fallback for semantic similarity")
+            return self.compute_levenshtein_similarity(text1, text2)
 
         except Exception as e:
             logger.warning(f"Semantic similarity calculation failed: {e}")
@@ -256,14 +256,20 @@ class TraditionalMetricsEngine:
     def assess_task_success(
         self, similarity_scores: SimilarityScores, threshold: float = 0.8
     ) -> float:
-        """Assess task completion success based on similarity threshold.
+        """Assess task completion success with continuous proportional scoring.
+
+        Returns a continuous score in [0.0, 1.0] rather than a binary result.
+        When weighted similarity meets or exceeds the threshold, returns 1.0.
+        When below, returns proportional credit (weighted_similarity / threshold).
+        When threshold is 0.0, returns 0.0 to avoid division by zero.
 
         Args:
             similarity_scores: Container with semantic, cosine, jaccard scores
-            threshold: Minimum similarity for success (from config)
+            threshold: Similarity value representing full credit (from config)
 
         Returns:
-            1.0 for success, 0.0 for failure
+            Continuous float in [0.0, 1.0]; 1.0 when similarity >= threshold,
+            weighted_similarity / threshold when below, 0.0 when threshold is 0.
         """
         try:
             # Weighted average of similarity metrics
@@ -275,7 +281,7 @@ class TraditionalMetricsEngine:
                 + similarity_scores.jaccard * weights["jaccard"]
             )
 
-            return 1.0 if overall_similarity >= threshold else 0.0
+            return min(1.0, overall_similarity / threshold) if threshold > 0.0 else 0.0
 
         except Exception as e:
             logger.warning(f"Task success assessment failed: {e}")
