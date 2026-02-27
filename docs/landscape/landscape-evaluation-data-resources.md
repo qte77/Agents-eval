@@ -302,7 +302,7 @@ This document provides a comprehensive overview of evaluation frameworks, datase
 - [AgentEvals CORE-Bench Leaderboard](https://huggingface.co/spaces/agent-evals/core_leaderboard)
 - [Berkeley Function-Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html)
 - [Chatbot Arena LLM Leaderboard](https://lmsys.org/projects/)
-- [GAIA Leaderboard](https://gaia-benchmark-leaderboard.hf.space/)
+- [GAIA Leaderboard](https://huggingface.co/spaces/gaia-benchmark/leaderboard)
 - [GalileoAI Agent Leaderboard](https://huggingface.co/spaces/galileo-ai/agent-leaderboard)
 - [WebDev Arena Leaderboard](https://web.lmarena.ai/leaderboard)
 - [MiniWoB++: a web interaction benchmark for reinforcement learning](https://miniwob.farama.org/)
