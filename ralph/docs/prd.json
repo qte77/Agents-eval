@@ -110,9 +110,9 @@
         "tests/evals/test_evaluation_pipeline.py",
         "tests/evals/test_composite_scorer.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:46:23Z",
       "content_hash": "73d748e7018702d7f0ea38610185eb1c9cad06e62cf3fe162c92e54da283cfc1",
       "depends_on": [
         "STORY-003"
@@ -150,9 +150,9 @@
         "tests/judge/test_evaluation_runner.py",
         "tests/engines/test_cc_engine.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 3,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:46:30Z",
       "content_hash": "29b0dc7646dd747c811f75940b9d1cdeeb16c2aee1fec08c6dacc98b3a622a6a",
       "depends_on": [
         "STORY-004"
