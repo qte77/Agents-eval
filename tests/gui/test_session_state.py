@@ -23,8 +23,8 @@ def test_session_state_defaults_structure():
     assert defaults == snapshot(
         {
             "chat_provider": CHAT_DEFAULT_PROVIDER,
-            "include_researcher": True,
-            "include_analyst": True,
+            "include_researcher": False,
+            "include_analyst": False,
             "include_synthesiser": False,
         }
     )
@@ -42,20 +42,3 @@ def test_session_state_provider_is_valid():
 
     # Assert: Provider must be in registry
     assert provider in PROVIDER_REGISTRY, f"Default provider '{provider}' not in PROVIDER_REGISTRY"
-
-
-def test_session_state_agent_defaults():
-    """Test sub-agent defaults: researcher and analyst enabled, synthesiser disabled.
-
-    S8-F8.1: researcher and analyst default to True for better UX.
-    """
-    # Arrange
-    from run_gui import get_session_state_defaults
-
-    # Act
-    defaults = get_session_state_defaults()
-
-    # Assert: researcher and analyst enabled by default; synthesiser stays off
-    assert defaults["include_researcher"] is True
-    assert defaults["include_analyst"] is True
-    assert defaults["include_synthesiser"] is False

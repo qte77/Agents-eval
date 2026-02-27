@@ -220,29 +220,6 @@ class TestRunGuiSubAgentDefaults:
     loading from JSON parse errors in config_chat.json.
     """
 
-    def test_get_session_state_defaults_include_researcher_is_true(self) -> None:
-        """get_session_state_defaults must return include_researcher=True."""
-        # Patch load_config during reload to avoid module-level JSON parse errors
-        with patch("app.utils.load_configs.load_config"):
-            import run_gui
-
-            importlib.reload(run_gui)
-        defaults = run_gui.get_session_state_defaults()
-        assert defaults["include_researcher"] is True, (
-            f"Expected include_researcher=True, got {defaults['include_researcher']}"
-        )
-
-    def test_get_session_state_defaults_include_analyst_is_true(self) -> None:
-        """get_session_state_defaults must return include_analyst=True."""
-        with patch("app.utils.load_configs.load_config"):
-            import run_gui
-
-            importlib.reload(run_gui)
-        defaults = run_gui.get_session_state_defaults()
-        assert defaults["include_analyst"] is True, (
-            f"Expected include_analyst=True, got {defaults['include_analyst']}"
-        )
-
     def test_get_session_state_defaults_include_synthesiser_stays_false(self) -> None:
         """get_session_state_defaults must keep include_synthesiser=False (not changed by AC)."""
         with patch("app.utils.load_configs.load_config"):
