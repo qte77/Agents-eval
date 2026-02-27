@@ -7,6 +7,7 @@ and interaction graph construction from trace data.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,7 @@ from app.judge.baseline_comparison import compare_all
 from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
 from app.judge.graph_builder import build_interaction_graph
+from app.utils.artifact_registry import get_artifact_registry
 from app.utils.log import logger
 
 
@@ -123,6 +125,7 @@ async def run_evaluation_if_enabled(
     judge_settings: JudgeSettings | None = None,
     manager_output: Any = None,
     review_text: str | None = None,
+    run_dir: Path | None = None,
 ) -> CompositeResult | None:
     """Run evaluation pipeline after manager completes if enabled.
 
@@ -139,6 +142,8 @@ async def run_evaluation_if_enabled(
         manager_output: Manager result output containing ReviewGenerationResult (optional).
         review_text: Pre-extracted review text (e.g. from CC engine). When provided,
             overrides text extraction from manager_output.
+        run_dir: Optional per-run output directory. When provided, evaluation results
+            are persisted to evaluation.json in this directory.
 
     Returns:
         CompositeResult from PydanticAI evaluation or None if skipped.
@@ -184,6 +189,15 @@ async def run_evaluation_if_enabled(
         execution_trace=execution_trace,
         reference_reviews=reference_reviews,
     )
+
+    # Persist evaluation results to run directory
+    if pydantic_result is not None and run_dir is not None:
+        eval_path = run_dir / "evaluation.json"
+        eval_path.write_text(
+            json.dumps(pydantic_result.model_dump(), indent=2), encoding="utf-8"
+        )
+        get_artifact_registry().register("Evaluation", eval_path)
+        logger.info(f"Evaluation results written to {eval_path}")
 
     # Run baseline comparisons if Claude Code directories provided
     await run_baseline_comparisons(
