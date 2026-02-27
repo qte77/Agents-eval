@@ -27,12 +27,11 @@ if TYPE_CHECKING:
 from pydantic import BaseModel, Field
 
 from app.config.config_app import DEFAULT_REVIEW_PROMPT_TEMPLATE
-from app.config.config_app import LOGS_BASE_PATH as _LOGS_BASE_PATH
 from app.utils.artifact_registry import get_artifact_registry
 from app.utils.log import logger
 
-# Reason: legacy stream storage path retained for backward compatibility during migration
-CC_STREAMS_PATH = f"{_LOGS_BASE_PATH}/cc_streams"
+if TYPE_CHECKING:
+    from app.utils.run_context import RunContext
 
 # Subtypes of system events that represent team sub-agent activity in the CC stream.
 # CC emits type=system with these subtypes for local_agent tasks (not "TeamCreate"/"Task").
@@ -327,25 +326,21 @@ def _rename_stream_file(src: Path, new_name: str) -> Path:
     return dest
 
 
-def _persist_solo_stream(raw_stdout: str, execution_id: str) -> None:
-    """Write raw solo JSON stdout to ``CC_STREAMS_PATH`` and register artifact.
-
-    Creates the target directory lazily. Filename pattern:
-    ``cc_solo_{execution_id}_{timestamp}.json``.
+def _persist_solo_stream(raw_stdout: str, stream_path: Path) -> None:
+    """Write raw solo JSON stdout to ``stream_path`` and register artifact.
 
     Args:
         raw_stdout: Raw stdout string from the CC solo subprocess.
-        execution_id: Execution ID extracted from parsed JSON (may be "unknown").
+        stream_path: Destination file path for the JSON output.
     """
-    ts = datetime.now().strftime("%Y%m%dT%H%M%S")
-    streams_dir = Path(CC_STREAMS_PATH)
-    streams_dir.mkdir(parents=True, exist_ok=True)
-    out_path = streams_dir / f"cc_solo_{execution_id}_{ts}.json"
-    out_path.write_text(raw_stdout, encoding="utf-8")
-    get_artifact_registry().register("CC solo stream", out_path)
+    stream_path.parent.mkdir(parents=True, exist_ok=True)
+    stream_path.write_text(raw_stdout, encoding="utf-8")
+    get_artifact_registry().register("CC solo stream", stream_path)
 
 
-def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
+def run_cc_solo(
+    query: str, timeout: int = 600, run_context: RunContext | None = None
+) -> CCResult:
     """Run Claude Code in solo (headless print) mode.
 
     Uses blocking ``subprocess.run`` with ``--output-format json``. The full JSON
@@ -354,6 +349,7 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
     Args:
         query: Prompt string passed to ``claude -p``.
         timeout: Maximum seconds to wait for the process. Defaults to 600.
+        run_context: Optional RunContext for per-run output directory.
 
     Returns:
         CCResult with output_data from parsed JSON stdout and session_dir if present.
@@ -394,7 +390,15 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
     execution_id = data.get("execution_id", data.get("session_id", "unknown"))
     session_dir: str | None = data.get("session_dir")
 
-    _persist_solo_stream(proc.stdout, execution_id)
+    if run_context is not None:
+        _persist_solo_stream(proc.stdout, run_context.stream_path)
+    else:
+        # Reason: legacy fallback when no RunContext — write to a temp location
+        ts = datetime.now().strftime("%Y%m%dT%H%M%S")
+        fallback_dir = Path("output") / "runs"
+        fallback_dir.mkdir(parents=True, exist_ok=True)
+        fallback_path = fallback_dir / f"cc_solo_{execution_id}_{ts}.json"
+        _persist_solo_stream(proc.stdout, fallback_path)
 
     logger.info(f"CC solo completed: execution_id={execution_id}")
     return CCResult(
@@ -404,7 +408,9 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
     )
 
 
-def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
+def run_cc_teams(
+    query: str, timeout: int = 600, run_context: RunContext | None = None
+) -> CCResult:
     """Run Claude Code in teams (agent orchestration) mode.
 
     Uses ``subprocess.Popen`` with ``--output-format stream-json`` and the
@@ -416,6 +422,7 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
     Args:
         query: Prompt string passed to ``claude -p``.
         timeout: Maximum seconds to allow the process to run. Defaults to 600.
+        run_context: Optional RunContext for per-run output directory.
 
     Returns:
         CCResult with team_artifacts populated from stream events.
@@ -434,11 +441,14 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
     cmd = ["claude", "-p", query, "--output-format", "stream-json", "--verbose"]
     logger.info(f"CC teams: running query (timeout={timeout}s)")
 
-    ts = datetime.now().strftime("%Y%m%dT%H%M%S")
-    # Reason: filename uses a placeholder timestamp; renamed after execution_id is known
-    streams_dir = Path(CC_STREAMS_PATH)
-    streams_dir.mkdir(parents=True, exist_ok=True)
-    stream_path = streams_dir / f"cc_teams_{ts}.jsonl"
+    if run_context is not None:
+        stream_path = run_context.stream_path
+        stream_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        ts = datetime.now().strftime("%Y%m%dT%H%M%S")
+        fallback_dir = Path("output") / "runs"
+        fallback_dir.mkdir(parents=True, exist_ok=True)
+        stream_path = fallback_dir / f"cc_teams_{ts}.jsonl"
 
     try:
         # Reason: query is sanitized by _sanitize_cc_query (empty, dash-prefix, length);
@@ -470,9 +480,16 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
     except subprocess.TimeoutExpired as e:
         raise RuntimeError(f"CC timed out after {e.timeout}s") from e
 
-    # Rename to include execution_id now that it is known
-    final_path = _rename_stream_file(stream_path, f"cc_teams_{result.execution_id}_{ts}.jsonl")
-    get_artifact_registry().register("CC teams stream", final_path)
+    if run_context is not None:
+        # Stream already written to run_context.stream_path; register as-is
+        get_artifact_registry().register("CC teams stream", stream_path)
+    else:
+        # Legacy fallback: rename to include execution_id
+        ts_fallback = datetime.now().strftime("%Y%m%dT%H%M%S")
+        final_path = _rename_stream_file(
+            stream_path, f"cc_teams_{result.execution_id}_{ts_fallback}.jsonl"
+        )
+        get_artifact_registry().register("CC teams stream", final_path)
 
     logger.info(f"CC teams completed: execution_id={result.execution_id}")
     return result

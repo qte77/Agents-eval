@@ -148,7 +148,7 @@ def _build_config_from_args(args: argparse.Namespace) -> SweepConfig | None:
     )
 
     output_dir = args.output_dir or Path(
-        f"results/sweeps/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        f"output/sweeps/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     )
 
     return SweepConfig(

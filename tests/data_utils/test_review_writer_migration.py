@@ -32,7 +32,7 @@ class TestReviewPersistenceSaveToRunContext:
         rp = ReviewPersistence(reviews_dir=str(tmp_path / "fallback"))
         review = self._make_review()
 
-        with patch("app.data_utils.review_persistence.get_artifact_registry") as mock_reg:
+        with patch("app.utils.artifact_registry.get_artifact_registry") as mock_reg:
             mock_reg.return_value = MagicMock()
             path = rp.save_review("paper_001", review, run_dir=run_dir)
 
@@ -50,7 +50,7 @@ class TestReviewPersistenceSaveToRunContext:
         rp = ReviewPersistence(reviews_dir=str(default_dir))
         review = self._make_review()
 
-        with patch("app.data_utils.review_persistence.get_artifact_registry") as mock_reg:
+        with patch("app.utils.artifact_registry.get_artifact_registry") as mock_reg:
             mock_reg.return_value = MagicMock()
             path = rp.save_review("paper_001", review, run_dir=run_dir)
 
@@ -64,7 +64,7 @@ class TestReviewPersistenceSaveToRunContext:
             rp = ReviewPersistence(reviews_dir=str(tmp_path))
         review = self._make_review()
 
-        with patch("app.data_utils.review_persistence.get_artifact_registry") as mock_reg:
+        with patch("app.utils.artifact_registry.get_artifact_registry") as mock_reg:
             mock_reg.return_value = MagicMock()
             path = rp.save_review("paper_001", review)
 

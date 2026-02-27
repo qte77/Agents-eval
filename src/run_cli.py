@@ -161,8 +161,13 @@ if __name__ == "__main__":
             suggestions = engine_obj.generate(composite_result)
             md = generate_report(composite_result, suggestions=suggestions)
 
-            timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-            output_path = Path("results") / "reports" / f"{timestamp}.md"
+            # Reason: use run_context report_path when available; fall back to output/reports
+            run_context = result_dict.get("run_context")
+            if run_context is not None:
+                output_path = run_context.report_path
+            else:
+                timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+                output_path = Path("output") / "reports" / f"{timestamp}.md"
             save_report(md, output_path)
             logger.info(f"Report written to {output_path}")
             print(f"Report saved: {output_path}")
