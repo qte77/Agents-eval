@@ -1,6 +1,6 @@
 {
   "project": "Product Requirements Document - Agents-eval Sprint 12",
-  "description": "Sprint 12 \u2014 CC teams mode bug fixes, scoring system fixes, and output directory restructuring. Fix engine_type misclassification, team artifact parsing, 5 evaluation scoring bugs, and consolidate all run artifacts into per-run directories.",
+  "description": "Sprint 12 — CC teams mode bug fixes, scoring system fixes, and output directory restructuring. Fix engine_type misclassification, team artifact parsing, 5 evaluation scoring bugs, and consolidate all run artifacts into per-run directories.",
   "source": "PRD-Sprint12-Ralph.md",
   "generated": "2026-02-27 04:48:56",
   "stories": [
@@ -16,15 +16,15 @@
         "AC5: `parse_stream_json` returns populated `team_artifacts` when given a real CC teams stream",
         "AC6: `make validate` passes with no regressions",
         "Update `_apply_event()` in `cc_engine.py` to detect team events by `type == \"system\"` AND `subtype in {\"task_started\", \"task_completed\"}` instead of checking `_TEAM_EVENT_TYPES`",
-        "Remove or repurpose `_TEAM_EVENT_TYPES` constant \u2014 the old values (`\"TeamCreate\"`, `\"Task\"`) do not appear in real CC output",
-        "Keep the existing `init` event handler (`type == \"system\" and subtype == \"init\"`) \u2014 it must take priority over the new team artifact handler",
+        "Remove or repurpose `_TEAM_EVENT_TYPES` constant — the old values (`\"TeamCreate\"`, `\"Task\"`) do not appear in real CC output",
+        "Keep the existing `init` event handler (`type == \"system\" and subtype == \"init\"`) — it must take priority over the new team artifact handler",
         "Order of checks in `_apply_event`: (1) init event, (2) result event, (3) team task events"
       ],
       "files": [
         "src/app/engines/cc_engine.py",
         "tests/engines/test_cc_engine.py"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "wave": 1,
       "completed_at": null,
       "content_hash": "b0b75acf09fcabe32a94636c0b2cd0a5f500ab4f2b45bfba9a2382c818c5b292",
@@ -33,7 +33,7 @@
     {
       "id": "STORY-002",
       "title": "Pass `cc_teams` flag through to `engine_type` assignment",
-      "description": "`engine_type` is set at `app.py:262` based on whether `cc_result.team_artifacts` is non-empty: `\"cc_teams\" if cc_result.team_artifacts else \"cc_solo\"`. This is fragile \u2014 if CC runs in teams mode but emits no parseable team events (Bug 1, or a short run), `engine_type` is wrong. The user's explicit `cc_teams` flag is the source of truth for mode selection but is consumed in CLI (`run_cli.py:115`) and GUI (`run_app.py:331`) and never forwarded to `main()` or `_run_cc_engine_path()`.",
+      "description": "`engine_type` is set at `app.py:262` based on whether `cc_result.team_artifacts` is non-empty: `\"cc_teams\" if cc_result.team_artifacts else \"cc_solo\"`. This is fragile — if CC runs in teams mode but emits no parseable team events (Bug 1, or a short run), `engine_type` is wrong. The user's explicit `cc_teams` flag is the source of truth for mode selection but is consumed in CLI (`run_cli.py:115`) and GUI (`run_app.py:331`) and never forwarded to `main()` or `_run_cc_engine_path()`.",
       "acceptance": [
         "AC1: `main()` accepts a `cc_teams: bool = False` parameter",
         "AC2: `_run_cc_engine_path()` accepts a `cc_teams: bool` parameter",
@@ -67,7 +67,7 @@
     {
       "id": "STORY-003",
       "title": "Skip Tier 3 for empty trace data",
-      "description": "When `GraphTraceData` has empty `tool_calls` and empty `agent_interactions` (e.g., CC solo runs with no trace artifacts), `evaluate_graph_metrics` returns an all-zero `Tier3Result`. This non-None result bypasses the fallback strategy (`_apply_fallback_strategy`), silently penalizing the composite score by 0.334 (two metrics \u00d7 0.167 weight). The fix: return `None` from `_execute_tier3` when trace data is empty, triggering the existing `tier1_only` fallback which creates neutral 0.5 scores.",
+      "description": "When `GraphTraceData` has empty `tool_calls` and empty `agent_interactions` (e.g., CC solo runs with no trace artifacts), `evaluate_graph_metrics` returns an all-zero `Tier3Result`. This non-None result bypasses the fallback strategy (`_apply_fallback_strategy`), silently penalizing the composite score by 0.334 (two metrics × 0.167 weight). The fix: return `None` from `_execute_tier3` when trace data is empty, triggering the existing `tier1_only` fallback which creates neutral 0.5 scores.",
       "acceptance": [
         "AC1: `_execute_tier3` returns `(None, 0.0)` when `GraphTraceData` has empty `tool_calls` AND empty `agent_interactions`",
         "AC2: A log message at INFO level is emitted when Tier 3 is skipped due to empty trace",
@@ -77,7 +77,7 @@
         "AC6: `make validate` passes with no regressions",
         "In `_execute_tier3` (`evaluation_pipeline.py:323`), after `trace_data = self._create_trace_data(execution_trace)`, add early return guard checking `not trace_data.tool_calls and not trace_data.agent_interactions`",
         "Record tier execution with 0.0 time before returning to keep performance stats consistent",
-        "The existing `_apply_fallback_strategy` (`evaluation_pipeline.py:369`) already handles `results.tier3 is None` by creating a `Tier3Result` with 0.5 scores \u2014 no changes needed there"
+        "The existing `_apply_fallback_strategy` (`evaluation_pipeline.py:369`) already handles `results.tier3 is None` by creating a `Tier3Result` with 0.5 scores — no changes needed there"
       ],
       "files": [
         "src/app/judge/evaluation_pipeline.py",
@@ -92,7 +92,7 @@
     {
       "id": "STORY-004",
       "title": "Wire `evaluate_composite_with_trace` into production",
-      "description": "`CompositeScorer.evaluate_composite_with_trace` detects single-agent mode from `GraphTraceData` and redistributes `coordination_quality` weight to remaining metrics. However, it is never called from production code \u2014 `_generate_composite_score` only calls `evaluate_composite` or `evaluate_composite_with_optional_tier2`. This means CC solo runs (and any single-agent execution) never benefit from weight redistribution, and `coordination_quality=0` silently penalizes the composite score.",
+      "description": "`CompositeScorer.evaluate_composite_with_trace` detects single-agent mode from `GraphTraceData` and redistributes `coordination_quality` weight to remaining metrics. However, it is never called from production code — `_generate_composite_score` only calls `evaluate_composite` or `evaluate_composite_with_optional_tier2`. This means CC solo runs (and any single-agent execution) never benefit from weight redistribution, and `coordination_quality=0` silently penalizes the composite score.",
       "acceptance": [
         "AC1: `_generate_composite_score` accepts an optional `trace_data: GraphTraceData | None` parameter",
         "AC2: When `trace_data` is provided and `results.is_complete()`, `evaluate_composite_with_trace` is called",
@@ -100,9 +100,9 @@
         "AC4: `evaluate_comprehensive` retains the `GraphTraceData` object and passes it to `_generate_composite_score`",
         "AC5: CC solo runs with empty `agent_interactions` trigger single-agent detection and weight redistribution",
         "AC6: `make validate` passes with no regressions",
-        "In `evaluate_comprehensive` (`evaluation_pipeline.py:476`), retain a `GraphTraceData` reference when converting `execution_trace` to dict \u2014 currently the object is discarded after conversion",
+        "In `evaluate_comprehensive` (`evaluation_pipeline.py:476`), retain a `GraphTraceData` reference when converting `execution_trace` to dict — currently the object is discarded after conversion",
         "Add `trace_data: GraphTraceData | None = None` parameter to `_generate_composite_score` (`evaluation_pipeline.py:279`)",
-        "New routing: if `trace_data is not None and results.is_complete()` \u2192 call `self.composite_scorer.evaluate_composite_with_trace(results, trace_data)`; otherwise fall through to existing logic",
+        "New routing: if `trace_data is not None and results.is_complete()` → call `self.composite_scorer.evaluate_composite_with_trace(results, trace_data)`; otherwise fall through to existing logic",
         "`evaluate_composite_with_trace` already handles both single-agent and multi-agent cases internally (`composite_scorer.py:456-517`)"
       ],
       "files": [
@@ -121,7 +121,7 @@
     {
       "id": "STORY-005",
       "title": "Propagate actual execution timestamps to `time_taken`",
-      "description": "`time_taken` is always ~0.999 because `_execute_tier1` captures `start_evaluation = time.time()` and immediately passes `time.time()` as `end_time` \u2014 both timestamps are microseconds apart. The `measure_execution_time` formula `exp(-duration)` then returns `exp(~0) \u2248 0.999`. The actual agent execution (e.g., CC solo ran for 158 seconds) is never measured or propagated. The fix: capture wall-clock timestamps around the subprocess/agent execution and propagate them through the pipeline to `_execute_tier1`.",
+      "description": "`time_taken` is always ~0.999 because `_execute_tier1` captures `start_evaluation = time.time()` and immediately passes `time.time()` as `end_time` — both timestamps are microseconds apart. The `measure_execution_time` formula `exp(-duration)` then returns `exp(~0) ≈ 0.999`. The actual agent execution (e.g., CC solo ran for 158 seconds) is never measured or propagated. The fix: capture wall-clock timestamps around the subprocess/agent execution and propagate them through the pipeline to `_execute_tier1`.",
       "acceptance": [
         "AC1: `CCResult` has `start_time: float` and `end_time: float` fields",
         "AC2: `run_cc_solo` captures `time.time()` before and after `subprocess.run()` and stores on `CCResult`",
@@ -161,13 +161,13 @@
     {
       "id": "STORY-006",
       "title": "Deduplicate `semantic_score` from `cosine_score`",
-      "description": "`compute_semantic_similarity` (`traditional_metrics.py:218`) delegates to `compute_cosine_similarity` because BERTScore is disabled due to build issues. This means `semantic_score == cosine_score` always, giving cosine 0.7 effective weight in the Tier 1 formula (`0.4 \u00d7 semantic + 0.3 \u00d7 cosine`) while Jaccard gets only 0.2. The fix: use Levenshtein similarity (already available via `textdistance` in `pyproject.toml`, with `compute_levenshtein_similarity` already implemented in the same class) as the semantic fallback. This provides a distinct character-level sequence similarity signal.",
+      "description": "`compute_semantic_similarity` (`traditional_metrics.py:218`) delegates to `compute_cosine_similarity` because BERTScore is disabled due to build issues. This means `semantic_score == cosine_score` always, giving cosine 0.7 effective weight in the Tier 1 formula (`0.4 × semantic + 0.3 × cosine`) while Jaccard gets only 0.2. The fix: use Levenshtein similarity (already available via `textdistance` in `pyproject.toml`, with `compute_levenshtein_similarity` already implemented in the same class) as the semantic fallback. This provides a distinct character-level sequence similarity signal.",
       "acceptance": [
         "AC1: `compute_semantic_similarity` delegates to `compute_levenshtein_similarity` instead of `compute_cosine_similarity`",
         "AC2: `semantic_score` and `cosine_score` produce different values for non-identical texts",
         "AC3: `semantic_score` returns 1.0 for identical texts and 0.0 for empty-vs-nonempty texts",
         "AC4: `Tier1Result.semantic_score` field description updated to reflect Levenshtein-based calculation",
-        "AC5: No new dependencies added \u2014 uses existing `textdistance` library",
+        "AC5: No new dependencies added — uses existing `textdistance` library",
         "AC6: `make validate` passes with no regressions",
         "In `compute_semantic_similarity` (`traditional_metrics.py:218`), change `return self.compute_cosine_similarity(text1, text2)` to `return self.compute_levenshtein_similarity(text1, text2)`",
         "Update the method's docstring and log message to say \"Levenshtein\" not \"cosine similarity fallback\"",
@@ -188,7 +188,7 @@
     {
       "id": "STORY-007",
       "title": "Replace binary `task_success` with continuous score",
-      "description": "`assess_task_success` (`traditional_metrics.py:256`) returns exactly 1.0 or 0.0 based on whether weighted similarity meets the 0.8 threshold. For generative review tasks where typical text similarity ranges 0.3\u20130.6, this almost always returns 0.0, providing zero useful signal in the composite score. The fix: use proportional credit `min(1.0, similarity / threshold)` which gives linear gradient below threshold and full credit at/above threshold.",
+      "description": "`assess_task_success` (`traditional_metrics.py:256`) returns exactly 1.0 or 0.0 based on whether weighted similarity meets the 0.8 threshold. For generative review tasks where typical text similarity ranges 0.3–0.6, this almost always returns 0.0, providing zero useful signal in the composite score. The fix: use proportional credit `min(1.0, similarity / threshold)` which gives linear gradient below threshold and full credit at/above threshold.",
       "acceptance": [
         "AC1: `assess_task_success` returns continuous float in `[0.0, 1.0]` instead of binary `{0.0, 1.0}`",
         "AC2: When weighted similarity >= threshold, returns 1.0",
@@ -198,7 +198,7 @@
         "AC6: `make validate` passes with no regressions",
         "In `assess_task_success` (`traditional_metrics.py:256`), replace `return 1.0 if overall_similarity >= threshold else 0.0` with `return min(1.0, overall_similarity / threshold) if threshold > 0.0 else 0.0`",
         "Update the method's docstring to document continuous scoring behavior",
-        "No config changes \u2014 the 0.8 threshold still represents \"full credit\" target; the change is in how sub-threshold scores are handled"
+        "No config changes — the 0.8 threshold still represents \"full credit\" target; the change is in how sub-threshold scores are handled"
       ],
       "files": [
         "src/app/judge/traditional_metrics.py",
@@ -218,10 +218,10 @@
         "AC1: `RunContext` dataclass exists with fields: `engine_type`, `paper_id`, `execution_id`, `start_time`, `run_dir` (Path)",
         "AC2: `RunContext.create(engine_type, paper_id, execution_id)` creates the directory `output/runs/{YYYYMMDD_HHMMSS}_{engine}_{paper_id}_{exec_id_8}/` and writes `metadata.json`",
         "AC3: `metadata.json` contains: `engine_type`, `paper_id`, `execution_id`, `start_time` (ISO), `cli_args` (optional dict)",
-        "AC4: Path helpers return correct filenames: `stream_path` \u2192 `stream.json`/`stream.jsonl` (based on engine_type), `trace_path` \u2192 `trace.jsonl`, `review_path` \u2192 `review.json`, `report_path` \u2192 `report.md`, `evaluation_path` \u2192 `evaluation.json`",
+        "AC4: Path helpers return correct filenames: `stream_path` → `stream.json`/`stream.jsonl` (based on engine_type), `trace_path` → `trace.jsonl`, `review_path` → `review.json`, `report_path` → `report.md`, `evaluation_path` → `evaluation.json`",
         "AC5: `OUTPUT_PATH = \"output\"` constant added to `config_app.py`",
         "AC6: Legacy constants `CC_STREAMS_PATH`, `MAS_REVIEWS_PATH`, `RESULTS_PATH` removed from `config_app.py`",
-        "AC7: `LOGS_PATH` (Loguru logs) and `LOGS_BASE_PATH` remain unchanged \u2014 application logs are not per-run",
+        "AC7: `LOGS_PATH` (Loguru logs) and `LOGS_BASE_PATH` remain unchanged — application logs are not per-run",
         "AC8: `JudgeSettings.trace_storage_path` default changed from `logs/Agent_evals/traces` to `output/runs` (fallback when `run_dir` is None)",
         "AC9: `main()` creates `RunContext` after engine execution completes (once `execution_id` is known) and passes it to evaluation and writer paths",
         "AC10: `output/` added to `.gitignore` (`results/` entry kept for existing artifacts)",
@@ -245,7 +245,7 @@
     {
       "id": "STORY-009",
       "title": "Migrate all writers to per-run directories",
-      "description": "Update all 6 file writers to use `RunContext` path helpers instead of constructing paths from legacy constants. Each writer receives `RunContext` (or `run_dir: Path`) and writes to the run directory. Remove timestamp generation from individual writers \u2014 `RunContext` owns the timestamp. Remove `CC_STREAMS_PATH` usage from `cc_engine.py`, `LOGS_BASE_PATH/traces` from `trace_processors.py`, `MAS_REVIEWS_PATH` from `review_persistence.py`, and hardcoded `results/reports` from `run_cli.py`.",
+      "description": "Update all 6 file writers to use `RunContext` path helpers instead of constructing paths from legacy constants. Each writer receives `RunContext` (or `run_dir: Path`) and writes to the run directory. Remove timestamp generation from individual writers — `RunContext` owns the timestamp. Remove `CC_STREAMS_PATH` usage from `cc_engine.py`, `LOGS_BASE_PATH/traces` from `trace_processors.py`, `MAS_REVIEWS_PATH` from `review_persistence.py`, and hardcoded `results/reports` from `run_cli.py`.",
       "acceptance": [
         "AC1: `run_cc_solo` writes stream to `run_context.stream_path` instead of `cc_streams/cc_solo_{exec_id}_{ts}.json`",
         "AC2: `run_cc_teams` writes stream to `run_context.stream_path` instead of `cc_streams/cc_teams_{exec_id}_{ts}.jsonl`",
@@ -253,7 +253,7 @@
         "AC4: `ReviewPersistence.save_review()` writes to `run_context.review_path` instead of `MAS_reviews/{paper_id}_{ts}.json`",
         "AC5: CLI report save writes to `run_context.report_path` instead of `results/reports/{ts}.md`",
         "AC6: `traces.db` SQLite database writes to `output/runs/traces.db` (shared across runs, not per-run)",
-        "AC7: `review_loader.py` deleted \u2014 dead code (no imports in `src/`, no tests), references removed `MAS_REVIEWS_PATH`",
+        "AC7: `review_loader.py` deleted — dead code (no imports in `src/`, no tests), references removed `MAS_REVIEWS_PATH`",
         "AC8: No code references `CC_STREAMS_PATH`, `MAS_REVIEWS_PATH`, `RESULTS_PATH`, or `LOGS_BASE_PATH/traces` for file writes",
         "AC9: `ArtifactRegistry` entries point to new per-run paths",
         "AC10: Sweep runner default `output_dir` changed from `results/sweeps/{ts}` to `output/sweeps/{ts}`",
