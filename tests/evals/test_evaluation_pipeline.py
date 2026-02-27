@@ -5,7 +5,7 @@ Validates pipeline initialization, tier execution, error handling,
 and performance characteristics with comprehensive coverage.
 """
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
 
@@ -381,3 +381,113 @@ class TestComprehensiveEvaluation:
                 assert result == sample_composite_result
                 # Test passes if evaluation completes successfully with modified targets
                 # Warning behavior is tested by the actual pipeline logic
+
+
+class TestTier3EmptyTraceSkip:
+    """Tests for STORY-003: Skip Tier 3 when trace data has no tool_calls or agent_interactions."""
+
+    @pytest.mark.asyncio
+    async def test_execute_tier3_returns_none_when_trace_empty(self, pipeline):
+        """AC1: _execute_tier3 returns (None, 0.0) when GraphTraceData has empty collections."""
+        # Both tool_calls and agent_interactions empty - should skip
+        result, exec_time = await pipeline._execute_tier3(None)
+
+        assert result is None
+        assert exec_time == 0.0
+
+    @pytest.mark.asyncio
+    async def test_execute_tier3_returns_none_when_trace_dict_has_empty_lists(self, pipeline):
+        """AC1: _execute_tier3 returns (None, 0.0) with explicit empty lists in trace dict."""
+        trace = {"execution_id": "test-run", "tool_calls": [], "agent_interactions": []}
+
+        result, exec_time = await pipeline._execute_tier3(trace)
+
+        assert result is None
+        assert exec_time == 0.0
+
+    @pytest.mark.asyncio
+    async def test_execute_tier3_logs_info_when_skipping(self, pipeline):
+        """AC2: INFO log is emitted when Tier 3 is skipped due to empty trace."""
+        with patch("app.judge.evaluation_pipeline.logger") as mock_logger:
+            await pipeline._execute_tier3(None)
+
+            # Verify an INFO level log was emitted mentioning the skip
+            info_calls = [str(c) for c in mock_logger.info.call_args_list]
+            assert any("skip" in msg.lower() or "empty" in msg.lower() for msg in info_calls), (
+                f"Expected INFO log about skipping Tier 3, got: {info_calls}"
+            )
+
+    @pytest.mark.asyncio
+    async def test_execute_tier3_records_tier_execution_on_skip(self, pipeline):
+        """AC3: performance_monitor.record_tier_execution(3, 0.0) called for skip case."""
+        with patch.object(pipeline.performance_monitor, "record_tier_execution") as mock_record:
+            await pipeline._execute_tier3(None)
+
+            mock_record.assert_called_once_with(3, 0.0)
+
+    @pytest.mark.asyncio
+    async def test_execute_tier3_not_skipped_when_tool_calls_present(
+        self, pipeline, sample_tier3_result
+    ):
+        """AC4: Tier 3 executes normally when tool_calls are present."""
+        trace = {
+            "execution_id": "test-run",
+            "tool_calls": [{"tool": "read_file", "result": "ok"}],
+            "agent_interactions": [],
+        }
+
+        with patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_analyze:
+            mock_analyze.return_value = sample_tier3_result
+
+            result, exec_time = await pipeline._execute_tier3(trace)
+
+            assert result == sample_tier3_result
+            assert exec_time > 0
+            mock_analyze.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_execute_tier3_not_skipped_when_agent_interactions_present(
+        self, pipeline, sample_tier3_result
+    ):
+        """AC4: Tier 3 executes normally when agent_interactions are present."""
+        trace = {
+            "execution_id": "test-run",
+            "tool_calls": [],
+            "agent_interactions": [{"from": "agent1", "to": "agent2", "msg": "hello"}],
+        }
+
+        with patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_analyze:
+            mock_analyze.return_value = sample_tier3_result
+
+            result, exec_time = await pipeline._execute_tier3(trace)
+
+            assert result == sample_tier3_result
+            assert exec_time > 0
+            mock_analyze.assert_called_once()
+
+    def test_fallback_strategy_creates_neutral_tier3_when_tier3_none(
+        self, pipeline, sample_tier1_result
+    ):
+        """AC5: tier1_only fallback creates neutral Tier 3 result (0.5 scores) when Tier 3 is None."""
+        from app.data_models.evaluation_models import EvaluationResults
+
+        # Tier 1 present, Tier 2 present, Tier 3 is None (skipped due to empty trace)
+        tier2 = Tier2Result(
+            technical_accuracy=0.8,
+            constructiveness=0.8,
+            planning_rationality=0.8,
+            overall_score=0.8,
+            model_used="gpt-4o-mini",
+            api_cost=0.0,
+            fallback_used=False,
+        )
+        results = EvaluationResults(tier1=sample_tier1_result, tier2=tier2, tier3=None)
+
+        fallback_results = pipeline._apply_fallback_strategy(results)
+
+        assert fallback_results.tier3 is not None
+        assert fallback_results.tier3.path_convergence == 0.5
+        assert fallback_results.tier3.tool_selection_accuracy == 0.5
+        assert fallback_results.tier3.coordination_centrality == 0.5
+        assert fallback_results.tier3.task_distribution_balance == 0.5
+        assert fallback_results.tier3.overall_score == 0.5
