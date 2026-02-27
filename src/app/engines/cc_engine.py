@@ -368,7 +368,6 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
     try:
         # Reason: query is sanitized by _sanitize_cc_query (empty, dash-prefix, length);
         # shell=False (list args) prevents shell interpretation — no injection risk.
-        # codeql[py/command-line-injection]
         proc = subprocess.run(
             cmd,
             capture_output=True,
@@ -438,7 +437,6 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
     try:
         # Reason: query is sanitized by _sanitize_cc_query (empty, dash-prefix, length);
         # shell=False (list args) prevents shell interpretation — no injection risk.
-        # codeql[py/command-line-injection]
         with subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
