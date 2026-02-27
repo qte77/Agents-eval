@@ -273,9 +273,9 @@
         "tests/judge/test_trace_processors.py",
         "tests/data_utils/test_review_persistence.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 4,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:58:10Z",
       "content_hash": "216a4f796df83cca6197d52c09fa90dce36267e6e901e0b0f0cf8dd761ab5ceb",
       "depends_on": [
         "STORY-008",
@@ -297,7 +297,7 @@
         "src/app/judge/evaluation_runner.py",
         "tests/judge/test_evaluation_runner.py"
       ],
-      "status": "pending",
+      "status": "failed",
       "wave": 5,
       "completed_at": null,
       "content_hash": "7147b0f0a5d46d0cce2b29f273e35c6c0d7207b31c2eef8e41ec4899951ad88f",
