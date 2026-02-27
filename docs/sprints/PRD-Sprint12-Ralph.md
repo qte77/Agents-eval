@@ -201,7 +201,7 @@ These events have `"type": "system"`, not `"TeamCreate"` or `"Task"`, so `_apply
 - [ ] AC2: When `trace_data` is provided and `results.is_complete()`, `evaluate_composite_with_trace` is called
 - [ ] AC3: When `trace_data` is None, existing routing to `evaluate_composite` / `evaluate_composite_with_optional_tier2` is preserved
 - [ ] AC4: `evaluate_comprehensive` retains the `GraphTraceData` object and passes it to `_generate_composite_score`
-- [ ] AC5: CC solo runs with empty coordination_events trigger single-agent detection and weight redistribution
+- [ ] AC5: CC solo runs with empty `agent_interactions` trigger single-agent detection and weight redistribution
 - [ ] AC6: `make validate` passes with no regressions
 
 **Technical Requirements**:
@@ -239,7 +239,7 @@ These events have `"type": "system"`, not `"TeamCreate"` or `"Task"`, so `_apply
 
 - Add `start_time: float = Field(default=0.0)` and `end_time: float = Field(default=0.0)` to `CCResult` (`cc_engine.py:67-87`)
 - Wrap `subprocess.run()` in `run_cc_solo` (`cc_engine.py:~380`) with `time.time()` before/after
-- Wrap `Popen` block in `run_cc_teams` (`cc_engine.py:~440`) with `time.time()` before/after; reconstruct `CCResult` with timing (Pydantic models are immutable)
+- Wrap `Popen` block in `run_cc_teams` (`cc_engine.py:~440`) with `time.time()` before/after; set `start_time`/`end_time` on `CCResult` after construction
 - Add `execution_start_time: float = 0.0` and `execution_end_time: float = 0.0` to `run_evaluation_if_enabled` (`evaluation_runner.py:115`); forward to `pipeline.evaluate_comprehensive`
 - Add same params to `evaluate_comprehensive` (`evaluation_pipeline.py:476`) and `_execute_tier1` (`evaluation_pipeline.py:138`)
 - In `_execute_tier1`, replace `start_evaluation = time.time()` / `time.time()` with external timestamps when non-zero
@@ -368,8 +368,8 @@ This feature is split into 3 stories to manage scope:
 - [ ] AC5: `OUTPUT_PATH = "output"` constant added to `config_app.py`
 - [ ] AC6: Legacy constants `CC_STREAMS_PATH`, `MAS_REVIEWS_PATH`, `RESULTS_PATH` removed from `config_app.py`
 - [ ] AC7: `LOGS_PATH` (Loguru logs) and `LOGS_BASE_PATH` remain unchanged — application logs are not per-run
-- [ ] AC8: `JudgeSettings.trace_storage_path` default removed (traces now go to `run_dir/trace.jsonl`)
-- [ ] AC9: `main()` creates `RunContext` early and passes it to engine and evaluation paths
+- [ ] AC8: `JudgeSettings.trace_storage_path` default changed from `logs/Agent_evals/traces` to `output/runs` (fallback when `run_dir` is None)
+- [ ] AC9: `main()` creates `RunContext` after engine execution completes (once `execution_id` is known) and passes it to evaluation and writer paths
 - [ ] AC10: `output/` added to `.gitignore` (`results/` entry kept for existing artifacts)
 - [ ] AC11: `make validate` passes with no regressions
 
@@ -420,8 +420,8 @@ This feature is split into 3 stories to manage scope:
 - `trace_processors.py`: `TraceCollector.__init__()` accepts optional `run_dir: Path`; `_store_trace()` writes to `run_dir / "trace.jsonl"` when set; `traces.db` moves to `resolve_project_path(OUTPUT_PATH) / "runs" / "traces.db"` (shared index)
 - `review_persistence.py`: `ReviewPersistence.__init__()` accepts optional `run_dir: Path`; `save_review()` writes to `run_dir / "review.json"` when set; remove `MAS_REVIEWS_PATH` import
 - `run_cli.py`: report save uses `run_context.report_path` instead of constructing `Path("results") / "reports" / f"{timestamp}.md"`
-- `sweep_runner.py`: change default `output_dir` from `f"results/sweeps/{ts}"` to `f"output/sweeps/{ts}"`; remove `RESULTS_PATH` import
-- `run_sweep.py`: update default `--output-dir` value if hardcoded
+- `sweep_runner.py`: remove `RESULTS_PATH` import (no default `output_dir` here — `SweepConfig.output_dir` is a required field)
+- `run_sweep.py`: change default `output_dir` from `f"results/sweeps/{ts}"` to `f"output/sweeps/{ts}"` (`run_sweep.py:150` owns the default); update `--output-dir` argparse default if hardcoded
 - `app.py`: pass `RunContext` (or `run_dir`) to CC engine functions and trace/review components
 - All writers: remove individual `strftime()` calls — `RunContext` directory name carries the timestamp
 
@@ -517,7 +517,7 @@ This feature is split into 3 stories to manage scope:
 - **Feature 8a** → STORY-008: Introduce `RunContext` and per-run directory infrastructure
   Create `RunContext` dataclass with path helpers, `metadata.json` writer, unified timestamp. Add `OUTPUT_PATH`, remove `CC_STREAMS_PATH`/`MAS_REVIEWS_PATH`/`RESULTS_PATH`. Create in `main()`. Files: `src/app/utils/run_context.py` (new), `src/app/config/config_app.py`, `src/app/config/judge_settings.py`, `src/app/app.py`, `src/gui/pages/evaluation.py`, `tests/utils/test_run_context.py` (new).
 
-- **Feature 8b** → STORY-009: Migrate all writers to per-run directories (depends: STORY-008)
+- **Feature 8b** → STORY-009: Migrate all writers to per-run directories (depends: STORY-008, STORY-005)
   Update `cc_engine.py`, `trace_processors.py`, `review_persistence.py`, `run_cli.py`, `sweep_runner.py` to write via `RunContext`/`OUTPUT_PATH` paths. Delete dead `review_loader.py`. Remove legacy path constants usage. Files: `src/app/engines/cc_engine.py`, `src/app/judge/trace_processors.py`, `src/app/data_utils/review_persistence.py`, `src/app/data_utils/review_loader.py` (delete), `src/run_cli.py`, `src/app/benchmark/sweep_runner.py`, `src/app/app.py`, tests.
 
 - **Feature 8c** → STORY-010: Persist evaluation results to `evaluation.json` (depends: STORY-009)
