@@ -5,14 +5,13 @@ Validates pipeline initialization, tier execution, error handling,
 and performance characteristics with comprehensive coverage.
 """
 
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import (
     CompositeResult,
-    GraphTraceData,
     Tier1Result,
     Tier2Result,
     Tier3Result,
@@ -164,12 +163,12 @@ class TestTierExecution:
 
     @pytest.mark.asyncio
     async def test_execute_tier3_success(self, pipeline, sample_tier3_result):
-        """Test successful Tier 3 execution."""
+        """Test successful Tier 3 execution with non-empty trace data."""
         with patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_analyze:
             mock_analyze.return_value = sample_tier3_result
 
             result, execution_time = await pipeline._execute_tier3(
-                {"agent_interactions": [], "tool_calls": []}
+                {"agent_interactions": [{"from": "a1", "to": "a2"}], "tool_calls": []}
             )
 
             assert result == sample_tier3_result
@@ -178,18 +177,16 @@ class TestTierExecution:
 
     @pytest.mark.asyncio
     async def test_execute_tier3_no_trace(self, pipeline, sample_tier3_result):
-        """Test Tier 3 execution without trace data."""
+        """Test Tier 3 execution without trace data returns None (empty trace skip)."""
         with patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_analyze:
             mock_analyze.return_value = sample_tier3_result
 
             result, execution_time = await pipeline._execute_tier3()
 
-            assert result == sample_tier3_result
-            # Verify minimal trace data was created
-            call_args = mock_analyze.call_args[0][0]
-            assert isinstance(call_args, GraphTraceData)
-            assert call_args.agent_interactions == []
-            assert call_args.tool_calls == []
+            # Empty trace triggers skip: returns None, graph engine not called
+            assert result is None
+            assert execution_time == 0.0
+            mock_analyze.assert_not_called()
 
 
 class TestFallbackStrategy:

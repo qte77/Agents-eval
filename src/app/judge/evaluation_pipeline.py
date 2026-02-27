@@ -340,8 +340,14 @@ class EvaluationPipeline:
         start_time = time.time()
 
         try:
-            logger.info("Executing Tier 3: Graph Analysis")
             trace_data = self._create_trace_data(execution_trace)
+
+            if not trace_data.tool_calls and not trace_data.agent_interactions:
+                logger.info("Tier 3 skipped: trace data has no tool_calls or agent_interactions")
+                self.performance_monitor.record_tier_execution(3, 0.0)
+                return None, 0.0
+
+            logger.info("Executing Tier 3: Graph Analysis")
 
             result = await asyncio.wait_for(
                 asyncio.create_task(
