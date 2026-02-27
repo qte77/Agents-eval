@@ -322,7 +322,7 @@ These events have `"type": "system"`, not `"TeamCreate"` or `"Task"`, so `_apply
 |--------|-------------|-----------------|------------------|
 | `cc_engine.py:334` | `logs/Agent_evals/cc_streams/` | `cc_solo_{exec_id}_{ts}.json` | `%Y%m%dT%H%M%S` |
 | `cc_engine.py:431` | `logs/Agent_evals/cc_streams/` | `cc_teams_{exec_id}_{ts}.jsonl` | `%Y%m%dT%H%M%S` |
-| `trace_processors.py:320` | `logs/Agent_evals/traces/` | `trace_{exec_id}_{ts}.jsonl` | `%Y-%m-%dT%H-%M-%SZ` |
+| `trace_processors.py:312` | `logs/Agent_evals/traces/` | `trace_{exec_id}_{ts}.jsonl` | `%Y-%m-%dT%H-%M-%SZ` |
 | `review_persistence.py:38` | `results/MAS_reviews/` | `{paper_id}_{ts}.json` | `%Y-%m-%dT%H-%M-%SZ` |
 | `run_cli.py:164` | `results/reports/` | `{ts}.md` | `%Y%m%dT%H%M%S` |
 | `sweep_runner.py:228` | `results/sweeps/{ts}/` | `results.json`, `summary.md` | `%Y%m%d_%H%M%S` |
@@ -355,7 +355,7 @@ This feature is split into 3 stories to manage scope:
 
 ---
 
-##### Feature 8a: Introduce `RunContext` and Per-Run Directory Infrastructure (STORY-008)
+##### 8.1 Introduce `RunContext` and Per-Run Directory Infrastructure (STORY-008)
 
 **Description**: Create a `RunContext` dataclass that owns the per-run output directory. It is created at the start of each `main()` invocation with the run's engine type, paper ID, and execution ID. It creates `output/runs/{YYYYMMDD_HHMMSS}_{engine}_{paper_id}_{exec_id_8}/`, writes `metadata.json`, and exposes path helpers (`stream_path`, `trace_path`, `review_path`, `report_path`, `evaluation_path`). Replace legacy path constants in `config_app.py` with single `OUTPUT_PATH`. Adopt unified timestamp format `%Y%m%dT%H%M%S` everywhere.
 
@@ -395,7 +395,7 @@ This feature is split into 3 stories to manage scope:
 
 ---
 
-##### Feature 8b: Migrate All Writers to Per-Run Directories (STORY-009, depends: STORY-008)
+##### 8.2 Migrate All Writers to Per-Run Directories (STORY-009, depends: STORY-008, STORY-005)
 
 **Description**: Update all 6 file writers to use `RunContext` path helpers instead of constructing paths from legacy constants. Each writer receives `RunContext` (or `run_dir: Path`) and writes to the run directory. Remove timestamp generation from individual writers — `RunContext` owns the timestamp. Remove `CC_STREAMS_PATH` usage from `cc_engine.py`, `LOGS_BASE_PATH/traces` from `trace_processors.py`, `MAS_REVIEWS_PATH` from `review_persistence.py`, and hardcoded `results/reports` from `run_cli.py`.
 
@@ -441,7 +441,7 @@ This feature is split into 3 stories to manage scope:
 
 ---
 
-##### Feature 8c: Persist Evaluation Results to `evaluation.json` (STORY-010, depends: STORY-009)
+##### 8.3 Persist Evaluation Results to `evaluation.json` (STORY-010, depends: STORY-009)
 
 **Description**: Evaluation pipeline results are currently returned in-memory and never written to disk (except indirectly via sweep `results.json`). With per-run directories, write the composite evaluation result to `run_dir/evaluation.json` after `evaluate_comprehensive` completes. This makes each run fully self-contained: stream/trace + review + evaluation + report all in one directory.
 
@@ -514,13 +514,13 @@ This feature is split into 3 stories to manage scope:
 - **Feature 7** → STORY-007: Replace binary `task_success` with continuous score
   Change `assess_task_success` from `0/1` to `min(1.0, similarity/threshold)`. Files: `src/app/judge/traditional_metrics.py`, `tests/evals/test_traditional_metrics.py`.
 
-- **Feature 8a** → STORY-008: Introduce `RunContext` and per-run directory infrastructure
+- **Feature 8.1** → STORY-008: Introduce `RunContext` and per-run directory infrastructure
   Create `RunContext` dataclass with path helpers, `metadata.json` writer, unified timestamp. Add `OUTPUT_PATH`, remove `CC_STREAMS_PATH`/`MAS_REVIEWS_PATH`/`RESULTS_PATH`. Create in `main()`. Files: `src/app/utils/run_context.py` (new), `src/app/config/config_app.py`, `src/app/config/judge_settings.py`, `src/app/app.py`, `src/gui/pages/evaluation.py`, `tests/utils/test_run_context.py` (new).
 
-- **Feature 8b** → STORY-009: Migrate all writers to per-run directories (depends: STORY-008, STORY-005)
+- **Feature 8.2** → STORY-009: Migrate all writers to per-run directories (depends: STORY-008, STORY-005)
   Update `cc_engine.py`, `trace_processors.py`, `review_persistence.py`, `run_cli.py`, `sweep_runner.py` to write via `RunContext`/`OUTPUT_PATH` paths. Delete dead `review_loader.py`. Remove legacy path constants usage. Files: `src/app/engines/cc_engine.py`, `src/app/judge/trace_processors.py`, `src/app/data_utils/review_persistence.py`, `src/app/data_utils/review_loader.py` (delete), `src/run_cli.py`, `src/app/benchmark/sweep_runner.py`, `src/app/app.py`, tests.
 
-- **Feature 8c** → STORY-010: Persist evaluation results to `evaluation.json` (depends: STORY-009)
+- **Feature 8.3** → STORY-010: Persist evaluation results to `evaluation.json` (depends: STORY-009)
   Write `CompositeResult` to `run_dir/evaluation.json` after pipeline completes. Files: `src/app/judge/evaluation_runner.py`, `tests/judge/test_evaluation_runner.py`.
 
 ### Notes for CC Agent Teams
@@ -559,7 +559,8 @@ Wave 1 (P1 scoring fixes — sequential on evaluation_pipeline.py, parallel on t
   gate: lead runs `make validate`
 
 Wave 2 (P2 output restructuring — sequential, touches many files):
-  teammate-1: STORY-008 (F8a RunContext infrastructure) → STORY-009 (F8b migrate writers) → STORY-010 (F8c evaluation.json)
+  teammate-1: STORY-008 (F8.1 RunContext infrastructure) → STORY-009 (F8.2 migrate writers) → STORY-010 (F8.3 evaluation.json)
+  shutdown teammate-2 after Wave 1 gate (no Wave 2 work assigned — saves token cost)
   gate: lead runs `make validate`
 ```
 
