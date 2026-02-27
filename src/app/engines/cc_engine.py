@@ -171,7 +171,7 @@ def _apply_event(
     Recognised events (checked in priority order):
     1. ``type=system, subtype=init`` → updates ``execution_id``
     2. ``type=result`` → updates ``output_data`` with timing/cost fields
-    3. ``type=system, subtype in {"task_started", "task_completed"}`` → appends to ``team_artifacts``
+    3. ``type=system, subtype in _TEAM_SUBTYPES`` → appends to ``team_artifacts``
 
     Args:
         event: Parsed JSONL event dict.
@@ -196,7 +196,7 @@ def parse_stream_json(stream: Iterator[str]) -> CCResult:
     Extracts:
     - ``type=system, subtype=init`` → ``session_id`` becomes ``execution_id``
     - ``type=result`` → ``duration_ms``, ``total_cost_usd``, ``num_turns`` → ``output_data``
-    - ``type=system, subtype in {"task_started", "task_completed"}`` → appended to ``team_artifacts``
+    - ``type=system, subtype in _TEAM_SUBTYPES`` → appended to ``team_artifacts``
 
     Skips blank lines and malformed JSON without raising.
 

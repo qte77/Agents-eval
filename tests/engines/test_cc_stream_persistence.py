@@ -354,7 +354,9 @@ class TestRunCCTeamsPersistence:
 
         lines = [
             json.dumps({"type": "system", "subtype": "init", "session_id": "sess-unchanged"}),
-            json.dumps({"type": "TeamCreate", "team_name": "my-team"}),
+            json.dumps(
+                {"type": "system", "subtype": "task_started", "agent_id": "agent-1"}
+            ),
             json.dumps({"type": "result", "num_turns": 4, "total_cost_usd": 0.03}),
         ]
         mock_proc = _make_mock_popen(lines)
@@ -370,7 +372,7 @@ class TestRunCCTeamsPersistence:
         assert result.execution_id == "sess-unchanged"
         assert result.output_data.get("num_turns") == 4
         assert len(result.team_artifacts) == 1
-        assert result.team_artifacts[0]["team_name"] == "my-team"
+        assert result.team_artifacts[0]["agent_id"] == "agent-1"
 
     def test_teams_incremental_write_not_buffered(self, tmp_path):
         """Stream is written line-by-line (tee pattern), not buffered until end."""
