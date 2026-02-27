@@ -634,3 +634,150 @@ class TestReviewTextOverride:
             call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
             # Falls back to extraction which yields "" for None manager_output
             assert call_kwargs["review"] == ""
+
+
+# MARK: --- evaluation.json persistence (STORY-010) ---
+
+
+class TestEvaluationJsonPersistence:
+    """Tests for persisting evaluation results to evaluation.json (STORY-010)."""
+
+    @pytest.mark.asyncio
+    async def test_writes_evaluation_json_when_result_and_run_dir(self, tmp_path):
+        """AC1/AC2: evaluation.json written to run_dir with full CompositeResult."""
+        mock_result = CompositeResult(
+            composite_score=0.75,
+            recommendation="weak_accept",
+            recommendation_weight=0.6,
+            metric_scores={"cosine": 0.8, "jaccard": 0.7},
+            tier1_score=0.75,
+            tier2_score=0.0,
+            tier3_score=0.0,
+            evaluation_complete=True,
+        )
+        with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            result = await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id=None,
+                run_dir=tmp_path,
+            )
+
+            assert result is mock_result
+            eval_file = tmp_path / "evaluation.json"
+            assert eval_file.exists(), "evaluation.json must be written to run_dir"
+
+            import json
+
+            data = json.loads(eval_file.read_text())
+            assert data["composite_score"] == 0.75
+            assert data["recommendation"] == "weak_accept"
+            assert "metric_scores" in data
+
+    @pytest.mark.asyncio
+    async def test_no_evaluation_json_when_skip_eval(self, tmp_path):
+        """AC3: evaluation.json must NOT be written when skip_eval=True."""
+        from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+        await run_evaluation_if_enabled(
+            skip_eval=True,
+            paper_id=None,
+            execution_id=None,
+            run_dir=tmp_path,
+        )
+
+        eval_file = tmp_path / "evaluation.json"
+        assert not eval_file.exists(), "evaluation.json must not be written when eval skipped"
+
+    @pytest.mark.asyncio
+    async def test_no_evaluation_json_when_run_dir_none(self):
+        """evaluation.json must NOT be written when run_dir is None."""
+        mock_result = CompositeResult(
+            composite_score=0.5,
+            recommendation="weak_accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier2_score=0.0,
+            tier3_score=0.0,
+            evaluation_complete=True,
+        )
+        with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            # Should not raise — just skip writing
+            result = await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id=None,
+                run_dir=None,
+            )
+            assert result is mock_result
+
+    @pytest.mark.asyncio
+    async def test_no_evaluation_json_when_result_is_none(self, tmp_path):
+        """evaluation.json must NOT be written when evaluate_comprehensive returns None."""
+        with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id=None,
+                run_dir=tmp_path,
+            )
+
+            eval_file = tmp_path / "evaluation.json"
+            assert not eval_file.exists(), "evaluation.json must not be written when result is None"
+
+    @pytest.mark.asyncio
+    async def test_registers_artifact_in_registry(self, tmp_path):
+        """AC4: ArtifactRegistry registers evaluation.json as 'Evaluation'."""
+        mock_result = CompositeResult(
+            composite_score=0.5,
+            recommendation="weak_accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier2_score=0.0,
+            tier3_score=0.0,
+            evaluation_complete=True,
+        )
+        with (
+            patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
+            patch("app.judge.evaluation_runner.get_artifact_registry") as mock_get_registry,
+        ):
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            mock_registry = MagicMock()
+            mock_get_registry.return_value = mock_registry
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id=None,
+                run_dir=tmp_path,
+            )
+
+            mock_registry.register.assert_called_once()
+            call_args = mock_registry.register.call_args
+            assert call_args[0][0] == "Evaluation"
+            assert "evaluation.json" in str(call_args[0][1])
