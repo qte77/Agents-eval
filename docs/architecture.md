@@ -2,10 +2,11 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-02-25
+updated: 2026-02-27
 category: architecture
 version: 3.8.0
 ---
+<!-- markdownlint-disable MD024 no-duplicate-heading -->
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
 
@@ -34,7 +35,7 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 
 ### Tier Result Data Flow and Persistence
 
-No disk persistence for individual tier results. The pipeline is in-memory only:
+Individual tier results are in-memory during pipeline execution. Sprint 12 adds per-run `evaluation.json` persistence (see [Output Structure](#output-structure-sprint-12)).
 
 1. **Tier execution** (`evaluation_pipeline.py:512-515`): Each tier runs and returns a typed result object (`Tier1Result`, `Tier2Result`, `Tier3Result`).
 2. **Assembly** (`evaluation_pipeline.py:520-523`): Results are packed into an `EvaluationResults` dataclass (with fallback fill-in if tiers are missing).
@@ -52,7 +53,7 @@ No disk persistence for individual tier results. The pipeline is in-memory only:
 
 **What is preserved:** Individual tier scores (`tier1_score`, `tier2_score`, `tier3_score`) and the full `metric_scores` breakdown are fields on `CompositeResult`. The per-tier `Tier1Result`/`Tier2Result`/`Tier3Result` objects are consumed by the composite scorer and not persisted separately.
 
-**Persistence paths:** Logger output (`_log_metric_comparison`), Markdown report via `report_generator.py`, sweep `results.json` via `SweepRunner`. No database or artifact store for evaluation results.
+**Persistence paths:** Per-run `evaluation.json` (Sprint 12), Markdown report via `report_generator.py`, sweep `results.json` via `SweepRunner`, logger output (`_log_metric_comparison`). See [Output Structure](#output-structure-sprint-12) for the per-run directory layout.
 
 ### Three-Tier Validation Strategy
 
@@ -257,7 +258,7 @@ Sprint 10 added full pipeline parity: `extract_cc_review_text()` feeds review te
 
 #### CC Teams Trace Data Flow
 
-The JSONL stream from `claude -p --output-format stream-json` is consumed live from stdout. Since Sprint 11, the raw stream is also persisted to `{LOGS_BASE_PATH}/cc_streams/` via incremental tee (crash-safe partial writes). Prior to Sprint 11, stream data was not persisted and all trace data had to be captured during execution.
+The JSONL stream from `claude -p --output-format stream-json` is consumed live from stdout. Since Sprint 12, the raw stream is persisted to `output/runs/{run_dir}/stream.jsonl` (see [Output Structure](#output-structure-sprint-12)). Sprint 11 introduced stream persistence to `{LOGS_BASE_PATH}/cc_streams/`; Sprint 12 migrated this to per-run directories.
 
 ```text
 Popen(stdout=PIPE)
@@ -275,14 +276,89 @@ Popen(stdout=PIPE)
         → coordination_events (from TeamCreate events)
 ```
 
+<!-- TODO(S12-F1): Update this paragraph after STORY-001 changes event parsing from _TEAM_EVENT_TYPES to system/task_started detection -->
 **Stream filter**: `_TEAM_EVENT_TYPES = {"TeamCreate", "Task"}`. Other event types (`assistant`, `tool_use`, `tool_result`) are present in the stream but not captured. This means Tier 3 graph analysis produces 0 nodes/0 edges when CC handles the task without spawning a team.
 
 **Team spawning is not guaranteed**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` enables the capability but CC autonomously decides whether to create a team based on task complexity. Simple queries may be solved solo even in teams mode. The default prompt template uses `"Use a team of agents."` phrasing to increase the likelihood of team creation, but it is ultimately CC's decision.
 
-### Output Files
+## Output Structure (Sprint 12)
 
-- `results.json` — raw per-evaluation scores (composition × paper × repetition)
-- `summary.md` — Markdown table with mean/stddev per metric per composition
+All run and sweep artifacts are consolidated under a single `output/` root directory. `RunContext` (`src/app/utils/run_context.py`) owns the per-run directory path and provides path helpers to all writers.
+
+### Directory Layout
+
+```text
+output/
+  runs/
+    {YYYYMMDD_HHMMSS}_{engine}_{paper_id}_{exec_id_8}/
+      metadata.json       ← engine_type, paper_id, exec_id, start_time, cli_args
+      stream.json         ← CC solo raw output (CC solo only)
+      stream.jsonl        ← CC teams JSONL stream (CC teams only)
+      trace.jsonl         ← MAS execution trace (MAS only)
+      review.json         ← generated review (MAS only)
+      evaluation.json     ← CompositeResult from pipeline (when evaluation enabled)
+      report.md           ← evaluation report (when --generate-report)
+    traces.db             ← shared SQLite trace index (across all runs)
+  sweeps/
+    {YYYYMMDD_HHMMSS}/
+      results.json        ← raw per-evaluation scores (composition × paper × repetition)
+      summary.md          ← Markdown table with mean/stddev per metric per composition
+
+logs/
+  Agent_evals/
+    logs/                 ← Loguru rotating .log files (not per-run)
+```
+
+### Output Decision Tree
+
+```text
+CLI/GUI invocation
+  │
+  ├─ ALWAYS: logs/Agent_evals/logs/{time}.log  (Loguru, module import)
+  │
+  ├─ RunContext.create() → output/runs/{ts}_{engine}_{paper}_{id}/
+  │    └─ WRITES: metadata.json
+  │
+  ├─ CC solo path
+  │    └─ WRITES: stream.json    (raw JSON from claude -p)
+  │
+  ├─ CC teams path
+  │    └─ WRITES: stream.jsonl   (JSONL teed from Popen stdout)
+  │
+  ├─ MAS path
+  │    ├─ WRITES: review.json    (ReviewPersistence)
+  │    └─ WRITES: trace.jsonl    (TraceCollector)
+  │
+  ├─ evaluation enabled (skip_eval=False)
+  │    └─ WRITES: evaluation.json (CompositeResult)
+  │
+  └─ --generate-report
+       └─ WRITES: report.md
+
+Sweep invocation (run_sweep.py)
+  │
+  ├─ ALWAYS: logs/Agent_evals/logs/{time}.log
+  │
+  └─ SweepRunner.run() → output/sweeps/{ts}/
+       ├─ WRITES: results.json   (incremental, after each evaluation)
+       └─ WRITES: summary.md     (at sweep end)
+```
+
+### Path Configuration
+
+All output paths are defined in `src/app/config/config_app.py`:
+
+| Constant | Value | Purpose |
+| --- | --- | --- |
+| `OUTPUT_PATH` | `"output"` | Root for all run and sweep artifacts |
+| `LOGS_BASE_PATH` | `"logs/Agent_evals"` | Application log root |
+| `LOGS_PATH` | `"logs/Agent_evals/logs"` | Loguru rotating logs |
+
+Paths are resolved relative to the project root via `resolve_project_path()` in `src/app/utils/paths.py`. Directories are created lazily with `mkdir(parents=True, exist_ok=True)`.
+
+### Timestamp Format
+
+All output filenames use a unified timestamp format: `%Y%m%dT%H%M%S` (e.g., `20260227T143000`). This replaced three inconsistent formats that existed prior to Sprint 12.
 
 ## Report Generation (Sprint 8)
 
@@ -300,7 +376,7 @@ CompositeResult → SuggestionEngine → [Suggestion, ...] → ReportGenerator �
 
 ### Entry Points
 
-- **CLI**: `--generate-report` flag on `run_cli.py` (requires evaluation, incompatible with `--skip-eval`). Output: `{output_dir}/reports/{timestamp}.md`
+- **CLI**: `--generate-report` flag on `run_cli.py` (requires evaluation, incompatible with `--skip-eval`). Output: `{run_dir}/report.md` (see [Output Structure](#output-structure-sprint-12))
 - **GUI**: "Generate Report" button on App page, enabled after evaluation completes. Inline Markdown display with download option.
 
 ## Security Framework (Sprint 6)
@@ -328,14 +404,27 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 11 - Delivered)
+### Current Implementation (Sprint 12 - In Progress)
+
+**Sprint 12 Scope**: CC teams mode bug fixes, scoring system fixes, and output directory restructuring.
+
+- **CC Teams Stream Event Parsing** (STORY-001): Fix `_apply_event` to capture `type=system, subtype=task_started/task_completed` events as team artifacts. Remove stale `_TEAM_EVENT_TYPES` constant.
+- **CC Teams Flag Passthrough** (STORY-002): Wire `cc_teams` boolean from CLI/GUI through `main()` to `engine_type` assignment. Replace `team_artifacts` inference with explicit flag.
+- **Tier 3 Empty-Trace Skip** (STORY-003): Return `None` from `_execute_tier3` when trace data is empty, triggering `tier1_only` fallback (neutral 0.5 scores).
+- **Composite Scoring Trace Awareness** (STORY-004): Wire `evaluate_composite_with_trace` into production pipeline for single-agent weight redistribution.
+- **Execution Timestamp Propagation** (STORY-005): Capture wall-clock timestamps around subprocess/agent execution and propagate to `_execute_tier1` for accurate `time_taken` metric.
+- **Semantic Score Deduplication** (STORY-006): Change `compute_semantic_similarity` to use Levenshtein instead of cosine (which duplicated `cosine_score`).
+- **Continuous Task Success** (STORY-007): Replace binary 0/1 `task_success` with proportional `min(1.0, similarity/threshold)`.
+- **Unified Output Directories** (STORY-008–010): `RunContext` consolidates all run artifacts into `output/runs/{ts}_{engine}_{paper}_{id}/`, sweeps into `output/sweeps/{ts}/`. See [Output Structure](#output-structure-sprint-12).
+
+### Previous Implementation (Sprint 11 - Delivered)
 
 **Sprint 11 Scope**: Observability, UX polish, test quality, and code health.
 
 - **End-of-Run Artifact Summary** (STORY-001): `ArtifactRegistry` singleton in `src/app/utils/artifact_registry.py` with thread-safe `register()`, `summary()`, and `reset()`. Seven components register artifact paths (log setup, trace collector, review persistence, structured review, report generator, sweep runner, CC stream persistence). CLI and sweep print summary at end of run.
 - **GUI Sidebar Tabs** (STORY-002): Streamlit layout refactored with sidebar navigation separating Run, Settings, Evaluation, and Agent Graph into distinct pages. Tab selection persists across reruns. `run_gui.py:43` TODO removed.
 - **CC Engine Empty Query Fix** (STORY-006): `build_cc_query()` in `cc_engine.py` generates default prompt from `paper_id` when query is empty. `DEFAULT_REVIEW_PROMPT_TEMPLATE` constant shared between CC and MAS paths (DRY). Teams mode prepends `"Use a team of agents."`.
-- **CC JSONL Stream Persistence** (STORY-007): Raw JSONL stream teed to `{LOGS_BASE_PATH}/cc_streams/` during CC execution. Solo writes JSON, teams writes JSONL incrementally (crash-safe). Files registered with `ArtifactRegistry`.
+- **CC JSONL Stream Persistence** (STORY-007): Raw JSONL stream teed during CC execution. Solo writes JSON, teams writes JSONL incrementally (crash-safe). Files registered with `ArtifactRegistry`. Sprint 12 migrated output from `{LOGS_BASE_PATH}/cc_streams/` to per-run directories.
 - **Search Tool HTTP Resilience** (STORY-010): `resilient_tool_wrapper` catches HTTP 403/429 from DuckDuckGo and Tavily, returning descriptive error string to agent instead of crashing. Both tools registered for fallback.
 - **Sub-Agent Validation Fix** (STORY-011): `_validate_model_return()` accepts `Any` input, tries `model_validate_json()` for string inputs (fixes non-OpenAI providers returning JSON strings instead of model instances). `str()` wrapping removed from call sites.
 - **Query Persistence Fix** (STORY-008): `key` parameter added to free-form query `text_input` widgets for Streamlit session state persistence.
@@ -527,6 +616,7 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 9**: Correctness & security hardening — dead code, format string sanitization, PDF guard, API key cleanup, judge accuracy, type safety, test quality -- Delivered
 - **Sprint 10**: E2E CLI/GUI parity for CC engine (pipeline parity, review text wiring, engine_type, GUI CC execution), graph visualization polish (mode-specific messages, Tier 3 informational label), test quality (inspect.getsource removal, reference reviews) -- Substantially Delivered (STORY-012/013/014 not started)
 - **Sprint 11**: Observability and UX polish — artifact summary (ArtifactRegistry), GUI sidebar tabs, CC engine fixes (empty query, stream persistence), search tool resilience, sub-agent validation fix, test quality (isinstance→behavioral, conftest consolidation), data layer refactor, config consolidation, examples modernization -- Delivered
+- **Sprint 12**: CC teams mode bug fixes (stream event parsing, cc_teams flag passthrough), scoring system fixes (Tier 3 empty-trace, composite trace awareness, time_taken timestamps, semantic dedup, continuous task_success), per-run output directories (RunContext, writer migration, evaluation.json persistence) -- In Progress
 
 For sprint details, see [roadmap.md](roadmap.md).
 

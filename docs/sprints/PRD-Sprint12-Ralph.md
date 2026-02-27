@@ -1,9 +1,9 @@
 ---
 title: Product Requirements Document - Agents-eval Sprint 12
-description: Sprint 12 — CC teams mode bug fixes and scoring system fixes. Fix engine_type misclassification, team artifact parsing, and 5 evaluation scoring bugs (time_taken, task_success, semantic duplication, Tier 3 fallback, single-agent weight redistribution).
+description: Sprint 12 — CC teams mode bug fixes, scoring system fixes, and output directory restructuring. Fix engine_type misclassification, team artifact parsing, 5 evaluation scoring bugs, and consolidate all run artifacts into per-run directories.
 version: 4.3.0
 created: 2026-02-25
-updated: 2026-02-26
+updated: 2026-02-27
 ---
 
 ## Project Overview
@@ -27,6 +27,7 @@ Additionally, the composite scoring system has 5 bugs producing misleading evalu
 | `time_taken` metric | Broken | Always ~0.999 — `_execute_tier1` passes two `time.time()` calls microseconds apart (`evaluation_pipeline.py:161,173`) |
 | `semantic_score` duplication | Bug | `compute_semantic_similarity` delegates to `compute_cosine_similarity` — cosine gets 0.7 effective weight in Tier 1 formula (`traditional_metrics.py:232`) |
 | `task_success` binary cliff | Design flaw | Returns 0.0 or 1.0 at 0.8 threshold — no gradient for generative tasks (`traditional_metrics.py:278`) |
+| Output directory structure | Poor UX | All streams, traces, reviews, reports dumped flat in separate dirs — no per-run grouping, inconsistent timestamps, no cross-artifact linking (`config_app.py:16-22`) |
 
 ---
 
@@ -311,10 +312,165 @@ These events have `"type": "system"`, not `"TeamCreate"` or `"Task"`, so `_apply
 
 ---
 
+#### Feature 8: Consolidate Run Artifacts into Per-Run Directories
+
+**Description**: Currently, run artifacts are scattered across 4 flat directories (`logs/Agent_evals/cc_streams/`, `logs/Agent_evals/traces/`, `results/MAS_reviews/`, `results/reports/`) with inconsistent naming and no per-run grouping. After 20+ runs, finding all artifacts for a single run requires cross-referencing execution IDs across directories. Filenames sort poorly because execution ID (hex hash) precedes the timestamp. Timestamp formats vary across writers (3 different formats). The fix: introduce an `output/` directory with `runs/` and `sweeps/` subdirectories, a unified timestamp format, a `RunContext` that tracks the current run's output path, and a `metadata.json` file that makes each run self-describing. Remove legacy path constants and all code writing to the old locations.
+
+**Current state (6 writers, 4 directories, 3 timestamp formats)**:
+
+| Writer | Current path | Filename pattern | Timestamp format |
+|--------|-------------|-----------------|------------------|
+| `cc_engine.py:334` | `logs/Agent_evals/cc_streams/` | `cc_solo_{exec_id}_{ts}.json` | `%Y%m%dT%H%M%S` |
+| `cc_engine.py:431` | `logs/Agent_evals/cc_streams/` | `cc_teams_{exec_id}_{ts}.jsonl` | `%Y%m%dT%H%M%S` |
+| `trace_processors.py:320` | `logs/Agent_evals/traces/` | `trace_{exec_id}_{ts}.jsonl` | `%Y-%m-%dT%H-%M-%SZ` |
+| `review_persistence.py:38` | `results/MAS_reviews/` | `{paper_id}_{ts}.json` | `%Y-%m-%dT%H-%M-%SZ` |
+| `run_cli.py:164` | `results/reports/` | `{ts}.md` | `%Y%m%dT%H%M%S` |
+| `sweep_runner.py:228` | `results/sweeps/{ts}/` | `results.json`, `summary.md` | `%Y%m%d_%H%M%S` |
+
+**Target state (unified output directory)**:
+
+```
+output/
+  runs/
+    {YYYYMMDD_HHMMSS}_{engine}_{paper_id}_{exec_id_8}/
+      metadata.json       ← engine_type, paper_id, exec_id, timestamps, CLI args
+      stream.json         ← CC solo output (if CC solo)
+      stream.jsonl        ← CC teams output (if CC teams)
+      trace.jsonl         ← MAS trace (if MAS)
+      review.json         ← MAS review (if MAS)
+      evaluation.json     ← pipeline results (currently in-memory only)
+      report.md           ← evaluation report (if --generate-report)
+    traces.db             ← shared SQLite trace index (across all runs)
+  sweeps/
+    {YYYYMMDD_HHMMSS}/
+      results.json        ← raw per-evaluation scores
+      summary.md          ← Markdown statistical summary
+```
+
+This feature is split into 3 stories to manage scope:
+
+- **STORY-008**: `RunContext` + `metadata.json` + path constants — foundational infrastructure
+- **STORY-009**: Migrate all 6 writers to use `RunContext` — the actual file moves
+- **STORY-010**: Persist evaluation results to `evaluation.json` — new capability enabled by per-run dirs
+
+---
+
+##### Feature 8a: Introduce `RunContext` and Per-Run Directory Infrastructure (STORY-008)
+
+**Description**: Create a `RunContext` dataclass that owns the per-run output directory. It is created at the start of each `main()` invocation with the run's engine type, paper ID, and execution ID. It creates `output/runs/{YYYYMMDD_HHMMSS}_{engine}_{paper_id}_{exec_id_8}/`, writes `metadata.json`, and exposes path helpers (`stream_path`, `trace_path`, `review_path`, `report_path`, `evaluation_path`). Replace legacy path constants in `config_app.py` with single `OUTPUT_PATH`. Adopt unified timestamp format `%Y%m%dT%H%M%S` everywhere.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `RunContext` dataclass exists with fields: `engine_type`, `paper_id`, `execution_id`, `start_time`, `run_dir` (Path)
+- [ ] AC2: `RunContext.create(engine_type, paper_id, execution_id)` creates the directory `output/runs/{YYYYMMDD_HHMMSS}_{engine}_{paper_id}_{exec_id_8}/` and writes `metadata.json`
+- [ ] AC3: `metadata.json` contains: `engine_type`, `paper_id`, `execution_id`, `start_time` (ISO), `cli_args` (optional dict)
+- [ ] AC4: Path helpers return correct filenames: `stream_path` → `stream.json`/`stream.jsonl` (based on engine_type), `trace_path` → `trace.jsonl`, `review_path` → `review.json`, `report_path` → `report.md`, `evaluation_path` → `evaluation.json`
+- [ ] AC5: `OUTPUT_PATH = "output"` constant added to `config_app.py`
+- [ ] AC6: Legacy constants `CC_STREAMS_PATH`, `MAS_REVIEWS_PATH`, `RESULTS_PATH` removed from `config_app.py`
+- [ ] AC7: `LOGS_PATH` (Loguru logs) and `LOGS_BASE_PATH` remain unchanged — application logs are not per-run
+- [ ] AC8: `JudgeSettings.trace_storage_path` default removed (traces now go to `run_dir/trace.jsonl`)
+- [ ] AC9: `main()` creates `RunContext` early and passes it to engine and evaluation paths
+- [ ] AC10: `output/` added to `.gitignore` (`results/` entry kept for existing artifacts)
+- [ ] AC11: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- New file `src/app/utils/run_context.py` with `RunContext` dataclass (Pydantic model)
+- `RunContext.create()` classmethod: generates `run_dir` name from `datetime.now().strftime("%Y%m%dT%H%M%S")`, `engine_type`, `paper_id`, `execution_id[:8]`; calls `mkdir(parents=True)` under `output/runs/`; writes `metadata.json` via `model_dump_json()`
+- Update `config_app.py`: add `OUTPUT_PATH = "output"`, remove `CC_STREAMS_PATH`, `MAS_REVIEWS_PATH`, `RESULTS_PATH`
+- Update `app.py:main()`: create `RunContext` after engine type is known, pass to `_run_cc_engine_path()` and `_run_mas_engine_path()`
+- For CC paths: `RunContext` is created after `run_cc_solo`/`run_cc_teams` returns (execution_id only known after CC runs). The stream file is written to a temp location first, then moved into the run dir. This matches the existing pattern where cc_teams renames the stream file after extracting session_id.
+- `ArtifactRegistry` calls updated to register paths from `RunContext`
+- GUI evaluation page `default_traces_dir` (`evaluation.py:320`) updated to `"output/runs/"`
+
+**Files**:
+
+- `src/app/utils/run_context.py` (new -- `RunContext` dataclass with path helpers and metadata writer)
+- `src/app/config/config_app.py` (edit -- add `OUTPUT_PATH`, remove `CC_STREAMS_PATH`, `MAS_REVIEWS_PATH`, `RESULTS_PATH`)
+- `src/app/config/judge_settings.py` (edit -- remove `trace_storage_path` default or point to `OUTPUT_PATH`)
+- `src/app/app.py` (edit -- create `RunContext` in `main()`, pass to engine/eval paths)
+- `src/gui/pages/evaluation.py` (edit -- update `default_traces_dir`)
+- `.gitignore` (edit -- add `output/`, keep `results/`)
+- `tests/utils/test_run_context.py` (new -- test directory creation, metadata.json content, path helpers)
+
+---
+
+##### Feature 8b: Migrate All Writers to Per-Run Directories (STORY-009, depends: STORY-008)
+
+**Description**: Update all 6 file writers to use `RunContext` path helpers instead of constructing paths from legacy constants. Each writer receives `RunContext` (or `run_dir: Path`) and writes to the run directory. Remove timestamp generation from individual writers — `RunContext` owns the timestamp. Remove `CC_STREAMS_PATH` usage from `cc_engine.py`, `LOGS_BASE_PATH/traces` from `trace_processors.py`, `MAS_REVIEWS_PATH` from `review_persistence.py`, and hardcoded `results/reports` from `run_cli.py`.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `run_cc_solo` writes stream to `run_context.stream_path` instead of `cc_streams/cc_solo_{exec_id}_{ts}.json`
+- [ ] AC2: `run_cc_teams` writes stream to `run_context.stream_path` instead of `cc_streams/cc_teams_{exec_id}_{ts}.jsonl`
+- [ ] AC3: `TraceCollector._store_trace()` writes to `run_context.trace_path` instead of `traces/trace_{exec_id}_{ts}.jsonl`
+- [ ] AC4: `ReviewPersistence.save_review()` writes to `run_context.review_path` instead of `MAS_reviews/{paper_id}_{ts}.json`
+- [ ] AC5: CLI report save writes to `run_context.report_path` instead of `results/reports/{ts}.md`
+- [ ] AC6: `traces.db` SQLite database writes to `output/runs/traces.db` (shared across runs, not per-run)
+- [ ] AC7: `review_loader.py` deleted — dead code (no imports in `src/`, no tests), references removed `MAS_REVIEWS_PATH`
+- [ ] AC8: No code references `CC_STREAMS_PATH`, `MAS_REVIEWS_PATH`, `RESULTS_PATH`, or `LOGS_BASE_PATH/traces` for file writes
+- [ ] AC9: `ArtifactRegistry` entries point to new per-run paths
+- [ ] AC10: Sweep runner default `output_dir` changed from `results/sweeps/{ts}` to `output/sweeps/{ts}`
+- [ ] AC11: `--output-dir` CLI override on `run_sweep.py` still works
+- [ ] AC12: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- `cc_engine.py`: `run_cc_solo()` and `run_cc_teams()` accept `run_dir: Path` parameter; write stream to `run_dir / "stream.json"` (solo) or `run_dir / "stream.jsonl"` (teams); remove `CC_STREAMS_PATH` import and local timestamp generation
+- `trace_processors.py`: `TraceCollector.__init__()` accepts optional `run_dir: Path`; `_store_trace()` writes to `run_dir / "trace.jsonl"` when set; `traces.db` moves to `resolve_project_path(OUTPUT_PATH) / "runs" / "traces.db"` (shared index)
+- `review_persistence.py`: `ReviewPersistence.__init__()` accepts optional `run_dir: Path`; `save_review()` writes to `run_dir / "review.json"` when set; remove `MAS_REVIEWS_PATH` import
+- `run_cli.py`: report save uses `run_context.report_path` instead of constructing `Path("results") / "reports" / f"{timestamp}.md"`
+- `sweep_runner.py`: change default `output_dir` from `f"results/sweeps/{ts}"` to `f"output/sweeps/{ts}"`; remove `RESULTS_PATH` import
+- `run_sweep.py`: update default `--output-dir` value if hardcoded
+- `app.py`: pass `RunContext` (or `run_dir`) to CC engine functions and trace/review components
+- All writers: remove individual `strftime()` calls — `RunContext` directory name carries the timestamp
+
+**Files**:
+
+- `src/app/engines/cc_engine.py` (edit -- accept `run_dir`, write stream to run dir, remove `CC_STREAMS_PATH`)
+- `src/app/judge/trace_processors.py` (edit -- accept `run_dir`, write trace to run dir, move `traces.db`)
+- `src/app/data_utils/review_persistence.py` (edit -- accept `run_dir`, write review to run dir, remove `MAS_REVIEWS_PATH`)
+- `src/app/data_utils/review_loader.py` (delete -- dead code, no imports in src/, no tests)
+- `src/run_cli.py` (edit -- use `run_context.report_path` for report save)
+- `src/app/app.py` (edit -- plumb `RunContext` to all writers)
+- `src/app/benchmark/sweep_runner.py` (edit -- change default `output_dir` to `output/sweeps/`)
+- `src/run_sweep.py` (edit -- update default `--output-dir` if hardcoded)
+- `tests/engines/test_cc_engine.py` (edit -- update stream write tests to use `run_dir`)
+- `tests/judge/test_trace_processors.py` (edit -- update trace write tests)
+- `tests/data_utils/test_review_persistence.py` (edit -- update review write tests)
+
+---
+
+##### Feature 8c: Persist Evaluation Results to `evaluation.json` (STORY-010, depends: STORY-009)
+
+**Description**: Evaluation pipeline results are currently returned in-memory and never written to disk (except indirectly via sweep `results.json`). With per-run directories, write the composite evaluation result to `run_dir/evaluation.json` after `evaluate_comprehensive` completes. This makes each run fully self-contained: stream/trace + review + evaluation + report all in one directory.
+
+**Acceptance Criteria**:
+
+- [ ] AC1: `evaluation.json` is written to `run_context.evaluation_path` after `evaluate_comprehensive` returns
+- [ ] AC2: `evaluation.json` contains the full `CompositeResult` (tier1, tier2, tier3, composite scores)
+- [ ] AC3: `evaluation.json` is only written when evaluation actually ran (not when `skip_eval=True`)
+- [ ] AC4: `ArtifactRegistry` registers `evaluation.json` as `"Evaluation"` artifact
+- [ ] AC5: `make validate` passes with no regressions
+
+**Technical Requirements**:
+
+- In `run_evaluation_if_enabled` (`evaluation_runner.py`), after pipeline returns results, write `result_dict` to `run_context.evaluation_path` via `json.dumps()` with `indent=2`
+- Guard: only write if `run_context` is provided and results are non-None
+- Register artifact path in `ArtifactRegistry`
+
+**Files**:
+
+- `src/app/judge/evaluation_runner.py` (edit -- write `evaluation.json` after pipeline completes)
+- `tests/judge/test_evaluation_runner.py` (edit -- verify `evaluation.json` written with correct content)
+
+---
+
 ## Non-Functional Requirements
 
 - No new external dependencies
 - **Scoring changes**: Features 3–7 change evaluation score behavior. Existing score comparisons against historical runs will not be directly comparable after these changes.
+- **Output directory migration**: Feature 8 consolidates all output under `output/` and removes legacy paths (`logs/Agent_evals/cc_streams/`, `logs/Agent_evals/traces/`, `results/`). Existing artifacts in those directories are not migrated. No backward compatibility layer.
 - **Change comments**: Every non-trivial code change must include a concise inline comment with sprint, story, and reason. Format: `# S12-F{N}: {why}`. Keep comments to one line. Omit for trivial changes (string edits, config values).
 
 ## Out of Scope
@@ -333,8 +489,9 @@ These events have `"type": "system"`, not `"TeamCreate"` or `"Task"`, so `_apply
 
 - **P0 (bug fix)**: STORY-001 (stream event parsing — root cause), STORY-002 (cc_teams flag passthrough — enables correct engine_type)
 - **P1 (scoring fix)**: STORY-003 → STORY-004 (Tier 3 fallback + single-agent redistribution), STORY-005 (time_taken timestamps), STORY-006 (semantic dedup), STORY-007 (task_success continuous)
+- **P2 (UX)**: STORY-008 → STORY-009 → STORY-010 (per-run output directories)
 
-### Story Breakdown (7 stories total):
+### Story Breakdown (10 stories total)
 
 - **Feature 1** → STORY-001: Fix CC teams stream event parsing
   Update `_apply_event` to capture `task_started`/`task_completed` system events as team artifacts. Remove stale `_TEAM_EVENT_TYPES` constant. TDD: update existing `parse_stream_json` tests to use real CC event format, add new tests for task lifecycle events. Files: `src/app/engines/cc_engine.py`, `tests/engines/test_cc_engine.py`.
@@ -357,6 +514,15 @@ These events have `"type": "system"`, not `"TeamCreate"` or `"Task"`, so `_apply
 - **Feature 7** → STORY-007: Replace binary `task_success` with continuous score
   Change `assess_task_success` from `0/1` to `min(1.0, similarity/threshold)`. Files: `src/app/judge/traditional_metrics.py`, `tests/evals/test_traditional_metrics.py`.
 
+- **Feature 8a** → STORY-008: Introduce `RunContext` and per-run directory infrastructure
+  Create `RunContext` dataclass with path helpers, `metadata.json` writer, unified timestamp. Add `OUTPUT_PATH`, remove `CC_STREAMS_PATH`/`MAS_REVIEWS_PATH`/`RESULTS_PATH`. Create in `main()`. Files: `src/app/utils/run_context.py` (new), `src/app/config/config_app.py`, `src/app/config/judge_settings.py`, `src/app/app.py`, `src/gui/pages/evaluation.py`, `tests/utils/test_run_context.py` (new).
+
+- **Feature 8b** → STORY-009: Migrate all writers to per-run directories (depends: STORY-008)
+  Update `cc_engine.py`, `trace_processors.py`, `review_persistence.py`, `run_cli.py`, `sweep_runner.py` to write via `RunContext`/`OUTPUT_PATH` paths. Delete dead `review_loader.py`. Remove legacy path constants usage. Files: `src/app/engines/cc_engine.py`, `src/app/judge/trace_processors.py`, `src/app/data_utils/review_persistence.py`, `src/app/data_utils/review_loader.py` (delete), `src/run_cli.py`, `src/app/benchmark/sweep_runner.py`, `src/app/app.py`, tests.
+
+- **Feature 8c** → STORY-010: Persist evaluation results to `evaluation.json` (depends: STORY-009)
+  Write `CompositeResult` to `run_dir/evaluation.json` after pipeline completes. Files: `src/app/judge/evaluation_runner.py`, `tests/judge/test_evaluation_runner.py`.
+
 ### Notes for CC Agent Teams
 
 Reference: `docs/analysis/CC-agent-teams-orchestration.md`
@@ -364,7 +530,7 @@ Reference: `docs/analysis/CC-agent-teams-orchestration.md`
 #### Teammate Definitions
 
 | Teammate | Role | Model | Permissions | TDD Responsibility |
-|----------|------|-------|-------------|-------------------|
+| --- | --- | --- | --- | --- |
 | Lead | Coordination, wave gates, `make validate` | sonnet | delegate mode | Runs full validation at wave boundaries |
 | teammate-1 | Developer (src/ + tests/) | opus | acceptEdits | `testing-python` (RED) → `implementing-python` (GREEN) → `make quick_validate` |
 | teammate-2 | Developer (traditional_metrics + tests) | opus | acceptEdits | `testing-python` (RED) → `implementing-python` (GREEN) → `make quick_validate` |
@@ -372,10 +538,13 @@ Reference: `docs/analysis/CC-agent-teams-orchestration.md`
 #### File-Conflict Dependencies
 
 | Story | Logical Dep | Shared File / Reason |
-|---|---|---|
+| --- | --- | --- |
 | STORY-002 | STORY-001 | `cc_engine.py` (STORY-001 changes event parsing that STORY-002's tests depend on) |
 | STORY-004 | STORY-003 | `evaluation_pipeline.py` (STORY-003 changes `_execute_tier3`; STORY-004 changes `_generate_composite_score` in same file) |
 | STORY-005 | STORY-004 | `evaluation_pipeline.py` (STORY-005 adds timestamp params to methods STORY-004 modified) |
+| STORY-009 | STORY-008 | All writer files (STORY-009 uses `RunContext` from STORY-008) |
+| STORY-009 | STORY-005 | `cc_engine.py`, `app.py` (STORY-005 adds timing fields that STORY-009's writer migration must preserve) |
+| STORY-010 | STORY-009 | `evaluation_runner.py` (STORY-010 adds `evaluation.json` write after STORY-009 plumbs `RunContext`) |
 
 #### Orchestration Waves
 
@@ -388,6 +557,10 @@ Wave 1 (P1 scoring fixes — sequential on evaluation_pipeline.py, parallel on t
   teammate-1: STORY-003 (F3 Tier 3 empty-trace skip) → STORY-004 (F4 wire composite_with_trace) → STORY-005 (F5 timestamp propagation)
   teammate-2: STORY-006 (F6 semantic dedup) → STORY-007 (F7 task_success continuous)
   gate: lead runs `make validate`
+
+Wave 2 (P2 output restructuring — sequential, touches many files):
+  teammate-1: STORY-008 (F8a RunContext infrastructure) → STORY-009 (F8b migrate writers) → STORY-010 (F8c evaluation.json)
+  gate: lead runs `make validate`
 ```
 
 #### Quality Gate Workflow
@@ -396,4 +569,4 @@ Wave 1 (P1 scoring fixes — sequential on evaluation_pipeline.py, parallel on t
 2. **Teammate picks next story**: checks `TaskList` for unblocked pending tasks, claims via `TaskUpdate` with `owner`
 3. **Wave boundary**: when all stories in a wave are completed, lead runs `make validate` (full suite)
 4. **Lead advances**: if `make validate` passes, lead confirms sprint complete; if it fails, lead assigns fix tasks
-5. **Shutdown**: after Wave 1, lead sends `shutdown_request` to all teammates, then `TeamDelete`
+5. **Shutdown**: after Wave 2, lead sends `shutdown_request` to all teammates, then `TeamDelete`
