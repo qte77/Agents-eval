@@ -4,12 +4,18 @@ Verifies RunContext dataclass fields, directory creation, metadata.json contents
 and path helper methods (AC1-AC5).
 """
 
+from __future__ import annotations
+
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
+
+if TYPE_CHECKING:
+    from app.utils.run_context import RunContext
 
 
 class TestRunContextDataclass:
@@ -168,7 +174,7 @@ class TestRunContextPathHelpers:
     """Tests for path helper methods (AC4)."""
 
     @pytest.fixture
-    def mas_context(self, tmp_path: Path) -> "RunContext":  # type: ignore[name-defined]
+    def mas_context(self, tmp_path: Path) -> RunContext:
         """Create a MAS RunContext for testing."""
         from app.utils.run_context import RunContext
 
@@ -183,7 +189,7 @@ class TestRunContextPathHelpers:
         )
 
     @pytest.fixture
-    def cc_solo_context(self, tmp_path: Path) -> "RunContext":  # type: ignore[name-defined]
+    def cc_solo_context(self, tmp_path: Path) -> RunContext:
         """Create a CC solo RunContext for testing."""
         from app.utils.run_context import RunContext
 
@@ -198,7 +204,7 @@ class TestRunContextPathHelpers:
         )
 
     @pytest.fixture
-    def cc_teams_context(self, tmp_path: Path) -> "RunContext":  # type: ignore[name-defined]
+    def cc_teams_context(self, tmp_path: Path) -> RunContext:
         """Create a CC teams RunContext for testing."""
         from app.utils.run_context import RunContext
 
@@ -212,35 +218,35 @@ class TestRunContextPathHelpers:
             run_dir=run_dir,
         )
 
-    def test_stream_path_mas_is_json(self, mas_context: "RunContext") -> None:  # type: ignore[name-defined]
+    def test_stream_path_mas_is_json(self, mas_context: RunContext) -> None:
         """stream_path for MAS engine returns stream.json (AC4)."""
         assert mas_context.stream_path.name == "stream.json"
         assert mas_context.stream_path.parent == mas_context.run_dir
 
-    def test_stream_path_cc_solo_is_jsonl(self, cc_solo_context: "RunContext") -> None:  # type: ignore[name-defined]
+    def test_stream_path_cc_solo_is_jsonl(self, cc_solo_context: RunContext) -> None:
         """stream_path for cc_solo engine returns stream.jsonl (AC4)."""
         assert cc_solo_context.stream_path.name == "stream.jsonl"
 
-    def test_stream_path_cc_teams_is_jsonl(self, cc_teams_context: "RunContext") -> None:  # type: ignore[name-defined]
+    def test_stream_path_cc_teams_is_jsonl(self, cc_teams_context: RunContext) -> None:
         """stream_path for cc_teams engine returns stream.jsonl (AC4)."""
         assert cc_teams_context.stream_path.name == "stream.jsonl"
 
-    def test_trace_path(self, mas_context: "RunContext") -> None:  # type: ignore[name-defined]
+    def test_trace_path(self, mas_context: RunContext) -> None:
         """trace_path returns trace.jsonl in run_dir (AC4)."""
         assert mas_context.trace_path.name == "trace.jsonl"
         assert mas_context.trace_path.parent == mas_context.run_dir
 
-    def test_review_path(self, mas_context: "RunContext") -> None:  # type: ignore[name-defined]
+    def test_review_path(self, mas_context: RunContext) -> None:
         """review_path returns review.json in run_dir (AC4)."""
         assert mas_context.review_path.name == "review.json"
         assert mas_context.review_path.parent == mas_context.run_dir
 
-    def test_report_path(self, mas_context: "RunContext") -> None:  # type: ignore[name-defined]
+    def test_report_path(self, mas_context: RunContext) -> None:
         """report_path returns report.md in run_dir (AC4)."""
         assert mas_context.report_path.name == "report.md"
         assert mas_context.report_path.parent == mas_context.run_dir
 
-    def test_evaluation_path(self, mas_context: "RunContext") -> None:  # type: ignore[name-defined]
+    def test_evaluation_path(self, mas_context: RunContext) -> None:
         """evaluation_path returns evaluation.json in run_dir (AC4)."""
         assert mas_context.evaluation_path.name == "evaluation.json"
         assert mas_context.evaluation_path.parent == mas_context.run_dir
