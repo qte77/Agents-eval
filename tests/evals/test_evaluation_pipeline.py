@@ -12,6 +12,8 @@ import pytest
 from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import (
     CompositeResult,
+    EvaluationResults,
+    GraphTraceData,
     Tier1Result,
     Tier2Result,
     Tier3Result,
@@ -466,7 +468,6 @@ class TestTier3EmptyTraceSkip:
         self, pipeline, sample_tier1_result
     ):
         """AC5: tier1_only fallback creates neutral Tier 3 result (0.5 scores) when Tier 3 is None."""
-        from app.data_models.evaluation_models import EvaluationResults
 
         # Tier 1 present, Tier 2 present, Tier 3 is None (skipped due to empty trace)
         tier2 = Tier2Result(
@@ -488,3 +489,242 @@ class TestTier3EmptyTraceSkip:
         assert fallback_results.tier3.coordination_centrality == 0.5
         assert fallback_results.tier3.task_distribution_balance == 0.5
         assert fallback_results.tier3.overall_score == 0.5
+
+
+class TestTraceDataWiring:
+    """Tests for STORY-004: Wire evaluate_composite_with_trace into production.
+
+    Validates that _generate_composite_score routes to evaluate_composite_with_trace
+    when trace_data is provided and results are complete, and preserves existing
+    routing when trace_data is None.
+    """
+
+    @pytest.fixture
+    def pipeline(self):
+        """Pipeline with Tier 2 available for comprehensive testing."""
+        p = EvaluationPipeline()
+        p.llm_engine.tier2_available = True
+        return p
+
+    def test_generate_composite_score_accepts_trace_data_param(self, pipeline):
+        """AC1: _generate_composite_score accepts optional trace_data parameter."""
+        results = EvaluationResults(
+            tier1=Tier1Result(
+                cosine_score=0.8, jaccard_score=0.7, semantic_score=0.85,
+                execution_time=1.0, time_score=0.9, task_success=1.0, overall_score=0.8,
+            ),
+            tier2=Tier2Result(
+                technical_accuracy=0.8, constructiveness=0.8, planning_rationality=0.8,
+                overall_score=0.8, model_used="test", api_cost=0.0, fallback_used=False,
+            ),
+            tier3=Tier3Result(
+                path_convergence=0.7, tool_selection_accuracy=0.8,
+                coordination_centrality=0.75, task_distribution_balance=0.8,
+                overall_score=0.76, graph_complexity=4,
+            ),
+        )
+        trace = GraphTraceData(
+            execution_id="test-004",
+            tool_calls=[{"tool": "read", "agent_id": "a1"}],
+            agent_interactions=[],
+        )
+
+        # Should accept trace_data parameter without error
+        result = pipeline._generate_composite_score(results, trace_data=trace)
+        assert isinstance(result, CompositeResult)
+
+    def test_generate_composite_score_calls_with_trace_when_complete(self, pipeline):
+        """AC2: When trace_data provided and results complete, evaluate_composite_with_trace called."""
+        results = EvaluationResults(
+            tier1=Tier1Result(
+                cosine_score=0.8, jaccard_score=0.7, semantic_score=0.85,
+                execution_time=1.0, time_score=0.9, task_success=1.0, overall_score=0.8,
+            ),
+            tier2=Tier2Result(
+                technical_accuracy=0.8, constructiveness=0.8, planning_rationality=0.8,
+                overall_score=0.8, model_used="test", api_cost=0.0, fallback_used=False,
+            ),
+            tier3=Tier3Result(
+                path_convergence=0.7, tool_selection_accuracy=0.8,
+                coordination_centrality=0.75, task_distribution_balance=0.8,
+                overall_score=0.76, graph_complexity=4,
+            ),
+        )
+        trace = GraphTraceData(
+            execution_id="test-004",
+            tool_calls=[{"tool": "read", "agent_id": "a1"}],
+            agent_interactions=[],
+        )
+
+        with patch.object(
+            pipeline.composite_scorer, "evaluate_composite_with_trace"
+        ) as mock_with_trace:
+            mock_with_trace.return_value = CompositeResult(
+                composite_score=0.8, recommendation="accept", recommendation_weight=1.0,
+                metric_scores={}, tier1_score=0.8, tier2_score=0.8, tier3_score=0.76,
+                evaluation_complete=True,
+            )
+            pipeline._generate_composite_score(results, trace_data=trace)
+            mock_with_trace.assert_called_once_with(results, trace)
+
+    def test_generate_composite_score_preserves_existing_routing_no_trace(self, pipeline):
+        """AC3: When trace_data is None, existing routing to evaluate_composite preserved."""
+        results = EvaluationResults(
+            tier1=Tier1Result(
+                cosine_score=0.8, jaccard_score=0.7, semantic_score=0.85,
+                execution_time=1.0, time_score=0.9, task_success=1.0, overall_score=0.8,
+            ),
+            tier2=Tier2Result(
+                technical_accuracy=0.8, constructiveness=0.8, planning_rationality=0.8,
+                overall_score=0.8, model_used="test", api_cost=0.0, fallback_used=False,
+            ),
+            tier3=Tier3Result(
+                path_convergence=0.7, tool_selection_accuracy=0.8,
+                coordination_centrality=0.75, task_distribution_balance=0.8,
+                overall_score=0.76, graph_complexity=4,
+            ),
+        )
+
+        with patch.object(pipeline.composite_scorer, "evaluate_composite") as mock_eval:
+            mock_eval.return_value = CompositeResult(
+                composite_score=0.8, recommendation="accept", recommendation_weight=1.0,
+                metric_scores={}, tier1_score=0.8, tier2_score=0.8, tier3_score=0.76,
+                evaluation_complete=True,
+            )
+            # No trace_data — should use standard evaluate_composite
+            pipeline._generate_composite_score(results)
+            mock_eval.assert_called_once_with(results)
+
+    def test_generate_composite_score_no_trace_tier2_missing(self, pipeline):
+        """AC3: When trace_data is None and tier2 missing, existing optional_tier2 routing preserved."""
+        results = EvaluationResults(
+            tier1=Tier1Result(
+                cosine_score=0.8, jaccard_score=0.7, semantic_score=0.85,
+                execution_time=1.0, time_score=0.9, task_success=1.0, overall_score=0.8,
+            ),
+            tier2=None,
+            tier3=Tier3Result(
+                path_convergence=0.7, tool_selection_accuracy=0.8,
+                coordination_centrality=0.75, task_distribution_balance=0.8,
+                overall_score=0.76, graph_complexity=4,
+            ),
+        )
+
+        with patch.object(
+            pipeline.composite_scorer, "evaluate_composite_with_optional_tier2"
+        ) as mock_opt:
+            mock_opt.return_value = CompositeResult(
+                composite_score=0.75, recommendation="weak_accept", recommendation_weight=0.7,
+                metric_scores={}, tier1_score=0.8, tier2_score=None, tier3_score=0.76,
+                evaluation_complete=False,
+            )
+            pipeline._generate_composite_score(results)
+            mock_opt.assert_called_once_with(results)
+
+    @pytest.mark.asyncio
+    async def test_evaluate_comprehensive_passes_trace_data(
+        self,
+        pipeline,
+        sample_tier1_result,
+        sample_tier2_result,
+        sample_tier3_result,
+        sample_composite_result,
+    ):
+        """AC4: evaluate_comprehensive retains GraphTraceData and passes to _generate_composite_score."""
+        trace = GraphTraceData(
+            execution_id="test-004",
+            tool_calls=[{"tool": "read", "agent_id": "a1"}],
+            agent_interactions=[{"from": "a1", "to": "a2"}],
+        )
+
+        with (
+            patch.object(
+                pipeline.traditional_engine, "evaluate_traditional_metrics"
+            ) as mock_t1,
+            patch.object(pipeline.llm_engine, "evaluate_comprehensive") as mock_t2,
+            patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_t3,
+            patch.object(pipeline, "_generate_composite_score") as mock_gen,
+        ):
+            mock_t1.return_value = sample_tier1_result
+            mock_t2.return_value = sample_tier2_result
+            mock_t3.return_value = sample_tier3_result
+            mock_gen.return_value = sample_composite_result
+
+            await pipeline.evaluate_comprehensive(
+                paper="Test paper",
+                review="Test review",
+                execution_trace=trace,
+            )
+
+            # Verify _generate_composite_score received the trace_data
+            mock_gen.assert_called_once()
+            call_kwargs = mock_gen.call_args
+            assert call_kwargs.kwargs.get("trace_data") is not None
+            passed_trace = call_kwargs.kwargs["trace_data"]
+            assert isinstance(passed_trace, GraphTraceData)
+            assert passed_trace.execution_id == "test-004"
+
+    @pytest.mark.asyncio
+    async def test_evaluate_comprehensive_no_trace_passes_none(
+        self,
+        pipeline,
+        sample_tier1_result,
+        sample_tier2_result,
+        sample_tier3_result,
+        sample_composite_result,
+    ):
+        """AC4: evaluate_comprehensive passes trace_data=None when no trace provided."""
+        with (
+            patch.object(
+                pipeline.traditional_engine, "evaluate_traditional_metrics"
+            ) as mock_t1,
+            patch.object(pipeline.llm_engine, "evaluate_comprehensive") as mock_t2,
+            patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_t3,
+            patch.object(pipeline, "_generate_composite_score") as mock_gen,
+        ):
+            mock_t1.return_value = sample_tier1_result
+            mock_t2.return_value = sample_tier2_result
+            mock_t3.return_value = sample_tier3_result
+            mock_gen.return_value = sample_composite_result
+
+            await pipeline.evaluate_comprehensive(
+                paper="Test paper",
+                review="Test review",
+                execution_trace=None,
+            )
+
+            mock_gen.assert_called_once()
+            call_kwargs = mock_gen.call_args
+            assert call_kwargs.kwargs.get("trace_data") is None
+
+    def test_solo_run_empty_interactions_triggers_weight_redistribution(self, pipeline):
+        """AC5: CC solo runs with empty agent_interactions trigger single-agent weight redistribution."""
+        results = EvaluationResults(
+            tier1=Tier1Result(
+                cosine_score=0.8, jaccard_score=0.7, semantic_score=0.85,
+                execution_time=1.0, time_score=0.9, task_success=1.0, overall_score=0.8,
+            ),
+            tier2=Tier2Result(
+                technical_accuracy=0.8, constructiveness=0.8, planning_rationality=0.8,
+                overall_score=0.8, model_used="test", api_cost=0.0, fallback_used=False,
+            ),
+            tier3=Tier3Result(
+                path_convergence=0.7, tool_selection_accuracy=0.8,
+                coordination_centrality=0.75, task_distribution_balance=0.8,
+                overall_score=0.76, graph_complexity=4,
+            ),
+        )
+        # Simulate CC solo run: tool_calls with single agent, no interactions
+        solo_trace = GraphTraceData(
+            execution_id="cc-solo",
+            tool_calls=[{"tool": "read_file", "agent_id": "main"}],
+            agent_interactions=[],
+            coordination_events=[],
+        )
+
+        result = pipeline._generate_composite_score(results, trace_data=solo_trace)
+
+        assert isinstance(result, CompositeResult)
+        assert result.single_agent_mode is True
+        # coordination_quality should NOT be in metric_scores (redistributed)
+        assert "coordination_quality" not in result.metric_scores
