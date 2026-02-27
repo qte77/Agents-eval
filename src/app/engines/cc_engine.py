@@ -338,9 +338,7 @@ def _persist_solo_stream(raw_stdout: str, stream_path: Path) -> None:
     get_artifact_registry().register("CC solo stream", stream_path)
 
 
-def run_cc_solo(
-    query: str, timeout: int = 600, run_context: RunContext | None = None
-) -> CCResult:
+def run_cc_solo(query: str, timeout: int = 600, run_context: RunContext | None = None) -> CCResult:
     """Run Claude Code in solo (headless print) mode.
 
     Uses blocking ``subprocess.run`` with ``--output-format json``. The full JSON
@@ -408,9 +406,7 @@ def run_cc_solo(
     )
 
 
-def run_cc_teams(
-    query: str, timeout: int = 600, run_context: RunContext | None = None
-) -> CCResult:
+def run_cc_teams(query: str, timeout: int = 600, run_context: RunContext | None = None) -> CCResult:
     """Run Claude Code in teams (agent orchestration) mode.
 
     Uses ``subprocess.Popen`` with ``--output-format stream-json`` and the
