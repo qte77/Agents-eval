@@ -51,7 +51,6 @@ class TestPromptsIntegration:
 
         with (
             patch.object(prompts_mod, "header"),
-            patch.object(prompts_mod, "warning"),
             patch.object(prompts_mod, "error"),
             patch.object(prompts_mod, "info"),
             patch("gui.pages.prompts.render_prompt_editor") as mock_editor,
@@ -80,7 +79,6 @@ class TestPromptsIntegration:
 
         with (
             patch.object(prompts_mod, "header"),
-            patch.object(prompts_mod, "warning"),
             patch.object(prompts_mod, "error") as mock_error,
             patch.object(prompts_mod, "info"),
         ):

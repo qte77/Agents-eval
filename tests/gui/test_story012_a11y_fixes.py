@@ -294,8 +294,8 @@ class TestSidebarRadioLabel:
                 "sidebar.radio must not use ' ' (space) as label — use 'Navigation' instead."
             )
 
-    def test_sidebar_uses_label_visibility_collapsed(self) -> None:
-        """render_sidebar must call radio with label_visibility='collapsed'."""
+    def test_sidebar_uses_label_visibility_hidden(self) -> None:
+        """render_sidebar must call radio with label_visibility='hidden' for a11y."""
         from unittest.mock import patch
 
         from gui.components.sidebar import render_sidebar
@@ -307,8 +307,8 @@ class TestSidebarRadioLabel:
         radio_calls = mock_sb.radio.call_args_list
         assert radio_calls, "sidebar.radio must be called"
         kwargs = radio_calls[0].kwargs
-        assert kwargs.get("label_visibility") == "collapsed", (
-            f"sidebar.radio must use label_visibility='collapsed', got: {kwargs.get('label_visibility')!r}"
+        assert kwargs.get("label_visibility") == "hidden", (
+            f"sidebar.radio must use label_visibility='hidden', got: {kwargs.get('label_visibility')!r}"
         )
 
     def test_sidebar_phoenix_link_warns_opens_in_new_tab(self) -> None:
@@ -388,11 +388,11 @@ class TestPromptsDisplayOnlyWarning:
     S8-F8.1: Users must be clearly informed that changes are not persisted.
     """
 
-    def test_prompts_calls_warning_with_display_only_message(self) -> None:
-        """render_prompts must call st.warning with a display-only notice.
+    def test_prompts_calls_info_with_read_only_message(self) -> None:
+        """render_prompts must call st.info with a read-only notice.
 
         Behavioral: call render_prompts with a valid ChatConfig and verify
-        warning() is called with text mentioning display-only or not-saved.
+        info() is called with text mentioning read-only.
         """
         from unittest.mock import patch
 
@@ -413,19 +413,14 @@ class TestPromptsDisplayOnlyWarning:
 
         with (
             patch.object(prompts_mod, "header"),
-            patch.object(prompts_mod, "warning") as mock_warning,
             patch.object(prompts_mod, "error"),
-            patch.object(prompts_mod, "info"),
+            patch.object(prompts_mod, "info") as mock_info,
             patch("gui.pages.prompts.render_prompt_editor", return_value=None),
         ):
             prompts_mod.render_prompts(chat_config)
 
-        assert mock_warning.called, (
-            "render_prompts must call st.warning() to show a prominent notice."
-        )
-        warning_text = " ".join(
-            str(call.args[0]) for call in mock_warning.call_args_list if call.args
-        )
-        assert "display-only" in warning_text or "not be saved" in warning_text, (
-            f"warning() must mention 'display-only' or 'not be saved'. Got: {warning_text!r}"
+        assert mock_info.called, "render_prompts must call st.info() to show a read-only notice."
+        info_text = " ".join(str(call.args[0]) for call in mock_info.call_args_list if call.args)
+        assert "read-only" in info_text.lower(), (
+            f"info() must mention 'read-only'. Got: {info_text!r}"
         )
