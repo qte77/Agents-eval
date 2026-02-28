@@ -83,6 +83,22 @@ package.json
 #        "hooks": [{"type": "command", "command": "rm -f HEAD config ..."}]}]}
 # Tracking: https://github.com/anthropics/claude-code/issues/17727 (open)
 # Closed incomplete: https://github.com/anthropics/claude-code/issues/17087
+# Worktree impact (open):
+#   https://github.com/anthropics/claude-code/issues/17374 — bwrap fails in worktrees (.git is file)
+#   https://github.com/anthropics/claude-code/issues/29316 — stub files in worktree root
+# Worktree impact (closed, not fully resolved):
+#   https://github.com/anthropics/claude-code/issues/26262 — sandbox restrictions break worktrees
+#   https://github.com/anthropics/claude-code/issues/22320 — bwrap can't mkdir .git/hooks
+#   https://github.com/anthropics/claude-code/issues/27440 — parallel worktree agents lose perms
+#
+# Note: The EnterWorktree tool is also broken by this bug. bwrap's
+#   denyWithinAllow matches HEAD/refs/objects/hooks/config as path suffixes
+#   regardless of depth, so .git/worktrees/<name>/HEAD is blocked the same
+#   as .git/HEAD. This makes git merge/commit impossible inside worktrees.
+#   The /HEAD etc. entries below only affect root-level phantom files —
+#   they do NOT affect .git/worktrees/ (git doesn't track its own internals).
+#   Tested: CC v2.1.52 (Feb 2026). No fix available; sandbox must be disabled
+#   for worktree git operations.
 #
 # git internals (denyWithinAllow drops .git/ prefix)
 /HEAD
