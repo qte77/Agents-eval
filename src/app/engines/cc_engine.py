@@ -407,6 +407,27 @@ def run_cc_solo(query: str, timeout: int = 600, run_context: RunContext | None =
     )
 
 
+def _wait_with_timeout(proc: subprocess.Popen[str], remaining: int, timeout: int) -> None:
+    """Wait for subprocess with timeout, killing on expiry (MAESTRO H1).
+
+    Args:
+        proc: Running subprocess to wait on.
+        remaining: Seconds left before overall timeout.
+        timeout: Original timeout value for error message.
+
+    Raises:
+        RuntimeError: If process times out or exits with non-zero code.
+    """
+    try:
+        proc.wait(timeout=remaining)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+        raise RuntimeError(f"CC timed out after {timeout}s (wait phase)")
+    if proc.returncode != 0:
+        raise RuntimeError(f"CC failed with exit code {proc.returncode}")
+
+
 def run_cc_teams(query: str, timeout: int = 600, run_context: RunContext | None = None) -> CCResult:
     """Run Claude Code in teams (agent orchestration) mode.
 
@@ -471,17 +492,8 @@ def run_cc_teams(query: str, timeout: int = 600, run_context: RunContext | None 
                 proc.kill()
                 raise RuntimeError(f"CC timed out after {e.timeout}s") from e
 
-            # Reason: enforce timeout on proc.wait() — without this, a hung process
-            # blocks indefinitely after stream reading completes (MAESTRO H1).
             remaining = max(1, timeout - int(time.time() - popen_start))
-            try:
-                proc.wait(timeout=remaining)
-            except subprocess.TimeoutExpired:
-                proc.kill()
-                proc.wait()
-                raise RuntimeError(f"CC timed out after {timeout}s (wait phase)")
-            if proc.returncode != 0:
-                raise RuntimeError(f"CC failed with exit code {proc.returncode}")
+            _wait_with_timeout(proc, remaining, timeout)
 
     except subprocess.TimeoutExpired as e:
         raise RuntimeError(f"CC timed out after {e.timeout}s") from e
