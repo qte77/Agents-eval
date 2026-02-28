@@ -2,7 +2,7 @@
 
 # Agents-eval
 
-A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates and evaluates scientific paper reviews through a three-tiered assessment approach: traditional metrics, LLM-as-a-Judge, and graph-based complexity analysis.
+A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates and evaluates scientific paper reviews through a three-tiered assessment approach: Tier 1 (Traditional Metrics), Tier 2 (LLM-as-a-Judge), and Tier 3 (Graph-Based Analysis).
 
 > Ultimate Goal: Evaluate multi-agent AI systems objectively - Three-tiered framework for researchers and developers building autonomous agent teams
 
@@ -79,7 +79,7 @@ Note: Chat configuration uses inference endpoints and models which are subject t
 
 **System**: Multi-agent evaluation pipeline (Manager → Researcher → Analyst → Synthesizer) with PydanticAI, processing [PeerRead](https://github.com/allenai/PeerRead) scientific papers.
 
-**Evaluation Approach**: Traditional metrics + LLM-as-a-Judge + Graph-based complexity analysis → Composite scoring. See [architecture.md](docs/architecture.md) for metric definitions.
+**Evaluation Approach**: Tier 1 (Traditional Metrics) + Tier 2 (LLM-as-a-Judge) + Tier 3 (Graph-Based Analysis) → Composite scoring. See [architecture.md](docs/architecture.md) for metric definitions.
 
 **Architecture**: [architecture.md](docs/architecture.md) | **Dataset Usage**: [PeerRead Agent Usage Guide](docs/howtos/peerread-agent-usage.md)
 

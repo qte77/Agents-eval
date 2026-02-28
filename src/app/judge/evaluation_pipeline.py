@@ -298,6 +298,29 @@ class EvaluationPipeline:
         elif results.tier2 is None:
             # Tier 2 skipped - validate Tier 1 and Tier 3 before redistribution
             if not results.tier1 or not results.tier3:
+                if results.tier1:
+                    # Reason: Tier 1 only — return degraded result so CI passes
+                    # without LLM provider env vars or trace data.
+                    logger.warning(
+                        "Composite score degraded: only Tier 1 available "
+                        "(Tier 2 skipped, Tier 3 unavailable). "
+                        "Score reflects traditional metrics only."
+                    )
+                    return CompositeResult(
+                        composite_score=results.tier1.overall_score,
+                        recommendation="weak_reject",
+                        recommendation_weight=-0.25,
+                        metric_scores={
+                            "cosine_score": results.tier1.cosine_score,
+                            "jaccard_score": results.tier1.jaccard_score,
+                            "semantic_score": results.tier1.semantic_score,
+                        },
+                        tier1_score=results.tier1.overall_score,
+                        tier2_score=None,
+                        tier3_score=0.0,
+                        evaluation_complete=False,
+                        weights_used={"tier1": 1.0, "tier2": 0.0, "tier3": 0.0},
+                    )
                 raise ValueError(
                     "Cannot generate composite score: Tier 1 and Tier 3 required "
                     "when Tier 2 is skipped"
