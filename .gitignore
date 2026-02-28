@@ -24,6 +24,7 @@ pytest-of-vscode/
 .ruff_cache/
 .mypy_cache/
 complexipy-snapshot.json
+inline-snapshot-*/
 
 # Logs
 *.log
