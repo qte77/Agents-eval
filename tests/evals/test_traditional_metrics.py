@@ -89,9 +89,7 @@ class TestTraditionalMetricsEngine:
         text1, text2 = sample_texts["academic_review"]
 
         # Mock Levenshtein similarity to return known value
-        with patch.object(
-            engine, "compute_levenshtein_similarity", return_value=0.85
-        ) as mock_lev:
+        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.85) as mock_lev:
             similarity = engine.compute_semantic_similarity(text1, text2)
             assert similarity == 0.85
             mock_lev.assert_called_once_with(text1, text2)
@@ -103,9 +101,7 @@ class TestTraditionalMetricsEngine:
         mock_bertscore.side_effect = Exception("Model loading failed")
 
         text1, text2 = sample_texts["similar"]
-        with patch.object(
-            engine, "compute_levenshtein_similarity", return_value=0.7
-        ) as mock_lev:
+        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.7) as mock_lev:
             similarity = engine.compute_semantic_similarity(text1, text2)
             assert similarity == 0.7
             mock_lev.assert_called_once_with(text1, text2)
@@ -920,9 +916,7 @@ class TestContinuousTaskSuccess:
         scores = SimilarityScores(cosine=0.3, jaccard=0.2, semantic=0.4)
         success = engine.assess_task_success(scores, threshold=0.8)
 
-        assert success not in [0.0, 1.0], (
-            f"Expected continuous score but got binary {success}"
-        )
+        assert success not in [0.0, 1.0], f"Expected continuous score but got binary {success}"
         assert 0.0 < success < 1.0
 
     def test_ac2_above_threshold_returns_1(self, engine):
@@ -1002,6 +996,4 @@ class TestContinuousTaskSuccess:
         ]
         for scores in test_cases:
             success = engine.assess_task_success(scores, threshold=0.8)
-            assert 0.0 <= success <= 1.0, (
-                f"Score {success} out of [0.0, 1.0] for scores {scores}"
-            )
+            assert 0.0 <= success <= 1.0, f"Score {success} out of [0.0, 1.0] for scores {scores}"

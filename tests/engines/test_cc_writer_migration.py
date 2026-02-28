@@ -9,8 +9,6 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from app.utils.run_context import RunContext
 
 

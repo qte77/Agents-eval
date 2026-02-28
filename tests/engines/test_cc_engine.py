@@ -461,9 +461,7 @@ class TestParseStreamJson:
         """parse_stream_json adds type=system/subtype=task_completed to team_artifacts (AC2)."""
         from app.engines.cc_engine import parse_stream_json
 
-        lines = [
-            json.dumps({"type": "system", "subtype": "task_completed", "agent_id": "agent-1"})
-        ]
+        lines = [json.dumps({"type": "system", "subtype": "task_completed", "agent_id": "agent-1"})]
         result = parse_stream_json(iter(lines))
         assert len(result.team_artifacts) == 1
         assert result.team_artifacts[0]["subtype"] == "task_completed"
@@ -508,15 +506,9 @@ class TestParseStreamJson:
         from app.engines.cc_engine import parse_stream_json
 
         lines = [
-            json.dumps(
-                {"type": "system", "subtype": "task_started", "agent_id": "agent-1"}
-            ),
-            json.dumps(
-                {"type": "system", "subtype": "task_started", "agent_id": "agent-2"}
-            ),
-            json.dumps(
-                {"type": "system", "subtype": "task_completed", "agent_id": "agent-1"}
-            ),
+            json.dumps({"type": "system", "subtype": "task_started", "agent_id": "agent-1"}),
+            json.dumps({"type": "system", "subtype": "task_started", "agent_id": "agent-2"}),
+            json.dumps({"type": "system", "subtype": "task_completed", "agent_id": "agent-1"}),
         ]
         result = parse_stream_json(iter(lines))
         assert len(result.team_artifacts) == 3

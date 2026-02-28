@@ -6,15 +6,12 @@ AC10: Sweep runner default output_dir changed from results/sweeps to output/swee
 
 from pathlib import Path
 
-import pytest
-
 
 class TestSweepRunnerDefaultOutputDir:
     """AC10: Sweep runner default output_dir uses output/sweeps instead of results/sweeps."""
 
     def test_default_output_dir_uses_output_prefix(self) -> None:
         """Default sweep output_dir starts with output/sweeps, not results/sweeps."""
-        from unittest.mock import patch
 
         # Simulate args with no --output-dir
         from argparse import Namespace

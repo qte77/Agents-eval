@@ -510,17 +510,30 @@ class TestTraceDataWiring:
         """AC1: _generate_composite_score accepts optional trace_data parameter."""
         results = EvaluationResults(
             tier1=Tier1Result(
-                cosine_score=0.8, jaccard_score=0.7, semantic_score=0.85,
-                execution_time=1.0, time_score=0.9, task_success=1.0, overall_score=0.8,
+                cosine_score=0.8,
+                jaccard_score=0.7,
+                semantic_score=0.85,
+                execution_time=1.0,
+                time_score=0.9,
+                task_success=1.0,
+                overall_score=0.8,
             ),
             tier2=Tier2Result(
-                technical_accuracy=0.8, constructiveness=0.8, planning_rationality=0.8,
-                overall_score=0.8, model_used="test", api_cost=0.0, fallback_used=False,
+                technical_accuracy=0.8,
+                constructiveness=0.8,
+                planning_rationality=0.8,
+                overall_score=0.8,
+                model_used="test",
+                api_cost=0.0,
+                fallback_used=False,
             ),
             tier3=Tier3Result(
-                path_convergence=0.7, tool_selection_accuracy=0.8,
-                coordination_centrality=0.75, task_distribution_balance=0.8,
-                overall_score=0.76, graph_complexity=4,
+                path_convergence=0.7,
+                tool_selection_accuracy=0.8,
+                coordination_centrality=0.75,
+                task_distribution_balance=0.8,
+                overall_score=0.76,
+                graph_complexity=4,
             ),
         )
         trace = GraphTraceData(
@@ -537,17 +550,30 @@ class TestTraceDataWiring:
         """AC2: When trace_data provided and results complete, evaluate_composite_with_trace called."""
         results = EvaluationResults(
             tier1=Tier1Result(
-                cosine_score=0.8, jaccard_score=0.7, semantic_score=0.85,
-                execution_time=1.0, time_score=0.9, task_success=1.0, overall_score=0.8,
+                cosine_score=0.8,
+                jaccard_score=0.7,
+                semantic_score=0.85,
+                execution_time=1.0,
+                time_score=0.9,
+                task_success=1.0,
+                overall_score=0.8,
             ),
             tier2=Tier2Result(
-                technical_accuracy=0.8, constructiveness=0.8, planning_rationality=0.8,
-                overall_score=0.8, model_used="test", api_cost=0.0, fallback_used=False,
+                technical_accuracy=0.8,
+                constructiveness=0.8,
+                planning_rationality=0.8,
+                overall_score=0.8,
+                model_used="test",
+                api_cost=0.0,
+                fallback_used=False,
             ),
             tier3=Tier3Result(
-                path_convergence=0.7, tool_selection_accuracy=0.8,
-                coordination_centrality=0.75, task_distribution_balance=0.8,
-                overall_score=0.76, graph_complexity=4,
+                path_convergence=0.7,
+                tool_selection_accuracy=0.8,
+                coordination_centrality=0.75,
+                task_distribution_balance=0.8,
+                overall_score=0.76,
+                graph_complexity=4,
             ),
         )
         trace = GraphTraceData(
@@ -560,8 +586,13 @@ class TestTraceDataWiring:
             pipeline.composite_scorer, "evaluate_composite_with_trace"
         ) as mock_with_trace:
             mock_with_trace.return_value = CompositeResult(
-                composite_score=0.8, recommendation="accept", recommendation_weight=1.0,
-                metric_scores={}, tier1_score=0.8, tier2_score=0.8, tier3_score=0.76,
+                composite_score=0.8,
+                recommendation="accept",
+                recommendation_weight=1.0,
+                metric_scores={},
+                tier1_score=0.8,
+                tier2_score=0.8,
+                tier3_score=0.76,
                 evaluation_complete=True,
             )
             pipeline._generate_composite_score(results, trace_data=trace)
@@ -571,24 +602,42 @@ class TestTraceDataWiring:
         """AC3: When trace_data is None, existing routing to evaluate_composite preserved."""
         results = EvaluationResults(
             tier1=Tier1Result(
-                cosine_score=0.8, jaccard_score=0.7, semantic_score=0.85,
-                execution_time=1.0, time_score=0.9, task_success=1.0, overall_score=0.8,
+                cosine_score=0.8,
+                jaccard_score=0.7,
+                semantic_score=0.85,
+                execution_time=1.0,
+                time_score=0.9,
+                task_success=1.0,
+                overall_score=0.8,
             ),
             tier2=Tier2Result(
-                technical_accuracy=0.8, constructiveness=0.8, planning_rationality=0.8,
-                overall_score=0.8, model_used="test", api_cost=0.0, fallback_used=False,
+                technical_accuracy=0.8,
+                constructiveness=0.8,
+                planning_rationality=0.8,
+                overall_score=0.8,
+                model_used="test",
+                api_cost=0.0,
+                fallback_used=False,
             ),
             tier3=Tier3Result(
-                path_convergence=0.7, tool_selection_accuracy=0.8,
-                coordination_centrality=0.75, task_distribution_balance=0.8,
-                overall_score=0.76, graph_complexity=4,
+                path_convergence=0.7,
+                tool_selection_accuracy=0.8,
+                coordination_centrality=0.75,
+                task_distribution_balance=0.8,
+                overall_score=0.76,
+                graph_complexity=4,
             ),
         )
 
         with patch.object(pipeline.composite_scorer, "evaluate_composite") as mock_eval:
             mock_eval.return_value = CompositeResult(
-                composite_score=0.8, recommendation="accept", recommendation_weight=1.0,
-                metric_scores={}, tier1_score=0.8, tier2_score=0.8, tier3_score=0.76,
+                composite_score=0.8,
+                recommendation="accept",
+                recommendation_weight=1.0,
+                metric_scores={},
+                tier1_score=0.8,
+                tier2_score=0.8,
+                tier3_score=0.76,
                 evaluation_complete=True,
             )
             # No trace_data — should use standard evaluate_composite
@@ -599,14 +648,22 @@ class TestTraceDataWiring:
         """AC3: When trace_data is None and tier2 missing, existing optional_tier2 routing preserved."""
         results = EvaluationResults(
             tier1=Tier1Result(
-                cosine_score=0.8, jaccard_score=0.7, semantic_score=0.85,
-                execution_time=1.0, time_score=0.9, task_success=1.0, overall_score=0.8,
+                cosine_score=0.8,
+                jaccard_score=0.7,
+                semantic_score=0.85,
+                execution_time=1.0,
+                time_score=0.9,
+                task_success=1.0,
+                overall_score=0.8,
             ),
             tier2=None,
             tier3=Tier3Result(
-                path_convergence=0.7, tool_selection_accuracy=0.8,
-                coordination_centrality=0.75, task_distribution_balance=0.8,
-                overall_score=0.76, graph_complexity=4,
+                path_convergence=0.7,
+                tool_selection_accuracy=0.8,
+                coordination_centrality=0.75,
+                task_distribution_balance=0.8,
+                overall_score=0.76,
+                graph_complexity=4,
             ),
         )
 
@@ -614,8 +671,13 @@ class TestTraceDataWiring:
             pipeline.composite_scorer, "evaluate_composite_with_optional_tier2"
         ) as mock_opt:
             mock_opt.return_value = CompositeResult(
-                composite_score=0.75, recommendation="weak_accept", recommendation_weight=0.7,
-                metric_scores={}, tier1_score=0.8, tier2_score=None, tier3_score=0.76,
+                composite_score=0.75,
+                recommendation="weak_accept",
+                recommendation_weight=0.7,
+                metric_scores={},
+                tier1_score=0.8,
+                tier2_score=None,
+                tier3_score=0.76,
                 evaluation_complete=False,
             )
             pipeline._generate_composite_score(results)
@@ -638,9 +700,7 @@ class TestTraceDataWiring:
         )
 
         with (
-            patch.object(
-                pipeline.traditional_engine, "evaluate_traditional_metrics"
-            ) as mock_t1,
+            patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_t1,
             patch.object(pipeline.llm_engine, "evaluate_comprehensive") as mock_t2,
             patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_t3,
             patch.object(pipeline, "_generate_composite_score") as mock_gen,
@@ -675,9 +735,7 @@ class TestTraceDataWiring:
     ):
         """AC4: evaluate_comprehensive passes trace_data=None when no trace provided."""
         with (
-            patch.object(
-                pipeline.traditional_engine, "evaluate_traditional_metrics"
-            ) as mock_t1,
+            patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_t1,
             patch.object(pipeline.llm_engine, "evaluate_comprehensive") as mock_t2,
             patch.object(pipeline.graph_engine, "evaluate_graph_metrics") as mock_t3,
             patch.object(pipeline, "_generate_composite_score") as mock_gen,
@@ -701,17 +759,30 @@ class TestTraceDataWiring:
         """AC5: CC solo runs with empty agent_interactions trigger single-agent weight redistribution."""
         results = EvaluationResults(
             tier1=Tier1Result(
-                cosine_score=0.8, jaccard_score=0.7, semantic_score=0.85,
-                execution_time=1.0, time_score=0.9, task_success=1.0, overall_score=0.8,
+                cosine_score=0.8,
+                jaccard_score=0.7,
+                semantic_score=0.85,
+                execution_time=1.0,
+                time_score=0.9,
+                task_success=1.0,
+                overall_score=0.8,
             ),
             tier2=Tier2Result(
-                technical_accuracy=0.8, constructiveness=0.8, planning_rationality=0.8,
-                overall_score=0.8, model_used="test", api_cost=0.0, fallback_used=False,
+                technical_accuracy=0.8,
+                constructiveness=0.8,
+                planning_rationality=0.8,
+                overall_score=0.8,
+                model_used="test",
+                api_cost=0.0,
+                fallback_used=False,
             ),
             tier3=Tier3Result(
-                path_convergence=0.7, tool_selection_accuracy=0.8,
-                coordination_centrality=0.75, task_distribution_balance=0.8,
-                overall_score=0.76, graph_complexity=4,
+                path_convergence=0.7,
+                tool_selection_accuracy=0.8,
+                coordination_centrality=0.75,
+                task_distribution_balance=0.8,
+                overall_score=0.76,
+                graph_complexity=4,
             ),
         )
         # Simulate CC solo run: tool_calls with single agent, no interactions
