@@ -16,6 +16,7 @@ import json
 import os
 import shutil
 import subprocess
+import time
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
@@ -446,6 +447,7 @@ def run_cc_teams(query: str, timeout: int = 600, run_context: RunContext | None 
         fallback_dir.mkdir(parents=True, exist_ok=True)
         stream_path = fallback_dir / f"cc_teams_{ts}.jsonl"
 
+    popen_start = time.time()
     try:
         # Reason: query is sanitized by _sanitize_cc_query (empty, dash-prefix, length);
         # shell=False (list args) prevents shell interpretation — no injection risk.
@@ -469,7 +471,15 @@ def run_cc_teams(query: str, timeout: int = 600, run_context: RunContext | None 
                 proc.kill()
                 raise RuntimeError(f"CC timed out after {e.timeout}s") from e
 
-            proc.wait()
+            # Reason: enforce timeout on proc.wait() — without this, a hung process
+            # blocks indefinitely after stream reading completes (MAESTRO H1).
+            remaining = max(1, timeout - int(time.time() - popen_start))
+            try:
+                proc.wait(timeout=remaining)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait()
+                raise RuntimeError(f"CC timed out after {timeout}s (wait phase)")
             if proc.returncode != 0:
                 raise RuntimeError(f"CC failed with exit code {proc.returncode}")
 

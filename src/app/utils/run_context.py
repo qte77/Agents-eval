@@ -7,6 +7,7 @@ Each run creates a timestamped directory under output/runs/ and writes metadata.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -14,6 +15,25 @@ from typing import Any
 
 # Reason: module-level constant allows tests to patch without modifying config
 OUTPUT_BASE = Path("output")
+
+# Reason: prevents path traversal — only safe chars allowed in directory name components
+_SAFE_PATH_RE = re.compile(r"[^a-zA-Z0-9._-]")
+
+
+def _sanitize_path_component(value: str) -> str:
+    """Sanitize a string for safe use in filesystem directory names.
+
+    Replaces any character that is not alphanumeric, dot, hyphen, or underscore
+    with an underscore. Prevents path traversal via ``../`` or ``/`` in
+    user-controlled values like ``paper_id``.
+
+    Args:
+        value: Raw string to sanitize.
+
+    Returns:
+        Sanitized string safe for directory name construction.
+    """
+    return _SAFE_PATH_RE.sub("_", value)
 
 
 @dataclass
@@ -62,7 +82,9 @@ class RunContext:
         start_time = datetime.now()
         ts = start_time.strftime("%Y%m%d_%H%M%S")
         exec_id_short = execution_id[:8]
-        dir_name = f"{ts}_{engine_type}_{paper_id}_{exec_id_short}"
+        safe_engine = _sanitize_path_component(engine_type)
+        safe_paper = _sanitize_path_component(paper_id)
+        dir_name = f"{ts}_{safe_engine}_{safe_paper}_{exec_id_short}"
 
         run_dir = OUTPUT_BASE / "runs" / dir_name
         run_dir.mkdir(parents=True, exist_ok=True)
