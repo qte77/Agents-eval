@@ -79,9 +79,9 @@ Note: Chat configuration uses inference endpoints and models which are subject t
 
 **System**: Multi-agent evaluation pipeline (Manager → Researcher → Analyst → Synthesizer) with PydanticAI, processing [PeerRead](https://github.com/allenai/PeerRead) scientific papers.
 
-**Evaluation Approach**: Traditional metrics + LLM-as-a-Judge + Graph-based complexity analysis → Composite scoring. See [PRD.md](docs/PRD.md#evaluation-metrics) for metric definitions.
+**Evaluation Approach**: Traditional metrics + LLM-as-a-Judge + Graph-based complexity analysis → Composite scoring. See [architecture.md](docs/architecture.md) for metric definitions.
 
-**Requirements**: [PRD.md](docs/PRD.md) | **Architecture**: [architecture.md](docs/architecture.md) | **Dataset Usage**: [PeerRead Agent Usage Guide](docs/howtos/peerread-agent-usage.md)
+**Architecture**: [architecture.md](docs/architecture.md) | **Dataset Usage**: [PeerRead Agent Usage Guide](docs/howtos/peerread-agent-usage.md)
 
 ## Diagrams
 
