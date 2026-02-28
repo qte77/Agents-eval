@@ -78,7 +78,7 @@ The system is designed with a clear separation of concerns:
 - **Dataset Interaction**: `src/app/data_utils/datasets_peerread.py` handles downloading and loading the PeerRead dataset
 - **Agent Tools**: `src/app/agents/peerread_tools.py` provides the tools for the agent manager
 - **Agent System**: `src/app/agents/agent_system.py` manages multi-agent coordination and execution
-- **Review Persistence**: `src/app/data_utils/review_persistence.py` and `src/app/data_utils/review_loader.py` manage saving and loading reviews
+- **Review Persistence**: `src/app/data_utils/review_persistence.py` manages saving and loading reviews
 - **Data Models**:
   - `src/app/data_models/peerread_models.py`: Defines core data structures like `PeerReadPaper` and `GeneratedReview`
   - `src/app/data_models/evaluation_models.py`: Contains evaluation result models and PeerRead evaluation structures

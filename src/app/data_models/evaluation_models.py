@@ -57,7 +57,9 @@ class Tier1Result(BaseModel):
     )
     execution_time: float = Field(ge=0.0, description="Raw execution time in seconds")
     time_score: float = Field(ge=0.0, le=1.0, description="Normalized time score")
-    task_success: float = Field(description="Binary success indicator (0.0 or 1.0)")
+    task_success: float = Field(
+        description="Continuous task success score (0.0 to 1.0, proportional credit below threshold)"
+    )
     overall_score: float = Field(ge=0.0, le=1.0, description="Weighted traditional metrics score")
 
 
