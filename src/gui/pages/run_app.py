@@ -570,7 +570,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     # Engine selector — per-run choice, not persistent config
     engine_label = st.radio(
         "Execution engine",
-        ["MAS (PydanticAI)", "Claude Code"],
+        ["Multi-Agent System (MAS)", "Claude Code"],
         key="engine_label",
         horizontal=True,
         # S8-F3.3: help text for engine selector
@@ -585,7 +585,14 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     # S10-F1: CC Teams checkbox — only shown when CC engine selected
     cc_teams = False
     if engine == "cc":
-        cc_teams = st.checkbox("Use CC Teams", key="cc_teams_mode")
+        cc_teams = st.checkbox(
+            "Use CC Teams",
+            key="cc_teams_mode",
+            help=(
+                "Runs Claude Code in multi-agent team mode. "
+                "Requires the claude CLI with agent teams support."
+            ),
+        )
 
     if engine == "cc" and not cc_available:
         st.warning(

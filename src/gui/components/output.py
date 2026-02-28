@@ -21,15 +21,5 @@ def render_output(result: Any = None, info_str: str | None = None, output_type: 
     if result:
         output_container = empty()
         output_container.write(result)
-        # match type:
-        #     case "json":
-        #         json(result)
-        #     case "code":
-        #         code(result)
-        #     case "md":
-        #         markdown(result)
-        #     case _:
-        #         text(result)
-        #         # st.write(result)
     else:
         info(info_str)

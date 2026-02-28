@@ -169,7 +169,7 @@ def _render_tier_scores(result: CompositeResult) -> None:
 
     if not result.evaluation_complete:
         st.warning(
-            "⚠️ Evaluation incomplete: Some tiers were not executed. "
+            "Evaluation incomplete: Some tiers were not executed. "
             "Results may not reflect full system performance."
         )
 
@@ -191,6 +191,7 @@ def _render_metrics_comparison(result: CompositeResult) -> None:
             "Text Metrics": [text_metrics.get(k, 0.0) for k in sorted(text_metrics)],
         }
 
+        st.caption("Bar chart: Graph metrics vs Text metrics comparison")
         st.bar_chart(comparison_data)
 
         # S8-F3.3: dataframe alt text for bar chart (WCAG 1.1.1 accessibility)
@@ -255,7 +256,7 @@ def _render_tier_deltas(comp: BaselineComparison) -> None:
 
 def _render_single_comparison(comp: BaselineComparison) -> None:
     """Render individual comparison details."""
-    with st.expander(f"📊 {comp.label_a} vs {comp.label_b}"):
+    with st.expander(f"{comp.label_a} vs {comp.label_b}"):
         st.write(comp.summary)
         _render_tier_deltas(comp)
 
@@ -278,7 +279,7 @@ def render_baseline_comparison(comparisons: list[BaselineComparison] | None) -> 
         )
         return
 
-    st.subheader("🔄 Baseline Comparisons")
+    st.subheader("Baseline Comparisons")
 
     # Display three-way comparison table if we have 3 comparisons
     if len(comparisons) == 3:
@@ -311,7 +312,7 @@ def _render_empty_state() -> None:
     st.info("No evaluation results available. Run an evaluation to see results here.")
 
     # S8-F3.3: baseline inputs in collapsed expander (progressive disclosure)
-    with st.expander("🔧 Baseline Comparison Configuration", expanded=False):
+    with st.expander("Baseline Comparison Configuration", expanded=False):
         st.markdown(
             "Provide directory paths to Claude Code artifact exports to enable "
             "comparative evaluation against MAS results."
@@ -355,7 +356,7 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
     Args:
         result: CompositeResult containing evaluation data, or None for empty state.
     """
-    st.header("📊 Evaluation Results")
+    st.header("Evaluation Results")
 
     if result is None:
         _render_empty_state()
