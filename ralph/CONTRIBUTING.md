@@ -6,7 +6,7 @@ For project-level development workflows, see the root [CONTRIBUTING.md](../CONTR
 ## Command Reference
 
 | Command | Purpose | Flags |
-|---------|---------|-------|
+| --------- | --------- | ------- |
 | `make ralph_userstory` | Create UserStory.md interactively via Claude | |
 | `make ralph_prd_md` | Generate PRD.md from UserStory.md | |
 | `make ralph_prd_json` | Generate prd.json from PRD.md | `DRY_RUN=1` parse-only |
@@ -23,7 +23,7 @@ For project-level development workflows, see the root [CONTRIBUTING.md](../CONTR
 ## Common Flags
 
 | Flag | Values | Default | Description |
-|------|--------|---------|-------------|
+| ------ | -------- | --------- | ------------- |
 | `MODEL` | `sonnet`, `opus`, `haiku` | `sonnet` | Claude model |
 | `MAX_ITERATIONS` | integer | `25` | Max loop iterations |
 | `RALPH_TIMEOUT` | seconds | (none) | Kill after N seconds |

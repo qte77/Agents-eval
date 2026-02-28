@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD024 no-duplicate-heading -->
 # Changelog
 
 All notable changes to Ralph Loop will be documented in this file.

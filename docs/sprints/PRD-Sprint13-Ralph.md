@@ -1,11 +1,9 @@
 ---
-title: Product Requirements Document
+title: Product Requirements Document Sprint 13 — GUI Audit Remediation & Theming
 version: 1.1
 sprint: 13
 authority: requirements
 ---
-
-# Product Requirements Document: Sprint 13 — GUI Audit Remediation & Theming
 
 ## Project Overview
 
@@ -48,16 +46,19 @@ changes during pipeline execution. Consolidate opening/closing ARIA tags into si
 `st.markdown()` calls or use `st.empty()` containers.
 
 **Acceptance Criteria**:
+
 - [ ] All `<div role="status" aria-live="polite">` regions are emitted as single `st.markdown()` calls
 - [ ] Screen reader announcement works for idle, running, completed, and error states
 - [ ] No orphaned opening/closing ARIA tags across separate `st.markdown()` calls
 
 **Technical Requirements**:
+
 - Refactor `_display_execution_result` to build complete ARIA-wrapped HTML strings before emitting
 - Use `st.empty()` containers for in-place status updates where appropriate
 - Verify DOM structure with browser dev tools after changes
 
 **Files**:
+
 - `src/gui/pages/run_app.py` (edit)
 
 ---
@@ -69,6 +70,7 @@ with no title, no ARIA role, no alt text, and no text equivalent. Add an accessi
 text summary and fix the keyboard trap risk from `scrolling=False`.
 
 **Acceptance Criteria**:
+
 - [ ] Text summary of graph (node count, edge count, agent names) rendered below the graph
 - [ ] `st.caption()` with descriptive text added before `components.html()` call
 - [ ] `<title>` element added to generated Pyvis HTML before injection
@@ -76,12 +78,14 @@ text summary and fix the keyboard trap risk from `scrolling=False`.
 - [ ] Pyvis `bgcolor` reads from theme instead of hard-coded `#ffffff`
 
 **Technical Requirements**:
+
 - Insert `<title>Agent Interaction Graph</title>` into the Pyvis HTML string
 - Add `st.caption("Agent interaction graph showing agent and tool relationships. See statistics below for details.")` before the component
 - Change `scrolling=False` to `scrolling=True`
 - Replace `bgcolor="#ffffff"` with theme-aware value from `styling.py`
 
 **Files**:
+
 - `src/gui/pages/agent_graph.py` (edit)
 - `src/gui/config/styling.py` (edit)
 
@@ -94,16 +98,19 @@ with no ARIA landmark. Add `role="log"` and `aria-label` to the outermost contai
 Fix message span color for theme compatibility.
 
 **Acceptance Criteria**:
+
 - [ ] Debug log container has `role="log"` and `aria-label="Debug logs"`
 - [ ] Message span uses `color: inherit` for theme compatibility
 - [ ] Inline `font-family: monospace; font-size: 12px` removed (duplicates global theme font)
 
 **Technical Requirements**:
+
 - Modify `LogCapture.format_logs_as_html()` to wrap output in `<section role="log" aria-label="Debug logs">`
 - Add `color: inherit` to message `<span>` elements
 - Remove redundant inline font declarations
 
 **Files**:
+
 - `src/gui/utils/log_capture.py` (edit)
 - `src/gui/pages/run_app.py` (edit)
 
@@ -116,16 +123,19 @@ handler and disappears on Streamlit rerender. Render the warning adjacent to the
 button so users see it.
 
 **Acceptance Criteria**:
+
 - [ ] Validation warning renders directly above or adjacent to the Run button
 - [ ] Warning persists on screen until user corrects the input
 - [ ] Warning is not buried in an async handler that fires after rerender
 
 **Technical Requirements**:
+
 - Move validation check from `_handle_query_submission` to the `render_app()` scope
 - Use `st.session_state` to persist the warning state across rerenders
 - Render warning with `st.warning()` in the same container as the Run button
 
 **Files**:
+
 - `src/gui/pages/run_app.py` (edit)
 
 ---
@@ -137,16 +147,19 @@ The Download button recreates on each render with no stable confirmation. Cache 
 report in session state.
 
 **Acceptance Criteria**:
+
 - [ ] Generated report cached in `st.session_state` — no duplicate renders on re-click
 - [ ] Download button persists after first generation
 - [ ] "Clear Results" button resets execution state to idle
 
 **Technical Requirements**:
+
 - Store generated markdown in `st.session_state["generated_report"]`
 - Render from cache if report already exists
 - Add "Clear Results" button that resets `execution_state` to idle and clears result keys
 
 **Files**:
+
 - `src/gui/pages/run_app.py` (edit)
 
 ---
@@ -158,6 +171,7 @@ report in session state.
 upgrade). Theme definitions stored in `styling.py`, selectable via sidebar or settings.
 
 **Acceptance Criteria**:
+
 - [ ] Three theme dicts defined in `config/styling.py` with full color specs
 - [ ] Theme selector widget in sidebar or settings page
 - [ ] Selected theme persists in session state across page navigations
@@ -165,6 +179,7 @@ upgrade). Theme definitions stored in `styling.py`, selectable via sidebar or se
 - [ ] `.streamlit/config.toml` documents the default theme choice
 
 **Technical Requirements**:
+
 - Define `THEMES` dict in `styling.py` with keys: `expanse_dark`, `nord_light`, `tokyo_night`
 - Each theme: `primaryColor`, `backgroundColor`, `secondaryBackgroundColor`, `textColor`, `accentColor`
 - Expanse Dark: `#4A90E2`, `#0b0c10`, `#1f2833`, `#66fcf1`, `#50C878`
@@ -175,6 +190,7 @@ upgrade). Theme definitions stored in `styling.py`, selectable via sidebar or se
 - Note: Streamlit theme switching at runtime requires `st.set_page_config` workaround or custom CSS injection
 
 **Files**:
+
 - `src/gui/config/styling.py` (edit)
 - `src/gui/components/sidebar.py` (edit)
 - `src/gui/pages/agent_graph.py` (edit)
@@ -189,16 +205,19 @@ upgrade). Theme definitions stored in `styling.py`, selectable via sidebar or se
 Add a checklist or step-by-step card guiding new users through setup.
 
 **Acceptance Criteria**:
+
 - [ ] Home page shows a step-by-step onboarding guide (configure provider, download dataset, run query)
 - [ ] Each step links or navigates to the relevant page
 - [ ] Onboarding content defined in `text.py` (not inline strings)
 
 **Technical Requirements**:
+
 - Add onboarding constants to `text.py` (step titles, descriptions)
 - Render as `st.info()` or card-like layout with numbered steps
 - Link steps to Settings and Run pages
 
 **Files**:
+
 - `src/gui/pages/home.py` (edit)
 - `src/gui/config/text.py` (edit)
 
@@ -210,15 +229,18 @@ Add a checklist or step-by-step card guiding new users through setup.
 of importing from `text.py`. Consolidate for single-source-of-truth copy management.
 
 **Acceptance Criteria**:
+
 - [ ] All header/subheader strings in `evaluation.py` moved to `text.py`
 - [ ] All header/subheader strings in `agent_graph.py` moved to `text.py`
 - [ ] All inline label strings in `run_app.py` ("Debug Log", "Generate Report") moved to `text.py`
 
 **Technical Requirements**:
+
 - Add constants to `text.py`: `EVALUATION_HEADER`, `AGENT_GRAPH_HEADER`, `DEBUG_LOG_LABEL`, `GENERATE_REPORT_LABEL`, etc.
 - Import and use in respective pages
 
 **Files**:
+
 - `src/gui/config/text.py` (edit)
 - `src/gui/pages/evaluation.py` (edit)
 - `src/gui/pages/agent_graph.py` (edit)
@@ -233,16 +255,19 @@ hidden by default on first visit. Phoenix Trace Viewer always visible even when 
 configured.
 
 **Acceptance Criteria**:
+
 - [ ] Sidebar navigation labels align with page headers
 - [ ] Baseline comparison expander expanded by default on first visit (no result available)
 - [ ] Phoenix Trace Viewer moved to collapsed sidebar expander
 
 **Technical Requirements**:
+
 - Update `PAGES` list in `config.py` to match page header text
 - Set `expanded=True` on baseline comparison expander when no result exists
 - Wrap Phoenix link in `st.sidebar.expander("Tracing (optional)")`
 
 **Files**:
+
 - `src/gui/config/config.py` (edit)
 - `src/gui/pages/evaluation.py` (edit)
 - `src/gui/components/sidebar.py` (edit)
@@ -256,17 +281,20 @@ Graph background is hard-coded white, conflicting with dark theme. Make graph co
 theme-aware.
 
 **Acceptance Criteria**:
+
 - [ ] Node label `font_color` explicitly set (not Pyvis default)
 - [ ] Node colors provide >= 4.5:1 contrast ratio for labels
 - [ ] Graph `bgcolor` reads from active theme (not hard-coded `#ffffff`)
 - [ ] Agent and tool node colors update when theme changes
 
 **Technical Requirements**:
+
 - Set `font_color="#000000"` for light themes, `font_color="#ECEFF4"` for dark themes
 - Read `bgcolor` from theme dict in `styling.py`
 - Map agent node color to theme `primaryColor`, tool node color to theme `accentColor`
 
 **Files**:
+
 - `src/gui/pages/agent_graph.py` (edit)
 - `src/gui/config/styling.py` (edit)
 
@@ -279,14 +307,17 @@ Implement type-aware rendering so Pydantic models and dicts render with navigabl
 structure instead of raw object dumps.
 
 **Acceptance Criteria**:
+
 - [ ] `render_output()` type-checks result and uses structured rendering (e.g., `st.json()` for dicts)
 - [ ] `CompositeResult` and other Pydantic models render with navigable structure
 
 **Technical Requirements**:
+
 - Add type dispatch: `st.json()` for dicts, `st.markdown()` for strings, structured rendering for Pydantic models
 - Import relevant result types from `src/app/data_models/`
 
 **Files**:
+
 - `src/gui/components/output.py` (edit)
 
 ---
@@ -358,7 +389,7 @@ Story Breakdown - Phase 1 (11 stories total):
 #### File-Conflict Dependencies
 
 | Story | Logical Dep | + File-Conflict Dep | Shared File |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | STORY-005 | STORY-004 | — | `src/gui/pages/run_app.py` |
 | STORY-007 | STORY-006 | — | `src/gui/components/sidebar.py` |
 | STORY-010 | STORY-009 | — | `src/gui/pages/evaluation.py` |
