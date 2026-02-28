@@ -19,6 +19,6 @@ def test_trace_storage_path_under_agent_evals():
     from app.config.judge_settings import JudgeSettings
 
     settings = JudgeSettings()
-    assert "Agent_evals" in settings.trace_storage_path, (
-        f"trace_storage_path should be under Agent_evals, got: {settings.trace_storage_path}"
+    assert settings.trace_storage_path == "output/runs", (
+        f"trace_storage_path should be 'output/runs', got: {settings.trace_storage_path}"
     )

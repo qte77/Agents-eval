@@ -16,6 +16,7 @@ from app.data_utils.datasets_peerread import PeerReadLoader
 from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
 from app.judge.trace_processors import TraceCollector
+from app.utils.artifact_registry import ArtifactRegistry
 
 # MARK: --- build_graph_from_trace ---
 
@@ -745,7 +746,7 @@ class TestEvaluationJsonPersistence:
             mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
             mock_pipeline_class.return_value = mock_pipeline
 
-            mock_registry = MagicMock()
+            mock_registry = MagicMock(spec=ArtifactRegistry)
             mock_get_registry.return_value = mock_registry
 
             from app.judge.evaluation_runner import run_evaluation_if_enabled

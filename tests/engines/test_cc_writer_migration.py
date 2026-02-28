@@ -161,7 +161,7 @@ class TestRunCCTeamsWritesToRunContext:
             run_cc_teams("test query", run_context=ctx)
 
         assert ctx.stream_path.exists()
-        written_lines = [l for l in ctx.stream_path.read_text().splitlines() if l.strip()]
+        written_lines = [line for line in ctx.stream_path.read_text().splitlines() if line.strip()]
         assert len(written_lines) == 2
 
     def test_teams_registers_artifact_at_stream_path(self, tmp_path: Path) -> None:

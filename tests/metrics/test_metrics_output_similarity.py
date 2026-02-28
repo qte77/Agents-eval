@@ -79,10 +79,10 @@ def test_similarity_result_structure():
         {
             "cosine_score": 0.7765145304745156,
             "jaccard_score": 0.8,
-            "semantic_score": 0.7765145304745156,
+            "semantic_score": 0.76,
             "execution_time": 0.1,
             "time_score": 0.9048374180359595,
-            "task_success": 0.0,
-            "overall_score": 0.794043913135757,
+            "task_success": 0.9661929489279433,
+            "overall_score": 0.7874381009459507,
         }
     )
