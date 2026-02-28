@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import signal
 import subprocess
 import time
 from collections.abc import Iterator
@@ -486,8 +487,6 @@ def run_cc_teams(query: str, timeout: int = 600, run_context: RunContext | None 
                 result = parse_stream_json(tee_stream)
             except subprocess.TimeoutExpired as e:
                 # S10-F1: kill entire process group, not just the lead process
-                import signal
-
                 os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                 proc.kill()
                 raise RuntimeError(f"CC timed out after {e.timeout}s") from e
