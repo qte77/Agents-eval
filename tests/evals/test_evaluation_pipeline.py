@@ -55,7 +55,6 @@ def sample_tier3_result():
     return Tier3Result(
         path_convergence=0.72,
         tool_selection_accuracy=0.83,
-
         coordination_centrality=0.75,
         task_distribution_balance=0.79,
         overall_score=0.76,
