@@ -1,10 +1,11 @@
-"""Tests for cc_engine.py — STORY-005.
+"""Tests for cc_engine.py — STORY-001, STORY-005.
 
 Covers:
 - check_cc_available: shutil.which detection
 - run_cc_solo: subprocess.run with --output-format json, error handling
 - run_cc_teams: subprocess.Popen with --output-format stream-json + JSONL parsing
-- parse_stream_json: parses init/result/TeamCreate/Task JSONL events
+- parse_stream_json: parses init/result/system/task_started/task_completed JSONL events
+- _apply_event: event routing logic (AC1-AC4 for STORY-001)
 - CCResult: Pydantic model structure
 """
 
@@ -271,16 +272,18 @@ class TestRunCCTeams:
         assert isinstance(result, CCResult)
 
     def test_teams_extracts_team_artifacts_from_stream(self):
-        """run_cc_teams populates team_artifacts from TeamCreate events in stream."""
+        """run_cc_teams populates team_artifacts from task_started events in stream (AC5)."""
         from app.engines.cc_engine import run_cc_teams
 
-        team_event = json.dumps({"type": "TeamCreate", "team_name": "eval-team"})
+        team_event = json.dumps(
+            {"type": "system", "subtype": "task_started", "agent_id": "agent-eval"}
+        )
         mock_proc = self._make_mock_popen([team_event])
 
         with patch("subprocess.Popen", return_value=mock_proc):
             result = run_cc_teams("test query")
 
-        assert any(a.get("team_name") == "eval-team" for a in result.team_artifacts)
+        assert any(a.get("agent_id") == "agent-eval" for a in result.team_artifacts)
 
     def test_teams_nonzero_exit_raises_runtime_error(self):
         """run_cc_teams raises RuntimeError when Popen exits with non-zero code."""
@@ -316,6 +319,84 @@ class TestRunCCTeams:
         ):
             with pytest.raises(RuntimeError, match="timed out"):
                 run_cc_teams("test query")
+
+
+# MARK: --- _apply_event (STORY-001) ---
+
+
+class TestApplyEvent:
+    """Tests for _apply_event() — event routing for STORY-001 fix.
+
+    AC1: captures type=system, subtype=task_started as team artifact
+    AC2: captures type=system, subtype=task_completed as team artifact
+    AC3: _TEAM_EVENT_TYPES removed/updated (tested via actual capture behavior)
+    AC4: type=system, subtype=init still sets execution_id, NOT captured as team artifact
+    """
+
+    def _make_state(self) -> dict:
+        return {"execution_id": "unknown", "output_data": {}, "team_artifacts": []}
+
+    def test_task_started_captured_as_team_artifact(self):
+        """_apply_event appends type=system/subtype=task_started to team_artifacts (AC1)."""
+        from app.engines.cc_engine import _apply_event
+
+        state = self._make_state()
+        event = {
+            "type": "system",
+            "subtype": "task_started",
+            "task_type": "local_agent",
+            "agent_id": "agent-1",
+        }
+        _apply_event(event, state)
+        assert len(state["team_artifacts"]) == 1
+        assert state["team_artifacts"][0]["subtype"] == "task_started"
+
+    def test_task_completed_captured_as_team_artifact(self):
+        """_apply_event appends type=system/subtype=task_completed to team_artifacts (AC2)."""
+        from app.engines.cc_engine import _apply_event
+
+        state = self._make_state()
+        event = {"type": "system", "subtype": "task_completed", "agent_id": "agent-1"}
+        _apply_event(event, state)
+        assert len(state["team_artifacts"]) == 1
+        assert state["team_artifacts"][0]["subtype"] == "task_completed"
+
+    def test_init_event_not_captured_as_team_artifact(self):
+        """_apply_event does NOT add init event to team_artifacts (AC4)."""
+        from app.engines.cc_engine import _apply_event
+
+        state = self._make_state()
+        event = {"type": "system", "subtype": "init", "session_id": "sess-001"}
+        _apply_event(event, state)
+        assert state["team_artifacts"] == []
+
+    def test_init_event_sets_execution_id(self):
+        """_apply_event still extracts session_id from init event (AC4 — no regression)."""
+        from app.engines.cc_engine import _apply_event
+
+        state = self._make_state()
+        event = {"type": "system", "subtype": "init", "session_id": "sess-abc"}
+        _apply_event(event, state)
+        assert state["execution_id"] == "sess-abc"
+
+    def test_result_event_updates_output_data(self):
+        """_apply_event updates output_data from result events."""
+        from app.engines.cc_engine import _apply_event
+
+        state = self._make_state()
+        event = {"type": "result", "num_turns": 5, "total_cost_usd": 0.03}
+        _apply_event(event, state)
+        assert state["output_data"]["num_turns"] == 5
+        assert state["team_artifacts"] == []
+
+    def test_unknown_event_type_ignored(self):
+        """_apply_event ignores unrecognised event types without raising."""
+        from app.engines.cc_engine import _apply_event
+
+        state = self._make_state()
+        _apply_event({"type": "assistant", "content": "hello"}, state)
+        assert state["team_artifacts"] == []
+        assert state["output_data"] == {}
 
 
 class TestParseStreamJson:
@@ -358,24 +439,43 @@ class TestParseStreamJson:
         assert result.output_data.get("total_cost_usd") == 0.05
         assert result.output_data.get("num_turns") == 7
 
-    def test_parses_team_create_event(self):
-        """parse_stream_json adds TeamCreate events to team_artifacts."""
+    def test_parses_task_started_event(self):
+        """parse_stream_json adds type=system/subtype=task_started to team_artifacts (AC1)."""
         from app.engines.cc_engine import parse_stream_json
 
-        lines = [json.dumps({"type": "TeamCreate", "team_name": "eval-team"})]
+        lines = [
+            json.dumps(
+                {
+                    "type": "system",
+                    "subtype": "task_started",
+                    "task_type": "local_agent",
+                    "agent_id": "agent-1",
+                }
+            )
+        ]
         result = parse_stream_json(iter(lines))
         assert len(result.team_artifacts) == 1
-        assert result.team_artifacts[0]["type"] == "TeamCreate"
-        assert result.team_artifacts[0]["team_name"] == "eval-team"
+        assert result.team_artifacts[0]["subtype"] == "task_started"
 
-    def test_parses_task_event(self):
-        """parse_stream_json adds Task events to team_artifacts."""
+    def test_parses_task_completed_event(self):
+        """parse_stream_json adds type=system/subtype=task_completed to team_artifacts (AC2)."""
         from app.engines.cc_engine import parse_stream_json
 
-        lines = [json.dumps({"type": "Task", "id": "task-001", "subject": "Review paper 1234"})]
+        lines = [json.dumps({"type": "system", "subtype": "task_completed", "agent_id": "agent-1"})]
         result = parse_stream_json(iter(lines))
         assert len(result.team_artifacts) == 1
-        assert result.team_artifacts[0]["type"] == "Task"
+        assert result.team_artifacts[0]["subtype"] == "task_completed"
+
+    def test_init_event_not_in_team_artifacts(self):
+        """parse_stream_json does NOT capture init events as team artifacts (AC4)."""
+        from app.engines.cc_engine import parse_stream_json
+
+        lines = [
+            json.dumps({"type": "system", "subtype": "init", "session_id": "sess-001"}),
+        ]
+        result = parse_stream_json(iter(lines))
+        assert result.team_artifacts == []
+        assert result.execution_id == "sess-001"
 
     def test_skips_blank_lines(self):
         """parse_stream_json skips empty/whitespace-only lines without error."""
@@ -401,14 +501,14 @@ class TestParseStreamJson:
         assert isinstance(result, CCResult)
         assert result.team_artifacts == []
 
-    def test_multiple_team_events_all_collected(self):
-        """parse_stream_json collects all team-related events."""
+    def test_multiple_team_task_events_all_collected(self):
+        """parse_stream_json collects all task_started and task_completed events (AC5)."""
         from app.engines.cc_engine import parse_stream_json
 
         lines = [
-            json.dumps({"type": "TeamCreate", "team_name": "team-a"}),
-            json.dumps({"type": "Task", "id": "task-1", "subject": "Task 1"}),
-            json.dumps({"type": "Task", "id": "task-2", "subject": "Task 2"}),
+            json.dumps({"type": "system", "subtype": "task_started", "agent_id": "agent-1"}),
+            json.dumps({"type": "system", "subtype": "task_started", "agent_id": "agent-2"}),
+            json.dumps({"type": "system", "subtype": "task_completed", "agent_id": "agent-1"}),
         ]
         result = parse_stream_json(iter(lines))
         assert len(result.team_artifacts) == 3
@@ -472,40 +572,35 @@ class TestCCResultToGraphTrace:
         assert trace.agent_interactions == []
         assert trace.coordination_events == []
 
-    def test_teams_maps_task_events_to_agent_interactions(self):
-        """CC teams Task events are mapped to agent_interactions."""
+    def test_teams_maps_task_started_to_agent_interactions(self):
+        """CC teams task_started system events are mapped to agent_interactions."""
         from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
 
         cc_result = CCResult(
             execution_id="teams-001",
             output_data={},
             team_artifacts=[
-                {"type": "Task", "id": "task-1", "subject": "Review intro", "owner": "teammate-1"},
-                {
-                    "type": "Task",
-                    "id": "task-2",
-                    "subject": "Review methods",
-                    "owner": "teammate-2",
-                },
+                {"type": "system", "subtype": "task_started", "agent_id": "agent-1"},
+                {"type": "system", "subtype": "task_started", "agent_id": "agent-2"},
             ],
         )
         trace = cc_result_to_graph_trace(cc_result)
         assert len(trace.agent_interactions) == 2
 
-    def test_teams_maps_team_create_to_coordination_events(self):
-        """CC teams TeamCreate events are mapped to coordination_events."""
+    def test_teams_maps_task_completed_to_coordination_events(self):
+        """CC teams task_completed system events are mapped to coordination_events."""
         from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
 
         cc_result = CCResult(
             execution_id="teams-002",
             output_data={},
             team_artifacts=[
-                {"type": "TeamCreate", "team_name": "review-team"},
+                {"type": "system", "subtype": "task_completed", "agent_id": "agent-1"},
             ],
         )
         trace = cc_result_to_graph_trace(cc_result)
         assert len(trace.coordination_events) == 1
-        assert trace.coordination_events[0]["team_name"] == "review-team"
+        assert trace.coordination_events[0]["agent_id"] == "agent-1"
 
     def test_returns_graph_trace_data_type(self):
         """cc_result_to_graph_trace always returns a GraphTraceData instance."""

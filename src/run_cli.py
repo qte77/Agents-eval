@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     from app.utils.artifact_registry import get_artifact_registry
 
-    result_dict = run(main(**args, engine=engine, cc_result=cc_result_obj))
+    result_dict = run(main(**args, engine=engine, cc_result=cc_result_obj, cc_teams=cc_teams))
 
     # S8-F6.1: generate report after evaluation if requested
     if generate_report_flag and result_dict:
@@ -161,8 +161,13 @@ if __name__ == "__main__":
             suggestions = engine_obj.generate(composite_result)
             md = generate_report(composite_result, suggestions=suggestions)
 
-            timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-            output_path = Path("results") / "reports" / f"{timestamp}.md"
+            # Reason: use run_context report_path when available; fall back to output/reports
+            run_context = result_dict.get("run_context")
+            if run_context is not None:
+                output_path = run_context.report_path
+            else:
+                timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+                output_path = Path("output") / "reports" / f"{timestamp}.md"
             save_report(md, output_path)
             logger.info(f"Report written to {output_path}")
             print(f"Report saved: {output_path}")

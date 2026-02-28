@@ -24,9 +24,9 @@
         "src/app/engines/cc_engine.py",
         "tests/engines/test_cc_engine.py"
       ],
-      "status": "in_progress",
+      "status": "passed",
       "wave": 1,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:12:46Z",
       "content_hash": "b0b75acf09fcabe32a94636c0b2cd0a5f500ab4f2b45bfba9a2382c818c5b292",
       "depends_on": []
     },
@@ -56,9 +56,9 @@
         "src/gui/pages/run_app.py",
         "tests/cli/test_cc_engine_wiring.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:36:49Z",
       "content_hash": "c3dcbf6f5bcfc7452d7a87e8566cb53291228f40d91cff611fac05ee66f87d23",
       "depends_on": [
         "STORY-001"
@@ -83,9 +83,9 @@
         "src/app/judge/evaluation_pipeline.py",
         "tests/evals/test_evaluation_pipeline.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 1,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:36:57Z",
       "content_hash": "d727c1609790fb198b928636da56e768642af9cd17848d3020369a23991001ba",
       "depends_on": []
     },
@@ -110,9 +110,9 @@
         "tests/evals/test_evaluation_pipeline.py",
         "tests/evals/test_composite_scorer.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:46:23Z",
       "content_hash": "73d748e7018702d7f0ea38610185eb1c9cad06e62cf3fe162c92e54da283cfc1",
       "depends_on": [
         "STORY-003"
@@ -150,9 +150,9 @@
         "tests/judge/test_evaluation_runner.py",
         "tests/engines/test_cc_engine.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 3,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:46:30Z",
       "content_hash": "29b0dc7646dd747c811f75940b9d1cdeeb16c2aee1fec08c6dacc98b3a622a6a",
       "depends_on": [
         "STORY-004"
@@ -179,9 +179,9 @@
         "src/app/data_models/evaluation_models.py",
         "tests/evals/test_traditional_metrics.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 1,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:37:04Z",
       "content_hash": "aa72dd6a7a1de170eb8a35070361630be48fb826fff7d3c46ae3d8231790d49d",
       "depends_on": []
     },
@@ -204,9 +204,9 @@
         "src/app/judge/traditional_metrics.py",
         "tests/evals/test_traditional_metrics.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 1,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:37:11Z",
       "content_hash": "932b300e631439028ad1fc5984f00548307d3038324d92427d6b3500bd2ba3d3",
       "depends_on": []
     },
@@ -236,9 +236,9 @@
         ".gitignore",
         "tests/utils/test_run_context.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 1,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:37:14Z",
       "content_hash": "a73dbb2bfb15428c3abee1efeb60563d5ea17fccaedb0ed5948c02897eb010ab",
       "depends_on": []
     },
@@ -273,9 +273,9 @@
         "tests/judge/test_trace_processors.py",
         "tests/data_utils/test_review_persistence.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 4,
-      "completed_at": null,
+      "completed_at": "2026-02-27T05:58:10Z",
       "content_hash": "216a4f796df83cca6197d52c09fa90dce36267e6e901e0b0f0cf8dd761ab5ceb",
       "depends_on": [
         "STORY-008",
@@ -297,9 +297,9 @@
         "src/app/judge/evaluation_runner.py",
         "tests/judge/test_evaluation_runner.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 5,
-      "completed_at": null,
+      "completed_at": "2026-02-27T06:03:34Z",
       "content_hash": "7147b0f0a5d46d0cce2b29f273e35c6c0d7207b31c2eef8e41ec4899951ad88f",
       "depends_on": [
         "STORY-009"

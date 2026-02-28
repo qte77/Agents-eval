@@ -85,26 +85,26 @@ class TestTraditionalMetricsEngine:
 
     # Semantic similarity tests (with mocking to avoid model dependencies)
     def test_semantic_similarity_with_bertscore(self, engine, sample_texts):
-        """Semantic similarity should use cosine similarity fallback."""
+        """Semantic similarity should use Levenshtein similarity fallback."""
         text1, text2 = sample_texts["academic_review"]
 
-        # Mock cosine similarity to return known value
-        with patch.object(engine, "compute_cosine_similarity", return_value=0.85) as mock_cosine:
+        # Mock Levenshtein similarity to return known value
+        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.85) as mock_lev:
             similarity = engine.compute_semantic_similarity(text1, text2)
             assert similarity == 0.85
-            mock_cosine.assert_called_once_with(text1, text2)
+            mock_lev.assert_called_once_with(text1, text2)
 
     @patch("app.judge.traditional_metrics.TraditionalMetricsEngine._get_bertscore_model")
     def test_semantic_similarity_fallback_on_error(self, mock_bertscore, engine, sample_texts):
-        """Given BERTScore failure, should fallback to cosine similarity."""
+        """Given BERTScore failure, should fallback to Levenshtein similarity."""
         # Mock BERTScore to raise exception
         mock_bertscore.side_effect = Exception("Model loading failed")
 
         text1, text2 = sample_texts["similar"]
-        with patch.object(engine, "compute_cosine_similarity", return_value=0.7) as mock_cosine:
+        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.7) as mock_lev:
             similarity = engine.compute_semantic_similarity(text1, text2)
             assert similarity == 0.7
-            mock_cosine.assert_called_once_with(text1, text2)
+            mock_lev.assert_called_once_with(text1, text2)
 
     # Execution time measurement tests
     def test_execution_time_measurement(self, engine):
@@ -138,13 +138,15 @@ class TestTraditionalMetricsEngine:
         assert success == 1.0
 
     def test_task_success_below_threshold(self, engine):
-        """Given similarity scores below threshold, task should fail."""
+        """Given similarity scores below threshold, task should return proportional credit."""
         from app.judge.traditional_metrics import SimilarityScores
 
         scores = SimilarityScores(cosine=0.5, jaccard=0.4, semantic=0.6)
         success = engine.assess_task_success(scores, threshold=0.8)
 
-        assert success == 0.0
+        # Weighted = 0.6*0.5 + 0.5*0.3 + 0.4*0.2 = 0.3 + 0.15 + 0.08 = 0.53
+        # Proportional credit = 0.53 / 0.8 = 0.6625
+        assert 0.0 < success < 1.0
 
     def test_task_success_weighted_average(self, engine):
         """Task success should use weighted average of similarity metrics."""
@@ -220,7 +222,7 @@ class TestTraditionalMetricsEngine:
             assert result.semantic_score == 0.85
             assert result.execution_time > 0.0
             assert result.time_score > 0.0
-            assert result.task_success in [0.0, 1.0]
+            assert 0.0 <= result.task_success <= 1.0
             assert 0.0 <= result.overall_score <= 1.0
 
 
@@ -691,8 +693,8 @@ class TestSimilarityScoreProperties:
         semantic=st.floats(min_value=0.0, max_value=1.0),
         threshold=st.floats(min_value=0.0, max_value=1.0),
     )
-    def test_task_success_returns_binary(self, cosine, jaccard, semantic, threshold):
-        """Property: Task success must return exactly 0.0 or 1.0."""
+    def test_task_success_in_unit_interval(self, cosine, jaccard, semantic, threshold):
+        """Property: Task success must return a float in [0.0, 1.0]."""
         from app.judge.traditional_metrics import SimilarityScores
 
         engine = TraditionalMetricsEngine()
@@ -700,8 +702,8 @@ class TestSimilarityScoreProperties:
 
         success = engine.assess_task_success(scores, threshold=threshold)
 
-        # PROPERTY: Must be binary (0.0 or 1.0)
-        assert success in [0.0, 1.0], f"Task success {success} not binary"
+        # PROPERTY: Must be continuous score in [0.0, 1.0]
+        assert 0.0 <= success <= 1.0, f"Task success {success} outside [0.0, 1.0]"
 
     @given(
         agent_output=st.text(min_size=10, max_size=200).filter(
@@ -732,7 +734,7 @@ class TestSimilarityScoreProperties:
         assert -1e-10 <= result.semantic_score <= 1.0 + 1e-10
         assert result.execution_time > 0.0
         assert 0.0 < result.time_score <= 1.0
-        assert result.task_success in [0.0, 1.0]
+        assert 0.0 <= result.task_success <= 1.0
         assert -1e-10 <= result.overall_score <= 1.0 + 1e-10
 
 
@@ -761,13 +763,99 @@ class TestTier1ResultStructure:
             {
                 "cosine_score": 0.2605556710562624,
                 "jaccard_score": 0.18181818181818182,
-                "semantic_score": 0.2605556710562624,
+                "semantic_score": 0.41666666666666663,
                 "execution_time": 1.5,
                 "time_score": 0.22313016014842982,
-                "task_success": 0.0,
-                "overall_score": 0.24106562211786303,
+                "task_success": 0.4035795887673105,
+                "overall_score": 0.30351002036202473,
             }
         )
+
+
+# MARK: STORY-006 tests for semantic score deduplication
+
+
+class TestSemanticScoreDeduplication:
+    """Tests for STORY-006: semantic_score must use Levenshtein, not cosine."""
+
+    @pytest.fixture
+    def engine(self):
+        """Fixture providing TraditionalMetricsEngine instance."""
+        return TraditionalMetricsEngine()
+
+    def test_ac1_semantic_similarity_delegates_to_levenshtein(self, engine):
+        """AC1: compute_semantic_similarity must delegate to compute_levenshtein_similarity."""
+        text1 = "This paper presents a novel approach."
+        text2 = "The work demonstrates a new method."
+
+        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.75) as mock_lev:
+            result = engine.compute_semantic_similarity(text1, text2)
+            assert result == 0.75
+            mock_lev.assert_called_once_with(text1, text2)
+
+    def test_ac1_semantic_similarity_does_not_delegate_to_cosine(self, engine):
+        """AC1: compute_semantic_similarity must NOT delegate to compute_cosine_similarity."""
+        text1 = "This paper presents a novel approach."
+        text2 = "The work demonstrates a new method."
+
+        with patch.object(engine, "compute_cosine_similarity") as mock_cosine:
+            engine.compute_semantic_similarity(text1, text2)
+            mock_cosine.assert_not_called()
+
+    def test_ac2_semantic_score_differs_from_cosine_score_for_non_identical_texts(self, engine):
+        """AC2: semantic_score and cosine_score should produce different values.
+
+        Use texts with shared words (so TF-IDF cosine > 0) but different character
+        sequences (so Levenshtein differs). This ensures cosine != levenshtein.
+        """
+        text1 = "The methodology is well-designed and the results are convincing."
+        text2 = "The approach used was well-designed but the results need more evaluation."
+
+        semantic = engine.compute_semantic_similarity(text1, text2)
+        cosine = engine.compute_cosine_similarity(text1, text2)
+
+        # They must differ — Levenshtein (char-level) and TF-IDF cosine (word-level) differ
+        assert semantic != cosine, (
+            f"semantic_score ({semantic}) must differ from cosine_score ({cosine})"
+        )
+
+    def test_ac3_semantic_similarity_identical_texts_returns_1(self, engine):
+        """AC3: semantic_score returns 1.0 for identical texts."""
+        text = "The methodology is well-designed and results are convincing."
+        result = engine.compute_semantic_similarity(text, text)
+        assert result == 1.0
+
+    def test_ac3_semantic_similarity_empty_vs_nonempty_returns_0(self, engine):
+        """AC3: semantic_score returns 0.0 for empty-vs-nonempty texts."""
+        result = engine.compute_semantic_similarity("", "some non-empty text")
+        assert result == 0.0
+
+        result2 = engine.compute_semantic_similarity("some non-empty text", "")
+        assert result2 == 0.0
+
+    def test_ac4_tier1_result_semantic_score_field_description(self):
+        """AC4: Tier1Result.semantic_score field description reflects Levenshtein calculation."""
+        from app.data_models.evaluation_models import Tier1Result
+
+        field_info = Tier1Result.model_fields["semantic_score"]
+        description = field_info.description or ""
+        assert "levenshtein" in description.lower(), (
+            f"semantic_score description must mention Levenshtein, got: {description!r}"
+        )
+        # Description may note BERTScore is disabled, but must not claim BERT as primary method
+        assert not description.lower().startswith("bert"), (
+            f"semantic_score description must not start with BERT-based, got: {description!r}"
+        )
+
+    def test_ac5_no_new_dependencies(self):
+        """AC5: semantic similarity uses textdistance (existing dependency)."""
+        # textdistance is already imported in traditional_metrics — verify it's accessible
+        import textdistance
+
+        text1 = "hello world"
+        text2 = "hello there"
+        score = float(textdistance.levenshtein.normalized_similarity(text1, text2))
+        assert 0.0 <= score <= 1.0
 
 
 # MARK: AC5 regression tests (no artificial sleep in evaluate_single_traditional)
@@ -799,3 +887,113 @@ class TestEvaluateSingleTraditionalNoSleep:
         )
         assert isinstance(result, Tier1Result)
         assert 0.0 <= result.overall_score <= 1.0
+
+
+# MARK: STORY-007 - Continuous task_success score
+
+
+class TestContinuousTaskSuccess:
+    """Tests for STORY-007: continuous task_success score.
+
+    AC1: assess_task_success returns continuous float in [0.0, 1.0]
+    AC2: When weighted similarity >= threshold, returns 1.0
+    AC3: When weighted similarity < threshold, returns weighted_similarity / threshold
+    AC4: When weighted similarity is 0.0, returns 0.0
+    AC5: When threshold is 0.0, returns 0.0 (avoid division by zero)
+    """
+
+    @pytest.fixture
+    def engine(self):
+        """Fixture providing TraditionalMetricsEngine instance."""
+        return TraditionalMetricsEngine()
+
+    def test_ac1_returns_continuous_float_not_binary(self, engine):
+        """AC1: assess_task_success returns a continuous float, not only 0.0 or 1.0."""
+        from app.judge.traditional_metrics import SimilarityScores
+
+        # Weighted = 0.4*0.5 + 0.3*0.3 + 0.2*0.2 = 0.20 + 0.09 + 0.04 = 0.33
+        # With threshold=0.8, proportional credit = 0.33 / 0.8 = 0.4125
+        scores = SimilarityScores(cosine=0.3, jaccard=0.2, semantic=0.4)
+        success = engine.assess_task_success(scores, threshold=0.8)
+
+        assert success not in [0.0, 1.0], f"Expected continuous score but got binary {success}"
+        assert 0.0 < success < 1.0
+
+    def test_ac2_above_threshold_returns_1(self, engine):
+        """AC2: When weighted similarity >= threshold, returns 1.0."""
+        from app.judge.traditional_metrics import SimilarityScores
+
+        # Weighted = 0.9*0.5 + 0.85*0.3 + 0.8*0.2 = 0.45 + 0.255 + 0.16 = 0.865
+        scores = SimilarityScores(cosine=0.85, jaccard=0.8, semantic=0.9)
+        success = engine.assess_task_success(scores, threshold=0.8)
+
+        assert success == 1.0
+
+    def test_ac2_exactly_at_threshold_returns_1(self, engine):
+        """AC2: When weighted similarity equals threshold exactly, returns 1.0."""
+        from app.judge.traditional_metrics import SimilarityScores
+
+        # weighted = semantic*0.5 + cosine*0.3 + jaccard*0.2
+        # 0.8*0.5 + 0.8*0.3 + 0.8*0.2 = 0.4 + 0.24 + 0.16 = 0.8
+        scores = SimilarityScores(cosine=0.8, jaccard=0.8, semantic=0.8)
+        success = engine.assess_task_success(scores, threshold=0.8)
+
+        assert success == 1.0
+
+    def test_ac3_proportional_credit_below_threshold(self, engine):
+        """AC3: When weighted similarity < threshold, returns weighted_similarity / threshold."""
+        from app.judge.traditional_metrics import SimilarityScores
+
+        # Weighted = 0.4*0.5 + 0.4*0.3 + 0.4*0.2 = 0.4
+        scores = SimilarityScores(cosine=0.4, jaccard=0.4, semantic=0.4)
+        threshold = 0.8
+        expected = 0.4 / threshold  # = 0.5
+
+        success = engine.assess_task_success(scores, threshold=threshold)
+
+        assert abs(success - expected) < 1e-10
+
+    def test_ac3_proportional_credit_low_similarity(self, engine):
+        """AC3: Proportional credit scales linearly with weighted similarity."""
+        from app.judge.traditional_metrics import SimilarityScores
+
+        # Weighted = 0.3*0.5 + 0.3*0.3 + 0.3*0.2 = 0.3
+        scores = SimilarityScores(cosine=0.3, jaccard=0.3, semantic=0.3)
+        threshold = 0.8
+        expected = 0.3 / threshold  # = 0.375
+
+        success = engine.assess_task_success(scores, threshold=threshold)
+
+        assert abs(success - expected) < 1e-10
+
+    def test_ac4_zero_similarity_returns_zero(self, engine):
+        """AC4: When weighted similarity is 0.0, returns 0.0."""
+        from app.judge.traditional_metrics import SimilarityScores
+
+        scores = SimilarityScores(cosine=0.0, jaccard=0.0, semantic=0.0)
+        success = engine.assess_task_success(scores, threshold=0.8)
+
+        assert success == 0.0
+
+    def test_ac5_zero_threshold_returns_zero(self, engine):
+        """AC5: When threshold is 0.0, returns 0.0 to avoid division by zero."""
+        from app.judge.traditional_metrics import SimilarityScores
+
+        scores = SimilarityScores(cosine=0.5, jaccard=0.5, semantic=0.5)
+        success = engine.assess_task_success(scores, threshold=0.0)
+
+        assert success == 0.0
+
+    def test_result_always_in_unit_interval(self, engine):
+        """Continuous score must always be in [0.0, 1.0]."""
+        from app.judge.traditional_metrics import SimilarityScores
+
+        test_cases = [
+            SimilarityScores(cosine=0.0, jaccard=0.0, semantic=0.0),
+            SimilarityScores(cosine=0.5, jaccard=0.5, semantic=0.5),
+            SimilarityScores(cosine=1.0, jaccard=1.0, semantic=1.0),
+            SimilarityScores(cosine=0.9, jaccard=0.1, semantic=0.3),
+        ]
+        for scores in test_cases:
+            success = engine.assess_task_success(scores, threshold=0.8)
+            assert 0.0 <= success <= 1.0, f"Score {success} out of [0.0, 1.0] for scores {scores}"

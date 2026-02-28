@@ -24,6 +24,7 @@ pytest-of-vscode/
 .ruff_cache/
 .mypy_cache/
 complexipy-snapshot.json
+inline-snapshot-*/
 
 # Logs
 *.log
@@ -57,6 +58,7 @@ datasets/
 docs/write-up/*
 !docs/write-up/en/
 !docs/write-up/template/
+output/
 results/
 test_data/
 wandb/

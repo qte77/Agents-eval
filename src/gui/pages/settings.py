@@ -47,16 +47,19 @@ def _render_agent_configuration() -> None:
             "Include Researcher Agent",
             value=st.session_state.get("include_researcher", False),
             key="researcher_checkbox",
+            help="Adds a literature search and citation analysis step.",
         )
         st.session_state["include_analyst"] = checkbox(
             "Include Analyst Agent",
             value=st.session_state.get("include_analyst", False),
             key="analyst_checkbox",
+            help="Adds methodology evaluation and statistical analysis.",
         )
         st.session_state["include_synthesiser"] = checkbox(
             "Include Synthesiser Agent",
             value=st.session_state.get("include_synthesiser", False),
             key="synthesiser_checkbox",
+            help="Combines findings from other agents into a unified assessment.",
         )
 
         # Token limit configuration
@@ -447,7 +450,7 @@ def render_settings(common_settings: CommonSettings, judge_settings: JudgeSettin
     _render_common_settings(common_settings)
 
     # Advanced Settings header before judge settings expanders
-    st.header("Advanced Settings")
+    st.subheader("Advanced Settings")
 
     # Judge Settings - Editable Sections
     _render_tier_configuration(judge_settings)

@@ -276,11 +276,16 @@ class EvaluationPipeline:
         tier2_provider_unavailable = results.tier2 is None and not self.llm_engine.tier2_available
         return not tier2_provider_unavailable
 
-    def _generate_composite_score(self, results: EvaluationResults) -> CompositeResult:
+    def _generate_composite_score(
+        self, results: EvaluationResults, trace_data: GraphTraceData | None = None
+    ) -> CompositeResult:
         """Generate composite score using appropriate scorer method.
 
         Args:
             results: Evaluation results from all tiers
+            trace_data: Optional trace data for single-agent detection and weight
+                redistribution. When provided with complete results, enables
+                evaluate_composite_with_trace routing.
 
         Returns:
             CompositeResult with appropriate weight handling
@@ -288,16 +293,41 @@ class EvaluationPipeline:
         Raises:
             ValueError: If insufficient tier results for scoring
         """
-        if results.tier2 is None:
+        if trace_data is not None and results.is_complete():
+            return self.composite_scorer.evaluate_composite_with_trace(results, trace_data)
+        elif results.tier2 is None:
             # Tier 2 skipped - validate Tier 1 and Tier 3 before redistribution
             if not results.tier1 or not results.tier3:
+                if results.tier1:
+                    # Reason: Tier 1 only — return degraded result so CI passes
+                    # without LLM provider env vars or trace data.
+                    logger.warning(
+                        "Composite score degraded: only Tier 1 available "
+                        "(Tier 2 skipped, Tier 3 unavailable). "
+                        "Score reflects traditional metrics only."
+                    )
+                    return CompositeResult(
+                        composite_score=results.tier1.overall_score,
+                        recommendation="weak_reject",
+                        recommendation_weight=-0.25,
+                        metric_scores={
+                            "cosine_score": results.tier1.cosine_score,
+                            "jaccard_score": results.tier1.jaccard_score,
+                            "semantic_score": results.tier1.semantic_score,
+                        },
+                        tier1_score=results.tier1.overall_score,
+                        tier2_score=None,
+                        tier3_score=0.0,
+                        evaluation_complete=False,
+                        weights_used={"tier1": 1.0, "tier2": 0.0, "tier3": 0.0},
+                    )
                 raise ValueError(
                     "Cannot generate composite score: Tier 1 and Tier 3 required "
                     "when Tier 2 is skipped"
                 )
             return self.composite_scorer.evaluate_composite_with_optional_tier2(results)
         elif results.is_complete():
-            # All tiers available
+            # All tiers available, no trace data
             return self.composite_scorer.evaluate_composite(results)
         else:
             raise ValueError("Cannot generate composite score: insufficient tier results")
@@ -340,8 +370,14 @@ class EvaluationPipeline:
         start_time = time.time()
 
         try:
-            logger.info("Executing Tier 3: Graph Analysis")
             trace_data = self._create_trace_data(execution_trace)
+
+            if not trace_data.tool_calls and not trace_data.agent_interactions:
+                logger.info("Tier 3 skipped: trace data has no tool_calls or agent_interactions")
+                self.performance_monitor.record_tier_execution(3, 0.0)
+                return None, 0.0
+
+            logger.info("Executing Tier 3: Graph Analysis")
 
             result = await asyncio.wait_for(
                 asyncio.create_task(
@@ -494,10 +530,12 @@ class EvaluationPipeline:
         Raises:
             ValueError: If critical evaluation components fail
         """
-        # Convert GraphTraceData to dict if needed
+        # Retain GraphTraceData for composite scoring, convert to dict for tier execution
+        trace_obj: GraphTraceData | None = None
         trace_dict: dict[str, Any] | None = None
         if execution_trace is not None:
             if isinstance(execution_trace, GraphTraceData):
+                trace_obj = execution_trace
                 trace_dict = execution_trace.model_dump()
             else:
                 trace_dict = execution_trace
@@ -529,7 +567,7 @@ class EvaluationPipeline:
                 results = self._apply_fallback_strategy(results)
 
             # Generate composite score with appropriate weight handling
-            composite_result = self._generate_composite_score(results)
+            composite_result = self._generate_composite_score(results, trace_data=trace_obj)
 
             # Finalize performance monitoring
             total_time = time.time() - pipeline_start

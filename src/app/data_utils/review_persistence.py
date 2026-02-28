@@ -2,16 +2,19 @@
 
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 
-from app.config.config_app import MAS_REVIEWS_PATH
 from app.data_models.peerread_models import PeerReadReview
 from app.utils.paths import resolve_project_path
+
+# Reason: legacy default path retained for backward compatibility during migration
+_DEFAULT_REVIEWS_DIR = "output/runs"
 
 
 class ReviewPersistence:
     """Handles saving and loading of MAS-generated reviews."""
 
-    def __init__(self, reviews_dir: str = MAS_REVIEWS_PATH):
+    def __init__(self, reviews_dir: str = _DEFAULT_REVIEWS_DIR):
         """Initialize with reviews directory path.
 
         Args:
@@ -22,28 +25,35 @@ class ReviewPersistence:
         self.reviews_dir.mkdir(parents=True, exist_ok=True)
 
     def save_review(
-        self, paper_id: str, review: PeerReadReview, timestamp: str | None = None
+        self,
+        paper_id: str,
+        review: PeerReadReview,
+        timestamp: str | None = None,
+        run_dir: Path | None = None,
     ) -> str:
-        """Save a review to the reviews directory.
+        """Save a review to the run directory or legacy reviews directory.
 
         Args:
             paper_id: Unique identifier for the paper
             review: The generated review object
             timestamp: Optional timestamp, defaults to current UTC time
+            run_dir: Optional per-run directory; writes review.json there if provided.
 
         Returns:
             str: Path to the saved review file
         """
-        if timestamp is None:
-            timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
-
-        filename = f"{paper_id}_{timestamp}.json"
-        filepath = self.reviews_dir / filename
+        if run_dir is not None:
+            filepath = run_dir / "review.json"
+        else:
+            if timestamp is None:
+                timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
+            filename = f"{paper_id}_{timestamp}.json"
+            filepath = self.reviews_dir / filename
 
         # Convert review to dict for JSON serialization
         review_data = {
             "paper_id": paper_id,
-            "timestamp": timestamp,
+            "timestamp": timestamp or datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ"),
             "review": review.model_dump(),
         }
 

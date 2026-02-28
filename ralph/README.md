@@ -92,7 +92,7 @@ PRD.md → prd.json → Ralph Loop → src/ + tests/ → progress.txt
 Each sprint gets its own PRD file. Ralph reads only `prd.json` —
 the PRD markdown is human-facing input to `generate_prd_json.py`.
 
-```
+```text
 docs/PRD.md                    # Parser input (or symlink to active sprint)
 ralph/docs/prd.json            # Ralph reads this
 ```

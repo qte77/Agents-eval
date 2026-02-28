@@ -28,9 +28,9 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 
 ### Evaluation Pipeline Flow
 
-1. **Traditional Metrics**: Text similarity (BLEU, ROUGE), execution time measurement
-2. **LLM-as-a-Judge**: Review quality assessment, agentic execution analysis
-3. **Graph-Based Analysis**: Tool call complexity, agent interaction mapping
+1. **Tier 1 — Traditional Metrics**: Text similarity (BLEU, ROUGE), execution time measurement
+2. **Tier 2 — LLM-as-a-Judge**: Review quality assessment, agentic execution analysis
+3. **Tier 3 — Graph-Based Analysis**: Tool call complexity, agent interaction mapping
 4. **Composite Scoring**: Final score calculation using formula: (Agentic Results / Execution Time / Graph Complexity)
 
 ### Tier Result Data Flow and Persistence
@@ -127,7 +127,7 @@ The evaluation framework is built around large context window models capable of 
 
 ### Sprint 1: PeerRead Evaluation Components
 
-#### Traditional Evaluation Metrics
+#### Tier 1 — Traditional Evaluation Metrics
 
 **Location**: `src/app/judge/plugins/traditional.py`
 
@@ -144,7 +144,7 @@ The evaluation framework is built around large context window models capable of 
   - Structure adherence measurement
   - Academic standard compliance with recommendation weights
 
-#### LLM-as-a-Judge Framework
+#### Tier 2 — LLM-as-a-Judge Framework
 
 **Location**: `src/app/judge/plugins/llm_judge.py`
 
@@ -161,7 +161,7 @@ The evaluation framework is built around large context window models capable of 
   - Generated review vs. ground truth PeerRead reviews
   - Multi-dimensional quality scoring with confidence threshold (0.8)
 
-#### Graph-Based Complexity Analysis
+#### Tier 3 — Graph-Based Complexity Analysis
 
 **Location**: `src/app/judge/plugins/graph_metrics.py`
 
@@ -228,6 +228,7 @@ The evaluation framework is built around large context window models capable of 
 - **Weight Redistribution**: When single-agent mode is detected, the `coordination_quality` metric (0.167 weight) is excluded and its weight is redistributed equally across the remaining 5 metrics (0.20 each)
 - **Transparency**: `CompositeResult` includes `single_agent_mode: bool` flag to indicate when redistribution occurred
 - **Compound Redistribution**: When both Tier 2 is skipped (no valid provider) AND single-agent mode is detected, weights are redistributed across the remaining available metrics to always sum to ~1.0
+- **Tier 1-Only Fallback** (Sprint 12): When both Tier 2 (no LLM provider API key) and Tier 3 (no trace data) are unavailable but Tier 1 succeeded, the pipeline returns a degraded `CompositeResult` using only traditional metrics (`cosine_score`, `jaccard_score`, `semantic_score`) with `weights_used={"tier1": 1.0, "tier2": 0.0, "tier3": 0.0}` and `evaluation_complete=False`. A warning is logged. This prevents CI failures in environments without LLM provider credentials.
 
 ## Benchmarking Infrastructure (Sprint 6)
 
@@ -410,7 +411,7 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 - **CC Teams Stream Event Parsing** (STORY-001): Fix `_apply_event` to capture `type=system, subtype=task_started/task_completed` events as team artifacts. Remove stale `_TEAM_EVENT_TYPES` constant.
 - **CC Teams Flag Passthrough** (STORY-002): Wire `cc_teams` boolean from CLI/GUI through `main()` to `engine_type` assignment. Replace `team_artifacts` inference with explicit flag.
-- **Tier 3 Empty-Trace Skip** (STORY-003): Return `None` from `_execute_tier3` when trace data is empty, triggering `tier1_only` fallback (neutral 0.5 scores).
+- **Tier 3 Empty-Trace Skip** (STORY-003): Return `None` from `_execute_tier3` when trace data is empty, triggering Tier 1-only fallback (see [Adaptive Weight Redistribution](#composite-scoring-system)).
 - **Composite Scoring Trace Awareness** (STORY-004): Wire `evaluate_composite_with_trace` into production pipeline for single-agent weight redistribution.
 - **Execution Timestamp Propagation** (STORY-005): Capture wall-clock timestamps around subprocess/agent execution and propagate to `_execute_tier1` for accurate `time_taken` metric.
 - **Semantic Score Deduplication** (STORY-006): Change `compute_semantic_similarity` to use Levenshtein instead of cosine (which duplicated `cosine_score`).

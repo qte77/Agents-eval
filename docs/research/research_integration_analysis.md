@@ -433,7 +433,7 @@ agent technologies mature.
 2. **Academic-Industry Bridge**: Research collaboration on evaluation standards
 3. **Community Adoption**: Cross-framework evaluation standard development
 
-**Authority Validation**: Requirements per [PRD.md](../PRD.md), implementation per
+**Authority Validation**: Requirements per sprint PRDs (`docs/sprints/`), implementation per
 [architecture.md](../architecture.md), research backing per [further_reading.md](further_reading.md).
 
 ## Conclusion
@@ -457,6 +457,6 @@ not available in existing evaluation frameworks, positioning this work as
 foundational infrastructure for the maturing agent ecosystem rather than
 competing tools.
 
-**Authority Sources**: [PRD.md](../PRD.md) (requirements), [architecture.md](../architecture.md)
+**Authority Sources**: Sprint PRDs (requirements), [architecture.md](../architecture.md)
 (technical implementation), [further_reading.md](further_reading.md) (research foundation),
 [landscape documentation](../landscape/) (tool integration).

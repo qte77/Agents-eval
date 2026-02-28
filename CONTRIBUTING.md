@@ -41,6 +41,7 @@ updated: 2026-02-16
 | `make lint_src` | Format and lint src with ruff | Ruff installed | Try `uv run ruff format . && uv run ruff check . --fix` |
 | `make type_check` | Run pyright static type checking | pyright installed | Try `uv run pyright` |
 | `make test` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
+| `make test_fix_snapshots` | Run tests and auto-fix inline snapshots | Pytest + inline-snapshot installed | Try `uv run pytest --inline-snapshot=fix` |
 | `make test_coverage` | Run tests with coverage report | Above + coverage installed | Try `uv run coverage run -m pytest \|\| true && uv run coverage report -m` |
 | `make validate` | Complete pre-commit validation | Above dependencies | Run individual commands manually |
 | `make quick_validate` | Fast development validation | Ruff, pyright, complexipy, jscpd installed | Run `make lint_src && make type_check && make complexity && make duplication` |
@@ -234,7 +235,7 @@ Each document type has specific authority and serves as the single source of tru
 
 #### Requirements & Strategy (What & Why)
 
-- **[PRD.md](docs/PRD.md)** - **PRIMARY AUTHORITY** for business requirements, scope boundaries, and project goals
+- **Sprint PRDs** (`docs/sprints/`) - **PRIMARY AUTHORITY** for business requirements, scope boundaries, and project goals
 - **[UserStory.md](docs/UserStory.md)** - **AUTHORITY** for user workflows, acceptance criteria, and success metrics
 
 #### Technical Implementation (How)

@@ -10,7 +10,7 @@ This system allows you to:
 
 Use the sidebar to navigate between different sections of the application.
 """
-PAGE_TITLE = "MAS Eval 👾"
+PAGE_TITLE = "MAS Eval"
 PROMPTS_WARNING = "No prompts found. Using default prompts."
 PROMPTS_HEADER = "Agent Prompts"
 RUN_APP_HEADER = "Run Research App"

@@ -15,7 +15,9 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import signal
 import subprocess
+import time
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
@@ -26,12 +28,16 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from app.config.config_app import CC_STREAMS_PATH, DEFAULT_REVIEW_PROMPT_TEMPLATE
+from app.config.config_app import DEFAULT_REVIEW_PROMPT_TEMPLATE
 from app.utils.artifact_registry import get_artifact_registry
 from app.utils.log import logger
 
-# Team-related event types captured from the live JSONL stream
-_TEAM_EVENT_TYPES = {"TeamCreate", "Task"}
+if TYPE_CHECKING:
+    from app.utils.run_context import RunContext
+
+# Subtypes of system events that represent team sub-agent activity in the CC stream.
+# CC emits type=system with these subtypes for local_agent tasks (not "TeamCreate"/"Task").
+_TEAM_SUBTYPES = {"task_started", "task_completed"}
 
 # CWE-78 mitigation: max query length to prevent unbounded input to subprocess
 _CC_QUERY_MAX_LENGTH = 10_000
@@ -167,10 +173,10 @@ def _apply_event(
 ) -> None:
     """Mutate ``state`` in-place based on ``event`` type.
 
-    Recognised events:
-    - ``type=system, subtype=init`` → updates ``execution_id``
-    - ``type=result`` → updates ``output_data`` with timing/cost fields
-    - ``type`` in ``_TEAM_EVENT_TYPES`` → appends to ``team_artifacts``
+    Recognised events (checked in priority order):
+    1. ``type=system, subtype=init`` → updates ``execution_id``
+    2. ``type=result`` → updates ``output_data`` with timing/cost fields
+    3. ``type=system, subtype in _TEAM_SUBTYPES`` → appends to ``team_artifacts``
 
     Args:
         event: Parsed JSONL event dict.
@@ -178,13 +184,14 @@ def _apply_event(
             ``team_artifacts``.
     """
     event_type = event.get("type", "")
-    if event_type == "system" and event.get("subtype") == "init":
+    subtype = event.get("subtype", "")
+    if event_type == "system" and subtype == "init":  # (1) init — highest priority
         session_id = event.get("session_id")
         if session_id:
             state["execution_id"] = session_id
-    elif event_type == "result":
+    elif event_type == "result":  # (2) result
         state["output_data"].update({k: event[k] for k in _RESULT_KEYS if k in event})
-    elif event_type in _TEAM_EVENT_TYPES:
+    elif event_type == "system" and subtype in _TEAM_SUBTYPES:  # (3) team task events
         state["team_artifacts"].append(event)
 
 
@@ -194,7 +201,7 @@ def parse_stream_json(stream: Iterator[str]) -> CCResult:
     Extracts:
     - ``type=system, subtype=init`` → ``session_id`` becomes ``execution_id``
     - ``type=result`` → ``duration_ms``, ``total_cost_usd``, ``num_turns`` → ``output_data``
-    - ``type=TeamCreate`` or ``type=Task`` → appended to ``team_artifacts``
+    - ``type=system, subtype in _TEAM_SUBTYPES`` → appended to ``team_artifacts``
 
     Skips blank lines and malformed JSON without raising.
 
@@ -272,10 +279,10 @@ def cc_result_to_graph_trace(cc_result: CCResult) -> GraphTraceData:
     coordination_events: list[dict[str, Any]] = []
 
     for artifact in cc_result.team_artifacts:
-        event_type = artifact.get("type", "")
-        if event_type == "Task":
+        subtype = artifact.get("subtype", "")
+        if subtype == "task_started":
             agent_interactions.append(artifact)
-        elif event_type == "TeamCreate":
+        elif subtype == "task_completed":
             coordination_events.append(artifact)
 
     return GraphTraceData(
@@ -321,25 +328,19 @@ def _rename_stream_file(src: Path, new_name: str) -> Path:
     return dest
 
 
-def _persist_solo_stream(raw_stdout: str, execution_id: str) -> None:
-    """Write raw solo JSON stdout to ``CC_STREAMS_PATH`` and register artifact.
-
-    Creates the target directory lazily. Filename pattern:
-    ``cc_solo_{execution_id}_{timestamp}.json``.
+def _persist_solo_stream(raw_stdout: str, stream_path: Path) -> None:
+    """Write raw solo JSON stdout to ``stream_path`` and register artifact.
 
     Args:
         raw_stdout: Raw stdout string from the CC solo subprocess.
-        execution_id: Execution ID extracted from parsed JSON (may be "unknown").
+        stream_path: Destination file path for the JSON output.
     """
-    ts = datetime.now().strftime("%Y%m%dT%H%M%S")
-    streams_dir = Path(CC_STREAMS_PATH)
-    streams_dir.mkdir(parents=True, exist_ok=True)
-    out_path = streams_dir / f"cc_solo_{execution_id}_{ts}.json"
-    out_path.write_text(raw_stdout, encoding="utf-8")
-    get_artifact_registry().register("CC solo stream", out_path)
+    stream_path.parent.mkdir(parents=True, exist_ok=True)
+    stream_path.write_text(raw_stdout, encoding="utf-8")
+    get_artifact_registry().register("CC solo stream", stream_path)
 
 
-def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
+def run_cc_solo(query: str, timeout: int = 600, run_context: RunContext | None = None) -> CCResult:
     """Run Claude Code in solo (headless print) mode.
 
     Uses blocking ``subprocess.run`` with ``--output-format json``. The full JSON
@@ -348,6 +349,7 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
     Args:
         query: Prompt string passed to ``claude -p``.
         timeout: Maximum seconds to wait for the process. Defaults to 600.
+        run_context: Optional RunContext for per-run output directory.
 
     Returns:
         CCResult with output_data from parsed JSON stdout and session_dir if present.
@@ -388,7 +390,15 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
     execution_id = data.get("execution_id", data.get("session_id", "unknown"))
     session_dir: str | None = data.get("session_dir")
 
-    _persist_solo_stream(proc.stdout, execution_id)
+    if run_context is not None:
+        _persist_solo_stream(proc.stdout, run_context.stream_path)
+    else:
+        # Reason: legacy fallback when no RunContext — write to a temp location
+        ts = datetime.now().strftime("%Y%m%dT%H%M%S")
+        fallback_dir = Path("output") / "runs"
+        fallback_dir.mkdir(parents=True, exist_ok=True)
+        fallback_path = fallback_dir / f"cc_solo_{execution_id}_{ts}.json"
+        _persist_solo_stream(proc.stdout, fallback_path)
 
     logger.info(f"CC solo completed: execution_id={execution_id}")
     return CCResult(
@@ -398,7 +408,28 @@ def run_cc_solo(query: str, timeout: int = 600) -> CCResult:
     )
 
 
-def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
+def _wait_with_timeout(proc: subprocess.Popen[str], remaining: int, timeout: int) -> None:
+    """Wait for subprocess with timeout, killing on expiry (MAESTRO H1).
+
+    Args:
+        proc: Running subprocess to wait on.
+        remaining: Seconds left before overall timeout.
+        timeout: Original timeout value for error message.
+
+    Raises:
+        RuntimeError: If process times out or exits with non-zero code.
+    """
+    try:
+        proc.wait(timeout=remaining)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+        raise RuntimeError(f"CC timed out after {timeout}s (wait phase)")
+    if proc.returncode != 0:
+        raise RuntimeError(f"CC failed with exit code {proc.returncode}")
+
+
+def run_cc_teams(query: str, timeout: int = 600, run_context: RunContext | None = None) -> CCResult:
     """Run Claude Code in teams (agent orchestration) mode.
 
     Uses ``subprocess.Popen`` with ``--output-format stream-json`` and the
@@ -410,6 +441,7 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
     Args:
         query: Prompt string passed to ``claude -p``.
         timeout: Maximum seconds to allow the process to run. Defaults to 600.
+        run_context: Optional RunContext for per-run output directory.
 
     Returns:
         CCResult with team_artifacts populated from stream events.
@@ -428,12 +460,16 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
     cmd = ["claude", "-p", query, "--output-format", "stream-json", "--verbose"]
     logger.info(f"CC teams: running query (timeout={timeout}s)")
 
-    ts = datetime.now().strftime("%Y%m%dT%H%M%S")
-    # Reason: filename uses a placeholder timestamp; renamed after execution_id is known
-    streams_dir = Path(CC_STREAMS_PATH)
-    streams_dir.mkdir(parents=True, exist_ok=True)
-    stream_path = streams_dir / f"cc_teams_{ts}.jsonl"
+    if run_context is not None:
+        stream_path = run_context.stream_path
+        stream_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        ts = datetime.now().strftime("%Y%m%dT%H%M%S")
+        fallback_dir = Path("output") / "runs"
+        fallback_dir.mkdir(parents=True, exist_ok=True)
+        stream_path = fallback_dir / f"cc_teams_{ts}.jsonl"
 
+    popen_start = time.time()
     try:
         # Reason: query is sanitized by _sanitize_cc_query (empty, dash-prefix, length);
         # shell=False (list args) prevents shell interpretation — no injection risk.
@@ -451,22 +487,26 @@ def run_cc_teams(query: str, timeout: int = 600) -> CCResult:
                 result = parse_stream_json(tee_stream)
             except subprocess.TimeoutExpired as e:
                 # S10-F1: kill entire process group, not just the lead process
-                import signal
-
                 os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                 proc.kill()
                 raise RuntimeError(f"CC timed out after {e.timeout}s") from e
 
-            proc.wait()
-            if proc.returncode != 0:
-                raise RuntimeError(f"CC failed with exit code {proc.returncode}")
+            remaining = max(1, timeout - int(time.time() - popen_start))
+            _wait_with_timeout(proc, remaining, timeout)
 
     except subprocess.TimeoutExpired as e:
         raise RuntimeError(f"CC timed out after {e.timeout}s") from e
 
-    # Rename to include execution_id now that it is known
-    final_path = _rename_stream_file(stream_path, f"cc_teams_{result.execution_id}_{ts}.jsonl")
-    get_artifact_registry().register("CC teams stream", final_path)
+    if run_context is not None:
+        # Stream already written to run_context.stream_path; register as-is
+        get_artifact_registry().register("CC teams stream", stream_path)
+    else:
+        # Legacy fallback: rename to include execution_id
+        ts_fallback = datetime.now().strftime("%Y%m%dT%H%M%S")
+        final_path = _rename_stream_file(
+            stream_path, f"cc_teams_{result.execution_id}_{ts_fallback}.jsonl"
+        )
+        get_artifact_registry().register("CC teams stream", final_path)
 
     logger.info(f"CC teams completed: execution_id={result.execution_id}")
     return result

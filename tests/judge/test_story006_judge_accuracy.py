@@ -297,5 +297,5 @@ class TestTier1ScoresPropertyUnSkipped:
         assert 0.0 <= result.semantic_score <= 1.0
         assert result.execution_time > 0.0
         assert 0.0 < result.time_score <= 1.0
-        assert result.task_success in [0.0, 1.0]
+        assert 0.0 <= result.task_success <= 1.0
         assert 0.0 <= result.overall_score <= 1.0

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+import time
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,8 @@ from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import GraphTraceData
 from app.judge.trace_processors import ProcessedTrace, TraceCollector, TraceEvent
 
+DEADLINE_SECONDS = 360
+
 
 class TestTraceEventAgentIdInvariant:
     """Test that agent_id is always present in tool_call trace events."""
@@ -31,11 +34,13 @@ class TestTraceEventAgentIdInvariant:
         tool_name=st.text(min_size=1, max_size=50),
         duration=st.floats(min_value=0.0, max_value=100.0),
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
     def test_process_events_includes_agent_id_in_tool_calls(
         self, agent_id: str, tool_name: str, duration: float
     ):
         """Property: _process_events() tool_call dicts MUST include agent_id field."""
+        start = time.monotonic()
+
         # Setup - use tempfile instead of tmp_path fixture
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
@@ -63,16 +68,24 @@ class TestTraceEventAgentIdInvariant:
             assert "agent_id" in tool_call, "agent_id missing from tool_call dict"
             assert tool_call["agent_id"] == agent_id
 
+        elapsed = time.monotonic() - start
+        assert elapsed < DEADLINE_SECONDS, (
+            f"_process_events exceeded {DEADLINE_SECONDS}s deadline: "
+            f"took {elapsed:.2f}s | agent_id={agent_id!r} tool_name={tool_name!r}"
+        )
+
     @given(
         agent_id=st.text(min_size=1, max_size=20),
         tool_name=st.text(min_size=1, max_size=50),
         duration=st.floats(min_value=0.0, max_value=100.0),
     )
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
     def test_parse_trace_events_includes_agent_id_in_tool_calls(
         self, agent_id: str, tool_name: str, duration: float
     ):
         """Property: _parse_trace_events() tool_call dicts MUST include agent_id field."""
+        start = time.monotonic()
+
         # Setup - use tempfile instead of tmp_path fixture
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
@@ -97,6 +110,12 @@ class TestTraceEventAgentIdInvariant:
             tool_call = tool_calls[0]
             assert "agent_id" in tool_call, "agent_id missing from tool_call dict"
             assert tool_call["agent_id"] == agent_id
+
+        elapsed = time.monotonic() - start
+        assert elapsed < DEADLINE_SECONDS, (
+            f"_parse_trace_events exceeded {DEADLINE_SECONDS}s deadline: "
+            f"took {elapsed:.2f}s | agent_id={agent_id!r} tool_name={tool_name!r}"
+        )
 
 
 class TestGraphTraceDataTransformation:

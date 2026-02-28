@@ -17,7 +17,7 @@
 	app_cli app_gui app_sweep app_profile \
 	cc_run_solo cc_collect_teams cc_run_teams \
 	lint_src lint_tests complexity duplication lint_hardcoded_paths \
-	test test_rerun test_coverage type_check validate quick_validate \
+	test test_rerun test_coverage test_fix_snapshots type_check validate quick_validate \
 	setup_phoenix phoenix_start phoenix_stop phoenix_status \
 	ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run \
 	ralph_worktree ralph_run_worktree ralph_stop ralph_status ralph_watch ralph_get_log ralph_clean \
@@ -409,6 +409,9 @@ test:  ## Run all tests
 
 test_rerun:  ## Rerun only failed tests (use during fix iterations)
 	uv run pytest --lf -x
+
+test_fix_snapshots:  ## Run tests and auto-fix inline snapshots
+	uv run pytest --inline-snapshot=fix
 
 test_coverage:  ## Run tests with coverage threshold (configured in pyproject.toml)
 	echo "Running tests with coverage gate (fail_under% defined in pyproject.toml)..."

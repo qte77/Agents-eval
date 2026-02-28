@@ -50,10 +50,16 @@ class Tier1Result(BaseModel):
 
     cosine_score: float = Field(ge=0.0, le=1.0, description="TF-IDF cosine similarity")
     jaccard_score: float = Field(ge=0.0, le=1.0, description="Word-level Jaccard similarity")
-    semantic_score: float = Field(ge=0.0, le=1.0, description="BERT-based semantic similarity")
+    semantic_score: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Levenshtein-based sequence similarity (BERTScore disabled)",
+    )
     execution_time: float = Field(ge=0.0, description="Raw execution time in seconds")
     time_score: float = Field(ge=0.0, le=1.0, description="Normalized time score")
-    task_success: float = Field(description="Binary success indicator (0.0 or 1.0)")
+    task_success: float = Field(
+        description="Continuous task success score (0.0 to 1.0, proportional below threshold)"
+    )
     overall_score: float = Field(ge=0.0, le=1.0, description="Weighted traditional metrics score")
 
 
