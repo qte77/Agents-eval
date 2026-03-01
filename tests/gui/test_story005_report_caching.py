@@ -115,9 +115,7 @@ class TestReportCachedInSessionState:
         report_renders = [
             c for c in mock_markdown.call_args_list if c.args and new_report in str(c.args[0])
         ]
-        assert len(report_renders) == 1, (
-            "Report must be rendered exactly once, not duplicated"
-        )
+        assert len(report_renders) == 1, "Report must be rendered exactly once, not duplicated"
 
 
 class TestDownloadButtonPersists:
@@ -140,14 +138,10 @@ class TestDownloadButtonPersists:
         ):
             run_app._render_report_section(composite_result=mock_result)
 
-        assert mock_download.called, (
-            "Download button must persist when cached report exists"
-        )
+        assert mock_download.called, "Download button must persist when cached report exists"
         call_kwargs = mock_download.call_args
         data_arg = call_kwargs.kwargs.get("data")
-        assert data_arg == cached_report, (
-            "Download button must use cached report data"
-        )
+        assert data_arg == cached_report, "Download button must use cached report data"
 
 
 class TestClearResultsButton:
@@ -205,12 +199,14 @@ class TestClearResultsButton:
         """When Clear Results is clicked, execution_state resets to idle."""
         from gui.pages import run_app
 
-        mock_session = _SessionDict({
-            "execution_state": "completed",
-            "execution_result": MagicMock(),
-            "execution_composite_result": MagicMock(),
-            "generated_report": "# Report",
-        })
+        mock_session = _SessionDict(
+            {
+                "execution_state": "completed",
+                "execution_result": MagicMock(),
+                "execution_composite_result": MagicMock(),
+                "generated_report": "# Report",
+            }
+        )
 
         # We need to find and call the clear results logic
         # The clear button should be in _render_report_section or render_app
@@ -243,11 +239,13 @@ class TestClearResultsButton:
         """When Clear Results is clicked, generated_report is cleared."""
         from gui.pages import run_app
 
-        mock_session = _SessionDict({
-            "execution_state": "completed",
-            "execution_result": MagicMock(),
-            "generated_report": "# Report",
-        })
+        mock_session = _SessionDict(
+            {
+                "execution_state": "completed",
+                "execution_result": MagicMock(),
+                "generated_report": "# Report",
+            }
+        )
 
         def button_side_effect(label, **kwargs):
             if "Clear" in str(label):

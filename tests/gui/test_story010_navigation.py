@@ -140,7 +140,9 @@ class TestBaselineExpanderDefault:
             _render_empty_state()
 
         baseline_calls = [c for c in captured_calls if "Baseline" in c["label"]]
-        assert len(baseline_calls) == 1, f"Expected 1 baseline expander call, got {len(baseline_calls)}"
+        assert len(baseline_calls) == 1, (
+            f"Expected 1 baseline expander call, got {len(baseline_calls)}"
+        )
         assert baseline_calls[0].get("expanded") is True, (
             f"Baseline expander must have expanded=True in empty state, "
             f"got expanded={baseline_calls[0].get('expanded')}"

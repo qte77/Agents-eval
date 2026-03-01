@@ -58,7 +58,9 @@ class TestSidebarNavigationTabs:
         with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
-        assert "Run Research App" in captured_options, "Sidebar navigation must include 'Run Research App' tab"
+        assert "Run Research App" in captured_options, (
+            "Sidebar navigation must include 'Run Research App' tab"
+        )
 
     def test_sidebar_radio_includes_settings_tab(self) -> None:
         """Sidebar navigation must include a 'Settings' tab.
@@ -92,7 +94,9 @@ class TestSidebarNavigationTabs:
         with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
-        assert "Evaluation Results" in captured_options, "Sidebar navigation must include 'Evaluation Results' tab"
+        assert "Evaluation Results" in captured_options, (
+            "Sidebar navigation must include 'Evaluation Results' tab"
+        )
 
     def test_sidebar_radio_includes_agent_graph_tab(self) -> None:
         """Sidebar navigation must include an 'Agent Graph' tab.
@@ -126,7 +130,12 @@ class TestSidebarNavigationTabs:
         with patch("gui.components.sidebar.sidebar", mock_sidebar):
             render_sidebar("Test App")
 
-        assert set(captured_options) == {"Run Research App", "Settings", "Evaluation Results", "Agent Graph"}, (
+        assert set(captured_options) == {
+            "Run Research App",
+            "Settings",
+            "Evaluation Results",
+            "Agent Graph",
+        }, (
             f"Expected exactly 4 tabs (Run Research App, Settings, Evaluation Results, Agent Graph), got: {captured_options}"
         )
 
@@ -313,7 +322,9 @@ class TestPagesConstant:
         """PAGES must contain 'Evaluation'."""
         from gui.config.config import PAGES
 
-        assert "Evaluation Results" in PAGES, f"PAGES must contain 'Evaluation Results', got: {PAGES}"
+        assert "Evaluation Results" in PAGES, (
+            f"PAGES must contain 'Evaluation Results', got: {PAGES}"
+        )
 
     def test_pages_contains_agent_graph(self) -> None:
         """PAGES must contain 'Agent Graph'."""
@@ -325,7 +336,12 @@ class TestPagesConstant:
         """PAGES must have exactly four entries: Run, Settings, Evaluation, Agent Graph."""
         from gui.config.config import PAGES
 
-        assert set(PAGES) == {"Run Research App", "Settings", "Evaluation Results", "Agent Graph"}, (
+        assert set(PAGES) == {
+            "Run Research App",
+            "Settings",
+            "Evaluation Results",
+            "Agent Graph",
+        }, (
             f"PAGES must be exactly ['Run Research App', 'Settings', 'Evaluation Results', 'Agent Graph'], got: {PAGES}"
         )
 

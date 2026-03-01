@@ -218,12 +218,17 @@ class TestSidebarThemeSelectbox:
         call_order: list[str] = []
         mock_sidebar = MagicMock()
         mock_sidebar.radio.return_value = "Run Research App"
-        mock_sidebar.selectbox.side_effect = lambda *a, **kw: call_order.append("selectbox") or "expanse_dark"
+        mock_sidebar.selectbox.side_effect = lambda *a, **kw: (
+            call_order.append("selectbox") or "expanse_dark"
+        )
 
         mock_expander_ctx = MagicMock()
         mock_expander_ctx.__enter__ = MagicMock(return_value=MagicMock())
         mock_expander_ctx.__exit__ = MagicMock(return_value=False)
-        mock_sidebar.expander.side_effect = lambda *a, **kw: (call_order.append("expander"), mock_expander_ctx)[1]
+        mock_sidebar.expander.side_effect = lambda *a, **kw: (
+            call_order.append("expander"),
+            mock_expander_ctx,
+        )[1]
 
         with patch("gui.components.sidebar.sidebar", mock_sidebar):
             with patch("gui.components.sidebar.st") as mock_st:

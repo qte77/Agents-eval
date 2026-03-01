@@ -234,15 +234,26 @@ class TestAgentGraphUsesThemeColors:
             patch("gui.pages.agent_graph.Network", mock_net_cls),
             patch("gui.pages.agent_graph.get_theme_bgcolor", return_value="#0b0c10"),
             patch("gui.pages.agent_graph.get_graph_font_color", return_value="#ECEFF4"),
-            patch("gui.pages.agent_graph.get_graph_node_colors", return_value=("#4A90E2", "#50C878")),
+            patch(
+                "gui.pages.agent_graph.get_graph_node_colors", return_value=("#4A90E2", "#50C878")
+            ),
             patch("streamlit.header"),
             patch("streamlit.subheader"),
             patch("streamlit.caption"),
-            patch("streamlit.expander", return_value=MagicMock(__enter__=MagicMock(), __exit__=MagicMock())),
+            patch(
+                "streamlit.expander",
+                return_value=MagicMock(__enter__=MagicMock(), __exit__=MagicMock()),
+            ),
             patch("streamlit.text"),
             patch("streamlit.markdown"),
             patch("streamlit.components.v1.html"),
-            patch("tempfile.NamedTemporaryFile", return_value=MagicMock(__enter__=MagicMock(return_value=MagicMock(name="/tmp/test.html")), __exit__=MagicMock())),
+            patch(
+                "tempfile.NamedTemporaryFile",
+                return_value=MagicMock(
+                    __enter__=MagicMock(return_value=MagicMock(name="/tmp/test.html")),
+                    __exit__=MagicMock(),
+                ),
+            ),
             patch("pathlib.Path.read_text", return_value="<head></head>"),
             patch("pathlib.Path.unlink"),
         ):
@@ -271,15 +282,26 @@ class TestAgentGraphUsesThemeColors:
             patch("gui.pages.agent_graph.Network", mock_net_cls),
             patch("gui.pages.agent_graph.get_theme_bgcolor", return_value="#0b0c10"),
             patch("gui.pages.agent_graph.get_graph_font_color", return_value="#ECEFF4"),
-            patch("gui.pages.agent_graph.get_graph_node_colors", return_value=("#7AA2F7", "#9ECE6A")),
+            patch(
+                "gui.pages.agent_graph.get_graph_node_colors", return_value=("#7AA2F7", "#9ECE6A")
+            ),
             patch("streamlit.header"),
             patch("streamlit.subheader"),
             patch("streamlit.caption"),
-            patch("streamlit.expander", return_value=MagicMock(__enter__=MagicMock(), __exit__=MagicMock())),
+            patch(
+                "streamlit.expander",
+                return_value=MagicMock(__enter__=MagicMock(), __exit__=MagicMock()),
+            ),
             patch("streamlit.text"),
             patch("streamlit.markdown"),
             patch("streamlit.components.v1.html"),
-            patch("tempfile.NamedTemporaryFile", return_value=MagicMock(__enter__=MagicMock(return_value=MagicMock(name="/tmp/test.html")), __exit__=MagicMock())),
+            patch(
+                "tempfile.NamedTemporaryFile",
+                return_value=MagicMock(
+                    __enter__=MagicMock(return_value=MagicMock(name="/tmp/test.html")),
+                    __exit__=MagicMock(),
+                ),
+            ),
             patch("pathlib.Path.read_text", return_value="<head></head>"),
             patch("pathlib.Path.unlink"),
         ):
@@ -307,15 +329,26 @@ class TestAgentGraphUsesThemeColors:
             patch("gui.pages.agent_graph.Network", mock_net_cls),
             patch("gui.pages.agent_graph.get_theme_bgcolor", return_value="#0b0c10"),
             patch("gui.pages.agent_graph.get_graph_font_color", return_value="#ECEFF4"),
-            patch("gui.pages.agent_graph.get_graph_node_colors", return_value=("#7AA2F7", "#9ECE6A")),
+            patch(
+                "gui.pages.agent_graph.get_graph_node_colors", return_value=("#7AA2F7", "#9ECE6A")
+            ),
             patch("streamlit.header"),
             patch("streamlit.subheader"),
             patch("streamlit.caption"),
-            patch("streamlit.expander", return_value=MagicMock(__enter__=MagicMock(), __exit__=MagicMock())),
+            patch(
+                "streamlit.expander",
+                return_value=MagicMock(__enter__=MagicMock(), __exit__=MagicMock()),
+            ),
             patch("streamlit.text"),
             patch("streamlit.markdown"),
             patch("streamlit.components.v1.html"),
-            patch("tempfile.NamedTemporaryFile", return_value=MagicMock(__enter__=MagicMock(return_value=MagicMock(name="/tmp/test.html")), __exit__=MagicMock())),
+            patch(
+                "tempfile.NamedTemporaryFile",
+                return_value=MagicMock(
+                    __enter__=MagicMock(return_value=MagicMock(name="/tmp/test.html")),
+                    __exit__=MagicMock(),
+                ),
+            ),
             patch("pathlib.Path.read_text", return_value="<head></head>"),
             patch("pathlib.Path.unlink"),
         ):
