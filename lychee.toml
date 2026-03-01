@@ -35,4 +35,6 @@ exclude = [
   # Allen AI domains (persistent timeouts in CI)
   "^https?://allenai\\.org",
   "^https?://.*\\.allen\\.ai",
+  # GitHub Pages deployment (not available until docs site is published)
+  "^https?://qte77\\.github\\.io",
 ]

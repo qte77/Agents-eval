@@ -16,6 +16,7 @@ Mock strategy:
 from unittest.mock import MagicMock, patch
 
 import pytest
+from streamlit.runtime.scriptrunner import StopException
 
 # Prefix for patching directly imported streamlit functions in run_app
 _RA = "gui.pages.run_app"
@@ -97,7 +98,7 @@ class TestValidationWarningSessionState:
             patch("streamlit.expander") as mock_expander,
             patch(f"{_RA}.spinner") as mock_spinner,
             patch("streamlit.checkbox"),
-            patch("streamlit.rerun", side_effect=Exception("rerun")),
+            patch("streamlit.rerun", side_effect=StopException("rerun")),
             patch(f"{_RA}.render_output"),
             patch(f"{_RA}._load_available_papers", return_value=[]),
             patch(f"{_RA}._execute_query_background"),
@@ -111,8 +112,8 @@ class TestValidationWarningSessionState:
 
             try:
                 await render_app()
-            except Exception:
-                pass  # st.rerun() raises to halt execution
+            except StopException:
+                pass  # st.rerun() raises StopException to halt execution
 
         assert not mock_session.get("show_validation_warning"), (
             "show_validation_warning must be cleared when valid input is provided"
