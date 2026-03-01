@@ -84,15 +84,17 @@ class TestTraditionalMetricsEngine:
         assert similarity == 0.0  # No common words
 
     # Semantic similarity tests (with mocking to avoid model dependencies)
-    def test_semantic_similarity_with_bertscore(self, engine, sample_texts):
-        """Semantic similarity should use Levenshtein similarity fallback."""
+    def test_semantic_similarity_levenshtein_fallback(self, engine, sample_texts):
+        """Semantic similarity should fall back to Levenshtein when BERTScore unavailable."""
         text1, text2 = sample_texts["academic_review"]
 
-        # Mock Levenshtein similarity to return known value
-        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.85) as mock_lev:
-            similarity = engine.compute_semantic_similarity(text1, text2)
-            assert similarity == 0.85
-            mock_lev.assert_called_once_with(text1, text2)
+        with patch.object(engine, "_get_bertscore_model", return_value=None):
+            with patch.object(
+                engine, "compute_levenshtein_similarity", return_value=0.85
+            ) as mock_lev:
+                similarity = engine.compute_semantic_similarity(text1, text2)
+                assert similarity == 0.85
+                mock_lev.assert_called_once_with(text1, text2)
 
     def test_semantic_similarity_fallback_on_bertscore_computation_error(
         self, engine, sample_texts

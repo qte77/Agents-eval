@@ -134,7 +134,7 @@ The evaluation framework is built around large context window models capable of 
 - **Output Similarity Assessment** (config: `output_similarity`):
   - Cosine similarity (primary metric from config)
   - Jaccard similarity (secondary metric)
-  - Semantic similarity (default metric from config)
+  - Semantic similarity via BERTScore F1 (`distilbert-base-uncased`), with Levenshtein fallback when unavailable
   - Confidence threshold: 0.8 (from config)
 - **Performance Metrics** (config: `time_taken`):
   - Execution time tracking (end-to-end paper processing)
@@ -174,7 +174,7 @@ The evaluation framework is built around large context window models capable of 
 3. **Graph Construction** → NetworkX processes trace data to build behavioral graphs showing coordination patterns and decision flows
 4. **Analysis** → NetworkX analyzes coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
 
-**Tool Selection**: See [Graph Analysis & Network Tools](landscape/landscape-evaluation-data-resources.md#6-graph-analysis--network-tools), [Post-Execution Graph Construction Tools](landscape/landscape-evaluation-data-resources.md#8-post-execution-graph-construction-tools), [Observability & Monitoring Platforms](landscape/landscape-agent-frameworks-infrastructure.md#4-observability--monitoring), and [Technical Analysis: Tracing Methods](landscape/trace_observe_methods.md) for detailed feasibility assessments and integration approaches.
+**Tool Selection**: See [Graph Analysis & Network Tools](landscape/landscape-evaluation-data-resources.md#6-graph-analysis-network-tools), [Post-Execution Graph Construction Tools](landscape/landscape-evaluation-data-resources.md#8-post-execution-graph-construction-tools), [Observability & Monitoring Platforms](landscape/landscape-agent-frameworks-infrastructure.md#4-observability-monitoring), and [Technical Analysis: Tracing Methods](landscape/trace_observe_methods.md) for detailed feasibility assessments and integration approaches.
 
 ##### Key Applications for Agent Evaluation
 
@@ -414,7 +414,7 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 - **Tier 3 Empty-Trace Skip** (STORY-003): Return `None` from `_execute_tier3` when trace data is empty, triggering Tier 1-only fallback (see [Adaptive Weight Redistribution](#composite-scoring-system)).
 - **Composite Scoring Trace Awareness** (STORY-004): Wire `evaluate_composite_with_trace` into production pipeline for single-agent weight redistribution.
 - **Execution Timestamp Propagation** (STORY-005): Capture wall-clock timestamps around subprocess/agent execution and propagate to `_execute_tier1` for accurate `time_taken` metric.
-- **Semantic Score Deduplication** (STORY-006): Change `compute_semantic_similarity` to use Levenshtein instead of cosine (which duplicated `cosine_score`).
+- **Semantic Score Deduplication** (STORY-006): Change `compute_semantic_similarity` to use BERTScore F1 (`distilbert-base-uncased`) with Levenshtein fallback, replacing cosine (which duplicated `cosine_score`). BERTScore re-enabled after sentencepiece build issues resolved (Sprint 13).
 - **Continuous Task Success** (STORY-007): Replace binary 0/1 `task_success` with proportional `min(1.0, similarity/threshold)`.
 - **Unified Output Directories** (STORY-008–010): `RunContext` consolidates all run artifacts into `output/runs/{ts}_{engine}_{paper}_{id}/`, sweeps into `output/sweeps/{ts}/`. See [Output Structure](#output-structure-sprint-12).
 
@@ -516,7 +516,7 @@ The three-tiered evaluation framework is fully operational with plugin architect
 
 - Cosine similarity using TF-IDF vectorization
 - Jaccard similarity with enhanced textdistance support
-- Semantic similarity using TF-IDF cosine
+- Semantic similarity via BERTScore F1 (Levenshtein fallback)
 - Execution time measurement and normalization
 - Task success assessment with configurable thresholds
 
@@ -528,7 +528,7 @@ The three-tiered evaluation framework is fully operational with plugin architect
 - Cost-budgeted evaluation with retry mechanisms
 - **Provider Fallback Chain** (Sprint 5): Automatically selects available LLM provider by validating API key availability before attempting calls
   - Primary provider validation → Fallback provider if primary unavailable → Skip Tier 2 entirely if both unavailable
-  - `tier2_provider=auto` mode inherits the agent system's active `chat_provider` for consistency
+  - `tier2_provider=auto` mode inherits the agent system's active `chat_provider` for consistency. When `chat_model` is not set, uses `PROVIDER_REGISTRY.default_model` for the resolved provider (e.g. `gpt-oss-120b` for Cerebras) instead of the generic `tier2_model` default
   - When Tier 2 is skipped, its 3 metrics (`technical_accuracy`, `constructiveness`, `planning_rationality`) are excluded from composite scoring and weights redistributed to Tier 1 and Tier 3
   - Prevents 401 authentication errors and neutral 0.5 fallback scores when providers are unavailable
 
