@@ -50,8 +50,12 @@ class TestReportCachedInSessionState:
         expected_report = "# Evaluation Report\n\n## Summary\n"
         mock_session = _SessionDict()
 
+        def button_side_effect(label, **kwargs):
+            # Only "Generate Report" is clicked
+            return "Generate" in str(label)
+
         with (
-            patch("streamlit.button", return_value=True),
+            patch("streamlit.button", side_effect=button_side_effect),
             patch("streamlit.markdown"),
             patch("streamlit.download_button"),
             patch("streamlit.session_state", mock_session),
@@ -94,8 +98,11 @@ class TestReportCachedInSessionState:
         new_report = "# New Report\n"
         mock_session = _SessionDict({"generated_report": "# Old Report\n"})
 
+        def button_side_effect(label, **kwargs):
+            return "Generate" in str(label)
+
         with (
-            patch("streamlit.button", return_value=True),
+            patch("streamlit.button", side_effect=button_side_effect),
             patch("streamlit.markdown") as mock_markdown,
             patch("streamlit.download_button"),
             patch("streamlit.session_state", mock_session),
@@ -152,7 +159,11 @@ class TestClearResultsButton:
         from gui.pages.run_app import render_app
 
         mock_session = _SessionDict(
-            {"execution_state": "completed", "execution_result": MagicMock()}
+            {
+                "execution_state": "completed",
+                "execution_result": MagicMock(),
+                "execution_composite_result": MagicMock(),
+            }
         )
         button_labels: list[str] = []
 
