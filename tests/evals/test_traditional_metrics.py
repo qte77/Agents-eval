@@ -94,17 +94,19 @@ class TestTraditionalMetricsEngine:
             assert similarity == 0.85
             mock_lev.assert_called_once_with(text1, text2)
 
-    @patch("app.judge.traditional_metrics.TraditionalMetricsEngine._get_bertscore_model")
-    def test_semantic_similarity_fallback_on_error(self, mock_bertscore, engine, sample_texts):
-        """Given BERTScore failure, should fallback to Levenshtein similarity."""
-        # Mock BERTScore to raise exception
-        mock_bertscore.side_effect = Exception("Model loading failed")
+    def test_semantic_similarity_fallback_on_bertscore_computation_error(self, engine, sample_texts):
+        """Given BERTScore .score() failure, should fallback to Levenshtein similarity."""
+        mock_scorer = Mock()
+        mock_scorer.score.side_effect = Exception("Computation failed")
 
         text1, text2 = sample_texts["similar"]
-        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.7) as mock_lev:
-            similarity = engine.compute_semantic_similarity(text1, text2)
-            assert similarity == 0.7
-            mock_lev.assert_called_once_with(text1, text2)
+        with patch.object(engine, "_get_bertscore_model", return_value=mock_scorer):
+            with patch.object(
+                engine, "compute_levenshtein_similarity", return_value=0.7
+            ) as mock_lev:
+                similarity = engine.compute_semantic_similarity(text1, text2)
+                assert similarity == 0.7
+                mock_lev.assert_called_once_with(text1, text2)
 
     # Execution time measurement tests
     def test_execution_time_measurement(self, engine):
@@ -1002,6 +1004,15 @@ class TestContinuousTaskSuccess:
 class TestBERTScoreReenablement:
     """Tests for BERTScore re-enablement in semantic similarity (Bug 1)."""
 
+    @pytest.fixture(autouse=True)
+    def _reset_bertscore_cache(self):
+        """Reset class-level BERTScore cache between tests."""
+        TraditionalMetricsEngine._bertscore_instance = None
+        TraditionalMetricsEngine._bertscore_init_failed = False
+        yield
+        TraditionalMetricsEngine._bertscore_instance = None
+        TraditionalMetricsEngine._bertscore_init_failed = False
+
     @pytest.fixture
     def engine(self):
         """Fixture providing TraditionalMetricsEngine instance."""
@@ -1009,18 +1020,14 @@ class TestBERTScoreReenablement:
 
     def test_get_bertscore_model_returns_scorer_instance(self, engine):
         """_get_bertscore_model should return a BERTScorer instance (lazy-loaded)."""
-        with patch(
-            "app.judge.traditional_metrics.BERTScorer"
-        ) as mock_bert_cls:
+        with patch("app.judge.traditional_metrics.BERTScorer") as mock_bert_cls:
             mock_scorer = Mock()
             mock_bert_cls.return_value = mock_scorer
 
             result = engine._get_bertscore_model()
 
             assert result is mock_scorer
-            mock_bert_cls.assert_called_once_with(
-                model_type="distilbert-base-uncased", lang="en"
-            )
+            mock_bert_cls.assert_called_once_with(model_type="distilbert-base-uncased", lang="en")
 
     def test_compute_semantic_similarity_uses_bertscore(self, engine):
         """compute_semantic_similarity should use BERTScore F1 when available."""

@@ -48,6 +48,11 @@ class TraditionalMetricsEngine:
     with performance targets under 1 second for typical academic reviews.
     """
 
+    # Reason: Class-level cache so BERTScorer init failure (e.g. read-only FS)
+    # is not retried on every new engine instance.
+    _bertscore_instance = None
+    _bertscore_init_failed = False
+
     def __init__(self):
         """Initialize metrics engine with cached components.
 
@@ -59,23 +64,25 @@ class TraditionalMetricsEngine:
             ngram_range=(1, 2),
             max_features=5000,  # Limit for performance
         )
-        self._bertscore = None  # Lazy loading
 
     def _get_bertscore_model(self):
         """Lazy-load BERTScorer instance for semantic similarity.
 
         Returns:
-            BERTScorer instance if available, None if bert-score not installed.
+            BERTScorer instance if available, None if bert-score not installed or init failed.
         """
-        if self._bertscore is not None:
-            return self._bertscore
-        if BERTScorer is None:
+        if TraditionalMetricsEngine._bertscore_instance is not None:
+            return TraditionalMetricsEngine._bertscore_instance
+        if TraditionalMetricsEngine._bertscore_init_failed or BERTScorer is None:
             return None
         try:
-            self._bertscore = BERTScorer(model_type="distilbert-base-uncased", lang="en")
-            return self._bertscore
+            TraditionalMetricsEngine._bertscore_instance = BERTScorer(
+                model_type="distilbert-base-uncased", lang="en"
+            )
+            return TraditionalMetricsEngine._bertscore_instance
         except Exception as e:
             logger.warning(f"BERTScore initialization failed: {e}")
+            TraditionalMetricsEngine._bertscore_init_failed = True
             return None
 
     def _compute_word_overlap_fallback(self, text1: str, text2: str) -> float:
@@ -248,7 +255,7 @@ class TraditionalMetricsEngine:
         if scorer is not None:
             try:
                 _, _, f1 = scorer.score([text1], [text2])
-                return float(f1.mean().item())
+                return float(f1.mean().item())  # type: ignore[union-attr]
             except Exception as e:
                 logger.warning(f"BERTScore computation failed, falling back to Levenshtein: {e}")
 
@@ -454,7 +461,7 @@ class TraditionalMetricsEngine:
             default_weights = {
                 "cosine_weight": 0.4,
                 "jaccard_weight": 0.4,
-                "semantic_weight": 0.2,  # Maps to Levenshtein
+                "semantic_weight": 0.2,
             }
 
             weights = config_weights or default_weights
@@ -465,7 +472,7 @@ class TraditionalMetricsEngine:
             # Calculate multiple similarity metrics
             cosine_sim = best_scores.cosine
             jaccard_sim = best_scores.jaccard
-            levenshtein_sim = best_scores.levenshtein  # Semantic weight maps to Levenshtein
+            levenshtein_sim = best_scores.levenshtein
 
             # Weighted combination using config weights
             cosine_weight = weights.get("cosine_weight", 0.4)
@@ -608,7 +615,7 @@ def create_evaluation_result(
     similarity_scores = {
         "cosine": best_scores.cosine,
         "jaccard": best_scores.jaccard,
-        "semantic": best_scores.semantic,  # Levenshtein-based
+        "semantic": best_scores.semantic,
     }
 
     gt_recommendations = [float(r.recommendation) for r in ground_truth_reviews]

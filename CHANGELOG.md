@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `traditional_metrics.py`: re-enable BERTScore for semantic similarity (was disabled due to resolved sentencepiece build issues), with Levenshtein fallback
+- `llm_evaluation_managers.py`: auto-resolved providers now use PROVIDER_REGISTRY `default_model` when `chat_model` is None, preventing wrong model errors (e.g. `gpt-4o-mini` sent to Cerebras)
+
 ### Security
 
 - `cc_engine.py`: add `_sanitize_cc_query()` — validates CC subprocess query input (empty, dash-prefix, length) to mitigate CWE-78 argument injection (CodeQL alerts #7, #8)

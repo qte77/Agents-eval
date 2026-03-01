@@ -19,7 +19,6 @@ dependencies = [
     "pydantic-ai-slim[duckduckgo,openai,tavily]>=1.62.0",
     "pydantic-settings>=2.13.1",
     # Modern ROUGE, BLEU, text metrics (2024+ maintained)
-    # DISABLED due to sentencepiece build issues
     # "torchmetrics[text]>=1.4.0",
     "scikit-learn>=1.8.0",  # F1, precision, recall, accuracy metrics
     "textdistance>=4.6.3",  # Multiple text similarity algorithms
