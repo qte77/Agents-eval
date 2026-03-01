@@ -30,7 +30,7 @@ def load_config[T: BaseModel](config_path: str | Path, data_model: type[T]) -> T
 
     Args:
         config_path: Path to the JSON configuration file
-        model: Pydantic model class for validation
+        data_model: Pydantic model class for validation
 
     Returns:
         Validated configuration instance

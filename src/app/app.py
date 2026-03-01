@@ -357,9 +357,6 @@ async def main(
 ) -> dict[str, Any] | None:
     """Main entry point for the application.
 
-    Args:
-        See `--help`.
-
     Returns:
         Dictionary with 'composite_result' (CompositeResult) and 'graph' (nx.DiGraph)
         if evaluation runs successfully, None otherwise (CLI mode or download-only).
