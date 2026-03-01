@@ -16,7 +16,7 @@ import networkx as nx
 import streamlit as st
 import streamlit.components.v1 as components
 
-from gui.config.styling import get_theme_bgcolor, get_theme_node_colors
+from gui.config.styling import get_graph_font_color, get_graph_node_colors, get_theme_bgcolor
 from gui.config.text import AGENT_GRAPH_HEADER, AGENT_GRAPH_NETWORK_SUBHEADER
 
 try:
@@ -81,7 +81,7 @@ def render_agent_graph(
         directed=True,
         notebook=False,
         bgcolor=get_theme_bgcolor(),
-        font_color=False,  # type: ignore[arg-type]
+        font_color=get_graph_font_color(),
     )
 
     # Configure physics for better layout
@@ -122,7 +122,7 @@ def render_agent_graph(
     )
 
     # Add nodes with visual distinction — colors from active theme
-    agent_color, tool_color = get_theme_node_colors()
+    agent_color, tool_color = get_graph_node_colors()
     for node in graph.nodes():
         node_data: dict[str, Any] = graph.nodes[node]  # type: ignore[assignment]
         node_type = node_data.get("type", "agent")
