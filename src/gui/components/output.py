@@ -5,7 +5,7 @@ result type: st.json() for dicts and Pydantic models, st.markdown()
 for strings, and st.write() as a fallback.
 """
 
-from typing import Any
+from typing import Any, cast
 
 import streamlit as st
 from pydantic import BaseModel
@@ -29,7 +29,7 @@ def render_output(
         if isinstance(result, BaseModel):
             st.json(result.model_dump(), expanded=True)
         elif isinstance(result, dict):
-            st.json(result, expanded=True)
+            st.json(cast(dict[str, Any], result), expanded=True)
         elif isinstance(result, str):
             st.markdown(result)
         else:
