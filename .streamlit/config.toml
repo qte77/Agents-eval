@@ -1,4 +1,5 @@
 [theme]
+# Default theme: "expanse_dark" from THEMES dict in src/gui/config/styling.py
 # S8-F8.1: primary color matches agent graph blue, replaces default red
 primaryColor="#4A90E2"
 backgroundColor="#0b0c10"
