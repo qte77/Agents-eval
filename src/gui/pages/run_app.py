@@ -373,43 +373,66 @@ def _display_configuration(provider: str, token_limit: int | None, agents_text: 
 def _display_execution_result(execution_state: str) -> None:
     """Display execution result based on current state.
 
-    Wraps state transitions in ARIA live regions for screen reader accessibility:
-    - role="status" for running/completed (polite, non-interrupting)
-    - role="alert" for errors (assertive, immediate announcement)
+    Wraps state transitions in ARIA live regions for screen reader accessibility.
+    All ARIA tags are consolidated into single st.markdown() calls to avoid
+    malformed DOM from orphaned opening/closing tags across separate calls.
 
     Args:
         execution_state: Current execution state (running/completed/error/idle)
     """
     if execution_state == "running":
-        # S8-F3.3: ARIA role="status" for polite announcement (WCAG 4.1.3)
-        st.markdown('<div role="status" aria-live="polite">', unsafe_allow_html=True)
+        # S13-STORY-001: Consolidated ARIA region (WCAG 4.1.3)
+        st.markdown(
+            '<div role="status" aria-live="polite">'
+            "Query execution in progress. "
+            "You can navigate to other tabs and return to see the result."
+            "</div>",
+            unsafe_allow_html=True,
+        )
         with spinner("Query execution in progress..."):
             info(
                 "Execution is running. You can navigate to other tabs and return to see the result."
             )
-        st.markdown("</div>", unsafe_allow_html=True)
 
     elif execution_state == "completed":
         result = getattr(st.session_state, "execution_result", None)
-        # S8-F3.3: ARIA role="status" for completed state + post-run navigation guidance
-        st.markdown('<div role="status" aria-live="polite">', unsafe_allow_html=True)
+        # S13-STORY-001: Consolidated ARIA region for completed state
+        nav_guidance = (
+            "Navigate to Evaluation Results to view scores, "
+            "or Agent Graph to explore agent interactions."
+        )
         if result:
+            st.markdown(
+                '<div role="status" aria-live="polite">'
+                f"Execution completed. {nav_guidance}"
+                "</div>",
+                unsafe_allow_html=True,
+            )
             render_output(result)
         else:
+            st.markdown(
+                '<div role="status" aria-live="polite">'
+                f"Execution completed but no result was returned. {nav_guidance}"
+                "</div>",
+                unsafe_allow_html=True,
+            )
             info("Execution completed but no result was returned.")
         st.markdown(
             "Navigate to **Evaluation Results** to view scores, "
             "or **Agent Graph** to explore agent interactions.",
             unsafe_allow_html=False,
         )
-        st.markdown("</div>", unsafe_allow_html=True)
 
     elif execution_state == "error":
-        # S8-F3.3: ARIA role="alert" for error state (assertive announcement, WCAG 4.1.3)
-        st.markdown('<div role="alert" aria-live="assertive">', unsafe_allow_html=True)
+        # S13-STORY-001: Consolidated ARIA region for error state
         error_msg = getattr(st.session_state, "execution_error", "Unknown error")
+        st.markdown(
+            '<div role="alert" aria-live="assertive">'
+            f"Error: {error_msg}"
+            "</div>",
+            unsafe_allow_html=True,
+        )
         exception(Exception(error_msg))
-        st.markdown("</div>", unsafe_allow_html=True)
 
     else:  # idle
         render_output(RUN_APP_OUTPUT_PLACEHOLDER)
