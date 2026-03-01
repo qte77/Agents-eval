@@ -296,41 +296,53 @@ class EvaluationPipeline:
         if trace_data is not None and results.is_complete():
             return self.composite_scorer.evaluate_composite_with_trace(results, trace_data)
         elif results.tier2 is None:
-            # Tier 2 skipped - validate Tier 1 and Tier 3 before redistribution
-            if not results.tier1 or not results.tier3:
-                if results.tier1:
-                    # Reason: Tier 1 only — return degraded result so CI passes
-                    # without LLM provider env vars or trace data.
-                    logger.warning(
-                        "Composite score degraded: only Tier 1 available "
-                        "(Tier 2 skipped, Tier 3 unavailable). "
-                        "Score reflects traditional metrics only."
-                    )
-                    return CompositeResult(
-                        composite_score=results.tier1.overall_score,
-                        recommendation="weak_reject",
-                        recommendation_weight=-0.25,
-                        metric_scores={
-                            "cosine_score": results.tier1.cosine_score,
-                            "jaccard_score": results.tier1.jaccard_score,
-                            "semantic_score": results.tier1.semantic_score,
-                        },
-                        tier1_score=results.tier1.overall_score,
-                        tier2_score=None,
-                        tier3_score=0.0,
-                        evaluation_complete=False,
-                        weights_used={"tier1": 1.0, "tier2": 0.0, "tier3": 0.0},
-                    )
-                raise ValueError(
-                    "Cannot generate composite score: Tier 1 and Tier 3 required "
-                    "when Tier 2 is skipped"
-                )
-            return self.composite_scorer.evaluate_composite_with_optional_tier2(results)
+            return self._composite_without_tier2(results)
         elif results.is_complete():
             # All tiers available, no trace data
             return self.composite_scorer.evaluate_composite(results)
         else:
             raise ValueError("Cannot generate composite score: insufficient tier results")
+
+    def _composite_without_tier2(self, results: EvaluationResults) -> CompositeResult:
+        """Handle composite scoring when Tier 2 was skipped.
+
+        Args:
+            results: Evaluation results (tier2 is None)
+
+        Returns:
+            CompositeResult with weight redistribution or degraded scoring
+
+        Raises:
+            ValueError: If neither Tier 1 nor Tier 3 results available
+        """
+        if results.tier1 and results.tier3:
+            return self.composite_scorer.evaluate_composite_with_optional_tier2(results)
+        if results.tier1:
+            # Reason: Tier 1 only — return degraded result so CI passes
+            # without LLM provider env vars or trace data.
+            logger.warning(
+                "Composite score degraded: only Tier 1 available "
+                "(Tier 2 skipped, Tier 3 unavailable). "
+                "Score reflects traditional metrics only."
+            )
+            return CompositeResult(
+                composite_score=results.tier1.overall_score,
+                recommendation="weak_reject",
+                recommendation_weight=-0.25,
+                metric_scores={
+                    "cosine_score": results.tier1.cosine_score,
+                    "jaccard_score": results.tier1.jaccard_score,
+                    "semantic_score": results.tier1.semantic_score,
+                },
+                tier1_score=results.tier1.overall_score,
+                tier2_score=None,
+                tier3_score=0.0,
+                evaluation_complete=False,
+                weights_used={"tier1": 1.0, "tier2": 0.0, "tier3": 0.0},
+            )
+        raise ValueError(
+            "Cannot generate composite score: Tier 1 and Tier 3 required when Tier 2 is skipped"
+        )
 
     def _handle_tier3_error(
         self, e: Exception, execution_trace: dict[str, Any] | None, start_time: float
