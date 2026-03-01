@@ -35,7 +35,6 @@ theme:
         name: "Toggle Light Mode"
 nav:
   - Home: index.md
-  - PRD: PRD.md
   - User Story: UserStory.md
   - Sprints: sprints/index.md
   - Code: docstrings.md

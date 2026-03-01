@@ -198,7 +198,7 @@ See `testing-strategy.md` for detailed comparison.
 See `pyproject.toml` for installed BDD tools.
 
 **Run BDD scenarios**: See
-[CONTRIBUTING.md](../CONTRIBUTING.md#complete-command-reference)
+[CONTRIBUTING.md](../../CONTRIBUTING.md#complete-command-reference)
 for make recipes. Run BDD scenarios with
 `uv run pytest tests/acceptance/`.
 

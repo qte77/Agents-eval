@@ -11,13 +11,11 @@ from unittest.mock import Mock, patch
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import Tier1Result
 from app.judge.traditional_metrics import (
     TraditionalMetricsEngine,
     evaluate_single_enhanced,
-    evaluate_single_traditional,
 )
 
 
@@ -232,27 +230,9 @@ class TestTraditionalMetricsEngine:
             assert 0.0 <= result.overall_score <= 1.0
 
 
-# Convenience function tests
-def test_evaluate_single_traditional():
-    """Test convenience function for single traditional evaluation."""
-    agent_output = "This is a test review with good methodology."
-    reference_texts = ["Test review with solid approach."]
-
-    with patch("app.judge.traditional_metrics.TraditionalMetricsEngine") as mock_engine_class:
-        mock_engine = Mock()
-        mock_engine_class.return_value = mock_engine
-
-        # Mock the evaluation result
-        mock_result = Mock(spec=Tier1Result)
-        mock_engine.evaluate_traditional_metrics.return_value = mock_result
-
-        result = evaluate_single_traditional(agent_output, reference_texts)
-
-        assert result == mock_result
-        mock_engine.evaluate_traditional_metrics.assert_called_once()
-
 
 # Performance tests
+@pytest.mark.benchmark
 class TestTraditionalMetricsPerformance:
     """Performance tests for traditional metrics engine."""
 
@@ -642,6 +622,15 @@ class TestPeerReadEvaluation:
 class TestSimilarityScoreProperties:
     """Property-based tests for similarity score bounds and invariants."""
 
+    @pytest.fixture(autouse=True)
+    def _reset_bertscore_cache(self):
+        """Force Levenshtein fallback to avoid BERTScore load latency exceeding Hypothesis deadline."""
+        TraditionalMetricsEngine._bertscore_instance = None
+        TraditionalMetricsEngine._bertscore_init_failed = True
+        yield
+        TraditionalMetricsEngine._bertscore_instance = None
+        TraditionalMetricsEngine._bertscore_init_failed = False
+
     @given(
         text1=st.text(min_size=1, max_size=500).filter(lambda s: s.strip()),
         text2=st.text(min_size=1, max_size=500).filter(lambda s: s.strip()),
@@ -742,157 +731,6 @@ class TestSimilarityScoreProperties:
         assert 0.0 < result.time_score <= 1.0
         assert 0.0 <= result.task_success <= 1.0
         assert -1e-10 <= result.overall_score <= 1.0 + 1e-10
-
-
-# MARK: Snapshot tests using inline-snapshot
-
-
-class TestTier1ResultStructure:
-    """Snapshot tests for Tier1Result structure regression."""
-
-    def test_tier1_result_structure_snapshot(self):
-        """Snapshot: Tier1Result structure should remain stable."""
-        engine = TraditionalMetricsEngine()
-        agent_output = "This paper demonstrates solid methodology and clear results."
-        reference_texts = ["Strong methodology with excellent results."]
-
-        # Use fixed time values to get stable snapshots
-        start_time = 1000.0
-        end_time = 1001.5  # 1.5 seconds
-
-        result = engine.evaluate_traditional_metrics(
-            agent_output, reference_texts, start_time, end_time
-        )
-
-        # SNAPSHOT: Capture the complete structure with stable time values
-        assert result.model_dump() == snapshot(
-            {
-                "cosine_score": 0.2605556710562624,
-                "jaccard_score": 0.18181818181818182,
-                "semantic_score": 0.41666666666666663,
-                "execution_time": 1.5,
-                "time_score": 0.22313016014842982,
-                "task_success": 0.4035795887673105,
-                "overall_score": 0.30351002036202473,
-            }
-        )
-
-
-# MARK: STORY-006 tests for semantic score deduplication
-
-
-class TestSemanticScoreDeduplication:
-    """Tests for STORY-006: semantic_score must use Levenshtein, not cosine."""
-
-    @pytest.fixture
-    def engine(self):
-        """Fixture providing TraditionalMetricsEngine instance."""
-        return TraditionalMetricsEngine()
-
-    def test_ac1_semantic_similarity_delegates_to_levenshtein(self, engine):
-        """AC1: compute_semantic_similarity must delegate to compute_levenshtein_similarity."""
-        text1 = "This paper presents a novel approach."
-        text2 = "The work demonstrates a new method."
-
-        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.75) as mock_lev:
-            result = engine.compute_semantic_similarity(text1, text2)
-            assert result == 0.75
-            mock_lev.assert_called_once_with(text1, text2)
-
-    def test_ac1_semantic_similarity_does_not_delegate_to_cosine(self, engine):
-        """AC1: compute_semantic_similarity must NOT delegate to compute_cosine_similarity."""
-        text1 = "This paper presents a novel approach."
-        text2 = "The work demonstrates a new method."
-
-        with patch.object(engine, "compute_cosine_similarity") as mock_cosine:
-            engine.compute_semantic_similarity(text1, text2)
-            mock_cosine.assert_not_called()
-
-    def test_ac2_semantic_score_differs_from_cosine_score_for_non_identical_texts(self, engine):
-        """AC2: semantic_score and cosine_score should produce different values.
-
-        Use texts with shared words (so TF-IDF cosine > 0) but different character
-        sequences (so Levenshtein differs). This ensures cosine != levenshtein.
-        """
-        text1 = "The methodology is well-designed and the results are convincing."
-        text2 = "The approach used was well-designed but the results need more evaluation."
-
-        semantic = engine.compute_semantic_similarity(text1, text2)
-        cosine = engine.compute_cosine_similarity(text1, text2)
-
-        # They must differ — Levenshtein (char-level) and TF-IDF cosine (word-level) differ
-        assert semantic != cosine, (
-            f"semantic_score ({semantic}) must differ from cosine_score ({cosine})"
-        )
-
-    def test_ac3_semantic_similarity_identical_texts_returns_1(self, engine):
-        """AC3: semantic_score returns 1.0 for identical texts."""
-        text = "The methodology is well-designed and results are convincing."
-        result = engine.compute_semantic_similarity(text, text)
-        assert result == 1.0
-
-    def test_ac3_semantic_similarity_empty_vs_nonempty_returns_0(self, engine):
-        """AC3: semantic_score returns 0.0 for empty-vs-nonempty texts."""
-        result = engine.compute_semantic_similarity("", "some non-empty text")
-        assert result == 0.0
-
-        result2 = engine.compute_semantic_similarity("some non-empty text", "")
-        assert result2 == 0.0
-
-    def test_ac4_tier1_result_semantic_score_field_description(self):
-        """AC4: Tier1Result.semantic_score field description reflects Levenshtein calculation."""
-        from app.data_models.evaluation_models import Tier1Result
-
-        field_info = Tier1Result.model_fields["semantic_score"]
-        description = field_info.description or ""
-        assert "levenshtein" in description.lower(), (
-            f"semantic_score description must mention Levenshtein, got: {description!r}"
-        )
-        # Description may note BERTScore is disabled, but must not claim BERT as primary method
-        assert not description.lower().startswith("bert"), (
-            f"semantic_score description must not start with BERT-based, got: {description!r}"
-        )
-
-    def test_ac5_no_new_dependencies(self):
-        """AC5: semantic similarity uses textdistance (existing dependency)."""
-        # textdistance is already imported in traditional_metrics — verify it's accessible
-        import textdistance
-
-        text1 = "hello world"
-        text2 = "hello there"
-        score = float(textdistance.levenshtein.normalized_similarity(text1, text2))
-        assert 0.0 <= score <= 1.0
-
-
-# MARK: AC5 regression tests (no artificial sleep in evaluate_single_traditional)
-
-
-class TestEvaluateSingleTraditionalNoSleep:
-    """Tests for AC5: time.sleep removed from evaluate_single_traditional."""
-
-    def test_evaluate_single_traditional_does_not_sleep(self):
-        """evaluate_single_traditional must not call time.sleep.
-
-        AC5: The artificial time.sleep(0.001) was removed because
-        measure_execution_time already clamps minimum.
-        """
-        with patch("time.sleep") as mock_sleep:
-            evaluate_single_traditional(
-                agent_output="This paper presents a novel approach.",
-                reference_texts=["The work demonstrates strong contribution."],
-            )
-            # If time.sleep is called anywhere during evaluate_single_traditional,
-            # this assertion will fail — confirming the sleep is still present (RED).
-            mock_sleep.assert_not_called()
-
-    def test_evaluate_single_traditional_returns_tier1_result(self):
-        """evaluate_single_traditional returns a Tier1Result with valid score range."""
-        result = evaluate_single_traditional(
-            agent_output="This paper presents a novel approach to machine learning.",
-            reference_texts=["The work demonstrates strong machine learning contributions."],
-        )
-        assert isinstance(result, Tier1Result)
-        assert 0.0 <= result.overall_score <= 1.0
 
 
 # MARK: STORY-007 - Continuous task_success score

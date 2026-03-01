@@ -119,7 +119,9 @@ def _run_cc_engine(args: dict[str, Any], cc_teams: bool) -> Any:
     from app.engines.cc_engine import build_cc_query, run_cc_solo, run_cc_teams
 
     query = build_cc_query(args.get("query", ""), args.get("paper_id"), cc_teams=cc_teams)
-    cc_result_obj = run_cc_teams(query, timeout=600) if cc_teams else run_cc_solo(query, timeout=600)
+    cc_result_obj = (
+        run_cc_teams(query, timeout=600) if cc_teams else run_cc_solo(query, timeout=600)
+    )
 
     if cc_result_obj.session_dir:
         args["cc_solo_dir"] = cc_result_obj.session_dir

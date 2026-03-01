@@ -282,7 +282,7 @@ For comprehensive testing guidance, see:
   scenarios for stakeholder collaboration
 
 For all make recipes and validation commands, see
-[CONTRIBUTING.md](../CONTRIBUTING.md#complete-command-reference).
+[CONTRIBUTING.md](../../CONTRIBUTING.md#complete-command-reference).
 
 ## Common Mistakes
 

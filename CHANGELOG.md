@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `make setup_bert_model` recipe: pre-downloads `distilbert-base-uncased` for BERTScore; called by `setup_dev` and `onCreateCommand` (fallback for non-prebuild Codespaces)
 - `devcontainer.json` (both variants): `HF_HOME=/workspaces/.cache/huggingface` persists model across restarts; `onCreateCommand: make setup_uv && make setup_bert_model` pre-bakes model into Codespaces prebuild
 
+### Changed
+
+- `run_cli.py`: extract `_run_cc_engine` and `_maybe_generate_report` from `cli_main` to reduce cognitive complexity (23→9)
+
 ### Fixed
 
 - `traditional_metrics.py`: re-enable BERTScore for semantic similarity (was disabled due to resolved sentencepiece build issues), with Levenshtein fallback

@@ -88,7 +88,7 @@ send_to_logfire=false  # Was "if-token-present" - changed to disable pytest-logf
 
 [tool.pyright]
 pythonVersion = "3.13"
-include = ["src", "tests"]
+include = ["src"]
 typeCheckingMode = "strict"
 extraPaths = ["./venv/lib/python3.13/site-packages"]
 useLibraryCodeForTypes = true

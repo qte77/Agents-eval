@@ -31,7 +31,7 @@ updated: 2026-02-16
 
 | Command | Purpose | Prerequisites | Error Recovery |
 |---------|---------|---------------|----------------|
-| `make setup_dev` | Install all dev dependencies | Makefile exists, uv installed | Try `uv sync --dev` directly |
+| `make setup_dev` | Install all dev dependencies | Makefile exists, uv installed | Try `uv sync` directly |
 | `make setup_claude_code` | Setup Claude Code CLI | Above + Claude Code available | Manual setup per Claude docs |
 | `make setup_dev OLLAMA=1` | Setup with Ollama local LLM | Above + Ollama installed | Check Ollama installation |
 | `make app_quickstart` | Download samples + evaluate smallest paper | API key in `.env` | `make setup_dataset` then `make app_cli ARGS="--paper-id=ID"` |
