@@ -1,5 +1,5 @@
 {
-  "project": "Product Requirements Document Sprint 13 \u2014 GUI Audit Remediation & Theming",
+  "project": "Product Requirements Document Sprint 13 — GUI Audit Remediation & Theming",
   "description": "",
   "source": "PRD.md",
   "generated": "2026-02-28 18:34:54",
@@ -19,9 +19,9 @@
       "files": [
         "src/gui/pages/run_app.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 1,
-      "completed_at": null,
+      "completed_at": "2026-03-01T09:41:42Z",
       "content_hash": "0905190cbda66238eafe45a290373c048e84166f3f6a9f01b5615b6ae6669875",
       "depends_on": []
     },
@@ -98,7 +98,7 @@
       "title": "Fix report generation and add clear results",
       "description": "Clicking \"Generate Report\" twice duplicates the rendered markdown.\nThe Download button recreates on each render with no stable confirmation. Cache the\nreport in session state.",
       "acceptance": [
-        "Generated report cached in `st.session_state` \u2014 no duplicate renders on re-click",
+        "Generated report cached in `st.session_state` — no duplicate renders on re-click",
         "Download button persists after first generation",
         "\"Clear Results\" button resets execution state to idle",
         "Store generated markdown in `st.session_state[\"generated_report\"]`",
