@@ -230,7 +230,6 @@ class TestTraditionalMetricsEngine:
             assert 0.0 <= result.overall_score <= 1.0
 
 
-
 # Performance tests
 @pytest.mark.benchmark
 class TestTraditionalMetricsPerformance:

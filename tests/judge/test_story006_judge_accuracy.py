@@ -258,5 +258,3 @@ class TestCosineScoreClamping:
 # ---------------------------------------------------------------------------
 # C1: Property test (un-skipped from test_traditional_metrics.py)
 # ---------------------------------------------------------------------------
-
-
