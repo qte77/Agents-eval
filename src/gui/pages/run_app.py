@@ -230,7 +230,9 @@ def _render_artifact_summary_panel() -> None:
     summary = getattr(st.session_state, "artifact_summary", None)
 
     with st.expander(ARTIFACTS_LABEL, expanded=False):
-        if not summary or summary == "No artifacts written":
+        from app.utils.artifact_registry import get_artifact_registry
+
+        if not get_artifact_registry().summary():
             st.info("No artifacts written yet. Run a query to see output paths.")
         else:
             st.code(summary, language=None)
@@ -340,6 +342,11 @@ async def _execute_query_background(
     st.session_state.execution_state = "running"
     st.session_state.execution_query = query
     st.session_state.execution_provider = provider
+
+    # Reset artifact registry so this run's summary doesn't include prior runs
+    from app.utils.artifact_registry import get_artifact_registry
+
+    get_artifact_registry().reset()
 
     # Setup log capture
     capture = LogCapture()

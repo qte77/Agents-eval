@@ -175,8 +175,5 @@ if __name__ == "__main__":
             else:
                 logger.warning("--generate-report requested but no evaluation result available")
     finally:
-        # Always print artifact summary, even when the run ends with an error
-        registry = get_artifact_registry()
-        summary_block = registry.format_summary_block()
-        print(summary_block)
-        logger.info(summary_block)
+        # Always log artifact summary, even when the run ends with an error
+        logger.info(get_artifact_registry().format_summary_block())
