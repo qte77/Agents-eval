@@ -1,25 +1,39 @@
+"""Output rendering component with type-aware dispatch.
+
+Renders results using appropriate Streamlit widgets based on the
+result type: st.json() for dicts and Pydantic models, st.markdown()
+for strings, and st.write() as a fallback.
+"""
+
 from typing import Any
 
-from streamlit import empty, info
+import streamlit as st
+from pydantic import BaseModel
 
 
-def render_output(result: Any = None, info_str: str | None = None, output_type: str | None = None):
-    """
-    Renders the output in a Streamlit app based on the provided output type.
+def render_output(
+    result: Any = None,
+    info_str: str | None = None,
+    output_type: str | None = None,
+) -> None:
+    """Renders output using type-appropriate Streamlit widgets.
 
     Args:
-        result (Any, optional): The content to be displayed. Can be JSON, code
-            markdown, or plain text.
-        info_str (str, optional): The information message to be displayed if result is None.
-        output_type (str, optional): The type of the result content. Can be 'json', 'code',
-            'md', or other for plain text.
-
-    Returns:
-        Out: None
+        result (Any, optional): The content to be displayed. Dispatches to
+            st.json() for dicts/Pydantic models, st.markdown() for strings,
+            st.write() for other types.
+        info_str (str, optional): Info message displayed when result is None/falsy.
+        output_type (str, optional): The type hint for the result content.
     """
-
     if result:
-        output_container = empty()
-        output_container.write(result)
+        if isinstance(result, BaseModel):
+            st.json(result.model_dump(), expanded=True)
+        elif isinstance(result, dict):
+            st.json(result, expanded=True)
+        elif isinstance(result, str):
+            st.markdown(result)
+        else:
+            output_container = st.empty()
+            output_container.write(result)
     else:
-        info(info_str)
+        st.info(info_str)
