@@ -1,3 +1,4 @@
+import streamlit as st
 from streamlit import set_page_config
 
 THEMES: dict[str, dict[str, str]] = {
@@ -34,3 +35,16 @@ def add_custom_styling(page_title: str):
     )
 
     # S8-F8.1: WCAG 1.3.3, 1.4.1 — native selection indicators must not be hidden via CSS
+
+
+def get_theme_bgcolor() -> str:
+    """Get the background color from the current Streamlit theme.
+
+    Returns:
+        str: Hex color string for the theme background (e.g. '#ffffff' or '#0e1117').
+    """
+    theme = st.get_option("theme.backgroundColor")
+    if isinstance(theme, str) and theme.startswith("#"):
+        return theme
+    # Reason: Streamlit default light theme background when theme is not configured
+    return "#ffffff"
