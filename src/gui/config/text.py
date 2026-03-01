@@ -27,3 +27,30 @@ SETTINGS_PROVIDER_PLACEHOLDER = "Select Provider"
 SETTINGS_ADD_PROVIDER = "Add New Provider"
 SETTINGS_API_KEY_LABEL = "API Key"
 OUTPUT_SUBHEADER = "Output"
+# STORY-009: Evaluation page constants
+EVALUATION_HEADER = "Evaluation Results"
+EVALUATION_OVERALL_RESULTS_SUBHEADER = "Overall Results"
+EVALUATION_TIER_SCORES_SUBHEADER = "Tier Scores"
+EVALUATION_METRICS_COMPARISON_SUBHEADER = "Graph Metrics vs Text Metrics Comparison"
+# STORY-009: Agent graph page constants
+AGENT_GRAPH_HEADER = "\U0001f578\ufe0f Agent Interaction Graph"
+AGENT_GRAPH_NETWORK_SUBHEADER = "Interactive Agent Network Visualization"
+# STORY-009: Run app label constants
+DEBUG_LOG_LABEL = "Debug Log"
+GENERATE_REPORT_LABEL = "Generate Report"
+DOWNLOAD_REPORT_LABEL = "Download Report"
+
+ONBOARDING_STEPS = [
+    {
+        "title": "1. Configure Provider",
+        "description": "Go to **Settings** to set up your LLM provider and API key.",
+    },
+    {
+        "title": "2. Download Dataset",
+        "description": "Run `make setup_dataset_sample` to fetch the PeerRead dataset.",
+    },
+    {
+        "title": "3. Run a Query",
+        "description": "Navigate to **App** to evaluate a paper or run a custom query.",
+    },
+]
