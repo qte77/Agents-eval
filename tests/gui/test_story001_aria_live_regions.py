@@ -136,9 +136,7 @@ class TestARIALiveRegionsConsolidated:
         for call in mock_md.call_args_list:
             html = str(call.args[0]) if call.args else ""
             stripped = html.strip()
-            assert stripped != "</div>", (
-                "Error state: closing </div> must not be emitted alone."
-            )
+            assert stripped != "</div>", "Error state: closing </div> must not be emitted alone."
 
 
 class TestARIALiveRegionsWellFormed:

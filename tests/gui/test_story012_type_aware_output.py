@@ -4,9 +4,8 @@ Verifies that render_output() dispatches to appropriate Streamlit
 widgets based on result type instead of using generic st.write().
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import pytest
 from pydantic import BaseModel
 
 
@@ -41,18 +40,14 @@ class TestRenderOutputTypeDispatch:
         mock_st.markdown.assert_called_once_with(text)
 
     @patch("gui.components.output.st")
-    def test_pydantic_model_renders_via_st_json_with_model_dump(
-        self, mock_st: MagicMock
-    ) -> None:
+    def test_pydantic_model_renders_via_st_json_with_model_dump(self, mock_st: MagicMock) -> None:
         """Pydantic BaseModel instances should render via st.json(model_dump())."""
         from gui.components.output import render_output
 
         model = SampleModel(name="test", score=0.8)
         render_output(result=model)
 
-        mock_st.json.assert_called_once_with(
-            model.model_dump(), expanded=True
-        )
+        mock_st.json.assert_called_once_with(model.model_dump(), expanded=True)
 
     @patch("gui.components.output.st")
     def test_none_result_shows_info_message(self, mock_st: MagicMock) -> None:

@@ -10,7 +10,7 @@ Verifies:
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import networkx as nx
 import pytest
@@ -40,7 +40,11 @@ class TestCaptionBeforeGraph:
     @patch("gui.pages.agent_graph.Network")
     @patch("gui.pages.agent_graph.st")
     def test_caption_called_before_components_html(
-        self, mock_st: MagicMock, mock_network_cls: MagicMock, mock_components: MagicMock, test_graph: nx.DiGraph
+        self,
+        mock_st: MagicMock,
+        mock_network_cls: MagicMock,
+        mock_components: MagicMock,
+        test_graph: nx.DiGraph,
     ) -> None:
         """st.caption() must be called before components.html()."""
         from gui.pages.agent_graph import render_agent_graph
@@ -63,7 +67,11 @@ class TestCaptionBeforeGraph:
     @patch("gui.pages.agent_graph.Network")
     @patch("gui.pages.agent_graph.st")
     def test_caption_text_references_statistics(
-        self, mock_st: MagicMock, mock_network_cls: MagicMock, mock_components: MagicMock, test_graph: nx.DiGraph
+        self,
+        mock_st: MagicMock,
+        mock_network_cls: MagicMock,
+        mock_components: MagicMock,
+        test_graph: nx.DiGraph,
     ) -> None:
         """Caption text should reference the statistics section."""
         from gui.pages.agent_graph import render_agent_graph
@@ -87,7 +95,11 @@ class TestTitleInHtml:
     @patch("gui.pages.agent_graph.Network")
     @patch("gui.pages.agent_graph.st")
     def test_title_element_in_html(
-        self, mock_st: MagicMock, mock_network_cls: MagicMock, mock_components: MagicMock, test_graph: nx.DiGraph
+        self,
+        mock_st: MagicMock,
+        mock_network_cls: MagicMock,
+        mock_components: MagicMock,
+        test_graph: nx.DiGraph,
     ) -> None:
         """Generated HTML passed to components.html() must contain <title>."""
         from gui.pages.agent_graph import render_agent_graph
@@ -114,7 +126,11 @@ class TestScrollingTrue:
     @patch("gui.pages.agent_graph.Network")
     @patch("gui.pages.agent_graph.st")
     def test_scrolling_true(
-        self, mock_st: MagicMock, mock_network_cls: MagicMock, mock_components: MagicMock, test_graph: nx.DiGraph
+        self,
+        mock_st: MagicMock,
+        mock_network_cls: MagicMock,
+        mock_components: MagicMock,
+        test_graph: nx.DiGraph,
     ) -> None:
         """components.html() must be called with scrolling=True."""
         from gui.pages.agent_graph import render_agent_graph
@@ -139,7 +155,11 @@ class TestBgcolorNotHardcoded:
     @patch("gui.pages.agent_graph.Network")
     @patch("gui.pages.agent_graph.st")
     def test_bgcolor_not_hardcoded_white(
-        self, mock_st: MagicMock, mock_network_cls: MagicMock, mock_components: MagicMock, test_graph: nx.DiGraph
+        self,
+        mock_st: MagicMock,
+        mock_network_cls: MagicMock,
+        mock_components: MagicMock,
+        test_graph: nx.DiGraph,
     ) -> None:
         """Network() must not be called with bgcolor='#ffffff'."""
         from gui.pages.agent_graph import render_agent_graph
@@ -153,7 +173,9 @@ class TestBgcolorNotHardcoded:
         network_call = mock_network_cls.call_args
         assert network_call is not None
         bgcolor_value = network_call[1].get("bgcolor", "#ffffff")
-        assert bgcolor_value != "#ffffff", f"bgcolor must not be hard-coded #ffffff, got {bgcolor_value}"
+        assert bgcolor_value != "#ffffff", (
+            f"bgcolor must not be hard-coded #ffffff, got {bgcolor_value}"
+        )
 
 
 class TestTextSummary:
@@ -163,7 +185,11 @@ class TestTextSummary:
     @patch("gui.pages.agent_graph.Network")
     @patch("gui.pages.agent_graph.st")
     def test_text_summary_contains_counts(
-        self, mock_st: MagicMock, mock_network_cls: MagicMock, mock_components: MagicMock, test_graph: nx.DiGraph
+        self,
+        mock_st: MagicMock,
+        mock_network_cls: MagicMock,
+        mock_components: MagicMock,
+        test_graph: nx.DiGraph,
     ) -> None:
         """Text summary must include node count, edge count, and agent names."""
         from gui.pages.agent_graph import render_agent_graph
@@ -177,7 +203,9 @@ class TestTextSummary:
         # Look for markdown or text calls containing summary info
         all_calls = mock_st.mock_calls
         all_text = " ".join(
-            str(c[1][0]) for c in all_calls if c[0] in ("markdown", "text", "write", "info") and c[1]
+            str(c[1][0])
+            for c in all_calls
+            if c[0] in ("markdown", "text", "write", "info") and c[1]
         )
 
         assert "3" in all_text or "nodes" in all_text.lower(), "Summary must mention node count"

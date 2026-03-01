@@ -21,18 +21,14 @@ class TestOnboardingConstants:
         """text.py must export ONBOARDING_STEPS."""
         from gui.config import text
 
-        assert hasattr(text, "ONBOARDING_STEPS"), (
-            "text.py must define ONBOARDING_STEPS constant"
-        )
+        assert hasattr(text, "ONBOARDING_STEPS"), "text.py must define ONBOARDING_STEPS constant"
 
     def test_onboarding_steps_is_list_with_items(self) -> None:
         """ONBOARDING_STEPS must be a non-empty list."""
         from gui.config.text import ONBOARDING_STEPS
 
         assert isinstance(ONBOARDING_STEPS, list), "ONBOARDING_STEPS must be a list"
-        assert len(ONBOARDING_STEPS) >= 3, (
-            "ONBOARDING_STEPS must have at least 3 steps"
-        )
+        assert len(ONBOARDING_STEPS) >= 3, "ONBOARDING_STEPS must have at least 3 steps"
 
     def test_onboarding_steps_have_title_and_description(self) -> None:
         """Each step must have 'title' and 'description' keys."""
@@ -47,18 +43,14 @@ class TestOnboardingConstants:
         from gui.config.text import ONBOARDING_STEPS
 
         all_text = " ".join(s["title"] + " " + s["description"] for s in ONBOARDING_STEPS)
-        assert "Settings" in all_text, (
-            "ONBOARDING_STEPS must reference Settings page"
-        )
+        assert "Settings" in all_text, "ONBOARDING_STEPS must reference Settings page"
 
     def test_onboarding_steps_reference_app(self) -> None:
         """At least one step must reference App page."""
         from gui.config.text import ONBOARDING_STEPS
 
         all_text = " ".join(s["title"] + " " + s["description"] for s in ONBOARDING_STEPS)
-        assert "App" in all_text, (
-            "ONBOARDING_STEPS must reference App page"
-        )
+        assert "App" in all_text, "ONBOARDING_STEPS must reference App page"
 
 
 class TestRenderHomeOnboarding:
@@ -75,9 +67,7 @@ class TestRenderHomeOnboarding:
         ):
             render_home()
 
-        all_md = " ".join(
-            str(call.args[0]) for call in mock_md.call_args_list if call.args
-        )
+        all_md = " ".join(str(call.args[0]) for call in mock_md.call_args_list if call.args)
         assert "1." in all_md or "1)" in all_md, (
             f"render_home must render numbered steps. Got markdown: {all_md[:300]}"
         )
@@ -105,8 +95,6 @@ class TestRenderHomeOnboarding:
         ):
             render_home()
 
-        all_md = " ".join(
-            str(call.args[0]) for call in mock_md.call_args_list if call.args
-        )
+        all_md = " ".join(str(call.args[0]) for call in mock_md.call_args_list if call.args)
         assert "Settings" in all_md, "Onboarding must reference Settings page"
         assert "App" in all_md, "Onboarding must reference App page"

@@ -1,10 +1,16 @@
 """Tests for STORY-006: Theme dicts defined in styling.py."""
 
-from gui.config.styling import THEMES, add_custom_styling
 from unittest.mock import patch
 
+from gui.config.styling import THEMES, add_custom_styling
 
-REQUIRED_KEYS = {"primaryColor", "backgroundColor", "secondaryBackgroundColor", "textColor", "accentColor"}
+REQUIRED_KEYS = {
+    "primaryColor",
+    "backgroundColor",
+    "secondaryBackgroundColor",
+    "textColor",
+    "accentColor",
+}
 
 EXPECTED_THEMES = {
     "expanse_dark": {

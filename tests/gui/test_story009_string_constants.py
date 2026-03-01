@@ -21,7 +21,9 @@ def test_evaluation_constants_exist_in_text():
     assert text.EVALUATION_HEADER == "Evaluation Results"
     assert text.EVALUATION_OVERALL_RESULTS_SUBHEADER == "Overall Results"
     assert text.EVALUATION_TIER_SCORES_SUBHEADER == "Tier Scores"
-    assert text.EVALUATION_METRICS_COMPARISON_SUBHEADER == "Graph Metrics vs Text Metrics Comparison"
+    assert (
+        text.EVALUATION_METRICS_COMPARISON_SUBHEADER == "Graph Metrics vs Text Metrics Comparison"
+    )
 
 
 def test_agent_graph_constants_exist_in_text():
@@ -72,9 +74,7 @@ def test_evaluation_page_imports_constants():
     assert _module_imports_name("gui.pages.evaluation", "EVALUATION_HEADER")
     assert _module_imports_name("gui.pages.evaluation", "EVALUATION_OVERALL_RESULTS_SUBHEADER")
     assert _module_imports_name("gui.pages.evaluation", "EVALUATION_TIER_SCORES_SUBHEADER")
-    assert _module_imports_name(
-        "gui.pages.evaluation", "EVALUATION_METRICS_COMPARISON_SUBHEADER"
-    )
+    assert _module_imports_name("gui.pages.evaluation", "EVALUATION_METRICS_COMPARISON_SUBHEADER")
 
 
 def test_agent_graph_page_imports_constants():

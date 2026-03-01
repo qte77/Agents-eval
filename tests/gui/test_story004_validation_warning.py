@@ -190,8 +190,7 @@ class TestValidationWarningRenderedNearButton:
 
         # st.warning should not be called for validation (CC warning may still fire)
         validation_warning_calls = [
-            c for c in mock_warning.call_args_list
-            if c.args and "query" in str(c.args[0]).lower()
+            c for c in mock_warning.call_args_list if c.args and "query" in str(c.args[0]).lower()
         ]
         assert not validation_warning_calls, (
             "st.warning() for validation must NOT be called when flag is False"
