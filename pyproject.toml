@@ -29,6 +29,8 @@ dependencies = [
     "scalene>=2.1.4",  # High-performance CPU, GPU, and memory profiler
     "arize-phoenix>=13.3.0",  # Local trace viewer via pip (replaces Docker-based Opik)
     "openinference-instrumentation-pydantic-ai>=0.1.12",  # PydanticAI auto-instrumentation, arizeai
+    "bert-score>=0.3.13",
+    "sentencepiece>=0.2.1",
 ]
 
 [project.urls]
