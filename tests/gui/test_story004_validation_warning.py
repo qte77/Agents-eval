@@ -6,7 +6,8 @@ validation to render_app() scope and uses session_state to persist the warning.
 
 Mock strategy:
 - Use _SessionDict (dict with attribute access) to simulate st.session_state
-- Patch streamlit widgets to simulate button clicks and empty inputs
+- Patch gui.pages.run_app.<widget> for directly imported streamlit functions
+- Patch streamlit.<widget> for functions accessed via st.<widget>
 - Assert session_state flag is set when validation fails
 - Assert st.warning() is called in render scope (not inside async handler)
 - Assert warning clears when valid input is provided
@@ -15,6 +16,9 @@ Mock strategy:
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# Prefix for patching directly imported streamlit functions in run_app
+_RA = "gui.pages.run_app"
 
 
 class _SessionDict(dict):
@@ -48,19 +52,19 @@ class TestValidationWarningSessionState:
 
         with (
             patch("streamlit.session_state", mock_session),
-            patch("streamlit.header"),
+            patch(f"{_RA}.header"),
             patch("streamlit.radio", return_value="Multi-Agent System (MAS)"),
-            patch("streamlit.text_input", return_value=""),
-            patch("streamlit.button", return_value=True),
+            patch(f"{_RA}.text_input", return_value=""),
+            patch(f"{_RA}.button", return_value=True),
             patch("streamlit.markdown"),
-            patch("streamlit.info"),
-            patch("streamlit.subheader"),
-            patch("streamlit.warning"),
+            patch(f"{_RA}.info"),
+            patch(f"{_RA}.subheader"),
+            patch(f"{_RA}.warning"),
             patch("streamlit.expander") as mock_expander,
-            patch("streamlit.spinner") as mock_spinner,
+            patch(f"{_RA}.spinner") as mock_spinner,
             patch("streamlit.checkbox"),
-            patch("gui.pages.run_app.render_output"),
-            patch("gui.pages.run_app._load_available_papers", return_value=[]),
+            patch(f"{_RA}.render_output"),
+            patch(f"{_RA}._load_available_papers", return_value=[]),
         ):
             mock_expander.return_value.__enter__ = MagicMock(return_value=None)
             mock_expander.return_value.__exit__ = MagicMock(return_value=False)
@@ -82,23 +86,23 @@ class TestValidationWarningSessionState:
 
         with (
             patch("streamlit.session_state", mock_session),
-            patch("streamlit.header"),
+            patch(f"{_RA}.header"),
             patch("streamlit.radio", return_value="Multi-Agent System (MAS)"),
-            patch("streamlit.text_input", return_value="Evaluate this paper"),
-            patch("streamlit.button", return_value=True),
+            patch(f"{_RA}.text_input", return_value="Evaluate this paper"),
+            patch(f"{_RA}.button", return_value=True),
             patch("streamlit.markdown"),
-            patch("streamlit.info"),
-            patch("streamlit.subheader"),
-            patch("streamlit.warning"),
+            patch(f"{_RA}.info"),
+            patch(f"{_RA}.subheader"),
+            patch(f"{_RA}.warning"),
             patch("streamlit.expander") as mock_expander,
-            patch("streamlit.spinner") as mock_spinner,
+            patch(f"{_RA}.spinner") as mock_spinner,
             patch("streamlit.checkbox"),
             patch("streamlit.rerun", side_effect=Exception("rerun")),
-            patch("gui.pages.run_app.render_output"),
-            patch("gui.pages.run_app._load_available_papers", return_value=[]),
-            patch("gui.pages.run_app._execute_query_background"),
-            patch("gui.pages.run_app._build_judge_settings_from_session", return_value=None),
-            patch("gui.pages.run_app._build_common_settings_from_session", return_value=None),
+            patch(f"{_RA}.render_output"),
+            patch(f"{_RA}._load_available_papers", return_value=[]),
+            patch(f"{_RA}._execute_query_background"),
+            patch(f"{_RA}._build_judge_settings_from_session", return_value=None),
+            patch(f"{_RA}._build_common_settings_from_session", return_value=None),
         ):
             mock_expander.return_value.__enter__ = MagicMock(return_value=None)
             mock_expander.return_value.__exit__ = MagicMock(return_value=False)
@@ -127,19 +131,19 @@ class TestValidationWarningRenderedNearButton:
 
         with (
             patch("streamlit.session_state", mock_session),
-            patch("streamlit.header"),
+            patch(f"{_RA}.header"),
             patch("streamlit.radio", return_value="Multi-Agent System (MAS)"),
-            patch("streamlit.text_input", return_value=""),
-            patch("streamlit.button", return_value=False),
+            patch(f"{_RA}.text_input", return_value=""),
+            patch(f"{_RA}.button", return_value=False),
             patch("streamlit.markdown"),
-            patch("streamlit.info"),
-            patch("streamlit.subheader"),
-            patch("streamlit.warning") as mock_warning,
+            patch(f"{_RA}.info"),
+            patch(f"{_RA}.subheader"),
+            patch(f"{_RA}.warning") as mock_warning,
             patch("streamlit.expander") as mock_expander,
-            patch("streamlit.spinner") as mock_spinner,
+            patch(f"{_RA}.spinner") as mock_spinner,
             patch("streamlit.checkbox"),
-            patch("gui.pages.run_app.render_output"),
-            patch("gui.pages.run_app._load_available_papers", return_value=[]),
+            patch(f"{_RA}.render_output"),
+            patch(f"{_RA}._load_available_papers", return_value=[]),
         ):
             mock_expander.return_value.__enter__ = MagicMock(return_value=None)
             mock_expander.return_value.__exit__ = MagicMock(return_value=False)
@@ -163,19 +167,19 @@ class TestValidationWarningRenderedNearButton:
 
         with (
             patch("streamlit.session_state", mock_session),
-            patch("streamlit.header"),
+            patch(f"{_RA}.header"),
             patch("streamlit.radio", return_value="Multi-Agent System (MAS)"),
-            patch("streamlit.text_input", return_value=""),
-            patch("streamlit.button", return_value=False),
+            patch(f"{_RA}.text_input", return_value=""),
+            patch(f"{_RA}.button", return_value=False),
             patch("streamlit.markdown"),
-            patch("streamlit.info"),
-            patch("streamlit.subheader"),
-            patch("streamlit.warning") as mock_warning,
+            patch(f"{_RA}.info"),
+            patch(f"{_RA}.subheader"),
+            patch(f"{_RA}.warning") as mock_warning,
             patch("streamlit.expander") as mock_expander,
-            patch("streamlit.spinner") as mock_spinner,
+            patch(f"{_RA}.spinner") as mock_spinner,
             patch("streamlit.checkbox"),
-            patch("gui.pages.run_app.render_output"),
-            patch("gui.pages.run_app._load_available_papers", return_value=[]),
+            patch(f"{_RA}.render_output"),
+            patch(f"{_RA}._load_available_papers", return_value=[]),
         ):
             mock_expander.return_value.__enter__ = MagicMock(return_value=None)
             mock_expander.return_value.__exit__ = MagicMock(return_value=False)
