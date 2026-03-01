@@ -32,6 +32,7 @@ logs/
 
 # Temporary files
 .tmp/
+matplotlib-*/
 
 # Traces
 profile.html
