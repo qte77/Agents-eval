@@ -25,15 +25,19 @@ Integrate documentation updates into the core development workflow, making them 
 
 ### Pull Request Checklist
 
-Modify the project's PR template to include a mandatory checklist item that forces a review of governance files:
+`.github/pull_request_template.md` enforces governance review on every PR. The Documentation section of the template requires:
 
 ```markdown
-- [ ] I have reviewed `AGENTS.md` and confirmed my changes are reflected
-- [ ] New patterns or solutions are documented in `AGENT_LEARNINGS.md`
-- [ ] Resolved requests are removed from `AGENT_REQUESTS.md`
+- [ ] `CHANGELOG.md` updated under `## [Unreleased]` using correct section type:
+  `Added` · `Changed` · `Deprecated` · `Removed` · `Fixed` · `Security`
+- [ ] `AGENTS.md` updated if new patterns, role boundaries, or rules changed
+- [ ] `AGENT_LEARNINGS.md` updated if a new pattern or solution was discovered
+- [ ] `AGENT_REQUESTS.md` — resolved requests removed; new blockers added if any
+- [ ] `CONTRIBUTING.md` updated if commands, paths, or coding standards changed
+- [ ] Docstrings added/updated for all new/modified functions and classes
 ```
 
-> **Note**: `.github/pull_request_template.md` does not yet exist in this project. Adding it is a recommended improvement.
+The template also enforces `make validate` passes and security checks. See `.github/pull_request_template.md` for the full template.
 
 ### Agent Responsibility
 
