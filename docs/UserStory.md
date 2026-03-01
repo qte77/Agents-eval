@@ -1,3 +1,12 @@
+---
+title: User Story - Agents-eval
+description: User stories and acceptance criteria for the Agents-eval MAS evaluation framework, covering graph-based coordination metrics vs text similarity evaluation for PeerRead multi-agent review generation
+category: requirements
+created: 2025-06-01
+updated: 2026-02-22
+version: 1.0.0
+---
+
 # User Story: Agents-eval
 
 ## Problem Statement

@@ -1,3 +1,12 @@
+---
+title: Spec-Kit Adoption Plan for Agents-eval
+description: Plan to adopt GitHub's Spec-Kit methodology to standardize specification-driven development, enhance subagent coordination, and create consistent documentation templates across sprints
+category: analysis
+created: 2026-01-12
+updated: 2026-02-18
+version: 1.0.0
+---
+
 # Spec-Kit Adoption Plan for Agents-eval
 
 ## Executive Summary

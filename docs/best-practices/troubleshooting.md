@@ -1,3 +1,12 @@
+---
+title: Troubleshooting Guide
+description: Guidance for common issues encountered during evaluation and development, including authentication failures, configuration problems, and pipeline debugging
+category: operations
+created: 2026-02-19
+updated: 2026-02-27
+version: 1.0.0
+---
+
 # Troubleshooting Guide
 
 This document provides guidance for common issues encountered during evaluation and development.
