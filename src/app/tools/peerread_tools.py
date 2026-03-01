@@ -462,13 +462,18 @@ def add_peerread_review_tools_to_agent(
         """
 
         async def _fn() -> str:
+            from app.utils.run_context import get_active_run_context
+
+            run_ctx = get_active_run_context()
             review = PeerReadReview(
                 comments=review_text,
                 recommendation=recommendation if recommendation else "UNKNOWN",
                 reviewer_confidence=str(confidence) if confidence > 0 else "UNKNOWN",
             )
             persistence = ReviewPersistence()
-            filepath = persistence.save_review(paper_id, review)
+            filepath = persistence.save_review(
+                paper_id, review, run_dir=run_ctx.run_dir if run_ctx else None
+            )
             logger.info(f"Saved review for paper {paper_id} to {filepath}")
             return filepath
 
@@ -512,11 +517,16 @@ def add_peerread_review_tools_to_agent(
         async def _fn() -> str:
             from datetime import UTC, datetime
 
+            from app.utils.run_context import get_active_run_context
+
+            run_ctx = get_active_run_context()
             peerread_format = structured_review.to_peerread_format()
             review = PeerReadReview.model_validate(peerread_format)
 
             persistence = ReviewPersistence()
-            filepath = persistence.save_review(paper_id, review)
+            filepath = persistence.save_review(
+                paper_id, review, run_dir=run_ctx.run_dir if run_ctx else None
+            )
 
             timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
             result = ReviewGenerationResult(

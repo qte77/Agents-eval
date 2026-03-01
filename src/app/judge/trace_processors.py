@@ -312,6 +312,9 @@ class TraceCollector:
     def _store_trace(self, trace: ProcessedTrace) -> None:
         """Store processed trace to both JSON file and SQLite database.
 
+        Also copies the trace JSONL to the per-run directory if an active
+        RunContext exists.
+
         Args:
             trace: ProcessedTrace to store
         """
@@ -324,6 +327,15 @@ class TraceCollector:
                 # Write as single JSON line
                 json.dump(asdict(trace), f)
                 f.write("\n")
+
+            # Copy trace to per-run directory if active
+            from app.utils.run_context import get_active_run_context
+
+            run_ctx = get_active_run_context()
+            if run_ctx is not None:
+                import shutil
+
+                shutil.copy2(json_file, run_ctx.trace_path)
 
             # Store in SQLite database
             conn = sqlite3.connect(self.db_path)

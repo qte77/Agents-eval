@@ -161,3 +161,26 @@ class RunContext:
             evaluation.json in run_dir.
         """
         return self.run_dir / "evaluation.json"
+
+
+# Reason: module-level singleton matches existing patterns (artifact_registry, trace_collector)
+_active_run_context: RunContext | None = None
+
+
+def get_active_run_context() -> RunContext | None:
+    """Get the active per-run context, if any.
+
+    Returns:
+        The active RunContext, or None if no run is in progress.
+    """
+    return _active_run_context
+
+
+def set_active_run_context(ctx: RunContext | None) -> None:
+    """Set or clear the active per-run context.
+
+    Args:
+        ctx: RunContext to activate, or None to clear.
+    """
+    global _active_run_context
+    _active_run_context = ctx

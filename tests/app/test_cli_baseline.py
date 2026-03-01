@@ -299,6 +299,7 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
         patch("app.judge.evaluation_runner.compare_all") as mock_compare_all,
+        patch("app.app.RunContext") as mock_rc_cls,
     ):
         # Setup mocks
         mock_setup.return_value = MagicMock(
@@ -318,6 +319,10 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         mock_pipeline_class.return_value = mock_pipeline
 
         mock_load_config.return_value = MagicMock(prompts={})
+
+        mock_ctx = MagicMock()
+        mock_ctx.run_dir = None
+        mock_rc_cls.create.return_value = mock_ctx
 
         from app.app import main
 

@@ -65,6 +65,7 @@ from app.utils.load_configs import load_config
 from app.utils.log import logger
 from app.utils.login import login
 from app.utils.paths import resolve_config_path
+from app.utils.run_context import RunContext, get_active_run_context, set_active_run_context
 
 CONFIG_FOLDER = "config"
 
@@ -176,6 +177,7 @@ def _prepare_result_dict(
     composite_result: Any | None,
     graph: Any | None,
     execution_id: str | None = None,
+    run_context: RunContext | None = None,
 ) -> dict[str, Any] | None:
     """Prepare result dictionary for GUI usage.
 
@@ -183,9 +185,10 @@ def _prepare_result_dict(
         composite_result: Evaluation result
         graph: Interaction graph
         execution_id: Execution trace ID for display on Evaluation page
+        run_context: Optional per-run context for artifact paths
 
     Returns:
-        Dict with result, graph, and execution_id if available, None otherwise
+        Dict with result, graph, execution_id, and run_context if available, None otherwise
     """
     # Return dict if we have either result or graph
     if composite_result is not None or graph is not None:
@@ -194,6 +197,7 @@ def _prepare_result_dict(
             "graph": graph,
             # S8-F8.2: include execution_id for Evaluation Results page threading
             "execution_id": execution_id,
+            "run_context": run_context,
         }
     return None
 
@@ -245,6 +249,17 @@ async def _run_cc_engine_path(
     from app.engines.cc_engine import extract_cc_review_text
 
     execution_id, graph = _extract_cc_artifacts(cc_result)
+
+    engine_type = "cc_teams" if cc_teams else "cc_solo"
+    run_ctx: RunContext | None = None
+    if execution_id:
+        run_ctx = RunContext.create(
+            engine_type=engine_type,
+            paper_id=paper_id or "unknown",
+            execution_id=execution_id,
+        )
+        set_active_run_context(run_ctx)
+
     # S10-AC2: extract review text from CC output for evaluation
     cc_review_text = extract_cc_review_text(cc_result)
     composite_result = await _run_evaluation_if_enabled(
@@ -258,10 +273,11 @@ async def _run_cc_engine_path(
         judge_settings,
         manager_output=None,
         review_text=cc_review_text,
+        run_dir=run_ctx.run_dir if run_ctx else None,
     )
     # S12-STORY-002: set engine_type from explicit cc_teams flag (not team_artifacts)
     if composite_result is not None:
-        composite_result.engine_type = "cc_teams" if cc_teams else "cc_solo"
+        composite_result.engine_type = engine_type
     return composite_result, graph, execution_id
 
 
@@ -317,6 +333,15 @@ async def _run_mas_engine_path(
         token_limit,
     )
 
+    run_ctx: RunContext | None = None
+    if execution_id:
+        run_ctx = RunContext.create(
+            engine_type="mas",
+            paper_id=paper_id or "unknown",
+            execution_id=execution_id,
+        )
+        set_active_run_context(run_ctx)
+
     composite_result = await _run_evaluation_if_enabled(
         skip_eval,
         paper_id,
@@ -327,6 +352,7 @@ async def _run_mas_engine_path(
         chat_provider,
         judge_settings,
         manager_output,
+        run_dir=run_ctx.run_dir if run_ctx else None,
     )
 
     graph = _build_graph_from_trace(execution_id) if execution_id else None
@@ -408,9 +434,13 @@ async def main(
                 )
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")
-            return _prepare_result_dict(composite_result, graph, execution_id)
+            return _prepare_result_dict(
+                composite_result, graph, execution_id, run_context=get_active_run_context()
+            )
 
     except Exception as e:
         msg = generic_exception(f"Aborting app '{PROJECT_NAME}' with: {e}")
         logger.exception(msg)
         raise Exception(msg) from e
+    finally:
+        set_active_run_context(None)

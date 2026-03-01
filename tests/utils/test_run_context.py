@@ -292,3 +292,59 @@ class TestConfigConstants:
 
         settings = JudgeSettings()
         assert settings.trace_storage_path == "output/runs"
+
+
+class TestActiveRunContextSingleton:
+    """Tests for module-level active RunContext singleton."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_singleton(self) -> None:
+        """Reset the singleton before and after each test."""
+        from app.utils.run_context import set_active_run_context
+
+        set_active_run_context(None)
+        yield  # type: ignore[misc]
+        set_active_run_context(None)
+
+    def test_get_active_returns_none_by_default(self) -> None:
+        """get_active_run_context returns None when no context is set."""
+        from app.utils.run_context import get_active_run_context
+
+        assert get_active_run_context() is None
+
+    def test_set_and_get_active(self, tmp_path: Path) -> None:
+        """set_active_run_context stores a context retrievable by get."""
+        from app.utils.run_context import (
+            RunContext,
+            get_active_run_context,
+            set_active_run_context,
+        )
+
+        ctx = RunContext(
+            engine_type="mas",
+            paper_id="p1",
+            execution_id="e1",
+            start_time=datetime(2026, 3, 1),
+            run_dir=tmp_path,
+        )
+        set_active_run_context(ctx)
+        assert get_active_run_context() is ctx
+
+    def test_clear_active(self, tmp_path: Path) -> None:
+        """set_active_run_context(None) clears the active context."""
+        from app.utils.run_context import (
+            RunContext,
+            get_active_run_context,
+            set_active_run_context,
+        )
+
+        ctx = RunContext(
+            engine_type="mas",
+            paper_id="p1",
+            execution_id="e1",
+            start_time=datetime(2026, 3, 1),
+            run_dir=tmp_path,
+        )
+        set_active_run_context(ctx)
+        set_active_run_context(None)
+        assert get_active_run_context() is None

@@ -161,7 +161,12 @@ async def test_graph_trace_data_passed_to_evaluation():
         patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
         patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
+        patch("app.app.RunContext") as mock_rc_cls,
     ):
+        mock_ctx = MagicMock()
+        mock_ctx.run_dir = None
+        mock_rc_cls.create.return_value = mock_ctx
+
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
