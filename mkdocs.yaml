@@ -36,8 +36,45 @@ theme:
 nav:
   - Home: index.md
   - User Story: UserStory.md
+  - Architecture: architecture.md
+  - Roadmap: roadmap.md
   - Sprints: sprints/index.md
   - Code: docstrings.md
+  - How-Tos:
+      - PeerRead Agent Usage: howtos/peerread-agent-usage.md
+      - Maintaining AGENTS.md: howtos/maintaining-agents-md.md
+  - Best Practices:
+      - Testing Strategy: best-practices/testing-strategy.md
+      - BDD: best-practices/bdd-best-practices.md
+      - TDD: best-practices/tdd-best-practices.md
+      - Python: best-practices/python-best-practices.md
+      - MAS Design Principles: best-practices/mas-design-principles.md
+      - MAS Security: best-practices/mas-security.md
+      - Troubleshooting: best-practices/troubleshooting.md
+  - Analysis:
+      - AgentBeats Basics: analysis/AgentBeats_basics.md
+      - Agent Teams Orchestration: analysis/CC-agent-teams-orchestration.md
+      - Fast Mode Analysis: analysis/CC-fast-mode-analysis.md
+      - Skills Ralph Adoption: analysis/CC-skills-Ralph-adoption-plan.md
+      - Inference Providers: analysis/Inference-Providers.md
+      - AGENTS.md Refactor Plan: analysis/agents-md-refactor-plan.md
+      - MAS Best Practices: analysis/benchmark_mas_best_practices.md
+      - Core Principles 80/20: analysis/core-principles-8020-analysis.md
+      - Production Agent Patterns: analysis/production-agent-patterns-gap-analysis.md
+      - Spec Kit Adoption: analysis/spec-kit-adoption-plan.md
+  - Landscape:
+      - Overview: landscape/landscape.md
+      - Agent Frameworks: landscape/landscape-agent-frameworks-infrastructure.md
+      - Evaluation Data: landscape/landscape-evaluation-data-resources.md
+      - Research Agents: landscape/landscape-research-agents.md
+      - Eval Metrics: landscape/agent_eval_metrics.md
+      - Trace & Observe: landscape/trace_observe_methods.md
+  - Research:
+      - Further Reading: research/further_reading.md
+      - Integration Analysis: research/research_integration_analysis.md
+  - Security: security-advisories.md
+  - Contributing: CONTRIBUTING.md
+  - Agents: AGENTS.md
   - Change Log: CHANGELOG.md
   - License: LICENSE.md
 plugins:

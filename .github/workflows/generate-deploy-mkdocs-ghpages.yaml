@@ -77,6 +77,7 @@ jobs:
         cp {CHANGELOG,LICENSE}.md "${DOC_DIR}"
         cp CONTRIBUTING.md "${DOC_DIR}"
         cp AGENTS.md "${DOC_DIR}"
+        cp {AGENT_REQUESTS,AGENT_LEARNINGS}.md "${DOC_DIR}"
         # Auxiliary files
         cp .env.example "${DOC_DIR}"
         cp "${CFG_PATH}/config_chat.json" "${DOC_DIR}/${CFG_PATH}"
