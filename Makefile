@@ -103,7 +103,12 @@ setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, lychee, plantuml
 	$(MAKE) -s setup_npm_tools
 	$(MAKE) -s setup_lychee
 	$(MAKE) -s setup_plantuml
+	$(MAKE) -s setup_bert_model
 	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s ollama_start)
+
+setup_bert_model:  ## Pre-download distilbert-base-uncased for BERTScore (Tier 1 semantic similarity)
+	echo "Pre-downloading BERTScore model (distilbert-base-uncased) ..."
+	uv run python -c "from bert_score import BERTScorer; BERTScorer(model_type='distilbert-base-uncased', lang='en'); print('BERTScore model ready.')"
 
 setup_claude_code:  ## Setup claude code CLI
 	echo "Setting up Claude Code CLI ..."

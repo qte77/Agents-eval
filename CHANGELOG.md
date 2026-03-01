@@ -11,10 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `make setup_bert_model` recipe: pre-downloads `distilbert-base-uncased` for BERTScore; called automatically by `setup_dev` (both devcontainer variants)
+- `devcontainer.json` (both variants): `HF_HOME=/workspaces/.cache/huggingface` so BERTScore model persists across Codespace restarts
+
 ### Fixed
 
 - `traditional_metrics.py`: re-enable BERTScore for semantic similarity (was disabled due to resolved sentencepiece build issues), with Levenshtein fallback
 - `llm_evaluation_managers.py`: auto-resolved providers now use PROVIDER_REGISTRY `default_model` when `chat_model` is None, preventing wrong model errors (e.g. `gpt-4o-mini` sent to Cerebras)
+- docs: pin `mkdocs>=1.6.1,<2.0` to prevent MkDocs 2.0 incompatibility with Material theme
+- docs: fix all MkDocs build warnings — broken nav entries, stale relative paths in sprint archives, anchor mismatches (double-dash from `&` headings, wrong target files), missing copied files (CONTRIBUTING.md, AGENTS.md), and griffe docstring issues; enable `strict: true`; add `docs/sprints/index.md` sprint overview page
 
 ### Security
 
