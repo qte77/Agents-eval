@@ -75,17 +75,7 @@ class LLMJudgeEngine:
         selected = self.select_available_provider(env_config)
         if selected:
             self.provider, self.model, self._api_key = selected
-            # Inherit chat_model when provider didn't fall back (same as chat_provider)
-            if chat_model is not None and self.provider == resolved_provider:
-                self.model = chat_model
-            elif chat_model is None and self.provider == resolved_provider and resolved_provider != settings.tier2_provider:
-                # Reason: Auto-resolved provider with no chat_model — use registry default
-                # to avoid sending tier2_model (e.g. gpt-4o-mini) to incompatible providers.
-                from app.data_models.app_models import PROVIDER_REGISTRY
-
-                registry_entry = PROVIDER_REGISTRY.get(self.provider)
-                if registry_entry and registry_entry.default_model:
-                    self.model = registry_entry.default_model
+            self.model = self._resolve_model(chat_model, resolved_provider, settings.tier2_provider)
             self.tier2_available = True
         else:
             # No providers available - mark Tier 2 as unavailable
@@ -107,6 +97,35 @@ class LLMJudgeEngine:
 
         # Track auth failures for fallback_used flag
         self._auth_failure_count = 0
+
+    def _resolve_model(
+        self, chat_model: str | None, resolved_provider: str, configured_provider: str
+    ) -> str:
+        """Resolve the correct model after provider selection.
+
+        Args:
+            chat_model: Explicit chat model from agent system, or None.
+            resolved_provider: Provider after auto-resolution (before fallback).
+            configured_provider: Original tier2_provider from settings.
+
+        Returns:
+            Model name to use for evaluation.
+        """
+        # Explicit chat_model wins when provider didn't fall back
+        if chat_model is not None and self.provider == resolved_provider:
+            return chat_model
+        # Auto-resolved provider with no chat_model — use registry default
+        if (
+            chat_model is None
+            and self.provider == resolved_provider
+            and resolved_provider != configured_provider
+        ):
+            from app.data_models.app_models import PROVIDER_REGISTRY
+
+            registry_entry = PROVIDER_REGISTRY.get(self.provider)
+            if registry_entry and registry_entry.default_model:
+                return registry_entry.default_model
+        return self.model
 
     def _resolve_provider_key(self, provider: str, env_config: AppEnv) -> tuple[bool, str | None]:
         """Resolve API key for a provider.

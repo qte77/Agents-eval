@@ -94,7 +94,9 @@ class TestTraditionalMetricsEngine:
             assert similarity == 0.85
             mock_lev.assert_called_once_with(text1, text2)
 
-    def test_semantic_similarity_fallback_on_bertscore_computation_error(self, engine, sample_texts):
+    def test_semantic_similarity_fallback_on_bertscore_computation_error(
+        self, engine, sample_texts
+    ):
         """Given BERTScore .score() failure, should fallback to Levenshtein similarity."""
         mock_scorer = Mock()
         mock_scorer.score.side_effect = Exception("Computation failed")
