@@ -78,6 +78,14 @@ class LLMJudgeEngine:
             # Inherit chat_model when provider didn't fall back (same as chat_provider)
             if chat_model is not None and self.provider == resolved_provider:
                 self.model = chat_model
+            elif chat_model is None and self.provider == resolved_provider and resolved_provider != settings.tier2_provider:
+                # Reason: Auto-resolved provider with no chat_model — use registry default
+                # to avoid sending tier2_model (e.g. gpt-4o-mini) to incompatible providers.
+                from app.data_models.app_models import PROVIDER_REGISTRY
+
+                registry_entry = PROVIDER_REGISTRY.get(self.provider)
+                if registry_entry and registry_entry.default_model:
+                    self.model = registry_entry.default_model
             self.tier2_available = True
         else:
             # No providers available - mark Tier 2 as unavailable

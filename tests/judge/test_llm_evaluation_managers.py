@@ -953,3 +953,52 @@ class TestStory002ChatModelInheritance:
                 chat_model="gpt-4o",
             )
             _ = pipeline  # ensure pipeline is used
+
+
+class TestAutoProviderModelResolution:
+    """Tests for auto provider model resolution using PROVIDER_REGISTRY (Bug 2)."""
+
+    def test_auto_provider_uses_registry_default_model_when_no_chat_model(self):
+        """Auto-resolved cerebras should use gpt-oss-120b from registry, not gpt-4o-mini."""
+        settings = JudgeSettings(tier2_provider="auto")
+        env_config = AppEnv(CEREBRAS_API_KEY="csk-test-key")
+
+        engine = LLMJudgeEngine(
+            settings,
+            env_config=env_config,
+            chat_provider="cerebras",
+            chat_model=None,
+        )
+
+        assert engine.provider == "cerebras"
+        assert engine.model == "gpt-oss-120b"
+
+    def test_auto_provider_prefers_chat_model_over_registry_default(self):
+        """Explicit chat_model should win over registry default_model."""
+        settings = JudgeSettings(tier2_provider="auto")
+        env_config = AppEnv(CEREBRAS_API_KEY="csk-test-key")
+
+        engine = LLMJudgeEngine(
+            settings,
+            env_config=env_config,
+            chat_provider="cerebras",
+            chat_model="llama-4-scout-17b-16e-instruct",
+        )
+
+        assert engine.provider == "cerebras"
+        assert engine.model == "llama-4-scout-17b-16e-instruct"
+
+    def test_auto_provider_falls_back_to_tier2_model_when_no_registry_default(self):
+        """Provider without default_model (github) keeps tier2_model when chat_model=None."""
+        settings = JudgeSettings(tier2_provider="auto", tier2_model="gpt-4o-mini")
+        env_config = AppEnv(GITHUB_API_KEY="ghp-test")
+
+        engine = LLMJudgeEngine(
+            settings,
+            env_config=env_config,
+            chat_provider="github",
+            chat_model=None,
+        )
+
+        assert engine.provider == "github"
+        assert engine.model == "gpt-4o-mini"

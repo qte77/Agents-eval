@@ -997,3 +997,55 @@ class TestContinuousTaskSuccess:
         for scores in test_cases:
             success = engine.assess_task_success(scores, threshold=0.8)
             assert 0.0 <= success <= 1.0, f"Score {success} out of [0.0, 1.0] for scores {scores}"
+
+
+class TestBERTScoreReenablement:
+    """Tests for BERTScore re-enablement in semantic similarity (Bug 1)."""
+
+    @pytest.fixture
+    def engine(self):
+        """Fixture providing TraditionalMetricsEngine instance."""
+        return TraditionalMetricsEngine()
+
+    def test_get_bertscore_model_returns_scorer_instance(self, engine):
+        """_get_bertscore_model should return a BERTScorer instance (lazy-loaded)."""
+        with patch(
+            "app.judge.traditional_metrics.BERTScorer"
+        ) as mock_bert_cls:
+            mock_scorer = Mock()
+            mock_bert_cls.return_value = mock_scorer
+
+            result = engine._get_bertscore_model()
+
+            assert result is mock_scorer
+            mock_bert_cls.assert_called_once_with(
+                model_type="distilbert-base-uncased", lang="en"
+            )
+
+    def test_compute_semantic_similarity_uses_bertscore(self, engine):
+        """compute_semantic_similarity should use BERTScore F1 when available."""
+        mock_scorer = Mock()
+        # BERTScorer.score returns (precision, recall, f1) tensors
+        mock_f1 = Mock()
+        mock_f1.mean.return_value.item.return_value = 0.92
+        mock_scorer.score.return_value = (Mock(), Mock(), mock_f1)
+
+        with patch.object(engine, "_get_bertscore_model", return_value=mock_scorer):
+            score = engine.compute_semantic_similarity(
+                "The paper presents a novel approach",
+                "This work introduces a new method",
+            )
+
+        assert abs(score - 0.92) < 0.01
+        mock_scorer.score.assert_called_once()
+
+    def test_compute_semantic_similarity_falls_back_to_levenshtein(self, engine):
+        """compute_semantic_similarity should fall back to Levenshtein when BERTScore unavailable."""
+        with patch.object(engine, "_get_bertscore_model", return_value=None):
+            with patch.object(
+                engine, "compute_levenshtein_similarity", return_value=0.65
+            ) as mock_lev:
+                score = engine.compute_semantic_similarity("text a", "text b")
+
+        assert score == 0.65
+        mock_lev.assert_called_once_with("text a", "text b")
