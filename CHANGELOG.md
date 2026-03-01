@@ -13,8 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `make setup_bert_model` recipe: pre-downloads `distilbert-base-uncased` for BERTScore; called automatically by `setup_dev` (both devcontainer variants)
-- `devcontainer.json` (both variants): `HF_HOME=/workspaces/.cache/huggingface` so BERTScore model persists across Codespace restarts
+- `make setup_uv` recipe: minimal bootstrap (`pip install uv` + `uv sync --frozen`); reused by `setup_prod` and `setup_dev` to avoid duplicated uv install logic
+- `make setup_bert_model` recipe: pre-downloads `distilbert-base-uncased` for BERTScore; called by `setup_dev` and `onCreateCommand` (fallback for non-prebuild Codespaces)
+- `devcontainer.json` (both variants): `HF_HOME=/workspaces/.cache/huggingface` persists model across restarts; `onCreateCommand: make setup_uv && make setup_bert_model` pre-bakes model into Codespaces prebuild
 
 ### Fixed
 

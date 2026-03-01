@@ -6,8 +6,8 @@
 .SILENT:
 .ONESHELL:
 .PHONY: \
-	setup_prod setup_dev setup_claude_code setup_sandbox \
-	setup_plantuml setup_pdf_converter setup_npm_tools setup_lychee \
+	setup_uv setup_prod setup_dev setup_claude_code setup_sandbox \
+	setup_bert_model setup_plantuml setup_pdf_converter setup_npm_tools setup_lychee \
 	setup_ollama clean_ollama setup_dataset \
 	dataset_smallest app_quickstart \
 	ollama_start ollama_stop \
@@ -87,17 +87,20 @@ TEAMS ?= false
 # MARK: setup
 
 
-setup_prod:  ## Install uv and deps. Flags: OLLAMA=1
-	echo "Setting up prod environment ..."
+setup_uv:  ## Install uv and sync frozen deps (minimal bootstrap, used by prebuild)
 	pip install uv -q
 	uv sync --frozen
+
+setup_prod:  ## Install uv and deps. Flags: OLLAMA=1
+	echo "Setting up prod environment ..."
+	$(MAKE) -s setup_uv
 	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s ollama_start)
 
 setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, lychee, plantuml. Flags: OLLAMA=1
 	echo "Setting up dev environment ..."
 	# sudo apt-get install -y gh
-	pip install uv -q
-	uv sync --all-groups
+	$(MAKE) -s setup_uv
+	uv sync
 	echo "npm version: $$(npm --version)"
 	$(MAKE) -s setup_claude_code
 	$(MAKE) -s setup_npm_tools
