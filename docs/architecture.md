@@ -557,6 +557,7 @@ The three-tiered evaluation framework is fully operational with plugin architect
 **Design Principles**: See [best-practices/mas-design-principles.md](best-practices/mas-design-principles.md) for 12-Factor Agents, Anthropic Harnesses, and PydanticAI integration patterns.
 
 **Security Framework**: See [best-practices/mas-security.md](best-practices/mas-security.md) for OWASP MAESTRO 7-layer security model.
+See [analysis/ai-security-governance-frameworks.md](analysis/ai-security-governance-frameworks.md) for cross-framework analysis (MAESTRO, MITRE ATLAS, NIST AI RMF, ISO 42001/23894).
 
 #### EvaluatorPlugin Interface
 

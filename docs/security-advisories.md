@@ -89,6 +89,10 @@ This project pins `scikit-learn>=1.8.0` in `pyproject.toml`, which includes the 
 
 ## Related Frameworks
 
+See [docs/analysis/ai-security-governance-frameworks.md](analysis/ai-security-governance-frameworks.md)
+for a detailed comparative analysis of all four frameworks and their applicability
+to Agents-eval.
+
 ### Threat Modeling & Attack Taxonomy
 
 - [MITRE ATLAS](https://atlas.mitre.org/) — Adversarial tactics and techniques for AI/ML systems. Catalog of real-world attack case studies on ML pipelines.
