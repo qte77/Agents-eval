@@ -430,8 +430,8 @@ class TestEvaluationBaselineExpander:
         source = Path("src/gui/pages/evaluation.py").read_text()
         tree = ast.parse(source)
 
-        # Find st.expander calls with expanded=False
-        found_collapsed = False
+        # STORY-010 changed baseline expander to expanded=True (visible on first visit)
+        found_expanded = False
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
                 func = node.func
@@ -444,12 +444,12 @@ class TestEvaluationBaselineExpander:
                 if is_expander:
                     for kw in node.keywords:
                         if kw.arg == "expanded":
-                            if isinstance(kw.value, ast.Constant) and kw.value.value is False:
-                                found_collapsed = True
+                            if isinstance(kw.value, ast.Constant) and kw.value.value is True:
+                                found_expanded = True
                             break
 
-        assert found_collapsed, (
-            "Baseline comparison expander must use expanded=False (collapsed by default)"
+        assert found_expanded, (
+            "Baseline comparison expander must use expanded=True (visible on first visit per STORY-010)"
         )
 
 
