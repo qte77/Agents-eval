@@ -11,7 +11,7 @@ features:
   - cross-references
   - relationship-explanations
   - clustering-by-themes
-papers_count: 260+
+papers_count: 262+
 coverage_period: 2020-10 to 2026-02
 created: 2025-08-24
 updated: 2026-02-15
@@ -75,6 +75,7 @@ This document provides a comprehensive, curated collection of research papers on
 - Safety: 2402.05044 (SALAD-Bench ACL 2024), 2412.14470 (Agent-SafetyBench), 2412.13178 (SafeAgentBench), 2410.09024 (AgentHarm ICLR 2025)
 - Recent 2025-2026: 2510.02271 (InfoMosaic-Bench), 2510.02190 (Deep Research), 2510.01670 (BLIND-ACT), 2512.12791 (assessment framework), TEAM-PHI (de-identification), Behavioral Fingerprinting (LLM profiles), Strategic Reasoning (digital twin)
 - Observability/Production: 2601.00481 (MAESTRO), 2602.10133 (AgentTrace), 2512.04123 (measuring agents), 2601.19583 (architecture-aware metrics), 2512.18311 (monitorability)
+- General agent eval: 2602.22953 (Exgentic, Open General Agent Leaderboard, Unified Protocol)
 - Surveys: 2503.16416 (evaluation survey), 2507.21504 (LLM agents survey), 2411.13768 (evaluation-driven), 2501.11067 (IntellAgent)
 
 **Architecture & System Design** `[ARCH]`:
@@ -142,9 +143,10 @@ This document provides a comprehensive, curated collection of research papers on
 **Memory Systems** `[MEM]`:
 
 - Surveys: 2512.13564 (memory in AI agents), 2512.23343 (AI meets brain), 2404.13501 (memory mechanisms)
-- Frameworks: 2601.03236 (MAGMA multi-graph), 2601.01885 (agentic memory), 2502.12110 (A-Mem)
+- Frameworks: 2601.03236 (MAGMA multi-graph), 2601.01885 (agentic memory), 2502.12110 (A-Mem), 2501.13956 (Zep temporal KG)
 - Learning: 2512.18950 (MACLA hierarchical procedural), 2511.18423 (GAM deep research), 2509.25250 (long-running agents)
 - Applications: 2510.01003 (repository memory), 2508.11120 (marketing MAS), 2510.11290 (AI-Agent School dual memory)
+- Production platforms: Cognee (knowledge graph engine, $7.5M seed Feb 2026), Mem0 ($24M, graph memory), LangMem (LangGraph-native)
 
 **Self-Improvement & Reflection** `[AUTO]`:
 
@@ -188,6 +190,10 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2026-02
 
+- [[2602.22953] General Agent Evaluation](https://arxiv.org/abs/2602.22953), [exgentic.ai](https://www.exgentic.ai/) `[EVAL]` `[BENCH]` `cs.AI`
+  - IBM Research framework proposing a Unified Protocol for fair, reproducible general agent evaluation without domain-specific tuning; introduces first Open General Agent Leaderboard across 5 agent implementations × 6 environments (AppWorld, BrowseComp+, SWEbenchV, τ²); top: OpenAI MCP + Claude Opus 4.5 = 0.73 avg success
+  - Cost-performance Pareto analysis (avg USD per task) enables framework selection on efficiency frontier
+  - Cross-ref: 2602.10133 (AgentTrace), 2601.00481 (MAESTRO), 2503.16416 (evaluation survey)
 - [[2602.10479] From Prompt-Response to Goal-Directed Systems: The Evolution of Agentic AI Software Architecture](https://arxiv.org/abs/2602.10479) `[ARCH]` `[MAS]` `[SURVEY]` `cs.SE` `cs.AI`
   - Reference architecture for production-grade LLM agents, taxonomy of multi-agent topologies with failure modes, enterprise hardening checklist covering governance, observability, and reproducibility
   - Cross-ref: 2601.01743 (agent system architectures), 2601.03328 (MAS design patterns), 2508.10146 (agentic frameworks)
@@ -793,6 +799,10 @@ Based on current gaps and transformative potential, three areas warrant immediat
 
 ## 2025-01
 
+- [[2501.13956] Zep: A Temporal Knowledge Graph Architecture for Agent Memory](https://arxiv.org/abs/2501.13956), [getzep.com](https://www.getzep.com/) `[MEM]` `[BENCH]` `cs.AI` `cs.CL`
+  - Introduces Zep, a memory layer service using Graphiti (temporally-aware KG engine) that outperforms MemGPT on DMR (94.8% vs 93.4%) and achieves +18.5% accuracy on LongMemEval; addresses static-document RAG limitations via dynamic synthesis of conversational and structured business data
+  - Establishes LongMemEval as the more representative enterprise memory benchmark vs DMR
+  - Cross-ref: 2601.03236 (MAGMA multi-graph), 2512.13564 (memory survey), 2404.13501 (memory mechanisms)
 - [[2501.14654] MedAgentBench: Benchmark for Virtual EHR Healthcare Workflows](https://arxiv.org/abs/2501.14654) `[BENCH]` `[SPEC]` `cs.AI`
   - Healthcare agent benchmark evaluating performance on virtual electronic health record workflows
 - [[2501.11067] IntellAgent: A Multi-Agent Framework for Evaluating Conversational AI Systems](https://arxiv.org/abs/2501.11067), [gh/plurai-ai/intellagent](https://github.com/plurai-ai/intellagent) `[EVAL]` `[MAS]` `[BENCH]` `cs.AI` `cs.CL`

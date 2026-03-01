@@ -7,8 +7,8 @@ tags:
   - metrics
   - peerread-evaluation
 created: 2025-10-05
-updated: 2026-01-13
-version: 1.1.0
+updated: 2026-03-01
+version: 1.2.0
 ---
 <!-- markdownlint-disable MD024 no-duplicate-heading -->
 
@@ -170,6 +170,17 @@ definitions, use cases, and primary research references for each metric.
 - **Limitations**: Requires diagnostic prompt suite, model-dependent patterns
 - **Reference**: Behavioral Fingerprinting of LLMs (Agents4Science 2025)
 - **Application**: Inform Tier 3 Graph Analysis for agent identity persistence and behavioral consistency tracking across interactions
+
+#### Cost-Performance Efficiency (Pareto)
+
+- **Definition**: Average USD cost per task paired with average success rate (0-1) across a benchmark suite
+- **Use Case**: Framework selection on the efficiency frontier — choose the framework achieving acceptable success at lowest cost
+- **Calculation**: Plot (avg_cost_per_task, avg_success_rate) per framework; Pareto-optimal frameworks are those where no other framework dominates on both dimensions simultaneously
+- **Strengths**: Makes cost/quality trade-off explicit; avoids optimizing only for accuracy at unbounded cost
+- **Limitations**: Cost varies with model/provider pricing; task distribution must be representative
+- **Reference**: [2602.22953] General Agent Evaluation / Exgentic (IBM Research, Feb 2026)
+- **Example**: SmolAgents + Claude Opus 4.5 = 0.66 success at $4.39/task vs OpenAI MCP + Claude Opus 4.5 = 0.73 success at $8.54/task — 2× cost for 11% success gain
+- **Application**: Use during framework selection for PeerRead batch evaluation to identify the cost-performance knee point
 
 ### Multi-Agent Coordination Metrics
 

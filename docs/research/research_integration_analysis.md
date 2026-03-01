@@ -14,18 +14,18 @@ tags:
   - self-evolving-agents
   - runtime-governance
 author: AI Research Team
-papers_analyzed: 228+
-coverage_period: 2022-10 to 2026-01-13
+papers_analyzed: 262+
+coverage_period: 2022-10 to 2026-02
 related_documents:
   - further_reading.md
 created: 2025-09-02
-updated: 2026-01-13
-version: 3.1.1
+updated: 2026-03-01
+version: 3.2.0
 ---
 
 ## Executive Summary
 
-Analysis of 228+ research papers (2022-2026) and 27+ production frameworks reveals convergence toward multi-dimensional agent evaluation methodologies. Key developments include self-evolving agent capabilities, runtime governance protocols, compositional self-improvement approaches, behavioral profiling, LLM evaluator robustness, and scalable MAS oversight.
+Analysis of 262+ research papers (2022-2026) and 30+ production frameworks reveals convergence toward multi-dimensional agent evaluation methodologies. Key developments include self-evolving agent capabilities, runtime governance protocols, compositional self-improvement approaches, behavioral profiling, LLM evaluator robustness, scalable MAS oversight, and an emerging agent memory infrastructure category anchored by the Context Engineering paradigm.
 
 **Related Documentation**: See [Further Reading](further_reading.md) for
 comprehensive research paper analysis and cross-references.
@@ -78,10 +78,10 @@ The academic community has moved beyond basic agent performance measurement to s
 
 **Comprehensive Tool Landscape** (vs. previous 4-framework analysis):
 
-- **27+ Agent Frameworks**: From basic orchestration to advanced memory systems (Letta/MemGPT)
-- **20+ Evaluation Platforms**: Specialized assessment tools with domain-specific capabilities  
+- **30+ Agent Frameworks**: From basic orchestration to advanced memory infrastructure (Letta/MemGPT, Cognee, Zep/Graphiti, Mem0, LangMem)
+- **20+ Evaluation Platforms**: Specialized assessment tools with domain-specific capabilities
 - **11 Observability Patterns**: Technical implementation approaches for comprehensive monitoring
-- **MCP Protocol Ecosystem**: Standardized agent communication enabling framework interoperability
+- **MCP Protocol Ecosystem**: 17K+ public servers (Linux Foundation governance Dec 2025); standardized agent communication enabling framework interoperability
 
 **Technical Implications**: Production tool diversity requires evaluation
 methodologies that assess performance across diverse agent implementations
@@ -226,6 +226,14 @@ Production insights from Anthropic's two-agent harness pattern mapping directly 
 
    **Application**: Enhance Tier 2 with rubric-based self-assessment; add `fix_rate` metric for partial progress on complex tasks; evaluate agent memory persistence patterns
 
+7. **General Agent Evaluation** ([2602.22953] Exgentic, Feb 2026)
+   - **Unified Protocol**: Framework-agnostic agent-benchmark integration enabling fair cross-environment evaluation without domain-specific tuning
+   - **Open General Agent Leaderboard**: 5 agent implementations × 6 environments; cost-performance Pareto (avg USD/task alongside success rate 0-1)
+   - **Key Finding**: General agents match domain-specific agents without environment-specific engineering — generalization is achievable today
+   - **Cost-Performance Frontier**: SmolAgents achieves 0.66 avg success at $4.39/task vs OpenAI MCP 0.73 at $8.54/task; framework choice has 2× cost impact at similar capability
+
+   **Application**: Apply Unified Protocol to benchmark PeerRead evaluation agents across standardized environments; use cost-performance Pareto for framework selection in batch evaluation workflows
+
 #### Safety and Trust Integration
 
 **Security Research Application**:
@@ -350,14 +358,24 @@ Production insights from Anthropic's two-agent harness pattern mapping directly 
 
 #### Memory Systems for Agent Evaluation
 
+**Context Engineering Paradigm (2025-2026)**: The field has converged on *context engineering* — assembling persistent, evolving context (user history, entity relationships, temporal changes) into the LLM context window — as the defining infrastructure challenge for production agents. This paradigm, coined by Tobi Lütke and endorsed by Andrej Karpathy (Jun 2025), repositions memory as infrastructure rather than a feature.
+
 **Key Papers**:
 
 - `[2512.13564] Memory in the Age of AI Agents`: Comprehensive survey on memory as core capability
 - `[2601.03236] MAGMA`: Multi-graph architecture (semantic, temporal, causal, entity)
 - `[2512.18950] MACLA`: Hierarchical procedural memory, 2,800× faster construction
+- `[2501.13956] Zep`: Temporal KG architecture outperforming MemGPT (DMR 94.8% vs 93.4%, LongMemEval +18.5%); establishes LongMemEval as the enterprise memory evaluation standard over DMR
 - `Behavioral Fingerprinting` (Agents4Science 2025): Diagnostic Prompt Suite analyzing 18 models revealing behavioral profiles beyond performance metrics; documents ISTJ/ESTJ personality clustering reflecting deliberate alignment choices
 
-**Application**: Inform Tier 2 (LLM-as-a-Judge) and Tier 3 (Graph Analysis) with memory consistency evaluation, identity persistence tracking across agent interactions, and behavioral profiling for agent self-assessment quality.
+**Production Memory Infrastructure** (30+ frameworks, up from 27+):
+
+- **Cognee** — Knowledge graph + vector engine, $7.5M seed (Feb 2026), 12K+ GitHub stars, 70+ companies; cognitive-science-grounded temporal awareness, MCP server integration
+- **Zep / Graphiti** — Temporal KG with `valid_at`/`invalid_at` timestamps, P95 300ms retrieval, open-source Apache-2.0
+- **Mem0** — $24M funding (Basis Set Ventures), graph memory layer, MCP server, +26% accuracy over OpenAI Memory, 90% lower token usage
+- **LangMem** — LangChain open-source library; LangGraph-native semantic/episodic/procedural memory
+
+**Application**: Inform Tier 2 (LLM-as-a-Judge) and Tier 3 (Graph Analysis) with memory consistency evaluation, identity persistence tracking across agent interactions, and behavioral profiling for agent self-assessment quality. LongMemEval provides the benchmark for validating cross-session memory in PeerRead evaluation agents.
 
 #### Domain-Specific Agent Benchmarks
 
