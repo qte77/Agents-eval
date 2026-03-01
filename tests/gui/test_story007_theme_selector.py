@@ -158,7 +158,7 @@ class TestSidebarThemeSelectbox:
     def _make_sidebar_mock(self, selectbox_return: str = "expanse_dark") -> MagicMock:
         """Create a sidebar mock with selectbox returning a given value."""
         mock_sidebar = MagicMock()
-        mock_sidebar.radio.return_value = "Run"
+        mock_sidebar.radio.return_value = "Run Research App"
         mock_sidebar.selectbox.return_value = selectbox_return
         return mock_sidebar
 
@@ -182,7 +182,7 @@ class TestSidebarThemeSelectbox:
 
         captured_options = []
         mock_sidebar = MagicMock()
-        mock_sidebar.radio.return_value = "Run"
+        mock_sidebar.radio.return_value = "Run Research App"
 
         def capture_selectbox(label, options, **kwargs):
             captured_options.extend(options)
@@ -211,15 +211,19 @@ class TestSidebarThemeSelectbox:
 
         assert session.get("selected_theme") == "tokyo_night"
 
-    def test_theme_selectbox_appears_before_divider(self) -> None:
-        """Theme selectbox must be called before the Phoenix divider section."""
+    def test_theme_selectbox_appears_before_tracing_expander(self) -> None:
+        """Theme selectbox must be called before the Tracing expander section."""
         from gui.components.sidebar import render_sidebar
 
         call_order: list[str] = []
         mock_sidebar = MagicMock()
-        mock_sidebar.radio.return_value = "Run"
+        mock_sidebar.radio.return_value = "Run Research App"
         mock_sidebar.selectbox.side_effect = lambda *a, **kw: call_order.append("selectbox") or "expanse_dark"
-        mock_sidebar.divider.side_effect = lambda *a, **kw: call_order.append("divider")
+
+        mock_expander_ctx = MagicMock()
+        mock_expander_ctx.__enter__ = MagicMock(return_value=MagicMock())
+        mock_expander_ctx.__exit__ = MagicMock(return_value=False)
+        mock_sidebar.expander.side_effect = lambda *a, **kw: (call_order.append("expander"), mock_expander_ctx)[1]
 
         with patch("gui.components.sidebar.sidebar", mock_sidebar):
             with patch("gui.components.sidebar.st") as mock_st:
@@ -227,8 +231,8 @@ class TestSidebarThemeSelectbox:
                 render_sidebar("Test App")
 
         assert "selectbox" in call_order
-        assert "divider" in call_order
-        assert call_order.index("selectbox") < call_order.index("divider")
+        assert "expander" in call_order
+        assert call_order.index("selectbox") < call_order.index("expander")
 
 
 # ---------------------------------------------------------------------------
