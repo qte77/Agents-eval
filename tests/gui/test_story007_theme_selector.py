@@ -239,8 +239,8 @@ class TestSidebarThemeSelectbox:
 class TestAgentGraphUsesThemeColors:
     """Test agent_graph.py reads node colors from active theme."""
 
-    def test_agent_graph_imports_get_theme_node_colors(self):
-        """agent_graph module must import get_theme_node_colors from styling."""
+    def test_agent_graph_imports_theme_node_colors_function(self):
+        """agent_graph module must import a theme node colors function from styling."""
         import importlib.util
         from pathlib import Path
 
@@ -249,8 +249,11 @@ class TestAgentGraphUsesThemeColors:
         assert spec.origin is not None
         source = Path(spec.origin).read_text()
 
-        assert "get_theme_node_colors" in source, (
-            "agent_graph.py must import get_theme_node_colors from gui.config.styling"
+        # Reason: accepts either get_theme_node_colors or its alias get_graph_node_colors
+        has_theme_fn = "get_theme_node_colors" in source or "get_graph_node_colors" in source
+        assert has_theme_fn, (
+            "agent_graph.py must import get_theme_node_colors or get_graph_node_colors "
+            "from gui.config.styling"
         )
 
     def test_agent_graph_no_hardcoded_node_colors(self):

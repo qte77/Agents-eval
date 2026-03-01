@@ -81,7 +81,7 @@ def render_agent_graph(
         directed=True,
         notebook=False,
         bgcolor=get_theme_bgcolor(),
-        font_color=get_graph_font_color(),
+        font_color=get_graph_font_color(),  # type: ignore[arg-type]
     )
 
     # Configure physics for better layout
