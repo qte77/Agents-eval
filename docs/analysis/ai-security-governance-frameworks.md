@@ -135,7 +135,7 @@ define both the attack vector taxonomy and the control set.
 ## 3. NIST AI Risk Management Framework
 
 **Source**: [NIST AI 100-1](https://www.nist.gov/artificial-intelligence/executive-order-safe-secure-and-trustworthy-artificial-intelligence) (January 2023)
-**Companion**: [NIST AI 600-1 Generative AI Profile](https://airc.nist.gov/Docs/1) (July 2024)
+**Companion**: [NIST AI 600-1 Generative AI Profile](https://doi.org/10.6028/NIST.AI.600-1) (July 2024)
 **Existing coverage**: Brief reference in [security-advisories.md](../security-advisories.md)
 
 ### Four Core Functions
@@ -380,7 +380,7 @@ is not warranted. A lightweight alignment approach:
 - [OWASP MAESTRO v1.0](https://genai.owasp.org/resource/multi-agentic-system-threat-modeling-guide-v1-0/)
 - [MITRE ATLAS](https://atlas.mitre.org/)
 - [NIST AI RMF 1.0 (AI 100-1)](https://www.nist.gov/artificial-intelligence/executive-order-safe-secure-and-trustworthy-artificial-intelligence)
-- [NIST AI 600-1 Generative AI Profile](https://airc.nist.gov/Docs/1)
+- [NIST AI 600-1 Generative AI Profile](https://doi.org/10.6028/NIST.AI.600-1)
 - [ISO/IEC 42001:2023](https://www.iso.org/standard/81230.html)
 - [ISO/IEC 23894:2023](https://www.iso.org/standard/77304.html)
 - [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
