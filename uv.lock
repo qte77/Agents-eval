@@ -106,7 +106,7 @@ dev = [
 ]
 docs = [
     { name = "griffe", specifier = ">=2.0.0" },
-    { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs", specifier = ">=1.6.1,<2.0" },
     { name = "mkdocs-awesome-pages-plugin", specifier = ">=2.10.1" },
     { name = "mkdocs-gen-files", specifier = ">=0.6.0" },
     { name = "mkdocs-literate-nav", specifier = ">=0.6.2" },
