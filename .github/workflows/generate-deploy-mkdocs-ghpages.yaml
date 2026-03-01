@@ -101,6 +101,13 @@ jobs:
           cp "${{ env.IMG_DIR }}"/* "${dir}"
         fi
 
+    - name: Copy llms.txt to site root
+      run: |
+        # Serve raw llms.txt at site root per https://llmstxt.org/ spec
+        if [ -f "${DOC_DIR}/llms.txt" ]; then
+          cp "${DOC_DIR}/llms.txt" "${SITE_DIR}/llms.txt"
+        fi
+
 #    - name: Push to gh-pages
 #      run: uv run mkdocs gh-deploy --force
 
