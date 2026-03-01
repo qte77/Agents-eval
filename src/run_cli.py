@@ -106,6 +106,63 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
     return {k: v for k, v in vars(_parser.parse_args(argv)).items() if v is not None}
 
 
+def _run_cc_engine(args: dict[str, Any], cc_teams: bool) -> Any:
+    """Run the Claude Code engine and return the result object.
+
+    Args:
+        args: Parsed CLI arguments dict (mutated: cc_solo_dir may be set).
+        cc_teams: Whether to use Agent Teams mode.
+
+    Returns:
+        CCResult object from the engine run.
+    """
+    from app.engines.cc_engine import build_cc_query, run_cc_solo, run_cc_teams
+
+    query = build_cc_query(args.get("query", ""), args.get("paper_id"), cc_teams=cc_teams)
+    cc_result_obj = run_cc_teams(query, timeout=600) if cc_teams else run_cc_solo(query, timeout=600)
+
+    if cc_result_obj.session_dir:
+        args["cc_solo_dir"] = cc_result_obj.session_dir
+
+    return cc_result_obj
+
+
+def _maybe_generate_report(result_dict: dict[str, Any], no_llm_suggestions: bool) -> None:
+    """Generate and save a Markdown report if composite result is available.
+
+    Args:
+        result_dict: Pipeline result containing composite_result and run_context.
+        no_llm_suggestions: Whether to disable LLM-assisted suggestions.
+    """
+    from datetime import datetime
+    from pathlib import Path
+
+    from app.reports.report_generator import generate_report, save_report
+    from app.reports.suggestion_engine import SuggestionEngine
+    from app.utils.log import logger
+
+    composite_result = result_dict.get("composite_result")
+    if composite_result is None:
+        logger.warning("--generate-report requested but no evaluation result available")
+        return
+
+    engine_obj = SuggestionEngine(no_llm_suggestions=no_llm_suggestions)
+    suggestions = engine_obj.generate(composite_result)
+    md = generate_report(composite_result, suggestions=suggestions)
+
+    # Reason: use run_context report_path when available; fall back to output/reports
+    run_context = result_dict.get("run_context")
+    if run_context is not None:
+        output_path = run_context.report_path
+    else:
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        output_path = Path("output") / "reports" / f"{timestamp}.md"
+
+    save_report(md, output_path)
+    logger.info(f"Report written to {output_path}")
+    print(f"Report saved: {output_path}")
+
+
 def cli_main() -> None:
     """Run the CLI application entry point.
 
@@ -113,7 +170,6 @@ def cli_main() -> None:
     and logs the artifact summary.
     """
     import sys
-    from datetime import datetime
 
     args = parse_args(argv[1:])
     engine = args.pop("engine")
@@ -131,56 +187,18 @@ def cli_main() -> None:
     from asyncio import run
 
     from app.app import main
+    from app.utils.artifact_registry import get_artifact_registry
     from app.utils.log import logger
 
     logger.info(f"Used arguments: {args}")
 
-    # S10-F1: run CC engine then pass result to main() instead of discarding it
-    cc_result_obj = None
-    if engine == "cc":
-        from app.engines.cc_engine import build_cc_query, run_cc_solo, run_cc_teams
-
-        query = build_cc_query(args.get("query", ""), args.get("paper_id"), cc_teams=cc_teams)
-        if cc_teams:
-            cc_result_obj = run_cc_teams(query, timeout=600)
-        else:
-            cc_result_obj = run_cc_solo(query, timeout=600)
-
-        if cc_result_obj.session_dir:
-            args["cc_solo_dir"] = cc_result_obj.session_dir
-
-    from app.utils.artifact_registry import get_artifact_registry
+    cc_result_obj = _run_cc_engine(args, cc_teams) if engine == "cc" else None
 
     try:
         result_dict = run(main(**args, engine=engine, cc_result=cc_result_obj, cc_teams=cc_teams))
-
-        # S8-F6.1: generate report after evaluation if requested
         if generate_report_flag and result_dict:
-            composite_result = result_dict.get("composite_result")
-            if composite_result is not None:
-                from pathlib import Path
-
-                from app.reports.report_generator import generate_report, save_report
-                from app.reports.suggestion_engine import SuggestionEngine
-
-                engine_obj = SuggestionEngine(no_llm_suggestions=no_llm_suggestions)
-                suggestions = engine_obj.generate(composite_result)
-                md = generate_report(composite_result, suggestions=suggestions)
-
-                # Reason: use run_context report_path when available; fall back to output/reports
-                run_context = result_dict.get("run_context")
-                if run_context is not None:
-                    output_path = run_context.report_path
-                else:
-                    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-                    output_path = Path("output") / "reports" / f"{timestamp}.md"
-                save_report(md, output_path)
-                logger.info(f"Report written to {output_path}")
-                print(f"Report saved: {output_path}")
-            else:
-                logger.warning("--generate-report requested but no evaluation result available")
+            _maybe_generate_report(result_dict, no_llm_suggestions)
     finally:
-        # Always log artifact summary, even when the run ends with an error
         logger.info(get_artifact_registry().format_summary_block())
 
 
