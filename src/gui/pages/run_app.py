@@ -34,6 +34,7 @@ from app.reports.report_generator import generate_report
 from app.utils.log import logger
 from gui.components.output import render_output
 from gui.config.text import (
+    ARTIFACTS_LABEL,
     DEBUG_LOG_LABEL,
     DOWNLOAD_REPORT_LABEL,
     GENERATE_REPORT_LABEL,
@@ -220,6 +221,21 @@ def _capture_execution_logs(capture: LogCapture) -> None:
     st.session_state.debug_logs = logs
 
 
+def _render_artifact_summary_panel() -> None:
+    """Render the artifact summary panel with paths written during the last run.
+
+    Displays an expandable panel listing all artifacts registered during execution
+    (log directory, reviews, evaluations, traces, reports, etc.).
+    """
+    summary = getattr(st.session_state, "artifact_summary", None)
+
+    with st.expander(ARTIFACTS_LABEL, expanded=False):
+        if not summary or summary == "No artifacts written":
+            st.info("No artifacts written yet. Run a query to see output paths.")
+        else:
+            st.code(summary, language=None)
+
+
 def _render_debug_log_panel() -> None:
     """Render the debug log panel with captured logs.
 
@@ -357,6 +373,9 @@ async def _execute_query_background(
     finally:
         _capture_execution_logs(capture)
         capture.detach_from_logger(handler_id)
+        from app.utils.artifact_registry import get_artifact_registry
+
+        st.session_state.artifact_summary = get_artifact_registry().format_summary_block()
 
 
 def _display_configuration(provider: str, token_limit: int | None, agents_text: str) -> None:
@@ -725,6 +744,7 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
 
     subheader(OUTPUT_SUBHEADER)
     _display_execution_result(_get_execution_state())
+    _render_artifact_summary_panel()
     _render_debug_log_panel()
 
     composite_result = st.session_state.get("execution_composite_result")

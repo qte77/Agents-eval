@@ -37,6 +37,7 @@ AGENT_GRAPH_HEADER = "\U0001f578\ufe0f Agent Interaction Graph"
 AGENT_GRAPH_NETWORK_SUBHEADER = "Interactive Agent Network Visualization"
 # STORY-009: Run app label constants
 DEBUG_LOG_LABEL = "Debug Log"
+ARTIFACTS_LABEL = "Artifacts Written"
 GENERATE_REPORT_LABEL = "Generate Report"
 DOWNLOAD_REPORT_LABEL = "Download Report"
 

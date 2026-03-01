@@ -146,36 +146,37 @@ if __name__ == "__main__":
 
     from app.utils.artifact_registry import get_artifact_registry
 
-    result_dict = run(main(**args, engine=engine, cc_result=cc_result_obj, cc_teams=cc_teams))
+    try:
+        result_dict = run(main(**args, engine=engine, cc_result=cc_result_obj, cc_teams=cc_teams))
 
-    # S8-F6.1: generate report after evaluation if requested
-    if generate_report_flag and result_dict:
-        composite_result = result_dict.get("composite_result")
-        if composite_result is not None:
-            from pathlib import Path
+        # S8-F6.1: generate report after evaluation if requested
+        if generate_report_flag and result_dict:
+            composite_result = result_dict.get("composite_result")
+            if composite_result is not None:
+                from pathlib import Path
 
-            from app.reports.report_generator import generate_report, save_report
-            from app.reports.suggestion_engine import SuggestionEngine
+                from app.reports.report_generator import generate_report, save_report
+                from app.reports.suggestion_engine import SuggestionEngine
 
-            engine_obj = SuggestionEngine(no_llm_suggestions=no_llm_suggestions)
-            suggestions = engine_obj.generate(composite_result)
-            md = generate_report(composite_result, suggestions=suggestions)
+                engine_obj = SuggestionEngine(no_llm_suggestions=no_llm_suggestions)
+                suggestions = engine_obj.generate(composite_result)
+                md = generate_report(composite_result, suggestions=suggestions)
 
-            # Reason: use run_context report_path when available; fall back to output/reports
-            run_context = result_dict.get("run_context")
-            if run_context is not None:
-                output_path = run_context.report_path
+                # Reason: use run_context report_path when available; fall back to output/reports
+                run_context = result_dict.get("run_context")
+                if run_context is not None:
+                    output_path = run_context.report_path
+                else:
+                    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+                    output_path = Path("output") / "reports" / f"{timestamp}.md"
+                save_report(md, output_path)
+                logger.info(f"Report written to {output_path}")
+                print(f"Report saved: {output_path}")
             else:
-                timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-                output_path = Path("output") / "reports" / f"{timestamp}.md"
-            save_report(md, output_path)
-            logger.info(f"Report written to {output_path}")
-            print(f"Report saved: {output_path}")
-        else:
-            logger.warning("--generate-report requested but no evaluation result available")
-
-    # Print artifact summary at end of run (AC3, AC5, AC6)
-    registry = get_artifact_registry()
-    summary_block = registry.format_summary_block()
-    print(summary_block)
-    logger.info(summary_block)
+                logger.warning("--generate-report requested but no evaluation result available")
+    finally:
+        # Always print artifact summary, even when the run ends with an error
+        registry = get_artifact_registry()
+        summary_block = registry.format_summary_block()
+        print(summary_block)
+        logger.info(summary_block)
