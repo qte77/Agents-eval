@@ -106,7 +106,12 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
     return {k: v for k, v in vars(_parser.parse_args(argv)).items() if v is not None}
 
 
-if __name__ == "__main__":
+def cli_main() -> None:
+    """Run the CLI application entry point.
+
+    Parses arguments, selects the execution engine, runs the pipeline,
+    and logs the artifact summary.
+    """
     import sys
     from datetime import datetime
 
@@ -177,3 +182,7 @@ if __name__ == "__main__":
     finally:
         # Always log artifact summary, even when the run ends with an error
         logger.info(get_artifact_registry().format_summary_block())
+
+
+if __name__ == "__main__":
+    cli_main()
