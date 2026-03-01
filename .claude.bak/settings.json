@@ -115,5 +115,6 @@
   "attribution": {
     "commit": "🤖 Co-Authored-By: Claude <noreply@anthropic.com>",
     "pr": "🤖 Generated with Claude <noreply@anthropic.com>"
-  }
+  },
+  "effortLevel": "medium"
 }
