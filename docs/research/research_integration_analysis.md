@@ -127,7 +127,7 @@ citations. Key papers: 2507.02825 (benchmarking best practices), 2411.13768
 
 **Technical Research Integration**: Self-evolving agent research establishes
 evaluation requirements for recursive systems. Four core areas (detailed in
-[further_reading.md](further_reading.md#self-improvement--reflection)):
+[further_reading.md](further_reading.md)):
 
 - Self-improvement tracking and identity consistency during modification
 - Recursive intelligence evaluation for self-modifying systems
@@ -137,7 +137,7 @@ evaluation requirements for recursive systems. Four core areas (detailed in
 ### 3. Runtime Governance and Safety Evolution
 
 **Governance Research Integration**: Runtime governance protocols define safety
-requirements (research details in [further_reading.md](further_reading.md#safety--risk-management)).
+requirements (research details in [further_reading.md](further_reading.md)).
 
 **Production Patterns**: Analysis of 27+ frameworks (see
 [landscape documentation](../landscape/)) reveals governance convergence:

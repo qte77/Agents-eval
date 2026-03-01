@@ -141,7 +141,7 @@ for full list.
 
 ## Running Tests
 
-See [CONTRIBUTING.md](../../CONTRIBUTING.md#complete-command-reference)
+See [CONTRIBUTING.md](../CONTRIBUTING.md#complete-command-reference)
 for all make recipes and test commands.
 
 For TDD iterations, run specific tests with

@@ -642,7 +642,7 @@ Candidate metrics identified from production frameworks and recent research for 
 
 The system relies on several key technology categories for implementation and evaluation.
 
-**Core Technologies**: See [Agent Frameworks](landscape/landscape-agent-frameworks-infrastructure.md#1-agent-frameworks) for PydanticAI agent orchestration details, [Graph Analysis & Network Tools](landscape/landscape-evaluation-data-resources.md#6-graph-analysis--network-tools) for NetworkX complexity analysis capabilities, and [Large Language Models](landscape/landscape-agent-frameworks-infrastructure.md#2-large-language-models) for LLM integration approaches.
+**Core Technologies**: See [Agent Frameworks](landscape/landscape-agent-frameworks-infrastructure.md#1-agent-frameworks) for PydanticAI agent orchestration details, [Graph Analysis & Network Tools](landscape/landscape-evaluation-data-resources.md#6-graph-analysis-network-tools) for NetworkX complexity analysis capabilities, and [Large Language Models](landscape/landscape-agent-frameworks-infrastructure.md#2-large-language-models) for LLM integration approaches.
 
 **Evaluation Tools**: See [Traditional Metrics Libraries](landscape/landscape-evaluation-data-resources.md#7-traditional-metrics-libraries) for NLTK and Rouge-Score implementation details and feasibility assessments.
 

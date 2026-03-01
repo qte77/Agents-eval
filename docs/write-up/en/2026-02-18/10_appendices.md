@@ -68,7 +68,7 @@ The framework supports a variety of LLM providers through PydanticAI's OpenAI-co
 
 The project follows a structured documentation hierarchy that prevents scope creep and defines clear authoritative sources. Each document has a specific scope and serves as the single source of truth for its domain.
 
-The complete hierarchy is described in [AGENTS.md](../../../../AGENTS.md). The following figure illustrates the reference structure and authority chain:
+The complete hierarchy is described in [AGENTS.md](../../../AGENTS.md). The following figure illustrates the reference structure and authority chain:
 
 \begin{figure}[!htbp]
 \centering

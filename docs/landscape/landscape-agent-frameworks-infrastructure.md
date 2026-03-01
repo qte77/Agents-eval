@@ -139,7 +139,7 @@ The MCP ecosystem has grown dramatically since Anthropic open-sourced the protoc
 
 - Security is the #1 adoption blocker — 72% of developers plan to increase MCP usage but cite authentication gaps
 - MCP gateways (e.g., AgentPass, Composio) are emerging as the dominant hosting pattern for secure access
-- See [MCP Security Considerations](#mcp-security-considerations-important) below for required mitigations
+- See MCP Security Considerations below for required mitigations
 
 **Evaluation Relevance:** MCP standardization means evaluation frameworks can now assess tool integration quality across 17,000+ servers without framework-specific instrumentation. The A2A + MCP protocol combination enables framework-agnostic agent evaluation as described in [research_integration_analysis.md](../research/research_integration_analysis.md).
 
@@ -198,11 +198,11 @@ The Model Context Protocol ecosystem includes numerous enterprise-focused MCP se
 
 **Web Scraping & Extraction Platforms:**
 
-For comprehensive web scraping and data extraction capabilities, see [Evaluation & Data Resources Landscape](landscape-evaluation-data-resources.md#web-scraping--extraction-platforms) which covers platforms like Apify, Firecrawl, Crawl4AI, and enterprise web intelligence solutions.
+For comprehensive web scraping and data extraction capabilities, see [Evaluation & Data Resources Landscape](landscape-evaluation-data-resources.md#web-scraping-extraction-platforms) which covers platforms like Apify, Firecrawl, Crawl4AI, and enterprise web intelligence solutions.
 
 **AI Browser Automation & Computer Use:**
 
-For browser automation and computer use tools, see [Evaluation & Data Resources Landscape](landscape-evaluation-data-resources.md#ai-browser-automation--computer-use) which covers platforms like Skyvern, Browser Use, ChatGPT Operator, and Anthropic Computer Use Tool.
+For browser automation and computer use tools, see [Evaluation & Data Resources Landscape](landscape-evaluation-data-resources.md#ai-browser-automation-computer-use) which covers platforms like Skyvern, Browser Use, ChatGPT Operator, and Anthropic Computer Use Tool.
 
 ### Memory & Knowledge Management
 
@@ -313,7 +313,7 @@ The AI agent ecosystem is converging on standardized observability practices thr
 
 **Sources:** [OpenTelemetry AI Agent Blog](https://opentelemetry.io/blog/2025/ai-agent-observability/), [Agentic Systems Proposal](https://github.com/open-telemetry/semantic-conventions/issues/2664)
 
-For additional observability platforms including LangWatch, MLflow, Uptrace, Traceloop, and limited local support options, see [Evaluation & Data Resources Landscape](landscape-evaluation-data-resources.md#llm-application-observability) which covers the full spectrum of observability solutions.
+For additional observability platforms including LangWatch, MLflow, Uptrace, Traceloop, and limited local support options, see [Evaluation & Data Resources Landscape](landscape-evaluation-data-resources.md#2-llm-application-observability) which covers the full spectrum of observability solutions.
 
 **Enterprise/Commercial (Evaluation Focused):**
 

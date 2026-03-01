@@ -37,11 +37,10 @@ nav:
   - Home: index.md
   - PRD: PRD.md
   - User Story: UserStory.md
-  - Sprint Plan: SprintPlan.md
+  - Sprints: sprints/index.md
   - Code: docstrings.md
   - Change Log: CHANGELOG.md
   - License: LICENSE.md
-  - llms.txt: llms.txt
 plugins:
   - search:
       lang: en
@@ -79,5 +78,5 @@ validation:
 # builds only if validation succeeds while
 # threating warnings as errors
 # also checks for broken links
-# strict: true
+strict: true
 ...
