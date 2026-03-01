@@ -108,9 +108,9 @@
       "files": [
         "src/gui/pages/run_app.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-03-01T10:18:42Z",
       "content_hash": "8e0560ff4254fba01fb7912300edf56d6297d07e39e94cdf5f7f226fce281e45",
       "depends_on": [
         "STORY-004"
@@ -157,9 +157,9 @@
         "src/gui/pages/settings.py",
         ".streamlit/config.toml"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 2,
-      "completed_at": null,
+      "completed_at": "2026-03-01T10:20:30Z",
       "content_hash": "d40d1ed42ebe73cda79ae95b8b3d6a991af3b7d27683eea2ba5f31dc29f2b385",
       "depends_on": [
         "STORY-006"
@@ -227,9 +227,9 @@
         "src/gui/pages/evaluation.py",
         "src/gui/components/sidebar.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 3,
-      "completed_at": null,
+      "completed_at": "2026-03-01T10:22:13Z",
       "content_hash": "7076a2f4140784d26feaff67e7208d60c1f29100abf8931ff56ab73ce44565de",
       "depends_on": [
         "STORY-009"
@@ -252,9 +252,9 @@
         "src/gui/pages/agent_graph.py",
         "src/gui/config/styling.py"
       ],
-      "status": "pending",
+      "status": "passed",
       "wave": 3,
-      "completed_at": null,
+      "completed_at": "2026-03-01T10:23:54Z",
       "content_hash": "5ad73c4b5aa35cfe27d165e56390d9bfc7e77499eebd3714638de026511d4dfd",
       "depends_on": [
         "STORY-006",
