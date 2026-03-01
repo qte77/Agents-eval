@@ -676,8 +676,13 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
 
     engine, cc_teams = _render_engine_selector()
     _render_engine_status(
-        engine, cc_available, provider_from_state, token_limit,
-        include_researcher, include_analyst, include_synthesiser,
+        engine,
+        cc_available,
+        provider_from_state,
+        token_limit,
+        include_researcher,
+        include_analyst,
+        include_synthesiser,
     )
 
     query, selected_paper_id = _render_query_input()
