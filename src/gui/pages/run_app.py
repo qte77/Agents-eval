@@ -533,9 +533,9 @@ async def _handle_query_submission(
 def _render_report_section(composite_result: CompositeResult | None) -> None:
     """Render the report generation section on the App page.
 
+    Caches the generated report in session state to prevent duplicate renders.
     Displays a "Generate Report" button when a composite_result is available.
-    On click, generates a Markdown report and renders it inline, with a
-    download button for saving to disk.
+    Provides a "Clear Results" button to reset execution state.
 
     Args:
         composite_result: Evaluation result to generate a report for,
@@ -545,17 +545,32 @@ def _render_report_section(composite_result: CompositeResult | None) -> None:
     if composite_result is None:
         return
 
-    # Render the generate button
+    # Generate report on button click and cache in session state
     if st.button(GENERATE_REPORT_LABEL, key="generate_report_btn"):
         markdown = generate_report(composite_result)
-        st.markdown(markdown)
+        st.session_state["generated_report"] = markdown
+
+    # Render cached report and download button if available
+    cached_report = st.session_state.get("generated_report")
+    if cached_report:
+        st.markdown(cached_report)
         st.download_button(
             label=DOWNLOAD_REPORT_LABEL,
-            data=markdown,
+            data=cached_report,
             file_name="evaluation_report.md",
             mime="text/markdown",
             key="download_report_btn",
         )
+
+    # Clear Results button resets execution state
+    if st.button("Clear Results", key="clear_results_btn"):
+        st.session_state["execution_state"] = "idle"
+        st.session_state["generated_report"] = None
+        if hasattr(st.session_state, "execution_result"):
+            del st.session_state["execution_result"]
+        if hasattr(st.session_state, "execution_composite_result"):
+            del st.session_state["execution_composite_result"]
+        st.rerun()
 
 
 def _render_engine_selector() -> tuple[str, bool]:
