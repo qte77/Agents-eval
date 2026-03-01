@@ -114,15 +114,6 @@ definitions, use cases, and primary research references for each metric.
 - **Limitations**: Requires clear correct/incorrect labels
 - **Reference**: [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
 
-#### Path Convergence
-
-- **Definition**: Ratio of minimum required steps to actual steps taken
-- **Use Case**: Measure agent efficiency in task completion
-- **Calculation**: `minimum_steps / actual_steps`
-- **Strengths**: Quantifies execution efficiency
-- **Limitations**: Requires optimal path knowledge
-- **Reference**: [WebArena: A Realistic Web Environment for Building Autonomous Agents](https://arxiv.org/abs/2307.13854) (efficiency metrics for web agents)
-
 #### Response Time
 
 - **Definition**: End-to-end processing time from input to output
