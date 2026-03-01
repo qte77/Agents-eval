@@ -340,7 +340,7 @@ async def main(
     include_analyst: bool = False,
     include_synthesiser: bool = False,
     chat_config_file: str | Path | None = None,
-    enable_review_tools: bool = True,
+    enable_review_tools: bool = False,
     paper_id: str | None = None,
     skip_eval: bool = False,
     download_peerread_full_only: bool = False,

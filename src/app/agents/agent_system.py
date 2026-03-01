@@ -253,7 +253,12 @@ def _add_research_tool(
     async def delegate_research(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], query: str
     ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
-        """Delegate research task to ResearchAgent."""
+        """Delegate a research task to the ResearchAgent. Returns structured research findings.
+
+        Args:
+            query: A natural-language description of what to research. Must be a plain
+                text string, NOT a JSON object or structured data.
+        """
         result = await _execute_traced_delegation(
             research_agent,
             ctx,
@@ -283,7 +288,12 @@ def _add_analysis_tool(
     async def delegate_analysis(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], query: str
     ) -> AnalysisResult:
-        """Delegate analysis task to AnalysisAgent."""
+        """Delegate an analysis task to the AnalysisAgent. Returns insights and recommendations.
+
+        Args:
+            query: A natural-language description of what to analyze. Must be a plain
+                text string, NOT a JSON object or structured data.
+        """
         result = await _execute_traced_delegation(
             analysis_agent,
             ctx,
@@ -310,7 +320,12 @@ def _add_synthesis_tool(
     async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], query: str
     ) -> ResearchSummary:
-        """Delegate synthesis task to SynthesisAgent."""
+        """Delegate a synthesis task to the SynthesisAgent. Returns a formatted research summary.
+
+        Args:
+            query: A natural-language description of what to synthesize. Must be a plain
+                text string, NOT a JSON object or structured data.
+        """
         result = await _execute_traced_delegation(
             synthesis_agent,
             ctx,

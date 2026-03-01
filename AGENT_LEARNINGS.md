@@ -200,6 +200,20 @@ updated: 2026-02-16
 - **Detection**: Test passes alone (`uv run pytest tests/file.py`) but fails in full suite (`make test`). Run directory batches to bisect.
 - **References**: `tests/gui/test_settings.py` (deleted), `tests/test_gui/test_settings_page.py` (deleted) — fixture patching `gui.pages.settings.text` after import was removed
 
+### Cerebras Structured Output Non-Compliance in MAS Delegation
+
+- **Context**: PydanticAI agents with `openai_supports_strict_tool_definition=False` providers (Cerebras, Groq, etc.)
+- **Problem**: Three failure modes observed with Cerebras `gpt-oss-120b`:
+  1. **Score fields as text**: Model returns natural language descriptions where `int` is expected (e.g., `"The work documents..."` for `impact: int`). Also returns word labels (`"accept"`) and floats (`0.78`).
+  2. **Wrong output type for general queries**: `enable_review_tools: bool = True` default in `main()` forced `ReviewGenerationResult` even for non-paper queries, triggering 422 from Cerebras on schema retry.
+  3. **Tool arg/output confusion**: Model calls `delegate_synthesis(insights=[...], recommendations=[...], approval=True)` instead of `delegate_synthesis(query="...")` — dumping the previous agent's output schema as tool input args.
+- **Solution**:
+  1. `BeforeValidator` coercions (`_ScoreInt`, `_PresentationFormatLiteral`) on `GeneratedReview` to handle text→int, float→int, word→score mapping.
+  2. Changed `enable_review_tools` default to `False`; `_prepare_query` activates it when `paper_id` is present.
+  3. Improved delegation tool docstrings to explicitly state `query` must be a plain text string, NOT structured data.
+- **Anti-pattern**: Assuming OpenAI-compatible providers follow JSON schema constraints. Without `strict=True` support, models may ignore type constraints entirely.
+- **References**: `src/app/data_models/peerread_models.py` (coercions), `src/app/app.py:343` (default fix), `src/app/agents/agent_system.py` (tool docstrings)
+
 ### `-X ours` Does Not Delete Files Added by Theirs
 
 - **Context**: Squash merging a feature branch into `main` via PR when `main` has diverged

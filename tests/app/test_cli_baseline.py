@@ -331,10 +331,15 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         mock_compare_all.assert_not_called()
 
 
-# STORY-009: Tests for default-on review tools and opt-out flag
+# STORY-009: Tests for review tools — disabled by default, enabled by paper_id
 @pytest.mark.asyncio
-async def test_review_tools_enabled_by_default():
-    """Test that review tools are enabled by default (STORY-009)."""
+async def test_review_tools_disabled_for_general_query():
+    """Test that review tools are disabled by default for general queries without paper_id (STORY-009).
+
+    Review tools are only enabled when paper_id triggers _prepare_query to set
+    review_tools_enabled=True. A bare general query must use ResearchResult,
+    not ReviewGenerationResult, to avoid 422 errors on providers like Cerebras.
+    """
     with (
         patch("app.app.setup_agent_env") as mock_setup,
         patch("app.app.login"),
@@ -359,18 +364,18 @@ async def test_review_tools_enabled_by_default():
 
         from app.app import main
 
-        # Run main without explicit enable_review_tools parameter
+        # Run main without paper_id — review tools must NOT be enabled
         await main(
             chat_provider="test_provider",
             query="test query",
         )
 
-        # Verify get_manager was called with enable_review_tools=True (8th positional arg)
+        # Verify get_manager was called with enable_review_tools=False (8th positional arg)
         call_args = mock_get_manager.call_args[0]
         # get_manager(provider, provider_config, api_key, prompts,
         #             include_researcher, include_analyst, include_synthesiser, enable_review_tools)
         assert len(call_args) >= 8
-        assert call_args[7] is True  # enable_review_tools is 8th arg (index 7)
+        assert call_args[7] is False  # enable_review_tools is 8th arg (index 7)
 
 
 @pytest.mark.asyncio
