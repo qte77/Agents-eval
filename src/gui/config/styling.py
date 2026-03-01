@@ -37,6 +37,35 @@ def add_custom_styling(page_title: str):
     # S8-F8.1: WCAG 1.3.3, 1.4.1 — native selection indicators must not be hidden via CSS
 
 
+_DEFAULT_THEME = "expanse_dark"
+
+
+def get_active_theme() -> dict[str, str]:
+    """Get the active theme dict from session state.
+
+    Reads ``st.session_state["selected_theme"]`` and returns the matching
+    entry from :data:`THEMES`. Falls back to *expanse_dark* when the key
+    is missing or contains an unknown theme name.
+
+    Returns:
+        dict[str, str]: Theme color mapping with keys like ``primaryColor``,
+            ``accentColor``, etc.
+    """
+    theme_name = st.session_state.get("selected_theme", _DEFAULT_THEME)
+    return THEMES.get(theme_name, THEMES[_DEFAULT_THEME])
+
+
+def get_theme_node_colors() -> tuple[str, str]:
+    """Get node colors for agent graph from the active theme.
+
+    Returns:
+        tuple[str, str]: ``(primaryColor, accentColor)`` from the active theme.
+            *primaryColor* is used for agent nodes, *accentColor* for tool nodes.
+    """
+    theme = get_active_theme()
+    return theme["primaryColor"], theme["accentColor"]
+
+
 def get_theme_bgcolor() -> str:
     """Get the background color from the current Streamlit theme.
 

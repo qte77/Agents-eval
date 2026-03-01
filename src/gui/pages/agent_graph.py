@@ -16,7 +16,7 @@ import networkx as nx
 import streamlit as st
 import streamlit.components.v1 as components
 
-from gui.config.styling import get_theme_bgcolor
+from gui.config.styling import get_theme_bgcolor, get_theme_node_colors
 from gui.config.text import AGENT_GRAPH_HEADER, AGENT_GRAPH_NETWORK_SUBHEADER
 
 try:
@@ -121,28 +121,29 @@ def render_agent_graph(
         """
     )
 
-    # Add nodes with visual distinction
+    # Add nodes with visual distinction — colors from active theme
+    agent_color, tool_color = get_theme_node_colors()
     for node in graph.nodes():
         node_data: dict[str, Any] = graph.nodes[node]  # type: ignore[assignment]
         node_type = node_data.get("type", "agent")
         label = node_data.get("label", str(node))
 
         if node_type == "agent":
-            # Agent nodes: blue circles
+            # Agent nodes: themed circles
             net.add_node(
                 str(node),
                 label=label,
-                color="#4A90E2",
+                color=agent_color,
                 shape="dot",
                 size=25,
                 title=f"Agent: {label}",
             )
         else:
-            # Tool nodes: green squares
+            # Tool nodes: themed squares
             net.add_node(
                 str(node),
                 label=label,
-                color="#50C878",
+                color=tool_color,
                 shape="box",
                 size=20,
                 title=f"Tool: {label}",

@@ -1,6 +1,8 @@
+import streamlit as st
 from streamlit import sidebar
 
 from gui.config.config import PAGES, PHOENIX_DEFAULT_ENDPOINT
+from gui.config.styling import THEMES
 
 
 def render_sidebar(sidebar_title: str, execution_state: str = "idle") -> str:
@@ -23,6 +25,17 @@ def render_sidebar(sidebar_title: str, execution_state: str = "idle") -> str:
     # S8-F8.1: WCAG 1.3.1, 2.4.6 — meaningful label with visual collapse avoids empty label
     # key persists tab selection across Streamlit reruns within a session (AC4)
     selected_page = sidebar.radio("Navigation", PAGES, label_visibility="hidden", key="sidebar_tab")
+
+    # Theme selector — persists in session state across page navigations
+    theme_options = list(THEMES.keys())
+    current_theme = st.session_state.get("selected_theme", theme_options[0])
+    current_idx = theme_options.index(current_theme) if current_theme in theme_options else 0
+    st.session_state["selected_theme"] = sidebar.selectbox(
+        "Theme",
+        options=theme_options,
+        index=current_idx,
+        key="theme_selectbox",
+    )
 
     # Phoenix trace viewer link
     sidebar.divider()
