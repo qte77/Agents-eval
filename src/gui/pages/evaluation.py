@@ -318,7 +318,7 @@ def _render_empty_state() -> None:
     st.info("No evaluation results available. Run an evaluation to see results here.")
 
     # S8-F3.3: baseline inputs in collapsed expander (progressive disclosure)
-    with st.expander("Baseline Comparison Configuration", expanded=False):
+    with st.expander("Baseline Comparison Configuration", expanded=True):
         st.markdown(
             "Provide directory paths to Claude Code artifact exports to enable "
             "comparative evaluation against MAS results."
