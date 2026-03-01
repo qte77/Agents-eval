@@ -558,6 +558,96 @@ def _render_report_section(composite_result: CompositeResult | None) -> None:
         )
 
 
+def _render_engine_selector() -> tuple[str, bool]:
+    """Render the execution engine selector and CC Teams checkbox.
+
+    Returns:
+        Tuple of (engine, cc_teams) where engine is 'mas' or 'cc'.
+    """
+    engine_label = st.radio(
+        "Execution engine",
+        ["Multi-Agent System (MAS)", "Claude Code"],
+        key="engine_label",
+        horizontal=True,
+        help=(
+            "MAS (PydanticAI): multi-agent pipeline with Researcher, Analyst, and Synthesiser. "
+            "Claude Code: single-model execution via the `claude` CLI."
+        ),
+    )
+    engine = "cc" if engine_label == "Claude Code" else "mas"
+    st.session_state.engine = engine
+
+    cc_teams = False
+    if engine == "cc":
+        cc_teams = st.checkbox(
+            "Use CC Teams",
+            key="cc_teams_mode",
+            help=(
+                "Runs Claude Code in multi-agent team mode. "
+                "Requires the claude CLI with agent teams support."
+            ),
+        )
+
+    return engine, cc_teams
+
+
+def _render_engine_status(
+    engine: str,
+    cc_available: bool,
+    provider: str,
+    token_limit: int | None,
+    include_researcher: bool,
+    include_analyst: bool,
+    include_synthesiser: bool,
+) -> None:
+    """Show engine-specific status messages and MAS configuration.
+
+    Args:
+        engine: Selected engine ('mas' or 'cc').
+        cc_available: Whether the claude CLI is available.
+        provider: Active LLM provider.
+        token_limit: Optional token limit.
+        include_researcher: Whether researcher agent is enabled.
+        include_analyst: Whether analyst agent is enabled.
+        include_synthesiser: Whether synthesiser agent is enabled.
+    """
+    if engine == "cc" and not cc_available:
+        st.warning(
+            "Claude Code CLI (`claude`) not found on PATH. "
+            "Install it to use the CC engine: https://docs.anthropic.com/en/docs/claude-code"
+        )
+
+    if engine == "cc":
+        st.info(
+            "MAS agent controls (Researcher, Analyst, Synthesiser) are not applicable "
+            "when using the Claude Code engine."
+        )
+    else:
+        agents_text = _format_enabled_agents(
+            include_researcher, include_analyst, include_synthesiser
+        )
+        _display_configuration(provider, token_limit, agents_text)
+
+
+def _render_query_input() -> tuple[str, str | None]:
+    """Render input mode selector and query input fields.
+
+    Returns:
+        Tuple of (query, selected_paper_id).
+    """
+    input_mode = st.radio(
+        "Input mode",
+        ["Free-form query", "Select a paper"],
+        key="input_mode",
+        horizontal=True,
+    )
+
+    if input_mode == "Free-form query":
+        return text_input(RUN_APP_QUERY_PLACEHOLDER, key="freeform_query"), None
+
+    return _render_paper_selection_input()
+
+
 async def render_app(provider: str | None = None, chat_config_file: str | Path | None = None):
     """Render the main app interface for running agentic queries via Streamlit.
 
@@ -576,7 +666,6 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     header(RUN_APP_HEADER)
     _initialize_execution_state()
 
-    # CC availability: compute once and cache in session state
     st.session_state.setdefault("cc_available", shutil.which("claude") is not None)
     cc_available: bool = st.session_state.cc_available
 
@@ -585,63 +674,13 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     )
     token_limit: int | None = st.session_state.get("token_limit")
 
-    # Engine selector — per-run choice, not persistent config
-    engine_label = st.radio(
-        "Execution engine",
-        ["Multi-Agent System (MAS)", "Claude Code"],
-        key="engine_label",
-        horizontal=True,
-        # S8-F3.3: help text for engine selector
-        help=(
-            "MAS (PydanticAI): multi-agent pipeline with Researcher, Analyst, and Synthesiser. "
-            "Claude Code: single-model execution via the `claude` CLI."
-        ),
-    )
-    engine = "cc" if engine_label == "Claude Code" else "mas"
-    st.session_state.engine = engine
-
-    # S10-F1: CC Teams checkbox — only shown when CC engine selected
-    cc_teams = False
-    if engine == "cc":
-        cc_teams = st.checkbox(
-            "Use CC Teams",
-            key="cc_teams_mode",
-            help=(
-                "Runs Claude Code in multi-agent team mode. "
-                "Requires the claude CLI with agent teams support."
-            ),
-        )
-
-    if engine == "cc" and not cc_available:
-        st.warning(
-            "Claude Code CLI (`claude`) not found on PATH. "
-            "Install it to use the CC engine: https://docs.anthropic.com/en/docs/claude-code"
-        )
-
-    if engine == "cc":
-        # S8-F8.2: hide MAS controls entirely when CC engine selected (not just disabled)
-        st.info(
-            "MAS agent controls (Researcher, Analyst, Synthesiser) are not applicable "
-            "when using the Claude Code engine."
-        )
-    else:
-        agents_text = _format_enabled_agents(
-            include_researcher, include_analyst, include_synthesiser
-        )
-        _display_configuration(provider_from_state, token_limit, agents_text)
-
-    input_mode = st.radio(
-        "Input mode",
-        ["Free-form query", "Select a paper"],
-        key="input_mode",
-        horizontal=True,
+    engine, cc_teams = _render_engine_selector()
+    _render_engine_status(
+        engine, cc_available, provider_from_state, token_limit,
+        include_researcher, include_analyst, include_synthesiser,
     )
 
-    if input_mode == "Free-form query":
-        query = text_input(RUN_APP_QUERY_PLACEHOLDER, key="freeform_query")
-        selected_paper_id: str | None = None
-    else:
-        query, selected_paper_id = _render_paper_selection_input()
+    query, selected_paper_id = _render_query_input()
 
     if button(RUN_APP_BUTTON):
         if not (query or selected_paper_id):
@@ -661,15 +700,12 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
                 cc_teams=cc_teams,
             )
 
-    # S13-STORY-004: Render persistent validation warning near Run button
     if st.session_state.get("show_validation_warning"):
         warning(RUN_APP_QUERY_WARNING)
 
-    # S8-F8.1: subheader placed after run button so output section follows user action
     subheader(OUTPUT_SUBHEADER)
     _display_execution_result(_get_execution_state())
     _render_debug_log_panel()
 
-    # S8-F6.2: report section — enabled after evaluation completes
     composite_result = st.session_state.get("execution_composite_result")
     _render_report_section(composite_result)
