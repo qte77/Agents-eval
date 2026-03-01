@@ -134,17 +134,17 @@ class LogCapture:
             color = level_colors.get(level, "#666666")
             badge = level_badges.get(level, f"[{level}]")
             html_parts.append(
-                f'<div style="margin-bottom: 8px; font-family: monospace; font-size: 12px;">'
+                f'<div style="margin-bottom: 8px;">'
                 f'<span style="color: #666;">{entry["timestamp"]}</span> '
                 # S8-F8.1: WCAG 1.4.1 — text badge + color (not color alone)
                 f'<span style="color: {color}; font-weight: bold;">{badge}</span> '
                 # S8-F8.1: WCAG 1.4.3 — #696969 contrast ratio 5.9:1 (passes AA)
                 f'<span style="color: #696969;">{entry["module"]}</span> '
-                f"<span>{entry['message']}</span>"
+                f'<span style="color: inherit;">{entry["message"]}</span>'
                 f"</div>"
             )
 
-        return "".join(html_parts)
+        return f'<section role="log" aria-label="Debug logs">{"".join(html_parts)}</section>'
 
     def _sink_handler(self, message: Any) -> None:
         """Loguru sink handler that processes log records.
