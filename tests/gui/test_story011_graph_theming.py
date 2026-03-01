@@ -250,7 +250,7 @@ class TestAgentGraphUsesThemeColors:
             patch(
                 "tempfile.NamedTemporaryFile",
                 return_value=MagicMock(
-                    __enter__=MagicMock(return_value=MagicMock(name="/tmp/test.html")),
+                    __enter__=MagicMock(return_value=MagicMock(name="test.html")),
                     __exit__=MagicMock(),
                 ),
             ),
@@ -298,7 +298,7 @@ class TestAgentGraphUsesThemeColors:
             patch(
                 "tempfile.NamedTemporaryFile",
                 return_value=MagicMock(
-                    __enter__=MagicMock(return_value=MagicMock(name="/tmp/test.html")),
+                    __enter__=MagicMock(return_value=MagicMock(name="test.html")),
                     __exit__=MagicMock(),
                 ),
             ),
@@ -345,7 +345,7 @@ class TestAgentGraphUsesThemeColors:
             patch(
                 "tempfile.NamedTemporaryFile",
                 return_value=MagicMock(
-                    __enter__=MagicMock(return_value=MagicMock(name="/tmp/test.html")),
+                    __enter__=MagicMock(return_value=MagicMock(name="test.html")),
                     __exit__=MagicMock(),
                 ),
             ),
