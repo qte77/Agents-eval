@@ -34,6 +34,9 @@ from app.reports.report_generator import generate_report
 from app.utils.log import logger
 from gui.components.output import render_output
 from gui.config.text import (
+    DEBUG_LOG_LABEL,
+    DOWNLOAD_REPORT_LABEL,
+    GENERATE_REPORT_LABEL,
     OUTPUT_SUBHEADER,
     RUN_APP_BUTTON,
     RUN_APP_HEADER,
@@ -225,7 +228,7 @@ def _render_debug_log_panel() -> None:
     """
     logs = getattr(st.session_state, "debug_logs", [])
 
-    with st.expander("Debug Log", expanded=False):
+    with st.expander(DEBUG_LOG_LABEL, expanded=False):
         if not logs:
             st.info("No logs captured yet. Run a query to see execution logs.")
         else:
@@ -403,9 +406,7 @@ def _display_execution_result(execution_state: str) -> None:
         )
         if result:
             st.markdown(
-                '<div role="status" aria-live="polite">'
-                f"Execution completed. {nav_guidance}"
-                "</div>",
+                f'<div role="status" aria-live="polite">Execution completed. {nav_guidance}</div>',
                 unsafe_allow_html=True,
             )
             render_output(result)
@@ -427,9 +428,7 @@ def _display_execution_result(execution_state: str) -> None:
         # S13-STORY-001: Consolidated ARIA region for error state
         error_msg = getattr(st.session_state, "execution_error", "Unknown error")
         st.markdown(
-            '<div role="alert" aria-live="assertive">'
-            f"Error: {error_msg}"
-            "</div>",
+            f'<div role="alert" aria-live="assertive">Error: {error_msg}</div>',
             unsafe_allow_html=True,
         )
         exception(Exception(error_msg))
@@ -511,10 +510,6 @@ async def _handle_query_submission(
         engine: Execution engine — 'mas' (PydanticAI) or 'cc' (Claude Code).
         cc_teams: Whether to use CC Teams mode (only applies when engine='cc').
     """
-    if not (query or selected_paper_id):
-        warning(RUN_APP_QUERY_WARNING)
-        return
-
     judge_settings = _build_judge_settings_from_session()
     common_settings = _build_common_settings_from_session()
     info(f"{RUN_APP_QUERY_RUN_INFO} {query or f'paper {selected_paper_id}'}")
@@ -551,11 +546,11 @@ def _render_report_section(composite_result: CompositeResult | None) -> None:
         return
 
     # Render the generate button
-    if st.button("Generate Report", key="generate_report_btn"):
+    if st.button(GENERATE_REPORT_LABEL, key="generate_report_btn"):
         markdown = generate_report(composite_result)
         st.markdown(markdown)
         st.download_button(
-            label="Download Report",
+            label=DOWNLOAD_REPORT_LABEL,
             data=markdown,
             file_name="evaluation_report.md",
             mime="text/markdown",
@@ -649,18 +644,26 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
         query, selected_paper_id = _render_paper_selection_input()
 
     if button(RUN_APP_BUTTON):
-        await _handle_query_submission(
-            query,
-            selected_paper_id,
-            provider_from_state,
-            include_researcher,
-            include_analyst,
-            include_synthesiser,
-            chat_config_file,
-            token_limit,
-            engine=engine,
-            cc_teams=cc_teams,
-        )
+        if not (query or selected_paper_id):
+            st.session_state.show_validation_warning = True
+        else:
+            st.session_state.show_validation_warning = False
+            await _handle_query_submission(
+                query,
+                selected_paper_id,
+                provider_from_state,
+                include_researcher,
+                include_analyst,
+                include_synthesiser,
+                chat_config_file,
+                token_limit,
+                engine=engine,
+                cc_teams=cc_teams,
+            )
+
+    # S13-STORY-004: Render persistent validation warning near Run button
+    if st.session_state.get("show_validation_warning"):
+        warning(RUN_APP_QUERY_WARNING)
 
     # S8-F8.1: subheader placed after run button so output section follows user action
     subheader(OUTPUT_SUBHEADER)

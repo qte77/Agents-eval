@@ -11,6 +11,12 @@ from pathlib import Path
 import streamlit as st
 
 from app.data_models.evaluation_models import BaselineComparison, CompositeResult
+from gui.config.text import (
+    EVALUATION_HEADER,
+    EVALUATION_METRICS_COMPARISON_SUBHEADER,
+    EVALUATION_OVERALL_RESULTS_SUBHEADER,
+    EVALUATION_TIER_SCORES_SUBHEADER,
+)
 
 # S8-F3.3: human-readable labels for metric snake_case keys (WCAG display clarity)
 METRIC_LABELS: dict[str, str] = {
@@ -96,7 +102,7 @@ def _render_overall_results(
         result: CompositeResult containing evaluation data.
         baseline_comparison: Optional baseline for delta indicators in metrics.
     """
-    st.subheader("Overall Results")
+    st.subheader(EVALUATION_OVERALL_RESULTS_SUBHEADER)
     col1, col2, col3 = st.columns(3)
 
     # S8-F3.3: populate delta from baseline tier_deltas when available
@@ -132,7 +138,7 @@ def _render_tier_scores(result: CompositeResult) -> None:
     Args:
         result: CompositeResult containing tier scores.
     """
-    st.subheader("Tier Scores")
+    st.subheader(EVALUATION_TIER_SCORES_SUBHEADER)
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -180,7 +186,7 @@ def _render_metrics_comparison(result: CompositeResult) -> None:
     Args:
         result: CompositeResult containing metric scores.
     """
-    st.subheader("Graph Metrics vs Text Metrics Comparison")
+    st.subheader(EVALUATION_METRICS_COMPARISON_SUBHEADER)
 
     graph_metrics = _extract_graph_metrics(result.metric_scores)
     text_metrics = _extract_text_metrics(result.metric_scores)
@@ -356,7 +362,7 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
     Args:
         result: CompositeResult containing evaluation data, or None for empty state.
     """
-    st.header("Evaluation Results")
+    st.header(EVALUATION_HEADER)
 
     if result is None:
         _render_empty_state()

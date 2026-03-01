@@ -165,9 +165,7 @@ def render_agent_graph(
     html_content = tmp_path.read_text(encoding="utf-8")
 
     # AC-6: Insert <title> element into Pyvis HTML for screen readers
-    html_content = html_content.replace(
-        "<head>", "<head><title>Agent Interaction Graph</title>", 1
-    )
+    html_content = html_content.replace("<head>", "<head><title>Agent Interaction Graph</title>", 1)
 
     # AC-7: Descriptive caption before the graph component
     st.caption(
