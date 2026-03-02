@@ -89,7 +89,10 @@ class RunContext:
         dir_name = f"{ts}_{safe_engine}_{safe_paper}_{exec_id_short}"
         category = "cc" if engine_type.startswith("cc") else "mas"
 
-        run_dir = OUTPUT_BASE / "runs" / category / dir_name
+        run_dir = (OUTPUT_BASE / "runs" / category / dir_name).resolve()
+        if not run_dir.is_relative_to(OUTPUT_BASE.resolve()):
+            msg = f"Path traversal detected: {run_dir}"
+            raise ValueError(msg)
         run_dir.mkdir(parents=True, exist_ok=True)
 
         ctx = cls(
