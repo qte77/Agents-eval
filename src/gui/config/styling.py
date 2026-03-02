@@ -1,3 +1,16 @@
+"""GUI theming utilities.
+
+Provides helper functions that read the **active Streamlit theme** (light or
+dark) and return colors for custom elements such as the Pyvis agent graph.
+
+Theme colors are defined in ``.streamlit/config.toml`` via the native
+``[theme.dark]`` and ``[theme.light]`` sections.  Users switch themes through
+Streamlit's built-in Settings menu (hamburger icon → Settings → Theme).
+
+The ``THEMES`` dict below mirrors those config values so that non-Streamlit
+components (Pyvis, custom HTML) can access the palette at runtime.
+"""
+
 import streamlit as st
 from streamlit import set_page_config
 
@@ -25,8 +38,16 @@ THEMES: dict[str, dict[str, str]] = {
     },
 }
 
+_DARK_THEME = "expanse_dark"
+_LIGHT_THEME = "nord_light"
+
 
 def add_custom_styling(page_title: str):
+    """Configure the Streamlit page layout.
+
+    Args:
+        page_title: Title shown in the browser tab.
+    """
     set_page_config(
         page_title=f"{page_title}",
         page_icon="🤖",
@@ -37,37 +58,42 @@ def add_custom_styling(page_title: str):
     # S8-F8.1: WCAG 1.3.3, 1.4.1 — native selection indicators must not be hidden via CSS
 
 
-_DEFAULT_THEME = "expanse_dark"
+def _is_streamlit_light_mode() -> bool:
+    """Detect whether Streamlit is currently rendering in light mode.
 
-# Reason: Only themes with light backgrounds where dark text is needed for contrast
-_LIGHT_THEMES: frozenset[str] = frozenset({"nord_light"})
+    Uses ``st.get_option("theme.backgroundColor")`` to infer the active mode.
+    A background color with high luminance (>= 0x80 average) is considered light.
+
+    Returns:
+        bool: True when the active Streamlit theme is light.
+    """
+    bg = st.get_option("theme.backgroundColor")
+    if isinstance(bg, str) and bg.startswith("#") and len(bg) == 7:
+        r, g, b = int(bg[1:3], 16), int(bg[3:5], 16), int(bg[5:7], 16)
+        return (r + g + b) / 3 >= 0x80
+    return False
 
 
 def get_active_theme_name() -> str:
-    """Get the name of the currently selected theme.
+    """Get the name of the currently active theme.
 
-    Reads ``st.session_state["selected_theme"]``. Falls back to
-    ``"expanse_dark"`` when the key is missing.
+    Detects Streamlit's active theme (light or dark) and returns the
+    corresponding theme name from :data:`THEMES`.
 
     Returns:
-        str: Theme name string (e.g. ``"expanse_dark"``, ``"nord_light"``).
+        str: Theme name string (``"nord_light"`` or ``"expanse_dark"``).
     """
-    return st.session_state.get("selected_theme", _DEFAULT_THEME)
+    return _LIGHT_THEME if _is_streamlit_light_mode() else _DARK_THEME
 
 
 def get_active_theme() -> dict[str, str]:
-    """Get the active theme dict from session state.
-
-    Reads ``st.session_state["selected_theme"]`` and returns the matching
-    entry from :data:`THEMES`. Falls back to *expanse_dark* when the key
-    is missing or contains an unknown theme name.
+    """Get the active theme dict based on Streamlit's current mode.
 
     Returns:
         dict[str, str]: Theme color mapping with keys like ``primaryColor``,
             ``accentColor``, etc.
     """
-    theme_name = get_active_theme_name()
-    return THEMES.get(theme_name, THEMES[_DEFAULT_THEME])
+    return THEMES[get_active_theme_name()]
 
 
 def is_light_theme(theme_name: str) -> bool:
@@ -79,7 +105,7 @@ def is_light_theme(theme_name: str) -> bool:
     Returns:
         bool: True if the theme is a light theme, False otherwise.
     """
-    return theme_name in _LIGHT_THEMES
+    return theme_name == _LIGHT_THEME
 
 
 def get_graph_font_color() -> str:
@@ -91,8 +117,7 @@ def get_graph_font_color() -> str:
     Returns:
         str: Hex color string for graph label text.
     """
-    theme_name = get_active_theme_name()
-    if is_light_theme(theme_name):
+    if _is_streamlit_light_mode():
         return "#000000"
     return "#ECEFF4"
 
