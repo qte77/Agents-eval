@@ -87,53 +87,63 @@ The evaluation framework is built around large context window models capable of 
 
 ### Evaluation Components
 
-#### Tier 1 — Traditional Evaluation Metrics
+Result models: `src/app/data_models/evaluation_models.py`
+
+#### Tier 1 — Traditional Metrics (`Tier1Result`)
 
 **Location**: `src/app/judge/plugins/traditional.py`
 
-- Text similarity: cosine, Jaccard, BERTScore F1 (`distilbert-base-uncased`) with Levenshtein fallback
-- Execution time tracking (end-to-end paper processing)
-- Task success: review completeness and structure adherence
+| Metric | Range | Description |
+| --- | --- | --- |
+| `cosine_score` | 0–1 | TF-IDF cosine similarity vs ground truth |
+| `jaccard_score` | 0–1 | Word-level Jaccard similarity |
+| `semantic_score` | 0–1 | BERTScore F1 (`distilbert-base-uncased`), Levenshtein fallback |
+| `execution_time` | ≥0 | Raw wall-clock seconds |
+| `time_score` | 0–1 | Normalized time score |
+| `task_success` | 0–1 | Continuous: `min(1.0, similarity / threshold)` |
 
-#### Tier 2 — LLM-as-a-Judge Framework
+#### Tier 2 — LLM-as-a-Judge (`Tier2Result`)
 
 **Location**: `src/app/judge/plugins/llm_judge.py`
 
-- Planning rationality, tool efficiency, and recommendation quality assessment via configurable judge provider
-- Recommendation scoring with config weights (accept/weak_accept/weak_reject/reject)
+| Metric | Range | Description |
+| --- | --- | --- |
+| `technical_accuracy` | 0–1 | Factual and methodological correctness |
+| `constructiveness` | 0–1 | Actionable feedback quality |
+| `planning_rationality` | 0–1 | Decision-making and reasoning quality |
 
-#### Tier 3 — Graph-Based Complexity Analysis
+Also captures `model_used`, `api_cost`, and `fallback_used`.
+
+#### Tier 3 — Graph Analysis (`Tier3Result`)
 
 **Location**: `src/app/judge/plugins/graph_metrics.py`
 
-Post-execution behavioral analysis: agents autonomously decide tool use during execution, then trace data is processed into NetworkX graphs for retrospective evaluation.
+Post-execution behavioral analysis: trace data → NetworkX graphs → retrospective evaluation.
 
-- **Workflow**: Agent execution → Logfire trace capture → NetworkX graph construction → coordination analysis
-- **Metrics**: Agent interaction effectiveness (centrality), tool usage efficiency (edge density), coordination quality (path optimization)
+| Metric | Range | Description |
+| --- | --- | --- |
+| `path_convergence` | 0–1 | Tool usage path efficiency |
+| `tool_selection_accuracy` | 0–1 | Correct tool choice ratio |
+| `coordination_centrality` | 0–1 | Agent coordination quality (graph centrality) |
+| `task_distribution_balance` | 0–1 | Work distribution evenness across agents |
+| `graph_complexity` | ≥0 | Node count in interaction graph |
 
 #### Composite Scoring System
 
 **Location**: `src/app/judge/composite_scorer.py`
 
-**Formula**: `Agent Score = Weighted Sum of Six Core Metrics`
+The composite scorer maps tier result fields to six abstract metrics, each weighted 0.167 (equal):
 
-**Configuration-Based Metrics** (from `JudgeSettings` via pydantic-settings):
+| Composite Metric | Source Field | Tier |
+| --- | --- | --- |
+| `output_similarity` | `Tier1Result.overall_score` (weighted similarity) | 1 |
+| `time_taken` | `Tier1Result.time_score` | 1 |
+| `task_success` | `Tier1Result.task_success` | 1 |
+| `planning_rationality` | `Tier2Result.planning_rationality` | 2 |
+| `tool_efficiency` | `Tier3Result.tool_selection_accuracy` | 3 |
+| `coordination_quality` | `Tier3Result.coordination_centrality` | 3 |
 
-- `time_taken`: 0.167 (16.7% - execution time efficiency)
-- `task_success`: 0.167 (16.7% - review completion and accuracy)
-- `coordination_quality`: 0.167 (16.7% - agent interaction effectiveness)
-- `tool_efficiency`: 0.167 (16.7% - tool usage optimization)
-- `planning_rationality`: 0.167 (16.7% - decision-making quality)
-- `output_similarity`: 0.167 (16.7% - similarity to PeerRead ground truth)
-
-**Configuration-Based Output**:
-
-- Final weighted score using six metrics above (0.167 each)
-- Similarity metrics selection (cosine, jaccard, semantic) with semantic as default
-- Recommendation scoring with config weights and confidence threshold (0.8)
-- Performance trend analysis with configurable evaluation parameters
-
-**Adaptive Weight Redistribution** (Sprint 5):
+**Adaptive Weight Redistribution**:
 
 - **Single-Agent Mode Detection**: Automatically detects single-agent runs from `GraphTraceData` (0-1 unique agent IDs, empty `coordination_events`)
 - **Weight Redistribution**: When single-agent mode is detected, the `coordination_quality` metric (0.167 weight) is excluded and its weight is redistributed equally across the remaining 5 metrics (0.20 each)
