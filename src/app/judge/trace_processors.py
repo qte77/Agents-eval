@@ -310,32 +310,27 @@ class TraceCollector:
         )
 
     def _store_trace(self, trace: ProcessedTrace) -> None:
-        """Store processed trace to both JSON file and SQLite database.
+        """Store processed trace to JSON file and SQLite database.
 
-        Also copies the trace JSONL to the per-run directory if an active
-        RunContext exists.
+        Writes trace to the per-run directory when a RunContext is active,
+        otherwise falls back to flat storage under trace_storage_path.
 
         Args:
             trace: ProcessedTrace to store
         """
         try:
-            # Store as JSONL file
-            timestamp_str = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
-            json_file = self.storage_path / f"trace_{trace.execution_id}_{timestamp_str}.jsonl"
-
-            with open(json_file, "w") as f:
-                # Write as single JSON line
-                json.dump(asdict(trace), f)
-                f.write("\n")
-
-            # Copy trace to per-run directory if active
+            # Determine target path: per-run directory when active, else flat storage
             from app.utils.run_context import get_active_run_context
 
             run_ctx = get_active_run_context()
             if run_ctx is not None:
-                import shutil
+                json_file = run_ctx.trace_path
+            else:
+                timestamp_str = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
+                json_file = self.storage_path / f"trace_{trace.execution_id}_{timestamp_str}.json"
 
-                shutil.copy2(json_file, run_ctx.trace_path)
+            with open(json_file, "w") as f:
+                json.dump(asdict(trace), f)
 
             # Store in SQLite database
             conn = sqlite3.connect(self.db_path)
@@ -379,7 +374,8 @@ class TraceCollector:
             finally:
                 conn.close()
 
-            # Register trace file with artifact registry
+            # TODO: Artifact registry entry is not read back by any pipeline stage —
+            # same rationale as the JSONL write above (offline/manual access).
             from app.utils.artifact_registry import get_artifact_registry
 
             get_artifact_registry().register("Trace", json_file)

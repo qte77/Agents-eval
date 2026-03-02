@@ -4,11 +4,11 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+from app.config.config_app import MAS_RUNS_PATH
 from app.data_models.peerread_models import PeerReadReview
 from app.utils.paths import resolve_project_path
 
-# Reason: legacy default path retained for backward compatibility during migration
-_DEFAULT_REVIEWS_DIR = "output/runs"
+_DEFAULT_REVIEWS_DIR = MAS_RUNS_PATH
 
 
 class ReviewPersistence:
@@ -30,6 +30,8 @@ class ReviewPersistence:
         review: PeerReadReview,
         timestamp: str | None = None,
         run_dir: Path | None = None,
+        structured_review: dict[str, object] | None = None,
+        model_info: str | None = None,
     ) -> str:
         """Save a review to the run directory or legacy reviews directory.
 
@@ -38,6 +40,8 @@ class ReviewPersistence:
             review: The generated review object
             timestamp: Optional timestamp, defaults to current UTC time
             run_dir: Optional per-run directory; writes review.json there if provided.
+            structured_review: Optional GeneratedReview dict with validated scores.
+            model_info: Optional model identifier string.
 
         Returns:
             str: Path to the saved review file
@@ -50,12 +54,15 @@ class ReviewPersistence:
             filename = f"{paper_id}_{timestamp}.json"
             filepath = self.reviews_dir / filename
 
-        # Convert review to dict for JSON serialization
-        review_data = {
+        review_data: dict[str, object] = {
             "paper_id": paper_id,
             "timestamp": timestamp or datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ"),
             "review": review.model_dump(),
         }
+        if structured_review is not None:
+            review_data["structured_review"] = structured_review
+        if model_info is not None:
+            review_data["model_info"] = model_info
 
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(review_data, f, indent=2, ensure_ascii=False)
