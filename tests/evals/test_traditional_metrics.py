@@ -289,6 +289,7 @@ class TestTraditionalMetricsPerformance:
 
 
 # Enhanced features tests
+@pytest.mark.usefixtures("no_bertscore_download")
 class TestEnhancedFeatures:
     """Test suite for enhanced similarity features in traditional metrics."""
 
@@ -419,6 +420,7 @@ class TestEnhancedFeatures:
 
 
 # Convenience function tests for enhanced features
+@pytest.mark.usefixtures("no_bertscore_download")
 class TestEvaluateSingleEnhanced:
     """Tests for evaluate_single_enhanced convenience function."""
 
@@ -446,6 +448,7 @@ class TestEvaluateSingleEnhanced:
         assert result == 0.0
 
 
+@pytest.mark.usefixtures("no_bertscore_download")
 class TestPeerReadEvaluation:
     """Test PeerRead evaluation functionality from traditional metrics."""
 
@@ -711,9 +714,10 @@ class TestSimilarityScoreProperties:
         start_time = 1000.0
         end_time = 1001.0
 
-        result = engine.evaluate_traditional_metrics(
-            agent_output, reference_texts, start_time, end_time
-        )
+        with patch.object(engine, "_get_bertscore_model", return_value=None):
+            result = engine.evaluate_traditional_metrics(
+                agent_output, reference_texts, start_time, end_time
+            )
 
         # PROPERTY: All scores in valid range (allow tiny FP precision errors)
         assert -1e-10 <= result.cosine_score <= 1.0 + 1e-10
@@ -833,6 +837,24 @@ class TestContinuousTaskSuccess:
         for scores in test_cases:
             success = engine.assess_task_success(scores, threshold=0.8)
             assert 0.0 <= success <= 1.0, f"Score {success} out of [0.0, 1.0] for scores {scores}"
+
+
+class TestNoBERTScoreDownloadFixture:
+    """Verify no_bertscore_download fixture prevents model init."""
+
+    def test_fixture_prevents_bertscore_model_init(self, no_bertscore_download):
+        """Given no_bertscore_download fixture, _get_bertscore_model returns None."""
+        engine = TraditionalMetricsEngine()
+        assert engine._get_bertscore_model() is None
+
+    def test_semantic_similarity_uses_levenshtein_fallback(self, no_bertscore_download):
+        """Given no_bertscore_download, semantic similarity falls back to Levenshtein."""
+        engine = TraditionalMetricsEngine()
+        score = engine.compute_semantic_similarity(
+            "The quick brown fox", "The quick brown fox jumps"
+        )
+        # Levenshtein fallback produces a score without network access
+        assert 0.0 <= score <= 1.0
 
 
 class TestBERTScoreReenablement:

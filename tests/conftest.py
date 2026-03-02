@@ -48,7 +48,9 @@ import os
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Reason: weave bundles sentry_sdk and calls sentry_sdk.init() with a hardcoded
 # DSN at import time, causing network requests to o151352.ingest.us.sentry.io.
@@ -67,6 +69,24 @@ project_root = Path(__file__).parent.parent
 src_path = project_root / "src"
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
+
+
+@pytest.fixture
+def no_bertscore_download():
+    """Prevent BERTScore model download from HuggingFace.
+
+    Use explicitly in tests that reach compute_semantic_similarity()
+    without mocking. Forces Levenshtein fallback.
+
+    Usage:
+        def test_something(no_bertscore_download):
+            engine = TraditionalMetricsEngine()
+            engine.evaluate_traditional_metrics(...)  # safe, no download
+    """
+    from app.judge.traditional_metrics import TraditionalMetricsEngine
+
+    with patch.object(TraditionalMetricsEngine, "_get_bertscore_model", return_value=None):
+        yield
 
 
 def capture_registered_tools(register_fn: Callable, agent_id: str = "test") -> dict:

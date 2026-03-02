@@ -199,7 +199,7 @@ class TestRecommendationMatching:
 class TestCosineScoreClamping:
     """C1 — cosine score above 1.0 must be clamped before Tier1Result construction."""
 
-    def test_evaluate_traditional_metrics_cosine_never_exceeds_1(self):
+    def test_evaluate_traditional_metrics_cosine_never_exceeds_1(self, no_bertscore_download):
         """AC5: Cosine score is clamped to 1.0 before Tier1Result validation."""
         engine = TraditionalMetricsEngine()
 
