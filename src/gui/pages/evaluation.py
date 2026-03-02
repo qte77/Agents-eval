@@ -209,7 +209,7 @@ def _render_metrics_comparison(result: CompositeResult) -> None:
             {"Metric": format_metric_label(k), "Score": round(v, 3), "Category": "Text (Tier 1)"}
             for k, v in sorted(text_metrics.items())
         ]
-        st.dataframe(combined_rows, use_container_width=True)
+        st.dataframe(combined_rows, width="stretch")
     else:
         st.info("Insufficient metric data for comparison visualization.")
 
@@ -231,7 +231,7 @@ def _render_three_way_table(comparisons: list[BaselineComparison]) -> None:
                 "Tier 3 Δ": f"{comp.tier_deltas.get('tier3', 0):.3f}",
             }
         )
-    st.dataframe(comparison_data, use_container_width=True)
+    st.dataframe(comparison_data, width="stretch")
 
 
 def _render_tier_deltas(comp: BaselineComparison) -> None:

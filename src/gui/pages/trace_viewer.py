@@ -113,7 +113,7 @@ def render_trace_viewer() -> None:
         st.info("No executions recorded yet. Run an evaluation to populate traces.")
         return
 
-    st.dataframe(executions, use_container_width=True)
+    st.dataframe(executions, width="stretch")
 
     execution_ids = [e["execution_id"] for e in executions]
     selected = st.selectbox("Select execution for details", execution_ids)
@@ -121,4 +121,4 @@ def render_trace_viewer() -> None:
     if selected:
         st.subheader(f"Events for {selected}")
         events = _query_events(db_path, str(selected))
-        st.dataframe(events, use_container_width=True)
+        st.dataframe(events, width="stretch")
