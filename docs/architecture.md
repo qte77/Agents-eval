@@ -336,17 +336,23 @@ _Agents-eval/
           review.json     ← generated review (ReviewPersistence + GeneratedReview)
           evaluation.json ← CompositeResult (when evaluation enabled)
           report.md       ← evaluation report (when --generate-report)
+          agent_graph.json ← nx.DiGraph node-link serialization (when graph available)
+          agent_graph.png  ← static graph render (when graph available)
       cc/
         {ts}_cc_solo_{paper}_{id}/
           metadata.json
           stream.json     ← raw JSON from claude -p
           evaluation.json
           report.md
+          agent_graph.json
+          agent_graph.png
         {ts}_cc_teams_{paper}_{id}/
           metadata.json
           stream.jsonl    ← JSONL teed from Popen stdout
           evaluation.json
           report.md
+          agent_graph.json
+          agent_graph.png
       traces.db           ← shared SQLite trace index (across all runs)
     sweeps/
       {YYYYMMDD_HHMMSS}/
@@ -378,6 +384,10 @@ CLI/GUI invocation
   │
   ├─ evaluation enabled (skip_eval=False)
   │    └─ WRITES: evaluation.json (CompositeResult)
+  │
+  ├─ graph available (graph is not None)
+  │    ├─ WRITES: agent_graph.json (nx.DiGraph node-link data)
+  │    └─ WRITES: agent_graph.png  (static matplotlib render)
   │
   └─ --generate-report
        └─ WRITES: report.md
@@ -432,6 +442,8 @@ All output filenames use a unified timestamp format: `%Y%m%d_%H%M%S` (e.g., `202
 | `{run_dir}/review.json` | `ReviewPersistence` | JSON | None (offline) | Generated review with PeerRead format |
 | `{run_dir}/evaluation.json` | `EvaluationPipeline` | JSON | None (offline) | CompositeResult serialized after evaluation |
 | `{run_dir}/report.md` | `ReportGenerator` | Markdown | None (offline) | Human-readable evaluation report |
+| `{run_dir}/agent_graph.json` | `graph_export.export_graph_json` | JSON | None (offline) | nx.DiGraph node-link serialization for offline analysis |
+| `{run_dir}/agent_graph.png` | `graph_export.export_graph_png` | PNG | None (offline) | Static matplotlib render of agent interaction graph |
 | `{run_dir}/metadata.json` | `RunContext` | JSON | None (offline) | Run configuration and timing metadata |
 | `{run_dir}/stream.jsonl` | `cc_engine.py` (`_tee_stream` / `_persist_solo_stream`) | JSONL | None (offline) | CC engine raw stream capture |
 | `_Agents-eval/datasets/peerread/` | `PeerReadDownloader` | Mixed | `datasets_peerread.load_paper` (Tier 1/2) | Ground truth reviews and paper content |
@@ -446,7 +458,7 @@ Only two persistence paths have runtime consumers in the evaluation pipeline:
 - **`traces.db`** — read by `TraceCollector.load_trace()` during Tier 3 graph-based evaluation
 - **`datasets/peerread/`** — read by `datasets_peerread.load_paper()` for ground truth in Tier 1/2
 
-All other per-run files (`metadata.json`, `stream.*`, `review.json`, `evaluation.json`, `report.md`) are write-once, read-never at runtime. They exist for offline inspection, debugging, and audit trails.
+All other per-run files (`metadata.json`, `stream.*`, `review.json`, `evaluation.json`, `report.md`, `agent_graph.json`, `agent_graph.png`) are write-once, read-never at runtime. They exist for offline inspection, debugging, and audit trails.
 
 ### Phoenix / OTel vs TraceCollector
 
@@ -520,7 +532,7 @@ When the user navigates to the Agent Graph page, `render_agent_graph()` (`src/gu
 nx.DiGraph → Pyvis Network → temp .html → streamlit.components.html() → interactive browser widget
 ```
 
-**Note**: The graph is currently rendered only in the GUI and is not persisted to disk as an artifact. The `nx.DiGraph` exists in-memory during the session and is discarded when the session ends.
+**Persistence**: After graph construction, `export_graph_json()` and `export_graph_png()` (`src/app/judge/graph_export.py`) write the `nx.DiGraph` to the per-run output directory as `agent_graph.json` (node-link format) and `agent_graph.png` (static matplotlib render). Both artifacts are registered with `ArtifactRegistry`.
 
 ### ArtifactRegistry
 
