@@ -74,4 +74,4 @@ class TestLogfireGracefulDegradation:
             pytest.skip("Logfire not installed")
         except Exception as e:
             # Should handle gracefully, not crash
-            assert "logfire" in str(e).lower() or True
+            assert "logfire" in str(e).lower()

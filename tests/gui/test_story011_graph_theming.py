@@ -8,7 +8,7 @@ Covers:
 - agent_graph.py uses theme-aware colors (not hard-coded)
 
 Mock strategy:
-- st.session_state patched via _SessionDict for theme selection
+- st.get_option("theme.backgroundColor") mocked to simulate light/dark mode
 - Pyvis Network patched to capture node/network constructor args
 - No real Streamlit runtime needed
 """
@@ -16,26 +16,6 @@ Mock strategy:
 from unittest.mock import MagicMock, patch
 
 from gui.config.styling import THEMES
-
-
-class _SessionDict(dict):
-    """Dict that supports attribute access, mimicking st.session_state."""
-
-    def __getattr__(self, key: str) -> object:
-        try:
-            return self[key]
-        except KeyError as exc:
-            raise AttributeError(key) from exc
-
-    def __setattr__(self, key: str, value: object) -> None:
-        self[key] = value
-
-    def __delattr__(self, key: str) -> None:
-        try:
-            del self[key]
-        except KeyError as exc:
-            raise AttributeError(key) from exc
-
 
 # ---------------------------------------------------------------------------
 # 1. is_light_theme
@@ -72,39 +52,43 @@ class TestIsLightTheme:
 
 
 class TestGetActiveTheme:
-    """Test active theme retrieval from session state."""
+    """Test active theme retrieval based on Streamlit's active mode."""
 
-    def test_get_active_theme_name_default(self) -> None:
+    @patch("gui.config.styling.st")
+    def test_get_active_theme_name_dark_default(self, mock_st) -> None:
+        """No background option defaults to dark theme."""
+        mock_st.get_option.return_value = None
+
         from gui.config.styling import get_active_theme_name
 
-        with patch("streamlit.session_state", _SessionDict()):
-            assert get_active_theme_name() == "expanse_dark"
+        assert get_active_theme_name() == "expanse_dark"
 
-    def test_get_active_theme_name_from_session(self) -> None:
+    @patch("gui.config.styling.st")
+    def test_get_active_theme_name_light_mode(self, mock_st) -> None:
+        """Light background returns nord_light."""
+        mock_st.get_option.return_value = "#ECEFF4"
+
         from gui.config.styling import get_active_theme_name
 
-        with patch(
-            "streamlit.session_state",
-            _SessionDict({"selected_theme": "tokyo_night"}),
-        ):
-            assert get_active_theme_name() == "tokyo_night"
+        assert get_active_theme_name() == "nord_light"
 
-    def test_get_active_theme_returns_dict(self) -> None:
+    @patch("gui.config.styling.st")
+    def test_get_active_theme_returns_light_dict(self, mock_st) -> None:
+        """Light mode returns nord_light theme dict."""
+        mock_st.get_option.return_value = "#ECEFF4"
+
         from gui.config.styling import get_active_theme
 
-        with patch(
-            "streamlit.session_state",
-            _SessionDict({"selected_theme": "nord_light"}),
-        ):
-            theme = get_active_theme()
-            assert theme == THEMES["nord_light"]
+        assert get_active_theme() == THEMES["nord_light"]
 
-    def test_get_active_theme_default_expanse_dark(self) -> None:
+    @patch("gui.config.styling.st")
+    def test_get_active_theme_returns_dark_dict(self, mock_st) -> None:
+        """Dark mode returns expanse_dark theme dict."""
+        mock_st.get_option.return_value = "#0b0c10"
+
         from gui.config.styling import get_active_theme
 
-        with patch("streamlit.session_state", _SessionDict()):
-            theme = get_active_theme()
-            assert theme == THEMES["expanse_dark"]
+        assert get_active_theme() == THEMES["expanse_dark"]
 
 
 # ---------------------------------------------------------------------------
@@ -115,32 +99,21 @@ class TestGetActiveTheme:
 class TestGetGraphFontColor:
     """Test font color selection based on active theme."""
 
-    def test_light_theme_returns_black(self) -> None:
+    @patch("gui.config.styling.st")
+    def test_light_theme_returns_black(self, mock_st) -> None:
+        mock_st.get_option.return_value = "#ECEFF4"
+
         from gui.config.styling import get_graph_font_color
 
-        with patch(
-            "streamlit.session_state",
-            _SessionDict({"selected_theme": "nord_light"}),
-        ):
-            assert get_graph_font_color() == "#000000"
+        assert get_graph_font_color() == "#000000"
 
-    def test_dark_theme_returns_light(self) -> None:
+    @patch("gui.config.styling.st")
+    def test_dark_theme_returns_light(self, mock_st) -> None:
+        mock_st.get_option.return_value = "#0b0c10"
+
         from gui.config.styling import get_graph_font_color
 
-        with patch(
-            "streamlit.session_state",
-            _SessionDict({"selected_theme": "expanse_dark"}),
-        ):
-            assert get_graph_font_color() == "#ECEFF4"
-
-    def test_tokyo_night_returns_light(self) -> None:
-        from gui.config.styling import get_graph_font_color
-
-        with patch(
-            "streamlit.session_state",
-            _SessionDict({"selected_theme": "tokyo_night"}),
-        ):
-            assert get_graph_font_color() == "#ECEFF4"
+        assert get_graph_font_color() == "#ECEFF4"
 
 
 # ---------------------------------------------------------------------------
@@ -151,38 +124,25 @@ class TestGetGraphFontColor:
 class TestGetGraphNodeColors:
     """Test node color retrieval from active theme."""
 
-    def test_expanse_dark_colors(self) -> None:
+    @patch("gui.config.styling.st")
+    def test_dark_mode_colors(self, mock_st) -> None:
+        mock_st.get_option.return_value = "#0b0c10"
+
         from gui.config.styling import get_graph_node_colors
 
-        with patch(
-            "streamlit.session_state",
-            _SessionDict({"selected_theme": "expanse_dark"}),
-        ):
-            agent_color, tool_color = get_graph_node_colors()
-            assert agent_color == "#4A90E2"
-            assert tool_color == "#50C878"
+        agent_color, tool_color = get_graph_node_colors()
+        assert agent_color == "#4A90E2"
+        assert tool_color == "#50C878"
 
-    def test_nord_light_colors(self) -> None:
+    @patch("gui.config.styling.st")
+    def test_light_mode_colors(self, mock_st) -> None:
+        mock_st.get_option.return_value = "#ECEFF4"
+
         from gui.config.styling import get_graph_node_colors
 
-        with patch(
-            "streamlit.session_state",
-            _SessionDict({"selected_theme": "nord_light"}),
-        ):
-            agent_color, tool_color = get_graph_node_colors()
-            assert agent_color == "#5E81AC"
-            assert tool_color == "#88C0D0"
-
-    def test_tokyo_night_colors(self) -> None:
-        from gui.config.styling import get_graph_node_colors
-
-        with patch(
-            "streamlit.session_state",
-            _SessionDict({"selected_theme": "tokyo_night"}),
-        ):
-            agent_color, tool_color = get_graph_node_colors()
-            assert agent_color == "#7AA2F7"
-            assert tool_color == "#9ECE6A"
+        agent_color, tool_color = get_graph_node_colors()
+        assert agent_color == "#5E81AC"
+        assert tool_color == "#88C0D0"
 
 
 # ---------------------------------------------------------------------------
@@ -193,23 +153,21 @@ class TestGetGraphNodeColors:
 class TestGetThemeBgcolorFromActiveTheme:
     """Test that get_theme_bgcolor returns backgroundColor from active theme."""
 
-    def test_expanse_dark_bgcolor(self) -> None:
+    @patch("gui.config.styling.st")
+    def test_dark_mode_bgcolor(self, mock_st) -> None:
+        mock_st.get_option.return_value = "#0b0c10"
+
         from gui.config.styling import get_theme_bgcolor
 
-        with patch(
-            "streamlit.session_state",
-            _SessionDict({"selected_theme": "expanse_dark"}),
-        ):
-            assert get_theme_bgcolor() == "#0b0c10"
+        assert get_theme_bgcolor() == "#0b0c10"
 
-    def test_nord_light_bgcolor(self) -> None:
+    @patch("gui.config.styling.st")
+    def test_light_mode_bgcolor(self, mock_st) -> None:
+        mock_st.get_option.return_value = "#ECEFF4"
+
         from gui.config.styling import get_theme_bgcolor
 
-        with patch(
-            "streamlit.session_state",
-            _SessionDict({"selected_theme": "nord_light"}),
-        ):
-            assert get_theme_bgcolor() == "#ECEFF4"
+        assert get_theme_bgcolor() == "#ECEFF4"
 
 
 # ---------------------------------------------------------------------------
@@ -309,7 +267,6 @@ class TestAgentGraphUsesThemeColors:
 
             render_agent_graph(graph=graph)
 
-            # Find add_node call for the agent
             add_node_calls = mock_net_instance.add_node.call_args_list
             assert len(add_node_calls) >= 1
             agent_call = add_node_calls[0]

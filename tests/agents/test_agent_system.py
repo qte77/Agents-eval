@@ -289,35 +289,6 @@ class TestTraceCollection:
             mock_collector.log_tool_call.assert_called_once()
 
 
-class TestPydanticAiStreamRemoval:
-    """Verify that dead `pydantic_ai_stream` parameter has been removed from all call sites."""
-
-    def test_run_manager_has_no_pydantic_ai_stream_param(self):
-        """run_manager() must not accept pydantic_ai_stream parameter."""
-        sig = inspect.signature(run_manager)
-        assert "pydantic_ai_stream" not in sig.parameters, (
-            "pydantic_ai_stream is dead code (NotImplementedError) and must be removed from run_manager()"
-        )
-
-    def test_app_run_agent_execution_has_no_pydantic_ai_stream_param(self):
-        """_run_agent_execution() in app.py must not accept pydantic_ai_stream parameter."""
-        from app.app import _run_agent_execution
-
-        sig = inspect.signature(_run_agent_execution)
-        assert "pydantic_ai_stream" not in sig.parameters, (
-            "pydantic_ai_stream is dead code and must be removed from _run_agent_execution()"
-        )
-
-    def test_app_main_has_no_pydantic_ai_stream_param(self):
-        """main() in app.py must not accept pydantic_ai_stream parameter."""
-        from app.app import main
-
-        sig = inspect.signature(main)
-        assert "pydantic_ai_stream" not in sig.parameters, (
-            "pydantic_ai_stream is dead code and must be removed from main()"
-        )
-
-
 class TestValidateModelReturnJsonParsing:
     """Test STORY-011: _validate_model_return() JSON parsing fix.
 

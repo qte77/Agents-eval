@@ -80,9 +80,7 @@ class TestUpFrontRunContext:
             await main(chat_provider="test", query="test", skip_eval=True)
 
         assert len(captured_ctx) == 1, "Side-effect should fire exactly once"
-        assert captured_ctx[0] is not None, (
-            "RunContext must be active before _run_agent_execution"
-        )
+        assert captured_ctx[0] is not None, "RunContext must be active before _run_agent_execution"
 
     @pytest.mark.usefixtures("_mock_eval", "_mock_run_context")
     async def test_run_context_active_before_cc_execution(self) -> None:
@@ -115,9 +113,7 @@ class TestUpFrontRunContext:
             )
 
         assert len(captured_ctx) == 1, "Side-effect should fire exactly once"
-        assert captured_ctx[0] is not None, (
-            "RunContext must be active before _extract_cc_artifacts"
-        )
+        assert captured_ctx[0] is not None, "RunContext must be active before _extract_cc_artifacts"
 
     async def test_run_context_receives_pre_generated_execution_id(self) -> None:
         """RunContext.create() receives a uuid-pattern execution_id from main()."""
@@ -272,7 +268,9 @@ class TestSanitizePathComponent:
         assert "/" not in result
         assert "\\" not in result
 
-    @given(text=st.text(alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-"))
+    @given(
+        text=st.text(alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-")
+    )
     def test_safe_chars_input_unchanged(self, text: str) -> None:
         """Input containing only safe characters passes through unchanged."""
         from app.utils.run_context import _sanitize_path_component

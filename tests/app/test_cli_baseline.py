@@ -379,12 +379,8 @@ async def test_review_tools_disabled_for_general_query():
             query="test query",
         )
 
-        # Verify get_manager was called with enable_review_tools=False (8th positional arg)
-        call_args = mock_get_manager.call_args[0]
-        # get_manager(provider, provider_config, api_key, prompts,
-        #             include_researcher, include_analyst, include_synthesiser, enable_review_tools)
-        assert len(call_args) >= 8
-        assert call_args[7] is False  # enable_review_tools is 8th arg (index 7)
+        # Verify get_manager was called with enable_review_tools=False
+        assert mock_get_manager.call_args.kwargs.get("enable_review_tools") is False
 
 
 @pytest.mark.asyncio
@@ -421,10 +417,8 @@ async def test_no_review_tools_flag_disables_review_tools():
             enable_review_tools=False,
         )
 
-        # Verify get_manager was called with enable_review_tools=False (8th positional arg)
-        call_args = mock_get_manager.call_args[0]
-        assert len(call_args) >= 8
-        assert call_args[7] is False  # enable_review_tools is 8th arg (index 7)
+        # Verify get_manager was called with enable_review_tools=False
+        assert mock_get_manager.call_args.kwargs.get("enable_review_tools") is False
 
 
 def test_cli_parse_args_includes_no_review_tools_flag():

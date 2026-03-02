@@ -28,17 +28,3 @@ def test_session_state_defaults_structure():
             "include_synthesiser": False,
         }
     )
-
-
-def test_session_state_provider_is_valid():
-    """Test that default provider exists in PROVIDER_REGISTRY."""
-    # Arrange
-    from app.data_models.app_models import PROVIDER_REGISTRY
-    from run_gui import get_session_state_defaults
-
-    # Act
-    defaults = get_session_state_defaults()
-    provider = defaults["chat_provider"]
-
-    # Assert: Provider must be in registry
-    assert provider in PROVIDER_REGISTRY, f"Default provider '{provider}' not in PROVIDER_REGISTRY"

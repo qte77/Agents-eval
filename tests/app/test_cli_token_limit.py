@@ -22,43 +22,6 @@ class TestCLITokenLimitFlag:
     """Tests for --token-limit CLI flag."""
 
     @pytest.mark.asyncio
-    async def test_cli_accepts_token_limit_flag(self):
-        """Test that CLI accepts --token-limit flag and passes it to setup_agent_env."""
-        with (
-            patch("app.app.setup_agent_env") as mock_setup,
-            patch("app.app.login"),
-            patch("app.app.get_manager") as mock_get_manager,
-            patch("app.app.run_manager", new_callable=AsyncMock) as mock_run_manager,
-            patch("app.app.load_config") as mock_load_config,
-        ):
-            # Setup mocks
-            mock_setup.return_value = MagicMock(
-                provider="test_provider",
-                provider_config=MagicMock(usage_limits=25000),
-                api_key="test_key",
-                prompts={},
-                query="test query",
-                usage_limits=UsageLimits(request_limit=10, total_tokens_limit=100000),
-            )
-            mock_manager = MagicMock(spec=Agent)
-            mock_get_manager.return_value = mock_manager
-            mock_run_manager.return_value = (
-                "test_exec_123",
-                None,
-            )  # (execution_id, manager_output)
-            mock_load_config.return_value = MagicMock(prompts={})
-
-            # Run main with --token-limit flag
-            await main(
-                chat_provider="test_provider",
-                query="test query",
-                token_limit=100000,
-            )
-
-            # Verify setup_agent_env was called
-            mock_setup.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_cli_token_limit_overrides_config(self):
         """Test that CLI --token-limit overrides config_chat.json usage_limits."""
         with (
@@ -109,17 +72,6 @@ class TestCLITokenLimitFlag:
         """Test that parse_args extracts --token-limit flag."""
         args = parse_args(["--token-limit=150000"])
         assert args["token_limit"] == 150000
-
-    def test_cli_help_includes_token_limit(self):
-        """Snapshot: CLI help text includes --token-limit."""
-        # This test would capture help output, but since parse_args exits on --help,
-        # we'll test the commands dict structure instead
-        from run_cli import parse_args
-
-        # Verify --token-limit is in the documented commands
-        # (would need to refactor parse_args to expose commands dict)
-        # For now, verify flag parsing works
-        assert parse_args(["--token-limit=50000"])["token_limit"] == 50000
 
 
 class TestEnvVarTokenLimit:

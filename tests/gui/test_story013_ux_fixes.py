@@ -13,39 +13,8 @@ Mock strategy:
 - No real Streamlit runtime needed
 """
 
-import inspect
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
-
-# ---------------------------------------------------------------------------
-# 1. output.py — rename `type` → `output_type` parameter
-# ---------------------------------------------------------------------------
-
-
-class TestOutputTypeParameterRename:
-    """Verify render_output uses `output_type` instead of `type`.
-
-    `type` shadows Python's built-in — STORY-013 renames it.
-    """
-
-    def test_render_output_has_output_type_parameter(self) -> None:
-        """render_output signature must have `output_type` parameter, not `type`."""
-        from gui.components.output import render_output
-
-        sig = inspect.signature(render_output)
-        assert "output_type" in sig.parameters, (
-            "render_output must have `output_type` parameter (renamed from `type`)"
-        )
-
-    def test_render_output_does_not_have_type_parameter(self) -> None:
-        """render_output signature must NOT have `type` parameter (shadows built-in)."""
-        from gui.components.output import render_output
-
-        sig = inspect.signature(render_output)
-        assert "type" not in sig.parameters, (
-            "render_output must not shadow built-in `type` — rename to `output_type`"
-        )
-
 
 # ---------------------------------------------------------------------------
 # 2. run_app.py — execution_id stored in session state

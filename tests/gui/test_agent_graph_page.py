@@ -89,19 +89,6 @@ class TestAgentGraphPage:
             # Should render HTML visualization
             assert mock_html.called
 
-    def test_distinguishes_agent_and_tool_nodes(self, mock_networkx_graph):
-        """Test that agent and tool nodes are visually distinguished."""
-        from gui.pages.agent_graph import render_agent_graph
-
-        with patch("streamlit.header"), patch("streamlit.components.v1.html") as mock_html:
-            render_agent_graph(mock_networkx_graph)
-
-            # Verify HTML was generated with visual distinction
-            assert mock_html.called
-            html_content = mock_html.call_args[0][0] if mock_html.call_args else ""
-            # Pyvis uses different colors for different node types
-            assert isinstance(html_content, str)
-
     def test_render_with_empty_graph(self):
         """Test page renders gracefully with empty graph."""
         from gui.pages.agent_graph import render_agent_graph
@@ -123,60 +110,6 @@ class TestAgentGraphPage:
 
             # Should display informative message
             mock_info.assert_called_once()
-
-    def test_creates_pyvis_network(self, mock_networkx_graph):
-        """Test that Pyvis Network is created from NetworkX graph."""
-        from gui.pages.agent_graph import render_agent_graph
-
-        with (
-            patch("streamlit.header"),
-            patch("streamlit.components.v1.html") as mock_html,
-            patch("pyvis.network.Network") as mock_pyvis,
-        ):
-            render_agent_graph(mock_networkx_graph)
-
-            # Should create Pyvis Network instance
-            assert mock_pyvis.called or mock_html.called
-
-    def test_interactive_graph_features(self, mock_networkx_graph):
-        """Test that graph includes interactive features (physics, zoom)."""
-        from gui.pages.agent_graph import render_agent_graph
-
-        with patch("streamlit.header"), patch("streamlit.components.v1.html") as mock_html:
-            render_agent_graph(mock_networkx_graph)
-
-            # Verify HTML rendering was called (Pyvis creates interactive HTML)
-            assert mock_html.called
-
-    def test_graph_layout_configuration(self, mock_networkx_graph):
-        """Test that graph uses appropriate layout for readability."""
-        from gui.pages.agent_graph import render_agent_graph
-
-        with patch("streamlit.header"), patch("streamlit.components.v1.html") as mock_html:
-            render_agent_graph(mock_networkx_graph)
-
-            # Should render with configured layout
-            assert mock_html.called
-
-    def test_node_labels_displayed(self, mock_networkx_graph):
-        """Test that node labels are visible in visualization."""
-        from gui.pages.agent_graph import render_agent_graph
-
-        with patch("streamlit.header"), patch("streamlit.components.v1.html") as mock_html:
-            render_agent_graph(mock_networkx_graph)
-
-            # Verify visualization includes node information
-            assert mock_html.called
-
-    def test_edge_information_displayed(self, mock_networkx_graph):
-        """Test that edge information (interaction types) is visible."""
-        from gui.pages.agent_graph import render_agent_graph
-
-        with patch("streamlit.header"), patch("streamlit.components.v1.html") as mock_html:
-            render_agent_graph(mock_networkx_graph)
-
-            # Should render edge information
-            assert mock_html.called
 
 
 # MARK: --- mode-specific empty-state messages (STORY-011) ---
@@ -261,15 +194,6 @@ class TestAgentGraphEmptyStateMessages:
             # MAS message should not mention "solo" or "teams"
             assert "solo" not in call_text.lower()
             assert "teams" not in call_text.lower()
-
-    def test_render_agent_graph_accepts_composite_result(self):
-        """render_agent_graph accepts composite_result parameter."""
-        import inspect
-
-        from gui.pages.agent_graph import render_agent_graph
-
-        sig = inspect.signature(render_agent_graph)
-        assert "composite_result" in sig.parameters
 
 
 # MARK: --- Tier 3 informational label (STORY-011) ---

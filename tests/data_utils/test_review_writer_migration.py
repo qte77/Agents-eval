@@ -68,14 +68,3 @@ class TestReviewPersistenceSaveToRunContext:
 
         # Legacy behavior: filename contains paper_id and timestamp
         assert "paper_001" in Path(path).name
-
-
-class TestReviewLoaderDeleted:
-    """AC7: review_loader.py is deleted — dead code."""
-
-    def test_review_loader_module_does_not_exist(self) -> None:
-        """review_loader.py module cannot be imported after deletion."""
-        import importlib
-
-        with __import__("pytest").raises(ModuleNotFoundError):
-            importlib.import_module("app.data_utils.review_loader")

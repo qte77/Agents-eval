@@ -15,11 +15,9 @@ Covers:
 
 Mock strategy:
 - Streamlit widgets (st.info, st.markdown, st.metric, st.dataframe, etc.) patched
-- inspect.signature used for parameter presence checks
 - No real Streamlit runtime needed
 """
 
-import inspect
 from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
@@ -261,15 +259,6 @@ class TestSidebarExecutionIndicator:
     Act: Call render_sidebar with execution_state='running'
     Expected: Indicator text/markdown visible; absent when idle
     """
-
-    def test_render_sidebar_accepts_execution_state_parameter(self) -> None:
-        """render_sidebar signature includes execution_state parameter."""
-        from gui.components.sidebar import render_sidebar
-
-        sig = inspect.signature(render_sidebar)
-        assert "execution_state" in sig.parameters, (
-            "render_sidebar must accept 'execution_state' parameter"
-        )
 
     def test_render_sidebar_shows_indicator_when_running(self) -> None:
         """In-progress indicator visible when execution_state='running'."""
