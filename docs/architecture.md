@@ -281,32 +281,45 @@ Popen(stdout=PIPE)
 
 **Team spawning is not guaranteed**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` enables the capability but CC autonomously decides whether to create a team based on task complexity. Simple queries may be solved solo even in teams mode. The default prompt template uses `"Use a team of agents."` phrasing to increase the likelihood of team creation, but it is ultimately CC's decision.
 
-## Output Structure (Sprint 12)
+## Output Structure (Sprint 13)
 
-All run and sweep artifacts are consolidated under a single `output/` root directory. `RunContext` (`src/app/utils/run_context.py`) owns the per-run directory path and provides path helpers to all writers.
+All runtime data lives under a single `_Agents-eval/` root directory, kept outside the source tree via the leading underscore. `RunContext` (`src/app/utils/run_context.py`) owns per-run directory creation and routes MAS vs CC runs into separate subdirectories.
 
 ### Directory Layout
 
 ```text
-output/
-  runs/
-    {YYYYMMDD_HHMMSS}_{engine}_{paper_id}_{exec_id_8}/
-      metadata.json       ← engine_type, paper_id, exec_id, start_time, cli_args
-      stream.json         ← CC solo raw output (CC solo only)
-      stream.jsonl        ← CC teams JSONL stream (CC teams only)
-      trace.jsonl         ← MAS execution trace (MAS only)
-      review.json         ← generated review (MAS only)
-      evaluation.json     ← CompositeResult from pipeline (when evaluation enabled)
-      report.md           ← evaluation report (when --generate-report)
-    traces.db             ← shared SQLite trace index (across all runs)
-  sweeps/
-    {YYYYMMDD_HHMMSS}/
-      results.json        ← raw per-evaluation scores (composition × paper × repetition)
-      summary.md          ← Markdown table with mean/stddev per metric per composition
-
-logs/
-  Agent_evals/
-    logs/                 ← Loguru rotating .log files (not per-run)
+_Agents-eval/
+  datasets/
+    peerread/             ← downloaded PeerRead corpus cache
+  logs/
+    {time}.log            ← Loguru rotating log files (not per-run)
+  output/
+    runs/
+      mas/                              ← {ts} = YYYYMMDD_HHMMSS, {id} = exec_id first 8 chars
+        {ts}_{engine}_{paper}_{id}/
+          metadata.json   ← engine_type, paper_id, exec_id, start_time, cli_args
+          trace.json      ← MAS execution trace (TraceCollector)
+          review.json     ← generated review (ReviewPersistence + GeneratedReview)
+          evaluation.json ← CompositeResult (when evaluation enabled)
+          report.md       ← evaluation report (when --generate-report)
+      cc/
+        {ts}_cc_solo_{paper}_{id}/
+          metadata.json
+          stream.json     ← raw JSON from claude -p
+          evaluation.json
+          report.md
+        {ts}_cc_teams_{paper}_{id}/
+          metadata.json
+          stream.jsonl    ← JSONL teed from Popen stdout
+          evaluation.json
+          report.md
+      traces.db           ← shared SQLite trace index (across all runs)
+    sweeps/
+      {YYYYMMDD_HHMMSS}/
+        results.json      ← raw per-evaluation scores (composition × paper × repetition)
+        summary.md        ← Markdown table with mean/stddev per metric per composition
+    reports/
+      {timestamp}.md      ← standalone reports (CLI --generate-report without run)
 ```
 
 ### Output Decision Tree
@@ -314,20 +327,20 @@ logs/
 ```text
 CLI/GUI invocation
   │
-  ├─ ALWAYS: logs/Agent_evals/logs/{time}.log  (Loguru, module import)
+  ├─ ALWAYS: _Agents-eval/logs/{time}.log  (Loguru, module import)
   │
-  ├─ RunContext.create() → output/runs/{ts}_{engine}_{paper}_{id}/
+  ├─ RunContext.create() → _Agents-eval/output/runs/{mas|cc}/{ts}_{engine}_{paper}_{id}/
   │    └─ WRITES: metadata.json
   │
-  ├─ CC solo path
+  ├─ CC solo path  → runs/cc/{ts}_cc_solo_{paper}_{id}/
   │    └─ WRITES: stream.json    (raw JSON from claude -p)
   │
-  ├─ CC teams path
+  ├─ CC teams path → runs/cc/{ts}_cc_teams_{paper}_{id}/
   │    └─ WRITES: stream.jsonl   (JSONL teed from Popen stdout)
   │
-  ├─ MAS path
-  │    ├─ WRITES: review.json    (ReviewPersistence)
-  │    └─ WRITES: trace.jsonl    (TraceCollector)
+  ├─ MAS path      → runs/mas/{ts}_{engine}_{paper}_{id}/
+  │    ├─ WRITES: review.json    (ReviewPersistence + GeneratedReview)
+  │    └─ WRITES: trace.json     (TraceCollector)
   │
   ├─ evaluation enabled (skip_eval=False)
   │    └─ WRITES: evaluation.json (CompositeResult)
@@ -337,22 +350,26 @@ CLI/GUI invocation
 
 Sweep invocation (run_sweep.py)
   │
-  ├─ ALWAYS: logs/Agent_evals/logs/{time}.log
+  ├─ ALWAYS: _Agents-eval/logs/{time}.log
   │
-  └─ SweepRunner.run() → output/sweeps/{ts}/
+  └─ SweepRunner.run() → _Agents-eval/output/sweeps/{ts}/
        ├─ WRITES: results.json   (incremental, after each evaluation)
        └─ WRITES: summary.md     (at sweep end)
 ```
 
 ### Path Configuration
 
-All output paths are defined in `src/app/config/config_app.py`:
+All output paths derive from `_OUTPUT_BASE` in `src/app/config/config_app.py`:
 
 | Constant | Value | Purpose |
 | --- | --- | --- |
-| `OUTPUT_PATH` | `"output"` | Root for all run and sweep artifacts |
-| `LOGS_BASE_PATH` | `"logs/Agent_evals"` | Application log root |
-| `LOGS_PATH` | `"logs/Agent_evals/logs"` | Loguru rotating logs |
+| `_OUTPUT_BASE` | `"_Agents-eval"` | Root for all runtime data |
+| `DATASETS_PATH` | `"_Agents-eval/datasets"` | Downloaded dataset cache |
+| `LOGS_PATH` | `"_Agents-eval/logs"` | Loguru rotating logs |
+| `OUTPUT_PATH` | `"_Agents-eval/output"` | Run, sweep, and report artifacts |
+| `RUNS_PATH` | `"_Agents-eval/output/runs"` | All per-run directories |
+| `MAS_RUNS_PATH` | `"_Agents-eval/output/runs/mas"` | MAS engine run outputs |
+| `CC_RUNS_PATH` | `"_Agents-eval/output/runs/cc"` | CC engine run outputs |
 
 Paths are resolved relative to the project root via `resolve_project_path()` in `src/app/utils/paths.py`. Directories are created lazily with `mkdir(parents=True, exist_ok=True)`.
 
@@ -429,7 +446,7 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 **Sprint 11 Scope**: Observability, UX polish, test quality, and code health.
 
-- **End-of-Run Artifact Summary** (STORY-001): `ArtifactRegistry` singleton in `src/app/utils/artifact_registry.py` with thread-safe `register()`, `summary()`, and `reset()`. Seven components register artifact paths (log setup, trace collector, review persistence, structured review, report generator, sweep runner, CC stream persistence). CLI and sweep print summary at end of run.
+- **End-of-Run Artifact Summary** (STORY-001): `ArtifactRegistry` singleton in `src/app/utils/artifact_registry.py` with thread-safe `register()`, `summary()`, and `reset()`. Six components register artifact paths (log setup, trace collector, review persistence, report generator, sweep runner, CC stream persistence). CLI and sweep print summary at end of run.
 - **GUI Sidebar Tabs** (STORY-002): Streamlit layout refactored with sidebar navigation separating Run, Settings, Evaluation, and Agent Graph into distinct pages. Tab selection persists across reruns. `run_gui.py:43` TODO removed.
 - **CC Engine Empty Query Fix** (STORY-006): `build_cc_query()` in `cc_engine.py` generates default prompt from `paper_id` when query is empty. `DEFAULT_REVIEW_PROMPT_TEMPLATE` constant shared between CC and MAS paths (DRY). Teams mode prepends `"Use a team of agents."`.
 - **CC JSONL Stream Persistence** (STORY-007): Raw JSONL stream teed during CC execution. Solo writes JSON, teams writes JSONL incrementally (crash-safe). Files registered with `ArtifactRegistry`. Sprint 12 migrated output from `{LOGS_BASE_PATH}/cc_streams/` to per-run directories.
