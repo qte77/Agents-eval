@@ -15,6 +15,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
+from app.config.config_app import DATASETS_PEERREAD_PATH
 from app.config.peerread_config import PeerReadConfig
 from app.data_models.peerread_models import (
     PeerReadPaper,
@@ -919,7 +920,7 @@ class TestPeerReadDataSnapshots:
                 "base_url": "https://github.com/allenai/PeerRead/tree/master/data",
                 "github_api_base_url": "https://api.github.com/repos/allenai/PeerRead/contents/data",
                 "raw_github_base_url": "https://raw.githubusercontent.com/allenai/PeerRead/master/data",
-                "cache_directory": "_Agents-eval/datasets/peerread",
+                "cache_directory": DATASETS_PEERREAD_PATH,
                 "venues": ["acl_2017", "conll_2016", "iclr_2017"],
                 "splits": ["train", "test", "dev"],
                 "max_papers_per_query": 100,
