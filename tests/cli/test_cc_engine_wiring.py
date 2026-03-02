@@ -21,6 +21,16 @@ if SRC_PATH not in sys.path:
     sys.path.insert(0, SRC_PATH)
 
 
+@pytest.fixture(autouse=True)
+def _mock_run_context():
+    """Prevent real RunContext.create() → mkdir during tests."""
+    mock_ctx = MagicMock()
+    mock_ctx.run_dir = None
+    with patch("app.app.RunContext") as mock_rc:
+        mock_rc.create.return_value = mock_ctx
+        yield mock_rc
+
+
 def _make_sweep_config(output_dir: Path, **overrides: object):
     """Build a SweepConfig with sensible test defaults.
 

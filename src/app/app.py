@@ -71,6 +71,21 @@ from app.utils.run_context import RunContext, get_active_run_context, set_active
 CONFIG_FOLDER = "config"
 
 
+def _resolve_engine_type(engine: str, cc_teams: bool) -> str:
+    """Map engine name and cc_teams flag to engine_type for RunContext.
+
+    Args:
+        engine: Engine identifier ('mas' or 'cc').
+        cc_teams: Whether CC teams mode is active.
+
+    Returns:
+        Engine type string: 'mas', 'cc_solo', or 'cc_teams'.
+    """
+    if engine == "cc":
+        return "cc_teams" if cc_teams else "cc_solo"
+    return "mas"
+
+
 async def _run_agent_execution(
     chat_config_file: str | Path,
     chat_provider: str,
@@ -406,13 +421,8 @@ async def main(
         with span("main()"):
             # Generate execution_id up-front so RunContext is active before engine runs
             execution_id = f"exec_{_uuid.uuid4().hex[:12]}"
-            engine_type = (
-                "cc_teams"
-                if (engine == "cc" and cc_teams)
-                else ("cc_solo" if engine == "cc" else "mas")
-            )
             run_ctx = RunContext.create(
-                engine_type=engine_type,
+                engine_type=_resolve_engine_type(engine, cc_teams),
                 paper_id=paper_id or "unknown",
                 execution_id=execution_id,
             )

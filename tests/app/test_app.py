@@ -11,6 +11,16 @@ import pytest
 from pydantic_ai import Agent
 
 
+@pytest.fixture(autouse=True)
+def _mock_run_context():
+    """Prevent real RunContext.create() → mkdir during tests."""
+    mock_ctx = MagicMock()
+    mock_ctx.run_dir = None
+    with patch("app.app.RunContext") as mock_rc:
+        mock_rc.create.return_value = mock_ctx
+        yield mock_rc
+
+
 @pytest.mark.asyncio
 async def test_graph_built_when_skip_eval_and_execution_id_exists():
     """Test that graph is built even when evaluation is skipped (composite_result=None)."""

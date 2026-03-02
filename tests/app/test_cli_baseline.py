@@ -16,6 +16,16 @@ from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
 
 
+@pytest.fixture(autouse=True)
+def _mock_run_context():
+    """Prevent real RunContext.create() → mkdir during tests."""
+    mock_ctx = MagicMock()
+    mock_ctx.run_dir = None
+    with patch("app.app.RunContext") as mock_rc:
+        mock_rc.create.return_value = mock_ctx
+        yield mock_rc
+
+
 @pytest.mark.asyncio
 async def test_cli_accepts_cc_solo_dir_flag(tmp_path):
     """Test that CLI accepts --cc-solo-dir flag and passes it to main()."""
@@ -298,7 +308,6 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
         patch("app.judge.evaluation_runner.compare_all") as mock_compare_all,
-        patch("app.app.RunContext") as mock_rc_cls,
     ):
         # Setup mocks
         mock_setup.return_value = MagicMock(
@@ -318,10 +327,6 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         mock_pipeline_class.return_value = mock_pipeline
 
         mock_load_config.return_value = MagicMock(prompts={})
-
-        mock_ctx = MagicMock()
-        mock_ctx.run_dir = None
-        mock_rc_cls.create.return_value = mock_ctx
 
         from app.app import main
 

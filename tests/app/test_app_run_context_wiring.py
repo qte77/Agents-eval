@@ -12,6 +12,9 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from inline_snapshot import snapshot
 
 
 @pytest.fixture(autouse=True)
@@ -159,17 +162,35 @@ class TestPrepareResultDict:
             start_time=__import__("datetime").datetime(2026, 3, 1),
             run_dir=tmp_path,
         )
-        result = _prepare_result_dict(MagicMock(), MagicMock(), "e1", run_context=ctx)
+        mock_composite = MagicMock()
+        mock_graph = MagicMock()
+        result = _prepare_result_dict(mock_composite, mock_graph, "e1", run_context=ctx)
         assert result is not None
-        assert result["run_context"] is ctx
+        assert result == snapshot(
+            {
+                "composite_result": mock_composite,
+                "graph": mock_graph,
+                "execution_id": "e1",
+                "run_context": ctx,
+            }
+        )
 
     def test_run_context_none_when_not_set(self) -> None:
         """_prepare_result_dict returns None run_context when not provided."""
         from app.app import _prepare_result_dict
 
-        result = _prepare_result_dict(MagicMock(), MagicMock(), "e1")
+        mock_composite = MagicMock()
+        mock_graph = MagicMock()
+        result = _prepare_result_dict(mock_composite, mock_graph, "e1")
         assert result is not None
-        assert result["run_context"] is None
+        assert result == snapshot(
+            {
+                "composite_result": mock_composite,
+                "graph": mock_graph,
+                "execution_id": "e1",
+                "run_context": None,
+            }
+        )
 
 
 class TestMainCleanup:
@@ -237,3 +258,23 @@ class TestMainCleanup:
             await main()
 
         assert get_active_run_context() is None
+
+
+class TestSanitizePathComponent:
+    """Hypothesis fuzz tests for _sanitize_path_component."""
+
+    @given(text=st.text())
+    def test_output_never_contains_path_traversal_chars(self, text: str) -> None:
+        """Sanitized output never contains / or \\ characters."""
+        from app.utils.run_context import _sanitize_path_component
+
+        result = _sanitize_path_component(text)
+        assert "/" not in result
+        assert "\\" not in result
+
+    @given(text=st.text(alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-"))
+    def test_safe_chars_input_unchanged(self, text: str) -> None:
+        """Input containing only safe characters passes through unchanged."""
+        from app.utils.run_context import _sanitize_path_component
+
+        assert _sanitize_path_component(text) == text

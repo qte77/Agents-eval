@@ -14,6 +14,16 @@ from inline_snapshot import snapshot
 from app.data_models.evaluation_models import CompositeResult, Tier1Result
 
 
+@pytest.fixture(autouse=True)
+def _mock_run_context():
+    """Prevent real RunContext.create() → mkdir during tests."""
+    mock_ctx = MagicMock()
+    mock_ctx.run_dir = None
+    with patch("app.app.RunContext") as mock_rc:
+        mock_rc.create.return_value = mock_ctx
+        yield mock_rc
+
+
 @pytest.mark.asyncio
 async def test_evaluation_runs_after_manager_by_default():
     """Test that evaluation runs automatically after run_manager completes."""
@@ -132,7 +142,6 @@ async def test_graceful_skip_without_ground_truth():
         patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
         patch("app.judge.evaluation_runner.logger") as mock_logger,
-        patch("app.app.RunContext") as mock_rc_cls,
     ):
         # Setup mocks
         mock_setup.return_value = MagicMock(
@@ -152,10 +161,6 @@ async def test_graceful_skip_without_ground_truth():
         mock_pipeline_class.return_value = mock_pipeline
 
         mock_load_config.return_value = MagicMock(prompts={})
-
-        mock_ctx = MagicMock()
-        mock_ctx.run_dir = None
-        mock_rc_cls.create.return_value = mock_ctx
 
         from app.app import main
 
