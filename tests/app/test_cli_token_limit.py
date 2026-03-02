@@ -33,6 +33,7 @@ class TestCLITokenLimitFlag:
         ):
             # Setup mocks - config has 25000, CLI provides 100000
             mock_config = MagicMock(spec=ProviderConfig)
+            mock_config.model_name = "test-model"
             mock_config.usage_limits = 25000
             mock_setup.return_value = MagicMock(
                 provider="test_provider",
@@ -90,6 +91,7 @@ class TestEnvVarTokenLimit:
         ):
             # Setup mocks
             mock_config = MagicMock(spec=ProviderConfig)
+            mock_config.model_name = "test-model"
             mock_config.usage_limits = 25000
             mock_setup.return_value = MagicMock(
                 provider="test_provider",
@@ -129,6 +131,7 @@ class TestEnvVarTokenLimit:
         ):
             # Setup mocks
             mock_config = MagicMock(spec=ProviderConfig)
+            mock_config.model_name = "test-model"
             mock_config.usage_limits = 25000
             mock_setup.return_value = MagicMock(
                 provider="test_provider",
@@ -178,6 +181,7 @@ class TestConfigFallback:
         ):
             # Setup mocks - only config value, no overrides
             mock_config = MagicMock(spec=ProviderConfig)
+            mock_config.model_name = "test-model"
             mock_config.usage_limits = 25000
             mock_setup.return_value = MagicMock(
                 provider="test_provider",

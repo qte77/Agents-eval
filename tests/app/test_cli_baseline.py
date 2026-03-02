@@ -41,7 +41,7 @@ async def test_cli_accepts_cc_solo_dir_flag(tmp_path):
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -101,7 +101,7 @@ async def test_cli_accepts_cc_teams_dir_flag(tmp_path):
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -162,7 +162,7 @@ async def test_three_way_comparison_with_both_cc_baselines(tmp_path):
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -239,7 +239,7 @@ async def test_baseline_comparison_printed_to_console(tmp_path):
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -312,7 +312,7 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -359,7 +359,7 @@ async def test_review_tools_disabled_for_general_query():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -396,7 +396,7 @@ async def test_no_review_tools_flag_disables_review_tools():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",

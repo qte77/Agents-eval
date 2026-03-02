@@ -26,9 +26,6 @@
 .DEFAULT_GOAL := help
 
 
-# MARK: params
-
-
 # -- paths --
 OUTPUT_BASE := _Agents-eval
 SRC_PATH := src
@@ -83,7 +80,7 @@ RALPH_TIMEOUT ?=
 TEAMS ?= false
 
 
-# MARK: setup
+# MARK: SETUP
 
 
 setup_uv:  ## Install uv and sync frozen deps (minimal bootstrap, used by prebuild)
@@ -209,7 +206,7 @@ setup_dataset_sample:  ## Download small sample of PeerRead dataset
 	$(MAKE) -s app_cli ARGS=--download-peerread-samples-only
 	$(MAKE) -s dataset_smallest
 
-# MARK: ollama
+# MARK: OLLAMA
 
 
 ollama_start:  ## Start local Ollama server, default 127.0.0.1:11434
@@ -220,7 +217,7 @@ ollama_stop:  ## Stop local Ollama server
 	pkill ollama
 
 
-# MARK: plantuml
+# MARK: PLANTUML
 
 
 plantuml_serve:  ## Start PlantUML server for interactive diagram editing
@@ -233,7 +230,7 @@ plantuml_render:  ## Render a themed diagram from a PlantUML file
 		"$(CHECK_ONLY)" "$(PLANTUML_CONTAINER)"
 
 
-# MARK: pandoc
+# MARK: PANDOC
 
 
 pandoc_run:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make pandoc_run INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" [BIBLIOGRAPHY="$$dir/refs.bib"] [CSL="$$dir/style.csl"] | Help: make pandoc_run HELP=1
@@ -290,7 +287,7 @@ writeup_generate:  ## Generate writeup markdown via CC teams. Usage: make writeu
 	echo "=== Content generation complete. Output: $(WRITEUP_DIR)/generate.jsonl ==="
 
 
-# MARK: markdown
+# MARK: MARKDOWN
 
 
 lint_links:  ## Check for broken links with lychee. Usage: make lint_links [INPUT_FILES="docs/**/*.md"]
@@ -308,7 +305,7 @@ lint_md:  ## Lint markdown files. Usage: make lint_md INPUT_FILES="docs/**/*.md"
 	markdownlint $(INPUT_FILES) --fix
 
 
-# MARK: app
+# MARK: APP
 
 
 app_quickstart:  ## Download sample data and run evaluation on smallest paper
@@ -356,7 +353,7 @@ app_clean_logs:  ## Remove accumulated agent evaluation logs
 	echo "Agent evaluation logs cleaned."
 
 
-# MARK: cc-baselines
+# MARK: CC-BASELINES
 
 
 cc_run_solo:  ## Run CC solo via Python entry point. Usage: make cc_run_solo PAPER_ID=1105.1072 [CC_TIMEOUT=300]
@@ -383,7 +380,7 @@ cc_run_teams:  ## Run CC teams via Python entry point. Usage: make cc_run_teams 
 		--paper-id "$(PAPER_ID)"
 
 
-# MARK: quality
+# MARK: QUALITY
 
 
 lint_src:  ## Lint and format src with ruff
@@ -441,7 +438,7 @@ quick_validate:  ## Fast development cycle validation
 	echo "Quick validation completed (check output for any failures)"
 
 
-# MARK: phoenix
+# MARK: PHOENIX
 
 
 setup_phoenix:  ## Pull Phoenix Docker image (pre-download without starting)
@@ -474,7 +471,7 @@ phoenix_status:  ## Check Phoenix health status
 		echo "Phoenix UI: healthy (http://localhost:$(PHOENIX_PORT))" || echo "Phoenix UI: not responding"
 
 
-# MARK: ralph
+# MARK: RALPH
 
 
 ralph_userstory:  ## [Optional] Create UserStory.md interactively. Usage: make ralph_userstory
@@ -548,7 +545,7 @@ ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
 	echo "Ralph state cleaned. Run 'make ralph_init' to reinitialize."
 
 
-# MARK: help
+# MARK: HELP
 
 
 help:  ## Show available recipes grouped by section

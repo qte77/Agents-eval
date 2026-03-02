@@ -38,7 +38,7 @@ async def test_evaluation_runs_after_manager_by_default():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -102,7 +102,7 @@ async def test_skip_eval_flag_prevents_evaluation():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -146,7 +146,7 @@ async def test_graceful_skip_without_ground_truth():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",

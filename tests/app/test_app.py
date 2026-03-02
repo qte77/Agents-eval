@@ -10,6 +10,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pydantic_ai import Agent
 
+from app.data_models.app_models import ProviderConfig
+
 
 @pytest.fixture(autouse=True)
 def _mock_run_context():
@@ -35,7 +37,7 @@ async def test_graph_built_when_skip_eval_and_execution_id_exists():
         patch("app.app.persist_graph"),
     ):
         # Setup mocks
-        mock_provider_config = MagicMock()
+        mock_provider_config = MagicMock(spec=ProviderConfig)
         mock_provider_config.model_name = "test-model"
         mock_setup.return_value = MagicMock(
             provider="test_provider",

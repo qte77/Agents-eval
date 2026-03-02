@@ -207,7 +207,7 @@ async def test_graph_trace_data_passed_to_evaluation():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",

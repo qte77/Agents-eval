@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `models.py`: `create_simple_model` now routes Anthropic, Gemini, Cerebras, and other providers to their correct backends instead of defaulting to `api.openai.com` with the wrong API key
+- `evaluation_runner.py`/`app.py`: `chat_model` is now threaded from agent execution through the evaluation pipeline, allowing the LLM judge to inherit the correct model when `tier2_provider=auto`
+
 ### Added
 
 - `graph_export.py`: persist agent interaction graph as `agent_graph.json` (node-link format) and `agent_graph.png` (static matplotlib render) to per-run output directories; registered with `ArtifactRegistry`

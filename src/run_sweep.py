@@ -73,7 +73,7 @@ def parse_args() -> argparse.Namespace:
         "--judge-model",
         type=str,
         default=None,
-        help="LLM model for Tier 2 judge (default: uses JudgeSettings default)",
+        help="LLM model for Tier 2 judge (default: inherits chat model when auto)",
     )
     parser.add_argument(
         "--engine",
