@@ -1,11 +1,12 @@
 """
 This module sets up and runs a Streamlit application for a Multi-Agent System.
 
-The application uses a sidebar tab layout with four navigation sections:
+The application uses a sidebar tab layout with five navigation sections:
 - Run Research App: execution controls (provider, engine, paper, query, run button)
 - Settings: configuration options for provider and sub-agents
 - Evaluation Results: evaluation results and baseline comparison
 - Agent Graph: visual representation of agent interactions
+- Trace Viewer: SQLite browser for traces.db execution data
 
 The main function loads the configuration, renders the UI components, and handles the
 execution of the Multi-Agent System based on user input.

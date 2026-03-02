@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `agent_system.py`: wire `log_coordination_event()` in `_execute_traced_delegation` — populates `coordination_events` for single-agent detection in `composite_scorer`
+- Trace Viewer Streamlit page (`src/gui/pages/trace_viewer.py`): read-only SQLite browser for `traces.db` with executions overview and event drill-down; zero new dependencies
+- `docs/architecture.md`: Observability & Data Persistence section documenting all 12 persistence paths, runtime vs offline readers, and Phoenix/OTel vs TraceCollector comparison
+- `config_app.py`: `TRACES_DB_FILE` constant — single source of truth for `traces.db` filename
 - `make setup_uv` recipe: minimal bootstrap (`pip install uv` + `uv sync --frozen`); reused by `setup_prod` and `setup_dev` to avoid duplicated uv install logic
 - `make setup_bert_model` recipe: pre-downloads `distilbert-base-uncased` for BERTScore; called by `setup_dev` and `onCreateCommand` (fallback for non-prebuild Codespaces)
 - `devcontainer.json` (both variants): `HF_HOME=/workspaces/.cache/huggingface` persists model across restarts; `onCreateCommand: make setup_uv && make setup_bert_model` pre-bakes model into Codespaces prebuild
