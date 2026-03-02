@@ -20,12 +20,12 @@ target_score: 80%
 
 ### 1. Measure Review Quality vs Reference
 
-**Truth**: Users need BLEU/ROUGE scores comparing generated reviews to references.
+**Truth**: Users need similarity scores (cosine, Jaccard, BERTScore) comparing generated reviews to references.
 **Violation**: Graph complexity analysis, LLM-as-Judge evaluation tiers measure *how* not *what*.
 
 ### 2. One Tier Evaluation
 
-**Truth**: Traditional metrics (BLEU/ROUGE) are sufficient for quality assessment.
+**Truth**: Traditional metrics (cosine, Jaccard, BERTScore) are sufficient for quality assessment.
 **Violation**: Three-tier evaluation (Traditional → LLM Judge → Graph) is complexity theater.
 
 ### 3. Minimal Code, Maximum Value
@@ -40,7 +40,7 @@ target_score: 80%
 ```yaml
 evaluation_core:
   - src/app/evals/evaluation_pipeline.py: "Orchestrator (simplify to 50 lines)"
-  - src/app/evals/traditional_metrics.py: "BLEU/ROUGE/BERTScore only"
+  - src/app/evals/traditional_metrics.py: "cosine/Jaccard/BERTScore only"
 
 data_layer:
   - src/app/data_utils/datasets_peerread.py: "Dataset loader"
@@ -158,7 +158,7 @@ delete:
 keep:
   - pydantic: "Data validation (core)"
   - pydantic-ai-slim: "Agent runtime (core)"
-  - scikit-learn: "BLEU/ROUGE metrics (core)"
+  - scikit-learn: "cosine/Jaccard metrics (core)"
   - textdistance: "Text similarity (core)"
   - httpx: "HTTP client (core)"
 
@@ -206,7 +206,7 @@ week_4:
 ## Validation Checklist
 
 - [ ] All PeerRead evaluation workflows still work
-- [ ] BLEU/ROUGE/BERTScore metrics still calculate correctly
+- [ ] cosine/Jaccard/BERTScore metrics still calculate correctly
 - [ ] Agent generates reviews from papers
 - [ ] Execution time measured accurately
 - [ ] Zero feature regression for users

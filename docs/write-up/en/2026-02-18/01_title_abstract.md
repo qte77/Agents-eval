@@ -20,7 +20,7 @@ linestretch: 1.25
 header-includes:
   - \providecommand{\refname}{\bibname}
 abstract: |
-  This work describes the conception, implementation, and empirical evaluation of **Agents-eval**, a three-tier evaluation framework for agentic AI systems based on PydanticAI. The framework addresses the growing need to systematically and reproducibly assess Multi-Agent Systems (MAS) by combining three complementary evaluation tiers: **Tier 1** encompasses text-based metrics (ROUGE, BLEU, BERTScore) for quantitative output analysis, **Tier 2** implements LLM-as-Judge evaluations for qualitative assessments, and **Tier 3** analyzes agent graph behavior for structural execution assessment.
+  This work describes the conception, implementation, and empirical evaluation of **Agents-eval**, a three-tier evaluation framework for agentic AI systems based on PydanticAI. The framework addresses the growing need to systematically and reproducibly assess Multi-Agent Systems (MAS) by combining three complementary evaluation tiers: **Tier 1** encompasses text-based metrics (cosine similarity, Jaccard similarity, BERTScore) for quantitative output analysis, **Tier 2** implements LLM-as-Judge evaluations for qualitative assessments, and **Tier 3** analyzes agent graph behavior for structural execution assessment.
 
   The PeerRead corpus serves as the benchmark dataset, providing scientific peer-review data from leading conferences and journals. Agent orchestration is handled entirely through PydanticAI, which enables type-safe, model-agnostic agent construction.
 

@@ -30,7 +30,7 @@ Agents-eval addresses this gap through an evaluation framework that combines thr
 complementary assessment dimensions:
 
 - **Tier 1 -- Traditional Metrics**: Fast, objective text similarity metrics
-  (BLEU, ROUGE, cosine similarity) as baseline validation
+  (cosine, Jaccard, BERTScore) as baseline validation
 - **Tier 2 -- LLM-as-a-Judge**: Semantic quality assessment through a
   configurable language model judge
 - **Tier 3 -- Graph-Based Analysis**: Coordination patterns from real
