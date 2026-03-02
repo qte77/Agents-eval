@@ -1,11 +1,13 @@
 """Tests for RunContext wiring in app.main() and engine paths.
 
-Verifies that engine paths create RunContext, set the singleton,
-pass run_dir to evaluation, and clean up on completion/error.
+Verifies that RunContext is created up-front in main() *before* engine
+execution starts, so artifacts written during execution can use per-run
+directories. Also tests result dict preparation and singleton cleanup.
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -22,18 +24,17 @@ def _reset_run_context():
     set_active_run_context(None)
 
 
-class TestMasEnginePathRunContext:
-    """Tests for RunContext creation in _run_mas_engine_path."""
+class TestUpFrontRunContext:
+    """Tests that RunContext is active *before* engine execution begins."""
 
     @pytest.fixture
-    def _mock_agent_execution(self):
-        """Patch _run_agent_execution to return a known execution_id."""
-        with patch(
-            "app.app._run_agent_execution",
-            new_callable=AsyncMock,
-            return_value=("exec-abcd1234", {}, MagicMock()),
-        ) as m:
-            yield m
+    def _mock_run_context(self):
+        """Patch RunContext.create to return a mock without creating directories."""
+        with patch("app.app.RunContext") as mock_rc_cls:
+            mock_ctx = MagicMock()
+            mock_ctx.run_dir = None
+            mock_rc_cls.create.return_value = mock_ctx
+            yield mock_rc_cls
 
     @pytest.fixture
     def _mock_eval(self):
@@ -51,68 +52,96 @@ class TestMasEnginePathRunContext:
         with patch("app.app._build_graph_from_trace", return_value=None) as m:
             yield m
 
-    @pytest.mark.usefixtures("_mock_agent_execution", "_mock_graph")
-    async def test_passes_run_dir_to_evaluation(
-        self, tmp_path: Path, _mock_eval: AsyncMock
-    ) -> None:
-        """_run_mas_engine_path passes run_dir to evaluation."""
-        from app.app import _run_mas_engine_path
-
-        run_dir = tmp_path / "run"
-        with patch("app.app.RunContext") as mock_rc_cls:
-            mock_ctx = MagicMock()
-            mock_ctx.run_dir = run_dir
-            mock_rc_cls.create.return_value = mock_ctx
-
-            await _run_mas_engine_path(
-                chat_config_file="config.yaml",
-                chat_provider="test",
-                query="test",
-                paper_id=None,
-                enable_review_tools=False,
-                include_researcher=False,
-                include_analyst=False,
-                include_synthesiser=False,
-                token_limit=None,
-                skip_eval=True,
-                cc_solo_dir=None,
-                cc_teams_dir=None,
-                cc_teams_tasks_dir=None,
-                judge_settings=None,
-            )
-
-            _, kwargs = _mock_eval.call_args
-            assert kwargs["run_dir"] == run_dir
-
-    @pytest.mark.usefixtures("_mock_agent_execution", "_mock_graph")
-    async def test_sets_active_run_context(self, tmp_path: Path, _mock_eval: AsyncMock) -> None:
-        """_run_mas_engine_path sets the active run context singleton."""
-        from app.app import _run_mas_engine_path
+    @pytest.mark.usefixtures("_mock_eval", "_mock_graph", "_mock_run_context")
+    async def test_run_context_active_before_mas_execution(self) -> None:
+        """RunContext singleton is set *before* _run_agent_execution runs."""
         from app.utils.run_context import get_active_run_context
 
-        with patch("app.app.RunContext") as mock_rc_cls:
-            mock_ctx = MagicMock()
-            mock_ctx.run_dir = tmp_path / "run"
-            mock_rc_cls.create.return_value = mock_ctx
+        captured_ctx: list[object] = []
 
-            await _run_mas_engine_path(
-                chat_config_file="config.yaml",
+        async def _capture_side_effect(*args, **kwargs):
+            """Capture the active RunContext at the moment of execution."""
+            captured_ctx.append(get_active_run_context())
+            return ("exec-abc123", {}, MagicMock())
+
+        with (
+            patch(
+                "app.app._run_agent_execution",
+                new_callable=AsyncMock,
+                side_effect=_capture_side_effect,
+            ),
+            patch("app.app.resolve_config_path", return_value="config.yaml"),
+        ):
+            from app.app import main
+
+            await main(chat_provider="test", query="test", skip_eval=True)
+
+        assert len(captured_ctx) == 1, "Side-effect should fire exactly once"
+        assert captured_ctx[0] is not None, (
+            "RunContext must be active before _run_agent_execution"
+        )
+
+    @pytest.mark.usefixtures("_mock_eval", "_mock_run_context")
+    async def test_run_context_active_before_cc_execution(self) -> None:
+        """RunContext singleton is set *before* _extract_cc_artifacts runs."""
+        from app.utils.run_context import get_active_run_context
+
+        captured_ctx: list[object] = []
+
+        def _capture_side_effect(cc_result):
+            """Capture the active RunContext at the moment of artifact extraction."""
+            captured_ctx.append(get_active_run_context())
+            return ("cc-exec-123", MagicMock())
+
+        mock_cc_result = MagicMock()
+        mock_cc_result.execution_id = "cc-exec-123"
+
+        with (
+            patch("app.app._extract_cc_artifacts", side_effect=_capture_side_effect),
+            patch("app.app.resolve_config_path", return_value="config.yaml"),
+            patch("app.engines.cc_engine.extract_cc_review_text", return_value="review"),
+        ):
+            from app.app import main
+
+            await main(
                 chat_provider="test",
                 query="test",
-                paper_id="p1",
-                enable_review_tools=False,
-                include_researcher=False,
-                include_analyst=False,
-                include_synthesiser=False,
-                token_limit=None,
+                engine="cc",
+                cc_result=mock_cc_result,
                 skip_eval=True,
-                cc_solo_dir=None,
-                cc_teams_dir=None,
-                cc_teams_tasks_dir=None,
-                judge_settings=None,
             )
 
-            assert get_active_run_context() is mock_ctx
+        assert len(captured_ctx) == 1, "Side-effect should fire exactly once"
+        assert captured_ctx[0] is not None, (
+            "RunContext must be active before _extract_cc_artifacts"
+        )
+
+    async def test_run_context_receives_pre_generated_execution_id(self) -> None:
+        """RunContext.create() receives a uuid-pattern execution_id from main()."""
+        with (
+            patch("app.app.resolve_config_path", return_value="config.yaml"),
+            patch(
+                "app.app._run_mas_engine_path",
+                new_callable=AsyncMock,
+                return_value=(None, None, None),
+            ),
+            patch("app.app.RunContext") as mock_rc_cls,
+        ):
+            mock_ctx = MagicMock()
+            mock_ctx.run_dir = None
+            mock_rc_cls.create.return_value = mock_ctx
+
+            from app.app import main
+
+            await main(chat_provider="test", query="test", skip_eval=True)
+
+            # RunContext.create() should be called with exec_{hex12} pattern
+            mock_rc_cls.create.assert_called_once()
+            call_kwargs = mock_rc_cls.create.call_args[1]
+            exec_id = call_kwargs.get("execution_id", "")
+            assert re.match(r"^exec_[0-9a-f]{12}$", exec_id), (
+                f"execution_id should match exec_{{hex12}}, got {exec_id!r}"
+            )
 
 
 class TestPrepareResultDict:
