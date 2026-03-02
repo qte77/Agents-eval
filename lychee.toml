@@ -16,6 +16,8 @@ exclude_path = [
   "docs/sprints/archive",  # archived sprint docs (historical, not maintained)
   ".venv",                  # virtual environment (vendor packages, not our code)
   ".github/workflows",      # workflow files contain template variables (e.g. ${{ }})
+  ".claude.bak",            # archived skill configs (not maintained)
+  "docs/PRD.md",            # transient symlink to active sprint PRD (created on demand)
 ]
 
 # Exclude URLs that are expected to fail in CI
