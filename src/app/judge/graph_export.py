@@ -16,10 +16,6 @@ import networkx as nx
 from app.utils.artifact_registry import get_artifact_registry
 from app.utils.log import logger
 
-# Reason: matplotlib needs a writable config dir; default may be read-only in containers
-os.environ.setdefault("MPLCONFIGDIR", str(Path.home() / ".config" / "matplotlib"))
-
-
 def export_graph_json(graph: nx.DiGraph[str], output_dir: Path) -> Path:
     """Serialize an nx.DiGraph to agent_graph.json using node-link format.
 
@@ -52,6 +48,8 @@ def export_graph_png(graph: nx.DiGraph[str], output_dir: Path) -> Path:
     Returns:
         Path to the written agent_graph.png file.
     """
+    # Reason: must set before importing matplotlib to avoid writable-dir warning in containers
+    os.environ.setdefault("MPLCONFIGDIR", str(Path.home() / ".config" / "matplotlib"))
     import matplotlib
 
     matplotlib.use("Agg")
@@ -121,6 +119,7 @@ def persist_graph(graph: nx.DiGraph[str] | None, output_dir: Path) -> None:
         output_dir: Per-run output directory.
     """
     if graph is None:
+        logger.debug("No graph available, skipping export")
         return
     export_graph_json(graph, output_dir)
     export_graph_png(graph, output_dir)
