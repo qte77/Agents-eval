@@ -35,25 +35,25 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 
 ### Tier Result Data Flow and Persistence
 
-Individual tier results are in-memory during pipeline execution. Sprint 12 adds per-run `evaluation.json` persistence (see [Output Structure](#output-structure-sprint-12)).
+Individual tier results are in-memory during pipeline execution. Per-run `evaluation.json` persistence writes the final `CompositeResult` to disk (see [Output Structure](#output-structure-sprint-13)).
 
-1. **Tier execution** (`evaluation_pipeline.py:512-515`): Each tier runs and returns a typed result object (`Tier1Result`, `Tier2Result`, `Tier3Result`).
-2. **Assembly** (`evaluation_pipeline.py:520-523`): Results are packed into an `EvaluationResults` dataclass (with fallback fill-in if tiers are missing).
-3. **Composite scoring** (`evaluation_pipeline.py:531`): `CompositeScorer` combines tier results into a single `CompositeResult` — this is the only object returned to callers.
+1. **Tier execution** (`evaluation_pipeline.py`): Each tier runs and returns a typed result object (`Tier1Result`, `Tier2Result`, `Tier3Result`).
+2. **Assembly**: Results are packed into an `EvaluationResults` dataclass (with fallback fill-in if tiers are missing).
+3. **Composite scoring**: `CompositeScorer` combines tier results into a single `CompositeResult` — this is the only object returned to callers.
 
 **`CompositeResult` consumers:**
 
 | Consumer | Location | Purpose |
 | --- | --- | --- |
-| `run_evaluation_if_enabled()` | `evaluation_runner.py:181` | Main entry point, returns up to `app.py` |
-| `SweepRunner._evaluate_single()` | `sweep_runner.py:105` | Collects into `self.results` for batch analysis |
-| `_render_report_section()` | `run_app.py:501` | Renders in Streamlit GUI |
-| `generate_report()` | `report_generator.py:26` | Generates Markdown report |
-| `compare_pair()` | `baseline_comparison.py:47` | Diffs two `CompositeResult` objects |
+| `run_evaluation_if_enabled()` | `evaluation_runner.py` | Main entry point, returns up to `app.py` |
+| `SweepRunner._run_single_evaluation()` | `sweep_runner.py` | Collects into `self.results` for batch analysis |
+| `_render_report_section()` | `run_app.py` | Renders in Streamlit GUI |
+| `generate_report()` | `report_generator.py` | Generates Markdown report |
+| `compare()` | `baseline_comparison.py` | Diffs two `CompositeResult` objects |
 
 **What is preserved:** Individual tier scores (`tier1_score`, `tier2_score`, `tier3_score`) and the full `metric_scores` breakdown are fields on `CompositeResult`. The per-tier `Tier1Result`/`Tier2Result`/`Tier3Result` objects are consumed by the composite scorer and not persisted separately.
 
-**Persistence paths:** Per-run `evaluation.json` (Sprint 12), Markdown report via `report_generator.py`, sweep `results.json` via `SweepRunner`, logger output (`_log_metric_comparison`). See [Output Structure](#output-structure-sprint-12) for the per-run directory layout.
+**Persistence paths:** Per-run `evaluation.json`, Markdown report via `report_generator.py`, sweep `results.json` via `SweepRunner`, logger output (`_log_metric_comparison`). See [Output Structure](#output-structure-sprint-13) for the per-run directory layout.
 
 ### Three-Tier Validation Strategy
 
@@ -61,9 +61,9 @@ Individual tier results are in-memory during pipeline execution. Sprint 12 adds 
 
 | Tier | Role | Focus |
 | ------ | ------ | ------- |
-| Tier 1 (Traditional) | VALIDATOR | Fast, objective text similarity baseline |
-| Tier 2 (LLM-Judge) | VALIDATOR | Semantic quality assessment |
-| Tier 3 (Graph) | PRIMARY | Coordination patterns from execution traces |
+| Tier 1 (Traditional) | Baseline | Fast, objective text similarity |
+| Tier 2 (LLM-Judge) | Semantic | Quality assessment via LLM |
+| Tier 3 (Graph) | Behavioral | Coordination patterns from execution traces |
 
 **Validation Logic:**
 
@@ -73,49 +73,9 @@ Individual tier results are in-memory during pipeline execution. Sprint 12 adds 
 
 **Design Goals:**
 
-- **Graph (Tier 3)**: Rich analysis from execution traces - PRIMARY innovation
-- **Traditional (Tier 1)**: Keep SIMPLE - lightweight metrics only
-- **LLM-Judge (Tier 2)**: Keep SIMPLE - single LLM call, structured output
-
-### Evaluation Approach Decision Tree
-
-```text
-Evaluation Requirements Assessment
-│
-├─ Quick Development/Prototyping?
-│  ├─ YES → Use Traditional Metrics Only
-│  │         ├─ Basic similarity: BLEU, ROUGE
-│  │         └─ Add execution time measurement
-│  │
-│  └─ NO → Continue Assessment
-│
-├─ Need Semantic Understanding?
-│  ├─ NO → Traditional Metrics + Graph Analysis
-│  │        ├─ Focus on coordination patterns
-│  │        └─ Tool usage efficiency
-│  │
-│  └─ YES → Continue Assessment
-│
-├─ Budget Constraints (API Costs)?
-│  ├─ HIGH → Traditional + Graph (Skip LLM Judge)
-│  │         ├─ Use local models only
-│  │         └─ Focus on behavioral patterns
-│  │
-│  └─ LOW → Full Three-Tier Evaluation
-│
-├─ Research/Production Setting?
-│  ├─ RESEARCH → Full Pipeline + Extended Analysis
-│  │            ├─ All three evaluation tiers
-│  │            ├─ Comparative studies
-│  │            └─ Statistical significance testing
-│  │
-│  └─ PRODUCTION → Optimized Pipeline
-│               ├─ Cached traditional metrics
-│               ├─ Selective LLM judging
-│               └─ Real-time graph analysis
-│
-└─ Result: Choose appropriate combination based on constraints
-```
+- **Graph (Tier 3)**: Rich analysis from execution traces — project's differentiator
+- **Traditional (Tier 1)**: Lightweight metrics only
+- **LLM-Judge (Tier 2)**: Single LLM call, structured output
 
 ## Evaluation Framework Architecture
 
@@ -125,80 +85,31 @@ The evaluation framework is built around large context window models capable of 
 
 **Model Selection**: Configurable per provider via `--chat-provider` and `--judge-provider`. See [Large Language Models](landscape/landscape-agent-frameworks-infrastructure.md#2-large-language-models) for model comparisons, context limits, and integration approaches.
 
-### Sprint 1: PeerRead Evaluation Components
+### Evaluation Components
 
 #### Tier 1 — Traditional Evaluation Metrics
 
 **Location**: `src/app/judge/plugins/traditional.py`
 
-- **Output Similarity Assessment** (config: `output_similarity`):
-  - Cosine similarity (primary metric from config)
-  - Jaccard similarity (secondary metric)
-  - Semantic similarity via BERTScore F1 (`distilbert-base-uncased`), with Levenshtein fallback when unavailable
-  - Confidence threshold: 0.8 (from config)
-- **Performance Metrics** (config: `time_taken`):
-  - Execution time tracking (end-to-end paper processing)
-  - Resource usage monitoring (memory, API calls, token consumption)
-- **Task Success Evaluation** (config: `task_success`):
-  - Review completeness scoring
-  - Structure adherence measurement
-  - Academic standard compliance with recommendation weights
+- Text similarity: cosine, Jaccard, BERTScore F1 (`distilbert-base-uncased`) with Levenshtein fallback
+- Execution time tracking (end-to-end paper processing)
+- Task success: review completeness and structure adherence
 
 #### Tier 2 — LLM-as-a-Judge Framework
 
 **Location**: `src/app/judge/plugins/llm_judge.py`
 
-- **Planning Rationality Assessment** (config: `planning_rationality`):
-  - Decision-making process quality evaluation
-  - Reasoning chain coherence analysis
-  - Strategic planning effectiveness
-- **Tool Efficiency Evaluation** (config: `tool_efficiency`):
-  - Tool usage effectiveness analysis
-  - Resource optimization assessment
-  - API call efficiency measurement
-- **Recommendation Quality Scoring**:
-  - Uses config recommendation weights: accept (1.0), weak_accept (0.7), weak_reject (-0.7), reject (-1.0)
-  - Generated review vs. ground truth PeerRead reviews
-  - Multi-dimensional quality scoring with confidence threshold (0.8)
+- Planning rationality, tool efficiency, and recommendation quality assessment via configurable judge provider
+- Recommendation scoring with config weights (accept/weak_accept/weak_reject/reject)
 
 #### Tier 3 — Graph-Based Complexity Analysis
 
 **Location**: `src/app/judge/plugins/graph_metrics.py`
 
-**Approach**: Post-execution behavioral analysis where agents autonomously decide tool use during execution, then observability logs are processed to construct behavioral graphs for retrospective evaluation.
+Post-execution behavioral analysis: agents autonomously decide tool use during execution, then trace data is processed into NetworkX graphs for retrospective evaluation.
 
-##### Integration Workflow
-
-1. **Agent Execution** → PydanticAI agents (Manager/Researcher/Analyst/Synthesizer) autonomously decide tool use and coordination strategies during PeerRead paper processing
-2. **Observability Logging** → Logfire auto-instrumentation captures comprehensive execution traces, tool usage patterns, and agent interactions (viewable via Arize Phoenix)
-3. **Graph Construction** → NetworkX processes trace data to build behavioral graphs showing coordination patterns and decision flows
-4. **Analysis** → NetworkX analyzes coordination effectiveness, tool usage efficiency, and emergent behavioral patterns from constructed graphs
-
-**Tool Selection**: See [Graph Analysis & Network Tools](landscape/landscape-evaluation-data-resources.md#6-graph-analysis-network-tools), [Post-Execution Graph Construction Tools](landscape/landscape-evaluation-data-resources.md#8-post-execution-graph-construction-tools), [Observability & Monitoring Platforms](landscape/landscape-agent-frameworks-infrastructure.md#4-observability-monitoring), and [Technical Analysis: Tracing Methods](landscape/trace_observe_methods.md) for detailed feasibility assessments and integration approaches.
-
-##### Key Applications for Agent Evaluation
-
-- **Agent Interaction Patterns** - Identify communication flows, coordination effectiveness, and collaboration bottlenecks between Manager/Researcher/Analyst/Synthesizer agents
-- **Tool Usage Sequences** - Analyze autonomous tool selection patterns, decision quality, and usage efficiency across agent types and tasks
-- **Decision Flow Analysis** - Map how decisions and information propagate through the multi-agent system during PeerRead review generation
-- **Coordination Effectiveness** - Correlate behavioral patterns with successful task outcomes and identify optimal coordination strategies
-- **Performance Bottlenecks** - Detect where autonomous coordination breaks down, communication fails, or tool usage becomes inefficient
-
-##### Technical Implementation
-
-- **Coordination Quality Analysis** (config: `coordination_quality`):
-  - Agent interaction effectiveness using NetworkX post-execution graph analysis
-  - Multi-agent orchestration pattern analysis from behavioral traces
-  - Communication efficiency measurement through graph centrality metrics
-- **Execution Graph Construction**:
-  - Tool call pattern mapping from observability logs using spaCy + NetworkX
-  - Agent interaction relationship modeling through trace log analysis
-  - Decision branching visualization from autonomous agent decision sequences
-- **Complexity Metrics Integration**:
-  - Node count (discrete actions) → feeds into coordination_quality scoring
-  - Edge density (interaction frequency) → affects tool_efficiency evaluation
-  - Path optimization → impacts time_taken scoring through coordination analysis
-  - Pattern recognition → influences planning_rationality assessment via behavioral analysis
+- **Workflow**: Agent execution → Logfire trace capture → NetworkX graph construction → coordination analysis
+- **Metrics**: Agent interaction effectiveness (centrality), tool usage efficiency (edge density), coordination quality (path optimization)
 
 #### Composite Scoring System
 
@@ -228,7 +139,7 @@ The evaluation framework is built around large context window models capable of 
 - **Weight Redistribution**: When single-agent mode is detected, the `coordination_quality` metric (0.167 weight) is excluded and its weight is redistributed equally across the remaining 5 metrics (0.20 each)
 - **Transparency**: `CompositeResult` includes `single_agent_mode: bool` flag to indicate when redistribution occurred
 - **Compound Redistribution**: When both Tier 2 is skipped (no valid provider) AND single-agent mode is detected, weights are redistributed across the remaining available metrics to always sum to ~1.0
-- **Tier 1-Only Fallback** (Sprint 12): When both Tier 2 (no LLM provider API key) and Tier 3 (no trace data) are unavailable but Tier 1 succeeded, the pipeline returns a degraded `CompositeResult` using only traditional metrics (`cosine_score`, `jaccard_score`, `semantic_score`) with `weights_used={"tier1": 1.0, "tier2": 0.0, "tier3": 0.0}` and `evaluation_complete=False`. A warning is logged. This prevents CI failures in environments without LLM provider credentials.
+- **Tier 1-Only Fallback**: When both Tier 2 (no LLM provider API key) and Tier 3 (no trace data) are unavailable but Tier 1 succeeded, the pipeline returns a degraded `CompositeResult` using only traditional metrics (`cosine_score`, `jaccard_score`, `semantic_score`) with `weights_used={"tier1": 1.0, "tier2": 0.0, "tier3": 0.0}` and `evaluation_complete=False`. A warning is logged. This prevents CI failures in environments without LLM provider credentials.
 
 ## Benchmarking Infrastructure (Sprint 6)
 
@@ -259,7 +170,7 @@ Sprint 10 added full pipeline parity: `extract_cc_review_text()` feeds review te
 
 #### CC Teams Trace Data Flow
 
-The JSONL stream from `claude -p --output-format stream-json` is consumed live from stdout. Since Sprint 12, the raw stream is persisted to `output/runs/{run_dir}/stream.jsonl` (see [Output Structure](#output-structure-sprint-12)). Sprint 11 introduced stream persistence to `{LOGS_BASE_PATH}/cc_streams/`; Sprint 12 migrated this to per-run directories.
+The JSONL stream from `claude -p --output-format stream-json` is consumed live from stdout. The raw stream is persisted to the per-run directory (see [Output Structure](#output-structure-sprint-13)).
 
 ```text
 Popen(stdout=PIPE)
@@ -277,7 +188,7 @@ Popen(stdout=PIPE)
         → coordination_events (from TeamCreate events)
 ```
 
-**Stream filter** (Sprint 12): `_apply_event` captures `type=system, subtype=task_started/task_completed` events as team artifacts. The stale `_TEAM_EVENT_TYPES` constant was removed. Tier 3 graph analysis produces 0 nodes/0 edges when CC handles the task without spawning a team (triggers Tier 1-only fallback via adaptive weight redistribution).
+**Stream filter**: `_apply_event` captures `type=system, subtype=task_started/task_completed` events as team artifacts. The stale `_TEAM_EVENT_TYPES` constant was removed. Tier 3 graph analysis produces 0 nodes/0 edges when CC handles the task without spawning a team (triggers Tier 1-only fallback via adaptive weight redistribution).
 
 **Team spawning is not guaranteed**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` enables the capability but CC autonomously decides whether to create a team based on task complexity. Simple queries may be solved solo even in teams mode. The default prompt template uses `"Use a team of agents."` phrasing to increase the likelihood of team creation, but it is ultimately CC's decision.
 
@@ -373,9 +284,19 @@ All output paths derive from `_OUTPUT_BASE` in `src/app/config/config_app.py`:
 
 Paths are resolved relative to the project root via `resolve_project_path()` in `src/app/utils/paths.py`. Directories are created lazily with `mkdir(parents=True, exist_ok=True)`.
 
+### RunContext Routing
+
+`RunContext` is a module-level singleton (`get_active_run_context()` / `set_active_run_context()`) that bridges writers to the per-run directory:
+
+- **`RunContext.create()`** routes to `runs/mas/` or `runs/cc/` based on `engine_type.startswith("cc")`.
+- **Path properties** standardize filenames per engine: `stream_path` (`.json` for MAS, `.jsonl` for CC), `trace_path` (`trace.json`), `review_path`, `evaluation_path`, `report_path`.
+- **`TraceCollector._store_trace()`** writes to `run_ctx.trace_path` when active, otherwise falls back to flat `{RUNS_PATH}/trace_{id}_{ts}.json`. Also writes to `traces.db` (SQLite) for structured queries.
+- **`ReviewPersistence.save_review()`** writes to `run_dir/review.json` when active, otherwise falls back to `{MAS_RUNS_PATH}/{paper}_{ts}.json`.
+- **`review.json` schema**: Contains `paper_id`, `timestamp`, `review` (PeerRead format), and optionally `structured_review` (validated `GeneratedReview` dict) and `model_info`.
+
 ### Timestamp Format
 
-All output filenames use a unified timestamp format: `%Y%m%dT%H%M%S` (e.g., `20260227T143000`). This replaced three inconsistent formats that existed prior to Sprint 12.
+All output filenames use a unified timestamp format: `%Y%m%d_%H%M%S` (e.g., `20260227_143000`).
 
 ## Report Generation (Sprint 8)
 
@@ -393,7 +314,7 @@ CompositeResult → SuggestionEngine → [Suggestion, ...] → ReportGenerator �
 
 ### Entry Points
 
-- **CLI**: `--generate-report` flag on `run_cli.py` (requires evaluation, incompatible with `--skip-eval`). Output: `{run_dir}/report.md` (see [Output Structure](#output-structure-sprint-12))
+- **CLI**: `--generate-report` flag on `run_cli.py` (requires evaluation, incompatible with `--skip-eval`). Output: `{run_dir}/report.md` (see [Output Structure](#output-structure-sprint-13))
 - **GUI**: "Generate Report" button on App page, enabled after evaluation completes. Inline Markdown display with download option.
 
 ## Security Framework (Sprint 6)
@@ -405,6 +326,7 @@ The security hardening sprint applied the OWASP MAESTRO 7-layer model (Model, Ag
 - **SSRF prevention**: URL validation with domain allowlisting (`src/app/utils/url_validation.py`). Allowlist derived from actual `validate_url()` call sites, not conceptual dependencies.
 - **Input sanitization**: Prompt injection resistance via length limits and XML delimiter wrapping before LLM calls
 - **Log scrubbing**: Sensitive data filtering (API keys, tokens, passwords) before trace export (`src/app/utils/log_scrubbing.py`)
+- **Path sanitization**: `_sanitize_path_component()` in `run_context.py` strips path traversal sequences from `paper_id` and `engine_type` before directory creation
 - **Input size limits**: DoS prevention through maximum payload sizes at system boundaries
 
 ### CVE Status
@@ -440,7 +362,7 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 - **Execution Timestamp Propagation** (STORY-005): Captures wall-clock timestamps around subprocess/agent execution and propagates to `_execute_tier1` for accurate `time_taken` metric.
 - **Semantic Score Deduplication** (STORY-006): Changed `compute_semantic_similarity` to use BERTScore F1 (`distilbert-base-uncased`) with Levenshtein fallback, replacing cosine (which duplicated `cosine_score`). BERTScore re-enabled after sentencepiece build issues resolved (Sprint 13).
 - **Continuous Task Success** (STORY-007): Replaced binary 0/1 `task_success` with proportional `min(1.0, similarity/threshold)`.
-- **Unified Output Directories** (STORY-008–010): `RunContext` consolidates all run artifacts into `output/runs/{ts}_{engine}_{paper}_{id}/`, sweeps into `output/sweeps/{ts}/`. See [Output Structure](#output-structure-sprint-12).
+- **Unified Output Directories** (STORY-008–010): `RunContext` consolidates all run artifacts into `output/runs/{ts}_{engine}_{paper}_{id}/`, sweeps into `output/sweeps/{ts}/`. See [Output Structure](#output-structure-sprint-13).
 
 ### Previous Implementation (Sprint 11 - Delivered)
 
@@ -449,7 +371,7 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 - **End-of-Run Artifact Summary** (STORY-001): `ArtifactRegistry` singleton in `src/app/utils/artifact_registry.py` with thread-safe `register()`, `summary()`, and `reset()`. Six components register artifact paths (log setup, trace collector, review persistence, report generator, sweep runner, CC stream persistence). CLI and sweep print summary at end of run.
 - **GUI Sidebar Tabs** (STORY-002): Streamlit layout refactored with sidebar navigation separating Run, Settings, Evaluation, and Agent Graph into distinct pages. Tab selection persists across reruns. `run_gui.py:43` TODO removed.
 - **CC Engine Empty Query Fix** (STORY-006): `build_cc_query()` in `cc_engine.py` generates default prompt from `paper_id` when query is empty. `DEFAULT_REVIEW_PROMPT_TEMPLATE` constant shared between CC and MAS paths (DRY). Teams mode prepends `"Use a team of agents."`.
-- **CC JSONL Stream Persistence** (STORY-007): Raw JSONL stream teed during CC execution. Solo writes JSON, teams writes JSONL incrementally (crash-safe). Files registered with `ArtifactRegistry`. Sprint 12 migrated output from `{LOGS_BASE_PATH}/cc_streams/` to per-run directories.
+- **CC JSONL Stream Persistence** (STORY-007): Raw JSONL stream teed during CC execution. Solo writes JSON, teams writes JSONL incrementally (crash-safe). Files registered with `ArtifactRegistry`. Later migrated to per-run directories.
 - **Search Tool HTTP Resilience** (STORY-010): `resilient_tool_wrapper` catches HTTP 403/429 from DuckDuckGo and Tavily, returning descriptive error string to agent instead of crashing. Both tools registered for fallback.
 - **Sub-Agent Validation Fix** (STORY-011): `_validate_model_return()` accepts `Any` input, tries `model_validate_json()` for string inputs (fixes non-OpenAI providers returning JSON strings instead of model instances). `str()` wrapping removed from call sites.
 - **Query Persistence Fix** (STORY-008): `key` parameter added to free-form query `text_input` widgets for Streamlit session state persistence.
@@ -556,13 +478,12 @@ The three-tiered evaluation framework is fully operational with plugin architect
   - When Tier 2 is skipped, its 3 metrics (`technical_accuracy`, `constructiveness`, `planning_rationality`) are excluded from composite scoring and weights redistributed to Tier 1 and Tier 3
   - Prevents 401 authentication errors and neutral 0.5 fallback scores when providers are unavailable
 
-**✅ Tier 3 - Graph Analysis (PRIMARY)** (`src/app/judge/plugins/graph_metrics.py`):
+**✅ Tier 3 - Graph Analysis** (`src/app/judge/plugins/graph_metrics.py`):
 
-- NetworkX-based behavioral pattern analysis **from execution traces**
+- NetworkX-based behavioral pattern analysis from execution traces
 - Agent coordination quality measurement
 - Tool usage effectiveness evaluation
 - Performance bottleneck detection
-- **Primary differentiator** - all other tiers validate this
 
 **✅ Composite Scoring** (`src/app/judge/composite_scorer.py`):
 
@@ -645,23 +566,7 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 12**: CC teams mode bug fixes (stream event parsing, cc_teams flag passthrough), scoring system fixes (Tier 3 empty-trace, composite trace awareness, time_taken timestamps, semantic dedup, continuous task_success), per-run output directories (RunContext, writer migration, evaluation.json persistence) -- Delivered
 - **Sprint 13**: GUI audit remediation & theming — accessibility (ARIA live regions, landmarks, graph alt text), theming system (3 themes, selector widget, graph color integration), UX improvements (onboarding, validation, report caching, navigation, string consolidation, type-aware output) -- Delivered
 
-For sprint details, see [roadmap.md](roadmap.md).
-
-### New Metrics for Implementation
-
-Candidate metrics identified from production frameworks and recent research for future evaluation enhancement:
-
-| Metric | Source | Current Gap | Complexity | Impact |
-| -------- | -------- | ------------- | ------------ | -------- |
-| `path_convergence` | Arize Phoenix | No path efficiency | Low | Medium |
-| `handoff_quality` | Arize Multi-Agent | No inter-agent transition | Medium | High |
-| `fix_rate` | SWE-EVO [2512.18470] | Binary task success only | Low | High |
-| `rubric_alignment` | [2512.23707] | No self-grading assessment | Medium | High |
-| `evaluator_consensus` | TEAM-PHI (Agents4Science) | Single LLM judge | Low | High |
-| `coordination_topology` | Evolutionary Boids (Agents4Science) | No breadth vs depth | Low | Medium |
-| `delegation_depth` | HDO (Agents4Science) | No hierarchy verification | Low | High |
-
-**Integration Priority**: `fix_rate` → `evaluator_consensus` (Tier 2 robustness) → `delegation_depth` (Tier 3 coordination) → `coordination_topology` (Tier 3 pattern detection) → `path_convergence` (Tier 3 efficiency) → `rubric_alignment` (Tier 2 self-assessment)
+For sprint details, see [roadmap.md](roadmap.md). Candidate metrics for future sprints are tracked in [roadmap.md](roadmap.md).
 
 ## Key Dependencies
 
@@ -726,35 +631,6 @@ The system relies on several key technology categories for implementation and ev
   - Participate in both group coordination and individual agent assessments
 - **Location**: Planned for `src/app/agents/critic_agent.py` or extension of `agent_system.py`
 - **Research Basis**: Stanford's Virtual Lab demonstrated that dedicated critic agents reduce compounding errors in multi-agent systems
-
-## Research-Validated Evaluation Enhancements (Planned)
-
-Based on Stanford's Agents4Science conference (300+ AI-generated papers analyzed):
-
-### Priority 1: Citation Hallucination Detection
-
-- **Metric**: `reference_accuracy_score`
-- **Finding**: 56% of AI-generated papers contained ≥1 hallucinated reference
-- **Implementation**: Automated web search verification of cited sources
-- **Location**: Planned for `src/app/judge/citation_validator.py`
-
-### Priority 2: Reviewer Calibration
-
-- **Metric**: `reviewer_calibration_score`, `reviewer_consistency_score`
-- **Finding**: Claude most balanced (closest to human experts), GPT most conservative, Gemini most sycophantic
-- **Implementation**: Tune LLM-as-Judge using PeerRead accepted/rejected baseline
-- **Location**: Enhancement to `src/app/judge/plugins/llm_judge.py`
-
-### Priority 3: Social Dynamics Tracking
-
-- **Metrics**: `agent_dominance_score`, `coordination_balance`
-- **Finding**: Agent speaking order affects outcome quality
-- **Implementation**: Extract from execution traces - agent invocation order, message frequency/length
-- **Location**: Enhancement to `src/app/judge/plugins/graph_metrics.py`
-
-## Tools Available
-
-Other pydantic-ai agents and [pydantic-ai DuckDuckGo Search Tool](https://ai.pydantic.dev/common-tools/#duckduckgo-search-tool).
 
 ## Decision Log
 
