@@ -202,7 +202,7 @@ async def _execute_traced_delegation(
     """Execute a sub-agent delegation with trace collection.
 
     Centralizes the tracing pattern shared by all delegation tools:
-    log interaction, run sub-agent, log tool call with timing.
+    log coordination event, log interaction, run sub-agent, log tool call with timing.
 
     Args:
         sub_agent: The sub-agent to delegate to.
@@ -222,6 +222,13 @@ async def _execute_traced_delegation(
         from_agent="manager",
         to_agent=to_agent,
         interaction_type="delegation",
+        data={"query": query, "task_type": task_type},
+    )
+
+    trace_collector.log_coordination_event(
+        manager_agent="manager",
+        event_type="delegation",
+        target_agents=[to_agent],
         data={"query": query, "task_type": task_type},
     )
 
