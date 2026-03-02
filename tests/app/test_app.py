@@ -35,9 +35,11 @@ async def test_graph_built_when_skip_eval_and_execution_id_exists():
         patch("app.app.persist_graph"),
     ):
         # Setup mocks
+        mock_provider_config = MagicMock()
+        mock_provider_config.model_name = "test-model"
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=mock_provider_config,
             api_key="test_key",
             prompts={},
             query="test query",

@@ -98,8 +98,8 @@ async def _run_agent_execution(
     include_synthesiser: bool,
     token_limit: int | None,
     execution_id: str | None = None,
-) -> tuple[str, dict[str, str], Any]:
-    """Execute agent system and return execution ID, prompts, and manager output.
+) -> tuple[str, dict[str, str], Any, str]:
+    """Execute agent system and return execution ID, prompts, manager output, and chat model.
 
     Args:
         chat_config_file: Path to chat configuration file.
@@ -114,7 +114,7 @@ async def _run_agent_execution(
         execution_id: Optional pre-generated execution ID forwarded to run_manager.
 
     Returns:
-        Tuple of (execution_id, prompts dict, manager_output).
+        Tuple of (execution_id, prompts dict, manager_output, chat_model).
     """
     chat_config = load_config(chat_config_file, ChatConfig)
     prompts: dict[str, str] = cast(dict[str, str], chat_config.prompts)  # type: ignore[reportUnknownMemberType]
@@ -146,7 +146,7 @@ async def _run_agent_execution(
         execution_id=execution_id,
     )
 
-    return execution_id, prompts, manager_output
+    return execution_id, prompts, manager_output, agent_env.provider_config.model_name
 
 
 def _handle_download_mode(
@@ -347,7 +347,7 @@ async def _run_mas_engine_path(
     if not chat_provider:
         chat_provider = input("Which inference chat_provider to use? ")
 
-    execution_id, _, manager_output = await _run_agent_execution(
+    execution_id, _, manager_output, chat_model = await _run_agent_execution(
         chat_config_file,
         chat_provider,
         query,
@@ -368,8 +368,9 @@ async def _run_mas_engine_path(
         cc_teams_dir,
         cc_teams_tasks_dir,
         chat_provider,
-        judge_settings,
-        manager_output,
+        chat_model=chat_model,
+        judge_settings=judge_settings,
+        manager_output=manager_output,
         run_dir=run_dir,
     )
 

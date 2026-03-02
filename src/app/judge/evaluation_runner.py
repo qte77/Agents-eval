@@ -122,6 +122,7 @@ async def run_evaluation_if_enabled(
     cc_teams_dir: str | None = None,
     cc_teams_tasks_dir: str | None = None,
     chat_provider: str | None = None,
+    chat_model: str | None = None,
     judge_settings: JudgeSettings | None = None,
     manager_output: Any = None,
     review_text: str | None = None,
@@ -138,6 +139,8 @@ async def run_evaluation_if_enabled(
         cc_teams_tasks_dir: Path to Claude Code teams tasks directory (optional,
                            auto-discovered if not specified).
         chat_provider: Active chat provider from agent system.
+        chat_model: Active chat model from agent system. Forwarded to LLMJudgeEngine
+            for model inheritance when tier2_provider=auto.
         judge_settings: Optional JudgeSettings override from GUI or programmatic calls.
         manager_output: Manager result output containing ReviewGenerationResult (optional).
         review_text: Pre-extracted review text (e.g. from CC engine). When provided,
@@ -153,7 +156,9 @@ async def run_evaluation_if_enabled(
         return None
 
     logger.info("Running evaluation pipeline...")
-    pipeline = EvaluationPipeline(settings=judge_settings, chat_provider=chat_provider)
+    pipeline = EvaluationPipeline(
+        settings=judge_settings, chat_provider=chat_provider, chat_model=chat_model
+    )
 
     if not paper_id:
         logger.info("Skipping evaluation: no ground-truth reviews available")

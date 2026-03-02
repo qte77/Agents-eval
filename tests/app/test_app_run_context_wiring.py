@@ -65,7 +65,7 @@ class TestUpFrontRunContext:
         async def _capture_side_effect(*args, **kwargs):
             """Capture the active RunContext at the moment of execution."""
             captured_ctx.append(get_active_run_context())
-            return ("exec-abc123", {}, MagicMock())
+            return ("exec-abc123", {}, MagicMock(), "test-model")
 
         with (
             patch(

@@ -271,7 +271,7 @@ class TestMainCCBranch:
             patch(
                 "app.app._run_agent_execution",
                 new_callable=AsyncMock,
-                return_value=("exec-id", {}, None),
+                return_value=("exec-id", {}, None, "gpt-4o-mini"),
             ) as mock_run_agent,
             patch("app.app._run_evaluation_if_enabled", new_callable=AsyncMock, return_value=None),
             patch("app.app._build_graph_from_trace", return_value=None),
@@ -412,7 +412,7 @@ class TestEngineTypeSetOnResult:
             patch(
                 "app.app._run_agent_execution",
                 new_callable=AsyncMock,
-                return_value=("exec-id", {}, None),
+                return_value=("exec-id", {}, None, "gpt-4o-mini"),
             ),
             patch(
                 "app.app._run_evaluation_if_enabled",

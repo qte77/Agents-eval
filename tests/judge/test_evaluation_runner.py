@@ -137,7 +137,9 @@ class TestRunEvaluationIfEnabled:
                 chat_provider="cerebras",
             )
 
-            mock_pipeline_class.assert_called_once_with(settings=None, chat_provider="cerebras")
+            mock_pipeline_class.assert_called_once_with(
+                settings=None, chat_provider="cerebras", chat_model=None
+            )
 
     @pytest.mark.asyncio
     async def test_loads_trace_when_execution_id_provided(self):
