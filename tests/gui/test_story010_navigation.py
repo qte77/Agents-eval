@@ -269,3 +269,21 @@ class TestDispatchMatchesUpdatedPages:
             asyncio.run(__import__("run_gui").main())
 
         mock_render_evaluation.assert_called_once()
+
+    def test_dispatch_trace_viewer(self) -> None:
+        """run_gui.main must dispatch 'Trace Viewer' to render_trace_viewer."""
+        import asyncio
+
+        with (
+            patch("run_gui.render_sidebar", return_value="Trace Viewer"),
+            patch("run_gui.render_app"),
+            patch("run_gui.add_custom_styling"),
+            patch("run_gui.initialize_session_state"),
+            patch("run_gui.render_settings"),
+            patch("run_gui.render_evaluation"),
+            patch("run_gui.render_agent_graph"),
+            patch("run_gui.render_trace_viewer") as mock_render_trace_viewer,
+        ):
+            asyncio.run(__import__("run_gui").main())
+
+        mock_render_trace_viewer.assert_called_once()
