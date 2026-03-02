@@ -8,7 +8,8 @@
 # 400 = Bad Request (wandb.ai, operator.chatgpt.com — bot-blocking)
 # 415 = Unsupported Media Type (ecanarys.com, secondtalent.com — bot-blocking)
 # 500 = Internal Server Error (neurips.cc — intermittent)
-accept = [200, 204, 301, 400, 401, 403, 415, 429, 500]
+# 202 = Accepted (opendatascience.com, marktechpost.com — async processing)
+accept = [200, 202, 204, 301, 400, 401, 403, 415, 429, 500]
 
 # Exclude paths from scanning
 exclude_path = [
