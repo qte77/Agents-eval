@@ -193,7 +193,7 @@ The benchmarking pipeline enables systematic comparison of MAS compositions with
 ### Architecture
 
 ```text
-SweepConfig → SweepRunner → (compositions × papers × repetitions) → SweepAnalysis → output files
+SweepConfig → SweepRunner → (compositions × papers × repetitions) → SweepAnalyzer → output files
 ```
 
 - **`SweepConfig`** (`src/app/benchmark/sweep_config.py`): Declares sweep parameters — agent compositions (2³ = 8 default), paper IDs, repetitions per combination, provider settings
