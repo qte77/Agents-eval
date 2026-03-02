@@ -30,6 +30,13 @@ log_cc_warn()    { log_warn    "${MAGENTA}[CC]${NC} $1"; }
 log_cc_error()   { log_error   "${RED}[CC]${NC} $1"; }
 log_cc_success() { log_success "${MAGENTA}[CC]${NC} $1"; }
 
+# -- Ralph paths (single source of truth) --
+RALPH_LOG_DIR="logs/ralph"
+RALPH_DOCS_DIR="ralph/docs"
+RALPH_PRD_JSON="$RALPH_DOCS_DIR/prd.json"
+RALPH_PROGRESS_FILE="$RALPH_DOCS_DIR/progress.txt"
+RALPH_PROMPT_FILE="$RALPH_DOCS_DIR/templates/prompt.md"
+
 # Check if command exists
 require_command() {
     local cmd="$1"

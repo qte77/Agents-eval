@@ -12,7 +12,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
-LOG_DIR="logs/ralph"
+LOG_DIR="$RALPH_LOG_DIR"
 
 show_process_tree() {
     echo "=== Ralph Process Tree ==="

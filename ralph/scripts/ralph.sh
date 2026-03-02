@@ -87,9 +87,9 @@ clear_tdd_verified() {
 RALPH_MODEL=${RALPH_MODEL:-"sonnet"}  # Model: sonnet, opus, haiku
 MAX_ITERATIONS=${MAX_ITERATIONS:-25}
 REQUIRE_REFACTOR=${REQUIRE_REFACTOR:-false}  # Require [REFACTOR] commit (true/false)
-PRD_JSON="ralph/docs/prd.json"
-PROGRESS_FILE="ralph/docs/progress.txt"
-PROMPT_FILE="ralph/docs/templates/prompt.md"
+PRD_JSON="$RALPH_PRD_JSON"
+PROGRESS_FILE="$RALPH_PROGRESS_FILE"
+PROMPT_FILE="$RALPH_PROMPT_FILE"
 MAX_RETRIES=3
 RALPH_TEAMS=${RALPH_TEAMS:-false}  # EXPERIMENTAL: cross-story interference causes false rejections (see ralph/README.md)
 RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
@@ -100,7 +100,7 @@ RETRY_CONTEXT_FILE="/tmp/claude/ralph_retry_context.txt"
 TDD_VERIFIED_DIR="/tmp/claude/ralph_tdd_verified"
 
 # Set up logging
-LOG_DIR="logs/ralph"
+LOG_DIR="$RALPH_LOG_DIR"
 LOG_FILE="$LOG_DIR/$(date +%Y-%m-%d_%H:%M:%S).log"
 mkdir -p "$LOG_DIR"
 
