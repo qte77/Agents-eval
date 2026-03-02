@@ -16,6 +16,7 @@ import networkx as nx
 from app.utils.artifact_registry import get_artifact_registry
 from app.utils.log import logger
 
+
 def export_graph_json(graph: nx.DiGraph[str], output_dir: Path) -> Path:
     """Serialize an nx.DiGraph to agent_graph.json using node-link format.
 
