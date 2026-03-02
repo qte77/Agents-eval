@@ -33,6 +33,7 @@ logs/
 # Temporary files
 .tmp/
 matplotlib-*/
+torchinductor_*/
 
 # Traces
 profile.html
@@ -54,6 +55,7 @@ reference/
 site/
 
 # project specific
+/_Agents-eval/
 data/
 datasets/
 docs/write-up/*
