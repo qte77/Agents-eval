@@ -122,6 +122,5 @@ package.json
 # created as empty files, not dirs — bypass trailing-slash gitignore patterns
 /.claude/agents
 /.claude/commands
-/.claude/skills
 /.idea
 /.vscode
