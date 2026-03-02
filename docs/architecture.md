@@ -16,6 +16,41 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 
 **Primary Purpose**: Evaluate agent performance in generating academic paper reviews through multiple evaluation methodologies to produce composite performance scores.
 
+## Entry Points
+
+The framework exposes three execution entry points, each backed by a Makefile recipe:
+
+| Entry Point | Makefile Recipe | Module | Purpose |
+| --- | --- | --- | --- |
+| **CLI** | `make app_cli ARGS="..."` | `src/run_cli.py` | Single-run evaluation via command line |
+| **GUI** | `make app_gui` | `src/run_gui.py` | Streamlit interactive dashboard |
+| **Sweep** | `make app_sweep ARGS="..."` | `src/run_sweep.py` | Automated benchmarking across compositions |
+
+Additional convenience recipes:
+
+| Recipe | Purpose |
+| --- | --- |
+| `make app_quickstart` | Download sample data + evaluate smallest paper (one command) |
+| `make app_profile` | Profile a CLI run with Scalene |
+| `make app_clean_results` | Remove all sweep result files |
+| `make app_clean_logs` | Remove accumulated agent evaluation logs |
+| `make cc_run_solo PAPER_ID=…` | Shorthand for `--engine=cc` single-agent CC baseline |
+| `make cc_run_teams PAPER_ID=…` | Shorthand for `--engine=cc --cc-teams` CC Agent Teams baseline |
+
+### CLI (`run_cli.py`)
+
+Lightweight wrapper with lazy imports. Parses `--engine={mas,cc}`, selects the execution path, runs `main()`, and optionally generates a report.
+
+Key flags: `--paper-id`, `--chat-provider`, `--judge-provider`, `--engine`, `--cc-teams`, `--generate-report`, `--skip-eval`, `--include-researcher`, `--include-analyst`, `--include-synthesiser`, `--token-limit`.
+
+### GUI (`run_gui.py`)
+
+Streamlit multi-page app launched via `streamlit run`. Pages: Run Research App (execution + results), Settings (provider/model config), Evaluation Results (tier breakdown + baseline comparison), Agent Graph (Pyvis visualization), Trace Viewer (SQLite trace browser). Theme selection and session state persist across page navigations.
+
+### Sweep (`run_sweep.py`)
+
+CLI for automated benchmarking. Accepts `--config <json>` for file-based configuration or individual flags. See [Benchmarking Infrastructure](#benchmarking-infrastructure-sprint-6) for full details.
+
 ## Data Flow
 
 ### Agent Execution Flow
@@ -28,7 +63,7 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 
 ### Evaluation Pipeline Flow
 
-1. **Tier 1 — Traditional Metrics**: Text similarity (BLEU, ROUGE), execution time measurement
+1. **Tier 1 — Traditional Metrics**: Text similarity (TF-IDF cosine, Jaccard, BERTScore/Levenshtein), execution time measurement
 2. **Tier 2 — LLM-as-a-Judge**: Review quality assessment, agentic execution analysis
 3. **Tier 3 — Graph-Based Analysis**: Tool call complexity, agent interaction mapping
 4. **Composite Scoring**: Final score calculation using formula: (Agentic Results / Execution Time / Graph Complexity)
@@ -97,7 +132,7 @@ Result models: `src/app/data_models/evaluation_models.py`
 | --- | --- | --- |
 | `cosine_score` | 0–1 | TF-IDF cosine similarity vs ground truth |
 | `jaccard_score` | 0–1 | Word-level Jaccard similarity |
-| `semantic_score` | 0–1 | BERTScore F1 (`distilbert-base-uncased`), Levenshtein fallback |
+| `semantic_score` | 0–1 | Levenshtein-based sequence similarity (BERTScore optional, currently disabled) |
 | `execution_time` | ≥0 | Raw wall-clock seconds |
 | `time_score` | 0–1 | Normalized time score |
 | `task_success` | 0–1 | Continuous: `min(1.0, similarity / threshold)` |
@@ -163,7 +198,85 @@ SweepConfig → SweepRunner → (compositions × papers × repetitions) → Swee
 
 - **`SweepConfig`** (`src/app/benchmark/sweep_config.py`): Declares sweep parameters — agent compositions (2³ = 8 default), paper IDs, repetitions per combination, provider settings
 - **`SweepRunner`** (`src/app/benchmark/sweep_runner.py`): Executes the sweep matrix, calls `evaluation_pipeline.evaluate_comprehensive()` for each cell, aggregates raw results
-- **`SweepAnalysis`** / `SweepAnalyzer` (`src/app/benchmark/sweep_analysis.py`): Computes mean, stddev, min, max per metric per composition across repetitions
+- **`SweepAnalyzer`** (`src/app/benchmark/sweep_analysis.py`): Computes mean, stddev, min, max per metric per composition across repetitions
+
+### SweepConfig Fields
+
+| Field | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `compositions` | `list[AgentComposition]` | required | Which MAS compositions to test |
+| `repetitions` | `int` | required | Runs per composition per paper |
+| `paper_ids` | `list[str]` | required | PeerRead paper IDs (e.g. `"1105.1072"`) |
+| `output_dir` | `Path` | required | Sweep output directory |
+| `chat_provider` | `str` | `CHAT_DEFAULT_PROVIDER` | LLM provider for MAS agents |
+| `engine` | `str` | `"mas"` | `"mas"` or `"cc"` |
+| `cc_teams` | `bool` | `False` | CC solo vs CC Agent Teams |
+| `judge_provider` | `str` | `"auto"` | Tier 2 judge provider |
+| `judge_model` | `str\|None` | `None` | Tier 2 judge model override |
+| `retry_delay_seconds` | `float` | `5.0` | Backoff seed for 429 retries |
+| `cc_artifact_dirs` | `list[Path]\|None` | `None` | Pre-collected CC artifacts (skip re-running) |
+
+### Agent Compositions
+
+`generate_all_compositions()` produces the full 2³ = 8 Cartesian product of `{researcher, analyst, synthesiser}` toggles:
+
+| Name | Researcher | Analyst | Synthesiser |
+| --- | --- | --- | --- |
+| `manager-only` | - | - | - |
+| `researcher` | yes | - | - |
+| `analyst` | - | yes | - |
+| `synthesiser` | - | - | yes |
+| `researcher+analyst` | yes | yes | - |
+| `researcher+synthesiser` | yes | - | yes |
+| `analyst+synthesiser` | - | yes | yes |
+| `researcher+analyst+synthesiser` | yes | yes | yes |
+
+### Engine Modes in Sweep Context
+
+The `engine` field is a single string, not a list. Each mode differs in execution:
+
+- **`engine="mas"`**: Runs MAS evaluations only (compositions × papers × repetitions). No CC invoked.
+- **`engine="cc", cc_teams=False`**: Runs MAS evaluations **and** CC solo baselines. CC solo loops over papers only (no composition loop), calls `run_cc_solo()`.
+- **`engine="cc", cc_teams=True`**: Runs MAS evaluations **and** CC teams baselines. Calls `run_cc_teams()` per paper.
+
+To compare all three engines on the same papers, run **three separate sweeps**:
+
+```bash
+# MAS only (all 8 compositions)
+make app_sweep ARGS="--engine mas --all-compositions --paper-ids 1105.1072 --chat-provider cerebras --judge-provider cerebras"
+
+# MAS + CC solo baseline
+make app_sweep ARGS="--engine cc --paper-ids 1105.1072 --chat-provider cerebras --judge-provider cerebras"
+
+# MAS + CC teams baseline
+make app_sweep ARGS="--engine cc --cc-teams --paper-ids 1105.1072 --chat-provider cerebras --judge-provider cerebras"
+```
+
+### Sweep CLI Reference (`run_sweep.py`)
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--config <path>` | — | JSON config file (overrides individual flags) |
+| `--paper-ids <csv>` | required | Comma-separated paper IDs |
+| `--repetitions <n>` | `3` | Repetitions per composition |
+| `--all-compositions` | off | Use all 8 agent compositions |
+| `--chat-provider <name>` | `CHAT_DEFAULT_PROVIDER` | LLM provider for MAS agents |
+| `--judge-provider <name>` | `"auto"` | Tier 2 judge provider |
+| `--judge-model <name>` | per JudgeSettings | Tier 2 judge model |
+| `--engine {mas,cc}` | `"mas"` | Execution engine |
+| `--cc-teams` | off | Use CC Agent Teams mode |
+| `--output-dir <path>` | `output/sweeps/<timestamp>` | Output directory |
+
+### Execution Flow
+
+`SweepRunner.run()` executes in this order:
+
+1. `_validate_prerequisites()` — if `engine="cc"`, checks `claude` CLI is on PATH
+2. `_run_mas_evaluations()` — **always runs**: loops compositions × papers × repetitions, writes incremental `results.json` after each success
+3. `_run_cc_baselines()` — **only when `engine="cc"`**: loops papers, calls `run_cc_solo` or `run_cc_teams`, feeds CCResult through evaluation pipeline
+4. `_save_results()` — writes final `results.json` + `summary.md`
+
+Rate-limit resilience: on HTTP 429, retries with exponential backoff (seed: `retry_delay_seconds`). Incremental `results.json` persistence ensures partial results survive failures.
 
 ### CC Headless Integration
 
@@ -320,8 +433,7 @@ All output filenames use a unified timestamp format: `%Y%m%d_%H%M%S` (e.g., `202
 | `{run_dir}/evaluation.json` | `EvaluationPipeline` | JSON | None (offline) | CompositeResult serialized after evaluation |
 | `{run_dir}/report.md` | `ReportGenerator` | Markdown | None (offline) | Human-readable evaluation report |
 | `{run_dir}/metadata.json` | `RunContext` | JSON | None (offline) | Run configuration and timing metadata |
-| `{run_dir}/stream.jsonl` | `CCStreamPersistence` | JSONL | None (offline) | CC engine raw stream capture |
-| `{run_dir}/stream.md` | `CCStreamPersistence` | Markdown | None (offline) | CC engine formatted stream |
+| `{run_dir}/stream.jsonl` | `cc_engine.py` (`_tee_stream` / `_persist_solo_stream`) | JSONL | None (offline) | CC engine raw stream capture |
 | `_Agents-eval/datasets/peerread/` | `PeerReadDownloader` | Mixed | `datasets_peerread.load_paper` (Tier 1/2) | Ground truth reviews and paper content |
 | `_Agents-eval/logs/{time}.log` | Loguru | Text | None (offline) | Rotating application logs |
 | `_Agents-eval/output/sweeps/{ts}/results.json` | `SweepRunner` | JSON | None (offline) | Incremental sweep results |
@@ -343,13 +455,72 @@ These are independent observability channels with no pipeline dependency between
 | Aspect | TraceCollector | Phoenix / OTel |
 | --- | --- | --- |
 | Transport | Direct SQLite writes | OTLP gRPC via Logfire |
-| Data | Agent interactions, tool calls, coordination events | LLM request/response spans, token counts |
+| Data | Agent interactions, tool calls, coordination events | Metrics and logs only (no distributed trace spans — see AGENT_LEARNINGS.md) |
 | Consumer | Tier 3 evaluation (`composite_scorer.py`) | Phoenix dashboard (port 6006) |
 | Dependency | Required for evaluation | Optional, supplementary |
 
 ### Trace Viewer (GUI)
 
 The **Trace Viewer** Streamlit page (`src/gui/pages/trace_viewer.py`) provides read-only SQLite access to `traces.db`. It shows an executions overview table with drill-down to individual trace events. Uses Python's built-in `sqlite3` module — no additional dependencies.
+
+### Agent Graph Pipeline (Trace → NetworkX → Pyvis)
+
+The Agent Graph page renders an interactive visualization of agent interactions and tool usage from execution traces. The pipeline has three stages: trace persistence, graph construction, and rendering.
+
+#### Stage 1: Trace Persistence
+
+During MAS execution, `TraceCollector` (`src/app/judge/trace_processors.py`) records agent events (interactions, tool calls, coordination) and writes them to two stores:
+
+- **`{run_dir}/trace.json`** — per-run JSON snapshot for offline inspection
+- **`traces.db`** (SQLite, shared across runs) — structured store with `trace_executions` and `trace_events` tables, used as source of truth for runtime graph construction
+
+For CC engines, `cc_result_to_graph_trace()` (`src/app/engines/cc_engine.py:255`) builds `GraphTraceData` directly from the JSONL stream's `TeamCreate` and `Task` events — no SQLite round-trip.
+
+```text
+MAS path:   TraceCollector.complete_trace() → _store_trace() → traces.db + trace.json
+CC path:    CCResult.team_artifacts → cc_result_to_graph_trace() → GraphTraceData (in-memory)
+```
+
+#### Stage 2: NetworkX Graph Construction
+
+`GraphTraceData` (`src/app/data_models/evaluation_models.py:183`) is the intermediate model with three lists: `agent_interactions`, `tool_calls`, and `coordination_events`.
+
+`build_interaction_graph()` (`src/app/judge/graph_builder.py:16`) converts `GraphTraceData` into an `nx.DiGraph`:
+
+- **Agent nodes**: Created from `agent_interactions[].from`/`to` fields. Attributes: `type="agent"`, `label=<name>.capitalize()`.
+- **Tool nodes**: Created from `tool_calls[].tool_name`. Attributes: `type="tool"`, `label=<tool_name>.replace("_"," ").title()`.
+- **Edges**: Agent→Agent edges carry `interaction=<type>`. Agent→Tool edges carry `interaction="tool_call"`, `success=<bool>`.
+
+The two engine paths converge at graph construction:
+
+```text
+MAS:  TraceCollector.load_trace(execution_id) → GraphTraceData → build_interaction_graph() → nx.DiGraph
+CC:   cc_result_to_graph_trace(cc_result)      → GraphTraceData → build_interaction_graph() → nx.DiGraph
+```
+
+Both paths are called from `app.py`: `_run_mas_engine_path()` (line 375) and `_extract_cc_artifacts()` (line 245). The resulting `nx.DiGraph` is returned in the `main()` result dict as `{"graph": graph}`.
+
+#### Stage 3: Pyvis Rendering (GUI)
+
+The GUI stores the graph in Streamlit session state (`run_app.py:284`):
+
+```python
+st.session_state.execution_graph = result.get("graph")
+```
+
+When the user navigates to the Agent Graph page, `render_agent_graph()` (`src/gui/pages/agent_graph.py:44`) converts the `nx.DiGraph` into an interactive HTML visualization using Pyvis:
+
+1. Creates a `Network(directed=True)` with Barnes-Hut physics (gravitational constant, spring layout, 200 stabilization iterations)
+2. Iterates graph nodes — agents rendered as themed circles (`shape="dot"`, `size=25`), tools as themed boxes (`shape="box"`, `size=20`). Colors sourced from the active GUI theme via `get_graph_node_colors()`
+3. Iterates graph edges — directed arrows with interaction type as hover tooltip
+4. Writes to a temporary HTML file via `net.save_graph()`, injects an accessibility `<title>` element, renders via `streamlit.components.html()`, then deletes the temp file
+5. Displays graph statistics (node/edge counts) and an accessible text summary
+
+```text
+nx.DiGraph → Pyvis Network → temp .html → streamlit.components.html() → interactive browser widget
+```
+
+**Note**: The graph is currently rendered only in the GUI and is not persisted to disk as an artifact. The `nx.DiGraph` exists in-memory during the session and is discarded when the session ends.
 
 ### ArtifactRegistry
 
@@ -405,7 +576,7 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 **Sprint 13 Scope**: GUI audit remediation and theming system.
 
 - **Accessibility Fixes** (STORY-001–004): Consolidated ARIA live regions via single `st.markdown()` calls, agent graph text summary with `st.caption()` and `<title>`, debug log `role="log"` landmark with `aria-label`, validation warning placement near Run button.
-- **Theming System** (STORY-006–007, STORY-011): `THEMES` dict with 3 curated themes (Expanse Dark, Nord Light, Tokyo Night), sidebar theme selector widget, graph font color and background color integration with active theme.
+- **Theming System** (STORY-006–007, STORY-011): `THEMES` dict with 3 curated themes (Expanse Dark, Nord Light, Tokyo Night), integrated with Streamlit's built-in Settings menu for theme switching, graph font color and background color integration with active theme.
 - **UX Improvements** (STORY-005, STORY-008–010, STORY-012): Report caching via `session_state["generated_report"]` with Clear Results button, home page onboarding steps, UI string consolidation in `src/gui/config/text.py`, navigation label consistency, type-aware output rendering in `render_output()`.
 
 ### Previous Implementation (Sprint 12 - Delivered)
@@ -429,7 +600,7 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 - **GUI Sidebar Tabs** (STORY-002): Streamlit layout refactored with sidebar navigation separating Run, Settings, Evaluation, and Agent Graph into distinct pages. Tab selection persists across reruns. `run_gui.py:43` TODO removed.
 - **CC Engine Empty Query Fix** (STORY-006): `build_cc_query()` in `cc_engine.py` generates default prompt from `paper_id` when query is empty. `DEFAULT_REVIEW_PROMPT_TEMPLATE` constant shared between CC and MAS paths (DRY). Teams mode prepends `"Use a team of agents."`.
 - **CC JSONL Stream Persistence** (STORY-007): Raw JSONL stream teed during CC execution. Solo writes JSON, teams writes JSONL incrementally (crash-safe). Files registered with `ArtifactRegistry`. Later migrated to per-run directories.
-- **Search Tool HTTP Resilience** (STORY-010): `resilient_tool_wrapper` catches HTTP 403/429 from DuckDuckGo and Tavily, returning descriptive error string to agent instead of crashing. Both tools registered for fallback.
+- **Search Tool HTTP Resilience** (STORY-010): `resilient_tool_wrapper` catches HTTP 403/429 from DuckDuckGo, returning descriptive error string to agent instead of crashing. Tavily is a declared dependency (`pydantic-ai-slim[tavily]`) with `TAVILY_API_KEY` in `AppEnv`, ready to wire as a fallback search tool but not yet registered on the researcher agent.
 - **Sub-Agent Validation Fix** (STORY-011): `_validate_model_return()` accepts `Any` input, tries `model_validate_json()` for string inputs (fixes non-OpenAI providers returning JSON strings instead of model instances). `str()` wrapping removed from call sites.
 - **Query Persistence Fix** (STORY-008): `key` parameter added to free-form query `text_input` widgets for Streamlit session state persistence.
 - **Test Quality** (STORY-003, STORY-004): `assert isinstance()` replaced with behavioral assertions across 12 test files. Subdirectory `conftest.py` files added to `tests/agents/`, `tests/judge/`, `tests/tools/`, `tests/evals/` with shared fixtures.
@@ -469,12 +640,12 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 - **Benchmarking Infrastructure**:
   - MAS composition sweep (`SweepRunner`): 8 agent compositions × N papers × N repetitions
   - Statistical analysis (`SweepAnalyzer`): mean, stddev, min, max per composition
-  - Sweep CLI (`run_sweep.py`) with `--provider`, `--paper-numbers`, `--repetitions`, `--all-compositions`
+  - Sweep CLI (`run_sweep.py`) with `--chat-provider`, `--paper-ids`, `--repetitions`, `--all-compositions`
   - Results output: `results.json` (raw) + `summary.md` (Markdown table)
 
 - **CC Baseline Completion**:
   - `CCTraceAdapter` for parsing Claude Code artifacts from headless invocation
-  - Artifact collection from `~/.claude/teams/` and `~/.claude/tasks/`
+  - Live JSONL stream parsing (teams artifacts are ephemeral in print mode — see [CC Headless Integration](#cc-headless-integration))
 
 - **Security Hardening**:
   - SSRF prevention: URL validation with domain allowlisting
@@ -548,11 +719,13 @@ The three-tiered evaluation framework is fully operational with plugin architect
 - Recommendation mapping (accept/weak_accept/weak_reject/reject)
 - Configuration-driven weights from `JudgeSettings`
 
-**✅ Evaluation Pipeline** (`src/app/judge/agent.py`):
+**✅ Evaluation Pipeline** (`src/app/judge/evaluation_pipeline.py`):
 
-- End-to-end evaluation orchestration
+- End-to-end evaluation orchestration (active production path via `run_evaluation_if_enabled()`)
 - Performance monitoring and error handling
 - Fallback strategies and timeout management
+
+**`JudgeAgent`** (`src/app/judge/agent.py`): Alternative plugin-based orchestrator. Exported from `judge.__init__` but not used in any production path (CLI, GUI, sweep). Candidate for removal.
 
 ### Plugin Architecture (Sprint 3 - Delivered)
 
@@ -576,10 +749,10 @@ class EvaluatorPlugin(ABC):
     def tier(self) -> int: ...
 
     @abstractmethod
-    def evaluate(self, context: BaseModel) -> BaseModel: ...
+    def evaluate(self, input_data: BaseModel, context: dict[str, Any] | None = None) -> BaseModel: ...
 
     @abstractmethod
-    def get_context_for_next_tier(self, result: BaseModel) -> BaseModel: ...
+    def get_context_for_next_tier(self, result: BaseModel) -> dict[str, Any]: ...
 ```
 
 #### PluginRegistry
@@ -594,18 +767,17 @@ Replaces `EvaluationConfig` JSON with `pydantic-settings` BaseSettings class usi
 class JudgeSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="JUDGE_")
 
-    tier1_timeout: int = 30
-    tier2_timeout: int = 60
-    tier3_timeout: int = 45
-    tier_weights: dict[int, float] = {1: 0.33, 2: 0.33, 3: 0.34}
-    # ... other settings
+    tier1_max_seconds: float = 1.0
+    tier2_max_seconds: float = 10.0
+    total_max_seconds: float = 120.0
+    tier2_provider: str = "auto"
+    tier2_model: str = "gpt-4o-mini"
+    # ... 30+ settings covering per-tier config, thresholds, tracing, observability
 ```
-
-JSON fallback available during migration period via `json_file` parameter.
 
 #### Typed Context Passing
 
-All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_context_for_next_tier()` method returns typed context consumed by the next tier's `evaluate()` method.
+Each plugin's `get_context_for_next_tier()` returns a `dict[str, Any]` context consumed by the next tier's `evaluate(input_data, context)` method. Input/output boundaries use Pydantic models; inter-tier context uses dicts for flexibility.
 
 ### Development Timeline
 
