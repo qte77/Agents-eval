@@ -308,6 +308,49 @@ Paths are resolved relative to the project root via `resolve_project_path()` in 
 
 All output filenames use a unified timestamp format: `%Y%m%d_%H%M%S` (e.g., `20260227_143000`).
 
+## Observability & Data Persistence
+
+### Persistence Paths Reference
+
+| Path | Writer | Format | Runtime Reader | Purpose |
+| --- | --- | --- | --- | --- |
+| `_Agents-eval/output/runs/traces.db` | `TraceCollector._store_trace` | SQLite | `TraceCollector.load_trace` (Tier 3) | Source of truth for graph-based evaluation |
+| `{run_dir}/trace.json` | `TraceCollector._store_trace` | JSON | None (offline) | Per-run trace snapshot for manual inspection |
+| `{run_dir}/review.json` | `ReviewPersistence` | JSON | None (offline) | Generated review with PeerRead format |
+| `{run_dir}/evaluation.json` | `EvaluationPipeline` | JSON | None (offline) | CompositeResult serialized after evaluation |
+| `{run_dir}/report.md` | `ReportGenerator` | Markdown | None (offline) | Human-readable evaluation report |
+| `{run_dir}/metadata.json` | `RunContext` | JSON | None (offline) | Run configuration and timing metadata |
+| `{run_dir}/stream.jsonl` | `CCStreamPersistence` | JSONL | None (offline) | CC engine raw stream capture |
+| `{run_dir}/stream.md` | `CCStreamPersistence` | Markdown | None (offline) | CC engine formatted stream |
+| `_Agents-eval/datasets/peerread/` | `PeerReadDownloader` | Mixed | `datasets_peerread.load_paper` (Tier 1/2) | Ground truth reviews and paper content |
+| `_Agents-eval/logs/{time}.log` | Loguru | Text | None (offline) | Rotating application logs |
+| `_Agents-eval/output/sweeps/{ts}/results.json` | `SweepRunner` | JSON | None (offline) | Incremental sweep results |
+| `_Agents-eval/output/sweeps/{ts}/summary.md` | `SweepRunner` | Markdown | None (offline) | Sweep summary report |
+
+### Runtime vs Offline Readers
+
+Only two persistence paths have runtime consumers in the evaluation pipeline:
+
+- **`traces.db`** — read by `TraceCollector.load_trace()` during Tier 3 graph-based evaluation
+- **`datasets/peerread/`** — read by `datasets_peerread.load_paper()` for ground truth in Tier 1/2
+
+All other per-run files (`metadata.json`, `stream.*`, `review.json`, `evaluation.json`, `report.md`) are write-once, read-never at runtime. They exist for offline inspection, debugging, and audit trails.
+
+### Phoenix / OTel vs TraceCollector
+
+These are independent observability channels with no pipeline dependency between them:
+
+| Aspect | TraceCollector | Phoenix / OTel |
+| --- | --- | --- |
+| Transport | Direct SQLite writes | OTLP gRPC via Logfire |
+| Data | Agent interactions, tool calls, coordination events | LLM request/response spans, token counts |
+| Consumer | Tier 3 evaluation (`composite_scorer.py`) | Phoenix dashboard (port 6006) |
+| Dependency | Required for evaluation | Optional, supplementary |
+
+### ArtifactRegistry
+
+In-memory singleton (`src/app/utils/artifact_registry.py`) that tracks all file paths written during a run. Components call `register(label, path)` as they write artifacts. At run end, `summary()` produces a human-readable list of all outputs. Not persisted — exists only for end-of-run CLI/GUI display.
+
 ## Report Generation (Sprint 8)
 
 Post-evaluation report generation synthesizes tier scores into actionable Markdown reports.
