@@ -43,7 +43,13 @@ def traces_db(tmp_path):
     )
     conn.execute(
         "INSERT INTO trace_events VALUES (NULL, ?, ?, ?, ?, ?)",
-        ("exec_abc123", 100.0, "agent_interaction", "manager", '{"from":"manager","to":"researcher"}'),
+        (
+            "exec_abc123",
+            100.0,
+            "agent_interaction",
+            "manager",
+            '{"from":"manager","to":"researcher"}',
+        ),
     )
     conn.commit()
     conn.close()
@@ -102,7 +108,9 @@ class TestTraceViewerPage:
         from gui.pages.trace_viewer import render_trace_viewer
 
         with (
-            patch("gui.pages.trace_viewer.resolve_project_path", return_value=empty_traces_db.parent),
+            patch(
+                "gui.pages.trace_viewer.resolve_project_path", return_value=empty_traces_db.parent
+            ),
             patch("streamlit.header"),
             patch("streamlit.info") as mock_info,
             patch("streamlit.dataframe"),

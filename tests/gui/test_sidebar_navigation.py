@@ -136,9 +136,7 @@ class TestSidebarNavigationTabs:
             "Evaluation Results",
             "Agent Graph",
             "Trace Viewer",
-        }, (
-            f"Expected exactly 5 tabs, got: {captured_options}"
-        )
+        }, f"Expected exactly 5 tabs, got: {captured_options}"
 
 
 # ---------------------------------------------------------------------------
@@ -343,9 +341,7 @@ class TestPagesConstant:
             "Evaluation Results",
             "Agent Graph",
             "Trace Viewer",
-        }, (
-            f"Expected exactly 5 PAGES entries, got: {PAGES}"
-        )
+        }, f"Expected exactly 5 PAGES entries, got: {PAGES}"
 
 
 # ---------------------------------------------------------------------------
