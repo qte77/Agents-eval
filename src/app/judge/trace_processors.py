@@ -375,8 +375,6 @@ class TraceCollector:
             finally:
                 conn.close()
 
-            # TODO: Artifact registry entry is not read back by any pipeline stage —
-            # same rationale as the JSONL write above (offline/manual access).
             from app.utils.artifact_registry import get_artifact_registry
 
             get_artifact_registry().register("Trace", json_file)
