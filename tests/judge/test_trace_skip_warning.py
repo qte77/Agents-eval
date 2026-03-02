@@ -155,6 +155,4 @@ class TestTraceSkipWarning:
         assert result is not None
         # Verify the JSON file was created (successful storage has observable side-effects)
         json_files = list(collector.storage_path.glob("trace_test-with-events_*.json"))
-        assert len(json_files) == 1, (
-            f"Expected 1 JSON file after successful storage: {json_files}"
-        )
+        assert len(json_files) == 1, f"Expected 1 JSON file after successful storage: {json_files}"
