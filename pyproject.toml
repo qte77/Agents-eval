@@ -88,14 +88,20 @@ send_to_logfire=false  # Was "if-token-present" - changed to disable pytest-logf
 
 [tool.pyright]
 pythonVersion = "3.13"
+# Type-check only our code, not tests/ or deps
 include = ["src"]
+# Strictest checking for our own codebase
 typeCheckingMode = "strict"
-# extraPaths = ["./.venv/lib/python3.13/site-packages"]
-useLibraryCodeForTypes = true
+# false = use .pyi stubs only; true causes OOM with 8GB venv
+useLibraryCodeForTypes = false
+# Catch broken imports
 reportMissingImports = true
+# Don't require stubs for every third-party library
 reportMissingTypeStubs = false
+# Suppress Unknown types leaking from untyped libraries
 reportUnknownMemberType = "none"
 reportUnknownVariableType = "none"
+reportUnknownParameterType = "none"
 
 [tool.complexipy]
 paths = ["src"]
