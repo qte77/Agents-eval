@@ -11,6 +11,7 @@ import shutil
 from sys import argv, exit
 from typing import Any
 
+from app.config.config_app import OUTPUT_PATH
 from app.data_models.app_models import PROVIDER_REGISTRY
 
 _parser = argparse.ArgumentParser(description="Agents-eval CLI — run MAS evaluation pipeline")
@@ -158,7 +159,7 @@ def _maybe_generate_report(result_dict: dict[str, Any], no_llm_suggestions: bool
         output_path = run_context.report_path
     else:
         timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-        output_path = Path("output") / "reports" / f"{timestamp}.md"
+        output_path = Path(OUTPUT_PATH) / "reports" / f"{timestamp}.md"
 
     save_report(md, output_path)
     logger.info(f"Report written to {output_path}")

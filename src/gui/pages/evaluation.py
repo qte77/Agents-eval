@@ -10,6 +10,7 @@ from pathlib import Path
 
 import streamlit as st
 
+from app.config.config_app import LOGS_PATH
 from app.data_models.evaluation_models import BaselineComparison, CompositeResult
 from gui.config.text import (
     EVALUATION_HEADER,
@@ -324,7 +325,7 @@ def _render_empty_state() -> None:
             "comparative evaluation against MAS results."
         )
         # S8-F8.2: auto-populate from known CC artifact location if it exists
-        default_traces_dir = "logs/Agent_evals/traces/"
+        default_traces_dir = f"{LOGS_PATH}/traces/"
         default_value = default_traces_dir if Path(default_traces_dir).is_dir() else ""
         _validate_dir_input("Claude Code Solo Directory", "cc_solo_dir_input", default_value)
         _validate_dir_input("Claude Code Teams Directory", "cc_teams_dir_input")

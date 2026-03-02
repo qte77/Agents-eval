@@ -30,6 +30,7 @@
 
 
 # -- paths --
+OUTPUT_BASE := _Agents-eval
 SRC_PATH := src
 APP_PATH := $(SRC_PATH)/app
 CLI_PATH := $(SRC_PATH)/run_cli.py
@@ -72,8 +73,6 @@ PHOENIX_GRPC_PORT := 4317
 
 # -- cc baselines (Claude Code artifact collection) --
 CC_TRACES_SCRIPT := scripts/collect-cc-traces
-CC_SOLO_OUTPUT := logs/cc/solo
-CC_TEAMS_OUTPUT := logs/cc/teams
 CC_TIMEOUT ?= 300
 CC_TEAMS_TIMEOUT ?= 600
 CC_MODEL ?=
@@ -202,7 +201,7 @@ setup_dataset:  ## Download PeerRead dataset. Usage: make setup_dataset [MODE=fu
 	$(MAKE) -s dataset_smallest
 
 dataset_smallest:  ## Show N smallest papers by file size. Usage: make dataset_smallest N=5
-	@find datasets/peerread -path "*/parsed_pdfs/*.json" \
+	@find $(OUTPUT_BASE)/datasets/peerread -path "*/parsed_pdfs/*.json" \
 		-type f -printf '%s %p\n' 2>/dev/null | sort -n | head -$(or $(N),10)
 
 setup_dataset_sample:  ## Download small sample of PeerRead dataset
@@ -314,7 +313,7 @@ lint_md:  ## Lint markdown files. Usage: make lint_md INPUT_FILES="docs/**/*.md"
 
 app_quickstart:  ## Download sample data and run evaluation on smallest paper
 	echo "=== Quick Start: Download samples + evaluate smallest paper ==="
-	if [ ! -d datasets/peerread ]; then
+	if [ ! -d $(OUTPUT_BASE)/datasets/peerread ]; then
 		$(MAKE) -s setup_dataset
 	else
 		echo "PeerRead dataset already present, skipping download."
@@ -339,21 +338,21 @@ app_sweep:  ## Run MAS composition sweep. Usage: make app_sweep ARGS="--paper-id
 	PYTHONPATH=$(SRC_PATH) uv run python $(SRC_PATH)/run_sweep.py $(ARGS)
 
 app_profile:  ## Profile app with scalene
-	mkdir -p logs/scalene-profiles
+	mkdir -p $(OUTPUT_BASE)/logs/scalene-profiles
 	uv run scalene --outfile \
-		"logs/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
+		"$(OUTPUT_BASE)/logs/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
 		"$(CLI_PATH)"
 
-app_clean_results:  ## Remove all sweep result files from results/sweeps/
-	echo "Removing results/sweeps/ contents ..."
-	rm -rf results/sweeps/*
+app_clean_results:  ## Remove all sweep result files
+	echo "Removing $(OUTPUT_BASE)/output/sweeps/ contents ..."
+	rm -rf $(OUTPUT_BASE)/output/sweeps/*
 	echo "Sweep results cleaned."
 
-app_clean_logs:  ## Remove accumulated agent evaluation logs from logs/Agent_evals/
-	echo "WARNING: This will delete all logs in logs/Agent_evals/ (including traces)!"
+app_clean_logs:  ## Remove accumulated agent evaluation logs
+	echo "WARNING: This will delete all logs in $(OUTPUT_BASE)/logs/ (including traces)!"
 	echo "Press Ctrl+C to cancel, Enter to continue..."
 	read
-	rm -rf logs/Agent_evals/*
+	rm -rf $(OUTPUT_BASE)/logs/*
 	echo "Agent evaluation logs cleaned."
 
 

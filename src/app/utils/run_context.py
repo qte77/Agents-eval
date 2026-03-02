@@ -13,8 +13,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from app.config.config_app import OUTPUT_PATH
+
 # Reason: module-level constant allows tests to patch without modifying config
-OUTPUT_BASE = Path("output")
+OUTPUT_BASE = Path(OUTPUT_PATH)
 
 # Reason: prevents path traversal — only safe chars allowed in directory name components
 _SAFE_PATH_RE = re.compile(r"[^a-zA-Z0-9._-]")
@@ -67,8 +69,8 @@ class RunContext:
     ) -> RunContext:
         """Create a RunContext and its output directory.
 
-        Creates output/runs/{YYYYMMDD_HHMMSS}_{engine_type}_{paper_id}_{exec_id_8}/
-        and writes metadata.json.
+        Creates output/runs/{category}/{ts}_{engine}_{paper}_{exec_id_8}/
+        and writes metadata.json. Category is ``mas`` or ``cc``.
 
         Args:
             engine_type: Engine identifier ('mas', 'cc_solo', 'cc_teams').
@@ -85,8 +87,9 @@ class RunContext:
         safe_engine = _sanitize_path_component(engine_type)
         safe_paper = _sanitize_path_component(paper_id)
         dir_name = f"{ts}_{safe_engine}_{safe_paper}_{exec_id_short}"
+        category = "cc" if engine_type.startswith("cc") else "mas"
 
-        run_dir = OUTPUT_BASE / "runs" / dir_name
+        run_dir = OUTPUT_BASE / "runs" / category / dir_name
         run_dir.mkdir(parents=True, exist_ok=True)
 
         ctx = cls(
@@ -131,9 +134,9 @@ class RunContext:
         """Path to the trace output file.
 
         Returns:
-            trace.jsonl in run_dir.
+            trace.json in run_dir.
         """
-        return self.run_dir / "trace.jsonl"
+        return self.run_dir / "trace.json"
 
     @property
     def review_path(self) -> Path:

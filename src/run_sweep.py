@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 from app.benchmark import AgentComposition, SweepConfig, generate_all_compositions, run_sweep
-from app.config.config_app import CHAT_DEFAULT_PROVIDER
+from app.config.config_app import CHAT_DEFAULT_PROVIDER, OUTPUT_PATH
 from app.data_models.app_models import PROVIDER_REGISTRY
 from app.utils.log import logger
 
@@ -148,7 +148,7 @@ def _build_config_from_args(args: argparse.Namespace) -> SweepConfig | None:
     )
 
     output_dir = args.output_dir or Path(
-        f"output/sweeps/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        f"{OUTPUT_PATH}/sweeps/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     )
 
     return SweepConfig(
