@@ -612,25 +612,27 @@ async def run_manager(
     query: UserPromptType,
     provider: str,
     usage_limits: UsageLimits | None,
+    execution_id: str | None = None,
 ) -> tuple[str, Any]:
-    """
-    Asynchronously runs the manager with the given query and provider, handling errors
-        and printing results.
+    """Asynchronously run the manager with the given query and provider.
 
     Auto-instrumented by logfire.instrument_pydantic_ai() - no manual decorators needed.
 
     Args:
-        manager (Agent): The system agent responsible for running the query.
-        query (str): The query to be processed by the manager.
-        provider (str): The provider to be used for the query.
-        usage_limits (UsageLimits): The usage limits to be applied during the query
-            execution.
+        manager: The system agent responsible for running the query.
+        query: The query to be processed by the manager.
+        provider: The provider to be used for the query.
+        usage_limits: The usage limits to be applied during the query execution.
+        execution_id: Optional pre-generated execution ID. When provided, used
+            as-is; otherwise a new ``exec_{hex12}`` ID is generated.
+
     Returns:
-        tuple[str, Any]: Tuple of (execution_id, manager_output) for trace retrieval and evaluation
+        Tuple of (execution_id, manager_output) for trace retrieval and evaluation.
     """
     # Initialize trace collection
     trace_collector = get_trace_collector()
-    execution_id = f"exec_{uuid.uuid4().hex[:12]}"
+    if execution_id is None:
+        execution_id = f"exec_{uuid.uuid4().hex[:12]}"
     trace_collector.start_execution(execution_id)
 
     model_obj = getattr(manager, "model", None)
