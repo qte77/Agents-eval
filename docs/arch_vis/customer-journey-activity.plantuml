@@ -42,9 +42,9 @@ endif
 :System executes three-tier evaluation;
 
 partition "Three-Tier Evaluation Process" {
-  :Tier 1 — Traditional Metrics: BLEU, ROUGE, BERTScore, execution time;
-  :Tier 2 — LLM-as-a-Judge: planning rationale, coordination quality, tool efficiency;
-  :Tier 3 — Graph Analysis: agent interaction complexity and delegation patterns;
+  :Tier 1 — Traditional Metrics: cosine, Jaccard, BERTScore, time, task success;
+  :Tier 2 — LLM-as-a-Judge: technical accuracy, constructiveness, planning rationality;
+  :Tier 3 — Graph Analysis: path convergence, tool selection, coordination centrality, task distribution;
   :Composite Scoring: weighted final score;
 }
 

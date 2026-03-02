@@ -66,12 +66,12 @@ activate Loader
 Loader --> Evaluator: PeerReadPaper with reviews
 deactivate Loader
 
-Evaluator -> Evaluator: Tier 1 — Traditional Metrics\n(BLEU, ROUGE, BERTScore)
-Evaluator -> LLM: Tier 2 — LLM-as-a-Judge\n(quality assessment)
+Evaluator -> Evaluator: Tier 1 — Traditional Metrics\n(cosine, Jaccard, BERTScore, time, task success)
+Evaluator -> LLM: Tier 2 — LLM-as-a-Judge\n(technical accuracy, constructiveness, planning rationality)
 activate LLM
 LLM --> Evaluator: Judge scores
 deactivate LLM
-Evaluator -> Evaluator: Tier 3 — Graph Analysis\n(delegation patterns, tool usage)
+Evaluator -> Evaluator: Tier 3 — Graph Analysis\n(path convergence, tool selection, coordination, distribution)
 Evaluator -> Evaluator: Composite Score\n(weighted tier results)
 
 Evaluator --> MainApp: CompositeResult
