@@ -167,10 +167,25 @@ cat > "$header_temp" << EOF
 \\usepackage{pdflscape}
 \\AtBeginEnvironment{landscape}{\\setkeys{Gin}{width=\\linewidth,keepaspectratio}}
 
-% Prevent oversized images from overflowing page height
+% Prevent oversized images from overflowing page width or height
 \\usepackage[export]{adjustbox}
-\\let\\oldincludegraphics\\includegraphics
-\\renewcommand{\\includegraphics}[2][]{\\adjustimage{max width=\\linewidth,max height=0.85\\textheight,keepaspectratio,#1}{#2}}
+\\makeatletter
+\\def\\ScaleWidthIfNeeded{%
+  \\ifdim\\Gin@nat@width>\\linewidth
+    \\linewidth
+  \\else
+    \\Gin@nat@width
+  \\fi
+}
+\\def\\ScaleHeightIfNeeded{%
+  \\ifdim\\Gin@nat@height>0.9\\textheight
+    0.9\\textheight
+  \\else
+    \\Gin@nat@height
+  \\fi
+}
+\\makeatother
+\\setkeys{Gin}{width=\\ScaleWidthIfNeeded,height=\\ScaleHeightIfNeeded,keepaspectratio}
 
 \\usepackage{float}
 \\floatplacement{figure}{!tb}
@@ -396,6 +411,41 @@ result=$?
 # Check result
 if [ $result -eq 0 ]; then
     echo "PDF generated successfully: $output_file"
+
+    # --- Auto-generate BUILD.md ---
+    _out_dir=$(dirname "$output_file")
+    _out_name=$(basename "$output_file")
+    _pv=$(pandoc --version 2>/dev/null | head -1 | sed 's/pandoc //' || echo "unknown")
+    _cwd="${work_dir:-.}"
+    {
+        printf '# Build Instructions for %s v%s\n\n' "$PROJECT_NAME" "$VERSION"
+        printf '## PDF Generation Command\n\n```bash\ncd %s && \\\npandoc \\\n' "$_cwd"
+        for _f in $input_files; do printf '  %s \\\n' "$_f"; done
+        printf '  --toc --toc-depth=2 \\\n'
+        [ "$number_sections" = "true" ] && printf '  --number-sections \\\n'
+        printf '  -V geometry:"margin=1in,footskip=35pt" \\\n'
+        printf '  -V documentclass=report \\\n'
+        printf '  --pdf-engine=xelatex \\\n'
+        printf '  --from markdown+smart \\\n'
+        printf '  -V pagestyle=plain'
+        [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ] && \
+            printf ' \\\n  --citeproc \\\n  --bibliography=%s' "$(basename "$bibliography_file")"
+        [ -n "$csl_file" ] && [ -f "$csl_file" ] && \
+            printf ' \\\n  --csl=%s' "$csl_file"
+        printf ' \\\n  -o %s\n```\n\n' "$_out_name"
+        printf '## Prerequisites\n\n'
+        printf '%s\n' "- \`pandoc\` (tested with $_pv)"
+        printf '%s\n\n' "- \`xelatex\` (TeX Live)"
+        printf '## Notes\n\n'
+        printf '%s\n' "- **PDF engine**: \`xelatex\`"
+    } > "$_out_dir/BUILD.md"
+    echo "Build instructions: $_out_dir/BUILD.md"
+
+    # --- Create/update blog-post.md template ---
+    printf '%s\n' "---" "layout: post" "title: \"$PROJECT_NAME v$VERSION\"" \
+        "excerpt: \"\"" "categories: []" "---" "" "# $PROJECT_NAME" "" \
+        "TODO: Write blog post summary." > "$_out_dir/blog-post.md"
+    echo "Blog post template: $_out_dir/blog-post.md"
 else
     echo "Error: PDF generation failed"
     exit 1
