@@ -24,3 +24,17 @@ Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for tech
 | **Sprint 11** | Delivered | Observability, UX polish, test quality: end-of-run artifact summary (ArtifactRegistry), GUI sidebar tabs, CC engine empty query fix (build_cc_query), CC JSONL stream persistence, search tool HTTP resilience, sub-agent validation JSON parsing fix, query persistence fix, assert isinstance→behavioral replacements, conftest consolidation, dispatch registry refactor, config model consolidation, examples modernization (8 total) | [PRD Sprint 11](sprints/archive/PRD-Sprint11-Ralph.md) |
 | **Sprint 12** | Delivered | CC teams mode fixes (stream event parsing, cc_teams flag passthrough, engine_type fix), scoring system fixes (Tier 3 empty-trace skip, composite trace awareness, time_taken timestamps, semantic score dedup, continuous task_success), per-run output directories (RunContext consolidation) | [PRD Sprint 12](sprints/archive/PRD-Sprint12-Ralph.md) |
 | **Sprint 13** | Delivered | GUI audit remediation & theming — accessibility fixes (ARIA live regions, landmarks, keyboard traps, graph alt text), theming system (3 curated themes, selector widget, graph color integration), UX improvements (onboarding, validation placement, report caching, navigation consistency, string consolidation, type-aware output rendering) | [PRD Sprint 13](sprints/archive/PRD-Sprint13-Ralph.md) |
+
+## Backlog — Candidate Evaluation Metrics
+
+Unscheduled metrics identified from production frameworks and research. No sprint assigned.
+
+| Metric | Source | Current Gap | Impact |
+| --- | --- | --- | --- |
+| `fix_rate` | SWE-EVO [2512.18470] | Binary task success only | High |
+| `evaluator_consensus` | TEAM-PHI (Agents4Science) | Single LLM judge | High |
+| `delegation_depth` | HDO (Agents4Science) | No hierarchy verification | High |
+| `handoff_quality` | Arize Multi-Agent | No inter-agent transition | High |
+| `rubric_alignment` | [2512.23707] | No self-grading assessment | High |
+| `coordination_topology` | Evolutionary Boids (Agents4Science) | No breadth vs depth | Medium |
+| `path_convergence` | Arize Phoenix | No path efficiency | Medium |

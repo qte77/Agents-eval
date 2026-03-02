@@ -566,7 +566,7 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 12**: CC teams mode bug fixes (stream event parsing, cc_teams flag passthrough), scoring system fixes (Tier 3 empty-trace, composite trace awareness, time_taken timestamps, semantic dedup, continuous task_success), per-run output directories (RunContext, writer migration, evaluation.json persistence) -- Delivered
 - **Sprint 13**: GUI audit remediation & theming — accessibility (ARIA live regions, landmarks, graph alt text), theming system (3 themes, selector widget, graph color integration), UX improvements (onboarding, validation, report caching, navigation, string consolidation, type-aware output) -- Delivered
 
-For sprint details, see [roadmap.md](roadmap.md). Candidate metrics for future sprints are tracked in [roadmap.md](roadmap.md).
+For sprint details and candidate metrics backlog, see [roadmap.md](roadmap.md).
 
 ## Key Dependencies
 
