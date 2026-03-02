@@ -762,3 +762,53 @@ class TestEvaluationJsonPersistence:
             call_args = mock_registry.register.call_args
             assert call_args[0][0] == "Evaluation"
             assert "evaluation.json" in str(call_args[0][1])
+
+
+# MARK: --- chat_model threading to EvaluationPipeline ---
+
+
+class TestChatModelThreading:
+    """chat_model must reach EvaluationPipeline from run_evaluation_if_enabled."""
+
+    @pytest.mark.asyncio
+    async def test_chat_model_forwarded_to_pipeline(self):
+        """chat_model must be forwarded to EvaluationPipeline constructor."""
+        with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id=None,
+                chat_provider="anthropic",
+                chat_model="claude-sonnet-4-20250514",
+            )
+
+            mock_pipeline_class.assert_called_once_with(
+                settings=None, chat_provider="anthropic", chat_model="claude-sonnet-4-20250514"
+            )
+
+    @pytest.mark.asyncio
+    async def test_chat_model_none_by_default(self):
+        """chat_model defaults to None when not provided."""
+        with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id=None,
+                chat_provider="openai",
+            )
+
+            mock_pipeline_class.assert_called_once_with(
+                settings=None, chat_provider="openai", chat_model=None
+            )
