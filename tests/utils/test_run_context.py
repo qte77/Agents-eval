@@ -253,6 +253,16 @@ class TestRunContextPathHelpers:
         assert mas_context.evaluation_path.name == "evaluation.json"
         assert mas_context.evaluation_path.parent == mas_context.run_dir
 
+    def test_graph_json_path(self, mas_context: RunContext) -> None:
+        """graph_json_path returns agent_graph.json in run_dir."""
+        assert mas_context.graph_json_path.name == "agent_graph.json"
+        assert mas_context.graph_json_path.parent == mas_context.run_dir
+
+    def test_graph_png_path(self, mas_context: RunContext) -> None:
+        """graph_png_path returns agent_graph.png in run_dir."""
+        assert mas_context.graph_png_path.name == "agent_graph.png"
+        assert mas_context.graph_png_path.parent == mas_context.run_dir
+
 
 class TestConfigConstants:
     """Tests for config constant changes (AC5, AC6, AC7, AC8)."""

@@ -168,6 +168,24 @@ class RunContext:
         """
         return self.run_dir / "evaluation.json"
 
+    @property
+    def graph_json_path(self) -> Path:
+        """Path to the agent graph JSON export file.
+
+        Returns:
+            agent_graph.json in run_dir.
+        """
+        return self.run_dir / "agent_graph.json"
+
+    @property
+    def graph_png_path(self) -> Path:
+        """Path to the agent graph PNG export file.
+
+        Returns:
+            agent_graph.png in run_dir.
+        """
+        return self.run_dir / "agent_graph.png"
+
 
 # Reason: module-level singleton matches existing patterns (artifact_registry, trace_collector)
 _active_run_context: RunContext | None = None
