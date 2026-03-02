@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from app.config.config_app import TRACES_DB_FILE
 from app.data_models.evaluation_models import GraphTraceData
 from app.utils.log import logger
 
@@ -69,7 +70,7 @@ class TraceCollector:
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
         # Initialize SQLite database
-        self.db_path = self.storage_path / "traces.db"
+        self.db_path = self.storage_path / TRACES_DB_FILE
         self._init_database()
 
         # Current execution state

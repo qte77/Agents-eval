@@ -11,7 +11,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from app.config.config_app import RUNS_PATH
+from app.config.config_app import RUNS_PATH, TRACES_DB_FILE
 from app.utils.paths import resolve_project_path
 from gui.config.text import TRACE_VIEWER_HEADER
 
@@ -22,7 +22,7 @@ def _get_db_path() -> Path:
     Returns:
         Path to the traces.db file (may not exist).
     """
-    return resolve_project_path(RUNS_PATH) / "traces.db"
+    return resolve_project_path(RUNS_PATH) / TRACES_DB_FILE
 
 
 def _query_executions(db_path: Path) -> list[dict[str, object]]:
