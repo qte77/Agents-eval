@@ -38,4 +38,8 @@ exclude = [
   "^https?://.*\\.allen\\.ai",
   # GitHub Pages deployment (not available until docs site is published)
   "^https?://qte77\\.github\\.io",
+  # OpenTelemetry (valid pages, blocked by CI network/firewall)
+  "^https?://opentelemetry\\.io",
+  # APM Digest (persistent timeouts in CI)
+  "^https?://www\\.apmdigest\\.com",
 ]
