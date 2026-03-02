@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `graph_export.py`: persist agent interaction graph as `agent_graph.json` (node-link format) and `agent_graph.png` (static matplotlib render) to per-run output directories; registered with `ArtifactRegistry`
+- `run_context.py`: `graph_json_path` and `graph_png_path` properties on `RunContext`
 - Trace Viewer page (`gui/pages/trace_viewer.py`): read-only SQLite browser for `traces.db`
 - `agent_system.py`: `log_coordination_event()` wiring for single-agent detection
 - `docs/architecture.md`: Entry Points section, expanded Benchmarking Infrastructure (SweepConfig, engine modes, compositions, CLI reference), fixed 12 stale references
