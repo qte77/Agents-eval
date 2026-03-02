@@ -1,6 +1,6 @@
-"""Tests for trace JSONL copy to per-run directory.
+"""Tests for trace file write to per-run directory.
 
-Verifies that _store_trace() copies the trace file to the active
+Verifies that _store_trace() writes the trace file to the active
 RunContext's trace_path when a RunContext is active.
 """
 
@@ -63,7 +63,7 @@ class TestTraceStoreRunContext:
         )
 
     def test_copies_to_run_dir_when_active(self, tmp_path: Path) -> None:
-        """_store_trace copies JSONL to run_context.trace_path when active."""
+        """_store_trace writes trace to run_context.trace_path when active."""
         from app.utils.run_context import RunContext, set_active_run_context
 
         run_dir = tmp_path / "run"
@@ -104,7 +104,7 @@ class TestTraceStoreRunContext:
             collector._store_trace(trace)
 
         # Default storage should have the trace file
-        trace_files = list((tmp_path / "traces").glob("trace_*.jsonl"))
+        trace_files = list((tmp_path / "traces").glob("trace_*.json"))
         assert len(trace_files) == 1
 
         # No run_dir copy should exist

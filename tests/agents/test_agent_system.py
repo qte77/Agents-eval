@@ -350,7 +350,6 @@ class TestValidateModelReturnJsonParsing:
 
     def test_signature_accepts_any_type(self):
         """AC-signature: _validate_model_return must accept Any, not just str."""
-        import inspect
 
         from app.agents.agent_system import _validate_model_return as fn
 
@@ -365,7 +364,6 @@ class TestValidateModelReturnJsonParsing:
     def test_str_wrapping_removed_from_research_delegation(self):
         """AC4: delegate_research passes result.output directly (no str() wrapping)."""
         import ast
-        import inspect
 
         source = inspect.getsource(agent_system)
         tree = ast.parse(source)
@@ -386,7 +384,6 @@ class TestValidateModelReturnJsonParsing:
     def test_str_wrapping_removed_from_analysis_delegation(self):
         """AC4: delegate_analysis passes result.output directly (no str() wrapping)."""
         import ast
-        import inspect
 
         source = inspect.getsource(agent_system)
         tree = ast.parse(source)
@@ -405,7 +402,6 @@ class TestValidateModelReturnJsonParsing:
     def test_str_wrapping_removed_from_synthesis_delegation(self):
         """AC4: delegate_synthesis passes result.output directly (no str() wrapping)."""
         import ast
-        import inspect
 
         source = inspect.getsource(agent_system)
         tree = ast.parse(source)
