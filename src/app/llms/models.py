@@ -77,11 +77,6 @@ def _create_model_for_provider(
             model_name=model_name,
             provider=OpenAIProvider(api_key=api_key),
         )
-    elif provider in ["openrouter", "github"]:
-        return OpenAIChatModel(
-            model_name=model_name,
-            provider=OpenAIProvider(base_url=base_url, api_key=api_key),
-        )
     elif provider == "anthropic":
         # Reason: Anthropic has native PydanticAI support; using the OpenAI-compatible
         # fallback loses Anthropic-specific features (caching, extended thinking).

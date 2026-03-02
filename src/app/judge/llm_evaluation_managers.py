@@ -76,6 +76,7 @@ class LLMJudgeEngine:
         if selected:
             self.provider, self.model, self._api_key = selected
             self.model = self._resolve_model(chat_model, resolved_provider, settings.tier2_provider)
+            logger.info(f"Judge model resolved: {self.provider}/{self.model}")
             self.tier2_available = True
         else:
             # No providers available - mark Tier 2 as unavailable
