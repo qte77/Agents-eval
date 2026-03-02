@@ -347,6 +347,10 @@ These are independent observability channels with no pipeline dependency between
 | Consumer | Tier 3 evaluation (`composite_scorer.py`) | Phoenix dashboard (port 6006) |
 | Dependency | Required for evaluation | Optional, supplementary |
 
+### Trace Viewer (GUI)
+
+The **Trace Viewer** Streamlit page (`src/gui/pages/trace_viewer.py`) provides read-only SQLite access to `traces.db`. It shows an executions overview table with drill-down to individual trace events. Uses Python's built-in `sqlite3` module — no additional dependencies.
+
 ### ArtifactRegistry
 
 In-memory singleton (`src/app/utils/artifact_registry.py`) that tracks all file paths written during a run. Components call `register(label, path)` as they write artifacts. At run end, `summary()` produces a human-readable list of all outputs. Not persisted — exists only for end-of-run CLI/GUI display.

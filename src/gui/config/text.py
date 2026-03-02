@@ -35,6 +35,8 @@ EVALUATION_METRICS_COMPARISON_SUBHEADER = "Graph Metrics vs Text Metrics Compari
 # STORY-009: Agent graph page constants
 AGENT_GRAPH_HEADER = "\U0001f578\ufe0f Agent Interaction Graph"
 AGENT_GRAPH_NETWORK_SUBHEADER = "Interactive Agent Network Visualization"
+# Trace Viewer page constants
+TRACE_VIEWER_HEADER = "Trace Viewer"
 # STORY-009: Run app label constants
 DEBUG_LOG_LABEL = "Debug Log"
 ARTIFACTS_LABEL = "Artifacts Written"

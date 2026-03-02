@@ -36,6 +36,7 @@ from gui.pages.agent_graph import render_agent_graph
 from gui.pages.evaluation import render_evaluation
 from gui.pages.run_app import render_app
 from gui.pages.settings import render_settings
+from gui.pages.trace_viewer import render_trace_viewer
 
 chat_config_file = Path(__file__).parent / APP_CONFIG_PATH / CHAT_CONFIG_FILE
 chat_config = load_config(chat_config_file, ChatConfig)
@@ -93,6 +94,8 @@ async def main():
         graph = st.session_state.get("execution_graph", None)
         composite_result = st.session_state.get("execution_composite_result", None)
         render_agent_graph(graph, composite_result=composite_result)
+    elif selected_page == "Trace Viewer":
+        render_trace_viewer()
 
 
 if __name__ == "__main__":

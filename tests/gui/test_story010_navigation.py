@@ -76,11 +76,11 @@ class TestPagesMatchHeaders:
 
         assert "Agent Graph" in PAGES, f"PAGES must contain 'Agent Graph', got: {PAGES}"
 
-    def test_pages_has_exactly_four_entries(self) -> None:
-        """PAGES must have exactly four entries."""
+    def test_pages_has_exactly_five_entries(self) -> None:
+        """PAGES must have exactly five entries including Trace Viewer."""
         from gui.config.config import PAGES
 
-        assert len(PAGES) == 4, f"PAGES must have exactly 4 entries, got {len(PAGES)}: {PAGES}"
+        assert len(PAGES) == 5, f"PAGES must have exactly 5 entries, got {len(PAGES)}: {PAGES}"
 
     def test_pages_does_not_contain_bare_run(self) -> None:
         """PAGES must NOT contain bare 'Run' (old value)."""

@@ -135,8 +135,9 @@ class TestSidebarNavigationTabs:
             "Settings",
             "Evaluation Results",
             "Agent Graph",
+            "Trace Viewer",
         }, (
-            f"Expected exactly 4 tabs (Run Research App, Settings, Evaluation Results, Agent Graph), got: {captured_options}"
+            f"Expected exactly 5 tabs, got: {captured_options}"
         )
 
 
@@ -332,8 +333,8 @@ class TestPagesConstant:
 
         assert "Agent Graph" in PAGES, f"PAGES must contain 'Agent Graph', got: {PAGES}"
 
-    def test_pages_has_exactly_four_entries(self) -> None:
-        """PAGES must have exactly four entries: Run, Settings, Evaluation, Agent Graph."""
+    def test_pages_has_exactly_five_entries(self) -> None:
+        """PAGES must have exactly five entries including Trace Viewer."""
         from gui.config.config import PAGES
 
         assert set(PAGES) == {
@@ -341,8 +342,9 @@ class TestPagesConstant:
             "Settings",
             "Evaluation Results",
             "Agent Graph",
+            "Trace Viewer",
         }, (
-            f"PAGES must be exactly ['Run Research App', 'Settings', 'Evaluation Results', 'Agent Graph'], got: {PAGES}"
+            f"Expected exactly 5 PAGES entries, got: {PAGES}"
         )
 
 
