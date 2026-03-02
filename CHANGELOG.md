@@ -16,15 +16,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `make setup_uv` recipe: minimal bootstrap (`pip install uv` + `uv sync --frozen`); reused by `setup_prod` and `setup_dev` to avoid duplicated uv install logic
 - `make setup_bert_model` recipe: pre-downloads `distilbert-base-uncased` for BERTScore; called by `setup_dev` and `onCreateCommand` (fallback for non-prebuild Codespaces)
 - `devcontainer.json` (both variants): `HF_HOME=/workspaces/.cache/huggingface` persists model across restarts; `onCreateCommand: make setup_uv && make setup_bert_model` pre-bakes model into Codespaces prebuild
+- `app.py`: up-front `RunContext.create()` before engine dispatch — execution_id generated in `main()`, passed to `run_manager()` and engine paths; `_resolve_engine_type()` helper extracted to keep complexity under threshold
+- `app.py`: `_run_agent_execution()` and `run_manager()` accept optional `execution_id` parameter for caller-controlled trace IDs
+- `tests/app/test_app_run_context_wiring.py`: Hypothesis fuzz tests for `_sanitize_path_component` (path traversal safety), inline-snapshot assertions for `_prepare_result_dict`
 
 ### Changed
 
 - `run_cli.py`: extract `_run_cc_engine` and `_maybe_generate_report` from `cli_main` to reduce cognitive complexity (23→9)
+- `.streamlit/config.toml`: native Streamlit theming via `[theme.dark]` (Expanse Dark) and `[theme.light]` (Nord Light) sections; users switch via Settings menu instead of sidebar dropdown
+- `gui/config/styling.py`: theme detection via `st.get_option("theme.backgroundColor")` luminance check instead of `session_state["selected_theme"]`
+- `gui/components/sidebar.py`: removed theme selector dropdown — Streamlit's native light/dark switcher replaces it
+
+### Removed
+
+- `tests/agents/test_orchestration_deleted.py`: 4 meta-tests verifying a one-time file deletion
+- `tests/agents/test_agent_system.py`: 3 `TestPydanticAiStreamRemoval` signature tests (one-time dead-parameter verification)
+- `tests/gui/test_agent_graph_page.py`: `test_distinguishes_agent_and_tool_nodes` (only asserted `mock_html.called`)
+- `tests/gui/test_story007_gui_polish.py`: `test_render_sidebar_accepts_execution_state_parameter` (`inspect.signature` test)
+- `tests/gui/test_settings_integration.py`: `test_render_settings_accepts_common_and_judge_settings` (try/except no-raise pattern)
+- `tests/gui/test_story007_theme_selector.py`: 4 `TestSidebarThemeSelectbox` tests (widget removed)
+- 31 low-value RunContext wiring tests (commit `42a3de3`)
 
 ### Fixed
 
 - `traditional_metrics.py`: re-enable BERTScore for semantic similarity (was disabled due to resolved sentencepiece build issues), with Levenshtein fallback
 - `llm_evaluation_managers.py`: auto-resolved providers now use PROVIDER_REGISTRY `default_model` when `chat_model` is None, preventing wrong model errors (e.g. `gpt-4o-mini` sent to Cerebras)
+- `tests/app/test_cli_baseline.py`: replaced fragile positional `call_args[7]` index checks with keyword `.kwargs.get("enable_review_tools")`
 - docs: pin `mkdocs>=1.6.1,<2.0` to prevent MkDocs 2.0 incompatibility with Material theme
 - docs: fix all MkDocs build warnings — broken nav entries, stale relative paths in sprint archives, anchor mismatches (double-dash from `&` headings, wrong target files), missing copied files (CONTRIBUTING.md, AGENTS.md), and griffe docstring issues; enable `strict: true`; add `docs/sprints/index.md` sprint overview page
 

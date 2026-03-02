@@ -2,9 +2,9 @@
 title: Agents-eval Architecture
 description: Detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework
 created: 2025-08-31
-updated: 2026-02-27
+updated: 2026-03-02
 category: architecture
-version: 3.8.0
+version: 3.9.0
 ---
 <!-- markdownlint-disable MD024 no-duplicate-heading -->
 
@@ -277,8 +277,7 @@ Popen(stdout=PIPE)
         → coordination_events (from TeamCreate events)
 ```
 
-<!-- TODO(S12-F1): Update this paragraph after STORY-001 changes event parsing from _TEAM_EVENT_TYPES to system/task_started detection -->
-**Stream filter**: `_TEAM_EVENT_TYPES = {"TeamCreate", "Task"}`. Other event types (`assistant`, `tool_use`, `tool_result`) are present in the stream but not captured. This means Tier 3 graph analysis produces 0 nodes/0 edges when CC handles the task without spawning a team.
+**Stream filter** (Sprint 12): `_apply_event` captures `type=system, subtype=task_started/task_completed` events as team artifacts. The stale `_TEAM_EVENT_TYPES` constant was removed. Tier 3 graph analysis produces 0 nodes/0 edges when CC handles the task without spawning a team (triggers Tier 1-only fallback via adaptive weight redistribution).
 
 **Team spawning is not guaranteed**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` enables the capability but CC autonomously decides whether to create a team based on task complexity. Simple queries may be solved solo even in teams mode. The default prompt template uses `"Use a team of agents."` phrasing to increase the likelihood of team creation, but it is ultimately CC's decision.
 
@@ -405,17 +404,25 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 **Detailed Timeline**: See [roadmap.md](roadmap.md) for comprehensive sprint history, dependencies, and development phases.
 
-### Current Implementation (Sprint 12 - In Progress)
+### Previous Implementation (Sprint 13 - Delivered)
+
+**Sprint 13 Scope**: GUI audit remediation and theming system.
+
+- **Accessibility Fixes** (STORY-001–004): Consolidated ARIA live regions via single `st.markdown()` calls, agent graph text summary with `st.caption()` and `<title>`, debug log `role="log"` landmark with `aria-label`, validation warning placement near Run button.
+- **Theming System** (STORY-006–007, STORY-011): `THEMES` dict with 3 curated themes (Expanse Dark, Nord Light, Tokyo Night), sidebar theme selector widget, graph font color and background color integration with active theme.
+- **UX Improvements** (STORY-005, STORY-008–010, STORY-012): Report caching via `session_state["generated_report"]` with Clear Results button, home page onboarding steps, UI string consolidation in `src/gui/config/text.py`, navigation label consistency, type-aware output rendering in `render_output()`.
+
+### Previous Implementation (Sprint 12 - Delivered)
 
 **Sprint 12 Scope**: CC teams mode bug fixes, scoring system fixes, and output directory restructuring.
 
-- **CC Teams Stream Event Parsing** (STORY-001): Fix `_apply_event` to capture `type=system, subtype=task_started/task_completed` events as team artifacts. Remove stale `_TEAM_EVENT_TYPES` constant.
-- **CC Teams Flag Passthrough** (STORY-002): Wire `cc_teams` boolean from CLI/GUI through `main()` to `engine_type` assignment. Replace `team_artifacts` inference with explicit flag.
-- **Tier 3 Empty-Trace Skip** (STORY-003): Return `None` from `_execute_tier3` when trace data is empty, triggering Tier 1-only fallback (see [Adaptive Weight Redistribution](#composite-scoring-system)).
-- **Composite Scoring Trace Awareness** (STORY-004): Wire `evaluate_composite_with_trace` into production pipeline for single-agent weight redistribution.
-- **Execution Timestamp Propagation** (STORY-005): Capture wall-clock timestamps around subprocess/agent execution and propagate to `_execute_tier1` for accurate `time_taken` metric.
-- **Semantic Score Deduplication** (STORY-006): Change `compute_semantic_similarity` to use BERTScore F1 (`distilbert-base-uncased`) with Levenshtein fallback, replacing cosine (which duplicated `cosine_score`). BERTScore re-enabled after sentencepiece build issues resolved (Sprint 13).
-- **Continuous Task Success** (STORY-007): Replace binary 0/1 `task_success` with proportional `min(1.0, similarity/threshold)`.
+- **CC Teams Stream Event Parsing** (STORY-001): Fixed `_apply_event` to capture `type=system, subtype=task_started/task_completed` events as team artifacts. Removed stale `_TEAM_EVENT_TYPES` constant.
+- **CC Teams Flag Passthrough** (STORY-002): Wired `cc_teams` boolean from CLI/GUI through `main()` to `engine_type` assignment. Replaced `team_artifacts` inference with explicit flag.
+- **Tier 3 Empty-Trace Skip** (STORY-003): Returns `None` from `_execute_tier3` when trace data is empty, triggering Tier 1-only fallback (see [Adaptive Weight Redistribution](#composite-scoring-system)).
+- **Composite Scoring Trace Awareness** (STORY-004): Wired `evaluate_composite_with_trace` into production pipeline for single-agent weight redistribution.
+- **Execution Timestamp Propagation** (STORY-005): Captures wall-clock timestamps around subprocess/agent execution and propagates to `_execute_tier1` for accurate `time_taken` metric.
+- **Semantic Score Deduplication** (STORY-006): Changed `compute_semantic_similarity` to use BERTScore F1 (`distilbert-base-uncased`) with Levenshtein fallback, replacing cosine (which duplicated `cosine_score`). BERTScore re-enabled after sentencepiece build issues resolved (Sprint 13).
+- **Continuous Task Success** (STORY-007): Replaced binary 0/1 `task_success` with proportional `min(1.0, similarity/threshold)`.
 - **Unified Output Directories** (STORY-008–010): `RunContext` consolidates all run artifacts into `output/runs/{ts}_{engine}_{paper}_{id}/`, sweeps into `output/sweeps/{ts}/`. See [Output Structure](#output-structure-sprint-12).
 
 ### Previous Implementation (Sprint 11 - Delivered)
@@ -618,7 +625,8 @@ All inter-plugin data uses Pydantic models (no raw dicts). Each plugin's `get_co
 - **Sprint 9**: Correctness & security hardening — dead code, format string sanitization, PDF guard, API key cleanup, judge accuracy, type safety, test quality -- Delivered
 - **Sprint 10**: E2E CLI/GUI parity for CC engine (pipeline parity, review text wiring, engine_type, GUI CC execution), graph visualization polish (mode-specific messages, Tier 3 informational label), test quality (inspect.getsource removal, reference reviews) -- Substantially Delivered (STORY-012/013/014 not started)
 - **Sprint 11**: Observability and UX polish — artifact summary (ArtifactRegistry), GUI sidebar tabs, CC engine fixes (empty query, stream persistence), search tool resilience, sub-agent validation fix, test quality (isinstance→behavioral, conftest consolidation), data layer refactor, config consolidation, examples modernization -- Delivered
-- **Sprint 12**: CC teams mode bug fixes (stream event parsing, cc_teams flag passthrough), scoring system fixes (Tier 3 empty-trace, composite trace awareness, time_taken timestamps, semantic dedup, continuous task_success), per-run output directories (RunContext, writer migration, evaluation.json persistence) -- In Progress
+- **Sprint 12**: CC teams mode bug fixes (stream event parsing, cc_teams flag passthrough), scoring system fixes (Tier 3 empty-trace, composite trace awareness, time_taken timestamps, semantic dedup, continuous task_success), per-run output directories (RunContext, writer migration, evaluation.json persistence) -- Delivered
+- **Sprint 13**: GUI audit remediation & theming — accessibility (ARIA live regions, landmarks, graph alt text), theming system (3 themes, selector widget, graph color integration), UX improvements (onboarding, validation, report caching, navigation, string consolidation, type-aware output) -- Delivered
 
 For sprint details, see [roadmap.md](roadmap.md).
 
