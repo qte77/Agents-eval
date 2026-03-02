@@ -10,6 +10,22 @@ import json
 import pytest
 
 from app.judge.evaluation_pipeline import EvaluationPipeline
+from app.judge.traditional_metrics import TraditionalMetricsEngine
+
+
+@pytest.fixture(autouse=True)
+def _reset_bertscore_cache():
+    """Force Levenshtein fallback to avoid BERTScore model download in normal test runs.
+
+    BERTScore lazy-loads a HuggingFace model (distilbert-base-uncased) on first use.
+    This autouse fixture disables that for all evals/ tests. BERTScore-specific behavior
+    is tested with proper mocks in TestBERTScoreReenablement (which resets _init_failed=False).
+    """
+    TraditionalMetricsEngine._bertscore_instance = None
+    TraditionalMetricsEngine._bertscore_init_failed = True
+    yield
+    TraditionalMetricsEngine._bertscore_instance = None
+    TraditionalMetricsEngine._bertscore_init_failed = False
 
 
 @pytest.fixture

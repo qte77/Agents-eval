@@ -419,29 +419,31 @@ class TestEnhancedFeatures:
 
 
 # Convenience function tests for enhanced features
-def test_evaluate_single_enhanced():
-    """Test convenience function for enhanced evaluation."""
-    agent_output = "This paper presents novel machine learning approach with solid evaluation."
-    reference_texts = ["Novel ML method with comprehensive experimental evaluation."]
+class TestEvaluateSingleEnhanced:
+    """Tests for evaluate_single_enhanced convenience function."""
 
-    # Test with default weights
-    result = evaluate_single_enhanced(agent_output, reference_texts)
-    assert 0.0 <= result <= 1.0
-    assert result > 0.3  # Should show similarity
+    def test_evaluate_single_enhanced(self):
+        """Test convenience function for enhanced evaluation."""
+        agent_output = "This paper presents novel machine learning approach with solid evaluation."
+        reference_texts = ["Novel ML method with comprehensive experimental evaluation."]
 
-    # Test with custom weights
-    weights = {"cosine_weight": 0.7, "jaccard_weight": 0.3, "semantic_weight": 0.0}
-    result_weighted = evaluate_single_enhanced(agent_output, reference_texts, weights)
-    assert 0.0 <= result_weighted <= 1.0
+        # Test with default weights
+        result = evaluate_single_enhanced(agent_output, reference_texts)
+        assert 0.0 <= result <= 1.0
+        assert result > 0.3  # Should show similarity
 
+        # Test with custom weights
+        weights = {"cosine_weight": 0.7, "jaccard_weight": 0.3, "semantic_weight": 0.0}
+        result_weighted = evaluate_single_enhanced(agent_output, reference_texts, weights)
+        assert 0.0 <= result_weighted <= 1.0
 
-def test_evaluate_single_enhanced_empty_references():
-    """Enhanced evaluation should handle empty reference lists."""
-    agent_output = "Some output text"
-    reference_texts = []
+    def test_evaluate_single_enhanced_empty_references(self):
+        """Enhanced evaluation should handle empty reference lists."""
+        agent_output = "Some output text"
+        reference_texts = []
 
-    result = evaluate_single_enhanced(agent_output, reference_texts)
-    assert result == 0.0
+        result = evaluate_single_enhanced(agent_output, reference_texts)
+        assert result == 0.0
 
 
 class TestPeerReadEvaluation:
@@ -620,15 +622,6 @@ class TestPeerReadEvaluation:
 
 class TestSimilarityScoreProperties:
     """Property-based tests for similarity score bounds and invariants."""
-
-    @pytest.fixture(autouse=True)
-    def _reset_bertscore_cache(self):
-        """Force Levenshtein fallback to avoid BERTScore load latency exceeding Hypothesis deadline."""
-        TraditionalMetricsEngine._bertscore_instance = None
-        TraditionalMetricsEngine._bertscore_init_failed = True
-        yield
-        TraditionalMetricsEngine._bertscore_instance = None
-        TraditionalMetricsEngine._bertscore_init_failed = False
 
     @given(
         text1=st.text(min_size=1, max_size=500).filter(lambda s: s.strip()),
@@ -897,3 +890,19 @@ class TestBERTScoreReenablement:
 
         assert score == 0.65
         mock_lev.assert_called_once_with("text a", "text b")
+
+    @pytest.mark.network
+    def test_bertscore_real_model_download(self):
+        """Validate real BERTScore model download from HuggingFace.
+
+        Run with: pytest -m network tests/evals/test_traditional_metrics.py -k bertscore_real
+        """
+        engine = TraditionalMetricsEngine()
+        scorer = engine._get_bertscore_model()
+
+        assert scorer is not None
+        _, _, f1 = scorer.score(
+            ["The paper presents a novel approach"],
+            ["This work introduces a new method"],
+        )
+        assert 0.0 <= float(f1.mean().item()) <= 1.0

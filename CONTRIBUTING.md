@@ -128,6 +128,13 @@ The project requirements are in `pyproject.toml`. Use the provided `Makefile` to
 
 Security tests run as part of `make test` (no separate command needed).
 
+#### Opt-in Test Markers
+
+Tests requiring network access or long runtimes are excluded from `make test` by default. Run them explicitly:
+
+- `uv run pytest -m network` — real external calls (HuggingFace model download, API validation)
+- `uv run pytest -m benchmark` — performance benchmarks
+
 **Testing Guidelines:**
 
 - **Mock for**: Unit tests, CI/CD pipelines, deterministic behavior
