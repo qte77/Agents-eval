@@ -135,7 +135,7 @@ async def _run_agent_execution(
         include_researcher,
         include_analyst,
         include_synthesiser,
-        enable_review_tools,
+        enable_review_tools=enable_review_tools,
     )
     execution_id, manager_output = await run_manager(
         manager,

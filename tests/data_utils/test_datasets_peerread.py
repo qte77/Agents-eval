@@ -919,7 +919,7 @@ class TestPeerReadDataSnapshots:
                 "base_url": "https://github.com/allenai/PeerRead/tree/master/data",
                 "github_api_base_url": "https://api.github.com/repos/allenai/PeerRead/contents/data",
                 "raw_github_base_url": "https://raw.githubusercontent.com/allenai/PeerRead/master/data",
-                "cache_directory": "datasets/peerread",
+                "cache_directory": "_Agents-eval/datasets/peerread",
                 "venues": ["acl_2017", "conll_2016", "iclr_2017"],
                 "splits": ["train", "test", "dev"],
                 "max_papers_per_query": 100,

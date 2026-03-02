@@ -12,8 +12,20 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from app.config.judge_settings import JudgeSettings
 from app.judge.trace_processors import TraceCollector
+
+
+@pytest.fixture(autouse=True)
+def _reset_run_context():
+    """Clear active run context to prevent cross-test pollution."""
+    from app.utils.run_context import set_active_run_context
+
+    set_active_run_context(None)
+    yield
+    set_active_run_context(None)
 
 
 class TestTraceSkipWarning:
@@ -141,8 +153,8 @@ class TestTraceSkipWarning:
         result = collector.end_execution()
 
         assert result is not None
-        # Verify the JSONL file was created (successful storage has observable side-effects)
-        jsonl_files = list(collector.storage_path.glob("trace_test-with-events_*.jsonl"))
-        assert len(jsonl_files) == 1, (
-            f"Expected 1 JSONL file after successful storage: {jsonl_files}"
+        # Verify the JSON file was created (successful storage has observable side-effects)
+        json_files = list(collector.storage_path.glob("trace_test-with-events_*.json"))
+        assert len(json_files) == 1, (
+            f"Expected 1 JSON file after successful storage: {json_files}"
         )
