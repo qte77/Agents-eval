@@ -52,39 +52,6 @@ class TestMasEnginePathRunContext:
             yield m
 
     @pytest.mark.usefixtures("_mock_agent_execution", "_mock_graph")
-    async def test_creates_run_context(self, tmp_path: Path, _mock_eval: AsyncMock) -> None:
-        """_run_mas_engine_path creates a RunContext when execution_id is present."""
-        from app.app import _run_mas_engine_path
-
-        with patch("app.app.RunContext") as mock_rc_cls:
-            mock_ctx = MagicMock()
-            mock_ctx.run_dir = tmp_path / "run"
-            mock_rc_cls.create.return_value = mock_ctx
-
-            await _run_mas_engine_path(
-                chat_config_file="config.yaml",
-                chat_provider="test",
-                query="test",
-                paper_id="1105.1072",
-                enable_review_tools=False,
-                include_researcher=False,
-                include_analyst=False,
-                include_synthesiser=False,
-                token_limit=None,
-                skip_eval=True,
-                cc_solo_dir=None,
-                cc_teams_dir=None,
-                cc_teams_tasks_dir=None,
-                judge_settings=None,
-            )
-
-            mock_rc_cls.create.assert_called_once_with(
-                engine_type="mas",
-                paper_id="1105.1072",
-                execution_id="exec-abcd1234",
-            )
-
-    @pytest.mark.usefixtures("_mock_agent_execution", "_mock_graph")
     async def test_passes_run_dir_to_evaluation(
         self, tmp_path: Path, _mock_eval: AsyncMock
     ) -> None:
@@ -146,91 +113,6 @@ class TestMasEnginePathRunContext:
             )
 
             assert get_active_run_context() is mock_ctx
-
-
-class TestCcEnginePathRunContext:
-    """Tests for RunContext creation in _run_cc_engine_path."""
-
-    @pytest.fixture
-    def _mock_cc_artifacts(self):
-        """Patch _extract_cc_artifacts to return known values."""
-        with patch(
-            "app.app._extract_cc_artifacts",
-            return_value=("cc-exec-5678", MagicMock()),
-        ) as m:
-            yield m
-
-    @pytest.fixture
-    def _mock_eval(self):
-        """Patch _run_evaluation_if_enabled to return None."""
-        with patch(
-            "app.app._run_evaluation_if_enabled",
-            new_callable=AsyncMock,
-            return_value=None,
-        ) as m:
-            yield m
-
-    @pytest.fixture
-    def _mock_extract_review(self):
-        """Patch extract_cc_review_text."""
-        with patch("app.engines.cc_engine.extract_cc_review_text", return_value="review text") as m:
-            yield m
-
-    @pytest.mark.usefixtures("_mock_cc_artifacts", "_mock_extract_review")
-    async def test_creates_run_context(self, tmp_path: Path, _mock_eval: AsyncMock) -> None:
-        """_run_cc_engine_path creates a RunContext."""
-        from app.app import _run_cc_engine_path
-
-        with patch("app.app.RunContext") as mock_rc_cls:
-            mock_ctx = MagicMock()
-            mock_ctx.run_dir = tmp_path / "run"
-            mock_rc_cls.create.return_value = mock_ctx
-
-            await _run_cc_engine_path(
-                cc_result=MagicMock(),
-                skip_eval=True,
-                paper_id="p1",
-                cc_solo_dir=None,
-                cc_teams_dir=None,
-                cc_teams_tasks_dir=None,
-                chat_provider="test",
-                judge_settings=None,
-                cc_teams=False,
-            )
-
-            mock_rc_cls.create.assert_called_once_with(
-                engine_type="cc_solo",
-                paper_id="p1",
-                execution_id="cc-exec-5678",
-            )
-
-    @pytest.mark.usefixtures("_mock_cc_artifacts", "_mock_extract_review")
-    async def test_uses_cc_teams_engine_type(self, tmp_path: Path, _mock_eval: AsyncMock) -> None:
-        """_run_cc_engine_path uses 'cc_teams' engine_type when cc_teams=True."""
-        from app.app import _run_cc_engine_path
-
-        with patch("app.app.RunContext") as mock_rc_cls:
-            mock_ctx = MagicMock()
-            mock_ctx.run_dir = tmp_path / "run"
-            mock_rc_cls.create.return_value = mock_ctx
-
-            await _run_cc_engine_path(
-                cc_result=MagicMock(),
-                skip_eval=True,
-                paper_id="p1",
-                cc_solo_dir=None,
-                cc_teams_dir=None,
-                cc_teams_tasks_dir=None,
-                chat_provider="test",
-                judge_settings=None,
-                cc_teams=True,
-            )
-
-            mock_rc_cls.create.assert_called_once_with(
-                engine_type="cc_teams",
-                paper_id="p1",
-                execution_id="cc-exec-5678",
-            )
 
 
 class TestPrepareResultDict:

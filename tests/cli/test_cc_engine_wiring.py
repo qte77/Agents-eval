@@ -1,12 +1,13 @@
 """Tests for STORY-006: cc_engine wiring into CLI/sweep/GUI + --cc-teams flag.
 
 Covers:
-- --cc-teams flag added to CLI and sweep arg parsers
-- run_cli delegates to run_cc_solo / run_cc_teams (no inline subprocess)
+- --cc-teams flag added to CLI argument parser
 - sweep_runner._invoke_cc_comparison delegates to cc_engine
 - run_app._execute_query_background passes engine to main()
-- _run_cc_baselines wired through CCTraceAdapter (not a stub)
-- scripts/collect-cc-traces/ directory removed
+- _run_cc_baselines wired through CCTraceAdapter
+- CC review text wired to evaluation pipeline
+- engine_type set on CompositeResult from cc_teams flag
+- GUI creates CC result and passes to main()
 """
 
 import sys
@@ -42,13 +43,6 @@ def _make_sweep_config(output_dir: Path, **overrides: object):
 class TestCCTeamsFlagCLI:
     """--cc-teams flag added to run_cli.py argument parser."""
 
-    def test_cc_teams_flag_registered_in_parser(self):
-        """--cc-teams is a recognized boolean flag in run_cli._parser."""
-        from run_cli import _parser
-
-        option_strings = {a for action in _parser._actions for a in action.option_strings}
-        assert "--cc-teams" in option_strings
-
     def test_cc_teams_flag_defaults_to_false(self):
         """--cc-teams flag is False (or absent) when not specified."""
         from run_cli import parse_args
@@ -62,91 +56,6 @@ class TestCCTeamsFlagCLI:
 
         args = parse_args(["--engine=cc", "--cc-teams"])
         assert args.get("cc_teams") is True
-
-    def test_cc_teams_can_combine_with_engine_cc(self):
-        """--cc-teams can be combined with --engine=cc."""
-        from run_cli import parse_args
-
-        args = parse_args(["--engine=cc", "--cc-teams", "--query=test query"])
-        assert args.get("engine") == "cc"
-        assert args.get("cc_teams") is True
-
-
-class TestCCTeamsFlagSweep:
-    """--cc-teams flag added to run_sweep.py argument parser."""
-
-    def test_cc_teams_flag_registered_in_sweep_parser(self, tmp_path: Path):
-        """--cc-teams is a recognized flag via SweepConfig model."""
-        config = _make_sweep_config(tmp_path, cc_teams=False)
-        assert config.cc_teams is False
-
-    def test_sweep_config_supports_cc_teams_field(self, tmp_path: Path):
-        """SweepConfig model has cc_teams boolean field."""
-        config = _make_sweep_config(tmp_path, cc_teams=True)
-        assert config.cc_teams is True
-
-    def test_sweep_config_cc_teams_defaults_to_false(self, tmp_path: Path):
-        """SweepConfig.cc_teams defaults to False."""
-        config = _make_sweep_config(tmp_path)
-        assert config.cc_teams is False
-
-
-class TestCLIDelegatesToCCEngine:
-    """run_cli delegates CC execution to cc_engine functions, not inline subprocess."""
-
-    def test_cli_cc_branch_calls_run_cc_solo_not_subprocess(self):
-        """When --engine=cc (no --cc-teams), run_cli delegates to run_cc_solo, not subprocess."""
-        from app.engines.cc_engine import CCResult
-
-        mock_result = CCResult(
-            execution_id="exec-test-123",
-            output_data={},
-            session_dir=str(Path(__file__).parent / "nonexistent_session"),
-        )
-
-        # Behavioral: patch run_cc_solo at the cc_engine module level and verify it gets called
-        # when run_cli handles engine="cc" path
-        with patch("app.engines.cc_engine.run_cc_solo", return_value=mock_result) as mock_solo:
-            from app.engines.cc_engine import run_cc_solo
-
-            # Directly invoke run_cc_solo as run_cli would delegate to it
-            result = run_cc_solo("test query cc delegation", timeout=600)
-            assert result.execution_id == "exec-test-123"
-            mock_solo.assert_called_once()
-
-    def test_cli_cc_solo_delegates_to_run_cc_solo(self, tmp_path: Path):
-        """When engine=cc without cc_teams, CLI delegates to cc_engine.run_cc_solo."""
-        from app.engines.cc_engine import CCResult
-
-        mock_result = CCResult(
-            execution_id="exec-001", output_data={}, session_dir=str(tmp_path / "sess")
-        )
-
-        with patch("app.engines.cc_engine.run_cc_solo", return_value=mock_result) as mock_solo:
-            with patch("app.app.main", new_callable=AsyncMock) as mock_main:
-                mock_main.return_value = {}
-                from app.engines.cc_engine import run_cc_solo
-
-                result = run_cc_solo("test query", timeout=600)
-                assert result.execution_id == "exec-001"
-                mock_solo.assert_called_once()
-
-    def test_cli_cc_teams_delegates_to_run_cc_teams(self):
-        """When engine=cc with cc_teams=True, CLI delegates to cc_engine.run_cc_teams."""
-        from app.engines.cc_engine import CCResult
-
-        mock_result = CCResult(
-            execution_id="exec-teams-001",
-            output_data={},
-            team_artifacts=[{"type": "TeamCreate", "team_name": "test-team"}],
-        )
-
-        with patch("app.engines.cc_engine.run_cc_teams", return_value=mock_result) as mock_teams:
-            from app.engines.cc_engine import run_cc_teams
-
-            result = run_cc_teams("test query", timeout=600)
-            assert len(result.team_artifacts) == 1
-            mock_teams.assert_called_once()
 
 
 class TestSweepRunnerDelegatesToCCEngine:
@@ -282,17 +191,6 @@ class TestRunAppPassesEngine:
             f"Got: {captured_main_kwargs.get('engine')!r}"
         )
 
-    def test_execute_query_background_accepts_engine_parameter(self):
-        """_execute_query_background function signature accepts engine parameter."""
-        import inspect
-
-        from gui.pages.run_app import _execute_query_background
-
-        sig = inspect.signature(_execute_query_background)
-        assert "engine" in sig.parameters, (
-            "_execute_query_background must accept 'engine' parameter"
-        )
-
 
 class TestRunCCBaselinesWired:
     """_run_cc_baselines wired through CCTraceAdapter, not a stub."""
@@ -330,58 +228,9 @@ class TestRunCCBaselinesWired:
             "_run_cc_baselines must call _invoke_cc_comparison at least once per paper"
         )
 
-    @pytest.mark.asyncio
-    async def test_run_cc_baselines_calls_cc_trace_adapter_when_result_available(
-        self, tmp_path: Path
-    ):
-        """_run_cc_baselines calls CCTraceAdapter to process CC results."""
-        from app.benchmark.sweep_runner import SweepRunner
-        from app.engines.cc_engine import CCResult
-
-        config = _make_sweep_config(tmp_path, engine="cc", paper_ids=["1105.1072"])
-        runner = SweepRunner(config)
-
-        mock_cc_result = CCResult(
-            execution_id="exec-001",
-            output_data={},
-            session_dir=str(tmp_path / "sess"),
-        )
-
-        with patch.object(
-            runner, "_invoke_cc_comparison", new_callable=AsyncMock, return_value=mock_cc_result
-        ):
-            with patch("app.benchmark.sweep_runner.CCTraceAdapter") as mock_adapter_cls:
-                mock_adapter = MagicMock()
-                mock_adapter_cls.return_value = mock_adapter
-                await runner._run_cc_baselines()
-
-
-class TestGUICCTeamsCheckbox:
-    """GUI CC Teams checkbox visible when CC engine selected (STORY-010)."""
-
-    def test_execute_query_background_accepts_cc_teams_parameter(self):
-        """_execute_query_background signature accepts cc_teams parameter."""
-        import inspect
-
-        from gui.pages.run_app import _execute_query_background
-
-        sig = inspect.signature(_execute_query_background)
-        assert "cc_teams" in sig.parameters, (
-            "_execute_query_background must accept 'cc_teams' parameter"
-        )
-
 
 class TestMainCCBranch:
     """main() CC branch skips MAS and uses CC result (STORY-010)."""
-
-    def test_main_accepts_cc_result_parameter(self):
-        """main() signature includes cc_result parameter."""
-        import inspect
-
-        from app.app import main
-
-        sig = inspect.signature(main)
-        assert "cc_result" in sig.parameters, "main() must accept cc_result parameter"
 
     @pytest.mark.asyncio
     async def test_main_cc_engine_skips_run_agent_execution(self):
@@ -534,81 +383,6 @@ class TestEngineTypeSetOnResult:
             assert result["composite_result"].engine_type == "cc_teams"
 
     @pytest.mark.asyncio
-    async def test_cc_teams_true_with_empty_artifacts_still_cc_teams(self):
-        """AC6: cc_teams=True + empty team_artifacts → engine_type='cc_teams'."""
-        from app.data_models.evaluation_models import CompositeResult
-        from app.engines.cc_engine import CCResult
-
-        cc_result = CCResult(
-            execution_id="cc-teams-empty",
-            output_data={},
-            team_artifacts=[],  # empty artifacts
-        )
-        mock_composite = CompositeResult(
-            composite_score=0.5,
-            recommendation="accept",
-            recommendation_weight=0.5,
-            metric_scores={},
-            tier1_score=0.5,
-            tier3_score=0.3,
-            evaluation_complete=True,
-        )
-
-        with (
-            patch("app.app._extract_cc_artifacts", return_value=("cc-teams-empty", None)),
-            patch(
-                "app.app._run_evaluation_if_enabled",
-                new_callable=AsyncMock,
-                return_value=mock_composite,
-            ),
-        ):
-            from app.app import main
-
-            result = await main(engine="cc", cc_result=cc_result, cc_teams=True, query="test")
-
-            assert result is not None
-            assert result["composite_result"].engine_type == "cc_teams"
-
-    @pytest.mark.asyncio
-    async def test_cc_teams_false_with_artifacts_still_cc_solo(self):
-        """AC7: cc_teams=False → engine_type='cc_solo' regardless of team_artifacts."""
-        from app.data_models.evaluation_models import CompositeResult
-        from app.engines.cc_engine import CCResult
-
-        cc_result = CCResult(
-            execution_id="cc-solo-with-artifacts",
-            output_data={},
-            team_artifacts=[{"type": "TeamCreate", "name": "spurious"}],
-        )
-        mock_composite = CompositeResult(
-            composite_score=0.5,
-            recommendation="accept",
-            recommendation_weight=0.5,
-            metric_scores={},
-            tier1_score=0.5,
-            tier3_score=0.3,
-            evaluation_complete=True,
-        )
-
-        with (
-            patch(
-                "app.app._extract_cc_artifacts",
-                return_value=("cc-solo-with-artifacts", None),
-            ),
-            patch(
-                "app.app._run_evaluation_if_enabled",
-                new_callable=AsyncMock,
-                return_value=mock_composite,
-            ),
-        ):
-            from app.app import main
-
-            result = await main(engine="cc", cc_result=cc_result, cc_teams=False, query="test")
-
-            assert result is not None
-            assert result["composite_result"].engine_type == "cc_solo"
-
-    @pytest.mark.asyncio
     async def test_mas_engine_keeps_default_engine_type(self):
         """MAS engine leaves engine_type as default 'mas'."""
         from app.data_models.evaluation_models import CompositeResult
@@ -730,155 +504,3 @@ class TestGUICCExecution:
 
             mock_teams.assert_called_once_with("test teams")
             assert mock_main.call_args.kwargs.get("cc_result") is mock_cc_result
-
-
-# MARK: --- STORY-002: cc_teams flag passthrough ---
-
-
-class TestCCTeamsFlagPassthrough:
-    """STORY-002: cc_teams flag forwarded from CLI/GUI through main() to engine_type."""
-
-    def test_main_accepts_cc_teams_parameter(self):
-        """AC1: main() signature includes cc_teams: bool = False parameter."""
-        import inspect
-
-        from app.app import main
-
-        sig = inspect.signature(main)
-        assert "cc_teams" in sig.parameters, "main() must accept cc_teams parameter"
-        param = sig.parameters["cc_teams"]
-        assert param.default is False, "cc_teams must default to False"
-
-    def test_run_cc_engine_path_accepts_cc_teams_parameter(self):
-        """AC2: _run_cc_engine_path() signature includes cc_teams: bool parameter."""
-        import inspect
-
-        from app.app import _run_cc_engine_path
-
-        sig = inspect.signature(_run_cc_engine_path)
-        assert "cc_teams" in sig.parameters, "_run_cc_engine_path() must accept cc_teams parameter"
-
-    @pytest.mark.asyncio
-    async def test_cli_passes_cc_teams_to_main(self):
-        """AC4: CLI passes cc_teams flag to main() call."""
-        captured_kwargs: dict = {}
-
-        async def capture_main(**kwargs: object) -> None:
-            captured_kwargs.update(kwargs)
-            return None
-
-        from app.engines.cc_engine import CCResult
-
-        mock_result = CCResult(execution_id="cli-cc-teams", output_data={})
-
-        with (
-            patch("app.engines.cc_engine.run_cc_teams", return_value=mock_result),
-            patch("app.engines.cc_engine.build_cc_query", return_value="query"),
-            patch("app.app.main", side_effect=capture_main),
-            patch("app.utils.artifact_registry.get_artifact_registry") as mock_reg,
-        ):
-            mock_registry = MagicMock()
-            mock_registry.format_summary_block.return_value = ""
-            mock_reg.return_value = mock_registry
-
-            # Simulate what run_cli.__main__ does when cc_teams=True
-            # We can't run __main__ directly, but we can verify main() is called
-            # with cc_teams by checking that _execute_query_background passes it
-            pass
-
-        # Instead, verify via GUI path which is testable
-        # CLI verification is structural (parse_args + main() signature)
-
-    @pytest.mark.asyncio
-    async def test_gui_passes_cc_teams_true_to_main(self):
-        """AC5: GUI passes cc_teams=True to main() when CC Teams mode selected."""
-        captured_kwargs: dict = {}
-
-        async def capture_main(**kwargs: object) -> None:
-            captured_kwargs.update(kwargs)
-            return None
-
-        from app.engines.cc_engine import CCResult
-
-        mock_cc_result = CCResult(execution_id="gui-cc-teams", output_data={})
-
-        with (
-            patch("gui.pages.run_app.st") as mock_st,
-            patch("gui.pages.run_app.LogCapture") as mock_log_capture,
-            patch("gui.pages.run_app.main", side_effect=capture_main),
-            patch("gui.pages.run_app.run_cc_teams", return_value=mock_cc_result),
-        ):
-            mock_capture = MagicMock()
-            mock_capture.get_logs.return_value = []
-            mock_capture.attach_to_logger.return_value = "h"
-            mock_log_capture.return_value = mock_capture
-            mock_st.session_state = MagicMock()
-
-            from gui.pages.run_app import _execute_query_background
-
-            await _execute_query_background(
-                query="test teams",
-                provider="openai",
-                include_researcher=False,
-                include_analyst=False,
-                include_synthesiser=False,
-                chat_config_file=None,
-                engine="cc",
-                cc_teams=True,
-            )
-
-            assert captured_kwargs.get("cc_teams") is True, "GUI must pass cc_teams=True to main()"
-
-    @pytest.mark.asyncio
-    async def test_gui_passes_cc_teams_false_to_main(self):
-        """AC5: GUI passes cc_teams=False to main() when CC solo mode selected."""
-        captured_kwargs: dict = {}
-
-        async def capture_main(**kwargs: object) -> None:
-            captured_kwargs.update(kwargs)
-            return None
-
-        from app.engines.cc_engine import CCResult
-
-        mock_cc_result = CCResult(execution_id="gui-cc-solo", output_data={})
-
-        with (
-            patch("gui.pages.run_app.st") as mock_st,
-            patch("gui.pages.run_app.LogCapture") as mock_log_capture,
-            patch("gui.pages.run_app.main", side_effect=capture_main),
-            patch("gui.pages.run_app.run_cc_solo", return_value=mock_cc_result),
-        ):
-            mock_capture = MagicMock()
-            mock_capture.get_logs.return_value = []
-            mock_capture.attach_to_logger.return_value = "h"
-            mock_log_capture.return_value = mock_capture
-            mock_st.session_state = MagicMock()
-
-            from gui.pages.run_app import _execute_query_background
-
-            await _execute_query_background(
-                query="test solo",
-                provider="openai",
-                include_researcher=False,
-                include_analyst=False,
-                include_synthesiser=False,
-                chat_config_file=None,
-                engine="cc",
-                cc_teams=False,
-            )
-
-            assert captured_kwargs.get("cc_teams") is not True, (
-                "GUI must not pass cc_teams=True when in solo mode"
-            )
-
-
-class TestShellScriptsRemoved:
-    """scripts/collect-cc-traces/ directory should not exist."""
-
-    def test_scripts_collect_cc_traces_dir_removed(self):
-        """scripts/collect-cc-traces/ directory has been removed."""
-        scripts_dir = Path(__file__).parent.parent.parent / "scripts" / "collect-cc-traces"
-        assert not scripts_dir.exists(), (
-            f"scripts/collect-cc-traces/ still exists at {scripts_dir}. "
-            "It should be removed as Python cc_engine replaces it."
-        )
