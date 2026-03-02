@@ -101,6 +101,7 @@ class TestUpFrontRunContext:
             patch("app.app._extract_cc_artifacts", side_effect=_capture_side_effect),
             patch("app.app.resolve_config_path", return_value="config.yaml"),
             patch("app.engines.cc_engine.extract_cc_review_text", return_value="review"),
+            patch("app.app.persist_graph"),
         ):
             from app.app import main
 

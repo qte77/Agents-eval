@@ -61,6 +61,7 @@ from app.judge.evaluation_runner import (
 from app.judge.evaluation_runner import (
     run_evaluation_if_enabled as _run_evaluation_if_enabled,
 )
+from app.judge.graph_export import persist_graph
 from app.utils.error_messages import generic_exception
 from app.utils.load_configs import load_config
 from app.utils.log import logger
@@ -461,6 +462,8 @@ async def main(
                     execution_id=execution_id,
                     run_dir=run_ctx.run_dir,
                 )
+
+            persist_graph(graph, run_ctx.run_dir)
 
             logger.info(f"Exiting app '{PROJECT_NAME}'")
             return _prepare_result_dict(

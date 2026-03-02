@@ -256,6 +256,7 @@ class TestMainCCBranch:
             patch("app.app._run_agent_execution") as mock_run_agent,
             patch("app.app._run_evaluation_if_enabled", new_callable=AsyncMock, return_value=None),
             patch("app.app._build_graph_from_trace", return_value=None),
+            patch("app.app.persist_graph"),
         ):
             from app.app import main
 

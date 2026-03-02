@@ -32,6 +32,7 @@ async def test_graph_built_when_skip_eval_and_execution_id_exists():
         patch("app.app._run_evaluation_if_enabled", new_callable=AsyncMock) as mock_eval,
         patch("app.app._build_graph_from_trace") as mock_build_graph,
         patch("app.app.load_config") as mock_load_config,
+        patch("app.app.persist_graph"),
     ):
         # Setup mocks
         mock_setup.return_value = MagicMock(
