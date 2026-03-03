@@ -180,6 +180,22 @@ def cli_main() -> None:
     generate_report_flag = args.pop("generate_report", False) or False
     no_llm_suggestions = args.pop("no_llm_suggestions", False) or False
 
+    # Reason: main() expects a JudgeSettings object, not raw provider/model strings.
+    # Mirrors SweepRunner._build_judge_settings() logic.
+    judge_provider = args.pop("judge_provider", None)
+    judge_model = args.pop("judge_model", None)
+    judge_settings = None
+    if judge_provider or judge_model:
+        from app.judge.evaluation_pipeline import JudgeSettings
+
+        kwargs: dict[str, Any] = {}
+        if judge_provider:
+            kwargs["tier2_provider"] = judge_provider
+        if judge_model:
+            kwargs["tier2_model"] = judge_model
+        judge_settings = JudgeSettings(**kwargs)
+    args["judge_settings"] = judge_settings
+
     if engine == "cc" and not shutil.which("claude"):
         print(
             "error: --engine=cc requires the 'claude' CLI to be installed and on PATH",
