@@ -158,7 +158,7 @@ Demonstrates running Claude Code in agent-teams orchestration mode via
 **What it shows:**
 
 - Building a teams-mode query with `build_cc_query(cc_teams=True)`
-- Invoking `run_cc_teams()` and inspecting `TeamCreate`/`Task` events in `CCResult`
+- Invoking `run_cc_teams()` and inspecting `task_started`/`task_completed` events in `CCResult`
 - How team artifacts are captured from the live JSONL stream
 - Graceful handling when `claude` CLI is not on PATH
 
