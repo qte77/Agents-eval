@@ -57,9 +57,11 @@
       "Bash(mkdir:*)",
       "Bash(rm:*)",
       "Edit(.claude/**)",
+      "Edit(AGENTS.md)",
       "Edit(CLAUDE.md)",
       "Edit(Makefile)",
       "Edit(pyproject.toml)",
+      "Edit(CONTRIBUTING.md)",
       "Edit(README.md)"
     ]
   },
