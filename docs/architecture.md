@@ -18,13 +18,15 @@ This is a Multi-Agent System (MAS) evaluation framework for assessing agentic AI
 
 ## Entry Points
 
-The framework exposes three execution entry points, each backed by a Makefile recipe:
+The framework exposes five execution entry points, each backed by a Makefile recipe:
 
 | Entry Point | Makefile Recipe | Module | Purpose |
 | --- | --- | --- | --- |
 | **CLI** | `make app_cli ARGS="..."` | `src/run_cli.py` | Single-run evaluation via command line |
 | **GUI** | `make app_gui` | `src/run_gui.py` | Streamlit interactive dashboard |
 | **Sweep** | `make app_sweep ARGS="..."` | `src/run_sweep.py` | Automated benchmarking across compositions |
+| **Batch Run** | `make app_batch_run ARGS="..."` | `scripts/batch_run.py` | Run `app_cli` across all agent compositions with error resilience |
+| **Batch Eval** | `make app_batch_eval ARGS="..."` | `scripts/batch_eval.py` | Summarize existing runs and sweeps into a consolidated report |
 
 Additional convenience recipes:
 
@@ -50,6 +52,16 @@ Streamlit multi-page app launched via `streamlit run`. Pages: Run Research App (
 ### Sweep (`run_sweep.py`)
 
 CLI for automated benchmarking. Accepts `--config <json>` for file-based configuration or individual flags. See [Benchmarking Infrastructure](#benchmarking-infrastructure-sprint-6) for full details.
+
+### Batch Run (`batch_run.py`)
+
+Runs `make app_cli` for each of the 8 agent compositions (2^3 from researcher/analyst/synthesiser toggles) for one or more papers. Catches and continues past errors (422, timeouts, UsageLimitExceeded). Supports parallel execution via `--parallel N` and composition filtering via `--compositions`.
+
+Key flags: `--paper-ids`, `--chat-provider`, `--engine`, `--parallel`, `--compositions`, `--output`, `--verbose`.
+
+### Batch Eval (`batch_eval.py`)
+
+Reads `evaluation.json` from each run directory and `results.json` from each sweep directory, then writes a consolidated Markdown summary to `_Agents-eval/output/summary.md`. Supports `--runs-only` and `--sweeps-only` filters. Summary includes per-run scores (composite, T1/T2/T3, recommendation), aggregate statistics, and per-sweep mean/stddev.
 
 ## Data Flow
 
@@ -184,7 +196,7 @@ The composite scorer maps tier result fields to six abstract metrics, each weigh
 - **Weight Redistribution**: When single-agent mode is detected, the `coordination_quality` metric (0.167 weight) is excluded and its weight is redistributed equally across the remaining 5 metrics (0.20 each)
 - **Transparency**: `CompositeResult` includes `single_agent_mode: bool` flag to indicate when redistribution occurred
 - **Compound Redistribution**: When both Tier 2 is skipped (no valid provider) AND single-agent mode is detected, weights are redistributed across the remaining available metrics to always sum to ~1.0
-- **Tier 1-Only Fallback**: When both Tier 2 (no LLM provider API key) and Tier 3 (no trace data) are unavailable but Tier 1 succeeded, the pipeline returns a degraded `CompositeResult` using only traditional metrics (`cosine_score`, `jaccard_score`, `semantic_score`) with `weights_used={"tier1": 1.0, "tier2": 0.0, "tier3": 0.0}` and `evaluation_complete=False`. A warning is logged. This prevents CI failures in environments without LLM provider credentials.
+- **Tier Input Guards**: Tier 1 is skipped when review text is empty (non-paper queries) or no usable reference reviews are available (PeerRead cache empty). When Tier 1 is skipped and Tier 2+3 are available, composite uses T2+T3 with equal weight redistribution. When only Tier 1 is available (Tier 2 and 3 both unavailable), composite is capped at `composite_weak_reject_threshold` (default 0.4) with `evaluation_complete=False` — a single-tier result cannot score above the weak_reject boundary.
 
 ## Benchmarking Infrastructure (Sprint 6)
 

@@ -36,6 +36,8 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 - **CC Engine:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc"` (requires `claude` CLI on PATH)
 - **CC Teams:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc --cc-teams"` (multi-agent orchestration)
 - **MAS Sweep:** `make app_sweep ARGS="--paper-ids 1105.1072 --repetitions 1 --all-compositions"` (benchmark all 8 agent compositions)
+- **Batch Run:** `make app_batch_run ARGS="--paper-ids 1105.1072 --parallel 4"` (run all compositions via subprocess, resilient to errors)
+- **Batch Eval:** `make app_batch_eval` (summarize all existing runs and sweeps into `_Agents-eval/output/summary.md`)
 
 > **Note:** All commands above use the default provider (`github`). Set your API key in `.env` or pass `--chat-provider=<provider>` to use a different one. See [.env.example](.env.example).
 
@@ -46,6 +48,8 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 - **CC Engine:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc"` (requires `claude` CLI on PATH)
 - **CC Teams:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc --cc-teams"` (multi-agent orchestration)
 - **MAS Sweep:** `make app_sweep ARGS="--paper-ids 1105.1072 --repetitions 1 --all-compositions"` (benchmark all 8 agent compositions)
+- **Batch Run:** `make app_batch_run ARGS="--paper-ids 1105.1072 --parallel 4"` (run all compositions via subprocess, resilient to errors)
+- **Batch Eval:** `make app_batch_eval` (summarize all existing runs and sweeps into `_Agents-eval/output/summary.md`)
 - **Core Resources:**
   - [CONTRIBUTING.md](CONTRIBUTING.md) - Commands, workflows, coding patterns
   - [docs/architecture.md](docs/architecture.md) - Technical design and decisions
