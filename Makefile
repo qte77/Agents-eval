@@ -79,6 +79,16 @@ RALPH_PROJECT ?= $(notdir $(CURDIR))
 RALPH_TIMEOUT ?=
 TEAMS ?= false
 
+# -- quiet mode (default: quiet; set VERBOSE=1 for full output) --
+VERBOSE ?=
+ifndef VERBOSE
+  RUFF_QUIET   := --quiet
+  PYTEST_QUIET := -q --tb=short --no-header
+  COV_QUIET    := --cov-report=
+  CPLX_QUIET   := -q
+  JSCPD_QUIET  := --silent
+endif
+
 
 # MARK: SETUP
 
@@ -387,26 +397,31 @@ cc_run_teams:  ## Run CC teams via Python entry point. Usage: make cc_run_teams 
 
 
 lint_src:  ## Lint and format src with ruff
-	uv run ruff format --exclude tests
-	uv run ruff check --fix --exclude tests
+	echo "--- lint_src$(if $(RUFF_QUIET), [quiet])"
+	uv run ruff format $(RUFF_QUIET) --exclude tests
+	uv run ruff check $(RUFF_QUIET) --fix --exclude tests
 
 lint_tests:  ## Lint and format tests with ruff
-	uv run ruff format tests
-	uv run ruff check tests --fix
+	echo "--- lint_tests$(if $(RUFF_QUIET), [quiet])"
+	uv run ruff format $(RUFF_QUIET) tests
+	uv run ruff check $(RUFF_QUIET) tests --fix
 
 complexity:  ## Check cognitive complexity with complexipy
-	uv run complexipy
+	echo "--- complexity$(if $(CPLX_QUIET), [quiet])"
+	uv run complexipy $(CPLX_QUIET)
 
 # TODO: evaluate Python-native alternative to jscpd (pylint R0801, PMD CPD) to reduce npm dependency
 duplication:  ## Detect copy-paste duplication with jscpd
+	echo "--- duplication$(if $(JSCPD_QUIET), [quiet])"
 	if command -v jscpd > /dev/null 2>&1; then
-		jscpd src/ --min-lines 5 --min-tokens 50 --reporters console
+		jscpd src/ --min-lines 5 --min-tokens 50 --reporters console $(JSCPD_QUIET)
 	else
 		echo "jscpd not installed — skipping duplication check (run 'make setup_npm_tools' to enable)"
 	fi
 
 test:  ## Run all tests
-	uv run pytest
+	echo "--- test$(if $(PYTEST_QUIET), [quiet])"
+	uv run pytest $(PYTEST_QUIET)
 
 test_rerun:  ## Rerun only failed tests (use during fix iterations)
 	uv run pytest --lf -x
@@ -415,30 +430,30 @@ test_fix_snapshots:  ## Run tests and auto-fix inline snapshots
 	uv run pytest --inline-snapshot=fix
 
 test_coverage:  ## Run tests with coverage threshold (configured in pyproject.toml)
-	echo "Running tests with coverage gate (fail_under% defined in pyproject.toml)..."
-	uv run pytest --cov
+	echo "--- test_coverage$(if $(PYTEST_QUIET), [quiet])"
+	uv run pytest $(PYTEST_QUIET) --cov $(COV_QUIET)
 
 type_check:  ## Check for static typing errors
+	echo "--- type_check"
 	uv run pyright src
 
 validate:  ## Complete pre-commit validation (lint + type check + complexity + duplication + test coverage)
 	set -e
-	echo "Running complete validation sequence..."
 	$(MAKE) -s lint_src
 	$(MAKE) -s lint_tests
 	$(MAKE) -s type_check
 	$(MAKE) -s complexity
 	$(MAKE) -s duplication
 	$(MAKE) -s test_coverage
-	echo "Validation completed successfully"
+	echo "=== validate: all passed ==="
 
 quick_validate:  ## Fast development cycle validation
-	echo "Running quick validation ..."
+	set -e
 	$(MAKE) -s lint_src
 	$(MAKE) -s type_check
 	$(MAKE) -s complexity
 	$(MAKE) -s duplication
-	echo "Quick validation completed (check output for any failures)"
+	echo "=== quick_validate: all passed ==="
 
 
 # MARK: PHOENIX
