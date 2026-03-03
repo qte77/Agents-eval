@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/batch_run.py`: batch composition runner — runs `make app_cli` across all 8 agent compositions for one or more papers with `--parallel` support, error continuation, and optional JSON output
+- `Makefile`: `app_batch_run` recipe as drop-in alternative to `app_sweep` using subprocess calls
+
+### Fixed
+
+- `evaluation_pipeline.py`: skip Tier 1 when review is empty or no reference reviews available (prevents false 1.0 and uninformative 0.1 scores)
+- `evaluation_pipeline.py`: cap T1-only composite at `composite_weak_reject_threshold` (0.4) — incomplete evaluation no longer scores as "perfect"
+- `evaluation_pipeline.py`: route T1-skipped composite through T2+T3 when available instead of raising ValueError
+- `cc_teams.py`: fix stale event type checks (`type=="TeamCreate"`/`"Task"` → `subtype=="task_started"`/`"task_completed"`)
+- `run_sweep.py`: include exception type in sweep error message for actionable diagnostics
+
 ### Changed
 
 - `evaluation_runner.py`: DRY paper content loading — renamed `_load_cc_paper_content` → `_load_paper_content` and replaced duplicated inline PDF→abstract fallback in `_extract_paper_and_review_content` with a single call

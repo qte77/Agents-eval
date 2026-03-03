@@ -14,7 +14,7 @@
 	plantuml_serve plantuml_render \
 	pandoc_run writeup writeup_generate \
 	lint_links lint_md \
-	app_cli app_gui app_sweep app_profile \
+	app_cli app_gui app_sweep app_batch_run app_profile \
 	cc_run_solo cc_collect_teams cc_run_teams \
 	lint_src lint_tests complexity duplication \
 	test test_rerun test_coverage test_fix_snapshots type_check validate quick_validate \
@@ -345,6 +345,9 @@ app_sweep:  ## Run MAS composition sweep. Usage: make app_sweep ARGS="--paper-id
 
 app_batch_eval:  ## Re-evaluate existing runs and regenerate sweep summaries. Usage: make app_batch_eval ARGS="--runs-only"
 	uv run python scripts/batch_eval.py $(ARGS)
+
+app_batch_run:  ## Run app_cli for all agent compositions. Usage: make app_batch_run ARGS="--paper-ids 1105.1072 [--parallel 4]"
+	uv run python scripts/batch_run.py $(ARGS)
 
 app_profile:  ## Profile app with scalene
 	mkdir -p $(OUTPUT_BASE)/logs/scalene-profiles

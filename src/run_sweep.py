@@ -188,8 +188,10 @@ async def main_async() -> int:
         logger.info(f"Output: {config.output_dir}")
 
         results = await run_sweep(config)
+        n = len(results)
+        print(f"\nSweep complete: {n} evaluation{'s' if n != 1 else ''} succeeded.")
 
-        logger.info(f"Sweep completed with {len(results)} total evaluations")
+        logger.info(f"Sweep completed with {n} total evaluations")
         logger.info(f"Results saved to {config.output_dir}")
 
         # Log artifact summary at end of sweep (AC7)
@@ -200,7 +202,7 @@ async def main_async() -> int:
         return 0
 
     except Exception as e:
-        logger.error(f"Sweep failed: {e}", exc_info=True)
+        logger.error(f"Sweep failed with {type(e).__name__}: {e}", exc_info=True)
         return 1
 
 
