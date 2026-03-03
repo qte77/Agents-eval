@@ -142,7 +142,7 @@ def _extract_error_line(stderr: str) -> str | None:
     """
     # Reason: loguru logs non-error levels to stderr; skip them to surface
     # the actual exception line.
-    _LOGURU_NON_ERROR = ("| TRACE", "| DEBUG", "| INFO", "| SUCCESS", "| WARNING")
+    loguru_non_error = ("| TRACE", "| DEBUG", "| INFO", "| SUCCESS", "| WARNING")
 
     for line in reversed(stderr.strip().splitlines()):
         stripped = line.strip()
@@ -153,7 +153,7 @@ def _extract_error_line(stderr: str) -> str | None:
         if is_make or stripped.lstrip("~ ^") == "":
             continue
         # Skip loguru non-error log lines (INFO, DEBUG, WARNING, etc.)
-        if any(level in stripped for level in _LOGURU_NON_ERROR):
+        if any(level in stripped for level in loguru_non_error):
             continue
         return stripped
     return None
