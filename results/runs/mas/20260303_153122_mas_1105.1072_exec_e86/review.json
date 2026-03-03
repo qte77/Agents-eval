@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T15-31-33Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "This paper presents an overview of the current state of the English-Lithuanian-English (ELE) machine translation system, focusing on the lexicon, phrase dictionary, translation engine, and word sense disambiguation using Google. Contributions include development of an open, extensible ELE dictionary-lexicon with morphological details, a strategy for polysemy handling through translation prioritization, and preliminary use of Google for word sense disambiguation in MT. Strengths: The work addresses a less-resourced language pair, contributes architectural insights on the MT lexicon and engine, clear outline of ongoing and future tasks, including extension plans and performance optimizations. Weaknesses: The translation engine is at an early stage with limited functionality, lack of experimental results or evaluation metrics, reliance on external Google queries for word sense disambiguation which may not scale well, and insufficient comparison with existing MT solutions or benchmarks for the language pair. Technical soundness: The system design and implementation approach are reasonable given the complexity of ELE MT but lack detailed validation or error analysis. Clarity: The paper is generally clear with adequate explanations and good layout. Suggestions: Include more empirical evaluation, refine translation engine components, investigate scalable, corpus-based WSD methods, and enhance benchmarking against related work. Overall, this paper provides valuable insights into ELE MT development, but requires further progress and evaluation for stronger impact and acceptance.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "This paper presents an overview of the current state of the English-Lithuanian-English (ELE) machine translation system, focusing on the lexicon, phrase dictionary, translation engine, and word sense disambiguation using Google. Contributions include development of an open, extensible ELE dictionary-lexicon with morphological details, a strategy for polysemy handling through translation prioritization, and preliminary use of Google for word sense disambiguation in MT. Strengths: The work addresses a less-resourced language pair, contributes architectural insights on the MT lexicon and engine, clear outline of ongoing and future tasks, including extension plans and performance optimizations. Weaknesses: The translation engine is at an early stage with limited functionality, lack of experimental results or evaluation metrics, reliance on external Google queries for word sense disambiguation which may not scale well, and insufficient comparison with existing MT solutions or benchmarks for the language pair. Technical soundness: The system design and implementation approach are reasonable given the complexity of ELE MT but lack detailed validation or error analysis. Clarity: The paper is generally clear with adequate explanations and good layout. Suggestions: Include more empirical evaluation, refine translation engine components, investigate scalable, corpus-based WSD methods, and enhance benchmarking against related work. Overall, this paper provides valuable insights into ELE MT development, but requires further progress and evaluation for stronger impact and acceptance.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T14-56-18Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "The paper presents an overview of the English-Lithuanian-English machine translation system, detailing its current state, addressing challenges, and outlining future work including word sense disambiguation using Google as a corpus. Strengths include the clear identification of problems and planned improvements, the integration of morphological information and domain attributes, and the practical approach towards word sense disambiguation leveraging Google queries. Weaknesses include limited evaluation of system effectiveness, early-stage translation engine development, and incomplete handling of syntax and negations. The technical approach is sound but could benefit from more extensive testing and validation. The presentation is clear and well-structured, with suggestions to provide more empirical results and detailed comparison to related MT systems to strengthen the paper's substance and impact.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "4",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "The paper presents an overview of the English-Lithuanian-English machine translation system, detailing its current state, addressing challenges, and outlining future work including word sense disambiguation using Google as a corpus. Strengths include the clear identification of problems and planned improvements, the integration of morphological information and domain attributes, and the practical approach towards word sense disambiguation leveraging Google queries. Weaknesses include limited evaluation of system effectiveness, early-stage translation engine development, and incomplete handling of syntax and negations. The technical approach is sound but could benefit from more extensive testing and validation. The presentation is clear and well-structured, with suggestions to provide more empirical results and detailed comparison to related MT systems to strengthen the paper's substance and impact.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 4,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-02T18-19-21Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "3",
+    "meaningful_comparison": "3",
+    "presentation_format": "Poster",
+    "comments": "Overall the work demonstrates a solid engineering effort to build an English‑Lithuanian‑English MT system with an open‑access lexicon and a pragmatic, low‑resource WSD approach using Google hit counts. However, the current lexical coverage is far too limited for real‑world translation, and the absence of any quantitative evaluation or comparison with baselines prevents assessment of translation quality. The paper also suffers from presentation problems and does not situate itself within the broader MT literature. To be publishable, the authors should substantially expand the lexicon, implement and evaluate the translation engine (including WSD and syntactic transformations), provide rigorous experimental results, improve the manuscript’s language, and consider releasing the resources publicly.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "2",
+    "reviewer_confidence": "1",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 3,
+    "meaningful_comparison": 3,
+    "presentation_format": "Poster",
+    "comments": "Overall the work demonstrates a solid engineering effort to build an English‑Lithuanian‑English MT system with an open‑access lexicon and a pragmatic, low‑resource WSD approach using Google hit counts. However, the current lexical coverage is far too limited for real‑world translation, and the absence of any quantitative evaluation or comparison with baselines prevents assessment of translation quality. The paper also suffers from presentation problems and does not situate itself within the broader MT literature. To be publishable, the authors should substantially expand the lexicon, implement and evaluate the translation engine (including WSD and syntactic transformations), provide rigorous experimental results, improve the manuscript’s language, and consider releasing the resources publicly.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 2,
+    "reviewer_confidence": 1
+  },
+  "model_info": "gpt-oss-120b via PydanticAI"
+}

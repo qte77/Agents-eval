@@ -1,0 +1,21 @@
+{
+  "composite_score": 0.0,
+  "recommendation": "reject",
+  "recommendation_weight": -1.0,
+  "metric_scores": {},
+  "tier1_score": 0.0,
+  "tier2_score": null,
+  "tier3_score": 0.0,
+  "evaluation_complete": false,
+  "single_agent_mode": false,
+  "timestamp": "",
+  "config_version": "1.0.0",
+  "weights_used": {
+    "tier1": 0.0,
+    "tier2": 0.0,
+    "tier3": 0.0
+  },
+  "tiers_enabled": null,
+  "agent_assessment_scores": null,
+  "engine_type": "mas"
+}

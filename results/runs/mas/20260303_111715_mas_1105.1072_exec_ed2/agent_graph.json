@@ -1,0 +1,25 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "agent",
+      "label": "Manager",
+      "id": "manager"
+    },
+    {
+      "type": "tool",
+      "label": "Get Paper Content",
+      "id": "get_paper_content"
+    }
+  ],
+  "edges": [
+    {
+      "interaction": "tool_call",
+      "success": true,
+      "source": "manager",
+      "target": "get_paper_content"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-02T23-14-06Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "3",
+    "meaningful_comparison": "3",
+    "presentation_format": "Poster",
+    "comments": "Consider expanding the lexicon using semi‑automatic extraction from existing parallel corpora or publicly available bilingual dictionaries. Replace the Google API‑based WSD with contextual embeddings (e.g., multilingual BERT) to improve scalability and accuracy. Introduce quantitative evaluation metrics (BLEU, TER) and human assessment to substantiate translation quality claims. Develop a collaborative editing platform with version control to allow multiple lexicographers to contribute safely. Integrate handling of syntactic phenomena such as negation and tense to raise the fluency of generated translations.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "3",
+    "reviewer_confidence": "1",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 3,
+    "meaningful_comparison": 3,
+    "presentation_format": "Poster",
+    "comments": "Consider expanding the lexicon using semi‑automatic extraction from existing parallel corpora or publicly available bilingual dictionaries. Replace the Google API‑based WSD with contextual embeddings (e.g., multilingual BERT) to improve scalability and accuracy. Introduce quantitative evaluation metrics (BLEU, TER) and human assessment to substantiate translation quality claims. Develop a collaborative editing platform with version control to allow multiple lexicographers to contribute safely. Integrate handling of syntactic phenomena such as negation and tense to raise the fluency of generated translations.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 3,
+    "reviewer_confidence": 1
+  },
+  "model_info": "gpt-oss-120b via PydanticAI"
+}

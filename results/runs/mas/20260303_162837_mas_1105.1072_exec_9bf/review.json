@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T16-29-56Z",
+  "review": {
+    "impact": "2",
+    "substance": "2",
+    "appropriateness": "3",
+    "meaningful_comparison": "1",
+    "presentation_format": "Poster",
+    "comments": "Summary: The paper presents the current status of an English‑Lithuanian‑English machine‑translation system, describing the lexical database, phrase dictionary prototype, translation engine, caching strategy, and a proposed word‑sense disambiguation approach that leverages Google query counts.\n\nStrengths: Provides a detailed description of system architecture and practical engineering challenges (e.g., data entry, caching, optimization). Useful for practitioners building bilingual resources for low‑resource language pairs.\n\nWeaknesses: Lacks quantitative evaluation of translation quality or disambiguation effectiveness. Minimal related‑work discussion makes novelty unclear. Proposed WSD method relies on a fragile Google API with strict query limits.\n\nTechnical Soundness: Components are plausibly designed, but many implementation details remain conceptual. Absence of empirical results limits confidence in correctness.\n\nClarity and Presentation: Readable and reasonably structured, though some sections are repetitive and could benefit from tighter editing. Inclusion of tables or figures summarizing lexicon statistics would improve clarity.\n\nSuggestions: Add evaluation on benchmark datasets (e.g., BLEU, human assessment) to demonstrate translation improvements. Expand comparison with existing bilingual lexicons and MT systems. Explore more scalable WSD resources beyond Google queries.",
+    "soundness_correctness": "2",
+    "originality": "2",
+    "recommendation": "2",
+    "clarity": "3",
+    "reviewer_confidence": "3",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 2,
+    "substance": 2,
+    "appropriateness": 3,
+    "meaningful_comparison": 1,
+    "presentation_format": "Poster",
+    "comments": "Summary: The paper presents the current status of an English‑Lithuanian‑English machine‑translation system, describing the lexical database, phrase dictionary prototype, translation engine, caching strategy, and a proposed word‑sense disambiguation approach that leverages Google query counts.\n\nStrengths: Provides a detailed description of system architecture and practical engineering challenges (e.g., data entry, caching, optimization). Useful for practitioners building bilingual resources for low‑resource language pairs.\n\nWeaknesses: Lacks quantitative evaluation of translation quality or disambiguation effectiveness. Minimal related‑work discussion makes novelty unclear. Proposed WSD method relies on a fragile Google API with strict query limits.\n\nTechnical Soundness: Components are plausibly designed, but many implementation details remain conceptual. Absence of empirical results limits confidence in correctness.\n\nClarity and Presentation: Readable and reasonably structured, though some sections are repetitive and could benefit from tighter editing. Inclusion of tables or figures summarizing lexicon statistics would improve clarity.\n\nSuggestions: Add evaluation on benchmark datasets (e.g., BLEU, human assessment) to demonstrate translation improvements. Expand comparison with existing bilingual lexicons and MT systems. Explore more scalable WSD resources beyond Google queries.",
+    "soundness_correctness": 2,
+    "originality": 2,
+    "recommendation": 2,
+    "clarity": 3,
+    "reviewer_confidence": 3
+  },
+  "model_info": "gpt-oss-120b via PydanticAI"
+}

@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-02T14-51-36Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "This paper presents the current state of an English-Lithuanian-English machine translation lexicon and engine, describing its architecture, current challenges, and future directions. It contributes by detailing the lexicon design, handling of polysemy, morphological form storage, and planned integration of word sense disambiguation using Google as an external knowledge source. Strengths include a clear motivation for the language pair choice, a structured approach to lexicon building, and a novel use of Google for word sense disambiguation. Weaknesses are the limited current translation engine capabilities, incomplete syntax and negation handling, and a still underdeveloped phrase dictionary. The technical soundness is moderate as the system is in early development and some components are described theoretically rather than empirically validated. The paper is generally clearly written, though some sections could benefit from more detailed evaluation results and comparison to related MT systems. Suggestions for improvement include providing experimental evaluation metrics, elaborating on the scalability and accuracy of the WSD approach, expanding comparison to other MT lexicons and engines, and advancing the phrase dictionary and syntactic rules support. Overall, this paper provides a useful overview of a developing MT system with promising directions but requires further technical maturation and validation to make a strong impact.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "This paper presents the current state of an English-Lithuanian-English machine translation lexicon and engine, describing its architecture, current challenges, and future directions. It contributes by detailing the lexicon design, handling of polysemy, morphological form storage, and planned integration of word sense disambiguation using Google as an external knowledge source. Strengths include a clear motivation for the language pair choice, a structured approach to lexicon building, and a novel use of Google for word sense disambiguation. Weaknesses are the limited current translation engine capabilities, incomplete syntax and negation handling, and a still underdeveloped phrase dictionary. The technical soundness is moderate as the system is in early development and some components are described theoretically rather than empirically validated. The paper is generally clearly written, though some sections could benefit from more detailed evaluation results and comparison to related MT systems. Suggestions for improvement include providing experimental evaluation metrics, elaborating on the scalability and accuracy of the WSD approach, expanding comparison to other MT lexicons and engines, and advancing the phrase dictionary and syntactic rules support. Overall, this paper provides a useful overview of a developing MT system with promising directions but requires further technical maturation and validation to make a strong impact.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

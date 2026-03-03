@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T14-56-23Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "This paper provides an overview of the current state and future work of an English-Lithuanian-English machine translation system, focusing on the translation lexicon, the engine's core components, and word sense disambiguation using Google. The work highlights the challenges of building and expanding a bilingual lexicon with morphological complexities, polysemy handling, and domain-specific attributes. Strengths include the detailed description of the lexicon structure, attention to morphological forms, and the innovative use of Google for word sense disambiguation as a practical external knowledge source. However, the paper reveals that the translation engine is in the early stages, with limited treatment of negations, syntax rules, and incomplete tuning. The phrase dictionary is still under development, indicating that the system is not fully mature. The technical soundness is reasonable given the early state of the engine, though it requires significant future work. Presentation is clear and the paper is well-structured, which facilitates understanding the project's scope and challenges. Improvements could include more extensive evaluation results, deeper integration of syntactic and semantic processing, and further development of word sense disambiguation methodologies. Overall, this work is a valuable contribution to the niche area of Lithuanian language machine translation and worthy of acceptance for presentation.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "4",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "This paper provides an overview of the current state and future work of an English-Lithuanian-English machine translation system, focusing on the translation lexicon, the engine's core components, and word sense disambiguation using Google. The work highlights the challenges of building and expanding a bilingual lexicon with morphological complexities, polysemy handling, and domain-specific attributes. Strengths include the detailed description of the lexicon structure, attention to morphological forms, and the innovative use of Google for word sense disambiguation as a practical external knowledge source. However, the paper reveals that the translation engine is in the early stages, with limited treatment of negations, syntax rules, and incomplete tuning. The phrase dictionary is still under development, indicating that the system is not fully mature. The technical soundness is reasonable given the early state of the engine, though it requires significant future work. Presentation is clear and the paper is well-structured, which facilitates understanding the project's scope and challenges. Improvements could include more extensive evaluation results, deeper integration of syntactic and semantic processing, and further development of word sense disambiguation methodologies. Overall, this work is a valuable contribution to the niche area of Lithuanian language machine translation and worthy of acceptance for presentation.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 4,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

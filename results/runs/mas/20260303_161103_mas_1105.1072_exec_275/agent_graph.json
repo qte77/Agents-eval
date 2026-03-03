@@ -1,0 +1,47 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "agent",
+      "label": "Manager",
+      "id": "manager"
+    },
+    {
+      "type": "tool",
+      "label": "Get Peerread Paper",
+      "id": "get_peerread_paper"
+    },
+    {
+      "type": "tool",
+      "label": "Generate Paper Review Content From Template",
+      "id": "generate_paper_review_content_from_template"
+    },
+    {
+      "type": "tool",
+      "label": "Save Structured Review",
+      "id": "save_structured_review"
+    }
+  ],
+  "edges": [
+    {
+      "interaction": "tool_call",
+      "success": true,
+      "source": "manager",
+      "target": "get_peerread_paper"
+    },
+    {
+      "interaction": "tool_call",
+      "success": true,
+      "source": "manager",
+      "target": "generate_paper_review_content_from_template"
+    },
+    {
+      "interaction": "tool_call",
+      "success": true,
+      "source": "manager",
+      "target": "save_structured_review"
+    }
+  ]
+}

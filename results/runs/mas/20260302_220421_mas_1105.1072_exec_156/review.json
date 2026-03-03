@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-02T22-04-44Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "2",
+    "presentation_format": "Poster",
+    "comments": "Summary of the paper's contributions: The paper presents an early-stage English-Lithuanian-English (ELE) machine-translation system built around a richly annotated, user-editable lexicon. It describes the design of a bilingual lexical database with extensive morphological information, handling of polysemy via priority-ordered translation tables and optional domain tags, a separate phrase-dictionary architecture, an initial translation engine (direct translation + simple ending tuning), and a pragmatic word-sense disambiguation (WSD) approach leveraging Google hit-counts.\n\nStrengths of the work: • Rich lexical representation essential for highly inflected Lithuanian. • User-editable design encourages community growth. • Clear engineering roadmap with concrete next steps. • Innovative low-cost WSD prototype using Google.\n\nWeaknesses and areas for improvement: • No quantitative evaluation of translation quality. • Sparse related-work discussion, limiting assessment of novelty. • Lexicon size is tiny (~250 entries); scalability not addressed. • WSD reliance on Google API limits robustness. • Presentation suffers from typographical errors and lack of figures/tables.\n\nTechnical soundness assessment: The architecture (separate lexical and phrase modules, priority tables for polysemy) is sound, but the translation engine is rudimentary and lacks handling of key linguistic phenomena (negation, tense, syntactic restructuring). The WSD approach is conceptually valid but constrained by API limits. Overall reasonable for a prototype but needs substantial development.\n\nClarity and presentation quality: Main ideas conveyed but poor formatting, missing diagrams, and grammatical mistakes hinder readability. Structured layout with diagrams and tables would improve comprehension.\n\nSuggestions for improvement: 1) Add empirical evaluation (BLEU, human judgments). 2) Expand related-work section. 3) Outline plan to scale lexicon (corpus-driven extraction, crowdsourcing). 4) Explore alternative WSD methods (unsupervised clustering, multilingual embeddings). 5) Refine manuscript (correct errors, add architecture figures, tables of database schema).",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "3",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 2,
+    "presentation_format": "Poster",
+    "comments": "Summary of the paper's contributions: The paper presents an early-stage English-Lithuanian-English (ELE) machine-translation system built around a richly annotated, user-editable lexicon. It describes the design of a bilingual lexical database with extensive morphological information, handling of polysemy via priority-ordered translation tables and optional domain tags, a separate phrase-dictionary architecture, an initial translation engine (direct translation + simple ending tuning), and a pragmatic word-sense disambiguation (WSD) approach leveraging Google hit-counts.\n\nStrengths of the work: • Rich lexical representation essential for highly inflected Lithuanian. • User-editable design encourages community growth. • Clear engineering roadmap with concrete next steps. • Innovative low-cost WSD prototype using Google.\n\nWeaknesses and areas for improvement: • No quantitative evaluation of translation quality. • Sparse related-work discussion, limiting assessment of novelty. • Lexicon size is tiny (~250 entries); scalability not addressed. • WSD reliance on Google API limits robustness. • Presentation suffers from typographical errors and lack of figures/tables.\n\nTechnical soundness assessment: The architecture (separate lexical and phrase modules, priority tables for polysemy) is sound, but the translation engine is rudimentary and lacks handling of key linguistic phenomena (negation, tense, syntactic restructuring). The WSD approach is conceptually valid but constrained by API limits. Overall reasonable for a prototype but needs substantial development.\n\nClarity and presentation quality: Main ideas conveyed but poor formatting, missing diagrams, and grammatical mistakes hinder readability. Structured layout with diagrams and tables would improve comprehension.\n\nSuggestions for improvement: 1) Add empirical evaluation (BLEU, human judgments). 2) Expand related-work section. 3) Outline plan to scale lexicon (corpus-driven extraction, crowdsourcing). 4) Explore alternative WSD methods (unsupervised clustering, multilingual embeddings). 5) Refine manuscript (correct errors, add architecture figures, tables of database schema).",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 3,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-oss-120b via PydanticAI"
+}

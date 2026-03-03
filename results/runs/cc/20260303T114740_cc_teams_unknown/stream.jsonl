@@ -1,0 +1,3 @@
+{"type": "system", "subtype": "init", "session_id": "sess-unchanged"}
+{"type": "system", "subtype": "task_started", "agent_id": "agent-1"}
+{"type": "result", "num_turns": 4, "total_cost_usd": 0.03}

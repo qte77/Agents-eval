@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T15-31-34Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "3",
+    "meaningful_comparison": "2",
+    "presentation_format": "Poster",
+    "comments": "This paper presents an overview of the current state and future directions of the English-Lithuanian-English machine translation system. Contributions include the development of a bilingual lexicon and engine with morphological and syntactic processing, handling polysemy through translation prioritization and domain attributes, and a novel use of Google for word sense disambiguation. Strengths include the practical approach to lexicon extensibility, the detailed treatment of morphological forms, and the innovative idea to leverage Google results for disambiguation. Weaknesses include the early stage of the translation engine with incomplete syntax handling and negations, limited phrase dictionary implementation, and somewhat minimal experimental evaluation. Technically, the system appears sound but requires more comprehensive testing and refinement. The paper is clearly written with well-organized sections and adequate detail on the challenges and methods. Suggestions include expanding experimental validation, improving the phrase dictionary and syntax processing, and providing comparisons with existing MT systems to contextualize contributions better.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 3,
+    "meaningful_comparison": 2,
+    "presentation_format": "Poster",
+    "comments": "This paper presents an overview of the current state and future directions of the English-Lithuanian-English machine translation system. Contributions include the development of a bilingual lexicon and engine with morphological and syntactic processing, handling polysemy through translation prioritization and domain attributes, and a novel use of Google for word sense disambiguation. Strengths include the practical approach to lexicon extensibility, the detailed treatment of morphological forms, and the innovative idea to leverage Google results for disambiguation. Weaknesses include the early stage of the translation engine with incomplete syntax handling and negations, limited phrase dictionary implementation, and somewhat minimal experimental evaluation. Technically, the system appears sound but requires more comprehensive testing and refinement. The paper is clearly written with well-organized sections and adequate detail on the challenges and methods. Suggestions include expanding experimental validation, improving the phrase dictionary and syntax processing, and providing comparisons with existing MT systems to contextualize contributions better.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

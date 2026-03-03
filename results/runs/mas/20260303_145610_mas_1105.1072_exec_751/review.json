@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T14-56-19Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "This paper presents a detailed overview of the current state and future plans for the English-Lithuanian-English machine translation system. It describes the lexicon structure, morphological data representation, phrase dictionary development, and the translation engine including the incorporation of syntactic rules and word sense disambiguation using Google as a large text corpus source. Strengths include the comprehensive lexicon design, the use of morphological forms, and the novel approach to word sense disambiguation leveraging Google queries. The paper is technically sound with a clear explanation of database design and translation engine components. Areas for improvement include more thorough evaluation of the translation engine's performance and more detailed discussion on handling complex linguistic phenomena like negations and syntactic transformations. The clarity of presentation is good, although some sections would benefit from concise summaries. Overall, the paper makes a solid contribution to machine translation research, especially in a less-resourced language pair, and is suitable for oral presentation.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "4",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "This paper presents a detailed overview of the current state and future plans for the English-Lithuanian-English machine translation system. It describes the lexicon structure, morphological data representation, phrase dictionary development, and the translation engine including the incorporation of syntactic rules and word sense disambiguation using Google as a large text corpus source. Strengths include the comprehensive lexicon design, the use of morphological forms, and the novel approach to word sense disambiguation leveraging Google queries. The paper is technically sound with a clear explanation of database design and translation engine components. Areas for improvement include more thorough evaluation of the translation engine's performance and more detailed discussion on handling complex linguistic phenomena like negations and syntactic transformations. The clarity of presentation is good, although some sections would benefit from concise summaries. Overall, the paper makes a solid contribution to machine translation research, especially in a less-resourced language pair, and is suitable for oral presentation.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 4,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

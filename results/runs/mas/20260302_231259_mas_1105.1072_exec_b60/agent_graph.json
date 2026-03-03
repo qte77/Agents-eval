@@ -1,0 +1,36 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "agent",
+      "label": "Manager",
+      "id": "manager"
+    },
+    {
+      "type": "tool",
+      "label": "Get Paper Content",
+      "id": "get_paper_content"
+    },
+    {
+      "type": "tool",
+      "label": "Save Structured Review",
+      "id": "save_structured_review"
+    }
+  ],
+  "edges": [
+    {
+      "interaction": "tool_call",
+      "success": true,
+      "source": "manager",
+      "target": "get_paper_content"
+    },
+    {
+      "interaction": "tool_call",
+      "success": true,
+      "source": "manager",
+      "target": "save_structured_review"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "composite_score": 0.4,
+  "recommendation": "weak_reject",
+  "recommendation_weight": -0.7,
+  "metric_scores": {
+    "planning_rationality": 0.2
+  },
+  "tier1_score": 0.0,
+  "tier2_score": 0.4,
+  "tier3_score": 0.0,
+  "evaluation_complete": false,
+  "single_agent_mode": false,
+  "timestamp": "",
+  "config_version": "1.0.0",
+  "weights_used": {
+    "tier1": 0.0,
+    "tier2": 1.0,
+    "tier3": 0.0
+  },
+  "tiers_enabled": null,
+  "agent_assessment_scores": null,
+  "engine_type": "cc_solo"
+}
