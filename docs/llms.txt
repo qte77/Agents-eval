@@ -1,0 +1,36 @@
+# Agents-eval
+
+> Multi-Agent System (MAS) evaluation framework using PydanticAI — three-tiered assessment (Traditional Metrics, LLM-as-a-Judge, Graph-Based Analysis) for scientific paper review generation and evaluation.
+
+## Getting Started
+
+- [README](https://github.com/qte77/Agents-eval/blob/main/README.md): Project overview, quick start, and navigation
+- [Contributing](https://github.com/qte77/Agents-eval/blob/main/CONTRIBUTING.md): Development commands, coding standards, testing strategy
+- [Agent Instructions](https://github.com/qte77/Agents-eval/blob/main/AGENTS.md): AI agent behavioral rules and compliance requirements
+
+## Architecture & Design
+
+- [Architecture](https://github.com/qte77/Agents-eval/blob/main/docs/architecture.md): System design, technical decisions, architectural patterns
+- [User Stories](https://github.com/qte77/Agents-eval/blob/main/docs/UserStory.md): User workflows, acceptance criteria, success metrics
+- [Roadmap](https://github.com/qte77/Agents-eval/blob/main/docs/roadmap.md): Development roadmap and planned features
+
+## Usage & Operations
+
+- [PeerRead Agent Usage](https://github.com/qte77/Agents-eval/blob/main/docs/howtos/peerread-agent-usage.md): Operational guide for the evaluation pipeline
+- [Troubleshooting](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/troubleshooting.md): Common issues and solutions
+
+## Best Practices
+
+- [MAS Design Principles](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/mas-design-principles.md): Multi-agent system design guidance
+- [MAS Security](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/mas-security.md): Security practices for agent systems
+- [Testing Strategy](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/testing-strategy.md): Testing approach and guidelines
+- [Python Best Practices](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/python-best-practices.md): Python coding standards
+
+## Optional
+
+- [Security Advisories](https://github.com/qte77/Agents-eval/blob/main/docs/security-advisories.md): Known security issues and mitigations
+- [Agent Teams Orchestration](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/CC-agent-teams-orchestration.md): Claude Code agent teams analysis
+- [Inference Providers](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/Inference-Providers.md): LLM provider comparison
+- [Landscape: Agent Frameworks](https://github.com/qte77/Agents-eval/blob/main/docs/landscape/landscape-agent-frameworks-infrastructure.md): Agent framework survey
+- [Landscape: Evaluation Resources](https://github.com/qte77/Agents-eval/blob/main/docs/landscape/landscape-evaluation-data-resources.md): Evaluation datasets and benchmarks
+- [Landscape: Research Agents](https://github.com/qte77/Agents-eval/blob/main/docs/landscape/landscape-research-agents.md): Research agent landscape
