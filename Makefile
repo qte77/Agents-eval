@@ -334,6 +334,9 @@ app_gui:  ## Run app with Streamlit GUI
 app_sweep:  ## Run MAS composition sweep. Usage: make app_sweep ARGS="--paper-ids 1,2,3 --repetitions 3 --all-compositions"
 	PYTHONPATH=$(SRC_PATH) uv run python $(SRC_PATH)/run_sweep.py $(ARGS)
 
+app_batch_eval:  ## Re-evaluate existing runs and regenerate sweep summaries. Usage: make app_batch_eval ARGS="--runs-only"
+	uv run python scripts/batch_eval.py $(ARGS)
+
 app_profile:  ## Profile app with scalene
 	mkdir -p $(OUTPUT_BASE)/logs/scalene-profiles
 	uv run scalene --outfile \
