@@ -1,32 +1,33 @@
-# TODO use local installation of repo to text
-# https://github.com/itsitgroup/repo2txt
+# Generates a spec-compliant llms.txt index file per https://llmstxt.org/
+#
+# Approach: Semi-static (current)
+#   Curated markdown index maintained in .github/templates/llms.txt.tpl.
+#   Update the template when docs structure changes.
+#
+# Alternative approaches:
+#   Auto-generated: Walk docs/ at build time, produce sections from directory
+#     structure. Maintenance-free but less curated. Could use a script like
+#     https://github.com/itsitgroup/repo2txt or a custom docs/ tree walker.
+#   Hybrid: Maintain a docs/llms-txt-template.md with mustache-style placeholders,
+#     have the workflow fill dynamic sections (e.g. auto-list landscape/ docs)
+#     while keeping curated sections static.
 
 name: Write repo llms.txt
 
 on:
   push:
     branches: [main]
+    paths:
+      - '.github/templates/llms.txt.tpl'
+      - 'docs/**'
+      - 'src/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'AGENTS.md'
   workflow_dispatch:
-    inputs:
-      LLMS_TXT_PATH:
-        description: 'Path to the directory to save llsm.txt'
-        required: true
-        default: 'docs'
-        type: string
-      LLMS_TXT_NAME:
-        description: 'Name of the file to save to'
-        required: true
-        default: 'llms.txt'
-        type: string
-      CONVERTER_URL:
-        description: 'Only uithub.com available right now'
-        required: true
-        default: 'uithub.com'
-        type: choice
-        options:
-        - 'uithub.com'
-        # - 'gittodoc.com'
-         # - 'repo2txt.com'
+
+permissions:
+  contents: write
 
 jobs:
   generate-file:
@@ -36,35 +37,28 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set branch name
-        id: branch
-        run: echo "branch_name=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
-
-      - name: Construct and create llms.txt path
-        id: construct_and_create_llms_txt_path
+      - name: Validate template links exist
         run: |
-          LLMS_TXT_PATH="${{ inputs.LLMS_TXT_PATH }}"
-          LLMS_TXT_PATH="${LLMS_TXT_PATH:-docs}"
-          LLMS_TXT_NAME="${{ inputs.LLMS_TXT_NAME }}"
-          LLMS_TXT_NAME="${LLMS_TXT_NAME:-llms.txt}"
-          echo "LLMS_TXT_FULL=${LLMS_TXT_PATH}/${LLMS_TXT_NAME}" >> $GITHUB_OUTPUT
-          mkdir -p "${LLMS_TXT_PATH}"
+          stale=0
+          for path in $(grep -oP '\(\$\{BLOB\}/\K[^)]+' .github/templates/llms.txt.tpl); do
+            if [ ! -f "$path" ]; then
+              echo "::error::Stale link in llms.txt.tpl: $path"
+              stale=1
+            fi
+          done
+          exit $stale
 
-      - name: Fetch TXT from URL
+      - name: Generate llms.txt from template
         run: |
-          BRANCH="${{ steps.branch.outputs.branch_name }}"
-          LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
-          URL="https://${{ inputs.CONVERTER_URL }}/${{ github.repository }}/tree/${BRANCH}"
-          echo "Fetching content from: ${URL}"
-          echo "Saving content to: ${LLMS_TXT_FULL}"
-          curl -s "${URL}" > "${LLMS_TXT_FULL}"
+          BLOB="https://github.com/${{ github.repository }}/blob/main"
+          export BLOB
+          envsubst '${BLOB}' < .github/templates/llms.txt.tpl > docs/llms.txt
 
-      - name: Commit and push file
+      - name: Commit and push if changed
         run: |
-          LLMS_TXT_FULL=${{ steps.construct_and_create_llms_txt_path.outputs.LLMS_TXT_FULL }}
-          commit_msg="feat(docs): Add/Update ${LLMS_TXT_FULL}, a flattened repo as single text file, inspired by [llmstxt.org](https://llmstxt.org/)."
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add "${LLMS_TXT_FULL}"
-          git commit -m "${commit_msg}"
+          git add docs/llms.txt
+          git diff --cached --quiet && echo "No changes to llms.txt" && exit 0
+          git commit -m "docs: update llms.txt index"
           git push

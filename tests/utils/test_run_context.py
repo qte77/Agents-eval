@@ -155,7 +155,7 @@ class TestRunContextCreate:
         assert data.get("cli_args") is None
 
     def test_run_dir_nested_under_runs(self, tmp_path: Path) -> None:
-        """run_dir is nested under output/runs/ (AC2)."""
+        """run_dir is nested under output/runs/{category}/ (AC2)."""
         from app.utils.run_context import RunContext
 
         output_base = tmp_path / "output"
@@ -167,7 +167,9 @@ class TestRunContextCreate:
             )
 
         runs_dir = output_base / "runs"
-        assert ctx.run_dir.parent == runs_dir
+        # run_dir parent is runs/{category} (e.g. runs/mas/)
+        assert ctx.run_dir.parent.parent == runs_dir
+        assert ctx.run_dir.parent.name == "mas"
 
 
 class TestRunContextPathHelpers:
@@ -232,8 +234,8 @@ class TestRunContextPathHelpers:
         assert cc_teams_context.stream_path.name == "stream.jsonl"
 
     def test_trace_path(self, mas_context: RunContext) -> None:
-        """trace_path returns trace.jsonl in run_dir (AC4)."""
-        assert mas_context.trace_path.name == "trace.jsonl"
+        """trace_path returns trace.json in run_dir (AC4)."""
+        assert mas_context.trace_path.name == "trace.json"
         assert mas_context.trace_path.parent == mas_context.run_dir
 
     def test_review_path(self, mas_context: RunContext) -> None:
@@ -251,22 +253,31 @@ class TestRunContextPathHelpers:
         assert mas_context.evaluation_path.name == "evaluation.json"
         assert mas_context.evaluation_path.parent == mas_context.run_dir
 
+    def test_graph_json_path(self, mas_context: RunContext) -> None:
+        """graph_json_path returns agent_graph.json in run_dir."""
+        assert mas_context.graph_json_path.name == "agent_graph.json"
+        assert mas_context.graph_json_path.parent == mas_context.run_dir
+
+    def test_graph_png_path(self, mas_context: RunContext) -> None:
+        """graph_png_path returns agent_graph.png in run_dir."""
+        assert mas_context.graph_png_path.name == "agent_graph.png"
+        assert mas_context.graph_png_path.parent == mas_context.run_dir
+
 
 class TestConfigConstants:
     """Tests for config constant changes (AC5, AC6, AC7, AC8)."""
 
     def test_output_path_constant_exists(self) -> None:
-        """OUTPUT_PATH constant exists in config_app (AC5)."""
-        from app.config.config_app import OUTPUT_PATH
+        """OUTPUT_PATH constant uses _OUTPUT_BASE prefix (AC5)."""
+        from app.config.config_app import _OUTPUT_BASE, OUTPUT_PATH
 
-        assert OUTPUT_PATH == "output"
+        assert OUTPUT_PATH == f"{_OUTPUT_BASE}/output"
 
-    def test_logs_path_unchanged(self) -> None:
-        """LOGS_PATH and LOGS_BASE_PATH remain unchanged (AC7)."""
-        from app.config.config_app import LOGS_BASE_PATH, LOGS_PATH
+    def test_logs_path_uses_output_base(self) -> None:
+        """LOGS_PATH derives from _OUTPUT_BASE (AC7)."""
+        from app.config.config_app import _OUTPUT_BASE, LOGS_PATH
 
-        assert LOGS_BASE_PATH == "logs/Agent_evals"
-        assert LOGS_PATH == f"{LOGS_BASE_PATH}/logs"
+        assert LOGS_PATH == f"{_OUTPUT_BASE}/logs"
 
     def test_cc_streams_path_removed(self) -> None:
         """CC_STREAMS_PATH is removed from config_app (AC6)."""
@@ -287,8 +298,65 @@ class TestConfigConstants:
         assert not hasattr(cfg, "RESULTS_PATH"), "RESULTS_PATH should be removed"
 
     def test_judge_settings_trace_storage_path_default(self) -> None:
-        """JudgeSettings.trace_storage_path default is output/runs (AC8)."""
+        """JudgeSettings.trace_storage_path default matches RUNS_PATH (AC8)."""
+        from app.config.config_app import RUNS_PATH
         from app.config.judge_settings import JudgeSettings
 
         settings = JudgeSettings()
-        assert settings.trace_storage_path == "output/runs"
+        assert settings.trace_storage_path == RUNS_PATH
+
+
+class TestActiveRunContextSingleton:
+    """Tests for module-level active RunContext singleton."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_singleton(self) -> None:
+        """Reset the singleton before and after each test."""
+        from app.utils.run_context import set_active_run_context
+
+        set_active_run_context(None)
+        yield  # type: ignore[misc]
+        set_active_run_context(None)
+
+    def test_get_active_returns_none_by_default(self) -> None:
+        """get_active_run_context returns None when no context is set."""
+        from app.utils.run_context import get_active_run_context
+
+        assert get_active_run_context() is None
+
+    def test_set_and_get_active(self, tmp_path: Path) -> None:
+        """set_active_run_context stores a context retrievable by get."""
+        from app.utils.run_context import (
+            RunContext,
+            get_active_run_context,
+            set_active_run_context,
+        )
+
+        ctx = RunContext(
+            engine_type="mas",
+            paper_id="p1",
+            execution_id="e1",
+            start_time=datetime(2026, 3, 1),
+            run_dir=tmp_path,
+        )
+        set_active_run_context(ctx)
+        assert get_active_run_context() is ctx
+
+    def test_clear_active(self, tmp_path: Path) -> None:
+        """set_active_run_context(None) clears the active context."""
+        from app.utils.run_context import (
+            RunContext,
+            get_active_run_context,
+            set_active_run_context,
+        )
+
+        ctx = RunContext(
+            engine_type="mas",
+            paper_id="p1",
+            execution_id="e1",
+            start_time=datetime(2026, 3, 1),
+            run_dir=tmp_path,
+        )
+        set_active_run_context(ctx)
+        set_active_run_context(None)
+        assert get_active_run_context() is None

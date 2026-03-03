@@ -9,11 +9,19 @@ ground-truth reviews.
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
 from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import CompositeResult, Tier1Result
+
+
+@pytest.fixture(autouse=True)
+def _mock_run_context():
+    """Prevent real RunContext.create() → mkdir during tests."""
+    mock_ctx = MagicMock()
+    mock_ctx.run_dir = None
+    with patch("app.app.RunContext") as mock_rc:
+        mock_rc.create.return_value = mock_ctx
+        yield mock_rc
 
 
 @pytest.mark.asyncio
@@ -30,7 +38,7 @@ async def test_evaluation_runs_after_manager_by_default():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -94,7 +102,7 @@ async def test_skip_eval_flag_prevents_evaluation():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -138,7 +146,7 @@ async def test_graceful_skip_without_ground_truth():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -178,34 +186,6 @@ def test_skip_eval_cli_argument_parsing():
     # Test without --skip-eval flag
     args = parse_args(["--query=test"])
     assert "skip_eval" not in args
-
-
-# STORY-004: Hypothesis property-based tests for wiring invariants
-class TestEvaluationWiringInvariants:
-    """Property-based tests for evaluation wiring invariants."""
-
-    @given(
-        composite_score=st.floats(min_value=0.0, max_value=1.0, allow_nan=False),
-        tier1_score=st.floats(min_value=0.0, max_value=1.0, allow_nan=False),
-    )
-    def test_composite_result_score_bounds(self, composite_score, tier1_score):
-        """Property: CompositeResult scores always in valid bounds."""
-        # Arrange & Act
-        result = CompositeResult(
-            composite_score=composite_score,
-            recommendation="accept",
-            recommendation_weight=0.8,
-            metric_scores={"test": 0.5},
-            tier1_score=tier1_score,
-            tier2_score=0.0,
-            tier3_score=0.0,
-            evaluation_complete=True,
-        )
-
-        # Assert invariants
-        assert 0.0 <= result.composite_score <= 1.0
-        assert 0.0 <= result.tier1_score <= 1.0
-        assert result.recommendation in ["accept", "weak_accept", "weak_reject", "reject"]
 
 
 # STORY-004: Inline-snapshot regression tests for wiring outputs

@@ -19,7 +19,6 @@ dependencies = [
     "pydantic-ai-slim[duckduckgo,openai,tavily]>=1.62.0",
     "pydantic-settings>=2.13.1",
     # Modern ROUGE, BLEU, text metrics (2024+ maintained)
-    # DISABLED due to sentencepiece build issues
     # "torchmetrics[text]>=1.4.0",
     "scikit-learn>=1.8.0",  # F1, precision, recall, accuracy metrics
     "textdistance>=4.6.3",  # Multiple text similarity algorithms
@@ -29,6 +28,8 @@ dependencies = [
     "scalene>=2.1.4",  # High-performance CPU, GPU, and memory profiler
     "arize-phoenix>=13.3.0",  # Local trace viewer via pip (replaces Docker-based Opik)
     "openinference-instrumentation-pydantic-ai>=0.1.12",  # PydanticAI auto-instrumentation, arizeai
+    "bert-score>=0.3.13",
+    "sentencepiece>=0.2.1",
 ]
 
 [project.urls]
@@ -59,7 +60,7 @@ test = [
 ]
 docs = [
     "griffe>=2.0.0",
-    "mkdocs>=1.6.1",
+    "mkdocs>=1.6.1,<2.0",
     "mkdocs-awesome-pages-plugin>=2.10.1",
     "mkdocs-gen-files>=0.6.0",
     "mkdocs-literate-nav>=0.6.2",
@@ -71,7 +72,7 @@ docs = [
 [tool.uv]
 # package = true
 default-groups = ["dev", "test", "gui", "docs"]
-exclude-newer = "2026-02-28T00:00:00Z"
+exclude-newer = "2026-03-01T00:00:00Z"
 
 
 # MARK: Logging configurations
@@ -87,14 +88,20 @@ send_to_logfire=false  # Was "if-token-present" - changed to disable pytest-logf
 
 [tool.pyright]
 pythonVersion = "3.13"
-include = ["src", "tests"]
+# Type-check only our code, not tests/ or deps
+include = ["src"]
+# Strictest checking for our own codebase
 typeCheckingMode = "strict"
-extraPaths = ["./venv/lib/python3.13/site-packages"]
-useLibraryCodeForTypes = true
+# false = use .pyi stubs only; true causes OOM with 8GB venv
+useLibraryCodeForTypes = false
+# Catch broken imports
 reportMissingImports = true
+# Don't require stubs for every third-party library
 reportMissingTypeStubs = false
+# Suppress Unknown types leaking from untyped libraries
 reportUnknownMemberType = "none"
 reportUnknownVariableType = "none"
+reportUnknownParameterType = "none"
 
 [tool.complexipy]
 paths = ["src"]

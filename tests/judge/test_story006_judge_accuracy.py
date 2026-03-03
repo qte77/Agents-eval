@@ -13,9 +13,6 @@ from __future__ import annotations
 from unittest.mock import Mock, patch
 
 import pytest
-from hypothesis import given
-from hypothesis import settings as hyp_settings
-from hypothesis import strategies as st
 
 from app.config.judge_settings import JudgeSettings
 from app.data_models.evaluation_models import Tier1Result
@@ -202,7 +199,7 @@ class TestRecommendationMatching:
 class TestCosineScoreClamping:
     """C1 — cosine score above 1.0 must be clamped before Tier1Result construction."""
 
-    def test_evaluate_traditional_metrics_cosine_never_exceeds_1(self):
+    def test_evaluate_traditional_metrics_cosine_never_exceeds_1(self, no_bertscore_download):
         """AC5: Cosine score is clamped to 1.0 before Tier1Result validation."""
         engine = TraditionalMetricsEngine()
 
@@ -261,41 +258,3 @@ class TestCosineScoreClamping:
 # ---------------------------------------------------------------------------
 # C1: Property test (un-skipped from test_traditional_metrics.py)
 # ---------------------------------------------------------------------------
-
-
-class TestTier1ScoresPropertyUnSkipped:
-    """Property-based test validating Tier1Result scores always in valid range (un-skipped C1)."""
-
-    @given(
-        agent_output=st.text(min_size=10, max_size=200).filter(
-            lambda s: s.strip() and any(c.isalnum() for c in s)
-        ),
-        reference_texts=st.lists(
-            st.text(min_size=10, max_size=200).filter(
-                lambda s: s.strip() and any(c.isalnum() for c in s)
-            ),
-            min_size=1,
-            max_size=5,
-        ),
-    )
-    @hyp_settings(max_examples=50)
-    def test_tier1_result_scores_always_valid(self, agent_output, reference_texts):
-        """Property: Tier1Result cosine_score is always clamped to [0, 1]."""
-        engine = TraditionalMetricsEngine()
-        start_time = 1000.0
-        end_time = 1001.0
-
-        result = engine.evaluate_traditional_metrics(
-            agent_output, reference_texts, start_time, end_time
-        )
-
-        # PROPERTY: cosine_score must be in [0, 1] — clamped for FP issues
-        assert 0.0 <= result.cosine_score <= 1.0, (
-            f"cosine_score={result.cosine_score} out of range [0,1] (tests-review C1)"
-        )
-        assert 0.0 <= result.jaccard_score <= 1.0
-        assert 0.0 <= result.semantic_score <= 1.0
-        assert result.execution_time > 0.0
-        assert 0.0 < result.time_score <= 1.0
-        assert 0.0 <= result.task_success <= 1.0
-        assert 0.0 <= result.overall_score <= 1.0

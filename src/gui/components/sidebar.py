@@ -1,3 +1,4 @@
+import streamlit as st
 from streamlit import sidebar
 
 from gui.config.config import PAGES, PHOENIX_DEFAULT_ENDPOINT
@@ -24,14 +25,12 @@ def render_sidebar(sidebar_title: str, execution_state: str = "idle") -> str:
     # key persists tab selection across Streamlit reruns within a session (AC4)
     selected_page = sidebar.radio("Navigation", PAGES, label_visibility="hidden", key="sidebar_tab")
 
-    # Phoenix trace viewer link
-    sidebar.divider()
-    sidebar.markdown("### 🔍 Trace Viewer")
-    # S8-F8.1: "(opens in new tab)" warns users of external navigation
-    sidebar.markdown(
-        f"[Open Phoenix Traces (opens in new tab)]({PHOENIX_DEFAULT_ENDPOINT})",
-        help="View detailed execution traces in Arize Phoenix",
-    )
-    sidebar.caption("Phoenix must be running locally on port 6006")
+    # STORY-010: Phoenix trace viewer in collapsed sidebar expander
+    with sidebar.expander("Tracing (optional)", expanded=False):
+        st.markdown(
+            f"[Open Phoenix Traces (opens in new tab)]({PHOENIX_DEFAULT_ENDPOINT})",
+            help="View detailed execution traces in Arize Phoenix",
+        )
+        st.caption("Phoenix must be running locally on port 6006")
 
     return selected_page

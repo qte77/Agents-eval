@@ -180,7 +180,7 @@ Tier 1 + Tier 2 (review quality) are directly comparable. Tier 3 (graph/coordina
 
 #### Feature 3: Expand Inference Provider Registry and Update Stale Models
 
-**Description**: The current `PROVIDER_REGISTRY` has 12 providers but is missing many popular OpenAI-compatible inference providers. Key omissions: Groq, Fireworks AI, DeepSeek, Mistral, SambaNova, Nebius, Cohere. The `anthropic` provider entry falls through to the generic `OpenAIChatModel` handler in `create_llm_model()` instead of using PydanticAI's native Anthropic support. Several existing `config_chat.json` entries have stale/deprecated model IDs -- two are live bugs: `huggingface` uses `facebook/bart-large-mnli` (a classification model, not chat -- will fail immediately) and `together` uses `Llama-3.3-70B-Instruct-Turbo-Free` (removed Jul 2025 -- will fail silently). Multiple `max_content_length` values are wrong (e.g., `cerebras` says 8192 but `gpt-oss-120b` has 128K context; `grok` says 15000 but should be 131K). Values must reflect the maximum token usage allowed on each provider's free tier before requests get blocked. See [Inference-Providers.md](../analysis/Inference-Providers.md) for the full provider analysis.
+**Description**: The current `PROVIDER_REGISTRY` has 12 providers but is missing many popular OpenAI-compatible inference providers. Key omissions: Groq, Fireworks AI, DeepSeek, Mistral, SambaNova, Nebius, Cohere. The `anthropic` provider entry falls through to the generic `OpenAIChatModel` handler in `create_llm_model()` instead of using PydanticAI's native Anthropic support. Several existing `config_chat.json` entries have stale/deprecated model IDs -- two are live bugs: `huggingface` uses `facebook/bart-large-mnli` (a classification model, not chat -- will fail immediately) and `together` uses `Llama-3.3-70B-Instruct-Turbo-Free` (removed Jul 2025 -- will fail silently). Multiple `max_content_length` values are wrong (e.g., `cerebras` says 8192 but `gpt-oss-120b` has 128K context; `grok` says 15000 but should be 131K). Values must reflect the maximum token usage allowed on each provider's free tier before requests get blocked. See [Inference-Providers.md](../../analysis/Inference-Providers.md) for the full provider analysis.
 
 **Acceptance Criteria**:
 
@@ -190,7 +190,7 @@ Tier 1 + Tier 2 (review quality) are directly comparable. Tier 3 (graph/coordina
 - [ ] AC4: Live bug fixed: `huggingface` model updated from `facebook/bart-large-mnli` (classification, not chat) to `meta-llama/Meta-Llama-3.3-70B-Instruct`
 - [ ] AC5: Live bug fixed: `together` model updated from removed `Llama-3.3-70B-Instruct-Turbo-Free` to `meta-llama/Llama-3.3-70B-Instruct-Turbo`
 - [ ] AC6: Existing stale `config_chat.json` entries updated to current models: `gemini-2.0-flash`, `gpt-4.1-mini` (openai + github), `grok-3-mini`, `claude-sonnet-4-20250514`, `qwen/qwen3-next-80b-a3b-instruct:free` (openrouter), `llama3.3:latest` (ollama)
-- [ ] AC7: `max_content_length` in `config_chat.json` reflects the maximum token usage allowed on each provider's free tier before requests get rate-limited or blocked (per [Inference-Providers.md](../analysis/Inference-Providers.md) "Key Limit" column)
+- [ ] AC7: `max_content_length` in `config_chat.json` reflects the maximum token usage allowed on each provider's free tier before requests get rate-limited or blocked (per [Inference-Providers.md](../../analysis/Inference-Providers.md) "Key Limit" column)
 - [ ] AC8: `create_llm_model()` handles `anthropic` provider using PydanticAI's native `AnthropicModel` instead of the generic OpenAI-compatible fallback
 - [ ] AC9: `create_llm_model()` handles `groq` with `OpenAIModelProfile(openai_supports_strict_tool_definition=False)` (same as existing `cerebras` handling)
 - [ ] AC10: GUI Settings page provider dropdown automatically includes all new providers (already dynamic from `PROVIDER_REGISTRY.keys()`)
@@ -207,7 +207,7 @@ Tier 1 + Tier 2 (review quality) are directly comparable. Tier 3 (graph/coordina
   - `sambanova`: `https://api.sambanova.ai/v1`, env: `SAMBANOVA_API_KEY`
   - `nebius`: `https://api.studio.nebius.ai/v1`, env: `NEBIUS_API_KEY`
   - `cohere`: `https://api.cohere.com/v2`, env: `COHERE_API_KEY`
-- Add matching entries to `config_chat.json` with models from [Inference-Providers.md](../analysis/Inference-Providers.md)
+- Add matching entries to `config_chat.json` with models from [Inference-Providers.md](../../analysis/Inference-Providers.md)
 - Update stale existing `config_chat.json` model IDs and `max_content_length` values (see AC4-AC7 and analysis doc)
 - Add `anthropic` branch in `create_llm_model()` using `from pydantic_ai.models.anthropic import AnthropicModel`
 - Add `groq` branch in `create_llm_model()` with `openai_supports_strict_tool_definition=False`
@@ -379,7 +379,7 @@ make ralph_run TEAMS=true MAX_ITERATIONS=12 MODEL=opus
 make ralph_run_worktree BRANCH=ralph/sprint10-e2e-parity TEAMS=true MAX_ITERATIONS=12
 ```
 
-**How teams mode works in Ralph** (see [CC-agent-teams-orchestration.md](../analysis/CC-agent-teams-orchestration.md)):
+**How teams mode works in Ralph** (see [CC-agent-teams-orchestration.md](../../analysis/CC-agent-teams-orchestration.md)):
 
 - Sets `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` automatically when `TEAMS=true`
 - Lead picks primary story, delegates wave peers to teammates via the shared task list

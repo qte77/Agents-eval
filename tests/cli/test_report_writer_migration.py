@@ -6,6 +6,8 @@ AC10: Sweep runner default output_dir changed from results/sweeps to output/swee
 
 from pathlib import Path
 
+from app.config.config_app import OUTPUT_PATH
+
 
 class TestSweepRunnerDefaultOutputDir:
     """AC10: Sweep runner default output_dir uses output/sweeps instead of results/sweeps."""
@@ -33,7 +35,7 @@ class TestSweepRunnerDefaultOutputDir:
 
         config = _build_config_from_args(args)
         assert config is not None
-        assert str(config.output_dir).startswith("output/sweeps")
+        assert str(config.output_dir).startswith(f"{OUTPUT_PATH}/sweeps")
 
 
 class TestCLIReportWriterMigration:

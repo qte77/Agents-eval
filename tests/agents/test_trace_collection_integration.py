@@ -151,6 +151,43 @@ def test_end_execution_idempotent_no_warning():
 
 
 @pytest.mark.asyncio
+async def test_coordination_event_logged_on_delegation():
+    """Test that _execute_traced_delegation logs a coordination event."""
+    with patch("app.agents.agent_system.get_trace_collector") as mock_get_collector:
+        mock_collector = MagicMock(spec=TraceCollector)
+        mock_get_collector.return_value = mock_collector
+
+        from app.agents.agent_system import _execute_traced_delegation
+
+        # Mock sub-agent
+        mock_sub_agent = MagicMock(spec=Agent)
+        mock_run_result = MagicMock(spec=AgentRunResult)
+        mock_run_result.output = MagicMock()
+        mock_sub_agent.run = AsyncMock(return_value=mock_run_result)
+
+        # Mock RunContext
+        mock_ctx = MagicMock()
+        mock_ctx.usage = MagicMock()
+
+        await _execute_traced_delegation(
+            mock_sub_agent,
+            mock_ctx,
+            "test query",
+            to_agent="researcher",
+            tool_name="delegate_research",
+            task_type="research",
+        )
+
+        mock_collector.log_coordination_event.assert_called_once()
+        call_kwargs = mock_collector.log_coordination_event.call_args.kwargs
+        assert call_kwargs["manager_agent"] == "manager"
+        assert call_kwargs["event_type"] == "delegation"
+        assert call_kwargs["target_agents"] == ["researcher"]
+        assert "query" in call_kwargs["data"]
+        assert "task_type" in call_kwargs["data"]
+
+
+@pytest.mark.asyncio
 async def test_graph_trace_data_passed_to_evaluation():
     """Test that GraphTraceData is constructed and passed to evaluate_comprehensive."""
     with (
@@ -161,11 +198,16 @@ async def test_graph_trace_data_passed_to_evaluation():
         patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
         patch("app.app.load_config") as mock_load_config,
         patch("app.agents.agent_system.get_trace_collector") as mock_get_collector,
+        patch("app.app.RunContext") as mock_rc_cls,
     ):
+        mock_ctx = MagicMock()
+        mock_ctx.run_dir = None
+        mock_rc_cls.create.return_value = mock_ctx
+
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",

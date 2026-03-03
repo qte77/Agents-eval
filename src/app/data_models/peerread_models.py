@@ -12,7 +12,8 @@ This module also includes structured data models for LLM-generated reviews,
 ensuring consistency and validation against the PeerRead format.
 """
 
-from typing import Annotated, Literal
+import re
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator
 
@@ -20,6 +21,61 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_valida
 # Reason: Some PeerRead JSON files store scores as integers (e.g., "SOUNDNESS_CORRECTNESS": 3)
 # which fail str validation without coercion.
 _ScoreStr = Annotated[str, BeforeValidator(str)]
+
+# Recommendation word → numeric score mapping for weak-structured-output providers (e.g. Cerebras).
+_WORD_TO_SCORE: dict[str, int] = {
+    "strong accept": 5,
+    "strong_accept": 5,
+    "accept": 4,
+    "borderline accept": 3,
+    "borderline reject": 3,
+    "borderline": 3,
+    "reject": 2,
+    "strong reject": 1,
+    "strong_reject": 1,
+}
+
+
+def _coerce_score_to_int(v: Any) -> Any:
+    """Coerce LLM score values to int for providers that ignore integer schema constraints.
+
+    Reason: Providers like Cerebras with openai_supports_strict_tool_definition=False
+    may return natural language descriptions, floats, or word labels instead of integers.
+    Extraction priority: word mapping → float rounding → first digit in text → default 3.
+    """
+    if isinstance(v, int):
+        return v
+    if isinstance(v, float):
+        return max(1, min(5, round(v)))
+    if isinstance(v, str):
+        v_lower = v.lower().strip()
+        if v_lower in _WORD_TO_SCORE:
+            return _WORD_TO_SCORE[v_lower]
+        try:
+            return max(1, min(5, round(float(v_lower.split()[0]))))
+        except (ValueError, IndexError):
+            pass
+        if m := re.search(r"\b([1-5])\b", v):
+            return int(m.group(1))
+        return 3
+    return v
+
+
+def _coerce_presentation_format(v: Any) -> Any:
+    """Coerce presentation format to Literal['Poster', 'Oral'].
+
+    Reason: Same provider compliance issue — model may return a sentence describing
+    the format instead of the exact literal value.
+    """
+    if isinstance(v, str) and v not in ("Poster", "Oral"):
+        return "Oral" if "oral" in v.lower() else "Poster"
+    return v
+
+
+_ScoreInt = Annotated[int, BeforeValidator(_coerce_score_to_int)]
+_PresentationFormatLiteral = Annotated[
+    Literal["Poster", "Oral"], BeforeValidator(_coerce_presentation_format)
+]
 
 
 class PeerReadReview(BaseModel):
@@ -126,27 +182,29 @@ class GeneratedReview(BaseModel):
     all required fields are present with proper validation.
     """
 
-    impact: int = Field(..., ge=1, le=5, description="Impact rating (1=minimal, 5=high impact)")
+    impact: _ScoreInt = Field(
+        ..., ge=1, le=5, description="Impact rating (1=minimal, 5=high impact)"
+    )
 
-    substance: int = Field(
+    substance: _ScoreInt = Field(
         ..., ge=1, le=5, description="Substance/depth rating (1=shallow, 5=substantial)"
     )
 
-    appropriateness: int = Field(
+    appropriateness: _ScoreInt = Field(
         ...,
         ge=1,
         le=5,
         description="Venue appropriateness rating (1=inappropriate, 5=appropriate)",
     )
 
-    meaningful_comparison: int = Field(
+    meaningful_comparison: _ScoreInt = Field(
         ...,
         ge=1,
         le=5,
         description="Related work comparison rating (1=poor, 5=excellent)",
     )
 
-    presentation_format: Literal["Poster", "Oral"] = Field(
+    presentation_format: _PresentationFormatLiteral = Field(
         ..., description="Recommended presentation format"
     )
 
@@ -157,21 +215,21 @@ class GeneratedReview(BaseModel):
         "weaknesses, technical soundness, clarity, and suggestions",
     )
 
-    soundness_correctness: int = Field(
+    soundness_correctness: _ScoreInt = Field(
         ...,
         ge=1,
         le=5,
         description="Technical soundness rating (1=many errors, 5=very sound)",
     )
 
-    originality: int = Field(
+    originality: _ScoreInt = Field(
         ...,
         ge=1,
         le=5,
         description="Originality rating (1=not original, 5=highly original)",
     )
 
-    recommendation: int = Field(
+    recommendation: _ScoreInt = Field(
         ...,
         ge=1,
         le=5,
@@ -181,14 +239,14 @@ class GeneratedReview(BaseModel):
         ),
     )
 
-    clarity: int = Field(
+    clarity: _ScoreInt = Field(
         ...,
         ge=1,
         le=5,
         description="Presentation clarity rating (1=very unclear, 5=very clear)",
     )
 
-    reviewer_confidence: int = Field(
+    reviewer_confidence: _ScoreInt = Field(
         ...,
         ge=1,
         le=5,

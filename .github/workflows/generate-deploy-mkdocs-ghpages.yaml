@@ -75,9 +75,15 @@ jobs:
         mkdir -p "${DOC_DIR}/${CFG_PATH}"
         cp README.md "${DOC_DIR}/index.md"
         cp {CHANGELOG,LICENSE}.md "${DOC_DIR}"
+        cp CONTRIBUTING.md "${DOC_DIR}"
+        cp AGENTS.md "${DOC_DIR}"
+        cp {AGENT_REQUESTS,AGENT_LEARNINGS}.md "${DOC_DIR}"
         # Auxiliary files
         cp .env.example "${DOC_DIR}"
         cp "${CFG_PATH}/config_chat.json" "${DOC_DIR}/${CFG_PATH}"
+
+    - name: Fix docs/-prefixed links in index.md
+      run: sed -i 's|](docs/|](|g' "${DOC_DIR}/index.md"
 
     - name: Generate code docstrings concat file
       run: |
@@ -99,6 +105,13 @@ jobs:
         if [ -d "${{ env.IMG_DIR }}" ]; then
           mkdir -p "${dir}"
           cp "${{ env.IMG_DIR }}"/* "${dir}"
+        fi
+
+    - name: Copy llms.txt to site root
+      run: |
+        # Serve raw llms.txt at site root per https://llmstxt.org/ spec
+        if [ -f "${DOC_DIR}/llms.txt" ]; then
+          cp "${DOC_DIR}/llms.txt" "${SITE_DIR}/llms.txt"
         fi
 
 #    - name: Push to gh-pages

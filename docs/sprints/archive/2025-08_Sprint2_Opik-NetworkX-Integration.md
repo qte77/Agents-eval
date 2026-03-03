@@ -478,7 +478,7 @@ Create: `docs/sprints/handoffs/sprint2-to-sprint3.md`
 
 ## References
 
-- [Three-Tier Validation Strategy](../architecture.md#three-tier-validation-strategy)
+- [Three-Tier Validation Strategy](../../architecture.md#three-tier-validation-strategy)
 - [Opik Documentation](https://www.comet.com/docs/opik/)
-- [Existing docker-compose.opik.yaml](../../docker-compose.opik.yaml)
+- Existing `docker-compose.opik.yaml`
 - [Sprint 3: SoC/SRP Refactoring](2025-08_Sprint3_SoC_SRP.md)

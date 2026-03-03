@@ -11,6 +11,7 @@ Evaluation orchestration is delegated to app.judge.evaluation_runner.
 
 from __future__ import annotations
 
+import uuid as _uuid
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, TypeVar, cast
@@ -60,13 +61,30 @@ from app.judge.evaluation_runner import (
 from app.judge.evaluation_runner import (
     run_evaluation_if_enabled as _run_evaluation_if_enabled,
 )
+from app.judge.graph_export import persist_graph
 from app.utils.error_messages import generic_exception
 from app.utils.load_configs import load_config
 from app.utils.log import logger
 from app.utils.login import login
 from app.utils.paths import resolve_config_path
+from app.utils.run_context import RunContext, get_active_run_context, set_active_run_context
 
 CONFIG_FOLDER = "config"
+
+
+def _resolve_engine_type(engine: str, cc_teams: bool) -> str:
+    """Map engine name and cc_teams flag to engine_type for RunContext.
+
+    Args:
+        engine: Engine identifier ('mas' or 'cc').
+        cc_teams: Whether CC teams mode is active.
+
+    Returns:
+        Engine type string: 'mas', 'cc_solo', or 'cc_teams'.
+    """
+    if engine == "cc":
+        return "cc_teams" if cc_teams else "cc_solo"
+    return "mas"
 
 
 async def _run_agent_execution(
@@ -79,14 +97,24 @@ async def _run_agent_execution(
     include_analyst: bool,
     include_synthesiser: bool,
     token_limit: int | None,
-) -> tuple[str, dict[str, str], Any]:
-    """Execute agent system and return execution ID, prompts, and manager output.
+    execution_id: str | None = None,
+) -> tuple[str, dict[str, str], Any, str]:
+    """Execute agent system and return execution ID, prompts, manager output, and chat model.
 
     Args:
-        All agent execution configuration parameters
+        chat_config_file: Path to chat configuration file.
+        chat_provider: LLM provider name.
+        query: User query string.
+        paper_id: Optional PeerRead paper ID.
+        enable_review_tools: Whether to enable review tools.
+        include_researcher: Whether to include researcher agent.
+        include_analyst: Whether to include analyst agent.
+        include_synthesiser: Whether to include synthesiser agent.
+        token_limit: Optional token limit override.
+        execution_id: Optional pre-generated execution ID forwarded to run_manager.
 
     Returns:
-        Tuple of (execution_id, prompts dict, manager_output)
+        Tuple of (execution_id, prompts dict, manager_output, chat_model).
     """
     chat_config = load_config(chat_config_file, ChatConfig)
     prompts: dict[str, str] = cast(dict[str, str], chat_config.prompts)  # type: ignore[reportUnknownMemberType]
@@ -108,16 +136,17 @@ async def _run_agent_execution(
         include_researcher,
         include_analyst,
         include_synthesiser,
-        enable_review_tools,
+        enable_review_tools=enable_review_tools,
     )
     execution_id, manager_output = await run_manager(
         manager,
         agent_env.query,
         agent_env.provider,
         agent_env.usage_limits,
+        execution_id=execution_id,
     )
 
-    return execution_id, prompts, manager_output
+    return execution_id, prompts, manager_output, agent_env.provider_config.model_name
 
 
 def _handle_download_mode(
@@ -176,6 +205,7 @@ def _prepare_result_dict(
     composite_result: Any | None,
     graph: Any | None,
     execution_id: str | None = None,
+    run_context: RunContext | None = None,
 ) -> dict[str, Any] | None:
     """Prepare result dictionary for GUI usage.
 
@@ -183,9 +213,10 @@ def _prepare_result_dict(
         composite_result: Evaluation result
         graph: Interaction graph
         execution_id: Execution trace ID for display on Evaluation page
+        run_context: Optional per-run context for artifact paths
 
     Returns:
-        Dict with result, graph, and execution_id if available, None otherwise
+        Dict with result, graph, execution_id, and run_context if available, None otherwise
     """
     # Return dict if we have either result or graph
     if composite_result is not None or graph is not None:
@@ -194,25 +225,26 @@ def _prepare_result_dict(
             "graph": graph,
             # S8-F8.2: include execution_id for Evaluation Results page threading
             "execution_id": execution_id,
+            "run_context": run_context,
         }
     return None
 
 
 @op()  # type: ignore[reportUntypedFunctionDecorator]
-def _extract_cc_artifacts(cc_result: Any) -> tuple[str, Any]:
-    """Extract execution ID and graph from a CC engine result.
+def _extract_cc_artifacts(cc_result: Any) -> tuple[str, Any, Any]:
+    """Extract execution ID, graph, and trace data from a CC engine result.
 
     Args:
         cc_result: CCResult from solo or teams execution.
 
     Returns:
-        Tuple of (execution_id, interaction_graph).
+        Tuple of (execution_id, interaction_graph, graph_trace).
     """
     from app.engines.cc_engine import cc_result_to_graph_trace
     from app.judge.graph_builder import build_interaction_graph
 
     graph_trace = cc_result_to_graph_trace(cc_result)
-    return cc_result.execution_id, build_interaction_graph(graph_trace)
+    return cc_result.execution_id, build_interaction_graph(graph_trace), graph_trace
 
 
 async def _run_cc_engine_path(
@@ -225,6 +257,8 @@ async def _run_cc_engine_path(
     chat_provider: str,
     judge_settings: JudgeSettings | None,
     cc_teams: bool = False,
+    run_dir: Path | None = None,
+    cc_model: str | None = None,
 ) -> tuple[Any, Any, str | None]:
     """Execute CC engine path: extract artifacts, evaluate, set engine_type.
 
@@ -238,13 +272,18 @@ async def _run_cc_engine_path(
         chat_provider: LLM provider name.
         judge_settings: Optional judge settings.
         cc_teams: Whether CC was run in teams mode (source of truth for engine_type).
+        run_dir: Per-run output directory from up-front RunContext.
+        cc_model: CC model name, forwarded as chat_model to evaluation pipeline.
 
     Returns:
         Tuple of (composite_result, graph, execution_id).
     """
     from app.engines.cc_engine import extract_cc_review_text
 
-    execution_id, graph = _extract_cc_artifacts(cc_result)
+    execution_id, graph, graph_trace = _extract_cc_artifacts(cc_result)
+
+    engine_type = "cc_teams" if cc_teams else "cc_solo"
+
     # S10-AC2: extract review text from CC output for evaluation
     cc_review_text = extract_cc_review_text(cc_result)
     composite_result = await _run_evaluation_if_enabled(
@@ -255,13 +294,16 @@ async def _run_cc_engine_path(
         cc_teams_dir,
         cc_teams_tasks_dir,
         chat_provider,
-        judge_settings,
+        chat_model=cc_model,
+        judge_settings=judge_settings,
         manager_output=None,
         review_text=cc_review_text,
+        run_dir=run_dir,
+        execution_trace=graph_trace,
+        engine_type=engine_type,
     )
-    # S12-STORY-002: set engine_type from explicit cc_teams flag (not team_artifacts)
     if composite_result is not None:
-        composite_result.engine_type = "cc_teams" if cc_teams else "cc_solo"
+        composite_result.engine_type = engine_type
     return composite_result, graph, execution_id
 
 
@@ -280,6 +322,8 @@ async def _run_mas_engine_path(
     cc_teams_dir: str | None,
     cc_teams_tasks_dir: str | None,
     judge_settings: JudgeSettings | None,
+    execution_id: str | None = None,
+    run_dir: Path | None = None,
 ) -> tuple[Any, Any, str | None]:
     """Execute MAS engine path: run agents, evaluate, build graph.
 
@@ -298,6 +342,8 @@ async def _run_mas_engine_path(
         cc_teams_dir: CC teams trace directory.
         cc_teams_tasks_dir: CC teams tasks directory.
         judge_settings: Optional judge settings.
+        execution_id: Pre-generated execution ID from main().
+        run_dir: Per-run output directory from up-front RunContext.
 
     Returns:
         Tuple of (composite_result, graph, execution_id).
@@ -305,7 +351,7 @@ async def _run_mas_engine_path(
     if not chat_provider:
         chat_provider = input("Which inference chat_provider to use? ")
 
-    execution_id, _, manager_output = await _run_agent_execution(
+    execution_id, _, manager_output, chat_model = await _run_agent_execution(
         chat_config_file,
         chat_provider,
         query,
@@ -315,6 +361,7 @@ async def _run_mas_engine_path(
         include_analyst,
         include_synthesiser,
         token_limit,
+        execution_id=execution_id,
     )
 
     composite_result = await _run_evaluation_if_enabled(
@@ -325,8 +372,10 @@ async def _run_mas_engine_path(
         cc_teams_dir,
         cc_teams_tasks_dir,
         chat_provider,
-        judge_settings,
-        manager_output,
+        chat_model=chat_model,
+        judge_settings=judge_settings,
+        manager_output=manager_output,
+        run_dir=run_dir,
     )
 
     graph = _build_graph_from_trace(execution_id) if execution_id else None
@@ -340,7 +389,7 @@ async def main(
     include_analyst: bool = False,
     include_synthesiser: bool = False,
     chat_config_file: str | Path | None = None,
-    enable_review_tools: bool = True,
+    enable_review_tools: bool = False,
     paper_id: str | None = None,
     skip_eval: bool = False,
     download_peerread_full_only: bool = False,
@@ -354,11 +403,9 @@ async def main(
     engine: str = "mas",
     cc_result: Any | None = None,
     cc_teams: bool = False,
+    cc_model: str | None = None,
 ) -> dict[str, Any] | None:
     """Main entry point for the application.
-
-    Args:
-        See `--help`.
 
     Returns:
         Dictionary with 'composite_result' (CompositeResult) and 'graph' (nx.DiGraph)
@@ -379,6 +426,15 @@ async def main(
         logger.info(f"Chat config file: {chat_config_file}")
 
         with span("main()"):
+            # Generate execution_id up-front so RunContext is active before engine runs
+            execution_id = f"exec_{_uuid.uuid4().hex[:12]}"
+            run_ctx = RunContext.create(
+                engine_type=_resolve_engine_type(engine, cc_teams),
+                paper_id=paper_id or "unknown",
+                execution_id=execution_id,
+            )
+            set_active_run_context(run_ctx)
+
             # S10-F1: CC engine branch — skip MAS, use CC result directly
             if engine == "cc" and cc_result is not None:
                 composite_result, graph, execution_id = await _run_cc_engine_path(
@@ -391,6 +447,8 @@ async def main(
                     chat_provider,
                     judge_settings,
                     cc_teams=cc_teams,
+                    run_dir=run_ctx.run_dir,
+                    cc_model=cc_model,
                 )
             else:
                 composite_result, graph, execution_id = await _run_mas_engine_path(
@@ -408,12 +466,20 @@ async def main(
                     cc_teams_dir,
                     cc_teams_tasks_dir,
                     judge_settings,
+                    execution_id=execution_id,
+                    run_dir=run_ctx.run_dir,
                 )
 
+            persist_graph(graph, run_ctx.run_dir)
+
             logger.info(f"Exiting app '{PROJECT_NAME}'")
-            return _prepare_result_dict(composite_result, graph, execution_id)
+            return _prepare_result_dict(
+                composite_result, graph, execution_id, run_context=get_active_run_context()
+            )
 
     except Exception as e:
         msg = generic_exception(f"Aborting app '{PROJECT_NAME}' with: {e}")
         logger.exception(msg)
         raise Exception(msg) from e
+    finally:
+        set_active_run_context(None)

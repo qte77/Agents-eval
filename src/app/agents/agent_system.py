@@ -202,7 +202,7 @@ async def _execute_traced_delegation(
     """Execute a sub-agent delegation with trace collection.
 
     Centralizes the tracing pattern shared by all delegation tools:
-    log interaction, run sub-agent, log tool call with timing.
+    log coordination event, log interaction, run sub-agent, log tool call with timing.
 
     Args:
         sub_agent: The sub-agent to delegate to.
@@ -222,6 +222,13 @@ async def _execute_traced_delegation(
         from_agent="manager",
         to_agent=to_agent,
         interaction_type="delegation",
+        data={"query": query, "task_type": task_type},
+    )
+
+    trace_collector.log_coordination_event(
+        manager_agent="manager",
+        event_type="delegation",
+        target_agents=[to_agent],
         data={"query": query, "task_type": task_type},
     )
 
@@ -253,7 +260,12 @@ def _add_research_tool(
     async def delegate_research(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], query: str
     ) -> ResearchResult | ResearchResultSimple | ReviewGenerationResult:
-        """Delegate research task to ResearchAgent."""
+        """Delegate a research task to the ResearchAgent. Returns structured research findings.
+
+        Args:
+            query: A natural-language description of what to research. Must be a plain
+                text string, NOT a JSON object or structured data.
+        """
         result = await _execute_traced_delegation(
             research_agent,
             ctx,
@@ -283,7 +295,12 @@ def _add_analysis_tool(
     async def delegate_analysis(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], query: str
     ) -> AnalysisResult:
-        """Delegate analysis task to AnalysisAgent."""
+        """Delegate an analysis task to the AnalysisAgent. Returns insights and recommendations.
+
+        Args:
+            query: A natural-language description of what to analyze. Must be a plain
+                text string, NOT a JSON object or structured data.
+        """
         result = await _execute_traced_delegation(
             analysis_agent,
             ctx,
@@ -310,7 +327,12 @@ def _add_synthesis_tool(
     async def delegate_synthesis(  # type: ignore[reportUnusedFunction]
         ctx: RunContext[None], query: str
     ) -> ResearchSummary:
-        """Delegate synthesis task to SynthesisAgent."""
+        """Delegate a synthesis task to the SynthesisAgent. Returns a formatted research summary.
+
+        Args:
+            query: A natural-language description of what to synthesize. Must be a plain
+                text string, NOT a JSON object or structured data.
+        """
         result = await _execute_traced_delegation(
             synthesis_agent,
             ctx,
@@ -597,25 +619,27 @@ async def run_manager(
     query: UserPromptType,
     provider: str,
     usage_limits: UsageLimits | None,
+    execution_id: str | None = None,
 ) -> tuple[str, Any]:
-    """
-    Asynchronously runs the manager with the given query and provider, handling errors
-        and printing results.
+    """Asynchronously run the manager with the given query and provider.
 
     Auto-instrumented by logfire.instrument_pydantic_ai() - no manual decorators needed.
 
     Args:
-        manager (Agent): The system agent responsible for running the query.
-        query (str): The query to be processed by the manager.
-        provider (str): The provider to be used for the query.
-        usage_limits (UsageLimits): The usage limits to be applied during the query
-            execution.
+        manager: The system agent responsible for running the query.
+        query: The query to be processed by the manager.
+        provider: The provider to be used for the query.
+        usage_limits: The usage limits to be applied during the query execution.
+        execution_id: Optional pre-generated execution ID. When provided, used
+            as-is; otherwise a new ``exec_{hex12}`` ID is generated.
+
     Returns:
-        tuple[str, Any]: Tuple of (execution_id, manager_output) for trace retrieval and evaluation
+        Tuple of (execution_id, manager_output) for trace retrieval and evaluation.
     """
     # Initialize trace collection
     trace_collector = get_trace_collector()
-    execution_id = f"exec_{uuid.uuid4().hex[:12]}"
+    if execution_id is None:
+        execution_id = f"exec_{uuid.uuid4().hex[:12]}"
     trace_collector.start_execution(execution_id)
 
     model_obj = getattr(manager, "model", None)

@@ -5,6 +5,8 @@ This module verifies that the traditional metrics engine correctly computes
 similarity scores between agent outputs and reference texts.
 """
 
+from unittest.mock import patch
+
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from inline_snapshot import snapshot
@@ -12,7 +14,7 @@ from inline_snapshot import snapshot
 from app.judge.traditional_metrics import TraditionalMetricsEngine
 
 
-def test_traditional_metrics_similarity():
+def test_traditional_metrics_similarity(no_bertscore_download):
     """Test similarity calculation through the traditional metrics engine."""
     engine = TraditionalMetricsEngine()
 
@@ -45,12 +47,13 @@ def test_similarity_scores_always_in_bounds(text_length: int, reference_count: i
     reference_texts = ["reference text " * 10 for _ in range(reference_count)]
 
     # Act
-    result = engine.evaluate_traditional_metrics(
-        agent_output=agent_output,
-        reference_texts=reference_texts,
-        start_time=0.0,
-        end_time=0.1,
-    )
+    with patch.object(engine, "_get_bertscore_model", return_value=None):
+        result = engine.evaluate_traditional_metrics(
+            agent_output=agent_output,
+            reference_texts=reference_texts,
+            start_time=0.0,
+            end_time=0.1,
+        )
 
     # Assert invariants
     assert 0.0 <= result.cosine_score <= 1.0
@@ -60,7 +63,7 @@ def test_similarity_scores_always_in_bounds(text_length: int, reference_count: i
 
 
 # STORY-004: Inline-snapshot regression tests for metrics output
-def test_similarity_result_structure():
+def test_similarity_result_structure(no_bertscore_download):
     """Snapshot: Traditional metrics result structure."""
     # Arrange
     engine = TraditionalMetricsEngine()

@@ -56,7 +56,9 @@
   },
   "containerEnv": {
     "UV_LINK_MODE": "copy",
-    "UV_CACHE_DIR": "/tmp/claude-1000/uv-cache"
+    "UV_CACHE_DIR": "/tmp/claude-1000/uv-cache",
+    "HF_HOME": "/workspaces/.cache/huggingface"
   },
+  "onCreateCommand": "make setup_uv && make setup_bert_model",
   "postCreateCommand": "make setup_sandbox && make setup_dev"
 }

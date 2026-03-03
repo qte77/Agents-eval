@@ -135,6 +135,19 @@ class EvaluationPipeline:
         """
         return self.settings.is_tier_enabled(tier)
 
+    def _skip_tier1(self, reason: str) -> tuple[None, float]:
+        """Return skip result for Tier 1 with logging and monitoring.
+
+        Args:
+            reason: Human-readable reason for skipping, included in log.
+
+        Returns:
+            Tuple of (None, 0.0) indicating tier was skipped.
+        """
+        logger.info(f"Tier 1 skipped: {reason}")
+        self.performance_monitor.record_tier_execution(1, 0.0)
+        return None, 0.0
+
     async def _execute_tier1(
         self, paper: str, review: str, reference_reviews: list[str] | None = None
     ) -> tuple[Tier1Result | None, float]:
@@ -152,6 +165,17 @@ class EvaluationPipeline:
             logger.debug("Tier 1 disabled, skipping traditional metrics")
             return None, 0.0
 
+        # Reason: Empty review cannot produce meaningful similarity scores —
+        # empty-vs-empty returns 1.0 (false perfect), non-empty-vs-empty returns 0.0 (noise).
+        if not review.strip():
+            return self._skip_tier1("review text is empty")
+
+        # Reason: No usable references means T1 compares against [""] fallback,
+        # producing all-zero similarities regardless of review quality — no signal.
+        usable_refs = [r for r in (reference_reviews or []) if r.strip()]
+        if not usable_refs:
+            return self._skip_tier1("no usable reference reviews available")
+
         performance_targets = self.performance_targets
         timeout = performance_targets.get("tier1_max_seconds", 1.0)
         start_time = time.time()
@@ -160,8 +184,7 @@ class EvaluationPipeline:
             logger.info("Executing Tier 1: Traditional Metrics")
             start_evaluation = time.time()
 
-            # Use reference reviews or default to empty list for similarity comparison
-            ref_reviews = reference_reviews or [""]  # Fallback for missing ground truth
+            ref_reviews = usable_refs
 
             result = await asyncio.wait_for(
                 asyncio.create_task(
@@ -295,42 +318,126 @@ class EvaluationPipeline:
         """
         if trace_data is not None and results.is_complete():
             return self.composite_scorer.evaluate_composite_with_trace(results, trace_data)
+        elif results.tier1 is None:
+            return self._composite_without_tier1(results)
         elif results.tier2 is None:
-            # Tier 2 skipped - validate Tier 1 and Tier 3 before redistribution
-            if not results.tier1 or not results.tier3:
-                if results.tier1:
-                    # Reason: Tier 1 only — return degraded result so CI passes
-                    # without LLM provider env vars or trace data.
-                    logger.warning(
-                        "Composite score degraded: only Tier 1 available "
-                        "(Tier 2 skipped, Tier 3 unavailable). "
-                        "Score reflects traditional metrics only."
-                    )
-                    return CompositeResult(
-                        composite_score=results.tier1.overall_score,
-                        recommendation="weak_reject",
-                        recommendation_weight=-0.25,
-                        metric_scores={
-                            "cosine_score": results.tier1.cosine_score,
-                            "jaccard_score": results.tier1.jaccard_score,
-                            "semantic_score": results.tier1.semantic_score,
-                        },
-                        tier1_score=results.tier1.overall_score,
-                        tier2_score=None,
-                        tier3_score=0.0,
-                        evaluation_complete=False,
-                        weights_used={"tier1": 1.0, "tier2": 0.0, "tier3": 0.0},
-                    )
-                raise ValueError(
-                    "Cannot generate composite score: Tier 1 and Tier 3 required "
-                    "when Tier 2 is skipped"
-                )
-            return self.composite_scorer.evaluate_composite_with_optional_tier2(results)
+            return self._composite_without_tier2(results)
         elif results.is_complete():
             # All tiers available, no trace data
             return self.composite_scorer.evaluate_composite(results)
         else:
             raise ValueError("Cannot generate composite score: insufficient tier results")
+
+    def _composite_without_tier1(self, results: EvaluationResults) -> CompositeResult:
+        """Handle composite scoring when Tier 1 was skipped (empty review or no references).
+
+        Routes to T2+T3 when available, T2-only (capped) when T3 missing,
+        or returns degraded 0.0 result when all tiers are unavailable.
+
+        Args:
+            results: Evaluation results (tier1 is None).
+
+        Returns:
+            CompositeResult with T2+T3 weight redistribution or degraded scoring.
+        """
+        if results.tier2 and results.tier3:
+            score = (results.tier2.overall_score + results.tier3.overall_score) / 2
+            recommendation = self.composite_scorer.map_to_recommendation(score)
+            return CompositeResult(
+                composite_score=score,
+                recommendation=recommendation,
+                recommendation_weight=self.composite_scorer.get_recommendation_weight(
+                    recommendation
+                ),
+                metric_scores={
+                    "planning_rationality": results.tier2.planning_rationality,
+                    "coordination_quality": results.tier3.coordination_centrality,
+                    "tool_efficiency": results.tier3.tool_selection_accuracy,
+                },
+                tier1_score=0.0,
+                tier2_score=results.tier2.overall_score,
+                tier3_score=results.tier3.overall_score,
+                evaluation_complete=False,
+                weights_used={"tier1": 0.0, "tier2": 0.5, "tier3": 0.5},
+            )
+        if results.tier2:
+            penalized = min(
+                results.tier2.overall_score, self.settings.composite_weak_reject_threshold
+            )
+            return CompositeResult(
+                composite_score=penalized,
+                recommendation="weak_reject",
+                recommendation_weight=self.composite_scorer.get_recommendation_weight(
+                    "weak_reject"
+                ),
+                metric_scores={"planning_rationality": results.tier2.planning_rationality},
+                tier1_score=0.0,
+                tier2_score=results.tier2.overall_score,
+                tier3_score=0.0,
+                evaluation_complete=False,
+                weights_used={"tier1": 0.0, "tier2": 1.0, "tier3": 0.0},
+            )
+        # All tiers skipped — return empty evaluation with score 0.0
+        logger.warning(
+            "All tiers skipped — no evaluation data available. "
+            "Check that review text and reference reviews are non-empty."
+        )
+        return CompositeResult(
+            composite_score=0.0,
+            recommendation="reject",
+            recommendation_weight=self.composite_scorer.get_recommendation_weight("reject"),
+            metric_scores={},
+            tier1_score=0.0,
+            tier2_score=None,
+            tier3_score=0.0,
+            evaluation_complete=False,
+            weights_used={"tier1": 0.0, "tier2": 0.0, "tier3": 0.0},
+        )
+
+    def _composite_without_tier2(self, results: EvaluationResults) -> CompositeResult:
+        """Handle composite scoring when Tier 2 was skipped.
+
+        Args:
+            results: Evaluation results (tier2 is None)
+
+        Returns:
+            CompositeResult with weight redistribution or degraded scoring
+
+        Raises:
+            ValueError: If neither Tier 1 nor Tier 3 results available
+        """
+        if results.tier1 and results.tier3:
+            return self.composite_scorer.evaluate_composite_with_optional_tier2(results)
+        if results.tier1:
+            # Reason: Tier 1 only — cap at weak_reject threshold to prevent
+            # misleading high scores from incomplete evaluations.
+            penalized_score = min(
+                results.tier1.overall_score, self.settings.composite_weak_reject_threshold
+            )
+            logger.warning(
+                "Composite score degraded: only Tier 1 available "
+                "(Tier 2 skipped, Tier 3 unavailable). "
+                f"Score capped at {self.settings.composite_weak_reject_threshold} "
+                f"(was {results.tier1.overall_score:.3f})."
+            )
+            return CompositeResult(
+                composite_score=penalized_score,
+                recommendation="weak_reject",
+                recommendation_weight=-0.25,
+                metric_scores={
+                    "cosine_score": results.tier1.cosine_score,
+                    "jaccard_score": results.tier1.jaccard_score,
+                    "semantic_score": results.tier1.semantic_score,
+                },
+                tier1_score=results.tier1.overall_score,
+                tier2_score=None,
+                tier3_score=0.0,
+                evaluation_complete=False,
+                weights_used={"tier1": 1.0, "tier2": 0.0, "tier3": 0.0},
+            )
+        raise ValueError(
+            "Cannot generate composite score: Tier 1 and Tier 3 required when Tier 2 is skipped"
+        )
 
     def _handle_tier3_error(
         self, e: Exception, execution_trace: dict[str, Any] | None, start_time: float
@@ -373,7 +480,10 @@ class EvaluationPipeline:
             trace_data = self._create_trace_data(execution_trace)
 
             if not trace_data.tool_calls and not trace_data.agent_interactions:
-                logger.info("Tier 3 skipped: trace data has no tool_calls or agent_interactions")
+                logger.info(
+                    "Tier 3 skipped: trace data has no tool_calls or agent_interactions "
+                    "(expected for CC solo mode — single-agent stream has no delegation events)"
+                )
                 self.performance_monitor.record_tier_execution(3, 0.0)
                 return None, 0.0
 

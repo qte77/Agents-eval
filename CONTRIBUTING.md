@@ -31,13 +31,15 @@ updated: 2026-02-16
 
 | Command | Purpose | Prerequisites | Error Recovery |
 |---------|---------|---------------|----------------|
-| `make setup_dev` | Install all dev dependencies | Makefile exists, uv installed | Try `uv sync --dev` directly |
+| `make setup_dev` | Install all dev dependencies | Makefile exists, uv installed | Try `uv sync` directly |
 | `make setup_claude_code` | Setup Claude Code CLI | Above + Claude Code available | Manual setup per Claude docs |
 | `make setup_dev OLLAMA=1` | Setup with Ollama local LLM | Above + Ollama installed | Check Ollama installation |
 | `make app_quickstart` | Download samples + evaluate smallest paper | API key in `.env` | `make setup_dataset` then `make app_cli ARGS="--paper-id=ID"` |
 | `make app_cli` | Run CLI application | Dev environment setup | Try `uv run python src/run_cli.py` |
 | `make app_cli ARGS="--help"` | Run CLI with arguments | Above | Try `uv run python src/run_cli.py --help` |
 | `make app_gui` | Run Streamlit GUI | Above + Streamlit installed | Try `uv run streamlit run src/run_gui.py` |
+| `make app_batch_run ARGS="--paper-ids ID"` | Run app_cli for all agent compositions | Above | Try `uv run python scripts/batch_run.py --help` |
+| `make app_batch_eval` | Summarize existing runs and sweeps into consolidated report | Above | Try `uv run python scripts/batch_eval.py --help` |
 | `make lint_src` | Format and lint src with ruff | Ruff installed | Try `uv run ruff format . && uv run ruff check . --fix` |
 | `make type_check` | Run pyright static type checking | pyright installed | Try `uv run pyright` |
 | `make test` | Run all tests with pytest | Pytest installed | Try `uv run pytest` |
@@ -127,6 +129,13 @@ The project requirements are in `pyproject.toml`. Use the provided `Makefile` to
 - Tool registration scope validation
 
 Security tests run as part of `make test` (no separate command needed).
+
+#### Opt-in Test Markers
+
+Tests requiring network access or long runtimes are excluded from `make test` by default. Run them explicitly:
+
+- `uv run pytest -m network` — real external calls (HuggingFace model download, API validation)
+- `uv run pytest -m benchmark` — performance benchmarks
 
 **Testing Guidelines:**
 

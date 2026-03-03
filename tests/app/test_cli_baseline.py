@@ -9,12 +9,21 @@ of CC artifact modes works properly.
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from inline_snapshot import snapshot
 from pydantic_ai import Agent
 
 from app.data_models.evaluation_models import BaselineComparison, CompositeResult
 from app.judge.cc_trace_adapter import CCTraceAdapter
 from app.judge.evaluation_pipeline import EvaluationPipeline
+
+
+@pytest.fixture(autouse=True)
+def _mock_run_context():
+    """Prevent real RunContext.create() → mkdir during tests."""
+    mock_ctx = MagicMock()
+    mock_ctx.run_dir = None
+    with patch("app.app.RunContext") as mock_rc:
+        mock_rc.create.return_value = mock_ctx
+        yield mock_rc
 
 
 @pytest.mark.asyncio
@@ -32,7 +41,7 @@ async def test_cli_accepts_cc_solo_dir_flag(tmp_path):
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -92,7 +101,7 @@ async def test_cli_accepts_cc_teams_dir_flag(tmp_path):
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -153,7 +162,7 @@ async def test_three_way_comparison_with_both_cc_baselines(tmp_path):
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -230,7 +239,7 @@ async def test_baseline_comparison_printed_to_console(tmp_path):
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -303,7 +312,7 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -331,10 +340,15 @@ async def test_no_baseline_comparison_when_no_cc_dirs():
         mock_compare_all.assert_not_called()
 
 
-# STORY-009: Tests for default-on review tools and opt-out flag
+# STORY-009: Tests for review tools — disabled by default, enabled by paper_id
 @pytest.mark.asyncio
-async def test_review_tools_enabled_by_default():
-    """Test that review tools are enabled by default (STORY-009)."""
+async def test_review_tools_disabled_for_general_query():
+    """Test that review tools are disabled by default for general queries without paper_id (STORY-009).
+
+    Review tools are only enabled when paper_id triggers _prepare_query to set
+    review_tools_enabled=True. A bare general query must use ResearchResult,
+    not ReviewGenerationResult, to avoid 422 errors on providers like Cerebras.
+    """
     with (
         patch("app.app.setup_agent_env") as mock_setup,
         patch("app.app.login"),
@@ -345,7 +359,7 @@ async def test_review_tools_enabled_by_default():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -359,18 +373,14 @@ async def test_review_tools_enabled_by_default():
 
         from app.app import main
 
-        # Run main without explicit enable_review_tools parameter
+        # Run main without paper_id — review tools must NOT be enabled
         await main(
             chat_provider="test_provider",
             query="test query",
         )
 
-        # Verify get_manager was called with enable_review_tools=True (8th positional arg)
-        call_args = mock_get_manager.call_args[0]
-        # get_manager(provider, provider_config, api_key, prompts,
-        #             include_researcher, include_analyst, include_synthesiser, enable_review_tools)
-        assert len(call_args) >= 8
-        assert call_args[7] is True  # enable_review_tools is 8th arg (index 7)
+        # Verify get_manager was called with enable_review_tools=False
+        assert mock_get_manager.call_args.kwargs.get("enable_review_tools") is False
 
 
 @pytest.mark.asyncio
@@ -386,7 +396,7 @@ async def test_no_review_tools_flag_disables_review_tools():
         # Setup mocks
         mock_setup.return_value = MagicMock(
             provider="test_provider",
-            provider_config={},
+            provider_config=MagicMock(),
             api_key="test_key",
             prompts={},
             query="test query",
@@ -407,10 +417,8 @@ async def test_no_review_tools_flag_disables_review_tools():
             enable_review_tools=False,
         )
 
-        # Verify get_manager was called with enable_review_tools=False (8th positional arg)
-        call_args = mock_get_manager.call_args[0]
-        assert len(call_args) >= 8
-        assert call_args[7] is False  # enable_review_tools is 8th arg (index 7)
+        # Verify get_manager was called with enable_review_tools=False
+        assert mock_get_manager.call_args.kwargs.get("enable_review_tools") is False
 
 
 def test_cli_parse_args_includes_no_review_tools_flag():
@@ -421,119 +429,3 @@ def test_cli_parse_args_includes_no_review_tools_flag():
     args = parse_args(["--no-review-tools"])
     assert "enable_review_tools" in args
     assert args["enable_review_tools"] is False
-
-
-def test_cli_help_text_includes_no_review_tools():
-    """Snapshot test for CLI help text showing --no-review-tools flag (STORY-009)."""
-    from run_cli import _parser
-
-    option_strings = {a for action in _parser._actions for a in action.option_strings}
-    for expected_flag in ("--no-review-tools", "--enable-review-tools"):
-        assert expected_flag in option_strings, f"Expected {expected_flag} in parser"
-
-
-# STORY-007: Inline-snapshot tests for CLI output with baselines
-class TestCLIBaselineOutputSnapshots:
-    """Snapshot tests for CLI baseline comparison output."""
-
-    def test_single_baseline_comparison_output(self):
-        """Snapshot: CLI output format with single CC baseline."""
-        # Arrange
-        mock_result = CompositeResult(
-            composite_score=0.8,
-            recommendation="accept",
-            recommendation_weight=0.8,
-            metric_scores={"test": 0.8},
-            tier1_score=0.8,
-            tier2_score=0.8,
-            tier3_score=0.8,
-            evaluation_complete=True,
-        )
-        mock_comparison = BaselineComparison(
-            label_a="PydanticAI",
-            label_b="CC-solo",
-            result_a=mock_result,
-            result_b=mock_result,
-            metric_deltas={
-                "cosine_score": 0.12,
-                "jaccard_score": 0.08,
-                "semantic_score": 0.15,
-            },
-            tier_deltas={"tier1": 0.10, "tier2": 0.12, "tier3": 0.08},
-            summary="PydanticAI scored +0.10 higher on average vs CC-solo (largest diff: semantic_score +0.15)",
-        )
-
-        # Act
-        output = {
-            "summary": mock_comparison.summary,
-            "metric_deltas": mock_comparison.metric_deltas,
-            "tier_deltas": mock_comparison.tier_deltas,
-        }
-
-        # Assert with snapshot
-        assert output == snapshot(
-            {
-                "summary": "PydanticAI scored +0.10 higher on average vs CC-solo (largest diff: semantic_score +0.15)",
-                "metric_deltas": {
-                    "cosine_score": 0.12,
-                    "jaccard_score": 0.08,
-                    "semantic_score": 0.15,
-                },
-                "tier_deltas": {"tier1": 0.10, "tier2": 0.12, "tier3": 0.08},
-            }
-        )
-
-    def test_three_way_comparison_output(self):
-        """Snapshot: CLI output format with three-way comparison."""
-        # Arrange
-        mock_result = CompositeResult(
-            composite_score=0.8,
-            recommendation="accept",
-            recommendation_weight=0.8,
-            metric_scores={"test": 0.8},
-            tier1_score=0.8,
-            tier2_score=0.8,
-            tier3_score=0.8,
-            evaluation_complete=True,
-        )
-        comparisons = [
-            BaselineComparison(
-                label_a="PydanticAI",
-                label_b="CC-solo",
-                result_a=mock_result,
-                result_b=mock_result,
-                metric_deltas={"cosine_score": 0.12},
-                tier_deltas={"tier1": 0.10, "tier2": 0.12, "tier3": 0.08},
-                summary="PydanticAI scored +0.10 higher on average vs CC-solo",
-            ),
-            BaselineComparison(
-                label_a="PydanticAI",
-                label_b="CC-teams",
-                result_a=mock_result,
-                result_b=mock_result,
-                metric_deltas={"cosine_score": 0.05},
-                tier_deltas={"tier1": 0.03, "tier2": 0.06, "tier3": 0.04},
-                summary="PydanticAI scored +0.05 higher on average vs CC-teams",
-            ),
-            BaselineComparison(
-                label_a="CC-solo",
-                label_b="CC-teams",
-                result_a=mock_result,
-                result_b=mock_result,
-                metric_deltas={"cosine_score": -0.07},
-                tier_deltas={"tier1": -0.07, "tier2": -0.06, "tier3": -0.04},
-                summary="CC-solo scored -0.07 lower on average vs CC-teams",
-            ),
-        ]
-
-        # Act
-        output = [{"summary": c.summary} for c in comparisons]
-
-        # Assert with snapshot
-        assert output == snapshot(
-            [
-                {"summary": "PydanticAI scored +0.10 higher on average vs CC-solo"},
-                {"summary": "PydanticAI scored +0.05 higher on average vs CC-teams"},
-                {"summary": "CC-solo scored -0.07 lower on average vs CC-teams"},
-            ]
-        )

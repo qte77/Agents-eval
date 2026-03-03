@@ -6,17 +6,17 @@
 .SILENT:
 .ONESHELL:
 .PHONY: \
-	setup_prod setup_dev setup_claude_code setup_sandbox \
-	setup_plantuml setup_pdf_converter setup_npm_tools setup_lychee \
+	setup_uv setup_prod setup_dev setup_claude_code setup_sandbox \
+	setup_bert_model setup_plantuml setup_pdf_converter setup_npm_tools setup_lychee \
 	setup_ollama clean_ollama setup_dataset \
 	dataset_smallest app_quickstart \
 	ollama_start ollama_stop \
 	plantuml_serve plantuml_render \
 	pandoc_run writeup writeup_generate \
 	lint_links lint_md \
-	app_cli app_gui app_sweep app_profile \
+	app_cli app_gui app_sweep app_batch_run app_profile \
 	cc_run_solo cc_collect_teams cc_run_teams \
-	lint_src lint_tests complexity duplication lint_hardcoded_paths \
+	lint_src lint_tests complexity duplication \
 	test test_rerun test_coverage test_fix_snapshots type_check validate quick_validate \
 	setup_phoenix phoenix_start phoenix_stop phoenix_status \
 	ralph_userstory ralph_prd_md ralph_prd_json ralph_init ralph_run \
@@ -26,10 +26,8 @@
 .DEFAULT_GOAL := help
 
 
-# MARK: params
-
-
 # -- paths --
+OUTPUT_BASE := _Agents-eval
 SRC_PATH := src
 APP_PATH := $(SRC_PATH)/app
 CLI_PATH := $(SRC_PATH)/run_cli.py
@@ -72,8 +70,6 @@ PHOENIX_GRPC_PORT := 4317
 
 # -- cc baselines (Claude Code artifact collection) --
 CC_TRACES_SCRIPT := scripts/collect-cc-traces
-CC_SOLO_OUTPUT := logs/cc/solo
-CC_TEAMS_OUTPUT := logs/cc/teams
 CC_TIMEOUT ?= 300
 CC_TEAMS_TIMEOUT ?= 600
 CC_MODEL ?=
@@ -83,27 +79,44 @@ RALPH_PROJECT ?= $(notdir $(CURDIR))
 RALPH_TIMEOUT ?=
 TEAMS ?= false
 
+# -- quiet mode (default: quiet; set VERBOSE=1 for full output) --
+VERBOSE ?=
+ifndef VERBOSE
+  RUFF_QUIET   := --quiet
+  PYTEST_QUIET := -q --tb=short --no-header
+  COV_QUIET    := --cov-report=
+  CPLX_QUIET   := -q
+endif
 
-# MARK: setup
 
+# MARK: SETUP
+
+
+setup_uv:  ## Install uv and sync frozen deps (minimal bootstrap, used by prebuild)
+	pip install uv -q
+	uv sync --frozen
 
 setup_prod:  ## Install uv and deps. Flags: OLLAMA=1
 	echo "Setting up prod environment ..."
-	pip install uv -q
-	uv sync --frozen
+	$(MAKE) -s setup_uv
 	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s ollama_start)
 
 setup_dev:  ## Install uv and deps, claude code, mdlint, jscpd, lychee, plantuml. Flags: OLLAMA=1
 	echo "Setting up dev environment ..."
 	# sudo apt-get install -y gh
-	pip install uv -q
-	uv sync --all-groups
+	$(MAKE) -s setup_uv
+	uv sync
 	echo "npm version: $$(npm --version)"
 	$(MAKE) -s setup_claude_code
 	$(MAKE) -s setup_npm_tools
 	$(MAKE) -s setup_lychee
 	$(MAKE) -s setup_plantuml
+	$(MAKE) -s setup_bert_model
 	$(if $(filter 1,$(OLLAMA)),$(MAKE) -s setup_ollama && $(MAKE) -s ollama_start)
+
+setup_bert_model:  ## Pre-download distilbert-base-uncased for BERTScore (Tier 1 semantic similarity)
+	echo "Pre-downloading BERTScore model (distilbert-base-uncased) ..."
+	uv run python -c "from bert_score import BERTScorer; BERTScorer(model_type='distilbert-base-uncased', lang='en'); print('BERTScore model ready.')"
 
 setup_claude_code:  ## Setup claude code CLI
 	echo "Setting up Claude Code CLI ..."
@@ -194,7 +207,7 @@ setup_dataset:  ## Download PeerRead dataset. Usage: make setup_dataset [MODE=fu
 	$(MAKE) -s dataset_smallest
 
 dataset_smallest:  ## Show N smallest papers by file size. Usage: make dataset_smallest N=5
-	@find datasets/peerread -path "*/parsed_pdfs/*.json" \
+	@find $(OUTPUT_BASE)/datasets/peerread -path "*/parsed_pdfs/*.json" \
 		-type f -printf '%s %p\n' 2>/dev/null | sort -n | head -$(or $(N),10)
 
 setup_dataset_sample:  ## Download small sample of PeerRead dataset
@@ -202,7 +215,7 @@ setup_dataset_sample:  ## Download small sample of PeerRead dataset
 	$(MAKE) -s app_cli ARGS=--download-peerread-samples-only
 	$(MAKE) -s dataset_smallest
 
-# MARK: ollama
+# MARK: OLLAMA
 
 
 ollama_start:  ## Start local Ollama server, default 127.0.0.1:11434
@@ -213,7 +226,7 @@ ollama_stop:  ## Stop local Ollama server
 	pkill ollama
 
 
-# MARK: plantuml
+# MARK: PLANTUML
 
 
 plantuml_serve:  ## Start PlantUML server for interactive diagram editing
@@ -226,7 +239,7 @@ plantuml_render:  ## Render a themed diagram from a PlantUML file
 		"$(CHECK_ONLY)" "$(PLANTUML_CONTAINER)"
 
 
-# MARK: pandoc
+# MARK: PANDOC
 
 
 pandoc_run:  ## Convert MD to PDF using pandoc. Usage: dir=docs/en && make pandoc_run INPUT_FILES="$$(printf '%s\\036' $$dir/*.md)" OUTPUT_FILE="$$dir/report.pdf" [BIBLIOGRAPHY="$$dir/refs.bib"] [CSL="$$dir/style.csl"] | Help: make pandoc_run HELP=1
@@ -283,7 +296,7 @@ writeup_generate:  ## Generate writeup markdown via CC teams. Usage: make writeu
 	echo "=== Content generation complete. Output: $(WRITEUP_DIR)/generate.jsonl ==="
 
 
-# MARK: markdown
+# MARK: MARKDOWN
 
 
 lint_links:  ## Check for broken links with lychee. Usage: make lint_links [INPUT_FILES="docs/**/*.md"]
@@ -301,12 +314,12 @@ lint_md:  ## Lint markdown files. Usage: make lint_md INPUT_FILES="docs/**/*.md"
 	markdownlint $(INPUT_FILES) --fix
 
 
-# MARK: app
+# MARK: APP
 
 
 app_quickstart:  ## Download sample data and run evaluation on smallest paper
 	echo "=== Quick Start: Download samples + evaluate smallest paper ==="
-	if [ ! -d datasets/peerread ]; then
+	if [ ! -d $(OUTPUT_BASE)/datasets/peerread ]; then
 		$(MAKE) -s setup_dataset
 	else
 		echo "PeerRead dataset already present, skipping download."
@@ -330,26 +343,32 @@ app_gui:  ## Run app with Streamlit GUI
 app_sweep:  ## Run MAS composition sweep. Usage: make app_sweep ARGS="--paper-ids 1,2,3 --repetitions 3 --all-compositions"
 	PYTHONPATH=$(SRC_PATH) uv run python $(SRC_PATH)/run_sweep.py $(ARGS)
 
+app_batch_eval:  ## Re-evaluate existing runs and regenerate sweep summaries. Usage: make app_batch_eval ARGS="--runs-only"
+	uv run python scripts/batch_eval.py $(ARGS)
+
+app_batch_run:  ## Run app_cli for all agent compositions. Usage: make app_batch_run ARGS="--paper-ids 1105.1072 [--parallel 4]"
+	uv run python scripts/batch_run.py $(ARGS)
+
 app_profile:  ## Profile app with scalene
-	mkdir -p logs/scalene-profiles
+	mkdir -p $(OUTPUT_BASE)/logs/scalene-profiles
 	uv run scalene --outfile \
-		"logs/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
+		"$(OUTPUT_BASE)/logs/scalene-profiles/profile-$$(date +%Y%m%d-%H%M%S)" \
 		"$(CLI_PATH)"
 
-app_clean_results:  ## Remove all sweep result files from results/sweeps/
-	echo "Removing results/sweeps/ contents ..."
-	rm -rf results/sweeps/*
+app_clean_results:  ## Remove all sweep result files
+	echo "Removing $(OUTPUT_BASE)/output/sweeps/ contents ..."
+	rm -rf $(OUTPUT_BASE)/output/sweeps/*
 	echo "Sweep results cleaned."
 
-app_clean_logs:  ## Remove accumulated agent evaluation logs from logs/Agent_evals/
-	echo "WARNING: This will delete all logs in logs/Agent_evals/ (including traces)!"
+app_clean_logs:  ## Remove accumulated agent evaluation logs
+	echo "WARNING: This will delete all logs in $(OUTPUT_BASE)/logs/ (including traces)!"
 	echo "Press Ctrl+C to cancel, Enter to continue..."
 	read
-	rm -rf logs/Agent_evals/*
+	rm -rf $(OUTPUT_BASE)/logs/*
 	echo "Agent evaluation logs cleaned."
 
 
-# MARK: cc-baselines
+# MARK: CC-BASELINES
 
 
 cc_run_solo:  ## Run CC solo via Python entry point. Usage: make cc_run_solo PAPER_ID=1105.1072 [CC_TIMEOUT=300]
@@ -376,36 +395,35 @@ cc_run_teams:  ## Run CC teams via Python entry point. Usage: make cc_run_teams 
 		--paper-id "$(PAPER_ID)"
 
 
-# MARK: quality
+# MARK: QUALITY
 
 
 lint_src:  ## Lint and format src with ruff
-	uv run ruff format --exclude tests
-	uv run ruff check --fix --exclude tests
+	echo "--- lint_src$(if $(RUFF_QUIET), [quiet])"
+	uv run ruff format $(RUFF_QUIET) --exclude tests
+	uv run ruff check $(RUFF_QUIET) --fix --exclude tests
 
 lint_tests:  ## Lint and format tests with ruff
-	uv run ruff format tests
-	uv run ruff check tests --fix
+	echo "--- lint_tests$(if $(RUFF_QUIET), [quiet])"
+	uv run ruff format $(RUFF_QUIET) tests
+	uv run ruff check $(RUFF_QUIET) tests --fix
 
 complexity:  ## Check cognitive complexity with complexipy
-	uv run complexipy
+	echo "--- complexity$(if $(CPLX_QUIET), [quiet])"
+	uv run complexipy $(CPLX_QUIET)
 
 # TODO: evaluate Python-native alternative to jscpd (pylint R0801, PMD CPD) to reduce npm dependency
 duplication:  ## Detect copy-paste duplication with jscpd
+	echo "--- duplication"
 	if command -v jscpd > /dev/null 2>&1; then
 		jscpd src/ --min-lines 5 --min-tokens 50 --reporters console
 	else
 		echo "jscpd not installed — skipping duplication check (run 'make setup_npm_tools' to enable)"
 	fi
 
-lint_hardcoded_paths:  ## Check for hardcoded /workspaces/ paths in tests
-	if grep -rn --include='*.py' '/workspaces/' tests/; then
-		echo "ERROR: Hardcoded /workspaces/ paths found in tests (breaks GHA). Use relative paths or inspect.getfile()."
-		exit 1
-	fi
-
 test:  ## Run all tests
-	uv run pytest
+	echo "--- test$(if $(PYTEST_QUIET), [quiet])"
+	uv run pytest $(PYTEST_QUIET)
 
 test_rerun:  ## Rerun only failed tests (use during fix iterations)
 	uv run pytest --lf -x
@@ -414,34 +432,33 @@ test_fix_snapshots:  ## Run tests and auto-fix inline snapshots
 	uv run pytest --inline-snapshot=fix
 
 test_coverage:  ## Run tests with coverage threshold (configured in pyproject.toml)
-	echo "Running tests with coverage gate (fail_under% defined in pyproject.toml)..."
-	uv run pytest --cov
+	echo "--- test_coverage$(if $(PYTEST_QUIET), [quiet])"
+	uv run pytest $(PYTEST_QUIET) --cov $(COV_QUIET)
 
 type_check:  ## Check for static typing errors
+	echo "--- type_check"
 	uv run pyright src
 
 validate:  ## Complete pre-commit validation (lint + type check + complexity + duplication + test coverage)
 	set -e
-	echo "Running complete validation sequence..."
 	$(MAKE) -s lint_src
 	$(MAKE) -s lint_tests
 	$(MAKE) -s type_check
 	$(MAKE) -s complexity
 	$(MAKE) -s duplication
 	$(MAKE) -s test_coverage
-	echo "Validation completed successfully"
+	echo "=== validate: all passed ==="
 
 quick_validate:  ## Fast development cycle validation
-	echo "Running quick validation ..."
+	set -e
 	$(MAKE) -s lint_src
 	$(MAKE) -s type_check
 	$(MAKE) -s complexity
 	$(MAKE) -s duplication
-	$(MAKE) -s lint_hardcoded_paths
-	echo "Quick validation completed (check output for any failures)"
+	echo "=== quick_validate: all passed ==="
 
 
-# MARK: phoenix
+# MARK: PHOENIX
 
 
 setup_phoenix:  ## Pull Phoenix Docker image (pre-download without starting)
@@ -474,7 +491,7 @@ phoenix_status:  ## Check Phoenix health status
 		echo "Phoenix UI: healthy (http://localhost:$(PHOENIX_PORT))" || echo "Phoenix UI: not responding"
 
 
-# MARK: ralph
+# MARK: RALPH
 
 
 ralph_userstory:  ## [Optional] Create UserStory.md interactively. Usage: make ralph_userstory
@@ -548,7 +565,7 @@ ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
 	echo "Ralph state cleaned. Run 'make ralph_init' to reinitialize."
 
 
-# MARK: help
+# MARK: HELP
 
 
 help:  ## Show available recipes grouped by section

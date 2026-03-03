@@ -188,7 +188,7 @@ Task("Review implementation code quality", subagent_type="code-reviewer")
 - **LIGHTWEIGHT-FIRST APPROACH**: Prioritize minimal dependencies for core functionality, use heavy packages only as fallbacks when lightweight alternatives are insufficient
 - **DEPENDENCY STRATEGY**: Primary lightweight stack (ROUGE-Score, NLTK BLEU, scikit-learn, textdistance) with heavy fallbacks, e.g., HuggingFace Evaluate for advanced metrics only
 
-**Sprint Goals**: Implement focused, minimal PeerRead evaluation framework with streamlined traditional, LLM-judge, and graph-based evaluation approaches for efficient agent performance scoring. See [Evaluation Approach Decision Tree](../architecture.md#evaluation-approach-decision-tree) for guidance on approach selection.
+**Sprint Goals**: Implement focused, minimal PeerRead evaluation framework with streamlined traditional, LLM-judge, and graph-based evaluation approaches for efficient agent performance scoring. See [Evaluation Approach Decision Tree](../../architecture.md#evaluation-approach-decision-tree) for guidance on approach selection.
 
 ## Three-Tiered Evaluation Engine Strategy
 
@@ -279,7 +279,7 @@ Agent Score = (
 ### Model Requirements
 
 - **Large Context Windows**: Models capable of processing full PeerRead papers (>50k tokens, preferably 200k+ for full papers)
-- **Suggested Models** (see [Available Models](../landscape.md#available-models) for detailed comparisons):
+- **Suggested Models** (see [Available Models](../../landscape/landscape.md) for detailed comparisons):
   - **Claude 4 Opus/Sonnet** (1M context limit, Anthropic provider)
   - **GPT-4 Turbo** (128k context limit, OpenAI provider)  
   - **Gemini-1.5-Pro** (1M context limit, Google provider)
@@ -312,7 +312,7 @@ Agent Score = (
 **These tasks are essential for the evaluation framework and will be resolved in Sprint 1:**
 
 - [ ] **Three-Tiered Evaluation System**: Implement focused, minimal evaluation framework with streamlined traditional metrics, LLM-as-a-judge, and essential graph-based analysis
-- [ ] **Local Observability Infrastructure**: Implement local JSON/JSONL tracing with evaluation of Comet, Opik, Helicone, and Logfire for local storage capabilities. See [Technical Analysis: Tracing Methods](../trace_observe_methods.md) for detailed technical mechanisms of observability tools and their tracing implementations.
+- [ ] **Local Observability Infrastructure**: Implement local JSON/JSONL tracing with evaluation of Comet, Opik, Helicone, and Logfire for local storage capabilities. See [Technical Analysis: Tracing Methods](../../landscape/trace_observe_methods.md) for detailed technical mechanisms of observability tools and their tracing implementations.
 - [ ] **Technical Analysis Investigation**: Complete investigation into actual source code implementations of tracing and observation mechanisms within each observability tool's codebase for deeper technical understanding and integration planning.
 - [ ] **PDF Processing Assessment**: Evaluate existing agent capabilities for processing PDFs from PeerRead dataset with large context models
 - [ ] **Prompt Configuration Audit**: Complete externalization of all prompts to config files, eliminate hardcoded prompts
@@ -442,7 +442,7 @@ Agent Score = (
     - **Phase 3**: Performance baseline establishment and integration test enhancement
   - **Status**: ✅ COMPLETED - Comprehensive validation framework implemented with 7 test files, performance baselines documented, and production readiness confirmed
 - [ ] **Task 4.4**: Opik tracing integration with ClickHouse analytics & error handling testing
-  - **Status**: MOVED TO SPRINT 3 - See [Sprint 3 details](2025-09_Sprint3_Advanced-Features.md)
+  - **Status**: MOVED TO SPRINT 3 - See [Sprint 3 details](2025-08_Sprint3_SoC_SRP.md)
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
   - **Requirements**: Deploy local Opik instance as primary tracing solution, instrument PydanticAI agents with `@track` decorators, implement step-level evaluation for Manager/Researcher/Analyst/Synthesizer interactions, leverage ClickHouse for analytical queries, and comprehensive error handling testing
   - **Reference**: docs/landscape/landscape-agent-frameworks-infrastructure.md for Opik integration patterns, existing docker-compose.opik.yaml with ClickHouse backend
@@ -459,7 +459,7 @@ Agent Score = (
     - Graph metrics storage: NetworkX-generated metrics stored in ClickHouse for time-series analysis and performance correlation
   - **Optional Integrations**: Weave and Logfire implementations as secondary/fallback options
 - [ ] **Task 4.5**: Deploy Opik locally using official repository
-  - **Status**: MOVED TO SPRINT 3 - See [Sprint 3 details](2025-09_Sprint3_Advanced-Features.md)
+  - **Status**: MOVED TO SPRINT 3 - See [Sprint 3 details](2025-08_Sprint3_SoC_SRP.md)
   - **Assigned to**: Backend Architect → Python Developer → Code Reviewer
   - **Requirements**: Deploy local Opik instance using official documentation and repository, validate deployment with health checks, and integrate with existing docker-compose setup
   - **Reference**:
@@ -579,7 +579,7 @@ Agent Score = (
 ## References
 
 - [CONTRIBUTING.md](../../CONTRIBUTING.md): Development workflow and quality standards
-- [Technical Analysis: Tracing Methods](../trace_observe_methods.md)
-- [Available Models](../landscape.md#available-models): Large Context Models reference
-- [Landscape Analysis](../landscape.md): Comprehensive tool and framework analysis
-- [Evaluation Approach Decision Tree](../architecture.md#evaluation-approach-decision-tree)
+- [Technical Analysis: Tracing Methods](../../landscape/trace_observe_methods.md)
+- [Available Models](../../landscape/landscape.md): Large Context Models reference
+- [Landscape Analysis](../../landscape/landscape.md): Comprehensive tool and framework analysis
+- [Evaluation Approach Decision Tree](../../architecture.md#evaluation-approach-decision-tree)

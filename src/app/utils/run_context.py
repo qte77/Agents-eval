@@ -13,8 +13,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from app.config.config_app import OUTPUT_PATH
+
 # Reason: module-level constant allows tests to patch without modifying config
-OUTPUT_BASE = Path("output")
+OUTPUT_BASE = Path(OUTPUT_PATH)
 
 # Reason: prevents path traversal — only safe chars allowed in directory name components
 _SAFE_PATH_RE = re.compile(r"[^a-zA-Z0-9._-]")
@@ -67,8 +69,8 @@ class RunContext:
     ) -> RunContext:
         """Create a RunContext and its output directory.
 
-        Creates output/runs/{YYYYMMDD_HHMMSS}_{engine_type}_{paper_id}_{exec_id_8}/
-        and writes metadata.json.
+        Creates output/runs/{category}/{ts}_{engine}_{paper}_{exec_id_8}/
+        and writes metadata.json. Category is ``mas`` or ``cc``.
 
         Args:
             engine_type: Engine identifier ('mas', 'cc_solo', 'cc_teams').
@@ -85,9 +87,13 @@ class RunContext:
         safe_engine = _sanitize_path_component(engine_type)
         safe_paper = _sanitize_path_component(paper_id)
         dir_name = f"{ts}_{safe_engine}_{safe_paper}_{exec_id_short}"
+        category = "cc" if engine_type.startswith("cc") else "mas"
 
-        run_dir = OUTPUT_BASE / "runs" / dir_name
-        run_dir.mkdir(parents=True, exist_ok=True)
+        run_dir = (OUTPUT_BASE / "runs" / category / dir_name).resolve()  # lgtm[py/path-injection]
+        if not run_dir.is_relative_to(OUTPUT_BASE.resolve()):
+            msg = f"Path traversal detected: {run_dir}"
+            raise ValueError(msg)
+        run_dir.mkdir(parents=True, exist_ok=True)  # lgtm[py/path-injection]
 
         ctx = cls(
             engine_type=engine_type,
@@ -131,9 +137,9 @@ class RunContext:
         """Path to the trace output file.
 
         Returns:
-            trace.jsonl in run_dir.
+            trace.json in run_dir.
         """
-        return self.run_dir / "trace.jsonl"
+        return self.run_dir / "trace.json"
 
     @property
     def review_path(self) -> Path:
@@ -161,3 +167,44 @@ class RunContext:
             evaluation.json in run_dir.
         """
         return self.run_dir / "evaluation.json"
+
+    @property
+    def graph_json_path(self) -> Path:
+        """Path to the agent graph JSON export file.
+
+        Returns:
+            agent_graph.json in run_dir.
+        """
+        return self.run_dir / "agent_graph.json"
+
+    @property
+    def graph_png_path(self) -> Path:
+        """Path to the agent graph PNG export file.
+
+        Returns:
+            agent_graph.png in run_dir.
+        """
+        return self.run_dir / "agent_graph.png"
+
+
+# Reason: module-level singleton matches existing patterns (artifact_registry, trace_collector)
+_active_run_context: RunContext | None = None
+
+
+def get_active_run_context() -> RunContext | None:
+    """Get the active per-run context, if any.
+
+    Returns:
+        The active RunContext, or None if no run is in progress.
+    """
+    return _active_run_context
+
+
+def set_active_run_context(ctx: RunContext | None) -> None:
+    """Set or clear the active per-run context.
+
+    Args:
+        ctx: RunContext to activate, or None to clear.
+    """
+    global _active_run_context
+    _active_run_context = ctx

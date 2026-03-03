@@ -1,3 +1,12 @@
+---
+title: AGENTS.md Refactor Plan - Minimal Skills/Ralph Integration
+description: Plan for minimal integration of Claude Code Skills and Ralph Loop references into AGENTS.md, following KISS/DRY/YAGNI principles to add bidirectional awareness without duplication
+category: analysis
+created: 2026-01-11
+updated: 2026-01-11
+version: 1.0.0
+---
+
 # AGENTS.md Refactor Plan - Minimal Skills/Ralph Integration
 
 **Date**: 2026-01-11

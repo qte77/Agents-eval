@@ -10,7 +10,14 @@ from pathlib import Path
 
 import streamlit as st
 
+from app.config.config_app import LOGS_PATH
 from app.data_models.evaluation_models import BaselineComparison, CompositeResult
+from gui.config.text import (
+    EVALUATION_HEADER,
+    EVALUATION_METRICS_COMPARISON_SUBHEADER,
+    EVALUATION_OVERALL_RESULTS_SUBHEADER,
+    EVALUATION_TIER_SCORES_SUBHEADER,
+)
 
 # S8-F3.3: human-readable labels for metric snake_case keys (WCAG display clarity)
 METRIC_LABELS: dict[str, str] = {
@@ -96,7 +103,7 @@ def _render_overall_results(
         result: CompositeResult containing evaluation data.
         baseline_comparison: Optional baseline for delta indicators in metrics.
     """
-    st.subheader("Overall Results")
+    st.subheader(EVALUATION_OVERALL_RESULTS_SUBHEADER)
     col1, col2, col3 = st.columns(3)
 
     # S8-F3.3: populate delta from baseline tier_deltas when available
@@ -132,7 +139,7 @@ def _render_tier_scores(result: CompositeResult) -> None:
     Args:
         result: CompositeResult containing tier scores.
     """
-    st.subheader("Tier Scores")
+    st.subheader(EVALUATION_TIER_SCORES_SUBHEADER)
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -180,7 +187,7 @@ def _render_metrics_comparison(result: CompositeResult) -> None:
     Args:
         result: CompositeResult containing metric scores.
     """
-    st.subheader("Graph Metrics vs Text Metrics Comparison")
+    st.subheader(EVALUATION_METRICS_COMPARISON_SUBHEADER)
 
     graph_metrics = _extract_graph_metrics(result.metric_scores)
     text_metrics = _extract_text_metrics(result.metric_scores)
@@ -202,7 +209,7 @@ def _render_metrics_comparison(result: CompositeResult) -> None:
             {"Metric": format_metric_label(k), "Score": round(v, 3), "Category": "Text (Tier 1)"}
             for k, v in sorted(text_metrics.items())
         ]
-        st.dataframe(combined_rows, use_container_width=True)
+        st.dataframe(combined_rows, width="stretch")
     else:
         st.info("Insufficient metric data for comparison visualization.")
 
@@ -224,7 +231,7 @@ def _render_three_way_table(comparisons: list[BaselineComparison]) -> None:
                 "Tier 3 Δ": f"{comp.tier_deltas.get('tier3', 0):.3f}",
             }
         )
-    st.dataframe(comparison_data, use_container_width=True)
+    st.dataframe(comparison_data, width="stretch")
 
 
 def _render_tier_deltas(comp: BaselineComparison) -> None:
@@ -312,13 +319,13 @@ def _render_empty_state() -> None:
     st.info("No evaluation results available. Run an evaluation to see results here.")
 
     # S8-F3.3: baseline inputs in collapsed expander (progressive disclosure)
-    with st.expander("Baseline Comparison Configuration", expanded=False):
+    with st.expander("Baseline Comparison Configuration", expanded=True):
         st.markdown(
             "Provide directory paths to Claude Code artifact exports to enable "
             "comparative evaluation against MAS results."
         )
         # S8-F8.2: auto-populate from known CC artifact location if it exists
-        default_traces_dir = "logs/Agent_evals/traces/"
+        default_traces_dir = f"{LOGS_PATH}/traces/"
         default_value = default_traces_dir if Path(default_traces_dir).is_dir() else ""
         _validate_dir_input("Claude Code Solo Directory", "cc_solo_dir_input", default_value)
         _validate_dir_input("Claude Code Teams Directory", "cc_teams_dir_input")
@@ -356,7 +363,7 @@ def render_evaluation(result: CompositeResult | None = None) -> None:
     Args:
         result: CompositeResult containing evaluation data, or None for empty state.
     """
-    st.header("Evaluation Results")
+    st.header(EVALUATION_HEADER)
 
     if result is None:
         _render_empty_state()

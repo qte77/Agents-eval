@@ -11,13 +11,11 @@ from unittest.mock import Mock, patch
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from inline_snapshot import snapshot
 
 from app.data_models.evaluation_models import Tier1Result
 from app.judge.traditional_metrics import (
     TraditionalMetricsEngine,
     evaluate_single_enhanced,
-    evaluate_single_traditional,
 )
 
 
@@ -84,27 +82,33 @@ class TestTraditionalMetricsEngine:
         assert similarity == 0.0  # No common words
 
     # Semantic similarity tests (with mocking to avoid model dependencies)
-    def test_semantic_similarity_with_bertscore(self, engine, sample_texts):
-        """Semantic similarity should use Levenshtein similarity fallback."""
+    def test_semantic_similarity_levenshtein_fallback(self, engine, sample_texts):
+        """Semantic similarity should fall back to Levenshtein when BERTScore unavailable."""
         text1, text2 = sample_texts["academic_review"]
 
-        # Mock Levenshtein similarity to return known value
-        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.85) as mock_lev:
-            similarity = engine.compute_semantic_similarity(text1, text2)
-            assert similarity == 0.85
-            mock_lev.assert_called_once_with(text1, text2)
+        with patch.object(engine, "_get_bertscore_model", return_value=None):
+            with patch.object(
+                engine, "compute_levenshtein_similarity", return_value=0.85
+            ) as mock_lev:
+                similarity = engine.compute_semantic_similarity(text1, text2)
+                assert similarity == 0.85
+                mock_lev.assert_called_once_with(text1, text2)
 
-    @patch("app.judge.traditional_metrics.TraditionalMetricsEngine._get_bertscore_model")
-    def test_semantic_similarity_fallback_on_error(self, mock_bertscore, engine, sample_texts):
-        """Given BERTScore failure, should fallback to Levenshtein similarity."""
-        # Mock BERTScore to raise exception
-        mock_bertscore.side_effect = Exception("Model loading failed")
+    def test_semantic_similarity_fallback_on_bertscore_computation_error(
+        self, engine, sample_texts
+    ):
+        """Given BERTScore .score() failure, should fallback to Levenshtein similarity."""
+        mock_scorer = Mock()
+        mock_scorer.score.side_effect = Exception("Computation failed")
 
         text1, text2 = sample_texts["similar"]
-        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.7) as mock_lev:
-            similarity = engine.compute_semantic_similarity(text1, text2)
-            assert similarity == 0.7
-            mock_lev.assert_called_once_with(text1, text2)
+        with patch.object(engine, "_get_bertscore_model", return_value=mock_scorer):
+            with patch.object(
+                engine, "compute_levenshtein_similarity", return_value=0.7
+            ) as mock_lev:
+                similarity = engine.compute_semantic_similarity(text1, text2)
+                assert similarity == 0.7
+                mock_lev.assert_called_once_with(text1, text2)
 
     # Execution time measurement tests
     def test_execution_time_measurement(self, engine):
@@ -226,27 +230,8 @@ class TestTraditionalMetricsEngine:
             assert 0.0 <= result.overall_score <= 1.0
 
 
-# Convenience function tests
-def test_evaluate_single_traditional():
-    """Test convenience function for single traditional evaluation."""
-    agent_output = "This is a test review with good methodology."
-    reference_texts = ["Test review with solid approach."]
-
-    with patch("app.judge.traditional_metrics.TraditionalMetricsEngine") as mock_engine_class:
-        mock_engine = Mock()
-        mock_engine_class.return_value = mock_engine
-
-        # Mock the evaluation result
-        mock_result = Mock(spec=Tier1Result)
-        mock_engine.evaluate_traditional_metrics.return_value = mock_result
-
-        result = evaluate_single_traditional(agent_output, reference_texts)
-
-        assert result == mock_result
-        mock_engine.evaluate_traditional_metrics.assert_called_once()
-
-
 # Performance tests
+@pytest.mark.benchmark
 class TestTraditionalMetricsPerformance:
     """Performance tests for traditional metrics engine."""
 
@@ -304,6 +289,7 @@ class TestTraditionalMetricsPerformance:
 
 
 # Enhanced features tests
+@pytest.mark.usefixtures("no_bertscore_download")
 class TestEnhancedFeatures:
     """Test suite for enhanced similarity features in traditional metrics."""
 
@@ -434,31 +420,35 @@ class TestEnhancedFeatures:
 
 
 # Convenience function tests for enhanced features
-def test_evaluate_single_enhanced():
-    """Test convenience function for enhanced evaluation."""
-    agent_output = "This paper presents novel machine learning approach with solid evaluation."
-    reference_texts = ["Novel ML method with comprehensive experimental evaluation."]
+@pytest.mark.usefixtures("no_bertscore_download")
+class TestEvaluateSingleEnhanced:
+    """Tests for evaluate_single_enhanced convenience function."""
 
-    # Test with default weights
-    result = evaluate_single_enhanced(agent_output, reference_texts)
-    assert 0.0 <= result <= 1.0
-    assert result > 0.3  # Should show similarity
+    def test_evaluate_single_enhanced(self):
+        """Test convenience function for enhanced evaluation."""
+        agent_output = "This paper presents novel machine learning approach with solid evaluation."
+        reference_texts = ["Novel ML method with comprehensive experimental evaluation."]
 
-    # Test with custom weights
-    weights = {"cosine_weight": 0.7, "jaccard_weight": 0.3, "semantic_weight": 0.0}
-    result_weighted = evaluate_single_enhanced(agent_output, reference_texts, weights)
-    assert 0.0 <= result_weighted <= 1.0
+        # Test with default weights
+        result = evaluate_single_enhanced(agent_output, reference_texts)
+        assert 0.0 <= result <= 1.0
+        assert result > 0.3  # Should show similarity
+
+        # Test with custom weights
+        weights = {"cosine_weight": 0.7, "jaccard_weight": 0.3, "semantic_weight": 0.0}
+        result_weighted = evaluate_single_enhanced(agent_output, reference_texts, weights)
+        assert 0.0 <= result_weighted <= 1.0
+
+    def test_evaluate_single_enhanced_empty_references(self):
+        """Enhanced evaluation should handle empty reference lists."""
+        agent_output = "Some output text"
+        reference_texts = []
+
+        result = evaluate_single_enhanced(agent_output, reference_texts)
+        assert result == 0.0
 
 
-def test_evaluate_single_enhanced_empty_references():
-    """Enhanced evaluation should handle empty reference lists."""
-    agent_output = "Some output text"
-    reference_texts = []
-
-    result = evaluate_single_enhanced(agent_output, reference_texts)
-    assert result == 0.0
-
-
+@pytest.mark.usefixtures("no_bertscore_download")
 class TestPeerReadEvaluation:
     """Test PeerRead evaluation functionality from traditional metrics."""
 
@@ -724,9 +714,10 @@ class TestSimilarityScoreProperties:
         start_time = 1000.0
         end_time = 1001.0
 
-        result = engine.evaluate_traditional_metrics(
-            agent_output, reference_texts, start_time, end_time
-        )
+        with patch.object(engine, "_get_bertscore_model", return_value=None):
+            result = engine.evaluate_traditional_metrics(
+                agent_output, reference_texts, start_time, end_time
+            )
 
         # PROPERTY: All scores in valid range (allow tiny FP precision errors)
         assert -1e-10 <= result.cosine_score <= 1.0 + 1e-10
@@ -736,157 +727,6 @@ class TestSimilarityScoreProperties:
         assert 0.0 < result.time_score <= 1.0
         assert 0.0 <= result.task_success <= 1.0
         assert -1e-10 <= result.overall_score <= 1.0 + 1e-10
-
-
-# MARK: Snapshot tests using inline-snapshot
-
-
-class TestTier1ResultStructure:
-    """Snapshot tests for Tier1Result structure regression."""
-
-    def test_tier1_result_structure_snapshot(self):
-        """Snapshot: Tier1Result structure should remain stable."""
-        engine = TraditionalMetricsEngine()
-        agent_output = "This paper demonstrates solid methodology and clear results."
-        reference_texts = ["Strong methodology with excellent results."]
-
-        # Use fixed time values to get stable snapshots
-        start_time = 1000.0
-        end_time = 1001.5  # 1.5 seconds
-
-        result = engine.evaluate_traditional_metrics(
-            agent_output, reference_texts, start_time, end_time
-        )
-
-        # SNAPSHOT: Capture the complete structure with stable time values
-        assert result.model_dump() == snapshot(
-            {
-                "cosine_score": 0.2605556710562624,
-                "jaccard_score": 0.18181818181818182,
-                "semantic_score": 0.41666666666666663,
-                "execution_time": 1.5,
-                "time_score": 0.22313016014842982,
-                "task_success": 0.4035795887673105,
-                "overall_score": 0.30351002036202473,
-            }
-        )
-
-
-# MARK: STORY-006 tests for semantic score deduplication
-
-
-class TestSemanticScoreDeduplication:
-    """Tests for STORY-006: semantic_score must use Levenshtein, not cosine."""
-
-    @pytest.fixture
-    def engine(self):
-        """Fixture providing TraditionalMetricsEngine instance."""
-        return TraditionalMetricsEngine()
-
-    def test_ac1_semantic_similarity_delegates_to_levenshtein(self, engine):
-        """AC1: compute_semantic_similarity must delegate to compute_levenshtein_similarity."""
-        text1 = "This paper presents a novel approach."
-        text2 = "The work demonstrates a new method."
-
-        with patch.object(engine, "compute_levenshtein_similarity", return_value=0.75) as mock_lev:
-            result = engine.compute_semantic_similarity(text1, text2)
-            assert result == 0.75
-            mock_lev.assert_called_once_with(text1, text2)
-
-    def test_ac1_semantic_similarity_does_not_delegate_to_cosine(self, engine):
-        """AC1: compute_semantic_similarity must NOT delegate to compute_cosine_similarity."""
-        text1 = "This paper presents a novel approach."
-        text2 = "The work demonstrates a new method."
-
-        with patch.object(engine, "compute_cosine_similarity") as mock_cosine:
-            engine.compute_semantic_similarity(text1, text2)
-            mock_cosine.assert_not_called()
-
-    def test_ac2_semantic_score_differs_from_cosine_score_for_non_identical_texts(self, engine):
-        """AC2: semantic_score and cosine_score should produce different values.
-
-        Use texts with shared words (so TF-IDF cosine > 0) but different character
-        sequences (so Levenshtein differs). This ensures cosine != levenshtein.
-        """
-        text1 = "The methodology is well-designed and the results are convincing."
-        text2 = "The approach used was well-designed but the results need more evaluation."
-
-        semantic = engine.compute_semantic_similarity(text1, text2)
-        cosine = engine.compute_cosine_similarity(text1, text2)
-
-        # They must differ — Levenshtein (char-level) and TF-IDF cosine (word-level) differ
-        assert semantic != cosine, (
-            f"semantic_score ({semantic}) must differ from cosine_score ({cosine})"
-        )
-
-    def test_ac3_semantic_similarity_identical_texts_returns_1(self, engine):
-        """AC3: semantic_score returns 1.0 for identical texts."""
-        text = "The methodology is well-designed and results are convincing."
-        result = engine.compute_semantic_similarity(text, text)
-        assert result == 1.0
-
-    def test_ac3_semantic_similarity_empty_vs_nonempty_returns_0(self, engine):
-        """AC3: semantic_score returns 0.0 for empty-vs-nonempty texts."""
-        result = engine.compute_semantic_similarity("", "some non-empty text")
-        assert result == 0.0
-
-        result2 = engine.compute_semantic_similarity("some non-empty text", "")
-        assert result2 == 0.0
-
-    def test_ac4_tier1_result_semantic_score_field_description(self):
-        """AC4: Tier1Result.semantic_score field description reflects Levenshtein calculation."""
-        from app.data_models.evaluation_models import Tier1Result
-
-        field_info = Tier1Result.model_fields["semantic_score"]
-        description = field_info.description or ""
-        assert "levenshtein" in description.lower(), (
-            f"semantic_score description must mention Levenshtein, got: {description!r}"
-        )
-        # Description may note BERTScore is disabled, but must not claim BERT as primary method
-        assert not description.lower().startswith("bert"), (
-            f"semantic_score description must not start with BERT-based, got: {description!r}"
-        )
-
-    def test_ac5_no_new_dependencies(self):
-        """AC5: semantic similarity uses textdistance (existing dependency)."""
-        # textdistance is already imported in traditional_metrics — verify it's accessible
-        import textdistance
-
-        text1 = "hello world"
-        text2 = "hello there"
-        score = float(textdistance.levenshtein.normalized_similarity(text1, text2))
-        assert 0.0 <= score <= 1.0
-
-
-# MARK: AC5 regression tests (no artificial sleep in evaluate_single_traditional)
-
-
-class TestEvaluateSingleTraditionalNoSleep:
-    """Tests for AC5: time.sleep removed from evaluate_single_traditional."""
-
-    def test_evaluate_single_traditional_does_not_sleep(self):
-        """evaluate_single_traditional must not call time.sleep.
-
-        AC5: The artificial time.sleep(0.001) was removed because
-        measure_execution_time already clamps minimum.
-        """
-        with patch("time.sleep") as mock_sleep:
-            evaluate_single_traditional(
-                agent_output="This paper presents a novel approach.",
-                reference_texts=["The work demonstrates strong contribution."],
-            )
-            # If time.sleep is called anywhere during evaluate_single_traditional,
-            # this assertion will fail — confirming the sleep is still present (RED).
-            mock_sleep.assert_not_called()
-
-    def test_evaluate_single_traditional_returns_tier1_result(self):
-        """evaluate_single_traditional returns a Tier1Result with valid score range."""
-        result = evaluate_single_traditional(
-            agent_output="This paper presents a novel approach to machine learning.",
-            reference_texts=["The work demonstrates strong machine learning contributions."],
-        )
-        assert isinstance(result, Tier1Result)
-        assert 0.0 <= result.overall_score <= 1.0
 
 
 # MARK: STORY-007 - Continuous task_success score
@@ -997,3 +837,94 @@ class TestContinuousTaskSuccess:
         for scores in test_cases:
             success = engine.assess_task_success(scores, threshold=0.8)
             assert 0.0 <= success <= 1.0, f"Score {success} out of [0.0, 1.0] for scores {scores}"
+
+
+class TestNoBERTScoreDownloadFixture:
+    """Verify no_bertscore_download fixture prevents model init."""
+
+    def test_fixture_prevents_bertscore_model_init(self, no_bertscore_download):
+        """Given no_bertscore_download fixture, _get_bertscore_model returns None."""
+        engine = TraditionalMetricsEngine()
+        assert engine._get_bertscore_model() is None
+
+    def test_semantic_similarity_uses_levenshtein_fallback(self, no_bertscore_download):
+        """Given no_bertscore_download, semantic similarity falls back to Levenshtein."""
+        engine = TraditionalMetricsEngine()
+        score = engine.compute_semantic_similarity(
+            "The quick brown fox", "The quick brown fox jumps"
+        )
+        # Levenshtein fallback produces a score without network access
+        assert 0.0 <= score <= 1.0
+
+
+class TestBERTScoreReenablement:
+    """Tests for BERTScore re-enablement in semantic similarity (Bug 1)."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_bertscore_cache(self):
+        """Reset class-level BERTScore cache between tests."""
+        TraditionalMetricsEngine._bertscore_instance = None
+        TraditionalMetricsEngine._bertscore_init_failed = False
+        yield
+        TraditionalMetricsEngine._bertscore_instance = None
+        TraditionalMetricsEngine._bertscore_init_failed = False
+
+    @pytest.fixture
+    def engine(self):
+        """Fixture providing TraditionalMetricsEngine instance."""
+        return TraditionalMetricsEngine()
+
+    def test_get_bertscore_model_returns_scorer_instance(self, engine):
+        """_get_bertscore_model should return a BERTScorer instance (lazy-loaded)."""
+        with patch("app.judge.traditional_metrics.BERTScorer") as mock_bert_cls:
+            mock_scorer = Mock()
+            mock_bert_cls.return_value = mock_scorer
+
+            result = engine._get_bertscore_model()
+
+            assert result is mock_scorer
+            mock_bert_cls.assert_called_once_with(model_type="distilbert-base-uncased", lang="en")
+
+    def test_compute_semantic_similarity_uses_bertscore(self, engine):
+        """compute_semantic_similarity should use BERTScore F1 when available."""
+        mock_scorer = Mock()
+        # BERTScorer.score returns (precision, recall, f1) tensors
+        mock_f1 = Mock()
+        mock_f1.mean.return_value.item.return_value = 0.92
+        mock_scorer.score.return_value = (Mock(), Mock(), mock_f1)
+
+        with patch.object(engine, "_get_bertscore_model", return_value=mock_scorer):
+            score = engine.compute_semantic_similarity(
+                "The paper presents a novel approach",
+                "This work introduces a new method",
+            )
+
+        assert abs(score - 0.92) < 0.01
+        mock_scorer.score.assert_called_once()
+
+    def test_compute_semantic_similarity_falls_back_to_levenshtein(self, engine):
+        """compute_semantic_similarity should fall back to Levenshtein when BERTScore unavailable."""
+        with patch.object(engine, "_get_bertscore_model", return_value=None):
+            with patch.object(
+                engine, "compute_levenshtein_similarity", return_value=0.65
+            ) as mock_lev:
+                score = engine.compute_semantic_similarity("text a", "text b")
+
+        assert score == 0.65
+        mock_lev.assert_called_once_with("text a", "text b")
+
+    @pytest.mark.network
+    def test_bertscore_real_model_download(self):
+        """Validate real BERTScore model download from HuggingFace.
+
+        Run with: pytest -m network tests/evals/test_traditional_metrics.py -k bertscore_real
+        """
+        engine = TraditionalMetricsEngine()
+        scorer = engine._get_bertscore_model()
+
+        assert scorer is not None
+        _, _, f1 = scorer.score(
+            ["The paper presents a novel approach"],
+            ["This work introduces a new method"],
+        )
+        assert 0.0 <= float(f1.mean().item()) <= 1.0

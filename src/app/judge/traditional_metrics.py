@@ -23,7 +23,11 @@ from sklearn.metrics.pairwise import cosine_similarity
 from app.data_models.evaluation_models import PeerReadEvalResult, Tier1Result
 from app.data_models.peerread_models import PeerReadReview
 
-# from torchmetrics.text import BERTScore  # Disabled due to build issues
+try:
+    from bert_score import BERTScorer
+except ImportError:
+    BERTScorer = None  # type: ignore[assignment, misc]
+
 from app.utils.log import logger
 
 
@@ -44,6 +48,11 @@ class TraditionalMetricsEngine:
     with performance targets under 1 second for typical academic reviews.
     """
 
+    # Reason: Class-level cache so BERTScorer init failure (e.g. read-only FS)
+    # is not retried on every new engine instance.
+    _bertscore_instance = None
+    _bertscore_init_failed = False
+
     def __init__(self):
         """Initialize metrics engine with cached components.
 
@@ -55,16 +64,26 @@ class TraditionalMetricsEngine:
             ngram_range=(1, 2),
             max_features=5000,  # Limit for performance
         )
-        self._bertscore = None  # Lazy loading
 
     def _get_bertscore_model(self):
-        """BERTScore model unavailable due to build issues.
+        """Lazy-load BERTScorer instance for semantic similarity.
 
         Returns:
-            None - BERTScore disabled
+            BERTScorer instance if available, None if bert-score not installed or init failed.
         """
-        # BERTScore disabled due to sentencepiece build issues
-        return None
+        if TraditionalMetricsEngine._bertscore_instance is not None:
+            return TraditionalMetricsEngine._bertscore_instance
+        if TraditionalMetricsEngine._bertscore_init_failed or BERTScorer is None:
+            return None
+        try:
+            TraditionalMetricsEngine._bertscore_instance = BERTScorer(
+                model_type="distilbert-base-uncased", lang="en"
+            )
+            return TraditionalMetricsEngine._bertscore_instance
+        except Exception as e:
+            logger.warning(f"BERTScore initialization failed: {e}")
+            TraditionalMetricsEngine._bertscore_init_failed = True
+            return None
 
     def _compute_word_overlap_fallback(self, text1: str, text2: str) -> float:
         """Fallback to simple word overlap when TF-IDF fails."""
@@ -216,25 +235,31 @@ class TraditionalMetricsEngine:
                 return 0.0
 
     def compute_semantic_similarity(self, text1: str, text2: str) -> float:
-        """Compute semantic similarity using Levenshtein similarity fallback.
+        """Compute semantic similarity using BERTScore with Levenshtein fallback.
 
         Args:
             text1: Agent-generated review text
             text2: Reference review text
 
         Returns:
-            Levenshtein similarity between 0.0 and 1.0 (BERTScore disabled)
+            Similarity score between 0.0 and 1.0
 
-        Performance: ~20ms using textdistance Levenshtein similarity
+        Performance: ~200ms with BERTScore, ~20ms with Levenshtein fallback
         """
-        try:
-            # BERTScore disabled due to build issues, use Levenshtein similarity
-            logger.debug("Using Levenshtein similarity fallback for semantic similarity")
-            return self.compute_levenshtein_similarity(text1, text2)
-
-        except Exception as e:
-            logger.warning(f"Semantic similarity calculation failed: {e}")
+        if not text1.strip() and not text2.strip():
+            return 1.0
+        if not text1.strip() or not text2.strip():
             return 0.0
+
+        scorer = self._get_bertscore_model()
+        if scorer is not None:
+            try:
+                _, _, f1 = scorer.score([text1], [text2])
+                return float(f1.mean().item())  # type: ignore[union-attr]
+            except Exception as e:
+                logger.warning(f"BERTScore computation failed, falling back to Levenshtein: {e}")
+
+        return self.compute_levenshtein_similarity(text1, text2)
 
     def measure_execution_time(self, start_time: float, end_time: float) -> float:
         """Calculate execution time with normalization for scoring.
@@ -436,7 +461,7 @@ class TraditionalMetricsEngine:
             default_weights = {
                 "cosine_weight": 0.4,
                 "jaccard_weight": 0.4,
-                "semantic_weight": 0.2,  # Maps to Levenshtein
+                "semantic_weight": 0.2,
             }
 
             weights = config_weights or default_weights
@@ -447,7 +472,7 @@ class TraditionalMetricsEngine:
             # Calculate multiple similarity metrics
             cosine_sim = best_scores.cosine
             jaccard_sim = best_scores.jaccard
-            levenshtein_sim = best_scores.levenshtein  # Semantic weight maps to Levenshtein
+            levenshtein_sim = best_scores.levenshtein
 
             # Weighted combination using config weights
             cosine_weight = weights.get("cosine_weight", 0.4)
@@ -590,7 +615,7 @@ def create_evaluation_result(
     similarity_scores = {
         "cosine": best_scores.cosine,
         "jaccard": best_scores.jaccard,
-        "semantic": best_scores.semantic,  # Levenshtein-based
+        "semantic": best_scores.semantic,
     }
 
     gt_recommendations = [float(r.recommendation) for r in ground_truth_reviews]

@@ -90,7 +90,7 @@
 
 \section*{T}
 
-**Tier 1 (Traditional Metrics)**: Fast, objective text similarity measurement (cosine, Jaccard, BLEU/ROUGE) as validation baseline.
+**Tier 1 (Traditional Metrics)**: Fast, objective text similarity measurement (cosine, Jaccard, BERTScore) as validation baseline.
 
 **Tier 2 (LLM-as-a-Judge)**: Semantic quality assessment through configurable judge provider; automatic fallback when API keys are missing.
 

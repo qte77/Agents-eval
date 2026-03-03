@@ -63,14 +63,6 @@ async def run_example() -> dict[str, Any] | None:
 
 
 if __name__ == "__main__":
-    output = asyncio.run(run_example())
-    if output is not None:
-        composite = output.get("composite_result")
-        if composite is not None:
-            print(f"Composite score  : {composite.composite_score:.3f}")
-            print(f"Recommendation   : {composite.recommendation}")
-            print(f"Tiers enabled    : {composite.tiers_enabled}")
-        else:
-            print("Run completed — no composite result produced (eval may be skipped).")
-    else:
-        print("Run completed — no result returned (download-only or error).")
+    from examples._helpers import print_mas_result
+
+    print_mas_result(asyncio.run(run_example()))

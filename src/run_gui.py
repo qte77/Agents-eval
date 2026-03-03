@@ -1,11 +1,12 @@
 """
 This module sets up and runs a Streamlit application for a Multi-Agent System.
 
-The application uses a sidebar tab layout with four navigation sections:
-- Run: execution controls (provider, engine, paper, query, run button)
+The application uses a sidebar tab layout with five navigation sections:
+- Run Research App: execution controls (provider, engine, paper, query, run button)
 - Settings: configuration options for provider and sub-agents
-- Evaluation: evaluation results and baseline comparison
+- Evaluation Results: evaluation results and baseline comparison
 - Agent Graph: visual representation of agent interactions
+- Trace Viewer: SQLite browser for traces.db execution data
 
 The main function loads the configuration, renders the UI components, and handles the
 execution of the Multi-Agent System based on user input.
@@ -36,6 +37,7 @@ from gui.pages.agent_graph import render_agent_graph
 from gui.pages.evaluation import render_evaluation
 from gui.pages.run_app import render_app
 from gui.pages.settings import render_settings
+from gui.pages.trace_viewer import render_trace_viewer
 
 chat_config_file = Path(__file__).parent / APP_CONFIG_PATH / CHAT_CONFIG_FILE
 chat_config = load_config(chat_config_file, ChatConfig)
@@ -77,14 +79,14 @@ async def main():
     add_custom_styling(PAGE_TITLE)
     selected_page = render_sidebar(PAGE_TITLE)
 
-    if selected_page == "Run":
+    if selected_page == "Run Research App":
         active_provider = st.session_state.get("chat_provider", CHAT_DEFAULT_PROVIDER)
-        logger.info(f"Page 'Run' provider: {active_provider}")
+        logger.info(f"Page 'Run Research App' provider: {active_provider}")
         await render_app(active_provider, chat_config_file)
     elif selected_page == "Settings":
         # Display actual settings from pydantic-settings classes
         render_settings(common_settings, judge_settings)
-    elif selected_page == "Evaluation":
+    elif selected_page == "Evaluation Results":
         # Pass composite result from session state if available
         composite_result = st.session_state.get("execution_composite_result", None)
         render_evaluation(composite_result)
@@ -93,6 +95,8 @@ async def main():
         graph = st.session_state.get("execution_graph", None)
         composite_result = st.session_state.get("execution_composite_result", None)
         render_agent_graph(graph, composite_result=composite_result)
+    elif selected_page == "Trace Viewer":
+        render_trace_viewer()
 
 
 if __name__ == "__main__":

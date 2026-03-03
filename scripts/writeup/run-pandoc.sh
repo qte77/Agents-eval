@@ -167,10 +167,53 @@ cat > "$header_temp" << EOF
 \\usepackage{pdflscape}
 \\AtBeginEnvironment{landscape}{\\setkeys{Gin}{width=\\linewidth,keepaspectratio}}
 
-% Prevent oversized images from overflowing page height
+% Prevent oversized images from overflowing page width or height
 \\usepackage[export]{adjustbox}
-\\let\\oldincludegraphics\\includegraphics
-\\renewcommand{\\includegraphics}[2][]{\\adjustimage{max width=\\linewidth,max height=0.85\\textheight,keepaspectratio,#1}{#2}}
+\\makeatletter
+\\def\\ScaleWidthIfNeeded{%
+  \\ifdim\\Gin@nat@width>\\linewidth
+    \\linewidth
+  \\else
+    \\Gin@nat@width
+  \\fi
+}
+\\def\\ScaleHeightIfNeeded{%
+  \\ifdim\\Gin@nat@height>0.9\\textheight
+    0.9\\textheight
+  \\else
+    \\Gin@nat@height
+  \\fi
+}
+\\makeatother
+\\setkeys{Gin}{width=\\ScaleWidthIfNeeded,height=\\ScaleHeightIfNeeded,keepaspectratio}
+% TODO: Auto-rotate landscape images 90° CCW when nat_width > threshold * nat_height
+% and nat_width > \\linewidth (i.e., the image would be scaled down to fit portrait).
+%
+% Problem: \\renewcommand{\\includegraphics} conflicts with pandoc's default
+% template \\setkeys{Gin}{width=\\maxwidth,...} and raw LaTeX [width=\\textwidth]
+% overrides in content files. The Gin defaults mask natural dimensions during
+% measurement, and explicit width= in #1 overrides rotation constraints.
+%
+% Recommended fix: pandoc Lua filter (auto-rotate.lua) that inspects image
+% dimensions at the AST level and wraps qualifying images in sidewaysfigure:
+%   function Image(img)
+%     local w, h = img_dimensions(img.src)
+%     if w > 1.3 * h then
+%       return pandoc.RawInline('latex',
+%         '\\begin{sidewaysfigure}[!htbp]\\centering'
+%         .. '\\includegraphics[width=\\textheight,keepaspectratio]{'..img.src..'}'
+%         .. '\\caption{'..pandoc.utils.stringify(img.caption)..'}'
+%         .. '\\end{sidewaysfigure}')
+%     end
+%   end
+% Invoke via: pandoc --lua-filter=auto-rotate.lua
+%
+% Threshold guidance (nat_width / nat_height):
+%   1.0 = any landscape image (too aggressive, catches near-square)
+%   1.2 = mildly landscape (4:3 screens, some diagrams)
+%   1.3 = recommended (catches wide diagrams/timelines, skips near-square)
+%   1.5 = only very wide images (panoramic, wide flowcharts)
+%   2.0 = ultra-wide only (banners, timeline strips)
 
 \\usepackage{float}
 \\floatplacement{figure}{!tb}
@@ -396,6 +439,80 @@ result=$?
 # Check result
 if [ $result -eq 0 ]; then
     echo "PDF generated successfully: $output_file"
+
+    # --- Auto-generate BUILD.md ---
+    _out_dir=$(dirname "$output_file")
+    _out_name=$(basename "$output_file")
+    _pv=$(pandoc --version 2>/dev/null | head -1 | sed 's/pandoc //' || echo "unknown")
+    _cwd="${work_dir:-.}"
+    # Build file lists with directory prefix for BUILD.md
+    _input_full=""
+    for _f in $input_files; do _input_full="$_input_full $_cwd/$_f"; done
+    _input_full=$(echo "$_input_full" | sed 's/^ //')
+    # Resolve title_file path (may be basename after cd into work_dir)
+    _title_full=""
+    [ -n "$title_file" ] && _title_full="$_cwd/$(basename "$title_file")"
+    # Strip PROJECT_ROOT prefix to produce relative paths
+    _bib_rel=$(echo "$bibliography_file" | sed "s|^$PROJECT_ROOT/||")
+    _csl_rel=$(echo "$csl_file" | sed "s|^$PROJECT_ROOT/||")
+    {
+        printf '# Build Instructions for %s v%s\n\n' "$PROJECT_NAME" "$VERSION"
+
+        # --- Make recipe (recommended) ---
+        printf '## Make Recipe (Recommended)\n\n```bash\n'
+        printf 'make pandoc_run \\\n'
+        printf '  INPUT_FILES="$$(printf '\''%%s\\036'\'' %s)" \\\n' "$_input_full"
+        printf '  OUTPUT_FILE="%s"' "$_cwd/$_out_name"
+        [ -n "$_title_full" ] && \
+            printf ' \\\n  TITLE_PAGE="%s"' "$_title_full"
+        [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ] && \
+            printf ' \\\n  BIBLIOGRAPHY="%s"' "$_bib_rel"
+        [ -n "$csl_file" ] && [ -f "$csl_file" ] && \
+            printf ' \\\n  CSL="%s"' "$_csl_rel"
+        [ "$number_sections" = "true" ] && \
+            printf ' \\\n  NUMBER_SECTIONS="true"'
+        [ "$list_of_figures" != "true" ] && \
+            printf ' \\\n  LIST_OF_FIGURES="false"'
+        [ "$list_of_tables" != "true" ] && \
+            printf ' \\\n  LIST_OF_TABLES="false"'
+        printf '\n```\n\n'
+
+        # --- Raw pandoc command (standalone) ---
+        printf '## Raw Pandoc Command (Standalone)\n\n```bash\ncd %s && \\\npandoc \\\n' "$_cwd"
+        for _f in $input_files; do printf '  %s \\\n' "$_f"; done
+        [ -n "$_title_full" ] && \
+            printf '  -B %s \\\n' "$(basename "$_title_full")"
+        printf '  --toc --toc-depth=2 \\\n'
+        [ "$number_sections" = "true" ] && printf '  --number-sections \\\n'
+        printf '  -V geometry:"margin=1in,footskip=35pt" \\\n'
+        printf '  -V documentclass=report \\\n'
+        printf '  --pdf-engine=xelatex \\\n'
+        printf '  --from markdown+smart \\\n'
+        printf '  -V pagestyle=plain'
+        [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ] && \
+            printf ' \\\n  --citeproc \\\n  --bibliography=%s' "$(basename "$bibliography_file")"
+        [ -n "$csl_file" ] && [ -f "$csl_file" ] && \
+            printf ' \\\n  --csl=%s' "$_csl_rel"
+        printf ' \\\n  -o %s\n```\n\n' "$_out_name"
+        printf '> **Note**: The raw command omits header-includes (font setup, image scaling,\n'
+        printf '> LoF/LoT, footer). Use the make recipe for full-featured builds.\n\n'
+
+        # --- Prerequisites & Notes ---
+        printf '## Prerequisites\n\n'
+        printf '%s\n' "- \`make\` with project Makefile"
+        printf '%s\n' "- \`pandoc\` (tested with $_pv)"
+        printf '%s\n\n' "- \`xelatex\` (TeX Live) — install via \`make setup_pdf_converter CONVERTER=pandoc\`"
+        printf '## Notes\n\n'
+        printf '%s\n' "- **PDF engine**: \`xelatex\` (hardcoded in \`run-pandoc.sh\`)"
+        printf '%s\n' "- **LoF/LoT**: enabled by default; disable with \`LIST_OF_FIGURES=false\`"
+    } > "$_out_dir/BUILD.md"
+    echo "Build instructions: $_out_dir/BUILD.md"
+
+    # --- Create/update blog-post.md template ---
+    printf '%s\n' "---" "layout: post" "title: \"$PROJECT_NAME v$VERSION\"" \
+        "excerpt: \"\"" "categories: []" "---" "" "# $PROJECT_NAME" "" \
+        "TODO: Write blog post summary." > "$_out_dir/blog-post.md"
+    echo "Blog post template: $_out_dir/blog-post.md"
 else
     echo "Error: PDF generation failed"
     exit 1

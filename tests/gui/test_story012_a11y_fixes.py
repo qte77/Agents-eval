@@ -315,17 +315,26 @@ class TestSidebarRadioLabel:
         """render_sidebar Phoenix markdown must include '(opens in new tab)' text.
 
         S8-F8.1: Warn users that the link opens in a new tab (WCAG 3.2.5).
+        STORY-010 moved Phoenix into sidebar.expander, where st.markdown is used
+        (not sidebar.markdown), so we patch both to capture all markdown calls.
         """
-        from unittest.mock import patch
+        from unittest.mock import MagicMock, patch
 
         from gui.components.sidebar import render_sidebar
 
         mock_sb = self._make_mock_sidebar()
-        with patch("gui.components.sidebar.sidebar", mock_sb):
+        mock_st_markdown = MagicMock()
+        with (
+            patch("gui.components.sidebar.sidebar", mock_sb),
+            patch("gui.components.sidebar.st") as mock_st,
+        ):
+            mock_st.session_state = {}
+            mock_st.markdown = mock_st_markdown
             render_sidebar("Test App")
 
-        markdown_calls = mock_sb.markdown.call_args_list
-        all_markdown_content = " ".join(str(call.args[0]) for call in markdown_calls if call.args)
+        # Collect markdown calls from both sidebar.markdown and st.markdown
+        all_calls = mock_sb.markdown.call_args_list + mock_st_markdown.call_args_list
+        all_markdown_content = " ".join(str(call.args[0]) for call in all_calls if call.args)
         assert "opens in new tab" in all_markdown_content, (
             "render_sidebar Phoenix link must include '(opens in new tab)' text for WCAG 3.2.5."
         )

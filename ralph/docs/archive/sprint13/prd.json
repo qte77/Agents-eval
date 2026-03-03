@@ -1,0 +1,284 @@
+{
+  "project": "Product Requirements Document Sprint 13 — GUI Audit Remediation & Theming",
+  "description": "",
+  "source": "PRD.md",
+  "generated": "2026-02-28 18:34:54",
+  "stories": [
+    {
+      "id": "STORY-001",
+      "title": "Fix broken ARIA live regions in run_app.py",
+      "description": "The ARIA live region tags in `run_app.py` are split across separate\n`st.markdown()` calls, creating malformed DOM. Screen readers never announce status\nchanges during pipeline execution. Consolidate opening/closing ARIA tags into single\n`st.markdown()` calls or use `st.empty()` containers.",
+      "acceptance": [
+        "All `<div role=\"status\" aria-live=\"polite\">` regions are emitted as single `st.markdown()` calls",
+        "Screen reader announcement works for idle, running, completed, and error states",
+        "No orphaned opening/closing ARIA tags across separate `st.markdown()` calls",
+        "Refactor `_display_execution_result` to build complete ARIA-wrapped HTML strings before emitting",
+        "Use `st.empty()` containers for in-place status updates where appropriate",
+        "Verify DOM structure with browser dev tools after changes"
+      ],
+      "files": [
+        "src/gui/pages/run_app.py"
+      ],
+      "status": "passed",
+      "wave": 1,
+      "completed_at": "2026-03-01T09:41:42Z",
+      "content_hash": "0905190cbda66238eafe45a290373c048e84166f3f6a9f01b5615b6ae6669875",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-002",
+      "title": "Add accessible alternative for agent graph",
+      "description": "The Pyvis network graph is injected as raw HTML via `components.html()`\nwith no title, no ARIA role, no alt text, and no text equivalent. Add an accessible\ntext summary and fix the keyboard trap risk from `scrolling=False`.",
+      "acceptance": [
+        "Text summary of graph (node count, edge count, agent names) rendered below the graph",
+        "`st.caption()` with descriptive text added before `components.html()` call",
+        "`<title>` element added to generated Pyvis HTML before injection",
+        "`scrolling=True` set on `components.html()` to prevent keyboard trap",
+        "Pyvis `bgcolor` reads from theme instead of hard-coded `#ffffff`",
+        "Insert `<title>Agent Interaction Graph</title>` into the Pyvis HTML string",
+        "Add `st.caption(\"Agent interaction graph showing agent and tool relationships. See statistics below for details.\")` before the component",
+        "Change `scrolling=False` to `scrolling=True`",
+        "Replace `bgcolor=\"#ffffff\"` with theme-aware value from `styling.py`"
+      ],
+      "files": [
+        "src/gui/pages/agent_graph.py",
+        "src/gui/config/styling.py"
+      ],
+      "status": "passed",
+      "wave": 1,
+      "completed_at": "2026-03-01T09:43:46Z",
+      "content_hash": "998cfb2860169e2b3f497349477275f4c7c02ff00b91615b5159c8c6153bde40",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-003",
+      "title": "Add debug log panel ARIA landmark",
+      "description": "The debug log panel renders raw HTML via `unsafe_allow_html=True`\nwith no ARIA landmark. Add `role=\"log\"` and `aria-label` to the outermost container.\nFix message span color for theme compatibility.",
+      "acceptance": [
+        "Debug log container has `role=\"log\"` and `aria-label=\"Debug logs\"`",
+        "Message span uses `color: inherit` for theme compatibility",
+        "Inline `font-family: monospace; font-size: 12px` removed (duplicates global theme font)",
+        "Modify `LogCapture.format_logs_as_html()` to wrap output in `<section role=\"log\" aria-label=\"Debug logs\">`",
+        "Add `color: inherit` to message `<span>` elements",
+        "Remove redundant inline font declarations"
+      ],
+      "files": [
+        "src/gui/utils/log_capture.py",
+        "src/gui/pages/run_app.py"
+      ],
+      "status": "passed",
+      "wave": 1,
+      "completed_at": "2026-03-01T09:45:24Z",
+      "content_hash": "9cbc2b5a88d1fed08734d243bfeff02094e2f3d93242c20503caf4450ae178fc",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-004",
+      "title": "Fix validation warning placement on Run page",
+      "description": "The validation warning for empty query/paper fires inside the async\nhandler and disappears on Streamlit rerender. Render the warning adjacent to the Run\nbutton so users see it.",
+      "acceptance": [
+        "Validation warning renders directly above or adjacent to the Run button",
+        "Warning persists on screen until user corrects the input",
+        "Warning is not buried in an async handler that fires after rerender",
+        "Move validation check from `_handle_query_submission` to the `render_app()` scope",
+        "Use `st.session_state` to persist the warning state across rerenders",
+        "Render warning with `st.warning()` in the same container as the Run button"
+      ],
+      "files": [
+        "src/gui/pages/run_app.py"
+      ],
+      "status": "passed",
+      "wave": 1,
+      "completed_at": "2026-03-01T09:47:00Z",
+      "content_hash": "a40952dae33098631727653704b220486e44b7e56be41da48e0576ef52b582bc",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-005",
+      "title": "Fix report generation and add clear results",
+      "description": "Clicking \"Generate Report\" twice duplicates the rendered markdown.\nThe Download button recreates on each render with no stable confirmation. Cache the\nreport in session state.",
+      "acceptance": [
+        "Generated report cached in `st.session_state` — no duplicate renders on re-click",
+        "Download button persists after first generation",
+        "\"Clear Results\" button resets execution state to idle",
+        "Store generated markdown in `st.session_state[\"generated_report\"]`",
+        "Render from cache if report already exists",
+        "Add \"Clear Results\" button that resets `execution_state` to idle and clears result keys"
+      ],
+      "files": [
+        "src/gui/pages/run_app.py"
+      ],
+      "status": "passed",
+      "wave": 2,
+      "completed_at": "2026-03-01T10:18:42Z",
+      "content_hash": "8e0560ff4254fba01fb7912300edf56d6297d07e39e94cdf5f7f226fce281e45",
+      "depends_on": [
+        "STORY-004"
+      ]
+    },
+    {
+      "id": "STORY-006",
+      "title": "Define theme dicts in styling.py",
+      "description": "Add three curated, selectable Streamlit themes: \"Expanse Dark\" (current),\n\"Nord Light\" (light, readability-first), and \"Tokyo Night\" (warm dark, recommended\nupgrade). Theme definitions stored in `styling.py`, selectable via sidebar or settings.",
+      "acceptance": [
+        "Three theme dicts defined in `config/styling.py` with full color specs",
+        "Define `THEMES` dict in `styling.py` with keys: `expanse_dark`, `nord_light`, `tokyo_night`",
+        "Each theme: `primaryColor`, `backgroundColor`, `secondaryBackgroundColor`, `textColor`, `accentColor`",
+        "Expanse Dark: `#4A90E2`, `#0b0c10`, `#1f2833`, `#66fcf1`, `#50C878`",
+        "Nord Light: `#5E81AC`, `#ECEFF4`, `#E5E9F0`, `#2E3440`, `#88C0D0`",
+        "Tokyo Night: `#7AA2F7`, `#1A1B26`, `#24283B`, `#C0CAF5`, `#9ECE6A`",
+        "`.streamlit/config.toml` documents the default theme choice"
+      ],
+      "files": [
+        "src/gui/config/styling.py",
+        ".streamlit/config.toml"
+      ],
+      "status": "passed",
+      "wave": 1,
+      "completed_at": "2026-03-01T09:48:37Z",
+      "content_hash": "9606aa6958249202ba537d7b7d94416ba20f45ae08da2b22a78a648d57cf6938",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-007",
+      "title": "Add theme selector widget",
+      "description": "Add theme selector widget to sidebar or settings page. Persist selection in\nsession state across page navigations. Wire agent graph colors to active theme palette.",
+      "acceptance": [
+        "Theme selector widget in sidebar or settings page",
+        "Selected theme persists in session state across page navigations",
+        "Pyvis graph colors update to match selected theme accent colors",
+        "Theme selector writes to `st.session_state[\"selected_theme\"]`",
+        "Agent graph reads node/edge colors from active theme",
+        "Note: Streamlit theme switching at runtime requires `st.set_page_config` workaround or custom CSS injection"
+      ],
+      "files": [
+        "src/gui/components/sidebar.py",
+        "src/gui/pages/agent_graph.py",
+        "src/gui/pages/settings.py",
+        ".streamlit/config.toml"
+      ],
+      "status": "passed",
+      "wave": 2,
+      "completed_at": "2026-03-01T10:20:30Z",
+      "content_hash": "d40d1ed42ebe73cda79ae95b8b3d6a991af3b7d27683eea2ba5f31dc29f2b385",
+      "depends_on": [
+        "STORY-006"
+      ]
+    },
+    {
+      "id": "STORY-008",
+      "title": "Improve home page onboarding",
+      "description": "Home page has minimal onboarding with no actionable first step.\nAdd a checklist or step-by-step card guiding new users through setup.",
+      "acceptance": [
+        "Home page shows a step-by-step onboarding guide (configure provider, download dataset, run query)",
+        "Each step links or navigates to the relevant page",
+        "Onboarding content defined in `text.py` (not inline strings)",
+        "Add onboarding constants to `text.py` (step titles, descriptions)",
+        "Render as `st.info()` or card-like layout with numbered steps",
+        "Link steps to Settings and Run pages"
+      ],
+      "files": [
+        "src/gui/pages/home.py",
+        "src/gui/config/text.py"
+      ],
+      "status": "passed",
+      "wave": 1,
+      "completed_at": "2026-03-01T09:50:17Z",
+      "content_hash": "73925071a69b38d048f813d61d88db60cb3cbb22ef10f795ee1a30419224df54",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-009",
+      "title": "Consolidate UI string constants in text.py",
+      "description": "Several pages use inline string literals for headers and labels instead\nof importing from `text.py`. Consolidate for single-source-of-truth copy management.",
+      "acceptance": [
+        "All header/subheader strings in `evaluation.py` moved to `text.py`",
+        "All header/subheader strings in `agent_graph.py` moved to `text.py`",
+        "All inline label strings in `run_app.py` (\"Debug Log\", \"Generate Report\") moved to `text.py`",
+        "Add constants to `text.py`: `EVALUATION_HEADER`, `AGENT_GRAPH_HEADER`, `DEBUG_LOG_LABEL`, `GENERATE_REPORT_LABEL`, etc.",
+        "Import and use in respective pages"
+      ],
+      "files": [
+        "src/gui/config/text.py",
+        "src/gui/pages/evaluation.py",
+        "src/gui/pages/agent_graph.py",
+        "src/gui/pages/run_app.py"
+      ],
+      "status": "passed",
+      "wave": 2,
+      "completed_at": "2026-03-01T09:51:52Z",
+      "content_hash": "fefee86931a7870f9bce13de7f72dfe808a6549b7cf42a184c9f89346358e3e5",
+      "depends_on": []
+    },
+    {
+      "id": "STORY-010",
+      "title": "Fix navigation consistency and baseline expander",
+      "description": "Sidebar labels don't match page headers. Evaluation baseline expander\nhidden by default on first visit. Phoenix Trace Viewer always visible even when not\nconfigured.",
+      "acceptance": [
+        "Sidebar navigation labels align with page headers",
+        "Baseline comparison expander expanded by default on first visit (no result available)",
+        "Phoenix Trace Viewer moved to collapsed sidebar expander",
+        "Update `PAGES` list in `config.py` to match page header text",
+        "Set `expanded=True` on baseline comparison expander when no result exists",
+        "Wrap Phoenix link in `st.sidebar.expander(\"Tracing (optional)\")`"
+      ],
+      "files": [
+        "src/gui/config/config.py",
+        "src/gui/pages/evaluation.py",
+        "src/gui/components/sidebar.py"
+      ],
+      "status": "passed",
+      "wave": 3,
+      "completed_at": "2026-03-01T10:22:13Z",
+      "content_hash": "7076a2f4140784d26feaff67e7208d60c1f29100abf8931ff56ab73ce44565de",
+      "depends_on": [
+        "STORY-009"
+      ]
+    },
+    {
+      "id": "STORY-011",
+      "title": "Fix Pyvis graph contrast and color theming",
+      "description": "Agent graph node colors have insufficient contrast for text labels.\nGraph background is hard-coded white, conflicting with dark theme. Make graph colors\ntheme-aware.",
+      "acceptance": [
+        "Node label `font_color` explicitly set (not Pyvis default)",
+        "Node colors provide >= 4.5:1 contrast ratio for labels",
+        "Graph `bgcolor` reads from active theme (not hard-coded `#ffffff`)",
+        "Agent and tool node colors update when theme changes",
+        "Set `font_color=\"#000000\"` for light themes, `font_color=\"#ECEFF4\"` for dark themes",
+        "Read `bgcolor` from theme dict in `styling.py`",
+        "Map agent node color to theme `primaryColor`, tool node color to theme `accentColor`"
+      ],
+      "files": [
+        "src/gui/pages/agent_graph.py",
+        "src/gui/config/styling.py"
+      ],
+      "status": "passed",
+      "wave": 3,
+      "completed_at": "2026-03-01T10:23:54Z",
+      "content_hash": "5ad73c4b5aa35cfe27d165e56390d9bfc7e77499eebd3714638de026511d4dfd",
+      "depends_on": [
+        "STORY-006",
+        "STORY-002"
+      ]
+    },
+    {
+      "id": "STORY-012",
+      "title": "Type-aware output rendering",
+      "description": "`render_output` uses generic `st.write()` for all result types.\nImplement type-aware rendering so Pydantic models and dicts render with navigable\nstructure instead of raw object dumps.",
+      "acceptance": [
+        "`render_output()` type-checks result and uses structured rendering (e.g., `st.json()` for dicts)",
+        "`CompositeResult` and other Pydantic models render with navigable structure",
+        "Add type dispatch: `st.json()` for dicts, `st.markdown()` for strings, structured rendering for Pydantic models",
+        "Import relevant result types from `src/app/data_models/`"
+      ],
+      "files": [
+        "src/gui/components/output.py"
+      ],
+      "status": "passed",
+      "wave": 1,
+      "completed_at": "2026-03-01T09:53:26Z",
+      "content_hash": "37e8f152af85f7bf9794f6e516a1932c6378a9738f1d857b85de564a2e2079a1",
+      "depends_on": []
+    }
+  ]
+}

@@ -346,59 +346,109 @@ structure instead of raw object dumps.
 
 <!-- PARSER REQUIREMENT: Include story count in parentheses -->
 <!-- PARSER REQUIREMENT: Use (depends: STORY-XXX, STORY-YYY) for dependencies -->
-Story Breakdown - Phase 1 (11 stories total):
+Story Breakdown - Phase 1 (12 stories total):
 
 - **Feature 1** → STORY-001: Fix broken ARIA live regions in run_app.py
-  Consolidate split `st.markdown()` ARIA tags into single calls. Refactor `_display_execution_result` to build complete ARIA-wrapped HTML. Files: `src/gui/pages/run_app.py`.
+  Consolidate split `st.markdown()` ARIA tags into single calls. Refactor `_display_execution_result` to build complete ARIA-wrapped HTML. Files: `src/gui/pages/run_app.py`. Tests: `tests/gui/test_run_app.py`.
 
 - **Feature 2** → STORY-002: Add accessible alternative for agent graph
-  Add `<title>` to Pyvis HTML, `st.caption()` before graph, text summary below, `scrolling=True`. Files: `src/gui/pages/agent_graph.py`.
+  Add `<title>` to Pyvis HTML, `st.caption()` before graph, text summary below, `scrolling=True`. Files: `src/gui/pages/agent_graph.py`. Tests: `tests/gui/test_agent_graph_page.py`.
 
 - **Feature 3** → STORY-003: Add debug log panel ARIA landmark
-  Add `role="log"` and `aria-label` to log container HTML. Fix message span color. Remove redundant inline font. Files: `src/gui/utils/log_capture.py`, `src/gui/pages/run_app.py`.
+  Add `role="log"` and `aria-label` to log container HTML. Fix message span color. Remove redundant inline font. Files: `src/gui/utils/log_capture.py`, `src/gui/pages/run_app.py`. Tests: `tests/gui/test_realtime_debug_log.py`.
 
 - **Feature 4** → STORY-004: Fix validation warning placement on Run page
-  Move validation from async handler to `render_app()` scope. Persist warning in session state. Files: `src/gui/pages/run_app.py`.
+  Move validation from async handler to `render_app()` scope. Persist warning in session state. Files: `src/gui/pages/run_app.py`. Tests: `tests/gui/test_run_app.py`.
 
 - **Feature 5** → STORY-005: Fix report generation and add clear results (depends: STORY-004)
-  Cache generated report in session state. Add "Clear Results" button. Files: `src/gui/pages/run_app.py`.
+  Cache generated report in session state. Add "Clear Results" button. Files: `src/gui/pages/run_app.py`. Tests: `tests/gui/test_run_app.py`.
 
 - **Feature 6** → STORY-006: Define theme dicts in styling.py
-  Create `THEMES` dict with three themes (Expanse Dark, Nord Light, Tokyo Night). Full hex color specs. Files: `src/gui/config/styling.py`.
+  Create `THEMES` dict with three themes (Expanse Dark, Nord Light, Tokyo Night). Full hex color specs. Files: `src/gui/config/styling.py`. Tests: `tests/gui/test_styling.py` (new).
 
 - **Feature 6** → STORY-007: Add theme selector widget (depends: STORY-006)
-  Add theme selector to sidebar or settings. Persist in session state. Files: `src/gui/components/sidebar.py`, `src/gui/pages/settings.py`, `.streamlit/config.toml`.
+  Add theme selector to sidebar or settings. Persist in session state. Files: `src/gui/components/sidebar.py`, `src/gui/pages/settings.py`, `.streamlit/config.toml`. Tests: `tests/gui/test_sidebar_navigation.py`, `tests/gui/test_settings_integration.py`.
 
 - **Feature 7** → STORY-008: Improve home page onboarding
-  Add step-by-step onboarding guide with setup checklist. Define content in text.py. Files: `src/gui/pages/home.py`, `src/gui/config/text.py`.
+  Add step-by-step onboarding guide with setup checklist. Define content in text.py. Files: `src/gui/pages/home.py`, `src/gui/config/text.py`. Tests: `tests/gui/test_home_page.py` (new).
 
 - **Feature 8** → STORY-009: Consolidate UI string constants in text.py
-  Move inline header/label strings from evaluation.py, agent_graph.py, run_app.py to text.py. Files: `src/gui/config/text.py`, `src/gui/pages/evaluation.py`, `src/gui/pages/agent_graph.py`, `src/gui/pages/run_app.py`.
+  Move inline header/label strings from evaluation.py, agent_graph.py, run_app.py to text.py. Files: `src/gui/config/text.py`, `src/gui/pages/evaluation.py`, `src/gui/pages/agent_graph.py`, `src/gui/pages/run_app.py`. Tests: `tests/gui/test_text_constants.py` (new).
 
 - **Feature 9** → STORY-010: Fix navigation consistency and baseline expander (depends: STORY-009)
-  Align sidebar labels with page headers. Expand baseline expander on first visit. Move Phoenix link to collapsed expander. Files: `src/gui/config/config.py`, `src/gui/pages/evaluation.py`, `src/gui/components/sidebar.py`.
+  Align sidebar labels with page headers. Expand baseline expander on first visit. Move Phoenix link to collapsed expander. Files: `src/gui/config/config.py`, `src/gui/pages/evaluation.py`, `src/gui/components/sidebar.py`. Tests: `tests/gui/test_sidebar_navigation.py`, `tests/gui/test_evaluation_page.py`.
 
-- **Feature 10** → STORY-011: Fix Pyvis graph contrast and color theming (depends: STORY-006)
-  Set explicit font_color. Read bgcolor from theme. Map node colors to theme palette. Files: `src/gui/pages/agent_graph.py`, `src/gui/config/styling.py`.
+- **Feature 10** → STORY-011: Fix Pyvis graph contrast and color theming (depends: STORY-006, STORY-002)
+  Set explicit font_color. Read bgcolor from theme. Map node colors to theme palette. Files: `src/gui/pages/agent_graph.py`, `src/gui/config/styling.py`. Tests: `tests/gui/test_agent_graph_page.py`, `tests/gui/test_styling.py` (new).
 
 - **Feature 11** → STORY-012: Type-aware output rendering
-  Add type dispatch for structured rendering of dicts, strings, and Pydantic models. Files: `src/gui/components/output.py`.
+  Add type dispatch for structured rendering of dicts, strings, and Pydantic models. Files: `src/gui/components/output.py`. Tests: `tests/gui/test_output_rendering.py` (new).
+
+### TDD Workflow Per Story
+
+Each story follows Red-Green-Refactor:
+
+1. **RED**: Write failing tests first in the test file(s) listed above. Test behavior, not implementation (e.g., "ARIA region contains status text" not "st.markdown called with specific args").
+2. **GREEN**: Implement minimal code in source file(s) to pass tests.
+3. **REFACTOR**: Clean up, run `make quick_validate`, then `make test`.
+
+**Testing rules**:
+
+- Mock `streamlit` calls with `spec=` constraints (e.g., `MagicMock(spec=st.delta_generator.DeltaGenerator)`)
+- Test ARIA/HTML output as string assertions on the generated HTML content
+- Theme tests: validate dict structure, color hex format, required keys
+- Use `st.session_state` fixtures from existing `tests/gui/conftest.py`
+- New test files marked `(new)` above must be created by the implementing teammate
 
 ### Notes for CC Agent Teams
 
 #### File-Conflict Dependencies
 
-| Story | Logical Dep | + File-Conflict Dep | Shared File |
-| --- | --- | --- | --- |
-| STORY-005 | STORY-004 | — | `src/gui/pages/run_app.py` |
-| STORY-007 | STORY-006 | — | `src/gui/components/sidebar.py` |
-| STORY-010 | STORY-009 | — | `src/gui/pages/evaluation.py` |
-| STORY-011 | STORY-006 | + STORY-002 | `src/gui/pages/agent_graph.py` |
+<!-- markdownlint-disable MD013 -->
+
+| Story | Logical Dep | + File-Conflict Dep | Shared File | Resolution |
+| --- | --- | --- | --- | --- |
+| STORY-001 | — | + STORY-003, STORY-004 | `src/gui/pages/run_app.py` | Wave 1: different functions, low conflict risk |
+| STORY-003 | — | + STORY-001, STORY-004 | `src/gui/pages/run_app.py` | Wave 1: different functions, low conflict risk |
+| STORY-004 | — | + STORY-001, STORY-003 | `src/gui/pages/run_app.py` | Wave 1: different functions, low conflict risk |
+| STORY-005 | STORY-004 | — | `src/gui/pages/run_app.py` | Wave 2: sequential after STORY-004 |
+| STORY-007 | STORY-006 | — | `src/gui/components/sidebar.py` | Wave 2: sequential after STORY-006 |
+| STORY-009 | — | + STORY-002 | `src/gui/pages/agent_graph.py` | Wave 1: STORY-009 edits imports only, low conflict |
+| STORY-010 | STORY-009 | — | `src/gui/pages/evaluation.py` | Wave 2: sequential after STORY-009 |
+| STORY-011 | STORY-006 | + STORY-002 | `src/gui/pages/agent_graph.py` | Wave 3: sequential after both STORY-002 and STORY-006 |
+
+<!-- markdownlint-enable MD013 -->
 
 #### Orchestration Waves
 
 ```text
-Wave 1 (independent):  STORY-001, STORY-002, STORY-003, STORY-004, STORY-006, STORY-008, STORY-012
-Wave 2 (after Wave 1): STORY-005, STORY-007, STORY-009
-Wave 3 (after Wave 2): STORY-010, STORY-011
+Wave 1 (parallel, 7 teammates):
+  STORY-001  run_app.py ARIA regions        — no deps
+  STORY-002  agent_graph.py accessibility    — no deps
+  STORY-003  log_capture.py ARIA landmark    — no deps
+  STORY-004  run_app.py validation warning   — no deps
+  STORY-006  styling.py theme dicts          — no deps
+  STORY-008  home.py onboarding              — no deps
+  STORY-012  output.py type-aware rendering  — no deps
+
+Wave 2 (parallel, 3 teammates — after Wave 1 deps resolve):
+  STORY-005  run_app.py report caching       — depends: STORY-004
+  STORY-007  sidebar.py theme selector       — depends: STORY-006
+  STORY-009  text.py string consolidation    — no logical dep (Wave 2 for run_app.py contention)
+
+Wave 3 (parallel, 2 teammates — after Wave 2 deps resolve):
+  STORY-010  config.py + evaluation.py nav   — depends: STORY-009
+  STORY-011  agent_graph.py contrast/theme   — depends: STORY-006, STORY-002
 ```
+
+#### Teammate Spawn Strategy
+
+Each wave spawns teammates in parallel using `general-purpose` subagent type with `isolation: "worktree"`. Teammates receive:
+
+- Story ID, title, description, acceptance criteria, source files, test files
+- `MANDATORY: Read AGENTS.md first, then CONTRIBUTING.md. TDD workflow: write failing tests first, then implement.`
+- Explicit `depends_on` list so teammates know which files are safe to edit
+
+**Wave transitions**: Lead waits for all teammates in current wave to complete (`TaskList` polling) before spawning next wave. This prevents file conflicts on shared files like `run_app.py` and `agent_graph.py`.
+
+**run_app.py contention** (Wave 1): STORY-001, STORY-003, and STORY-004 all edit `run_app.py` but touch different functions (`_display_execution_result`, log panel rendering, and `render_app()` validation respectively). Use worktree isolation — lead merges sequentially after Wave 1 completes. If merge conflicts arise, resolve by re-running the conflicting story on the merged base.

@@ -3,8 +3,8 @@ title: Development Roadmap
 description: Sprint roadmap and implementation status for the Agents-eval project
 category: roadmap
 created: 2025-09-04
-updated: 2026-02-25
-version: 4.5.0
+updated: 2026-03-02
+version: 4.6.0
 ---
 
 Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for technical decisions (ADRs).
@@ -22,4 +22,24 @@ Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for tech
 | **Sprint 9** | Delivered | Correctness & security hardening — dead code deletion, format string sanitization, PDF size guard, API key env cleanup, security hardening, judge accuracy, AgentConfig typing, type safety fixes, test suite quality sweep | [PRD Sprint 9](sprints/archive/PRD-Sprint9-Ralph.md) |
 | **Sprint 10** | Substantially Delivered | CC evaluation pipeline parity (STORY-010: main() CC/MAS branch, extract_cc_review_text, cc_result_to_graph_trace, engine_type, GUI CC execution, reference reviews, process group kill); graph viz polish (STORY-011); inspect.getsource removal (STORY-015). STORY-012/013/014 not started. | [PRD Sprint 10](sprints/archive/PRD-Sprint10-Ralph.md) |
 | **Sprint 11** | Delivered | Observability, UX polish, test quality: end-of-run artifact summary (ArtifactRegistry), GUI sidebar tabs, CC engine empty query fix (build_cc_query), CC JSONL stream persistence, search tool HTTP resilience, sub-agent validation JSON parsing fix, query persistence fix, assert isinstance→behavioral replacements, conftest consolidation, dispatch registry refactor, config model consolidation, examples modernization (8 total) | [PRD Sprint 11](sprints/archive/PRD-Sprint11-Ralph.md) |
-| **Sprint 12** | In Progress | CC teams mode bug fixes: fix JSONL stream team event parsing (`_TEAM_EVENT_TYPES` mismatch with real CC output), pass `cc_teams` flag through to `engine_type` assignment (eliminates `team_artifacts`-based inference) | [PRD Sprint 12](sprints/archive/PRD-Sprint12-Ralph.md) |
+| **Sprint 12** | Delivered | CC teams mode fixes (stream event parsing, cc_teams flag passthrough, engine_type fix), scoring system fixes (Tier 3 empty-trace skip, composite trace awareness, time_taken timestamps, semantic score dedup, continuous task_success), per-run output directories (RunContext consolidation) | [PRD Sprint 12](sprints/archive/PRD-Sprint12-Ralph.md) |
+| **Sprint 13** | Delivered | GUI audit remediation & theming — accessibility fixes (ARIA live regions, landmarks, keyboard traps, graph alt text), theming system (3 curated themes, selector widget, graph color integration), UX improvements (onboarding, validation placement, report caching, navigation consistency, string consolidation, type-aware output rendering) | [PRD Sprint 13](sprints/archive/PRD-Sprint13-Ralph.md) |
+
+## Backlog — Candidate Evaluation Metrics
+
+Unscheduled metrics identified from production frameworks and research. No sprint assigned.
+
+| Metric | Source | Current Gap | Impact |
+| --- | --- | --- | --- |
+| `fix_rate` | SWE-EVO [2512.18470] | Binary task success only | High |
+| `evaluator_consensus` | TEAM-PHI (Agents4Science) | Single LLM judge | High |
+| `delegation_depth` | HDO (Agents4Science) | No hierarchy verification | High |
+| `handoff_quality` | Arize Multi-Agent | No inter-agent transition | High |
+| `rubric_alignment` | [2512.23707] | No self-grading assessment | High |
+| `coordination_topology` | Evolutionary Boids (Agents4Science) | No breadth vs depth | Medium |
+| `path_convergence` | Arize Phoenix | No path efficiency | Medium |
+
+## Backlog — Known Issues
+
+- **Delegation Tool Retry Exhaustion**: `delegate_synthesis` exceeds PydanticAI's max retry count of 3. The model repeatedly passes incorrect arguments (structured data instead of plain-text query, or invented parameter names like `report` instead of `query`), exhausting retries without a successful call. Blocks reliable sweep execution for the `synthesiser` composition. Potential mitigations: increase retry limit, add argument coercion at tool boundary, simplify delegation tool signature.
+- **Provider Token Limit Exceeded**: Cumulative token count exceeds provider-configured `total_tokens_limit` during multi-agent runs, aborting execution. Example: Cerebras `gpt-oss-120b` exceeded its 60,000-token limit (actual: 66,165 tokens). Multi-agent compositions are particularly susceptible since each sub-agent delegation adds to the cumulative count. Potential mitigations: dynamic per-agent token budgeting, context summarization between delegation steps, provider-aware limit configuration in `PROVIDER_REGISTRY`.

@@ -1,3 +1,12 @@
+---
+title: Security Advisories
+description: Known CVE advisories affecting project dependencies, their severity, and mitigation status for the Agents-eval project
+category: security
+created: 2026-02-19
+updated: 2026-03-01
+version: 1.0.0
+---
+
 # Security Advisories
 
 Known CVE advisories affecting dependencies and their applicability to this project.
@@ -88,6 +97,10 @@ This project pins `scikit-learn>=1.8.0` in `pyproject.toml`, which includes the 
 ---
 
 ## Related Frameworks
+
+See [docs/analysis/ai-security-governance-frameworks.md](analysis/ai-security-governance-frameworks.md)
+for a detailed comparative analysis of all four frameworks and their applicability
+to Agents-eval.
 
 ### Threat Modeling & Attack Taxonomy
 

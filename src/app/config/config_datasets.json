@@ -1,7 +1,7 @@
 {
     "peerread": {
         "base_url": "https://github.com/allenai/PeerRead/tree/master/data",
-        "cache_directory": "datasets/peerread",
+        "cache_directory": "_Agents-eval/datasets/peerread",
         "venues": [
             "acl_2017",
             "arxiv.cs.ai_2007-2017",

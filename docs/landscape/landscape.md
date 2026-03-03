@@ -2,7 +2,7 @@
 title: AI Agent Evaluation Landscape - Overview
 description: Overview and navigation guide for the comprehensive AI agent evaluation ecosystem documentation
 created: 2025-08-23
-updated: 2026-02-15
+updated: 2026-03-01
 category: landscape
 version: 1.3.1
 ---
@@ -55,7 +55,7 @@ Comprehensive guide covering:
 
 - **[Agent Evaluation Metrics](agent_eval_metrics.md)** - Comprehensive catalog of evaluation metrics for AI agents
 - **[Tracing & Observation Methods](trace_observe_methods.md)** - Technical analysis of 17 observability tool implementations with OpenTelemetry GenAI conventions and multi-agent tracing patterns
-- **[Trace Processors Implementation](../../src/app/judge/trace_processors.py)** - Source code for processing agent execution traces
+- **Trace Processors Implementation** (`src/app/judge/trace_processors.py`) - Source code for processing agent execution traces
 
 ### Architecture Visualization
 

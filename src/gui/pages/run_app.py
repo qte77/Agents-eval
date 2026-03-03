@@ -34,6 +34,10 @@ from app.reports.report_generator import generate_report
 from app.utils.log import logger
 from gui.components.output import render_output
 from gui.config.text import (
+    ARTIFACTS_LABEL,
+    DEBUG_LOG_LABEL,
+    DOWNLOAD_REPORT_LABEL,
+    GENERATE_REPORT_LABEL,
     OUTPUT_SUBHEADER,
     RUN_APP_BUTTON,
     RUN_APP_HEADER,
@@ -217,6 +221,23 @@ def _capture_execution_logs(capture: LogCapture) -> None:
     st.session_state.debug_logs = logs
 
 
+def _render_artifact_summary_panel() -> None:
+    """Render the artifact summary panel with paths written during the last run.
+
+    Displays an expandable panel listing all artifacts registered during execution
+    (log directory, reviews, evaluations, traces, reports, etc.).
+    """
+    summary = getattr(st.session_state, "artifact_summary", None)
+
+    with st.expander(ARTIFACTS_LABEL, expanded=False):
+        from app.utils.artifact_registry import get_artifact_registry
+
+        if not get_artifact_registry().summary():
+            st.info("No artifacts written yet. Run a query to see output paths.")
+        else:
+            st.code(summary, language=None)
+
+
 def _render_debug_log_panel() -> None:
     """Render the debug log panel with captured logs.
 
@@ -225,7 +246,7 @@ def _render_debug_log_panel() -> None:
     """
     logs = getattr(st.session_state, "debug_logs", [])
 
-    with st.expander("Debug Log", expanded=False):
+    with st.expander(DEBUG_LOG_LABEL, expanded=False):
         if not logs:
             st.info("No logs captured yet. Run a query to see execution logs.")
         else:
@@ -322,6 +343,11 @@ async def _execute_query_background(
     st.session_state.execution_query = query
     st.session_state.execution_provider = provider
 
+    # Reset artifact registry so this run's summary doesn't include prior runs
+    from app.utils.artifact_registry import get_artifact_registry
+
+    get_artifact_registry().reset()
+
     # Setup log capture
     capture = LogCapture()
     handler_id = capture.attach_to_logger()
@@ -354,6 +380,9 @@ async def _execute_query_background(
     finally:
         _capture_execution_logs(capture)
         capture.detach_from_logger(handler_id)
+        from app.utils.artifact_registry import get_artifact_registry
+
+        st.session_state.artifact_summary = get_artifact_registry().format_summary_block()
 
 
 def _display_configuration(provider: str, token_limit: int | None, agents_text: str) -> None:
@@ -373,43 +402,62 @@ def _display_configuration(provider: str, token_limit: int | None, agents_text: 
 def _display_execution_result(execution_state: str) -> None:
     """Display execution result based on current state.
 
-    Wraps state transitions in ARIA live regions for screen reader accessibility:
-    - role="status" for running/completed (polite, non-interrupting)
-    - role="alert" for errors (assertive, immediate announcement)
+    Wraps state transitions in ARIA live regions for screen reader accessibility.
+    All ARIA tags are consolidated into single st.markdown() calls to avoid
+    malformed DOM from orphaned opening/closing tags across separate calls.
 
     Args:
         execution_state: Current execution state (running/completed/error/idle)
     """
     if execution_state == "running":
-        # S8-F3.3: ARIA role="status" for polite announcement (WCAG 4.1.3)
-        st.markdown('<div role="status" aria-live="polite">', unsafe_allow_html=True)
+        # S13-STORY-001: Consolidated ARIA region (WCAG 4.1.3)
+        st.markdown(
+            '<div role="status" aria-live="polite">'
+            "Query execution in progress. "
+            "You can navigate to other tabs and return to see the result."
+            "</div>",
+            unsafe_allow_html=True,
+        )
         with spinner("Query execution in progress..."):
             info(
                 "Execution is running. You can navigate to other tabs and return to see the result."
             )
-        st.markdown("</div>", unsafe_allow_html=True)
 
     elif execution_state == "completed":
         result = getattr(st.session_state, "execution_result", None)
-        # S8-F3.3: ARIA role="status" for completed state + post-run navigation guidance
-        st.markdown('<div role="status" aria-live="polite">', unsafe_allow_html=True)
+        # S13-STORY-001: Consolidated ARIA region for completed state
+        nav_guidance = (
+            "Navigate to Evaluation Results to view scores, "
+            "or Agent Graph to explore agent interactions."
+        )
         if result:
+            st.markdown(
+                f'<div role="status" aria-live="polite">Execution completed. {nav_guidance}</div>',
+                unsafe_allow_html=True,
+            )
             render_output(result)
         else:
+            st.markdown(
+                '<div role="status" aria-live="polite">'
+                f"Execution completed but no result was returned. {nav_guidance}"
+                "</div>",
+                unsafe_allow_html=True,
+            )
             info("Execution completed but no result was returned.")
         st.markdown(
             "Navigate to **Evaluation Results** to view scores, "
             "or **Agent Graph** to explore agent interactions.",
             unsafe_allow_html=False,
         )
-        st.markdown("</div>", unsafe_allow_html=True)
 
     elif execution_state == "error":
-        # S8-F3.3: ARIA role="alert" for error state (assertive announcement, WCAG 4.1.3)
-        st.markdown('<div role="alert" aria-live="assertive">', unsafe_allow_html=True)
+        # S13-STORY-001: Consolidated ARIA region for error state
         error_msg = getattr(st.session_state, "execution_error", "Unknown error")
+        st.markdown(
+            f'<div role="alert" aria-live="assertive">Error: {error_msg}</div>',
+            unsafe_allow_html=True,
+        )
         exception(Exception(error_msg))
-        st.markdown("</div>", unsafe_allow_html=True)
 
     else:  # idle
         render_output(RUN_APP_OUTPUT_PLACEHOLDER)
@@ -488,10 +536,6 @@ async def _handle_query_submission(
         engine: Execution engine — 'mas' (PydanticAI) or 'cc' (Claude Code).
         cc_teams: Whether to use CC Teams mode (only applies when engine='cc').
     """
-    if not (query or selected_paper_id):
-        warning(RUN_APP_QUERY_WARNING)
-        return
-
     judge_settings = _build_judge_settings_from_session()
     common_settings = _build_common_settings_from_session()
     info(f"{RUN_APP_QUERY_RUN_INFO} {query or f'paper {selected_paper_id}'}")
@@ -515,9 +559,9 @@ async def _handle_query_submission(
 def _render_report_section(composite_result: CompositeResult | None) -> None:
     """Render the report generation section on the App page.
 
+    Caches the generated report in session state to prevent duplicate renders.
     Displays a "Generate Report" button when a composite_result is available.
-    On click, generates a Markdown report and renders it inline, with a
-    download button for saving to disk.
+    Provides a "Clear Results" button to reset execution state.
 
     Args:
         composite_result: Evaluation result to generate a report for,
@@ -527,17 +571,122 @@ def _render_report_section(composite_result: CompositeResult | None) -> None:
     if composite_result is None:
         return
 
-    # Render the generate button
-    if st.button("Generate Report", key="generate_report_btn"):
+    # Generate report on button click and cache in session state
+    if st.button(GENERATE_REPORT_LABEL, key="generate_report_btn"):
         markdown = generate_report(composite_result)
-        st.markdown(markdown)
+        st.session_state["generated_report"] = markdown
+
+    # Render cached report and download button if available
+    cached_report = st.session_state.get("generated_report")
+    if cached_report:
+        st.markdown(cached_report)
         st.download_button(
-            label="Download Report",
-            data=markdown,
+            label=DOWNLOAD_REPORT_LABEL,
+            data=cached_report,
             file_name="evaluation_report.md",
             mime="text/markdown",
             key="download_report_btn",
         )
+
+    # Clear Results button resets execution state
+    if st.button("Clear Results", key="clear_results_btn"):
+        st.session_state["execution_state"] = "idle"
+        st.session_state["generated_report"] = None
+        if hasattr(st.session_state, "execution_result"):
+            del st.session_state["execution_result"]
+        if hasattr(st.session_state, "execution_composite_result"):
+            del st.session_state["execution_composite_result"]
+        st.rerun()
+
+
+def _render_engine_selector() -> tuple[str, bool]:
+    """Render the execution engine selector and CC Teams checkbox.
+
+    Returns:
+        Tuple of (engine, cc_teams) where engine is 'mas' or 'cc'.
+    """
+    engine_label = st.radio(
+        "Execution engine",
+        ["Multi-Agent System (MAS)", "Claude Code"],
+        key="engine_label",
+        horizontal=True,
+        help=(
+            "MAS (PydanticAI): multi-agent pipeline with Researcher, Analyst, and Synthesiser. "
+            "Claude Code: single-model execution via the `claude` CLI."
+        ),
+    )
+    engine = "cc" if engine_label == "Claude Code" else "mas"
+    st.session_state.engine = engine
+
+    cc_teams = False
+    if engine == "cc":
+        cc_teams = st.checkbox(
+            "Use CC Teams",
+            key="cc_teams_mode",
+            help=(
+                "Runs Claude Code in multi-agent team mode. "
+                "Requires the claude CLI with agent teams support."
+            ),
+        )
+
+    return engine, cc_teams
+
+
+def _render_engine_status(
+    engine: str,
+    cc_available: bool,
+    provider: str,
+    token_limit: int | None,
+    include_researcher: bool,
+    include_analyst: bool,
+    include_synthesiser: bool,
+) -> None:
+    """Show engine-specific status messages and MAS configuration.
+
+    Args:
+        engine: Selected engine ('mas' or 'cc').
+        cc_available: Whether the claude CLI is available.
+        provider: Active LLM provider.
+        token_limit: Optional token limit.
+        include_researcher: Whether researcher agent is enabled.
+        include_analyst: Whether analyst agent is enabled.
+        include_synthesiser: Whether synthesiser agent is enabled.
+    """
+    if engine == "cc" and not cc_available:
+        st.warning(
+            "Claude Code CLI (`claude`) not found on PATH. "
+            "Install it to use the CC engine: https://docs.anthropic.com/en/docs/claude-code"
+        )
+
+    if engine == "cc":
+        st.info(
+            "MAS agent controls (Researcher, Analyst, Synthesiser) are not applicable "
+            "when using the Claude Code engine."
+        )
+    else:
+        agents_text = _format_enabled_agents(
+            include_researcher, include_analyst, include_synthesiser
+        )
+        _display_configuration(provider, token_limit, agents_text)
+
+
+def _render_query_input() -> tuple[str, str | None]:
+    """Render input mode selector and query input fields.
+
+    Returns:
+        Tuple of (query, selected_paper_id).
+    """
+    input_mode = st.radio(
+        "Input mode",
+        ["Free-form query", "Select a paper"],
+        key="input_mode",
+        horizontal=True,
+    )
+
+    if input_mode == "Free-form query":
+        return text_input(RUN_APP_QUERY_PLACEHOLDER, key="freeform_query"), None
+
+    return _render_paper_selection_input()
 
 
 async def render_app(provider: str | None = None, chat_config_file: str | Path | None = None):
@@ -558,7 +707,6 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     header(RUN_APP_HEADER)
     _initialize_execution_state()
 
-    # CC availability: compute once and cache in session state
     st.session_state.setdefault("cc_available", shutil.which("claude") is not None)
     cc_available: bool = st.session_state.cc_available
 
@@ -567,83 +715,44 @@ async def render_app(provider: str | None = None, chat_config_file: str | Path |
     )
     token_limit: int | None = st.session_state.get("token_limit")
 
-    # Engine selector — per-run choice, not persistent config
-    engine_label = st.radio(
-        "Execution engine",
-        ["Multi-Agent System (MAS)", "Claude Code"],
-        key="engine_label",
-        horizontal=True,
-        # S8-F3.3: help text for engine selector
-        help=(
-            "MAS (PydanticAI): multi-agent pipeline with Researcher, Analyst, and Synthesiser. "
-            "Claude Code: single-model execution via the `claude` CLI."
-        ),
-    )
-    engine = "cc" if engine_label == "Claude Code" else "mas"
-    st.session_state.engine = engine
-
-    # S10-F1: CC Teams checkbox — only shown when CC engine selected
-    cc_teams = False
-    if engine == "cc":
-        cc_teams = st.checkbox(
-            "Use CC Teams",
-            key="cc_teams_mode",
-            help=(
-                "Runs Claude Code in multi-agent team mode. "
-                "Requires the claude CLI with agent teams support."
-            ),
-        )
-
-    if engine == "cc" and not cc_available:
-        st.warning(
-            "Claude Code CLI (`claude`) not found on PATH. "
-            "Install it to use the CC engine: https://docs.anthropic.com/en/docs/claude-code"
-        )
-
-    if engine == "cc":
-        # S8-F8.2: hide MAS controls entirely when CC engine selected (not just disabled)
-        st.info(
-            "MAS agent controls (Researcher, Analyst, Synthesiser) are not applicable "
-            "when using the Claude Code engine."
-        )
-    else:
-        agents_text = _format_enabled_agents(
-            include_researcher, include_analyst, include_synthesiser
-        )
-        _display_configuration(provider_from_state, token_limit, agents_text)
-
-    input_mode = st.radio(
-        "Input mode",
-        ["Free-form query", "Select a paper"],
-        key="input_mode",
-        horizontal=True,
+    engine, cc_teams = _render_engine_selector()
+    _render_engine_status(
+        engine,
+        cc_available,
+        provider_from_state,
+        token_limit,
+        include_researcher,
+        include_analyst,
+        include_synthesiser,
     )
 
-    if input_mode == "Free-form query":
-        query = text_input(RUN_APP_QUERY_PLACEHOLDER, key="freeform_query")
-        selected_paper_id: str | None = None
-    else:
-        query, selected_paper_id = _render_paper_selection_input()
+    query, selected_paper_id = _render_query_input()
 
     if button(RUN_APP_BUTTON):
-        await _handle_query_submission(
-            query,
-            selected_paper_id,
-            provider_from_state,
-            include_researcher,
-            include_analyst,
-            include_synthesiser,
-            chat_config_file,
-            token_limit,
-            engine=engine,
-            cc_teams=cc_teams,
-        )
+        if not (query or selected_paper_id):
+            st.session_state.show_validation_warning = True
+        else:
+            st.session_state.show_validation_warning = False
+            await _handle_query_submission(
+                query,
+                selected_paper_id,
+                provider_from_state,
+                include_researcher,
+                include_analyst,
+                include_synthesiser,
+                chat_config_file,
+                token_limit,
+                engine=engine,
+                cc_teams=cc_teams,
+            )
 
-    # S8-F8.1: subheader placed after run button so output section follows user action
+    if st.session_state.get("show_validation_warning"):
+        warning(RUN_APP_QUERY_WARNING)
+
     subheader(OUTPUT_SUBHEADER)
     _display_execution_result(_get_execution_state())
+    _render_artifact_summary_panel()
     _render_debug_log_panel()
 
-    # S8-F6.2: report section — enabled after evaluation completes
     composite_result = st.session_state.get("execution_composite_result")
     _render_report_section(composite_result)

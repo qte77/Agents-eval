@@ -7,7 +7,6 @@ with the PeerRead dataset for paper retrieval, querying, and review evaluation.
 
 import time
 from collections.abc import Awaitable, Callable
-from json import dump
 from pathlib import Path
 from typing import TypeVar
 
@@ -462,13 +461,18 @@ def add_peerread_review_tools_to_agent(
         """
 
         async def _fn() -> str:
+            from app.utils.run_context import get_active_run_context
+
+            run_ctx = get_active_run_context()
             review = PeerReadReview(
                 comments=review_text,
                 recommendation=recommendation if recommendation else "UNKNOWN",
                 reviewer_confidence=str(confidence) if confidence > 0 else "UNKNOWN",
             )
             persistence = ReviewPersistence()
-            filepath = persistence.save_review(paper_id, review)
+            filepath = persistence.save_review(
+                paper_id, review, run_dir=run_ctx.run_dir if run_ctx else None
+            )
             logger.info(f"Saved review for paper {paper_id} to {filepath}")
             return filepath
 
@@ -512,29 +516,30 @@ def add_peerread_review_tools_to_agent(
         async def _fn() -> str:
             from datetime import UTC, datetime
 
+            from app.utils.run_context import get_active_run_context
+
+            run_ctx = get_active_run_context()
             peerread_format = structured_review.to_peerread_format()
             review = PeerReadReview.model_validate(peerread_format)
 
             persistence = ReviewPersistence()
-            filepath = persistence.save_review(paper_id, review)
+            filepath = persistence.save_review(
+                paper_id,
+                review,
+                run_dir=run_ctx.run_dir if run_ctx else None,
+                structured_review=structured_review.model_dump(),
+                model_info=model_info,
+            )
 
             timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
-            result = ReviewGenerationResult(
+            ReviewGenerationResult(
                 paper_id=paper_id,
                 review=structured_review,
                 timestamp=timestamp,
                 model_info=model_info,
             )
 
-            structured_path = filepath.replace(".json", "_structured.json")
-            with open(structured_path, "w", encoding="utf-8") as f:
-                dump(result.model_dump(), f, indent=2, ensure_ascii=False)
-
-            from app.utils.artifact_registry import get_artifact_registry
-
-            get_artifact_registry().register("Structured review", Path(structured_path))
-
-            logger.info(f"Saved structured review for paper {paper_id} to {filepath}")
+            logger.info(f"Saved review for paper {paper_id} to {filepath}")
             return filepath
 
         return await _traced_tool_call(

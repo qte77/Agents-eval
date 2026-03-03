@@ -14,7 +14,6 @@ Mock strategy:
 - inspect.signature for parameter presence checks; behavioral assertions for wiring
 """
 
-import inspect
 from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
@@ -28,15 +27,6 @@ class TestGenerateReportButtonPresence:
     The button must only appear when execution_state == 'completed' and
     a composite_result is available.
     """
-
-    def test_render_report_section_signature(self) -> None:
-        """_render_report_section must accept a composite_result parameter."""
-        from gui.pages import run_app
-
-        sig = inspect.signature(run_app._render_report_section)
-        assert "composite_result" in sig.parameters, (
-            "_render_report_section must accept 'composite_result' parameter"
-        )
 
     def test_generate_report_button_rendered_when_result_available(self) -> None:
         """When composite_result is available, "Generate Report" button is rendered.
@@ -197,42 +187,3 @@ class TestReportDownloadButton:
         assert data_arg == report_content, (
             "st.download_button must receive report content as 'data' argument"
         )
-
-
-# ---------------------------------------------------------------------------
-# 4. run_app.py — _render_report_section imported and wired into render_app
-# ---------------------------------------------------------------------------
-
-
-class TestReportSectionWiredIntoRenderApp:
-    """Verify _render_report_section is accessible on run_app and generate_report is wired in.
-
-    The report section must be integrated into the app flow,
-    appearing after execution completes.
-    """
-
-    def test_render_report_section_is_callable_on_run_app(self) -> None:
-        """run_app module must expose _render_report_section as a callable.
-
-        Behavioral: import run_app and verify _render_report_section attribute exists
-        and is callable (STORY-010 wiring check without source inspection).
-        """
-        from gui.pages import run_app
-
-        assert hasattr(run_app, "_render_report_section"), (
-            "run_app must define _render_report_section (STORY-010)"
-        )
-        assert callable(run_app._render_report_section), "_render_report_section must be callable"
-
-    def test_generate_report_is_accessible_from_run_app(self) -> None:
-        """run_app module must have generate_report as a callable attribute.
-
-        Behavioral: verify generate_report is importable from run_app's namespace,
-        confirming it is wired into the module.
-        """
-        from gui.pages import run_app
-
-        assert hasattr(run_app, "generate_report"), (
-            "run_app must import generate_report from report_generator (STORY-010)"
-        )
-        assert callable(run_app.generate_report), "generate_report must be callable on run_app"

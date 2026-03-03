@@ -3,20 +3,50 @@
 Use this template when generating writeup files. Replace `<topic>` and
 `<title>` with actual values.
 
-## Frontmatter (`00_frontmatter.md`)
+## Title Page and Abstract (`00_title_abstract.tex`)
+
+Raw LaTeX file passed via `TITLE_PAGE` parameter (`-B` before-body).
+Gives full control over title page layout, abstract, and optional
+abbreviation lists.
+
+```latex
+% Title page for pandoc -B (before-body) option
+\hypersetup{pdftitle={<title>}}
+
+\begin{titlepage}
+\centering
+{\Huge \textbf{<title>}}\\[1.5cm]
+{\Large <subtitle>}\\[1cm]
+\vfill
+{\large Version X.Y.Z}\\[0.3cm]
+{\large \today}
+\end{titlepage}
+
+\section*{Abstract}
+
+Abstract text here.
+
+\textbf{Keywords:} keyword1, keyword2
+
+\newpage
+```
+
+## Build Settings (`00_frontmatter.md`)
+
+YAML-only metadata for pandoc build configuration. No content.
 
 ```yaml
 ---
-title: "<title>"
-bibliography: references.bib
+toc-depth: 3
 reference-section-title: References
-nocite: ""
+linestretch: 1.25
+geometry: "margin=2.5cm,footskip=30pt"
 ---
 ```
 
-- `bibliography` - Path to `.bib` file (relative to document directory)
 - `reference-section-title` - Heading for the auto-generated reference list
-- `nocite: "@*"` - Include all entries even if not cited (optional)
+- LoF/LoT are controlled by `LIST_OF_FIGURES` / `LIST_OF_TABLES` make
+  variables (default: `true`), not YAML metadata
 
 ## BibTeX (`references.bib`)
 
@@ -97,14 +127,11 @@ Table 1 summarizes the results.
 : Caption text
 ```
 
-To generate a **List of Figures** or **List of Tables** after the
-table of contents, add to the frontmatter:
+**List of Figures** and **List of Tables** are generated automatically
+by `run-pandoc.sh` (default: both enabled). Disable via make variables:
 
-```yaml
----
-lof: true
-lot: true
----
+```bash
+make pandoc_run ... LIST_OF_FIGURES=false LIST_OF_TABLES=false
 ```
 
 ## Document Structure
@@ -113,7 +140,8 @@ lot: true
 
 ```text
 docs/write-up/<topic>/
-├── 00_frontmatter.md    # Title, abstract, YAML frontmatter
+├── 00_title_abstract.tex  # LaTeX title page + abstract (pandoc -B)
+├── 00_frontmatter.md      # YAML-only build settings
 ├── 01_introduction.md
 ├── 02_methods.md
 ├── 03_results.md
@@ -125,7 +153,8 @@ docs/write-up/<topic>/
 
 ```text
 docs/write-up/<topic>/
-├── 00_frontmatter.md
+├── 00_title_abstract.tex  # LaTeX title page + abstract (pandoc -B)
+├── 00_frontmatter.md      # YAML-only build settings
 ├── 01_introduction.md
 ├── 02_background.md
 ├── 03_methodology.md

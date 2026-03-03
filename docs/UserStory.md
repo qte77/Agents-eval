@@ -1,3 +1,12 @@
+---
+title: User Story - Agents-eval
+description: User stories and acceptance criteria for the Agents-eval MAS evaluation framework, covering graph-based coordination metrics vs text similarity evaluation for PeerRead multi-agent review generation
+category: requirements
+created: 2025-06-01
+updated: 2026-03-02
+version: 1.0.0
+---
+
 # User Story: Agents-eval
 
 ## Problem Statement
@@ -55,6 +64,9 @@ For implementation details, see [architecture.md](architecture.md). For sprint s
 - ~~CC evaluation pipeline parity — review text wiring, `engine_type` field, GUI CC execution.~~ (delivered Sprint 10)
 - ~~Graph visualization polish — mode-specific empty-state messages, Tier 3 informational label.~~ (delivered Sprint 10)
 - ~~Reference reviews loaded from PeerRead for all engine modes.~~ (delivered Sprint 10)
+- ~~Observability, artifact registry, CC engine fixes.~~ (delivered Sprint 11)
+- ~~CC teams mode fixes, scoring system, per-run output directories.~~ (delivered Sprint 12)
+- ~~GUI accessibility, ARIA landmarks, theming system.~~ (delivered Sprint 13)
 - Multi-channel deployment — FastAPI REST and MCP server endpoints.
 - Model-aware content truncation — token-limit-aware truncation for provider rate limits.
 - Migration cleanup — removing backward-compatibility shims.

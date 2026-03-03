@@ -139,7 +139,7 @@ class TestRunGuiWiring:
 
         with (
             patch("run_gui.add_custom_styling"),
-            patch("run_gui.render_sidebar", return_value="Evaluation"),
+            patch("run_gui.render_sidebar", return_value="Evaluation Results"),
             patch("run_gui.initialize_session_state"),
             patch("run_gui.render_evaluation") as mock_render,
             patch("run_gui.st") as mock_st,
@@ -175,7 +175,7 @@ class TestRunGuiWiring:
 
         with (
             patch("run_gui.add_custom_styling"),
-            patch("run_gui.render_sidebar", return_value="Evaluation"),
+            patch("run_gui.render_sidebar", return_value="Evaluation Results"),
             patch("run_gui.initialize_session_state"),
             patch("run_gui.render_evaluation") as mock_render,
             patch("run_gui.st") as mock_st,

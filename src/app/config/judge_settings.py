@@ -10,6 +10,8 @@ This module implements evaluation configuration following 12-Factor #3 (Config) 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.config.config_app import RUNS_PATH
+
 
 class JudgeSettings(BaseSettings):
     """
@@ -71,8 +73,14 @@ class JudgeSettings(BaseSettings):
     tier1_tfidf_max_features: int = Field(default=5000)
 
     # Tier 2: LLM-as-Judge
-    tier2_provider: str = Field(default="auto")
-    tier2_model: str = Field(default="gpt-4o-mini")
+    tier2_provider: str = Field(
+        default="auto",
+        description="LLM provider for judge. 'auto' inherits the chat provider and model.",
+    )
+    tier2_model: str = Field(
+        default="gpt-4o-mini",
+        description="LLM model for judge. Overridden by chat model when tier2_provider=auto.",
+    )
     tier2_fallback_provider: str = Field(default="github")
     tier2_fallback_model: str = Field(default="gpt-4o-mini")
     tier2_max_retries: int = Field(default=2)
@@ -95,7 +103,7 @@ class JudgeSettings(BaseSettings):
 
     # Observability
     trace_collection: bool = Field(default=True)
-    trace_storage_path: str = Field(default="output/runs")
+    trace_storage_path: str = Field(default=RUNS_PATH)
     logfire_enabled: bool = Field(default=True)
     logfire_send_to_cloud: bool = Field(default=False)
     phoenix_endpoint: str = Field(default="http://localhost:6006")

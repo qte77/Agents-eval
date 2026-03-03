@@ -200,6 +200,39 @@ updated: 2026-02-16
 - **Detection**: Test passes alone (`uv run pytest tests/file.py`) but fails in full suite (`make test`). Run directory batches to bisect.
 - **References**: `tests/gui/test_settings.py` (deleted), `tests/test_gui/test_settings_page.py` (deleted) — fixture patching `gui.pages.settings.text` after import was removed
 
+### Cerebras Structured Output Non-Compliance in MAS Delegation
+
+- **Context**: PydanticAI agents with `openai_supports_strict_tool_definition=False` providers (Cerebras, Groq, etc.)
+- **Problem**: Three failure modes observed with Cerebras `gpt-oss-120b`:
+  1. **Score fields as text**: Model returns natural language descriptions where `int` is expected (e.g., `"The work documents..."` for `impact: int`). Also returns word labels (`"accept"`) and floats (`0.78`).
+  2. **Wrong output type for general queries**: `enable_review_tools: bool = True` default in `main()` forced `ReviewGenerationResult` even for non-paper queries, triggering 422 from Cerebras on schema retry.
+  3. **Tool arg/output confusion**: Model calls `delegate_synthesis(insights=[...], recommendations=[...], approval=True)` instead of `delegate_synthesis(query="...")` — dumping the previous agent's output schema as tool input args.
+- **Solution**:
+  1. `BeforeValidator` coercions (`_ScoreInt`, `_PresentationFormatLiteral`) on `GeneratedReview` to handle text→int, float→int, word→score mapping.
+  2. Changed `enable_review_tools` default to `False`; `_prepare_query` activates it when `paper_id` is present.
+  3. Improved delegation tool docstrings to explicitly state `query` must be a plain text string, NOT structured data.
+- **Anti-pattern**: Assuming OpenAI-compatible providers follow JSON schema constraints. Without `strict=True` support, models may ignore type constraints entirely.
+- **References**: `src/app/data_models/peerread_models.py` (coercions), `src/app/app.py:343` (default fix), `src/app/agents/agent_system.py` (tool docstrings)
+
+### BERTScore Class-Level Lazy Loading with Failure Caching
+
+- **Context**: `TraditionalMetricsEngine` initializing BERTScorer (downloads HuggingFace model)
+- **Problem**: Per-instance lazy loading retries BERTScorer init on every new engine instance. In environments with read-only HF cache or no network, each attempt costs ~200ms. Hypothesis property tests (many instances) exceed deadline; performance tests fail.
+- **Solution**: Class-level `_bertscore_instance` and `_bertscore_init_failed` flags. First successful init is shared across all instances. First failure is cached — no retries.
+- **Example**: `TraditionalMetricsEngine._bertscore_instance = BERTScorer(...)` (class attr, not `self._bertscore`)
+- **Anti-pattern**: Instance-level lazy loading for expensive singletons. Each `__init__` retries the same failing operation.
+- **Also applies to**: Tests must reset class-level cache between test cases (`autouse` fixture setting both attrs to `None`/`False`).
+- **References**: `src/app/judge/traditional_metrics.py`, `tests/evals/test_traditional_metrics.py::TestBERTScoreReenablement`
+
+### Auto Provider Model Resolution via PROVIDER_REGISTRY
+
+- **Context**: `LLMJudgeEngine` with `tier2_provider=auto` resolving to non-OpenAI providers (Cerebras, Groq)
+- **Problem**: Auto-resolved provider inherits `tier2_model` default (`gpt-4o-mini`), which doesn't exist on the resolved provider's API. Cerebras returns 401; Groq returns 404.
+- **Solution**: After auto-resolution, when `chat_model=None`, consult `PROVIDER_REGISTRY[provider].default_model`. If set, use it instead of `tier2_model`.
+- **Example**: Cerebras auto-resolved → `PROVIDER_REGISTRY["cerebras"].default_model` = `"gpt-oss-120b"` → used instead of `"gpt-4o-mini"`
+- **Anti-pattern**: Assuming a single default model works across all providers. Each provider has its own model namespace.
+- **References**: `src/app/judge/llm_evaluation_managers.py:_resolve_model()`, `src/app/data_models/app_models.py:PROVIDER_REGISTRY`
+
 ### `-X ours` Does Not Delete Files Added by Theirs
 
 - **Context**: Squash merging a feature branch into `main` via PR when `main` has diverged

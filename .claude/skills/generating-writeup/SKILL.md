@@ -27,6 +27,7 @@ support. IEEE `[1]` style by default.
 ## Additional Resources
 
 - For document structure, frontmatter, and BibTeX format, see [template.md](template.md)
+- For planning academic research papers and technical writeups (Introduction → Literature Review → Methods → Results → Discussion → Conclusion), see [research-paper-plan.md](research-paper-plan.md)
 
 ## Citation Styles
 
@@ -49,6 +50,7 @@ dir=docs/write-up/<topic> && \
 make pandoc_run \
   INPUT_FILES="$$(printf '%s\036' $$dir/*.md)" \
   OUTPUT_FILE="$$dir/output.pdf" \
+  TITLE_PAGE="$$dir/00_title_abstract.tex" \
   BIBLIOGRAPHY="$$dir/references.bib"
 ```
 
@@ -59,6 +61,7 @@ dir=docs/write-up/<topic> && \
 make pandoc_run \
   INPUT_FILES="$$(printf '%s\036' $$dir/*.md)" \
   OUTPUT_FILE="$$dir/output.pdf" \
+  TITLE_PAGE="$$dir/00_title_abstract.tex" \
   BIBLIOGRAPHY="$$dir/references.bib" \
   CSL="scripts/writeup/citation-styles/apa.csl"
 ```

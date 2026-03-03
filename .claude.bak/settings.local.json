@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:results-receiver.actions.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:infodeepseek.github.io)",
+      "WebFetch(domain:atlas.mitre.org)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "exa"
+  ]
+}

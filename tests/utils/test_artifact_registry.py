@@ -37,7 +37,7 @@ class TestArtifactRegistry:
         from app.utils.artifact_registry import get_artifact_registry
 
         registry = get_artifact_registry()
-        registry.register("Trace", Path("relative/trace.jsonl"))
+        registry.register("Trace", Path("relative/trace.json"))
 
         summary = registry.summary()
         assert len(summary) == 1

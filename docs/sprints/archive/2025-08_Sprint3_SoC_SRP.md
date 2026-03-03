@@ -242,5 +242,5 @@ Sprint 2 addresses the architectural foundation needed to support the evaluation
 ## References
 
 - [CONTRIBUTING.md](../../CONTRIBUTING.md): Development workflow and quality standards
-- [Landscape Analysis](../landscape.md): Comprehensive tool and framework analysis
-- [Architecture Documentation](../architecture.md): System design and architectural decisions
+- [Landscape Analysis](../../landscape/landscape.md): Comprehensive tool and framework analysis
+- [Architecture Documentation](../../architecture.md): System design and architectural decisions

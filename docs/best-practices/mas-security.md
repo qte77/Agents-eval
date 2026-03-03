@@ -140,3 +140,5 @@ Checklist](mas-design-principles.md#agentplugin-design-checklist).
 - [12-Factor App](https://12factor.net/)
 - [OWASP Top 10 for LLM
   Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
+- [ai-security-governance-frameworks.md](../analysis/ai-security-governance-frameworks.md)
+  — Cross-framework analysis: MAESTRO, MITRE ATLAS, NIST AI RMF, ISO 42001/23894

@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 from app.benchmark import AgentComposition, SweepConfig, generate_all_compositions, run_sweep
-from app.config.config_app import CHAT_DEFAULT_PROVIDER
+from app.config.config_app import CHAT_DEFAULT_PROVIDER, OUTPUT_PATH
 from app.data_models.app_models import PROVIDER_REGISTRY
 from app.utils.log import logger
 
@@ -73,7 +73,7 @@ def parse_args() -> argparse.Namespace:
         "--judge-model",
         type=str,
         default=None,
-        help="LLM model for Tier 2 judge (default: uses JudgeSettings default)",
+        help="LLM model for Tier 2 judge (default: inherits chat model when auto)",
     )
     parser.add_argument(
         "--engine",
@@ -148,7 +148,7 @@ def _build_config_from_args(args: argparse.Namespace) -> SweepConfig | None:
     )
 
     output_dir = args.output_dir or Path(
-        f"output/sweeps/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        f"{OUTPUT_PATH}/sweeps/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     )
 
     return SweepConfig(
@@ -188,22 +188,21 @@ async def main_async() -> int:
         logger.info(f"Output: {config.output_dir}")
 
         results = await run_sweep(config)
+        n = len(results)
+        print(f"\nSweep complete: {n} evaluation{'s' if n != 1 else ''} succeeded.")
 
-        logger.info(f"Sweep completed with {len(results)} total evaluations")
+        logger.info(f"Sweep completed with {n} total evaluations")
         logger.info(f"Results saved to {config.output_dir}")
 
-        # Print artifact summary at end of sweep (AC7)
+        # Log artifact summary at end of sweep (AC7)
         from app.utils.artifact_registry import get_artifact_registry
 
-        registry = get_artifact_registry()
-        summary_block = registry.format_summary_block()
-        print(summary_block)
-        logger.info(summary_block)
+        logger.info(get_artifact_registry().format_summary_block())
 
         return 0
 
     except Exception as e:
-        logger.error(f"Sweep failed: {e}", exc_info=True)
+        logger.error(f"Sweep failed with {type(e).__name__}: {e}", exc_info=True)
         return 1
 
 

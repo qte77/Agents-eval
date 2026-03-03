@@ -130,11 +130,11 @@ async def evaluate_comprehensive(
 
 *Code excerpt from `src/app/judge/evaluation_pipeline.py:484`*
 
-**Tier 1 -- Traditional Metrics** (`src/app/judge/plugins/traditional.py`): TF-IDF cosine similarity, Jaccard similarity, and semantic similarity (TF-IDF cosine), execution time, and task success score. Timeout: 1 second.
+**Tier 1 -- Traditional Metrics** (`src/app/judge/plugins/traditional.py`): TF-IDF cosine similarity (`cosine_score`), Jaccard similarity (`jaccard_score`), BERTScore F1 with Levenshtein fallback (`semantic_score`), normalized execution time (`time_score`), and continuous task success (`task_success`). Timeout: 1 second.
 
-**Tier 2 -- LLM-as-Judge** (`src/app/judge/plugins/llm_judge.py`): A single LLM call evaluates technical accuracy, constructiveness, clarity, and planning rationality. The provider is automatically resolved via a fallback chain (`tier2_provider=auto` inherits the active chat provider; if no valid provider is available, Tier 2 is skipped and the weights are redistributed to Tier 1 and Tier 3). Timeout: 10 seconds.
+**Tier 2 -- LLM-as-Judge** (`src/app/judge/plugins/llm_judge.py`): A single LLM call evaluates `technical_accuracy`, `constructiveness`, and `planning_rationality`. The provider is automatically resolved via a fallback chain (`tier2_provider=auto` inherits the active chat provider; if no valid provider is available, Tier 2 is skipped and the weights are redistributed to Tier 1 and Tier 3). Timeout: 10 seconds.
 
-**Tier 3 -- Graph-Based Analysis** (`src/app/judge/plugins/graph_metrics.py`): NetworkX processes the `GraphTraceData` from the `TraceCollector` into a directed graph and computes `path_convergence`, `tool_selection_accuracy`, `coordination_centrality`, and `task_distribution_balance`. This is the primary differentiating metric of the framework [@architecture2025]. Timeout: 15 seconds.
+**Tier 3 -- Graph-Based Analysis** (`src/app/judge/plugins/graph_metrics.py`): NetworkX processes the `GraphTraceData` from the `TraceCollector` into a directed graph and computes `path_convergence`, `tool_selection_accuracy`, `coordination_centrality`, and `task_distribution_balance`. This is the differentiating tier of the framework [@architecture2025]. Timeout: 15 seconds.
 
 If a tier fails, depending on the `fallback_strategy` setting, a fallback (neutral 0.5 values) is applied or the tier is skipped. The performance metrics of all tier executions are captured in the `PerformanceMonitor`, which issues a bottleneck warning when exceeding 40% of total runtime.
 

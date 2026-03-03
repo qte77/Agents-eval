@@ -45,7 +45,7 @@ Sprint 3 builds upon the foundational evaluation framework (Sprint 1) and clean 
 
 ### External Tool Assessment & Integration
 
-**Research-Informed Prioritization**: Based on analysis from [research_integration_analysis.md](../papers/research_integration_analysis.md)
+**Research-Informed Prioritization**: Based on analysis from [research_integration_analysis.md](../../research/research_integration_analysis.md)
 
 #### Task 1: Structured Output & Workflow Tools
 
@@ -249,6 +249,6 @@ All Sprint 3 features must:
 ## References
 
 - [CONTRIBUTING.md](../../CONTRIBUTING.md): Development workflow and quality standards
-- [Research Integration Analysis](../papers/research_integration_analysis.md)
-- [Landscape Analysis](../landscape.md): Comprehensive tool and framework analysis
-- [Available Models](../landscape.md#available-models): Large Context Models reference
+- [Research Integration Analysis](../../research/research_integration_analysis.md)
+- [Landscape Analysis](../../landscape/landscape.md): Comprehensive tool and framework analysis
+- [Available Models](../../landscape/landscape.md): Large Context Models reference

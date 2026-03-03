@@ -1,11 +1,10 @@
 ---
-# https://github.blog/changelog/2023-01-18-code-scanning-codeql-action-v1-is-now-deprecated/
+# https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
 name: "CodeQL"
 
 on:
   push:
   pull_request:
-    types: [closed]
     branches: [ main ]
   schedule:
     - cron: '27 11 * * 0'
@@ -25,19 +24,19 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v4
       with:
         languages: python
 
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
+      uses: github/codeql-action/autobuild@v4
     # if autobuild fails
     #- run: |
     #   make bootstrap
     #   make release
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v4
     #- name: sarif
-    #  uses: github/codeql-action/upload-sarif@v2
+    #  uses: github/codeql-action/upload-sarif@v4
 ...

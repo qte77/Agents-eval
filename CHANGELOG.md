@@ -11,10 +11,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/batch_run.py`: batch composition runner — runs `make app_cli` across all 8 agent compositions for one or more papers with `--parallel` support, error continuation, and optional JSON output
+- `Makefile`: `app_batch_run` recipe as drop-in alternative to `app_sweep` using subprocess calls
+
+### Fixed
+
+- `evaluation_pipeline.py`: skip Tier 1 when review is empty or no reference reviews available (prevents false 1.0 and uninformative 0.1 scores)
+- `evaluation_pipeline.py`: cap T1-only composite at `composite_weak_reject_threshold` (0.4) — incomplete evaluation no longer scores as "perfect"
+- `evaluation_pipeline.py`: route T1-skipped composite through T2+T3 when available instead of raising ValueError
+- `cc_teams.py`: fix stale event type checks (`type=="TeamCreate"`/`"Task"` → `subtype=="task_started"`/`"task_completed"`)
+- `run_sweep.py`: include exception type in sweep error message for actionable diagnostics
+
+### Changed
+
+- `evaluation_runner.py`: DRY paper content loading — renamed `_load_cc_paper_content` → `_load_paper_content` and replaced duplicated inline PDF→abstract fallback in `_extract_paper_and_review_content` with a single call
+- `Makefile`: quiet mode for `make validate` — per-tool quiet flags (`RUFF_QUIET`, `PYTEST_QUIET`, `COV_QUIET`, `CPLX_QUIET`) enabled by default; override with `make validate VERBOSE=1` for full output. Each recipe prints step indicator with `[quiet]` when active.
+
+### Fixed
+
+- `cc_engine.py`: normalise CC `task_started` events to `from`/`to` format expected by graph analysis (Gap 5)
+- `app.py`/`evaluation_runner.py`: thread `GraphTraceData` from CC artifacts directly to evaluation pipeline, bypassing empty SQLite lookup (Gap 1)
+- `evaluation_runner.py`: load paper content from PeerRead when `manager_output` is `None` (CC engine path) so Tier 1/2 see actual paper text (Gap 2)
+- `app.py`: wire `cc_model` parameter through to evaluation pipeline as `chat_model` for Tier 2 LLM judge (Gap 4)
+- `models.py`: `create_simple_model` now routes Anthropic, Gemini, Cerebras, and other providers to their correct backends instead of defaulting to `api.openai.com` with the wrong API key
+- `evaluation_runner.py`/`app.py`: `chat_model` is now threaded from agent execution through the evaluation pipeline, allowing the LLM judge to inherit the correct model when `tier2_provider=auto`
+
+### Added
+
+- `graph_export.py`: persist agent interaction graph as `agent_graph.json` (node-link format) and `agent_graph.png` (static matplotlib render) to per-run output directories; registered with `ArtifactRegistry`
+- `run_context.py`: `graph_json_path` and `graph_png_path` properties on `RunContext`
+- Trace Viewer page (`gui/pages/trace_viewer.py`): read-only SQLite browser for `traces.db`
+- `agent_system.py`: `log_coordination_event()` wiring for single-agent detection
+- `docs/architecture.md`: Entry Points section, expanded Benchmarking Infrastructure (SweepConfig, engine modes, compositions, CLI reference), fixed 12 stale references
+- `config_app.py`: `TRACES_DB_FILE` constant
+- `make setup_uv`, `make setup_bert_model` recipes; `devcontainer.json` HF_HOME persistence
+- `app.py`: up-front `RunContext.create()` before engine dispatch; `execution_id` parameter on `_run_agent_execution()` and `run_manager()`
+- `test_app_run_context_wiring.py`: Hypothesis fuzz tests for path traversal safety
+
+### Changed
+
+- `run_cli.py`: extract helpers to reduce cognitive complexity (23→9)
+- Streamlit theming: native `config.toml` light/dark sections replace sidebar dropdown; `styling.py` luminance-based detection
+
+### Removed
+
+- `judge/agent.py` (`JudgeAgent`), `judge/trace_store.py` (`TraceStore`): unused in any production path
+- 44 low-value tests: one-time deletion checks, `inspect.signature` tests, mock-only assertions, stale RunContext wiring tests
+
+### Fixed
+
+- `traditional_metrics.py`: re-enable BERTScore with Levenshtein fallback
+- `llm_evaluation_managers.py`: auto-resolved providers use `PROVIDER_REGISTRY.default_model`
+- MkDocs: pin `>=1.6.1,<2.0`, fix all build warnings, enable `strict: true`
+
 ### Security
 
-- `cc_engine.py`: add `_sanitize_cc_query()` — validates CC subprocess query input (empty, dash-prefix, length) to mitigate CWE-78 argument injection (CodeQL alerts #7, #8)
-- `test_artifact_registry.py`: replace hardcoded `/tmp` paths with pytest `tmp_path` fixture (Bandit B108)
+- `cc_engine.py`: `_sanitize_cc_query()` mitigates CWE-78 argument injection
+- `test_artifact_registry.py`: replace hardcoded `/tmp` with `tmp_path` (Bandit B108)
 
 ## [4.1.0] - 2026-02-22
 

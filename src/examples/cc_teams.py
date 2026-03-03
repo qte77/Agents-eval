@@ -58,11 +58,11 @@ async def run_example() -> CCResult | None:
 
     result = run_cc_teams(query, timeout=_TIMEOUT_SECONDS)
 
-    team_creates = sum(1 for e in result.team_artifacts if e.get("type") == "TeamCreate")
-    tasks = sum(1 for e in result.team_artifacts if e.get("type") == "Task")
+    started = sum(1 for e in result.team_artifacts if e.get("subtype") == "task_started")
+    completed = sum(1 for e in result.team_artifacts if e.get("subtype") == "task_completed")
     logger.info(
         f"CC teams completed — execution_id={result.execution_id}, "
-        f"TeamCreate={team_creates}, Task={tasks}"
+        f"task_started={started}, task_completed={completed}"
     )
     return result
 
@@ -70,10 +70,10 @@ async def run_example() -> CCResult | None:
 if __name__ == "__main__":
     output = asyncio.run(run_example())
     if output is not None:
-        team_creates = sum(1 for e in output.team_artifacts if e.get("type") == "TeamCreate")
-        tasks = sum(1 for e in output.team_artifacts if e.get("type") == "Task")
+        started = sum(1 for e in output.team_artifacts if e.get("subtype") == "task_started")
+        completed = sum(1 for e in output.team_artifacts if e.get("subtype") == "task_completed")
         print(f"Execution ID     : {output.execution_id}")
         print(f"Team artifacts   : {len(output.team_artifacts)} total events")
-        print(f"  TeamCreate     : {team_creates}")
-        print(f"  Task           : {tasks}")
+        print(f"  task_started   : {started}")
+        print(f"  task_completed : {completed}")
         print(f"Output keys      : {list(output.output_data.keys())}")

@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from app.config.config_app import TRACES_DB_FILE
 from app.data_models.evaluation_models import GraphTraceData
 from app.utils.log import logger
 
@@ -69,7 +70,7 @@ class TraceCollector:
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
         # Initialize SQLite database
-        self.db_path = self.storage_path / "traces.db"
+        self.db_path = self.storage_path / TRACES_DB_FILE
         self._init_database()
 
         # Current execution state
@@ -310,20 +311,27 @@ class TraceCollector:
         )
 
     def _store_trace(self, trace: ProcessedTrace) -> None:
-        """Store processed trace to both JSON file and SQLite database.
+        """Store processed trace to JSON file and SQLite database.
+
+        Writes trace to the per-run directory when a RunContext is active,
+        otherwise falls back to flat storage under trace_storage_path.
 
         Args:
             trace: ProcessedTrace to store
         """
         try:
-            # Store as JSONL file
-            timestamp_str = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
-            json_file = self.storage_path / f"trace_{trace.execution_id}_{timestamp_str}.jsonl"
+            # Determine target path: per-run directory when active, else flat storage
+            from app.utils.run_context import get_active_run_context
+
+            run_ctx = get_active_run_context()
+            if run_ctx is not None:
+                json_file = run_ctx.trace_path
+            else:
+                timestamp_str = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
+                json_file = self.storage_path / f"trace_{trace.execution_id}_{timestamp_str}.json"
 
             with open(json_file, "w") as f:
-                # Write as single JSON line
                 json.dump(asdict(trace), f)
-                f.write("\n")
 
             # Store in SQLite database
             conn = sqlite3.connect(self.db_path)
@@ -367,7 +375,6 @@ class TraceCollector:
             finally:
                 conn.close()
 
-            # Register trace file with artifact registry
             from app.utils.artifact_registry import get_artifact_registry
 
             get_artifact_registry().register("Trace", json_file)

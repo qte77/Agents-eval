@@ -1,10 +1,20 @@
 [theme]
-# S8-F8.1: primary color matches agent graph blue, replaces default red
-primaryColor="#4A90E2"
-backgroundColor="#0b0c10"
-secondaryBackgroundColor="#1f2833"
-textColor="#66fcf1"
-font="monospace"
+# Base theme font shared across light and dark modes
+font = "monospace"
+
+[theme.dark]
+# "Expanse Dark" — cyan-on-dark cyberpunk palette
+primaryColor = "#4A90E2"
+backgroundColor = "#0b0c10"
+secondaryBackgroundColor = "#1f2833"
+textColor = "#66fcf1"
+
+[theme.light]
+# "Nord Light" — cool-blue-on-snow palette
+primaryColor = "#5E81AC"
+backgroundColor = "#ECEFF4"
+secondaryBackgroundColor = "#E5E9F0"
+textColor = "#2E3440"
 
 [server]
 # enableCORS = false

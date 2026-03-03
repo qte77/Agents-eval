@@ -168,9 +168,9 @@ The three-tier evaluation framework is fully implemented but could not be fully 
 
 | Tier | Purpose | Metrics | Status |
 |------|---------|---------|--------|
-| Tier 1 | Traditional text metrics | `cosine`, `jaccard`, `semantic`, `time_taken`, `task_success` | Implemented |
-| Tier 2 | LLM-as-Judge | `accuracy`, `constructiveness`, `clarity`, `planning_rationality` | Implemented (requires API key) |
-| Tier 3 | Graph behavioral analysis | `path_convergence`, `tool_accuracy`, `coordination_quality`, `distribution` | Implemented |
+| Tier 1 | Traditional text metrics | `cosine_score`, `jaccard_score`, `semantic_score`, `time_score`, `task_success` | Implemented |
+| Tier 2 | LLM-as-Judge | `technical_accuracy`, `constructiveness`, `planning_rationality` | Implemented (requires API key) |
+| Tier 3 | Graph behavioral analysis | `path_convergence`, `tool_selection_accuracy`, `coordination_centrality`, `task_distribution_balance` | Implemented |
 
 The composite scoring system combines six equally weighted metrics (0.167 each): `time_taken`, `task_success`, `output_similarity`, `planning_rationality`, `coordination_quality`, `tool_efficiency`.
 

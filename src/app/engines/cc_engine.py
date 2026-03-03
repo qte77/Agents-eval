@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from app.config.config_app import DEFAULT_REVIEW_PROMPT_TEMPLATE
+from app.config.config_app import CC_RUNS_PATH, DEFAULT_REVIEW_PROMPT_TEMPLATE
 from app.utils.artifact_registry import get_artifact_registry
 from app.utils.log import logger
 
@@ -38,6 +38,8 @@ if TYPE_CHECKING:
 # Subtypes of system events that represent team sub-agent activity in the CC stream.
 # CC emits type=system with these subtypes for local_agent tasks (not "TeamCreate"/"Task").
 _TEAM_SUBTYPES = {"task_started", "task_completed"}
+
+_CC_ORCHESTRATOR_AGENT = "cc_orchestrator"
 
 # CWE-78 mitigation: max query length to prevent unbounded input to subprocess
 _CC_QUERY_MAX_LENGTH = 10_000
@@ -252,6 +254,22 @@ def extract_cc_review_text(cc_result: CCResult) -> str:
     return str(cc_result.output_data.get("result", ""))
 
 
+def _normalize_task_started(artifact: dict[str, Any]) -> dict[str, Any]:
+    """Normalise a CC task_started event to the from/to format expected by graph analysis.
+
+    Args:
+        artifact: Raw CC stream event with ``subtype=task_started``.
+
+    Returns:
+        Dict with ``from``, ``to``, and ``type`` keys for graph builder compatibility.
+    """
+    return {
+        "from": _CC_ORCHESTRATOR_AGENT,
+        "to": artifact.get("agent_id", "unknown"),
+        "type": "delegation",
+    }
+
+
 def cc_result_to_graph_trace(cc_result: CCResult) -> GraphTraceData:
     """Build GraphTraceData from a CCResult for graph-based analysis.
 
@@ -281,7 +299,7 @@ def cc_result_to_graph_trace(cc_result: CCResult) -> GraphTraceData:
     for artifact in cc_result.team_artifacts:
         subtype = artifact.get("subtype", "")
         if subtype == "task_started":
-            agent_interactions.append(artifact)
+            agent_interactions.append(_normalize_task_started(artifact))
         elif subtype == "task_completed":
             coordination_events.append(artifact)
 
@@ -311,21 +329,6 @@ def _tee_stream(stream: Iterator[str], path: Path) -> Iterator[str]:
             fh.write(line if line.endswith("\n") else line + "\n")
             fh.flush()
             yield line
-
-
-def _rename_stream_file(src: Path, new_name: str) -> Path:
-    """Rename ``src`` to ``src.parent / new_name``, returning the new path.
-
-    Args:
-        src: Existing file path.
-        new_name: New filename (basename only).
-
-    Returns:
-        New Path after rename.
-    """
-    dest = src.parent / new_name
-    src.rename(dest)
-    return dest
 
 
 def _persist_solo_stream(raw_stdout: str, stream_path: Path) -> None:
@@ -393,12 +396,11 @@ def run_cc_solo(query: str, timeout: int = 600, run_context: RunContext | None =
     if run_context is not None:
         _persist_solo_stream(proc.stdout, run_context.stream_path)
     else:
-        # Reason: legacy fallback when no RunContext — write to a temp location
+        # Reason: fallback when no RunContext — mirror per-run directory structure
         ts = datetime.now().strftime("%Y%m%dT%H%M%S")
-        fallback_dir = Path("output") / "runs"
+        fallback_dir = Path(CC_RUNS_PATH) / f"{ts}_cc_solo_{execution_id[:8]}"
         fallback_dir.mkdir(parents=True, exist_ok=True)
-        fallback_path = fallback_dir / f"cc_solo_{execution_id}_{ts}.json"
-        _persist_solo_stream(proc.stdout, fallback_path)
+        _persist_solo_stream(proc.stdout, fallback_dir / "stream.json")
 
     logger.info(f"CC solo completed: execution_id={execution_id}")
     return CCResult(
@@ -465,9 +467,9 @@ def run_cc_teams(query: str, timeout: int = 600, run_context: RunContext | None 
         stream_path.parent.mkdir(parents=True, exist_ok=True)
     else:
         ts = datetime.now().strftime("%Y%m%dT%H%M%S")
-        fallback_dir = Path("output") / "runs"
+        fallback_dir = Path(CC_RUNS_PATH) / f"{ts}_cc_teams_unknown"
         fallback_dir.mkdir(parents=True, exist_ok=True)
-        stream_path = fallback_dir / f"cc_teams_{ts}.jsonl"
+        stream_path = fallback_dir / "stream.jsonl"
 
     popen_start = time.time()
     try:
@@ -497,16 +499,7 @@ def run_cc_teams(query: str, timeout: int = 600, run_context: RunContext | None 
     except subprocess.TimeoutExpired as e:
         raise RuntimeError(f"CC timed out after {e.timeout}s") from e
 
-    if run_context is not None:
-        # Stream already written to run_context.stream_path; register as-is
-        get_artifact_registry().register("CC teams stream", stream_path)
-    else:
-        # Legacy fallback: rename to include execution_id
-        ts_fallback = datetime.now().strftime("%Y%m%dT%H%M%S")
-        final_path = _rename_stream_file(
-            stream_path, f"cc_teams_{result.execution_id}_{ts_fallback}.jsonl"
-        )
-        get_artifact_registry().register("CC teams stream", final_path)
+    get_artifact_registry().register("CC teams stream", stream_path)
 
     logger.info(f"CC teams completed: execution_id={result.execution_id}")
     return result

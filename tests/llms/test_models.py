@@ -18,7 +18,7 @@ from app.data_models.app_models import (
     EndpointConfig,
     ProviderConfig,
 )
-from app.llms.models import create_llm_model, get_llm_model_name
+from app.llms.models import create_llm_model, create_simple_model, get_llm_model_name
 
 
 class TestModelNameFormatting:
@@ -695,3 +695,90 @@ class TestStory012CLIProviderValidation:
         for provider_name in _NEW_PROVIDERS:
             args = parse_args([f"--chat-provider={provider_name}"])
             assert args.get("chat_provider") == provider_name
+
+
+# ---------------------------------------------------------------------------
+# create_simple_model provider routing
+# ---------------------------------------------------------------------------
+
+
+class TestCreateSimpleModelProviderRouting:
+    """create_simple_model must route to correct provider backend."""
+
+    def test_anthropic_uses_anthropic_model(self):
+        """Anthropic provider should create AnthropicModel, not OpenAIChatModel."""
+        import sys
+
+        mock_anthropic_model = MagicMock()
+        mock_anthropic_provider = MagicMock()
+        fake_models_mod = MagicMock(AnthropicModel=mock_anthropic_model)
+        fake_providers_mod = MagicMock(AnthropicProvider=mock_anthropic_provider)
+
+        with patch.dict(
+            sys.modules,
+            {
+                "pydantic_ai.models.anthropic": fake_models_mod,
+                "pydantic_ai.providers.anthropic": fake_providers_mod,
+            },
+        ):
+            model = create_simple_model("anthropic", "claude-sonnet-4-20250514", "sk-ant-test")
+
+        assert not isinstance(model, OpenAIChatModel), (
+            "Anthropic provider should use native AnthropicModel, not OpenAIChatModel"
+        )
+        mock_anthropic_model.assert_called_once()
+
+    def test_gemini_uses_google_model(self):
+        """Gemini provider should create GoogleModel."""
+        import sys
+
+        mock_google_model = MagicMock()
+        mock_google_provider = MagicMock()
+        fake_models_mod = MagicMock(GoogleModel=mock_google_model)
+        fake_providers_mod = MagicMock(GoogleProvider=mock_google_provider)
+
+        with patch.dict(
+            sys.modules,
+            {
+                "pydantic_ai.models.google": fake_models_mod,
+                "pydantic_ai.providers.google": fake_providers_mod,
+            },
+        ):
+            model = create_simple_model("gemini", "gemini-2.0-flash", "gm-test")
+
+        assert not isinstance(model, OpenAIChatModel), (
+            "Gemini provider should use native GoogleModel, not OpenAIChatModel"
+        )
+        mock_google_model.assert_called_once()
+
+    def test_cerebras_uses_openai_with_correct_base_url(self):
+        """Cerebras should use OpenAI-compatible with correct base_url, not api.openai.com."""
+        with patch("app.llms.models.OpenAIProvider") as mock_provider_cls:
+            mock_provider_cls.return_value = MagicMock()
+            create_simple_model("cerebras", "gpt-oss-120b", "csk-test")
+
+        call_kwargs = mock_provider_cls.call_args.kwargs
+        assert call_kwargs.get("base_url") is not None, (
+            "Cerebras must specify base_url (not default to api.openai.com)"
+        )
+        assert "cerebras" in call_kwargs["base_url"], (
+            f"Cerebras base_url should contain 'cerebras', got: {call_kwargs['base_url']}"
+        )
+
+    def test_cerebras_disables_strict_tool_definitions(self):
+        """Cerebras model must have strict tool definitions disabled."""
+        model = create_simple_model("cerebras", "gpt-oss-120b", "csk-test")
+        assert isinstance(model, OpenAIChatModel)
+        assert model.profile.openai_supports_strict_tool_definition is False
+
+    def test_openai_still_works(self):
+        """Regression: OpenAI path must still work."""
+        model = create_simple_model("openai", "gpt-4o-mini", "sk-test")
+        assert isinstance(model, OpenAIChatModel)
+        assert model.model_name == "gpt-4o-mini"
+
+    def test_github_still_works(self):
+        """Regression: GitHub path must still work."""
+        model = create_simple_model("github", "gpt-4o", "gh-test")
+        assert isinstance(model, OpenAIChatModel)
+        assert model.model_name == "gpt-4o"

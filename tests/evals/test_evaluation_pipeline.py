@@ -128,7 +128,9 @@ class TestTierExecution:
 
             mock_eval.side_effect = slow_execution
 
-            result, execution_time = await pipeline._execute_tier1("sample paper", "sample review")
+            result, execution_time = await pipeline._execute_tier1(
+                "sample paper", "sample review", ["reference"]
+            )
 
             assert result is None
             assert execution_time >= 1.0  # Should be at least the timeout duration
@@ -263,6 +265,7 @@ class TestComprehensiveEvaluation:
                 paper="Sample paper content",
                 review="Sample review content",
                 execution_trace={"agent_calls": [], "tool_calls": []},
+                reference_reviews=["ground truth review"],
             )
 
             assert result == sample_composite_result
@@ -303,6 +306,7 @@ class TestComprehensiveEvaluation:
             result = await pipeline.evaluate_comprehensive(
                 paper="Sample paper content",
                 review="Sample review content",
+                reference_reviews=["ground truth review"],
             )
 
             assert result == sample_composite_result
@@ -317,7 +321,7 @@ class TestComprehensiveEvaluation:
 
     @pytest.mark.asyncio
     async def test_comprehensive_evaluation_total_failure(self, pipeline):
-        """Test comprehensive evaluation when all tiers fail."""
+        """Test comprehensive evaluation when all tiers fail returns degraded result."""
         # Mock all engines to fail
         with (
             patch.object(pipeline.traditional_engine, "evaluate_traditional_metrics") as mock_t1,
@@ -328,20 +332,16 @@ class TestComprehensiveEvaluation:
             mock_t2.side_effect = Exception("LLM service unavailable")
             mock_t3.side_effect = Exception("Graph analysis failed")
 
-            with pytest.raises(ValueError, match="Cannot generate composite score"):
-                await pipeline.evaluate_comprehensive(
-                    paper="Sample paper content",
-                    review="Sample review content",
-                )
+            result = await pipeline.evaluate_comprehensive(
+                paper="Sample paper content",
+                review="Sample review content",
+                reference_reviews=["ground truth review"],
+            )
 
-            # Mock the performance monitor response for execution_stats checking
-            with patch.object(
-                pipeline.performance_monitor,
-                "get_execution_stats",
-                return_value={"tiers_executed": [], "fallback_used": False},
-            ):
-                assert pipeline.execution_stats["tiers_executed"] == []
-                assert not pipeline.execution_stats["fallback_used"]
+            # All tiers failed → degraded result with score 0.0
+            assert result.composite_score == 0.0
+            assert result.recommendation == "reject"
+            assert result.evaluation_complete is False
 
     @pytest.mark.asyncio
     async def test_comprehensive_evaluation_performance_warning(
@@ -374,6 +374,7 @@ class TestComprehensiveEvaluation:
                 result = await pipeline.evaluate_comprehensive(
                     paper="Sample paper content",
                     review="Sample review content",
+                    reference_reviews=["ground truth review"],
                 )
 
                 assert result == sample_composite_result
@@ -488,6 +489,77 @@ class TestTier3EmptyTraceSkip:
         assert fallback_results.tier3.coordination_centrality == 0.5
         assert fallback_results.tier3.task_distribution_balance == 0.5
         assert fallback_results.tier3.overall_score == 0.5
+
+
+class TestTier1InputGuards:
+    """Tests for T1 input guards: skip when review empty or no usable references."""
+
+    @pytest.mark.asyncio
+    async def test_tier1_skipped_when_review_empty(self, pipeline):
+        """T1 must return (None, 0.0) when review is empty — nothing to evaluate."""
+        result, exec_time = await pipeline._execute_tier1("paper content", "", ["reference"])
+        assert result is None
+        assert exec_time == 0.0
+
+    @pytest.mark.asyncio
+    async def test_tier1_skipped_when_no_usable_references(self, pipeline):
+        """T1 must return (None, 0.0) when reference_reviews is None or all-empty."""
+        result, _ = await pipeline._execute_tier1("paper", "valid review", None)
+        assert result is None
+        # Also test all-empty strings
+        result2, _ = await pipeline._execute_tier1("paper", "valid review", ["", "  "])
+        assert result2 is None
+
+    def test_composite_routes_to_tier2_tier3_when_tier1_none(self, pipeline):
+        """When T1=None but T2+T3 present, composite uses T2+T3 with evaluation_complete=False."""
+        results = EvaluationResults(
+            tier1=None,
+            tier2=Tier2Result(
+                technical_accuracy=0.8,
+                constructiveness=0.8,
+                planning_rationality=0.8,
+                overall_score=0.8,
+                model_used="test",
+                api_cost=0.0,
+                fallback_used=False,
+            ),
+            tier3=Tier3Result(
+                path_convergence=0.7,
+                tool_selection_accuracy=0.8,
+                coordination_centrality=0.75,
+                task_distribution_balance=0.8,
+                overall_score=0.76,
+                graph_complexity=4,
+            ),
+        )
+        composite = pipeline._generate_composite_score(results)
+        assert composite.evaluation_complete is False
+        assert composite.weights_used["tier1"] == 0.0
+        assert composite.composite_score > 0.0
+
+    def test_composite_tier1_only_capped_at_weak_reject_threshold(self, pipeline):
+        """T1-only composite must be capped at weak_reject threshold (0.4), not T1 verbatim."""
+        tier1 = Tier1Result(
+            cosine_score=0.9,
+            jaccard_score=0.85,
+            semantic_score=0.92,
+            execution_time=0.5,
+            time_score=0.95,
+            task_success=1.0,
+            overall_score=0.95,
+        )
+        results = EvaluationResults(tier1=tier1, tier2=None, tier3=None)
+        composite = pipeline._composite_without_tier2(results)
+        assert composite.composite_score <= 0.4
+        assert composite.composite_score < tier1.overall_score
+
+    def test_composite_all_tiers_none_returns_degraded_zero(self, pipeline):
+        """When all tiers are None, composite returns 0.0 with reject — no crash."""
+        results = EvaluationResults(tier1=None, tier2=None, tier3=None)
+        composite = pipeline._generate_composite_score(results)
+        assert composite.composite_score == 0.0
+        assert composite.recommendation == "reject"
+        assert composite.evaluation_complete is False
 
 
 class TestTraceDataWiring:

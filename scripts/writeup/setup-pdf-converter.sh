@@ -50,7 +50,7 @@ case "$CONVERTER_CHOICE" in
     pandoc)
         echo "Installing pandoc and LaTeX packages..."
         sudo apt-get install -yqq pandoc
-        sudo apt-get install -yqq texlive-latex-recommended texlive-fonts-recommended
+        sudo apt-get install -yqq texlive-latex-recommended texlive-fonts-recommended texlive-xetex
 
         # Display version info
         if command -v pandoc &> /dev/null; then
