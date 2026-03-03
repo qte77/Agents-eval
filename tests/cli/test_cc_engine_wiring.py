@@ -286,6 +286,65 @@ class TestMainCCBranch:
 # MARK: --- AC2: CC review text wired to evaluation pipeline ---
 
 
+# MARK: --- AC: CC execution trace threading ---
+
+
+class TestCCEngineExecutionTrace:
+    """_extract_cc_artifacts returns 3-tuple including GraphTraceData."""
+
+    def test_extract_cc_artifacts_returns_3_tuple(self):
+        """_extract_cc_artifacts must return (execution_id, graph, graph_trace)."""
+        from app.data_models.evaluation_models import GraphTraceData
+        from app.engines.cc_engine import CCResult
+
+        cc_result = CCResult(execution_id="trace-001", output_data={}, team_artifacts=[])
+
+        from app.app import _extract_cc_artifacts
+
+        result = _extract_cc_artifacts(cc_result)
+        assert len(result) == 3
+        assert result[0] == "trace-001"
+        assert isinstance(result[2], GraphTraceData)
+
+    @pytest.mark.asyncio
+    async def test_cc_path_passes_graph_trace_to_evaluation(self):
+        """_run_cc_engine_path must pass execution_trace kwarg to _run_evaluation_if_enabled."""
+        from app.data_models.evaluation_models import GraphTraceData
+        from app.engines.cc_engine import CCResult
+
+        cc_result = CCResult(
+            execution_id="trace-002",
+            output_data={},
+            team_artifacts=[
+                {"type": "system", "subtype": "task_started", "agent_id": "agent-1"},
+            ],
+        )
+
+        mock_graph_trace = GraphTraceData(
+            execution_id="trace-002",
+            agent_interactions=[{"from": "cc_orchestrator", "to": "agent-1", "type": "delegation"}],
+        )
+
+        with (
+            patch(
+                "app.app._extract_cc_artifacts",
+                return_value=("trace-002", None, mock_graph_trace),
+            ),
+            patch(
+                "app.app._run_evaluation_if_enabled",
+                new_callable=AsyncMock,
+                return_value=None,
+            ) as mock_eval,
+        ):
+            from app.app import main
+
+            await main(engine="cc", cc_result=cc_result, query="test")
+
+            call_kwargs = mock_eval.call_args.kwargs
+            assert "execution_trace" in call_kwargs
+            assert call_kwargs["execution_trace"] is mock_graph_trace
+
+
 class TestCCReviewTextWiring:
     """CC review text must reach the evaluation pipeline (STORY-010 AC2)."""
 
@@ -300,7 +359,7 @@ class TestCCReviewTextWiring:
         )
 
         with (
-            patch("app.app._extract_cc_artifacts", return_value=("cc-review-wire", None)),
+            patch("app.app._extract_cc_artifacts", return_value=("cc-review-wire", None, None)),
             patch(
                 "app.app._run_evaluation_if_enabled",
                 new_callable=AsyncMock,
@@ -343,7 +402,7 @@ class TestEngineTypeSetOnResult:
         )
 
         with (
-            patch("app.app._extract_cc_artifacts", return_value=("cc-solo-type", None)),
+            patch("app.app._extract_cc_artifacts", return_value=("cc-solo-type", None, None)),
             patch(
                 "app.app._run_evaluation_if_enabled",
                 new_callable=AsyncMock,
@@ -379,7 +438,7 @@ class TestEngineTypeSetOnResult:
         )
 
         with (
-            patch("app.app._extract_cc_artifacts", return_value=("cc-teams-type", None)),
+            patch("app.app._extract_cc_artifacts", return_value=("cc-teams-type", None, None)),
             patch(
                 "app.app._run_evaluation_if_enabled",
                 new_callable=AsyncMock,
@@ -427,6 +486,57 @@ class TestEngineTypeSetOnResult:
 
             assert result is not None
             assert result["composite_result"].engine_type == "mas"
+
+
+# MARK: --- AC: cc_model threading to Tier 2 ---
+
+
+class TestCCModelThreading:
+    """cc_model must be forwarded from main() to evaluation as chat_model."""
+
+    @pytest.mark.asyncio
+    async def test_cc_path_passes_cc_model_as_chat_model(self):
+        """main(engine='cc', cc_model='claude-sonnet-4-6') → chat_model='claude-sonnet-4-6' in eval."""
+        from app.engines.cc_engine import CCResult
+
+        cc_result = CCResult(execution_id="model-001", output_data={})
+
+        with (
+            patch("app.app._extract_cc_artifacts", return_value=("model-001", None, None)),
+            patch(
+                "app.app._run_evaluation_if_enabled",
+                new_callable=AsyncMock,
+                return_value=None,
+            ) as mock_eval,
+        ):
+            from app.app import main
+
+            await main(engine="cc", cc_result=cc_result, cc_model="claude-sonnet-4-6", query="test")
+
+            call_kwargs = mock_eval.call_args.kwargs
+            assert call_kwargs["chat_model"] == "claude-sonnet-4-6"
+
+    @pytest.mark.asyncio
+    async def test_cc_path_defaults_chat_model_none(self):
+        """No cc_model → chat_model=None in eval call."""
+        from app.engines.cc_engine import CCResult
+
+        cc_result = CCResult(execution_id="model-002", output_data={})
+
+        with (
+            patch("app.app._extract_cc_artifacts", return_value=("model-002", None, None)),
+            patch(
+                "app.app._run_evaluation_if_enabled",
+                new_callable=AsyncMock,
+                return_value=None,
+            ) as mock_eval,
+        ):
+            from app.app import main
+
+            await main(engine="cc", cc_result=cc_result, query="test")
+
+            call_kwargs = mock_eval.call_args.kwargs
+            assert call_kwargs["chat_model"] is None
 
 
 # MARK: --- AC9: GUI creates CC result and passes to main ---

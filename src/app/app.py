@@ -302,6 +302,8 @@ async def _run_cc_engine_path(
         execution_trace=graph_trace,
         engine_type=engine_type,
     )
+    if composite_result is not None:
+        composite_result.engine_type = engine_type
     return composite_result, graph, execution_id
 
 

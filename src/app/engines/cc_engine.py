@@ -39,6 +39,8 @@ if TYPE_CHECKING:
 # CC emits type=system with these subtypes for local_agent tasks (not "TeamCreate"/"Task").
 _TEAM_SUBTYPES = {"task_started", "task_completed"}
 
+_CC_ORCHESTRATOR_AGENT = "cc_orchestrator"
+
 # CWE-78 mitigation: max query length to prevent unbounded input to subprocess
 _CC_QUERY_MAX_LENGTH = 10_000
 
@@ -252,6 +254,22 @@ def extract_cc_review_text(cc_result: CCResult) -> str:
     return str(cc_result.output_data.get("result", ""))
 
 
+def _normalize_task_started(artifact: dict[str, Any]) -> dict[str, Any]:
+    """Normalise a CC task_started event to the from/to format expected by graph analysis.
+
+    Args:
+        artifact: Raw CC stream event with ``subtype=task_started``.
+
+    Returns:
+        Dict with ``from``, ``to``, and ``type`` keys for graph builder compatibility.
+    """
+    return {
+        "from": _CC_ORCHESTRATOR_AGENT,
+        "to": artifact.get("agent_id", "unknown"),
+        "type": "delegation",
+    }
+
+
 def cc_result_to_graph_trace(cc_result: CCResult) -> GraphTraceData:
     """Build GraphTraceData from a CCResult for graph-based analysis.
 
@@ -281,7 +299,7 @@ def cc_result_to_graph_trace(cc_result: CCResult) -> GraphTraceData:
     for artifact in cc_result.team_artifacts:
         subtype = artifact.get("subtype", "")
         if subtype == "task_started":
-            agent_interactions.append(artifact)
+            agent_interactions.append(_normalize_task_started(artifact))
         elif subtype == "task_completed":
             coordination_events.append(artifact)
 

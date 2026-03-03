@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `cc_engine.py`: normalise CC `task_started` events to `from`/`to` format expected by graph analysis (Gap 5)
+- `app.py`/`evaluation_runner.py`: thread `GraphTraceData` from CC artifacts directly to evaluation pipeline, bypassing empty SQLite lookup (Gap 1)
+- `evaluation_runner.py`: load paper content from PeerRead when `manager_output` is `None` (CC engine path) so Tier 1/2 see actual paper text (Gap 2)
+- `app.py`: wire `cc_model` parameter through to evaluation pipeline as `chat_model` for Tier 2 LLM judge (Gap 4)
 - `models.py`: `create_simple_model` now routes Anthropic, Gemini, Cerebras, and other providers to their correct backends instead of defaulting to `api.openai.com` with the wrong API key
 - `evaluation_runner.py`/`app.py`: `chat_model` is now threaded from agent execution through the evaluation pipeline, allowing the LLM judge to inherit the correct model when `tier2_provider=auto`
 

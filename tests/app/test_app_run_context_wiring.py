@@ -92,7 +92,7 @@ class TestUpFrontRunContext:
         def _capture_side_effect(cc_result):
             """Capture the active RunContext at the moment of artifact extraction."""
             captured_ctx.append(get_active_run_context())
-            return ("cc-exec-123", MagicMock())
+            return ("cc-exec-123", MagicMock(), None)
 
         mock_cc_result = MagicMock()
         mock_cc_result.execution_id = "cc-exec-123"

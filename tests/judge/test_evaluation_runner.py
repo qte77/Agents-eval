@@ -973,7 +973,6 @@ class TestEvaluationJsonPersistence:
             assert call_args[0][0] == "Evaluation"
             assert "evaluation.json" in str(call_args[0][1])
 
-
     @pytest.mark.asyncio
     async def test_engine_type_persisted_in_evaluation_json(self, tmp_path):
         """engine_type passed to run_evaluation_if_enabled must appear in evaluation.json."""

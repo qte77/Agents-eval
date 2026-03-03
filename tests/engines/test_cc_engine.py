@@ -715,6 +715,91 @@ class TestSanitizeCCQuery:
         assert _sanitize_cc_query("Review this paper") == "Review this paper"
 
 
+# MARK: --- cc_result_to_graph_trace normalisation (Gap 5) ---
+
+
+class TestCCResultToGraphTraceNormalization:
+    """Tests for normalised from/to format in cc_result_to_graph_trace (Gap 5)."""
+
+    def test_task_started_normalized_to_from_to_format(self):
+        """task_started artifacts must have 'from' and 'to' keys after normalisation."""
+        from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
+
+        cc_result = CCResult(
+            execution_id="norm-001",
+            output_data={},
+            team_artifacts=[
+                {"type": "system", "subtype": "task_started", "agent_id": "agent-1"},
+            ],
+        )
+        trace = cc_result_to_graph_trace(cc_result)
+        assert len(trace.agent_interactions) == 1
+        interaction = trace.agent_interactions[0]
+        assert "from" in interaction
+        assert "to" in interaction
+
+    def test_task_started_from_is_cc_orchestrator(self):
+        """Normalised task_started 'from' field must be 'cc_orchestrator'."""
+        from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
+
+        cc_result = CCResult(
+            execution_id="norm-002",
+            output_data={},
+            team_artifacts=[
+                {"type": "system", "subtype": "task_started", "agent_id": "agent-eval"},
+            ],
+        )
+        trace = cc_result_to_graph_trace(cc_result)
+        assert trace.agent_interactions[0]["from"] == "cc_orchestrator"
+        assert trace.agent_interactions[0]["to"] == "agent-eval"
+
+    def test_multiple_agents_all_normalized(self):
+        """All task_started events must be normalised, not just the first."""
+        from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
+
+        cc_result = CCResult(
+            execution_id="norm-003",
+            output_data={},
+            team_artifacts=[
+                {"type": "system", "subtype": "task_started", "agent_id": "agent-1"},
+                {"type": "system", "subtype": "task_started", "agent_id": "agent-2"},
+            ],
+        )
+        trace = cc_result_to_graph_trace(cc_result)
+        assert len(trace.agent_interactions) == 2
+        for interaction in trace.agent_interactions:
+            assert "from" in interaction
+            assert "to" in interaction
+            assert interaction["from"] == "cc_orchestrator"
+
+    def test_normalized_interactions_pass_graph_validation(self):
+        """Normalised interactions must pass GraphAnalysisEngine._validate_agent_interactions."""
+        from app.config.judge_settings import JudgeSettings
+        from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
+        from app.judge.graph_analysis import GraphAnalysisEngine
+
+        cc_result = CCResult(
+            execution_id="norm-004",
+            output_data={},
+            team_artifacts=[
+                {"type": "system", "subtype": "task_started", "agent_id": "agent-1"},
+            ],
+        )
+        trace = cc_result_to_graph_trace(cc_result)
+
+        engine = GraphAnalysisEngine(JudgeSettings())
+        # Should not raise ValueError
+        engine._validate_agent_interactions(trace.agent_interactions)
+
+    def test_solo_result_still_returns_empty_interactions(self):
+        """CC solo (no team_artifacts) must still return empty agent_interactions."""
+        from app.engines.cc_engine import CCResult, cc_result_to_graph_trace
+
+        cc_result = CCResult(execution_id="solo-norm", output_data={}, team_artifacts=[])
+        trace = cc_result_to_graph_trace(cc_result)
+        assert trace.agent_interactions == []
+
+
 class TestSanitizeCCQueryIntegration:
     """Tests that run_cc_solo and run_cc_teams call _sanitize_cc_query."""
 

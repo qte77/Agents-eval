@@ -250,7 +250,7 @@ async def run_evaluation_if_enabled(
     )
 
     # Set engine_type before persisting so evaluation.json has the correct value
-    if pydantic_result is not None:
+    if pydantic_result is not None:  # type: ignore[reportUnnecessaryComparison]
         pydantic_result.engine_type = engine_type
 
     # Persist evaluation results to run directory
