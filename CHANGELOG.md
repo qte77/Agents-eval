@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `evaluation_runner.py`: DRY paper content loading — renamed `_load_cc_paper_content` → `_load_paper_content` and replaced duplicated inline PDF→abstract fallback in `_extract_paper_and_review_content` with a single call
-- `Makefile`: quiet mode for `make validate` — per-tool quiet flags (`RUFF_QUIET`, `PYTEST_QUIET`, `CPLX_QUIET`, `JSCPD_QUIET`) enabled by default; override with `make validate VERBOSE=1` for full output. Step indicators (`=== validate: step ===`) always visible.
+- `Makefile`: quiet mode for `make validate` — per-tool quiet flags (`RUFF_QUIET`, `PYTEST_QUIET`, `COV_QUIET`, `CPLX_QUIET`) enabled by default; override with `make validate VERBOSE=1` for full output. Each recipe prints step indicator with `[quiet]` when active.
 
 ### Fixed
 

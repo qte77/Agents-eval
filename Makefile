@@ -86,7 +86,6 @@ ifndef VERBOSE
   PYTEST_QUIET := -q --tb=short --no-header
   COV_QUIET    := --cov-report=
   CPLX_QUIET   := -q
-  JSCPD_QUIET  := --silent
 endif
 
 
@@ -412,9 +411,9 @@ complexity:  ## Check cognitive complexity with complexipy
 
 # TODO: evaluate Python-native alternative to jscpd (pylint R0801, PMD CPD) to reduce npm dependency
 duplication:  ## Detect copy-paste duplication with jscpd
-	echo "--- duplication$(if $(JSCPD_QUIET), [quiet])"
+	echo "--- duplication"
 	if command -v jscpd > /dev/null 2>&1; then
-		jscpd src/ --min-lines 5 --min-tokens 50 --reporters console $(JSCPD_QUIET)
+		jscpd src/ --min-lines 5 --min-tokens 50 --reporters console
 	else
 		echo "jscpd not installed — skipping duplication check (run 'make setup_npm_tools' to enable)"
 	fi
