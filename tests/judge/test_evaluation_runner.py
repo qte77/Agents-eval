@@ -523,7 +523,7 @@ class TestPaperAndReviewExtraction:
         with (
             patch("app.judge.trace_processors.get_trace_collector") as mock_get,
             patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
-            patch("app.data_utils.datasets_peerread.PeerReadLoader") as mock_loader_class,
+            patch("app.judge.evaluation_runner.PeerReadLoader") as mock_loader_class,
         ):
             mock_collector = MagicMock(spec=TraceCollector)
             mock_collector.load_trace.return_value = MagicMock()
@@ -580,7 +580,7 @@ class TestPaperAndReviewExtraction:
         with (
             patch("app.judge.trace_processors.get_trace_collector") as mock_get,
             patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
-            patch("app.data_utils.datasets_peerread.PeerReadLoader") as mock_loader_class,
+            patch("app.judge.evaluation_runner.PeerReadLoader") as mock_loader_class,
         ):
             mock_collector = MagicMock(spec=TraceCollector)
             mock_collector.load_trace.return_value = MagicMock()
@@ -761,7 +761,7 @@ class TestCCPaperContentLoading:
 
         with (
             patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
-            patch("app.data_utils.datasets_peerread.PeerReadLoader") as mock_loader_class,
+            patch("app.judge.evaluation_runner.PeerReadLoader") as mock_loader_class,
         ):
             mock_pipeline = MagicMock(spec=EvaluationPipeline)
             mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)

@@ -61,7 +61,6 @@ def _extract_paper_and_review_content(manager_output: Any) -> tuple[str, str]:
         return paper_content, review_text
 
     from app.data_models.peerread_models import ReviewGenerationResult
-    from app.data_utils.datasets_peerread import PeerReadLoader
 
     # Check if manager_output is ReviewGenerationResult
     if not isinstance(manager_output, ReviewGenerationResult):
@@ -70,25 +69,14 @@ def _extract_paper_and_review_content(manager_output: Any) -> tuple[str, str]:
     # Extract review text from ReviewGenerationResult
     review_text = manager_output.review.comments
 
-    # Load paper content from PeerReadLoader
-    loader = PeerReadLoader()
-    paper_id = manager_output.paper_id
-
-    # Try to load parsed PDF content first
-    parsed_content = loader.load_parsed_pdf_content(paper_id)
-    if parsed_content:
-        paper_content = parsed_content
-    else:
-        # Fallback to abstract if PDF unavailable
-        paper = loader.get_paper_by_id(paper_id)
-        if paper:
-            paper_content = paper.abstract
+    # Load paper content (PDF → abstract fallback)
+    paper_content = _load_paper_content(manager_output.paper_id)
 
     return paper_content, review_text
 
 
-def _load_cc_paper_content(paper_id: str) -> str:
-    """Load paper content from PeerRead for CC engine path (no manager_output).
+def _load_paper_content(paper_id: str) -> str:
+    """Load paper content from PeerRead for any engine path.
 
     Tries parsed PDF first, then falls back to abstract.
 
@@ -233,7 +221,7 @@ async def run_evaluation_if_enabled(
     # CC paper content fallback: when manager_output is None (CC path) but paper_id
     # is available, load paper content directly from PeerRead cache
     if not paper_content and paper_id:
-        paper_content = _load_cc_paper_content(paper_id)
+        paper_content = _load_paper_content(paper_id)
 
     # S10-F1: CC engine passes review_text directly, overriding extraction
     if review_text is None:
