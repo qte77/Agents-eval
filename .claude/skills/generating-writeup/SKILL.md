@@ -50,7 +50,6 @@ dir=docs/write-up/<topic> && \
 make pandoc_run \
   INPUT_FILES="$$(printf '%s\036' $$dir/*.md)" \
   OUTPUT_FILE="$$dir/output.pdf" \
-  TITLE_PAGE="$$dir/00_title_abstract.tex" \
   BIBLIOGRAPHY="$$dir/references.bib"
 ```
 
@@ -61,7 +60,6 @@ dir=docs/write-up/<topic> && \
 make pandoc_run \
   INPUT_FILES="$$(printf '%s\036' $$dir/*.md)" \
   OUTPUT_FILE="$$dir/output.pdf" \
-  TITLE_PAGE="$$dir/00_title_abstract.tex" \
   BIBLIOGRAPHY="$$dir/references.bib" \
   CSL="scripts/writeup/citation-styles/apa.csl"
 ```

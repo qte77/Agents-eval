@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T16-11-14Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "This paper provides an overview of the current state and future work directions for the English-Lithuanian-English machine translation (MT) lexicon and engine. The major contributions include describing the architecture and database structure of the lexicon, handling of polysemy, phrase dictionary separation, and the plan for implementing word sense disambiguation using Google as a corpus. The work captures important engineering details and practical considerations for developing an MT system for a less-resourced language pair.\n\nStrengths of the paper are its comprehensive description of the lexicon's design, including morphological forms and domain attributes, and the pragmatic approach to word sense disambiguation leveraging Google. The paper demonstrates awareness of system limitations and outlines future improvements clearly.\n\nWeaknesses include limited experimental evaluation and results; the paper is mainly descriptive. The translation engine is in an early stage, lacking some critical features such as fully implemented syntax rules, tense handling, negations, and complete word sense disambiguation. There is also limited discussion of related work and comparison with other MT systems.\n\nThe technical soundness is moderate given the early stage of the translation engine and the preliminary nature of word sense disambiguation implementation. The presentation is clear, with well-structured explanation and sufficient detail to understand the system's design and challenges.\n\nSuggestions for improvement include adding quantitative evaluation results once available, expanding related work comparison, incorporating more advanced linguistic features in the translation engine, and detailing the phrase dictionary implementation. Improving the discussion of limitations and challenges would also strengthen the paper.\n\nOverall, the paper is a solid contribution documenting an ongoing MT system development for English-Lithuanian, suitable for presentation in an oral format.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "This paper provides an overview of the current state and future work directions for the English-Lithuanian-English machine translation (MT) lexicon and engine. The major contributions include describing the architecture and database structure of the lexicon, handling of polysemy, phrase dictionary separation, and the plan for implementing word sense disambiguation using Google as a corpus. The work captures important engineering details and practical considerations for developing an MT system for a less-resourced language pair.\n\nStrengths of the paper are its comprehensive description of the lexicon's design, including morphological forms and domain attributes, and the pragmatic approach to word sense disambiguation leveraging Google. The paper demonstrates awareness of system limitations and outlines future improvements clearly.\n\nWeaknesses include limited experimental evaluation and results; the paper is mainly descriptive. The translation engine is in an early stage, lacking some critical features such as fully implemented syntax rules, tense handling, negations, and complete word sense disambiguation. There is also limited discussion of related work and comparison with other MT systems.\n\nThe technical soundness is moderate given the early stage of the translation engine and the preliminary nature of word sense disambiguation implementation. The presentation is clear, with well-structured explanation and sufficient detail to understand the system's design and challenges.\n\nSuggestions for improvement include adding quantitative evaluation results once available, expanding related work comparison, incorporating more advanced linguistic features in the translation engine, and detailing the phrase dictionary implementation. Improving the discussion of limitations and challenges would also strengthen the paper.\n\nOverall, the paper is a solid contribution documenting an ongoing MT system development for English-Lithuanian, suitable for presentation in an oral format.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

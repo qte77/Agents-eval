@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T16-00-20Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "Summary: The paper presents the current state and proposed future work of an English-Lithuanian-English machine translation system, including its lexicon, translation engine, and word sense disambiguation technique utilizing Google. Strengths: Comprehensive discussion of the lexicon design, practical challenges with polysemy, and the innovative idea of using Google for word sense disambiguation. Weaknesses: The translation engine is in an early stage with incomplete syntactic treatment and word sense disambiguation not yet fully integrated. Some optimization and scalability challenges remain. Technical Soundness: The methods are generally sound but the system requires further development to be fully functional and robust. Clarity: The paper is well structured and clear, providing adequate details on system components and future directions. Suggestions: Include more details on evaluation metrics and results when available; expand on integration strategies for syntax and negations; consider larger-scale testing and comparisons to other MT systems.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "4",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "Summary: The paper presents the current state and proposed future work of an English-Lithuanian-English machine translation system, including its lexicon, translation engine, and word sense disambiguation technique utilizing Google. Strengths: Comprehensive discussion of the lexicon design, practical challenges with polysemy, and the innovative idea of using Google for word sense disambiguation. Weaknesses: The translation engine is in an early stage with incomplete syntactic treatment and word sense disambiguation not yet fully integrated. Some optimization and scalability challenges remain. Technical Soundness: The methods are generally sound but the system requires further development to be fully functional and robust. Clarity: The paper is well structured and clear, providing adequate details on system components and future directions. Suggestions: Include more details on evaluation metrics and results when available; expand on integration strategies for syntax and negations; consider larger-scale testing and comparisons to other MT systems.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 4,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

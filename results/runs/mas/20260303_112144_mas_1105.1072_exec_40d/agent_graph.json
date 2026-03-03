@@ -1,0 +1,46 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "agent",
+      "label": "Manager",
+      "id": "manager"
+    },
+    {
+      "type": "agent",
+      "label": "Analyst",
+      "id": "analyst"
+    },
+    {
+      "type": "tool",
+      "label": "Get Paper Content",
+      "id": "get_paper_content"
+    },
+    {
+      "type": "tool",
+      "label": "Delegate Analysis",
+      "id": "delegate_analysis"
+    }
+  ],
+  "edges": [
+    {
+      "interaction": "delegation",
+      "source": "manager",
+      "target": "analyst"
+    },
+    {
+      "interaction": "tool_call",
+      "success": true,
+      "source": "manager",
+      "target": "get_paper_content"
+    },
+    {
+      "interaction": "tool_call",
+      "success": true,
+      "source": "manager",
+      "target": "delegate_analysis"
+    }
+  ]
+}

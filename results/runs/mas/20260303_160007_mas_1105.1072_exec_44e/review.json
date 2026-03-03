@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T16-00-22Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "This paper presents an overview of the English-Lithuanian-English machine translation system, detailing its lexicon, phrase dictionary, and current translation engine status along with future work plans. The work addresses the challenges in MT lexicon construction, morphological form handling, phrase dictionary separation, data entry, and introduces a word sense disambiguation approach utilizing Google as an external resource. Strengths include a comprehensive system overview and practical handling of polysemy and morphological complexity. Weaknesses lie in the early stage of translation engine development, lack of complete WSD integration, and limited evaluations. The technical soundness is reasonable but some components are still under development. The presentation is clear with detailed explanations and supporting information. Suggestions include performing more thorough evaluations, improving the translation engine and WSD integration, and expanding comparisons with related MT systems to better position contributions.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "This paper presents an overview of the English-Lithuanian-English machine translation system, detailing its lexicon, phrase dictionary, and current translation engine status along with future work plans. The work addresses the challenges in MT lexicon construction, morphological form handling, phrase dictionary separation, data entry, and introduces a word sense disambiguation approach utilizing Google as an external resource. Strengths include a comprehensive system overview and practical handling of polysemy and morphological complexity. Weaknesses lie in the early stage of translation engine development, lack of complete WSD integration, and limited evaluations. The technical soundness is reasonable but some components are still under development. The presentation is clear with detailed explanations and supporting information. Suggestions include performing more thorough evaluations, improving the translation engine and WSD integration, and expanding comparisons with related MT systems to better position contributions.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

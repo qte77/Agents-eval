@@ -1,0 +1,33 @@
+{
+  "composite_score": 0.5077801099633426,
+  "recommendation": "weak_reject",
+  "recommendation_weight": -0.7,
+  "metric_scores": {
+    "time_taken": 0.999000499833375,
+    "task_success": 0.0,
+    "output_similarity": 0.09990004998333751,
+    "planning_rationality": 0.44000000000000006,
+    "tool_efficiency": 1.0
+  },
+  "tier1_score": 0.09990004998333751,
+  "tier2_score": 0.6920000000000001,
+  "tier3_score": 0.675,
+  "evaluation_complete": true,
+  "single_agent_mode": true,
+  "timestamp": "",
+  "config_version": "1.0.0",
+  "weights_used": {
+    "time_taken": 0.2,
+    "task_success": 0.2,
+    "tool_efficiency": 0.2,
+    "planning_rationality": 0.2,
+    "output_similarity": 0.2
+  },
+  "tiers_enabled": [
+    1,
+    2,
+    3
+  ],
+  "agent_assessment_scores": null,
+  "engine_type": "mas"
+}

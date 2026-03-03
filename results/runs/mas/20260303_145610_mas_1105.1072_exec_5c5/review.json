@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T14-56-19Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "This paper provides an overview of the current state and future plans for the English-Lithuanian-English machine translation system, focusing on lexicon, phrase dictionary, and translation engine issues including word sense disambiguation using Google. The contributions include a specialized lexicon design for Lithuanian and English, approaches to polysemy and phrase dictionary management, and an outline of using Google for word sense disambiguation as a practical external knowledge source.\n\nStrengths: The paper addresses a niche language pair with linguistic complexities and offers practical insights into lexicon design and data entry challenges. Use of Google as a corpus for word sense disambiguation is an innovative approach given resource limitations.\n\nWeaknesses: The system is still in early stages with partial implementations and limited evaluation. The coverage of syntactic and semantic issues is preliminary, and some technical details lack depth. The paper would benefit from more comprehensive evaluations and comparisons with other MT approaches.\n\nTechnical soundness is acceptable for an ongoing project; some algorithms and architectural decisions are supported but many features are still in development. The presentation is generally clear though the writing could be tightened for better flow. Figures or examples illustrating the system components and results would improve clarity.\n\nFor improvement, the authors should enhance experimental validation, expand discussion on syntactic and semantic challenges, and provide clearer use cases. Addressing these would strengthen the paper's contribution and impact.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "This paper provides an overview of the current state and future plans for the English-Lithuanian-English machine translation system, focusing on lexicon, phrase dictionary, and translation engine issues including word sense disambiguation using Google. The contributions include a specialized lexicon design for Lithuanian and English, approaches to polysemy and phrase dictionary management, and an outline of using Google for word sense disambiguation as a practical external knowledge source.\n\nStrengths: The paper addresses a niche language pair with linguistic complexities and offers practical insights into lexicon design and data entry challenges. Use of Google as a corpus for word sense disambiguation is an innovative approach given resource limitations.\n\nWeaknesses: The system is still in early stages with partial implementations and limited evaluation. The coverage of syntactic and semantic issues is preliminary, and some technical details lack depth. The paper would benefit from more comprehensive evaluations and comparisons with other MT approaches.\n\nTechnical soundness is acceptable for an ongoing project; some algorithms and architectural decisions are supported but many features are still in development. The presentation is generally clear though the writing could be tightened for better flow. Figures or examples illustrating the system components and results would improve clarity.\n\nFor improvement, the authors should enhance experimental validation, expand discussion on syntactic and semantic challenges, and provide clearer use cases. Addressing these would strengthen the paper's contribution and impact.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

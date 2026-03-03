@@ -46,7 +46,8 @@ end note
 
 Manager -> Persistence: Save review + execution traces\n[Log scrubbing applied]
 activate Persistence
-Persistence -> Persistence: Create timestamped JSON file with metadata
+Persistence -> Persistence: RunContext routes to per-run directory\n(runs/mas/ or runs/cc/)
+Persistence -> Persistence: Write review.json, trace.json, metadata.json
 Persistence --> Manager: Confirm save
 deactivate Persistence
 
@@ -61,14 +62,19 @@ end group
 Manager -> EvalSystem: Initiate three-tier evaluation
 activate EvalSystem
 
-EvalSystem -> EvalSystem: Traditional Metrics (Text similarity, execution time, ...)
-EvalSystem -> EvalSystem: LLM-as-a-Judge (quality + execution assessment)
-EvalSystem -> EvalSystem: Graph Analysis (tool calls + complexity)
-EvalSystem -> EvalSystem: Composite Score = (Results / Time / Complexity)
+EvalSystem -> EvalSystem: Tier 1 — Traditional Metrics\n(cosine, Jaccard, BERTScore, time, task success)
+EvalSystem -> EvalSystem: Tier 2 — LLM-as-a-Judge\n(technical accuracy, constructiveness, planning rationality)
+EvalSystem -> EvalSystem: Tier 3 — Graph Analysis\n(path convergence, tool selection, coordination centrality)
+EvalSystem -> EvalSystem: Composite Score\n(6 equally weighted metrics, adaptive redistribution)
 
-EvalSystem --> Manager: Complete evaluation results
+EvalSystem -> Persistence: Write evaluation.json + agent_graph.json/png
+EvalSystem --> Manager: CompositeResult
 deactivate EvalSystem
 
-Manager --> User: Final agent performance score
+opt --generate-report
+    Manager -> Manager: SuggestionEngine → ReportGenerator\n→ report.md
+end
+
+Manager --> User: Final agent performance score + artifact summary
 deactivate Manager
 @enduml

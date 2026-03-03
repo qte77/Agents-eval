@@ -1,0 +1,25 @@
+{
+  "composite_score": 0.9999000499833375,
+  "recommendation": "weak_reject",
+  "recommendation_weight": -0.25,
+  "metric_scores": {
+    "cosine_score": 1.0,
+    "jaccard_score": 1.0,
+    "semantic_score": 1.0
+  },
+  "tier1_score": 0.9999000499833375,
+  "tier2_score": null,
+  "tier3_score": 0.0,
+  "evaluation_complete": false,
+  "single_agent_mode": false,
+  "timestamp": "",
+  "config_version": "1.0.0",
+  "weights_used": {
+    "tier1": 1.0,
+    "tier2": 0.0,
+    "tier3": 0.0
+  },
+  "tiers_enabled": null,
+  "agent_assessment_scores": null,
+  "engine_type": "mas"
+}

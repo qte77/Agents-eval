@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T16-02-16Z",
+  "review": {
+    "impact": "2",
+    "substance": "2",
+    "appropriateness": "3",
+    "meaningful_comparison": "2",
+    "presentation_format": "Poster",
+    "comments": "### Summary\nThe paper describes the current state and future work of an English‑Lithuanian‑English (ELE) machine translation system, focusing on the lexicon, phrase dictionary, data entry, translation engine, caching, and a proposed word‑sense disambiguation (WSD) approach using Google queries.\n\n### Strengths\n- Detailed description of the database schema and handling of rich Lithuanian morphology.\n- Addresses practical engineering issues such as caching, optimisation, and user‑editable lexicon.\n- Highlights need for WSD and proposes a pragmatic use of Google as an external corpus.\n\n### Weaknesses / Areas for Improvement\n- No empirical evaluation (e.g., BLEU scores, user studies) provided.\n- Related work on MT lexicons and WSD is minimally discussed, limiting assessment of novelty.\n- Google‑based WSD is constrained by API limits and lacks comparison to established statistical or neural methods.\n- Presentation suffers from repeated passages, typographical errors, and lack of visual aids (figures/tables).\n\n### Technical Soundness Assessment\nThe system architecture is plausible, but several claims (e.g., handling of polysemy, domain attributes) are unsupported by experiments. The proposed WSD relies on ad‑hoc heuristics without rigorous validation.\n\n### Clarity and Presentation Quality\nRedundant text and typographical issues reduce readability. Inclusion of diagrams or tables would improve clarity.\n\n### Suggestions for Improvement\n1. Include quantitative evaluation of translation quality and impact of the proposed WSD.\n2. Expand related‑work section to position the system within current MT literature.\n3. Refine manuscript structure, eliminate redundancy, and add visual illustrations.\n4. Explore more robust WSD techniques (e.g., contextual embeddings) that do not depend on limited Google API calls.",
+    "soundness_correctness": "2",
+    "originality": "2",
+    "recommendation": "2",
+    "clarity": "3",
+    "reviewer_confidence": "3",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 2,
+    "substance": 2,
+    "appropriateness": 3,
+    "meaningful_comparison": 2,
+    "presentation_format": "Poster",
+    "comments": "### Summary\nThe paper describes the current state and future work of an English‑Lithuanian‑English (ELE) machine translation system, focusing on the lexicon, phrase dictionary, data entry, translation engine, caching, and a proposed word‑sense disambiguation (WSD) approach using Google queries.\n\n### Strengths\n- Detailed description of the database schema and handling of rich Lithuanian morphology.\n- Addresses practical engineering issues such as caching, optimisation, and user‑editable lexicon.\n- Highlights need for WSD and proposes a pragmatic use of Google as an external corpus.\n\n### Weaknesses / Areas for Improvement\n- No empirical evaluation (e.g., BLEU scores, user studies) provided.\n- Related work on MT lexicons and WSD is minimally discussed, limiting assessment of novelty.\n- Google‑based WSD is constrained by API limits and lacks comparison to established statistical or neural methods.\n- Presentation suffers from repeated passages, typographical errors, and lack of visual aids (figures/tables).\n\n### Technical Soundness Assessment\nThe system architecture is plausible, but several claims (e.g., handling of polysemy, domain attributes) are unsupported by experiments. The proposed WSD relies on ad‑hoc heuristics without rigorous validation.\n\n### Clarity and Presentation Quality\nRedundant text and typographical issues reduce readability. Inclusion of diagrams or tables would improve clarity.\n\n### Suggestions for Improvement\n1. Include quantitative evaluation of translation quality and impact of the proposed WSD.\n2. Expand related‑work section to position the system within current MT literature.\n3. Refine manuscript structure, eliminate redundancy, and add visual illustrations.\n4. Explore more robust WSD techniques (e.g., contextual embeddings) that do not depend on limited Google API calls.",
+    "soundness_correctness": 2,
+    "originality": 2,
+    "recommendation": 2,
+    "clarity": 3,
+    "reviewer_confidence": 3
+  },
+  "model_info": "gpt-oss-120b via PydanticAI"
+}

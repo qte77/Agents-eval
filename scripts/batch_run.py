@@ -140,6 +140,10 @@ def _extract_error_line(stderr: str) -> str | None:
     Returns:
         Single error line, or None if nothing useful found.
     """
+    # Reason: loguru logs non-error levels to stderr; skip them to surface
+    # the actual exception line.
+    loguru_non_error = ("| TRACE", "| DEBUG", "| INFO", "| SUCCESS", "| WARNING")
+
     for line in reversed(stderr.strip().splitlines()):
         stripped = line.strip()
         if not stripped:
@@ -147,6 +151,9 @@ def _extract_error_line(stderr: str) -> str | None:
         # Skip make error lines and pure tilde underline carets
         is_make = stripped.startswith("make[") or stripped.startswith("make:")
         if is_make or stripped.lstrip("~ ^") == "":
+            continue
+        # Skip loguru non-error log lines (INFO, DEBUG, WARNING, etc.)
+        if any(level in stripped for level in loguru_non_error):
             continue
         return stripped
     return None
@@ -249,6 +256,8 @@ def _parse_args() -> argparse.Namespace:
         Parsed argument namespace.
     """
     providers = sorted(PROVIDER_REGISTRY.keys())
+    mas_names = [_composition_name(c) for c in _all_compositions()]
+    cc_names = [_composition_name(c) for c in _cc_compositions()]
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -286,9 +295,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--compositions",
         default=None,
+        metavar="NAME[,NAME,...]",
         help=(
-            "Filter by name, comma-separated "
-            "(MAS: 'researcher+analyst,manager-only'; CC: 'cc-solo,cc-teams')"
+            "Filter by name, comma-separated. "
+            f"MAS: {{{','.join(mas_names)}}}; "
+            f"CC: {{{','.join(cc_names)}}}"
         ),
     )
     parser.add_argument(
@@ -307,6 +318,11 @@ def _parse_args() -> argparse.Namespace:
         nargs="*",
         help="Extra args forwarded to app_cli (after '--')",
     )
+    # Reason: show help instead of cryptic error when invoked with no args
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(0)
+
     return parser.parse_args()
 
 

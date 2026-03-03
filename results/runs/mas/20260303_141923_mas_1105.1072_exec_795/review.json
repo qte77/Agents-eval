@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T14-19-37Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Poster",
+    "comments": "This paper provides an overview of the current state and future work of an English-Lithuanian-English machine translation system, with a focus on the lexicon and translation engine. The contribution lies in the description of a lexicon that supports morphological information for both languages, the use of domain attributes for word selection, and an approach to word sense disambiguation leveraging Google search queries.\n\nStrengths include a detailed lexicon design that accommodates morphological complexity, an innovative use of Google for word sense disambiguation, and a clear outline of challenges and future improvements.\n\nWeaknesses are that the translation engine is in an early stage and lacks fully developed syntax rules, negation handling, and tenses treatment, limiting the system's immediate practical usability. The phrase dictionary is still under development.\n\nThe technical aspects are sound but not yet fully mature. Clarity and presentation are generally good but could benefit from more detailed experimental results or evaluations.\n\nSuggestions: Include more evaluation metrics and real-world testing benchmarks, advance the translation engine development, and integrate phrase dictionary and syntactic rules comprehensively.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Poster",
+    "comments": "This paper provides an overview of the current state and future work of an English-Lithuanian-English machine translation system, with a focus on the lexicon and translation engine. The contribution lies in the description of a lexicon that supports morphological information for both languages, the use of domain attributes for word selection, and an approach to word sense disambiguation leveraging Google search queries.\n\nStrengths include a detailed lexicon design that accommodates morphological complexity, an innovative use of Google for word sense disambiguation, and a clear outline of challenges and future improvements.\n\nWeaknesses are that the translation engine is in an early stage and lacks fully developed syntax rules, negation handling, and tenses treatment, limiting the system's immediate practical usability. The phrase dictionary is still under development.\n\nThe technical aspects are sound but not yet fully mature. Clarity and presentation are generally good but could benefit from more detailed experimental results or evaluations.\n\nSuggestions: Include more evaluation metrics and real-world testing benchmarks, advance the translation engine development, and integrate phrase dictionary and syntactic rules comprehensively.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

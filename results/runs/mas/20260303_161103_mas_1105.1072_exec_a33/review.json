@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T16-11-13Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "This paper provides an overview of the current state and future work of an English-Lithuanian-English machine translation system, including the lexicon, translation engine, and word sense disambiguation (WSD) approach using Google as an external knowledge source.\n\nStrengths include the comprehensive description of the lexicon construction, morphological handling, and practical challenges faced. The incorporation of Google-based WSD is an interesting approach to address contextual translation challenges without extensive computational costs.\n\nWeaknesses involve the early developmental stage of the translation engine, lack of full implementation of syntactic rules and negation handling, and incomplete tuning of translation outputs. The evaluation and testing appear limited and anecdotal without quantitative results.\n\nTechnically, the work is sound within its scope but needs further development for practical usability and robustness. The presentation is clear and well-structured, with adequate explanation of methods and future directions.\n\nImprovements could focus on expanding quantitative evaluations of the system, advancing the implementation of syntactic transformations, and improving the testing methodology to include real-world translation scenarios. More detailed comparison with related machine translation systems and WSD methods would also strengthen the submission.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "3",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "This paper provides an overview of the current state and future work of an English-Lithuanian-English machine translation system, including the lexicon, translation engine, and word sense disambiguation (WSD) approach using Google as an external knowledge source.\n\nStrengths include the comprehensive description of the lexicon construction, morphological handling, and practical challenges faced. The incorporation of Google-based WSD is an interesting approach to address contextual translation challenges without extensive computational costs.\n\nWeaknesses involve the early developmental stage of the translation engine, lack of full implementation of syntactic rules and negation handling, and incomplete tuning of translation outputs. The evaluation and testing appear limited and anecdotal without quantitative results.\n\nTechnically, the work is sound within its scope but needs further development for practical usability and robustness. The presentation is clear and well-structured, with adequate explanation of methods and future directions.\n\nImprovements could focus on expanding quantitative evaluations of the system, advancing the implementation of syntactic transformations, and improving the testing methodology to include real-world translation scenarios. More detailed comparison with related machine translation systems and WSD methods would also strengthen the submission.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 3,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

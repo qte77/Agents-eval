@@ -1,0 +1,32 @@
+{
+  "paper_id": "1105.1072",
+  "timestamp": "2026-03-03T14-19-36Z",
+  "review": {
+    "impact": "3",
+    "substance": "3",
+    "appropriateness": "4",
+    "meaningful_comparison": "3",
+    "presentation_format": "Oral",
+    "comments": "This paper presents the current state and future development plans of an English-Lithuanian-English machine translation lexicon and engine. It discusses the architecture of the lexicon supporting morphological forms, the challenges addressed including polysemy and domain attributes, and plans for phrase dictionary and translation engine improvements. A noteworthy aspect is the approach to word sense disambiguation using Google queries for context, which is innovative. Strengths include the comprehensive lexicon architecture, the realistic discussion of current limitations, and the integration plan for phrase dictionary and syntax rules. The paper could improve by providing more experimental results or evaluation metrics for the translation quality and disambiguation effectiveness. The technical soundness is reasonable given the early-stage development, and the presentation is clear with sufficient details on implementation and challenges. Suggestions include expanding on evaluation and testing results, providing comparisons with other MT systems, and elaborating on the scalability and performance aspects of the system.",
+    "soundness_correctness": "3",
+    "originality": "3",
+    "recommendation": "4",
+    "clarity": "4",
+    "reviewer_confidence": "4",
+    "is_meta_review": null
+  },
+  "structured_review": {
+    "impact": 3,
+    "substance": 3,
+    "appropriateness": 4,
+    "meaningful_comparison": 3,
+    "presentation_format": "Oral",
+    "comments": "This paper presents the current state and future development plans of an English-Lithuanian-English machine translation lexicon and engine. It discusses the architecture of the lexicon supporting morphological forms, the challenges addressed including polysemy and domain attributes, and plans for phrase dictionary and translation engine improvements. A noteworthy aspect is the approach to word sense disambiguation using Google queries for context, which is innovative. Strengths include the comprehensive lexicon architecture, the realistic discussion of current limitations, and the integration plan for phrase dictionary and syntax rules. The paper could improve by providing more experimental results or evaluation metrics for the translation quality and disambiguation effectiveness. The technical soundness is reasonable given the early-stage development, and the presentation is clear with sufficient details on implementation and challenges. Suggestions include expanding on evaluation and testing results, providing comparisons with other MT systems, and elaborating on the scalability and performance aspects of the system.",
+    "soundness_correctness": 3,
+    "originality": 3,
+    "recommendation": 4,
+    "clarity": 4,
+    "reviewer_confidence": 4
+  },
+  "model_info": "gpt-4.1-mini via PydanticAI"
+}

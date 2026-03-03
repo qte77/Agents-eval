@@ -63,7 +63,6 @@ docs/write-up/*
 !docs/write-up/en/
 !docs/write-up/template/
 output/
-results/
 test_data/
 wandb/
 
