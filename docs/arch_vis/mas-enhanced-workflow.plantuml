@@ -1,6 +1,10 @@
 @startuml mas-enhanced-workflow
 title Enhanced MAS Workflow - Separation of Concerns
 
+!log Current 'STYLE' dvar: STYLE
+!log About to include: styles/github-STYLE.puml
+!include styles/github-STYLE.puml
+
 actor User
 participant "CLI/GUI Entry Point" as MainApp
 participant "Manager Agent" as Manager
@@ -54,8 +58,10 @@ note over MainApp
   CompositeResult.engine_type distinguishes
   "mas", "cc_solo", "cc_teams".
   Sprint 11: build_cc_query() for default prompts,
-  ArtifactRegistry prints summary at end of run,
-  CC JSONL stream persisted to cc_streams/.
+  ArtifactRegistry prints summary at end of run.
+  Sprint 12: RunContext routes outputs to
+  runs/mas/ or runs/cc/ per-run directories.
+  CC JSONL stream persisted per-run.
 end note
 
 MainApp -> Evaluator: Evaluate review quality (three-tier pipeline)
@@ -77,7 +83,13 @@ Evaluator -> Evaluator: Composite Score\n(weighted tier results)
 Evaluator --> MainApp: CompositeResult
 deactivate Evaluator
 
-MainApp --> User: Display results
+opt --generate-report
+    MainApp -> MainApp: SuggestionEngine → ReportGenerator\n→ report.md
+end
+
+MainApp -> MainApp: RunContext writes evaluation.json\nArtifactRegistry registers all outputs
+
+MainApp --> User: Display results + artifact summary
 deactivate MainApp
 
 note right of Loader

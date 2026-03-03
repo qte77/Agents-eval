@@ -11,9 +11,10 @@ start
 
 :Clones repository and sets up development environment;
 
-if (First time use or dataset update?) then (yes)
-  :Download PeerRead dataset with `make app_cli --download-peerread-full-only`;
-  :Dataset cached locally in `datasets/peerread/`;
+if (First time use?) then (yes)
+  :Run `make app_quickstart` (downloads sample data + evaluates smallest paper);
+  :Or: `make app_cli --download-peerread-full-only` for full dataset;
+  :Dataset cached locally in `_Agents-eval/datasets/peerread/`;
 else (no)
 endif
 
@@ -27,13 +28,23 @@ if (Interface choice) then (CLI)
     :Configure agent composition and provider via `--chat-provider`;
     :Agent system generates comprehensive review;
     :Three-tier evaluation runs automatically;
+    :Optional: `--generate-report` for Markdown report;
   }
+else if (Batch) then (batch)
+  :Execute `make app_batch_run ARGS="--paper-ids ID"`;
+  partition "Batch Run (all 8 compositions)" {
+    :Runs `app_cli` for each of 8 agent compositions;
+    :Supports `--parallel N` and `--compositions` filter;
+    :Error-resilient: catches 422, timeouts, UsageLimitExceeded;
+  }
+  :Summarize with `make app_batch_eval`;
 else (Streamlit GUI)
   :Launch `make app_gui` for interactive evaluation;
   partition "GUI Agent Evaluation" {
     :Browse and select PeerRead paper (dropdown with title/abstract);
     :Choose engine (MAS or Claude Code);
     :Configure provider, judge, and agent settings;
+    :Select theme (Expanse Dark, Nord Light, Tokyo Night);
     :Monitor agent progress via real-time debug log;
     :View evaluation metrics and agent interaction graph;
   }
@@ -60,7 +71,7 @@ endif
 
 if (Sweep comparison needed?) then (yes)
   :Run `make app_sweep` across compositions × papers × repetitions;
-  :Review statistical summary in `results/sweeps/<timestamp>/summary.md`;
+  :Review statistical summary in `_Agents-eval/output/sweeps/<timestamp>/summary.md`;
 else (no)
 endif
 
