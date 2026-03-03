@@ -140,6 +140,10 @@ def _extract_error_line(stderr: str) -> str | None:
     Returns:
         Single error line, or None if nothing useful found.
     """
+    # Reason: loguru logs non-error levels to stderr; skip them to surface
+    # the actual exception line.
+    _LOGURU_NON_ERROR = ("| TRACE", "| DEBUG", "| INFO", "| SUCCESS", "| WARNING")
+
     for line in reversed(stderr.strip().splitlines()):
         stripped = line.strip()
         if not stripped:
@@ -147,6 +151,9 @@ def _extract_error_line(stderr: str) -> str | None:
         # Skip make error lines and pure tilde underline carets
         is_make = stripped.startswith("make[") or stripped.startswith("make:")
         if is_make or stripped.lstrip("~ ^") == "":
+            continue
+        # Skip loguru non-error log lines (INFO, DEBUG, WARNING, etc.)
+        if any(level in stripped for level in _LOGURU_NON_ERROR):
             continue
         return stripped
     return None
