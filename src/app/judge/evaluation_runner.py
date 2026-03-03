@@ -87,6 +87,61 @@ def _extract_paper_and_review_content(manager_output: Any) -> tuple[str, str]:
     return paper_content, review_text
 
 
+def _load_cc_paper_content(paper_id: str) -> str:
+    """Load paper content from PeerRead for CC engine path (no manager_output).
+
+    Tries parsed PDF first, then falls back to abstract.
+
+    Args:
+        paper_id: PeerRead paper identifier.
+
+    Returns:
+        Paper content string, or empty string if not found.
+    """
+    loader = PeerReadLoader()
+    parsed = loader.load_parsed_pdf_content(paper_id)
+    if parsed:
+        return parsed
+
+    paper = loader.get_paper_by_id(paper_id)
+    if paper:
+        return paper.abstract
+
+    return ""
+
+
+def _resolve_execution_trace(execution_trace: Any, execution_id: str | None) -> Any:
+    """Resolve execution trace: use provided override or load from SQLite.
+
+    Args:
+        execution_trace: Pre-built GraphTraceData (CC path) or None.
+        execution_id: Execution ID for SQLite lookup (MAS path).
+
+    Returns:
+        GraphTraceData if available, None otherwise.
+    """
+    if execution_trace is not None:
+        return execution_trace
+
+    if not execution_id:
+        return None
+
+    from app.judge.trace_processors import get_trace_collector
+
+    trace_collector = get_trace_collector()
+    loaded_trace = trace_collector.load_trace(execution_id)
+
+    if loaded_trace:
+        logger.info(
+            f"Loaded trace data: {len(loaded_trace.agent_interactions)} interactions, "
+            f"{len(loaded_trace.tool_calls)} tool calls"
+        )
+    else:
+        logger.warning(f"No trace data found for execution: {execution_id}")
+
+    return loaded_trace
+
+
 def build_graph_from_trace(execution_id: str | None) -> nx.DiGraph[str] | None:
     """Build interaction graph from execution trace data.
 
@@ -127,6 +182,8 @@ async def run_evaluation_if_enabled(
     manager_output: Any = None,
     review_text: str | None = None,
     run_dir: Path | None = None,
+    execution_trace: Any = None,
+    engine_type: str = "mas",
 ) -> CompositeResult | None:
     """Run evaluation pipeline after manager completes if enabled.
 
@@ -147,6 +204,11 @@ async def run_evaluation_if_enabled(
             overrides text extraction from manager_output.
         run_dir: Optional per-run output directory. When provided, evaluation results
             are persisted to evaluation.json in this directory.
+        execution_trace: Optional pre-built GraphTraceData (e.g. from CC engine).
+            When provided, skips SQLite trace lookup. When None, falls back to
+            trace_collector.load_trace() (existing MAS behavior).
+        engine_type: Source engine identifier ('mas', 'cc_solo', or 'cc_teams').
+            Set on CompositeResult before persisting to evaluation.json.
 
     Returns:
         CompositeResult from PydanticAI evaluation or None if skipped.
@@ -163,24 +225,16 @@ async def run_evaluation_if_enabled(
     if not paper_id:
         logger.info("Skipping evaluation: no ground-truth reviews available")
 
-    # Retrieve GraphTraceData from trace collector
-    execution_trace = None
-    if execution_id:
-        from app.judge.trace_processors import get_trace_collector
-
-        trace_collector = get_trace_collector()
-        execution_trace = trace_collector.load_trace(execution_id)
-
-        if execution_trace:
-            logger.info(
-                f"Loaded trace data: {len(execution_trace.agent_interactions)} interactions, "
-                f"{len(execution_trace.tool_calls)} tool calls"
-            )
-        else:
-            logger.warning(f"No trace data found for execution: {execution_id}")
+    execution_trace = _resolve_execution_trace(execution_trace, execution_id)
 
     # Extract paper and review content from manager_output (or use override)
     paper_content, extracted_review = _extract_paper_and_review_content(manager_output)
+
+    # CC paper content fallback: when manager_output is None (CC path) but paper_id
+    # is available, load paper content directly from PeerRead cache
+    if not paper_content and paper_id:
+        paper_content = _load_cc_paper_content(paper_id)
+
     # S10-F1: CC engine passes review_text directly, overriding extraction
     if review_text is None:
         review_text = extracted_review
@@ -194,6 +248,10 @@ async def run_evaluation_if_enabled(
         execution_trace=execution_trace,
         reference_reviews=reference_reviews,
     )
+
+    # Set engine_type before persisting so evaluation.json has the correct value
+    if pydantic_result is not None:
+        pydantic_result.engine_type = engine_type
 
     # Persist evaluation results to run directory
     if run_dir is not None:

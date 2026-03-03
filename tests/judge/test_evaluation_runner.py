@@ -377,6 +377,68 @@ class TestReferenceReviewsLoading:
             assert call_kwargs["reference_reviews"] == []
 
 
+# MARK: --- execution_trace override for CC engine ---
+
+
+class TestExecutionTraceOverride:
+    """Verify run_evaluation_if_enabled accepts execution_trace that skips SQLite lookup."""
+
+    @pytest.mark.asyncio
+    async def test_uses_provided_execution_trace_skips_sqlite(self):
+        """When execution_trace is provided, get_trace_collector must NOT be called."""
+        provided_trace = GraphTraceData(
+            execution_id="cc-trace-001",
+            agent_interactions=[{"from": "cc_orchestrator", "to": "agent-1", "type": "delegation"}],
+        )
+
+        with (
+            patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
+            patch("app.judge.trace_processors.get_trace_collector") as mock_get_collector,
+        ):
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id="cc-trace-001",
+                execution_trace=provided_trace,
+            )
+
+            mock_get_collector.assert_not_called()
+            call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+            assert call_kwargs["execution_trace"] is provided_trace
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_sqlite_when_no_override(self):
+        """When execution_trace=None, get_trace_collector must be called (existing behavior)."""
+        with (
+            patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
+            patch("app.judge.trace_processors.get_trace_collector") as mock_get_collector,
+        ):
+            mock_collector = MagicMock(spec=TraceCollector)
+            mock_collector.load_trace.return_value = None
+            mock_get_collector.return_value = mock_collector
+
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id="exec-456",
+                execution_trace=None,
+            )
+
+            mock_get_collector.assert_called_once()
+
+
 # MARK: --- paper and review extraction (STORY-005) ---
 
 
@@ -578,6 +640,152 @@ class TestPaperAndReviewExtraction:
             assert call_kwargs["review"] == ""
 
 
+# MARK: --- CC paper content loading (Gap 2) ---
+
+
+class TestCCPaperContentLoading:
+    """Verify paper content loaded from PeerRead when manager_output is None (CC path)."""
+
+    @pytest.mark.asyncio
+    async def test_loads_paper_from_peerread_when_manager_output_none(self):
+        """paper_id set + manager_output=None → PeerReadLoader.load_parsed_pdf_content called."""
+        with (
+            patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
+            patch("app.judge.evaluation_runner.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            mock_loader = MagicMock(spec=PeerReadLoader)
+            mock_loader.load_parsed_pdf_content.return_value = "Full parsed PDF content"
+            mock_loader.get_paper_by_id.return_value = None
+            mock_loader_class.return_value = mock_loader
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id="1105.1072",
+                execution_id=None,
+                manager_output=None,
+            )
+
+            call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+            assert call_kwargs["paper"] == "Full parsed PDF content"
+
+    @pytest.mark.asyncio
+    async def test_abstract_fallback_when_pdf_unavailable(self):
+        """PDF returns None → get_paper_by_id called, abstract used."""
+        mock_paper = MagicMock(spec=PeerReadPaper)
+        mock_paper.abstract = "Paper abstract as fallback"
+        mock_paper.reviews = []
+
+        with (
+            patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
+            patch("app.judge.evaluation_runner.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            mock_loader = MagicMock(spec=PeerReadLoader)
+            mock_loader.load_parsed_pdf_content.return_value = None
+            mock_loader.get_paper_by_id.return_value = mock_paper
+            mock_loader_class.return_value = mock_loader
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id="1105.1072",
+                execution_id=None,
+                manager_output=None,
+            )
+
+            call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+            assert call_kwargs["paper"] == "Paper abstract as fallback"
+
+    @pytest.mark.asyncio
+    async def test_paper_stays_empty_when_paper_not_found(self):
+        """Both loaders return None → paper == ''."""
+        with (
+            patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
+            patch("app.judge.evaluation_runner.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            mock_loader = MagicMock(spec=PeerReadLoader)
+            mock_loader.load_parsed_pdf_content.return_value = None
+            mock_loader.get_paper_by_id.return_value = None
+            mock_loader_class.return_value = mock_loader
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id="nonexistent",
+                execution_id=None,
+                manager_output=None,
+            )
+
+            call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+            assert call_kwargs["paper"] == ""
+
+    @pytest.mark.asyncio
+    async def test_mas_path_unaffected(self):
+        """manager_output set → paper loaded via _extract_paper_and_review_content, not CC fallback."""
+        from app.data_models.peerread_models import GeneratedReview, ReviewGenerationResult
+
+        mock_review = GeneratedReview(
+            impact=4,
+            substance=4,
+            appropriateness=5,
+            meaningful_comparison=4,
+            presentation_format="Oral",
+            comments="This is a detailed review with contributions, strengths, weaknesses, technical analysis, and clarity assessment.",
+            soundness_correctness=4,
+            originality=5,
+            recommendation=4,
+            clarity=4,
+            reviewer_confidence=4,
+        )
+        mock_manager_output = ReviewGenerationResult(
+            paper_id="001",
+            review=mock_review,
+            timestamp="2024-01-01T00:00:00Z",
+            model_info="test-model",
+        )
+
+        with (
+            patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class,
+            patch("app.data_utils.datasets_peerread.PeerReadLoader") as mock_loader_class,
+        ):
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=None)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            mock_loader = MagicMock(spec=PeerReadLoader)
+            mock_loader.load_parsed_pdf_content.return_value = "PDF from MAS path"
+            mock_loader_class.return_value = mock_loader
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id="001",
+                execution_id=None,
+                manager_output=mock_manager_output,
+            )
+
+            call_kwargs = mock_pipeline.evaluate_comprehensive.call_args.kwargs
+            # MAS path extracts paper from manager_output via _extract_paper_and_review_content
+            # The CC fallback should NOT be triggered since paper_content is non-empty
+            assert call_kwargs["paper"] == "PDF from MAS path"
+
+
 # MARK: --- review_text override for CC engine (STORY-010 AC2) ---
 
 
@@ -764,6 +972,43 @@ class TestEvaluationJsonPersistence:
             call_args = mock_registry.register.call_args
             assert call_args[0][0] == "Evaluation"
             assert "evaluation.json" in str(call_args[0][1])
+
+
+    @pytest.mark.asyncio
+    async def test_engine_type_persisted_in_evaluation_json(self, tmp_path):
+        """engine_type passed to run_evaluation_if_enabled must appear in evaluation.json."""
+        mock_result = CompositeResult(
+            composite_score=0.6,
+            recommendation="weak_accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.6,
+            tier2_score=0.0,
+            tier3_score=0.0,
+            evaluation_complete=True,
+        )
+        with patch("app.judge.evaluation_runner.EvaluationPipeline") as mock_pipeline_class:
+            mock_pipeline = MagicMock(spec=EvaluationPipeline)
+            mock_pipeline.evaluate_comprehensive = AsyncMock(return_value=mock_result)
+            mock_pipeline_class.return_value = mock_pipeline
+
+            from app.judge.evaluation_runner import run_evaluation_if_enabled
+
+            result = await run_evaluation_if_enabled(
+                skip_eval=False,
+                paper_id=None,
+                execution_id=None,
+                run_dir=tmp_path,
+                engine_type="cc_solo",
+            )
+
+            assert result is not None
+            assert result.engine_type == "cc_solo"
+
+            import json
+
+            data = json.loads((tmp_path / "evaluation.json").read_text())
+            assert data["engine_type"] == "cc_solo"
 
 
 # MARK: --- chat_model threading to EvaluationPipeline ---

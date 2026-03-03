@@ -231,20 +231,20 @@ def _prepare_result_dict(
 
 
 @op()  # type: ignore[reportUntypedFunctionDecorator]
-def _extract_cc_artifacts(cc_result: Any) -> tuple[str, Any]:
-    """Extract execution ID and graph from a CC engine result.
+def _extract_cc_artifacts(cc_result: Any) -> tuple[str, Any, Any]:
+    """Extract execution ID, graph, and trace data from a CC engine result.
 
     Args:
         cc_result: CCResult from solo or teams execution.
 
     Returns:
-        Tuple of (execution_id, interaction_graph).
+        Tuple of (execution_id, interaction_graph, graph_trace).
     """
     from app.engines.cc_engine import cc_result_to_graph_trace
     from app.judge.graph_builder import build_interaction_graph
 
     graph_trace = cc_result_to_graph_trace(cc_result)
-    return cc_result.execution_id, build_interaction_graph(graph_trace)
+    return cc_result.execution_id, build_interaction_graph(graph_trace), graph_trace
 
 
 async def _run_cc_engine_path(
@@ -258,6 +258,7 @@ async def _run_cc_engine_path(
     judge_settings: JudgeSettings | None,
     cc_teams: bool = False,
     run_dir: Path | None = None,
+    cc_model: str | None = None,
 ) -> tuple[Any, Any, str | None]:
     """Execute CC engine path: extract artifacts, evaluate, set engine_type.
 
@@ -272,13 +273,14 @@ async def _run_cc_engine_path(
         judge_settings: Optional judge settings.
         cc_teams: Whether CC was run in teams mode (source of truth for engine_type).
         run_dir: Per-run output directory from up-front RunContext.
+        cc_model: CC model name, forwarded as chat_model to evaluation pipeline.
 
     Returns:
         Tuple of (composite_result, graph, execution_id).
     """
     from app.engines.cc_engine import extract_cc_review_text
 
-    execution_id, graph = _extract_cc_artifacts(cc_result)
+    execution_id, graph, graph_trace = _extract_cc_artifacts(cc_result)
 
     engine_type = "cc_teams" if cc_teams else "cc_solo"
 
@@ -292,15 +294,14 @@ async def _run_cc_engine_path(
         cc_teams_dir,
         cc_teams_tasks_dir,
         chat_provider,
-        chat_model=None,
+        chat_model=cc_model,
         judge_settings=judge_settings,
         manager_output=None,
         review_text=cc_review_text,
         run_dir=run_dir,
+        execution_trace=graph_trace,
+        engine_type=engine_type,
     )
-    # S12-STORY-002: set engine_type from explicit cc_teams flag (not team_artifacts)
-    if composite_result is not None:
-        composite_result.engine_type = engine_type
     return composite_result, graph, execution_id
 
 
@@ -400,6 +401,7 @@ async def main(
     engine: str = "mas",
     cc_result: Any | None = None,
     cc_teams: bool = False,
+    cc_model: str | None = None,
 ) -> dict[str, Any] | None:
     """Main entry point for the application.
 
@@ -444,6 +446,7 @@ async def main(
                     judge_settings,
                     cc_teams=cc_teams,
                     run_dir=run_ctx.run_dir,
+                    cc_model=cc_model,
                 )
             else:
                 composite_result, graph, execution_id = await _run_mas_engine_path(
