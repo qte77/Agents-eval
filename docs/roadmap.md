@@ -38,3 +38,8 @@ Unscheduled metrics identified from production frameworks and research. No sprin
 | `rubric_alignment` | [2512.23707] | No self-grading assessment | High |
 | `coordination_topology` | Evolutionary Boids (Agents4Science) | No breadth vs depth | Medium |
 | `path_convergence` | Arize Phoenix | No path efficiency | Medium |
+
+## Backlog — Known Issues
+
+- **Delegation Tool Retry Exhaustion**: `delegate_synthesis` exceeds PydanticAI's max retry count of 3. The model repeatedly passes incorrect arguments (structured data instead of plain-text query, or invented parameter names like `report` instead of `query`), exhausting retries without a successful call. Blocks reliable sweep execution for the `synthesiser` composition. Potential mitigations: increase retry limit, add argument coercion at tool boundary, simplify delegation tool signature.
+- **Provider Token Limit Exceeded**: Cumulative token count exceeds provider-configured `total_tokens_limit` during multi-agent runs, aborting execution. Example: Cerebras `gpt-oss-120b` exceeded its 60,000-token limit (actual: 66,165 tokens). Multi-agent compositions are particularly susceptible since each sub-agent delegation adds to the cumulative count. Potential mitigations: dynamic per-agent token budgeting, context summarization between delegation steps, provider-aware limit configuration in `PROVIDER_REGISTRY`.

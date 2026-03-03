@@ -137,6 +137,11 @@ class SweepRunner:
             except ModelHTTPError as e:
                 if e.status_code != 429 or not await self._handle_rate_limit(e, label, attempt):
                     return None
+            except SystemExit as e:
+                # Reason: run_manager raises SystemExit(1) on UsageLimitExceeded;
+                # catch it so one evaluation's token limit doesn't abort the sweep
+                logger.error(f"Evaluation aborted for {label}: {e}")
+                return None
             except Exception as e:
                 logger.error(f"Evaluation failed for {label}: {e}", exc_info=True)
                 return None
@@ -218,6 +223,9 @@ class SweepRunner:
     async def run(self) -> list[tuple[AgentComposition, CompositeResult]]:
         """Execute the full sweep across all compositions and repetitions.
 
+        Partial results are always saved via finally block, even if an
+        evaluation crashes mid-sweep (e.g. token limit exceeded).
+
         Returns:
             list[tuple[AgentComposition, CompositeResult]]: All evaluation results.
 
@@ -226,9 +234,11 @@ class SweepRunner:
         """
         await self._validate_prerequisites()
         self.config.output_dir.mkdir(parents=True, exist_ok=True)
-        await self._run_mas_evaluations()
-        await self._run_cc_baselines()
-        await self._save_results()
+        try:
+            await self._run_mas_evaluations()
+            await self._run_cc_baselines()
+        finally:
+            await self._save_results()
         return self.results
 
     async def _save_results_json(self) -> None:

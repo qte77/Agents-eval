@@ -466,6 +466,50 @@ class TestStory013bRetryAndPersistence:
         )
 
 
+class TestSweepCrashResilience:
+    """Tests for sweep crash resilience: partial results saved on failure."""
+
+    @pytest.mark.asyncio
+    async def test_sweep_survives_token_limit_and_saves_partial_results(self, tmp_path: Path):
+        """Sweep continues after SystemExit (token limit) and writes summary.md."""
+        config = SweepConfig(
+            compositions=[
+                AgentComposition(include_researcher=True),
+                AgentComposition(include_analyst=True),
+            ],
+            repetitions=1,
+            paper_ids=["1"],
+            output_dir=tmp_path / "sweep_results",
+            retry_delay_seconds=0.0,
+        )
+        mock_result = CompositeResult(
+            composite_score=0.5,
+            recommendation="weak_accept",
+            recommendation_weight=0.5,
+            metric_scores={},
+            tier1_score=0.5,
+            tier2_score=0.0,
+            tier3_score=0.0,
+            evaluation_complete=True,
+        )
+        call_count = 0
+
+        async def mock_main(**kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise SystemExit(1)
+            return {"composite_result": mock_result}
+
+        with patch("app.benchmark.sweep_runner.main", side_effect=mock_main):
+            results = await SweepRunner(config).run()
+
+        assert len(results) == 1
+        summary = config.output_dir / "summary.md"
+        assert summary.exists()
+        assert "analyst" in summary.read_text()
+
+
 class TestStory013bHandleModelHttpError:
     """Tests for _handle_model_http_error re-raise fix (STORY-013b)."""
 
