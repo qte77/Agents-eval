@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-03-03
+
 ### Added
 
 - `scripts/batch_run.py`: batch composition runner — runs `make app_cli` across all 8 agent compositions for one or more papers with `--parallel` support, error continuation, and optional JSON output
