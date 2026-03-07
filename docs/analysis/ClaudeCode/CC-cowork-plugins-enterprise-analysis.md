@@ -1,15 +1,17 @@
 ---
 title: CC Cowork, Plugins & Enterprise Analysis
-source: https://claude.com/blog/cowork-plugins-across-enterprise
+source: https://claude.com/blog/cowork-plugins-across-enterprise, https://claude.com/product/cowork
 purpose: Analysis of Claude's Cowork enterprise platform, plugin architecture, and connector ecosystem for potential relevance to Agents-eval MAS evaluation framework.
 created: 2026-03-07
 ---
 
-**Status**: Generally available (Cowork); Plugin architecture in active rollout
+**Status**: Research preview (Cowork desktop app); Plugin architecture in active rollout
 
 ## What Cowork & Plugins Are
 
-**Cowork** is Claude's enterprise collaboration platform — a central hub where teams customize Claude for organizational workflows ([source][cowork-blog]). **Plugins** are portable file-system bundles that transform into specialized agents, deployable across Cowork and anything built on the Claude Agent SDK ([source][sdk-plugins]).
+**Cowork** is Claude's agentic desktop application for knowledge work — a local app (Windows/macOS) where users give Claude access to local files and tools, set a task, and step away ([source][cowork-product]). Operates with more agency than Claude Chat: users describe outcomes and cadence, Claude takes action and reports progress ([source][cowork-product]). Available on all paid plans (Max, Team, Enterprise); agent safety is still in development ([source][cowork-product]).
+
+**Plugins** are portable file-system bundles that transform into specialized agents, deployable across Cowork and anything built on the Claude Agent SDK ([source][sdk-plugins]).
 
 ### Core Components
 
@@ -95,11 +97,13 @@ If the evaluation framework becomes a team-wide tool:
 
 ## References
 
+- [Cowork product page][cowork-product]
 - [Cowork & Plugins announcement][cowork-blog]
 - [CC Skills docs][cc-skills]
 - [Agent SDK Plugins docs][sdk-plugins]
 - [Agent SDK Skills docs][sdk-skills]
 
+[cowork-product]: https://claude.com/product/cowork
 [cowork-blog]: https://claude.com/blog/cowork-plugins-across-enterprise
 [cc-skills]: https://code.claude.com/docs/en/skills
 [sdk-plugins]: https://platform.claude.com/docs/en/agent-sdk/plugins
