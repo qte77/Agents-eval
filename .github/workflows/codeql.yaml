@@ -42,7 +42,7 @@ jobs:
     - name: Dismiss alerts with inline suppression comments
       uses: advanced-security/dismiss-alerts@v1
       with:
-        sarif-upload-id: ${{ steps.analyze.outputs.sarif-id }}
+        sarif-id: ${{ steps.analyze.outputs.sarif-id }}
         sarif-file: results.sarif
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
