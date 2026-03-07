@@ -63,6 +63,8 @@ git branch -d ralph/<branch>
 
 **Missing GPG signatures**: If push is rejected due to unsigned commits, re-sign from the earliest unsigned commit: `git rebase --exec 'git commit --amend --no-edit --gpg-sign' <commit-id>~1` then `git push --force-with-lease`. Rebase replays commits after the given base — `~1` targets the parent so `<commit-id>` itself is included. `--exec` runs the amend-sign after each replayed commit. `--force-with-lease` safely pushes the rewritten history.
 
+**PR merge via GitHub API**: see `AGENT_LEARNINGS.md` → "PR Squash Merge via GitHub API Requires Both Title and Message" (authoritative).
+
 ## 5. Story Scope Must Include All Consumers of Changed Interfaces
 
 PRD `files` lists are authored manually and often miss pre-existing tests that assert on renamed symbols, changed output formats, or widget counts.

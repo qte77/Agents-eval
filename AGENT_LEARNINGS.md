@@ -191,6 +191,15 @@ updated: 2026-02-16
 - **Example**: `--argjson completed "$completed"` instead of `--argjson done "$completed"`
 - **References**: `ralph/scripts/ralph.sh` (`get_next_story`, `get_unblocked_stories`)
 
+### Pipe-into-While Loses Variable Assignments (Bash Subshell)
+
+- **Context**: Bash `while read` loops processing multi-line variables in Ralph shell scripts
+- **Problem**: `echo "$var" | while read -r line; do found=true; done` — pipe creates a subshell, so `found=true` never propagates to the parent. Duplicate detection loops or post-loop checks are needed as workarounds, adding fragile complexity.
+- **Solution**: Use here-string to keep the loop in the current shell: `while read -r line; do ...; done <<< "$var"`
+- **Example**: `while IFS= read -r filepath; do found=true; done <<< "$files"` instead of `echo "$files" | while ...`
+- **Anti-pattern**: Adding a second subshell loop to detect what the first loop already computed but couldn't propagate.
+- **References**: `ralph/scripts/lib/snapshot.sh` (test files section), ShellCheck SC2031
+
 ### Stale Test Fixtures Cause Cross-File Pollution
 
 - **Context**: Full `make test` suite with tests that error/fail due to stale fixtures (e.g., patching removed imports)
@@ -235,25 +244,37 @@ updated: 2026-02-16
 
 ### `-X ours` Does Not Delete Files Added by Theirs
 
-- **Context**: Squash merging a feature branch into `main` via PR when `main` has diverged
-- **Problem**: `git merge -X ours origin/main` resolves conflicted hunks in our favor, but files that exist only on `main` (added after branches diverged) are auto-merged as clean additions — no conflict triggers, so `-X ours` never fires. Result: stale files from `main` leak into the feature branch and survive the squash merge.
-- **Solution**: After `-X ours` merge, diff against the pre-merge state and `git rm` files the other branch introduced: `git diff HEAD <pre-merge-sha> --name-only --diff-filter=A | xargs git rm`
-- **Anti-pattern**: Assuming `-X ours` means "keep only our files." It means "resolve conflicts in our favor" — non-conflicting additions from theirs pass through silently.
-- **References**: `ralph/README.md` (Merging Back), `ralph/docs/LEARNINGS.md` (section 4)
+See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
 
-### LaTeX \@commands in \AtBeginDocument Require Outer \makeatletter
+### PR Squash Merge via GitHub API Requires Both Title and Message
 
-- **Context**: `run-pandoc.sh` header-includes with `\AtBeginDocument{...\@ifundefined...}` for non-English languages
-- **Problem**: `\AtBeginDocument` tokenizes its argument at parse time. If `@` has catcode "other" (default), `\@ifundefined` is tokenized as `\@` (spacefactor) + literal text. At `\begin{document}`, `\@` executes in vertical mode → `! You can't use \spacefactor in vertical mode`.
-- **Solution**: Wrap `\AtBeginDocument{...}` in `\makeatletter...\makeatother` so `@` is catcode "letter" when the argument is tokenized. Placing `\makeatletter` *inside* the argument doesn't help — catcode changes only affect future tokenization.
-- **Example**: `\makeatletter \AtBeginDocument{\@ifundefined{refname}{}{...}} \makeatother`
-- **Anti-pattern**: Putting `\makeatletter` inside `\AtBeginDocument{...}` — tokens are already formed before execution.
-- **References**: `scripts/writeup/run-pandoc.sh:292-296`
+- **Context**: Merging a PR via GitHub API (e.g. Ralph branch or any feature branch)
+- **Problem**: `commit_title` alone drops all branch commit messages from the squash body. Title must follow repo convention `PR <title> (#NUM)` to match history.
+- **Solution**:
+  ```bash
+  gh api repos/OWNER/REPO/pulls/NUM/merge \
+    -X PUT \
+    -f merge_method=squash \
+    -f commit_title="PR <title> (#NUM)" \
+    -f commit_message="$(git log origin/main..HEAD --format='* %s')"
+  ```
+- **Anti-pattern**: Passing only `commit_title` — squash body will be empty, losing branch commit history
+- **References**: `ralph/docs/LEARNINGS.md` (section 4)
 
-### Writeup Recipe Missing TITLE_PAGE Parameter
+### `gh pr edit` Fails with Projects Classic Deprecation
 
-- **Context**: `make writeup` recipe calling `pandoc_run` sub-make
-- **Problem**: `00_title_abstract.tex` existed but was never passed to pandoc via `-B` (before-body). PDF generated without title page silently.
-- **Solution**: Add `TITLE_PAGE="$(WRITEUP_DIR)/00_title_abstract.tex"` to the `pandoc_run` call in the writeup recipe.
-- **Anti-pattern**: Assuming pandoc will auto-discover files by naming convention. Each input must be explicitly passed.
-- **References**: `Makefile` (writeup recipe)
+- **Context**: Editing PR title or body via GitHub CLI
+- **Problem**: `gh pr edit` exits with GraphQL error about Projects (classic) deprecation — even for unrelated edits
+- **Solution**: Use GraphQL mutation directly:
+  ```bash
+  PR_ID=$(gh pr view NUM --json id --jq '.id')
+  gh api graphql -f query="mutation { updatePullRequest(input: {pullRequestId: \"$PR_ID\", title: \"...\", body: \"...\"}) { pullRequest { title } } }"
+  ```
+- **Anti-pattern**: Retrying `gh pr edit` — always fails until GitHub removes the deprecated Projects field from the PR schema
+
+### Claude Code Sandbox Blocks Git on `.claude/skills/`
+
+- **Context**: Any git operation (reset, stash, pull, checkout) touching `.claude/skills/` paths
+- **Problem**: `.claude/skills/` is write-denied in the Bash tool sandbox. Git operations that modify files there fail with "Read-only file system" — including `git reset --hard`, `git stash`, `git pull`
+- **Solution**: Use Edit/Write tools for file changes in `.claude/skills/`; run git from a non-sandboxed terminal when those paths are involved
+- **Anti-pattern**: `git reset --hard` or `git clean` to resolve conflicts involving skill files — always fails in sandbox

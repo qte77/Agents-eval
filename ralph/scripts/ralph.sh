@@ -51,6 +51,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 source "$SCRIPT_DIR/lib/baseline.sh"
 source "$SCRIPT_DIR/lib/teams.sh"
+source "$SCRIPT_DIR/lib/snapshot.sh"
 
 # Helpers
 commit_count() { git rev-list --count HEAD -- 2>/dev/null || echo 0; }
@@ -428,8 +429,22 @@ execute_story() {
         echo "**Title**: $title"
         echo "**Description**: $description"
         echo ""
-        echo "Read prd.json for full acceptance criteria and expected files."
+        echo "Acceptance criteria, story files, and test context are pre-loaded below."
+        echo "Only read additional files if the pre-loaded context is insufficient."
     } >> "$iteration_prompt"
+
+    # Inject codebase snapshot
+    if [ -f "$CODEBASE_MAP_FILE" ]; then
+        echo "" >> "$iteration_prompt"
+        cat "$CODEBASE_MAP_FILE" >> "$iteration_prompt"
+    fi
+
+    # Inject story context
+    generate_story_context "$story_id"
+    if [ -f "$STORY_CONTEXT_FILE" ]; then
+        echo "" >> "$iteration_prompt"
+        cat "$STORY_CONTEXT_FILE" >> "$iteration_prompt"
+    fi
 
     # Append retry context if retrying after quality failure (#4: pass failure reason)
     if [ -f "$RETRY_CONTEXT_FILE" ]; then
@@ -738,6 +753,9 @@ main() {
 
     validate_environment
 
+    # Pre-compute codebase context (content-hash skips if unchanged)
+    generate_codebase_map
+
     # Show dependency wave plan before starting
     print_dependency_tree
 
@@ -946,12 +964,15 @@ main() {
             log_progress "$iteration" "$story_id" "FAIL" "Execution error"
         fi
 
-        # Wave boundary detection (teams mode only)
-        if [ "$story_passed" = "true" ] && [ "$RALPH_TEAMS" = "true" ]; then
+        # Wave boundary detection (both solo and teams mode)
+        if [ "$story_passed" = "true" ]; then
             local next_story
             next_story=$(get_next_story)
             if [ -n "$next_story" ] && ! echo "$last_wave_stories" | grep -qx "$next_story"; then
-                run_wave_checkpoint
+                generate_codebase_map  # Refresh snapshot after wave
+                if [ "$RALPH_TEAMS" = "true" ]; then
+                    run_wave_checkpoint
+                fi
                 last_wave_stories=$(get_unblocked_stories)
             fi
         fi

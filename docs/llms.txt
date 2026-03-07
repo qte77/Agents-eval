@@ -1,12 +1,11 @@
 # Agents-eval
 
-> Multi-Agent System (MAS) evaluation framework using PydanticAI — three-tiered assessment (Traditional Metrics, LLM-as-a-Judge, Graph-Based Analysis) for scientific paper review generation and evaluation.
+> Agents-eval is a Multi-Agent System (MAS) evaluation framework using PydanticAI for generating and evaluating scientific paper reviews.
 
 ## Getting Started
 
 - [README](https://github.com/qte77/Agents-eval/blob/main/README.md): Project overview, quick start, and navigation
 - [Contributing](https://github.com/qte77/Agents-eval/blob/main/CONTRIBUTING.md): Development commands, coding standards, testing strategy
-- [Agent Instructions](https://github.com/qte77/Agents-eval/blob/main/AGENTS.md): AI agent behavioral rules and compliance requirements
 
 ## Architecture & Design
 
@@ -16,7 +15,6 @@
 
 ## Usage & Operations
 
-- [PeerRead Agent Usage](https://github.com/qte77/Agents-eval/blob/main/docs/howtos/peerread-agent-usage.md): Operational guide for the evaluation pipeline
 - [Troubleshooting](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/troubleshooting.md): Common issues and solutions
 
 ## Best Practices
@@ -29,7 +27,25 @@
 ## Optional
 
 - [Security Advisories](https://github.com/qte77/Agents-eval/blob/main/docs/security-advisories.md): Known security issues and mitigations
+- [Agent Instructions](https://github.com/qte77/Agents-eval/blob/main/AGENTS.md): AI agent behavioral rules and compliance requirements
+- [PeerRead Agent Usage](https://github.com/qte77/Agents-eval/blob/main/docs/howtos/peerread-agent-usage.md): Operational guide for the evaluation pipeline
+- [CC Adoption Plan](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-adoption-plan.md): Claude Code feature adoption roadmap
 - [Agent Teams Orchestration](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md): Claude Code agent teams analysis
+- [Ralph Enhancement Research](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-ralph-enhancement-research.md): Ralph loop gap analysis and external patterns
+- [Skills Adoption](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-skills-adoption-analysis.md): Claude Code skills system adoption analysis
+- [Sandboxing](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-sandboxing-analysis.md): Claude Code sandboxing and security analysis
+- [Model & Provider Configuration](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-model-provider-configuration.md): LLM model and provider configuration
+- [Plugin Packaging](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-plugin-packaging-research.md): Claude Code plugin packaging research
+- [Memory System](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-memory-system-analysis.md): Claude Code memory system analysis
+- [Cowork & Plugins Enterprise](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-cowork-plugins-enterprise-analysis.md): Enterprise Cowork and plugins analysis
+- [Changelog Feature Scan](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-changelog-feature-scan.md): Claude Code changelog feature tracking
+- [Remote Control](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-remote-control-analysis.md): Claude Code remote control analysis
+- [Cloud Sessions](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-cloud-sessions-analysis.md): Claude Code cloud sessions (Code on the Web)
+- [Fast Mode](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-fast-mode-analysis.md): Claude Code fast mode analysis
+- [Chrome Extension](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-chrome-extension-analysis.md): Claude Code Chrome extension analysis
+- [llms.txt Analysis](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-llms-txt-analysis.md): llms.txt specification and implementation analysis
+- [Platform Documentation Index](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-platform-documentation-index.md): Claude platform documentation index
+- [Remote Access Landscape](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-remote-access-landscape.md): Remote access landscape analysis
 - [Inference Providers](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/Inference-Providers.md): LLM provider comparison
 - [Landscape: Agent Frameworks](https://github.com/qte77/Agents-eval/blob/main/docs/landscape/landscape-agent-frameworks-infrastructure.md): Agent framework survey
 - [Landscape: Evaluation Resources](https://github.com/qte77/Agents-eval/blob/main/docs/landscape/landscape-evaluation-data-resources.md): Evaluation datasets and benchmarks

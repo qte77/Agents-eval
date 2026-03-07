@@ -21,10 +21,11 @@ created: 2026-03-07
 
 <!-- markdownlint-enable MD013 -->
 
-## Improve Next Sprint (robustness)
+## Backlog
 
 <!-- markdownlint-disable MD013 -->
 
+- [ ] **Codebase snapshot system**: Pre-analyze `src/` file tree and signatures into `ralph/docs/codebase-map.md`; inject story-scoped context (AC, file contents, tests) into prompt. Regenerated per wave via content-hash diffing (`lib/snapshot.sh`). Inspired by [jcodemunch-mcp](https://github.com/jgravelle/jcodemunch-mcp) (AST-based symbol indexing) and `researching-codebase` skill (structured markdown output format)
 - [ ] **Namespace `/tmp` paths by worktree**: `BASELINE_FILE`, `RETRY_CONTEXT_FILE`, `TDD_VERIFIED_DIR` use fixed `/tmp/claude/ralph_*` paths — concurrent worktrees overwrite each other. Fix: `/tmp/claude/ralph_<worktree_hash>/`
 - [ ] **Add `--check-overlaps` to `generate_prd_json.py`**: Warn when stories share files without `depends_on`
 - [ ] **Add De-Sloppify pass**: Post-story cleanup iteration — run `make quick_validate` with a "fix all lint/type/complexity issues" prompt before marking story passed
@@ -32,6 +33,10 @@ created: 2026-03-07
 - [ ] **Ad-hoc steering instructions**: Accept a free-text `INSTRUCTION` parameter via CLI/Make to inject user guidance into the prompt without editing PRD or progress files. Usage: `make ralph_run INSTRUCTION="focus on error handling"`.
 - [ ] **Multi-instance worktree orchestration**: Run up to N independent Ralph instances in separate git worktrees simultaneously. Each worktree gets its own branch, prd.json, and progress.txt. See [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) for reference.
 - [ ] **Merge with ralph-loop template**: Evaluate and port features from [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) into this project, or merge both projects altogether.
+- [ ] **Trigger table in prompt.md**: Auto-route to skills based on file patterns changed (e.g., `src/app/agents/` → `designing-backend`). Source: [2602.20478] §3.1 Table 1
+- [ ] **Symptom-cause-fix tables in progress.txt**: Structured failure mode tables instead of free-text learnings. Agents avoid repeating known mistakes. Source: [2602.20478] §3.3
+- [ ] **Context drift detector**: Session-start hook warning when src/ files changed without codebase-map.md update. Extends content-hash check. Source: [2602.20478] §5
+- [ ] **Agent creation heuristic**: Track retry counts per-domain; suggest new skill when a domain repeatedly fails. Source: [2602.20478] §3.2
 
 <!-- markdownlint-enable MD013 -->
 
@@ -55,9 +60,16 @@ created: 2026-03-07
 | **Cloud Sessions for Ralph loop** | No local MCP servers or persistent state in cloud VMs; setup script complexity | Cloud sessions support custom images or MCP forwarding |
 | **BDD workflow support** | Only TDD `[RED]/[GREEN]/[REFACTOR]` accepted | A BDD project needs Ralph |
 | **Cross-layer validation commands** | Single-layer Python project | Project becomes multi-layer |
-| **Rust/Python rewrite** | Bash works; shell brittleness not yet a measured blocker | Bash brittleness measurably blocks development |
+| **CLI rewrite (Bun/Deno/Rust/Python)** | Bash works; jq/quoting fragility not yet a measured blocker. Bun/Deno are middle ground (scripting feel + types + native JSON). | jq quoting bugs (SC1010) or `/tmp` path collisions measurably block development |
 
 <!-- markdownlint-enable MD013 -->
+
+**CLI rewrite scope** (when triggered):
+
+- **Biggest wins**: Native JSON (eliminates jq), typed story/prd interfaces, proper tmp dir management, async process spawning
+- **Maps cleanly**: jq queries → JSON.parse, string parsing → typed objects, background monitor → async/await + AbortController, `claude -p` piping → Bun.spawn/Deno.Command
+- **Needs investigation**: `exec > >(tee)` dual logging, signal/trap handling, `ralph-in-worktree.sh` git coupling, `watch.sh`
+- **Middle ground**: Bun/Deno keep scripting feel vs full Rust rewrite
 
 ## Deferred
 
@@ -103,5 +115,6 @@ created: 2026-03-07
 - [CC-cloud-sessions-analysis.md](../docs/analysis/ClaudeCode/CC-cloud-sessions-analysis.md) — cloud VM execution
 - [CC-skills-adoption-analysis.md](../docs/analysis/ClaudeCode/CC-skills-adoption-analysis.md) — Skills adoption and format analysis (completed)
 - [CC-changelog-feature-scan.md](../docs/analysis/ClaudeCode/CC-changelog-feature-scan.md) — changelog scan (structured outputs, `/loop`, HTTP hooks, worktree isolation)
+- [Codified Context Infrastructure](https://arxiv.org/abs/2602.20478) — three-tier context architecture (constitution + specialist agents + cold-memory knowledge base), 283-session empirical study, 108K LOC C# project. Validates AGENTS.md + Skills + docs/ pattern.
 
 <!-- markdownlint-enable MD013 -->

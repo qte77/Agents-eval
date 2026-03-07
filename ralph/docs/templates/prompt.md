@@ -52,9 +52,9 @@ Follow the project's testing best practices. Tests MUST be written and
 
 ### Before starting: Read relevant files
 
-- Read ALL files listed in the story's `files` array from prd.json
+- Review the pre-loaded Codebase Map and Story Files below
 - Understand existing patterns before writing any code
-- **STATUS**: Output "Reading story files for STORY-XXX"
+- **STATUS**: Output "Reviewing pre-loaded context for STORY-XXX"
 
 ### Before RED: Impact scan for renames and behavior changes
 
@@ -136,4 +136,4 @@ Your work is verified by checking git history. Before finishing, confirm:
 
 ## Current Story Details
 
-(Will be appended by ralph.sh for each iteration)
+(Story details, codebase map, and story context will be appended by ralph.sh)
