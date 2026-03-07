@@ -12,14 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `ralph/TODO.md`: consolidated Ralph enhancement TODOs sourced from CC ralph enhancement research analysis
-
-### Changed
-
-- `ralph/README.md`: slimmed to essential content, removed sections duplicated elsewhere
-
-### Added
-
+- `ralph/TODO.md`: consolidated enhancement TODOs from CC ralph enhancement research
 - **Story Status Enum**: Replaced binary `passes: bool` with `status: str` enum (`"pending"` | `"in_progress"` | `"passed"` | `"failed"`) across prd.json schema, shell scripts, and templates — enables observable story state and distinguishes not-started from running from failed
 - **Wave Field in prd.json**: `wave: int` (1-indexed BFS level) computed by `compute_waves()` in `generate_prd_json.py` — makes dependency execution plan visible in prd.json without runtime computation
 - **Sprint 9 Archive**: `ralph/docs/archive/sprint9/` with completed prd.json and progress.txt (all 9 stories passed)
@@ -60,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`ralph/README.md`**: slimmed to essential content, removed duplicated sections
 - **`update_story_status()`**: Accepts enum values (`"pending"`, `"in_progress"`, `"passed"`, `"failed"`) instead of `"true"`/`"false"` — sets `.status` field, sets `completed_at` only on `"passed"`
 - **Story Lifecycle**: Main loop marks story `"in_progress"` at start, `"passed"` on success, `"failed"` on max retries (was only `"true"` on success)
 - **`_backfill_existing_stories()`**: Migrates legacy `passes: bool` → `status: str` and adds `wave: 0` for existing prd.json files
