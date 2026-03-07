@@ -13,12 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `.github/templates/llms.txt.additions.tpl`: project-specific llms.txt additions (Best Practices, Optional links) separate from generic skeleton
+- `scripts/writeup/README.md`: usage guide and pandoc/LaTeX gotchas (moved from AGENT_LEARNINGS)
+- `AGENT_LEARNINGS.md`: patterns for `gh pr edit` GraphQL workaround, CC sandbox git restriction, PR squash merge API
 - `.claude/skills/enforcing-doc-hierarchy/`: skill for auditing doc hierarchy, detecting broken references and chain breaks
 - `docs/analysis/ClaudeCode/`: 13 CC feature analyses — Remote Control, Cloud Sessions, Memory System, Cowork & Plugins, Chrome Extension, Platform Docs, Plugin Packaging, Ralph Enhancement Research, Sandboxing, Skills Adoption, Changelog Feature Scan, Model/Provider Config, llms.txt
 - `docs/analysis/ClaudeCode/CC-adoption-plan.md`: consolidated CC adoption plan (supersedes `CC-skills-Ralph-adoption-plan.md`)
 
 ### Changed
 
+- `.github/templates/llms.txt.tpl`: stripped to universal skeleton (`${PROJECT_NAME}`, `${PROJECT_DESC}`, `${BLOB}` vars only)
+- `.github/workflows/write-llms-txt.yaml`: append additions template, POSIX-safe validate, exclude `docs/llms.txt` from trigger to prevent CI cycle
+- `AGENT_LEARNINGS.md`: DRY/YAGNI cleanup — removed LaTeX/pandoc one-offs, collapsed `-X ours` and PR merge API to cross-references
+- `ralph/docs/LEARNINGS.md`: PR merge API block replaced with cross-reference to AGENT_LEARNINGS
 - `docs/analysis/ClaudeCode/`, `RDI-Agentbeats/`: reorganized CC and AgentBeats analysis into dedicated subdirectories
 - `scripts/writeup/generate-plantuml-png.sh`, `run-pandoc.sh`: POSIX-hardened (quoting, error handling, LaTeX `\makeatletter` fix)
 - `AGENT_LEARNINGS.md`: new patterns — shell keyword collision in jq args (SC1010), stale test fixture cross-file pollution

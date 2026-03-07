@@ -3,7 +3,7 @@ title: Agent Learning Documentation
 description: Non-obvious patterns that prevent repeated mistakes across sprints
 version: 1.0.0
 created: 2025-08-19
-updated: 2026-02-16
+updated: 2026-03-07
 ---
 
 ## Template
