@@ -16,7 +16,3 @@
 ## Usage & Operations
 
 - [Troubleshooting](${BLOB}/docs/best-practices/troubleshooting.md): Common issues and solutions
-
-## Optional
-
-- [Security Advisories](${BLOB}/docs/security-advisories.md): Known security issues and mitigations

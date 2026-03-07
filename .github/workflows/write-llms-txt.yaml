@@ -42,15 +42,18 @@ jobs:
       - name: Validate template links exist
         run: |
           stale=0
-          for tpl in .github/templates/llms.txt.tpl .github/templates/llms.txt.additions.tpl; do
-            [ -f "$tpl" ] || continue
+          validate_tpl() {
+            local tpl="$1"
             for path in $(grep -oP '\(\$\{BLOB\}/\K[^)]+' "$tpl"); do
               if [ ! -f "$path" ]; then
                 echo "::error::Stale link in $tpl: $path"
                 stale=1
               fi
             done
-          done
+          }
+          validate_tpl .github/templates/llms.txt.tpl
+          [ -f .github/templates/llms.txt.additions.tpl ] && \
+            validate_tpl .github/templates/llms.txt.additions.tpl
           exit $stale
 
       - name: Generate llms.txt from template

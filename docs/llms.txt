@@ -17,10 +17,6 @@
 
 - [Troubleshooting](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/troubleshooting.md): Common issues and solutions
 
-## Optional
-
-- [Security Advisories](https://github.com/qte77/Agents-eval/blob/main/docs/security-advisories.md): Known security issues and mitigations
-
 ## Best Practices
 
 - [MAS Design Principles](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/mas-design-principles.md): Multi-agent system design guidance
@@ -28,8 +24,9 @@
 - [Testing Strategy](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/testing-strategy.md): Testing approach and guidelines
 - [Python Best Practices](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/python-best-practices.md): Python coding standards
 
-## Optional (Project-Specific)
+## Optional
 
+- [Security Advisories](https://github.com/qte77/Agents-eval/blob/main/docs/security-advisories.md): Known security issues and mitigations
 - [Agent Instructions](https://github.com/qte77/Agents-eval/blob/main/AGENTS.md): AI agent behavioral rules and compliance requirements
 - [PeerRead Agent Usage](https://github.com/qte77/Agents-eval/blob/main/docs/howtos/peerread-agent-usage.md): Operational guide for the evaluation pipeline
 - [CC Adoption Plan](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-adoption-plan.md): Claude Code feature adoption roadmap

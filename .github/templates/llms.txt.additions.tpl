@@ -5,8 +5,9 @@
 - [Testing Strategy](${BLOB}/docs/best-practices/testing-strategy.md): Testing approach and guidelines
 - [Python Best Practices](${BLOB}/docs/best-practices/python-best-practices.md): Python coding standards
 
-## Optional (Project-Specific)
+## Optional
 
+- [Security Advisories](${BLOB}/docs/security-advisories.md): Known security issues and mitigations
 - [Agent Instructions](${BLOB}/AGENTS.md): AI agent behavioral rules and compliance requirements
 - [PeerRead Agent Usage](${BLOB}/docs/howtos/peerread-agent-usage.md): Operational guide for the evaluation pipeline
 - [CC Adoption Plan](${BLOB}/docs/analysis/ClaudeCode/CC-adoption-plan.md): Claude Code feature adoption roadmap
