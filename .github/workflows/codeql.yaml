@@ -34,7 +34,16 @@ jobs:
     #   make release
 
     - name: Perform CodeQL Analysis
+      id: analyze
       uses: github/codeql-action/analyze@v4
-    #- name: sarif
-    #  uses: github/codeql-action/upload-sarif@v4
+      with:
+        output: results.sarif
+
+    - name: Dismiss alerts with inline suppression comments
+      uses: advanced-security/dismiss-alerts@v1
+      with:
+        sarif-upload-id: ${{ steps.analyze.outputs.sarif-id }}
+        sarif-file: results.sarif
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ...
