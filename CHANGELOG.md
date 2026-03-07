@@ -11,6 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `.claude/skills/enforcing-doc-hierarchy/`: skill for auditing doc hierarchy, detecting broken references and chain breaks
+- `docs/analysis/ClaudeCode/`: 13 CC feature analyses — Remote Control, Cloud Sessions, Memory System, Cowork & Plugins, Chrome Extension, Platform Docs, Plugin Packaging, Ralph Enhancement Research, Sandboxing, Skills Adoption, Changelog Feature Scan, Model/Provider Config, llms.txt
+- `docs/analysis/ClaudeCode/CC-adoption-plan.md`: consolidated CC adoption plan (supersedes `CC-skills-Ralph-adoption-plan.md`)
+
+### Changed
+
+- `docs/analysis/ClaudeCode/`, `RDI-Agentbeats/`: reorganized CC and AgentBeats analysis into dedicated subdirectories
+- `scripts/writeup/generate-plantuml-png.sh`, `run-pandoc.sh`: POSIX-hardened (quoting, error handling, LaTeX `\makeatletter` fix)
+- `AGENT_LEARNINGS.md`: new patterns — shell keyword collision in jq args (SC1010), stale test fixture cross-file pollution
+- `docs/howtos/peerread-agent-usage.md`: slimmed to unique content
+- `README.md`: restructured badge layout and navigation
+- `.github/workflows/pytest.yaml`: pin uv cache to `uv.lock` hash for precise invalidation
+
+### Removed
+
+- `docs/analysis/CC-skills-Ralph-adoption-plan.md`: superseded by `ClaudeCode/CC-adoption-plan.md`
+- `docs/analysis/agents-md-refactor-plan.md`: consolidated into other docs
+
 ## [5.0.0] - 2026-03-03
 
 ### Added

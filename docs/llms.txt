@@ -29,7 +29,7 @@
 ## Optional
 
 - [Security Advisories](https://github.com/qte77/Agents-eval/blob/main/docs/security-advisories.md): Known security issues and mitigations
-- [Agent Teams Orchestration](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/CC-agent-teams-orchestration.md): Claude Code agent teams analysis
+- [Agent Teams Orchestration](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md): Claude Code agent teams analysis
 - [Inference Providers](https://github.com/qte77/Agents-eval/blob/main/docs/analysis/Inference-Providers.md): LLM provider comparison
 - [Landscape: Agent Frameworks](https://github.com/qte77/Agents-eval/blob/main/docs/landscape/landscape-agent-frameworks-infrastructure.md): Agent framework survey
 - [Landscape: Evaluation Resources](https://github.com/qte77/Agents-eval/blob/main/docs/landscape/landscape-evaluation-data-resources.md): Evaluation datasets and benchmarks

@@ -273,12 +273,13 @@ writeup:  ## Build writeup PDF. Usage: make writeup WRITEUP_DIR=docs/write-up/bs
 	$(MAKE) -s pandoc_run \
 		INPUT_FILES="$$(printf '%s\036' $(WRITEUP_DIR)/01_*.md $(WRITEUP_DIR)/0[2-8]_*.md $(WRITEUP_DIR)/09b_*.md $(WRITEUP_DIR)/10_*.md $(WRITEUP_DIR)/11_*.md)" \
 		OUTPUT_FILE="$(WRITEUP_OUTPUT)" \
+		TITLE_PAGE="$(WRITEUP_DIR)/00_title_abstract.tex" \
 		BIBLIOGRAPHY="$(WRITEUP_BIB)" \
 		CSL="$(WRITEUP_CSL)" \
 		LANGUAGE="$(LANGUAGE)" \
 		NUMBER_SECTIONS="true" \
 		LIST_OF_FIGURES="true" \
-		LIST_OF_TABLES="false" \
+		LIST_OF_TABLES="true" \
 		UNNUMBERED_TITLE="true"
 	echo "=== Writeup PDF: $(WRITEUP_OUTPUT) ==="
 

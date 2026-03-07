@@ -55,9 +55,10 @@ nav:
       - AgentBeats Basics: analysis/AgentBeats_basics.md
       - Agent Teams Orchestration: analysis/CC-agent-teams-orchestration.md
       - Fast Mode Analysis: analysis/CC-fast-mode-analysis.md
-      - Skills Ralph Adoption: analysis/CC-skills-Ralph-adoption-plan.md
+      - Skills Adoption Analysis: analysis/ClaudeCode/CC-skills-adoption-analysis.md
+      - Sandboxing Analysis: analysis/ClaudeCode/CC-sandboxing-analysis.md
+      - llms.txt Analysis: analysis/ClaudeCode/CC-llms-txt-analysis.md
       - Inference Providers: analysis/Inference-Providers.md
-      - AGENTS.md Refactor Plan: analysis/agents-md-refactor-plan.md
       - MAS Best Practices: analysis/benchmark_mas_best_practices.md
       - Core Principles 80/20: analysis/core-principles-8020-analysis.md
       - Production Agent Patterns: analysis/production-agent-patterns-gap-analysis.md

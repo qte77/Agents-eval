@@ -15,9 +15,10 @@
 #  - Auto-generated List of Figures after TOC (configurable)
 #  - Auto-generated List of Tables after TOC (configurable)
 #  - Unnumbered title page option (configurable)
+set -eu
 
 # Help
-if [ "$1" = "help" ]; then
+if [ "${1:-}" = "help" ]; then
     cat << 'EOF'
 Usage: $0 [input_files] [output_file] [title_page] [template] [footer_text] [toc_title] [language] [number_sections] [bibliography] [csl] [list_of_figures] [list_of_tables] [unnumbered_title]
 
@@ -50,6 +51,11 @@ EOF
     exit 0
 fi
 
+if ! command -v pandoc >/dev/null 2>&1; then
+    echo "Error: pandoc is not installed. Exiting ..."
+    exit 1
+fi
+
 # Resolve project root to absolute path (before any cd)
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
@@ -60,22 +66,22 @@ mkdir -p "$TEMP_DIR"
 # Extract name and version from [project] section
 PROJECT_FILE="$PROJECT_ROOT/pyproject.toml"
 project_section=$(mktemp -p "$TEMP_DIR")
-sed -n '/^\[project\]/,/^\[/p' "$PROJECT_FILE" | head -n -1 > "$project_section"
+sed -n '/^\[project\]/,/^\[/p' "$PROJECT_FILE" | sed '$d' > "$project_section"
 PROJECT_NAME=$(grep -E '^name[[:space:]]*=' "$project_section" | head -1 | sed -E 's/^name[[:space:]]*=[[:space:]]*"([^"]*)".*/\1/')
 VERSION=$(grep -E '^version[[:space:]]*=' "$project_section" | head -1 | sed -E 's/^version[[:space:]]*=[[:space:]]*"([^"]*)".*/\1/')
 rm -f "$project_section"
 
 # Parse arguments
-input_files_raw="${1:-!(01_*)*.md}"
+input_files_raw="${1:-*.md}"
 output_file="${2:-output.pdf}"
-title_file="$3"
-template_file="$4"
+title_file="${3:-}"
+template_file="${4:-}"
 footer_text="${5:-${PROJECT_NAME} v${VERSION}}"
-toc_title="$6"
+toc_title="${6:-}"
 language="${7:-en-US}"
 number_sections="${8:-true}"
-bibliography_file="$9"
-csl_file="${10}"
+bibliography_file="${9:-}"
+csl_file="${10:-}"
 list_of_figures="${11:-true}"
 list_of_tables="${12:-true}"
 unnumbered_title="${13:-true}"
@@ -104,7 +110,7 @@ set -- --toc --toc-depth=2 \
 
 # Handle directory changes for image paths
 work_dir=""
-title_arg=""
+title_added=false
 if echo "$input_files" | grep -q "/"; then
     for file in $input_files; do
         [ -f "$file" ] && work_dir=$(dirname "$file") && break
@@ -116,7 +122,10 @@ if echo "$input_files" | grep -q "/"; then
         for file in $input_files; do
             [ -f "$file" ] && temp_files="$temp_files $(basename "$file")"
         done
-        [ -n "$title_file" ] && [ -f "$title_file" ] && title_arg="-B $(basename "$title_file")"
+        if [ -n "$title_file" ] && [ -f "$title_file" ]; then
+            set -- "$@" -B "$(basename "$title_file")"
+            title_added=true
+        fi
         
         # Convert relative paths to absolute before cd
         case "$output_file" in /*) ;; *) output_file="$(pwd)/$output_file" ;; esac
@@ -132,7 +141,7 @@ if echo "$input_files" | grep -q "/"; then
 fi
 
 # Add title if not set by directory change
-[ -z "$title_arg" ] && [ -n "$title_file" ] && [ -f "$title_file" ] && title_arg="-B $title_file"
+[ "$title_added" = false ] && [ -n "$title_file" ] && [ -f "$title_file" ] && set -- "$@" -B "$title_file"
 
 # Add template
 [ -n "$template_file" ] && [ -f "$template_file" ] && set -- "$@" --template="$template_file"
@@ -289,10 +298,12 @@ lang_renames="\\renewcommand{\\figurename}{$figure_name}\\renewcommand{\\tablena
 [ -n "$abstract_name" ] && lang_renames="$lang_renames\\renewcommand{\\abstractname}{$abstract_name}"
 if [ -n "$bibliography_name" ]; then
     lang_renames="$lang_renames\\renewcommand{\\bibname}{$bibliography_name}"
-    lang_renames="$lang_renames\\makeatletter\\@ifundefined{refname}{}{\\renewcommand{\\refname}{$bibliography_name}}\\makeatother"
+    lang_renames="$lang_renames\\@ifundefined{refname}{}{\\renewcommand{\\refname}{$bibliography_name}}"
 fi
 cat >> "$header_temp" << EOF
+\\makeatletter
 \\AtBeginDocument{$lang_renames}
+\\makeatother
 EOF
 
 # Override TOC title if explicitly provided
@@ -379,6 +390,14 @@ EOF
     fi
 fi
 
+# Auto-inject abbreviations after TOC if 00_abbreviations.tex exists in work dir
+# After cd into work_dir, the file is in the current directory
+if [ -f "00_abbreviations.tex" ]; then
+    cat >> "$header_temp" << EOF
+\\appto\\tableofcontents{\\clearpage\\input{00_abbreviations.tex}}
+EOF
+fi
+
 # Auto-generate List of Figures / List of Tables after TOC (before arabic page numbering)
 if [ "$list_of_figures" = "true" ]; then
     cat >> "$header_temp" << EOF
@@ -407,6 +426,8 @@ set -- "$@" -H "$header_temp"
 if [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ]; then
     set -- "$@" --citeproc --bibliography="$bibliography_file"
     set -- "$@" -M link-citations=true
+    # Language-specific references heading on a new page
+    set -- "$@" -M reference-section-title="${bibliography_name:-References}"
     echo "Bibliography: $bibliography_file"
     if [ -n "$csl_file" ] && [ -f "$csl_file" ]; then
         set -- "$@" --csl="$csl_file"
@@ -421,99 +442,89 @@ if [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ]; then
     fi
 fi
 
-# Enable extended globbing
-[ -n "${BASH_VERSION}" ] && shopt -s extglob 2>/dev/null
-
 # Run pandoc
 echo "Converting '$input_files_raw' to '$output_file'..."
-if [ -n "$title_arg" ]; then
-    pandoc "$@" $title_arg -o "$output_file" $input_files
-else
-    pandoc "$@" -o "$output_file" $input_files
+if ! pandoc "$@" -o "$output_file" $input_files; then
+    [ "$cleanup_header" -eq 1 ] && rm -f "$header_temp"
+    echo "Error: PDF generation failed"
+    exit 1
 fi
-result=$?
 
 # Cleanup
 [ "$cleanup_header" -eq 1 ] && rm -f "$header_temp"
 
-# Check result
-if [ $result -eq 0 ]; then
-    echo "PDF generated successfully: $output_file"
+echo "PDF generated successfully: $output_file"
 
-    # --- Auto-generate BUILD.md ---
-    _out_dir=$(dirname "$output_file")
-    _out_name=$(basename "$output_file")
-    _pv=$(pandoc --version 2>/dev/null | head -1 | sed 's/pandoc //' || echo "unknown")
-    _cwd="${work_dir:-.}"
-    # Build file lists with directory prefix for BUILD.md
-    _input_full=""
-    for _f in $input_files; do _input_full="$_input_full $_cwd/$_f"; done
-    _input_full=$(echo "$_input_full" | sed 's/^ //')
-    # Resolve title_file path (may be basename after cd into work_dir)
-    _title_full=""
-    [ -n "$title_file" ] && _title_full="$_cwd/$(basename "$title_file")"
-    # Strip PROJECT_ROOT prefix to produce relative paths
-    _bib_rel=$(echo "$bibliography_file" | sed "s|^$PROJECT_ROOT/||")
-    _csl_rel=$(echo "$csl_file" | sed "s|^$PROJECT_ROOT/||")
-    {
-        printf '# Build Instructions for %s v%s\n\n' "$PROJECT_NAME" "$VERSION"
+# --- Auto-generate BUILD.md ---
+_out_dir=$(dirname "$output_file")
+_out_name=$(basename "$output_file")
+_pv=$(pandoc --version 2>/dev/null | head -1 | sed 's/pandoc //' || echo "unknown")
+_cwd="${work_dir:-.}"
+# Build file lists with directory prefix for BUILD.md
+_input_full=""
+for _f in $input_files; do _input_full="$_input_full $_cwd/$_f"; done
+_input_full=$(echo "$_input_full" | sed 's/^ //')
+# Resolve title_file path (may be basename after cd into work_dir)
+_title_full=""
+[ -n "$title_file" ] && _title_full="$_cwd/$(basename "$title_file")"
+# Strip PROJECT_ROOT prefix to produce relative paths
+_bib_rel=$(echo "$bibliography_file" | sed "s|^$PROJECT_ROOT/||")
+_csl_rel=$(echo "$csl_file" | sed "s|^$PROJECT_ROOT/||")
+{
+    printf '# Build Instructions for %s v%s\n\n' "$PROJECT_NAME" "$VERSION"
 
-        # --- Make recipe (recommended) ---
-        printf '## Make Recipe (Recommended)\n\n```bash\n'
-        printf 'make pandoc_run \\\n'
-        printf '  INPUT_FILES="$$(printf '\''%%s\\036'\'' %s)" \\\n' "$_input_full"
-        printf '  OUTPUT_FILE="%s"' "$_cwd/$_out_name"
-        [ -n "$_title_full" ] && \
-            printf ' \\\n  TITLE_PAGE="%s"' "$_title_full"
-        [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ] && \
-            printf ' \\\n  BIBLIOGRAPHY="%s"' "$_bib_rel"
-        [ -n "$csl_file" ] && [ -f "$csl_file" ] && \
-            printf ' \\\n  CSL="%s"' "$_csl_rel"
-        [ "$number_sections" = "true" ] && \
-            printf ' \\\n  NUMBER_SECTIONS="true"'
-        [ "$list_of_figures" != "true" ] && \
-            printf ' \\\n  LIST_OF_FIGURES="false"'
-        [ "$list_of_tables" != "true" ] && \
-            printf ' \\\n  LIST_OF_TABLES="false"'
-        printf '\n```\n\n'
+    # --- Make recipe (recommended) ---
+    printf '## Make Recipe (Recommended)\n\n```bash\n'
+    printf 'make pandoc_run \\\n'
+    printf '  INPUT_FILES="$$(printf '\''%%s\\036'\'' %s)" \\\n' "$_input_full"
+    printf '  OUTPUT_FILE="%s"' "$_cwd/$_out_name"
+    [ -n "$_title_full" ] && \
+        printf ' \\\n  TITLE_PAGE="%s"' "$_title_full"
+    [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ] && \
+        printf ' \\\n  BIBLIOGRAPHY="%s"' "$_bib_rel"
+    [ -n "$csl_file" ] && [ -f "$csl_file" ] && \
+        printf ' \\\n  CSL="%s"' "$_csl_rel"
+    [ "$number_sections" = "true" ] && \
+        printf ' \\\n  NUMBER_SECTIONS="true"'
+    [ "$list_of_figures" != "true" ] && \
+        printf ' \\\n  LIST_OF_FIGURES="false"'
+    [ "$list_of_tables" != "true" ] && \
+        printf ' \\\n  LIST_OF_TABLES="false"'
+    printf '\n```\n\n'
 
-        # --- Raw pandoc command (standalone) ---
-        printf '## Raw Pandoc Command (Standalone)\n\n```bash\ncd %s && \\\npandoc \\\n' "$_cwd"
-        for _f in $input_files; do printf '  %s \\\n' "$_f"; done
-        [ -n "$_title_full" ] && \
-            printf '  -B %s \\\n' "$(basename "$_title_full")"
-        printf '  --toc --toc-depth=2 \\\n'
-        [ "$number_sections" = "true" ] && printf '  --number-sections \\\n'
-        printf '  -V geometry:"margin=1in,footskip=35pt" \\\n'
-        printf '  -V documentclass=report \\\n'
-        printf '  --pdf-engine=xelatex \\\n'
-        printf '  --from markdown+smart \\\n'
-        printf '  -V pagestyle=plain'
-        [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ] && \
-            printf ' \\\n  --citeproc \\\n  --bibliography=%s' "$(basename "$bibliography_file")"
-        [ -n "$csl_file" ] && [ -f "$csl_file" ] && \
-            printf ' \\\n  --csl=%s' "$_csl_rel"
-        printf ' \\\n  -o %s\n```\n\n' "$_out_name"
-        printf '> **Note**: The raw command omits header-includes (font setup, image scaling,\n'
-        printf '> LoF/LoT, footer). Use the make recipe for full-featured builds.\n\n'
+    # --- Raw pandoc command (standalone) ---
+    printf '## Raw Pandoc Command (Standalone)\n\n```bash\ncd %s && \\\npandoc \\\n' "$_cwd"
+    for _f in $input_files; do printf '  %s \\\n' "$_f"; done
+    [ -n "$_title_full" ] && \
+        printf '  -B %s \\\n' "$(basename "$_title_full")"
+    printf '  --toc --toc-depth=2 \\\n'
+    [ "$number_sections" = "true" ] && printf '  --number-sections \\\n'
+    printf '  -V geometry:"margin=1in,footskip=35pt" \\\n'
+    printf '  -V documentclass=report \\\n'
+    printf '  --pdf-engine=xelatex \\\n'
+    printf '  --from markdown+smart \\\n'
+    printf '  -V pagestyle=plain'
+    [ -n "$bibliography_file" ] && [ -f "$bibliography_file" ] && \
+        printf ' \\\n  --citeproc \\\n  --bibliography=%s' "$(basename "$bibliography_file")"
+    [ -n "$csl_file" ] && [ -f "$csl_file" ] && \
+        printf ' \\\n  --csl=%s' "$_csl_rel"
+    printf ' \\\n  -o %s\n```\n\n' "$_out_name"
+    printf '> **Note**: The raw command omits header-includes (font setup, image scaling,\n'
+    printf '> LoF/LoT, footer). Use the make recipe for full-featured builds.\n\n'
 
-        # --- Prerequisites & Notes ---
-        printf '## Prerequisites\n\n'
-        printf '%s\n' "- \`make\` with project Makefile"
-        printf '%s\n' "- \`pandoc\` (tested with $_pv)"
-        printf '%s\n\n' "- \`xelatex\` (TeX Live) — install via \`make setup_pdf_converter CONVERTER=pandoc\`"
-        printf '## Notes\n\n'
-        printf '%s\n' "- **PDF engine**: \`xelatex\` (hardcoded in \`run-pandoc.sh\`)"
-        printf '%s\n' "- **LoF/LoT**: enabled by default; disable with \`LIST_OF_FIGURES=false\`"
-    } > "$_out_dir/BUILD.md"
-    echo "Build instructions: $_out_dir/BUILD.md"
+    # --- Prerequisites & Notes ---
+    printf '## Prerequisites\n\n'
+    printf '%s\n' "- \`make\` with project Makefile"
+    printf '%s\n' "- \`pandoc\` (tested with $_pv)"
+    printf '%s\n\n' "- \`xelatex\` (TeX Live) — install via \`make setup_pdf_converter CONVERTER=pandoc\`"
+    printf '## Notes\n\n'
+    printf '%s\n' "- **PDF engine**: \`xelatex\` (hardcoded in \`run-pandoc.sh\`)"
+    printf '%s\n' "- **LoF/LoT**: enabled by default; disable with \`LIST_OF_FIGURES=false\`"
+} > "$_out_dir/BUILD.md"
+echo "Build instructions: $_out_dir/BUILD.md"
 
-    # --- Create/update blog-post.md template ---
-    printf '%s\n' "---" "layout: post" "title: \"$PROJECT_NAME v$VERSION\"" \
-        "excerpt: \"\"" "categories: []" "---" "" "# $PROJECT_NAME" "" \
-        "TODO: Write blog post summary." > "$_out_dir/blog-post.md"
-    echo "Blog post template: $_out_dir/blog-post.md"
-else
-    echo "Error: PDF generation failed"
-    exit 1
-fi
+# --- Create/update blog-post.md template ---
+printf '%s\n' "---" "layout: post" "title: \"$PROJECT_NAME v$VERSION\"" \
+    "excerpt: \"\"" "categories: []" "---" "" "# $PROJECT_NAME" "" \
+    "TODO: Write blog post summary." > "$_out_dir/blog-post.md"
+echo "Blog post template: $_out_dir/blog-post.md"

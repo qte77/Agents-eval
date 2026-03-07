@@ -19,12 +19,12 @@ agents.** For technical workflows and coding standards, see
 - `designing-backend`, `implementing-python`, `reviewing-code`, `generating-prd`
 - See individual SKILL.md files for usage triggers and instructions
 
-**Ralph Loop** (`.claude/scripts/ralph/`): Autonomous task execution system
+**Ralph Loop** (`ralph/scripts/`): Autonomous task execution system
 
 - `make ralph_init` - Initialize environment and state files
 - `make ralph ITERATIONS=N` - Run autonomous development loop
-- State tracking: `docs/ralph/prd.json` (tasks), `docs/ralph/progress.txt` (learnings)
-- See `docs/CC-skills-Ralph-adoption-plan.md` for complete documentation
+- State tracking: `ralph/docs/prd.json` (tasks), `ralph/docs/progress.txt` (learnings)
+- See [ralph/README.md](ralph/README.md) for complete documentation
 
 **Integration**: Skills enforce AGENTS.md compliance. Ralph executes stories from PRD.md
 using Skills.
