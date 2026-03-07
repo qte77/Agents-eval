@@ -267,6 +267,21 @@ updated: 2026-02-16
 - **Anti-pattern**: Assuming pandoc will auto-discover files by naming convention. Each input must be explicitly passed.
 - **References**: `Makefile` (writeup recipe)
 
+### PR Squash Merge via GitHub API Requires Both Title and Message
+
+- **Context**: Merging a PR via GitHub API (e.g. Ralph branch or any feature branch)
+- **Problem**: `commit_title` alone drops all branch commit messages from the squash body. Title must follow repo convention `PR <title> (#NUM)` to match history.
+- **Solution**:
+  ```bash
+  gh api repos/OWNER/REPO/pulls/NUM/merge \
+    -X PUT \
+    -f merge_method=squash \
+    -f commit_title="PR <title> (#NUM)" \
+    -f commit_message="$(git log origin/main..HEAD --format='* %s')"
+  ```
+- **Anti-pattern**: Passing only `commit_title` — squash body will be empty, losing branch commit history
+- **References**: MEMORY.md, `ralph/docs/LEARNINGS.md` (section 4)
+
 ### `gh pr edit` Fails with Projects Classic Deprecation
 
 - **Context**: Editing PR title or body via GitHub CLI
