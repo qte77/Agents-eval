@@ -240,3 +240,20 @@ updated: 2026-02-16
 - **Solution**: After `-X ours` merge, diff against the pre-merge state and `git rm` files the other branch introduced: `git diff HEAD <pre-merge-sha> --name-only --diff-filter=A | xargs git rm`
 - **Anti-pattern**: Assuming `-X ours` means "keep only our files." It means "resolve conflicts in our favor" — non-conflicting additions from theirs pass through silently.
 - **References**: `ralph/README.md` (Merging Back), `ralph/docs/LEARNINGS.md` (section 4)
+
+### LaTeX \@commands in \AtBeginDocument Require Outer \makeatletter
+
+- **Context**: `run-pandoc.sh` header-includes with `\AtBeginDocument{...\@ifundefined...}` for non-English languages
+- **Problem**: `\AtBeginDocument` tokenizes its argument at parse time. If `@` has catcode "other" (default), `\@ifundefined` is tokenized as `\@` (spacefactor) + literal text. At `\begin{document}`, `\@` executes in vertical mode → `! You can't use \spacefactor in vertical mode`.
+- **Solution**: Wrap `\AtBeginDocument{...}` in `\makeatletter...\makeatother` so `@` is catcode "letter" when the argument is tokenized. Placing `\makeatletter` *inside* the argument doesn't help — catcode changes only affect future tokenization.
+- **Example**: `\makeatletter \AtBeginDocument{\@ifundefined{refname}{}{...}} \makeatother`
+- **Anti-pattern**: Putting `\makeatletter` inside `\AtBeginDocument{...}` — tokens are already formed before execution.
+- **References**: `scripts/writeup/run-pandoc.sh:292-296`
+
+### Writeup Recipe Missing TITLE_PAGE Parameter
+
+- **Context**: `make writeup` recipe calling `pandoc_run` sub-make
+- **Problem**: `00_title_abstract.tex` existed but was never passed to pandoc via `-B` (before-body). PDF generated without title page silently.
+- **Solution**: Add `TITLE_PAGE="$(WRITEUP_DIR)/00_title_abstract.tex"` to the `pandoc_run` call in the writeup recipe.
+- **Anti-pattern**: Assuming pandoc will auto-discover files by naming convention. Each input must be explicitly passed.
+- **References**: `Makefile` (writeup recipe)
