@@ -83,17 +83,17 @@ class RunContext:
         """
         start_time = datetime.now()
         ts = start_time.strftime("%Y%m%d_%H%M%S")
-        exec_id_short = execution_id[:8]
         safe_engine = _sanitize_path_component(engine_type)
         safe_paper = _sanitize_path_component(paper_id)
-        dir_name = f"{ts}_{safe_engine}_{safe_paper}_{exec_id_short}"
+        safe_exec_id = _sanitize_path_component(execution_id[:8])
+        dir_name = f"{ts}_{safe_engine}_{safe_paper}_{safe_exec_id}"
         category = "cc" if engine_type.startswith("cc") else "mas"
 
-        run_dir = (OUTPUT_BASE / "runs" / category / dir_name).resolve()  # lgtm[py/path-injection]
+        run_dir = (OUTPUT_BASE / "runs" / category / dir_name).resolve()  # CodeQL[py/path-injection]
         if not run_dir.is_relative_to(OUTPUT_BASE.resolve()):
             msg = f"Path traversal detected: {run_dir}"
             raise ValueError(msg)
-        run_dir.mkdir(parents=True, exist_ok=True)  # lgtm[py/path-injection]
+        run_dir.mkdir(parents=True, exist_ok=True)  # CodeQL[py/path-injection]
 
         ctx = cls(
             engine_type=engine_type,
