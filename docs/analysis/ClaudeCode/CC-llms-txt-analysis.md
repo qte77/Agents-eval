@@ -145,4 +145,4 @@ for GitHub blob URLs. Currently has 5 H2 sections and 17 links.
 - [llmstxt.org](https://llmstxt.org/) — specification
 - [platform.claude.com/llms.txt](https://platform.claude.com/llms.txt) — Anthropic API docs index
 - [code.claude.com/docs/llms.txt](https://code.claude.com/docs/llms.txt) — CC docs index
-- [llms_txt2ctx](https://github.com/nicholasgasior/llms-txt2ctx) — CLI tool to expand llms.txt
+- `llms_txt2ctx` — CLI tool to expand llms.txt into a flat context file
