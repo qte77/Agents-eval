@@ -1,0 +1,57 @@
+name: Generate SBOM
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '!docs/SBOM/**'
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate SBOM from dependency graph
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir -p docs/SBOM
+          gh api repos/${REPO}/dependency-graph/sbom \
+            --jq '.sbom' > docs/SBOM/sbom.spdx.json
+
+      - name: Generate human-readable markdown
+        run: |
+          {
+            echo "# Software Bill of Materials"
+            echo ""
+            echo "**Generated:** $(jq -r '.creationInfo.created' docs/SBOM/sbom.spdx.json)"
+            echo "**Format:** $(jq -r '.spdxVersion' docs/SBOM/sbom.spdx.json)"
+            echo "**Packages:** $(jq '[.packages[] | select(.SPDXID != "SPDXRef-DOCUMENT")] | length' docs/SBOM/sbom.spdx.json)"
+            echo ""
+            echo "| Package | Version | License |"
+            echo "|---------|---------|---------|"
+            jq -r '
+              [.packages[] | select(.SPDXID != "SPDXRef-DOCUMENT")]
+              | sort_by(.name)[]
+              | "| " + .name + " | " + (.versionInfo // "—") + " | " + (.licenseConcluded // "—") + " |"
+            ' docs/SBOM/sbom.spdx.json
+          } > docs/SBOM/sbom.md
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add docs/SBOM/sbom.spdx.json docs/SBOM/sbom.md
+          git diff --cached --quiet && echo "No changes to SBOM" && exit 0
+          git commit -m "docs: update SBOM"
+          git push
