@@ -1,7 +1,8 @@
 ---
 title: Strategy for Maintaining Agent Governance Files
 description: Guidelines for keeping AGENTS.md, AGENT_LEARNINGS.md, and AGENT_REQUESTS.md synchronized with codebase changes for effective AI agent operation
-date: 2026-03-01
+created: 2025-08-02
+updated: 2026-03-03
 category: maintenance
 version: 1.1.0
 ---

@@ -1,7 +1,8 @@
 ---
 title: PeerRead Agent System Usage Guide
 description: Agent tools reference, CLI examples, and troubleshooting for the PeerRead MAS
-date: 2026-03-07
+created: 2025-08-02
+updated: 2026-03-07
 category: usage-guide
 version: 3.1.0
 ---
