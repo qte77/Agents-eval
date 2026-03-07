@@ -1,8 +1,9 @@
 # Generates a spec-compliant llms.txt index file per https://llmstxt.org/
 #
 # Approach: Semi-static (current)
-#   Curated markdown index maintained in .github/templates/llms.txt.tpl.
-#   Update the template when docs structure changes.
+#   Generic skeleton in .github/templates/llms.txt.tpl (reusable across projects).
+#   Project-specific additions in .github/templates/llms.txt.additions.tpl (optional).
+#   Update the relevant template when docs structure changes.
 #
 # Alternative approaches:
 #   Auto-generated: Walk docs/ at build time, produce sections from directory
@@ -19,6 +20,7 @@ on:
     branches: [main]
     paths:
       - '.github/templates/llms.txt.tpl'
+      - '.github/templates/llms.txt.additions.tpl'
       - 'docs/**'
       - 'src/**'
       - 'README.md'
@@ -40,19 +42,31 @@ jobs:
       - name: Validate template links exist
         run: |
           stale=0
-          for path in $(grep -oP '\(\$\{BLOB\}/\K[^)]+' .github/templates/llms.txt.tpl); do
-            if [ ! -f "$path" ]; then
-              echo "::error::Stale link in llms.txt.tpl: $path"
-              stale=1
-            fi
+          for tpl in .github/templates/llms.txt.tpl .github/templates/llms.txt.additions.tpl; do
+            [ -f "$tpl" ] || continue
+            for path in $(grep -oP '\(\$\{BLOB\}/\K[^)]+' "$tpl"); do
+              if [ ! -f "$path" ]; then
+                echo "::error::Stale link in $tpl: $path"
+                stale=1
+              fi
+            done
           done
           exit $stale
 
       - name: Generate llms.txt from template
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          BLOB="https://github.com/${{ github.repository }}/blob/main"
-          export BLOB
-          envsubst '${BLOB}' < .github/templates/llms.txt.tpl > docs/llms.txt
+          BLOB="https://github.com/${REPO}/blob/main"
+          PROJECT_NAME=$(sed -n 's/^# //p' README.md | head -1)
+          PROJECT_DESC=$(curl -sf -H "Authorization: token ${GH_TOKEN}" \
+            "https://api.github.com/repos/${REPO}" | jq -r '.description // empty')
+          export BLOB PROJECT_NAME PROJECT_DESC
+          envsubst '${BLOB} ${PROJECT_NAME} ${PROJECT_DESC}' < .github/templates/llms.txt.tpl > docs/llms.txt
+          if [ -f .github/templates/llms.txt.additions.tpl ]; then
+            envsubst '${BLOB}' < .github/templates/llms.txt.additions.tpl >> docs/llms.txt
+          fi
 
       - name: Commit and push if changed
         run: |
