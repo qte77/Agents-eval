@@ -9,7 +9,7 @@ created: 2026-03-07
 
 ## Current Architecture Summary
 
-Ralph is an autonomous TDD development loop driving `claude -p` to implement stories from `prd.json`. Full architecture in [ralph/README.md](../../ralph/README.md); implementation history in [CC-skills-Ralph-adoption-plan.md](CC-skills-Ralph-adoption-plan.md).
+Ralph is an autonomous TDD development loop driving `claude -p` to implement stories from `prd.json`. Full architecture in [ralph/README.md](../../ralph/README.md); skills adoption in [CC-skills-adoption-analysis.md](CC-skills-adoption-analysis.md).
 
 ## Known Gaps (Internal)
 

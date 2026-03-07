@@ -31,7 +31,7 @@ Script handles: PRD.md parsing, `(depends: ...)` extraction, content hashing, st
 
 3. **Validate** (Read tool)
    - Read `ralph/docs/prd.json` (script output)
-   - Read `docs/PRD.md` (cross-reference)
+   - Read the sprint PRD (`docs/PRD.md` symlink or `docs/sprints/` source)
    - Check against Validation Checklist
 
 4. **Correct errors** (Write tool, if needed)

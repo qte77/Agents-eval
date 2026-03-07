@@ -9,7 +9,6 @@ created: 2026-03-07
 <!-- markdownlint-disable MD013 -->
 
 - [ ] **Fix `ralph_status` jq query**: Change `.passes == true` to `.status == "passed"` in Makefile — always shows 0 completed stories on current schema
-- [ ] **Fix AGENTS.md Ralph path**: Update `.claude/scripts/ralph/` to `ralph/scripts/`
 
 <!-- markdownlint-enable MD013 -->
 
@@ -40,7 +39,7 @@ created: 2026-03-07
 
 <!-- markdownlint-disable MD013 -->
 
-- [ ] **Agent Teams for parallel story execution**: Enable with `make ralph_run TEAMS=true` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`). Lead agent orchestrates teammates with skill-specific delegation. See [CC Agent Teams Orchestration](../docs/analysis/CC-agent-teams-orchestration.md) for architecture and tracing. **Terminology**: a **wave** is the set of currently unblocked stories (all `depends_on` satisfied) — i.e., the frontier of the dependency graph. Stories within a wave run in parallel (one teammate each); the next wave starts after the current one completes.
+- [ ] **Agent Teams for parallel story execution**: Enable with `make ralph_run TEAMS=true` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`). Lead agent orchestrates teammates with skill-specific delegation. See [CC Agent Teams Orchestration](../docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md) for architecture and tracing. **Terminology**: a **wave** is the set of currently unblocked stories (all `depends_on` satisfied) — i.e., the frontier of the dependency graph. Stories within a wave run in parallel (one teammate each); the next wave starts after the current one completes.
   - [ ] **CC Agent Teams as alternative orchestrator**: Instead of Ralph's bash loop driving `claude -p` with bolted-on teams support, the CC main orchestrator agent directly spawns a team via `TeamCreate` + `Task` tool. Each story becomes a `TaskCreate` entry with `blockedBy` dependencies (both logical and file-conflict). Addresses Ralph failure modes structurally: isolated teammate contexts prevent cross-contamination (#2), `blockedBy` prevents stale snapshots (#4), no external reset eliminates Sisyphean loops (#1), lead-scoped validation prevents cross-story complexity failures (#3), and file-conflict deps in `blockedBy` prevent parallel edits to the same file (#5). Requires self-contained story descriptions in the PRD Story Breakdown (usable as `TaskCreate(description=...)`). See Sprint 8 PRD "Notes for CC Agent Teams" section for orchestration waves, file-conflict dependency table, and teammate prompt template.
 
 <!-- markdownlint-enable MD013 -->
@@ -81,6 +80,7 @@ created: 2026-03-07
 - [x] **Agent Teams inter-story** — `ralph.sh` appends unblocked independent stories to the prompt; `check_tdd_commits` filters by story ID in teams mode to prevent cross-story marker false positives. Completed stories caught by existing `detect_already_complete` path.
 - [x] **Scoped reset on red-green validation failure** — Untracked files are snapshot before story execution; on TDD failure, only story-created files are removed. Additionally, quality-failure retries skip TDD verification entirely (prior RED+GREEN already verified), and `check_tdd_commits` has a fallback that detects `refactor(` prefix when `[REFACTOR]` bracket marker is missing.
 - [x] **Deduplicate log level in CC monitor output** — `monitor_story_progress` strips leading `[INFO]`/`[WARN]`/`[ERROR]` prefix from CC agent output before wrapping with `log_cc*`, preventing `[INFO] ... [CC] [INFO]` duplication.
+- [x] **Fix AGENTS.md Ralph path**: Update `.claude/scripts/ralph/` to `ralph/scripts/` — fixed state tracking paths too (`ralph/docs/prd.json`, `ralph/docs/progress.txt`)
 
 <!-- markdownlint-enable MD013 -->
 
@@ -101,7 +101,7 @@ created: 2026-03-07
 - [CC-remote-control-analysis.md](../docs/analysis/ClaudeCode/CC-remote-control-analysis.md) — remote monitoring mechanics
 - [CC-remote-access-landscape.md](../docs/analysis/ClaudeCode/CC-remote-access-landscape.md) — Omnara, CloudCLI alternatives
 - [CC-cloud-sessions-analysis.md](../docs/analysis/ClaudeCode/CC-cloud-sessions-analysis.md) — cloud VM execution
-- [CC-skills-Ralph-adoption-plan.md](../docs/analysis/ClaudeCode/CC-skills-Ralph-adoption-plan.md) — Skills + Ralph implementation (completed)
+- [CC-skills-adoption-analysis.md](../docs/analysis/ClaudeCode/CC-skills-adoption-analysis.md) — Skills adoption and format analysis (completed)
 - [CC-changelog-feature-scan.md](../docs/analysis/ClaudeCode/CC-changelog-feature-scan.md) — changelog scan (structured outputs, `/loop`, HTTP hooks, worktree isolation)
 
 <!-- markdownlint-enable MD013 -->

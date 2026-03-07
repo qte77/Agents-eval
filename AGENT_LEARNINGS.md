@@ -60,7 +60,7 @@ updated: 2026-02-16
   ```
 
 - **Key Finding**: Parallel reduces latency but token cost scales linearly (N teammates = N instances)
-- **References**: `docs/reviews/evaluation-pipeline-parallel-review-2026-02-11.md`, `docs/analysis/CC-agent-teams-orchestration.md`
+- **References**: `docs/reviews/evaluation-pipeline-parallel-review-2026-02-11.md`, `docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md`
 
 ### OpenAI-Compatible Provider Strict Tool Definitions
 
@@ -107,7 +107,7 @@ updated: 2026-02-16
 - **Context**: Running CC from Python for MAS vs CC baseline comparison
 - **Problem**: Sprint 3 `cc_otel` used wrong abstraction — CC tracing is infrastructure (env vars), not application code
 - **Solution**: `claude -p "prompt" --output-format json` via `subprocess.run()`. Check with `shutil.which("claude")`. Collect artifacts from `~/.claude/teams/` + `~/.claude/tasks/`, parse via `CCTraceAdapter`.
-- **References**: `docs/analysis/CC-agent-teams-orchestration.md`, Sprint 6 Feature 7
+- **References**: `docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md`, Sprint 6 Feature 7
 
 ### Review-to-PRD Traceability
 
@@ -165,7 +165,7 @@ updated: 2026-02-16
 - **Solution**: For trace-level execution analysis (required for evaluation), use artifact collection (`CCTraceAdapter` parses `raw_stream.jsonl`). OTel is supplementary for cost/token dashboards only.
 - **Key distinction**: metrics/logs → OTel → Phoenix dashboards; trace spans → artifact collection → `CCTraceAdapter` → `GraphTraceData`
 - **Upstream issues**: [anthropics/claude-code#9584](https://github.com/anthropics/claude-code/issues/9584), [#2090](https://github.com/anthropics/claude-code/issues/2090)
-- **References**: `docs/analysis/CC-agent-teams-orchestration.md`, `.claude/settings.json` (OTel vars currently disabled)
+- **References**: `docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md`, `.claude/settings.json` (OTel vars currently disabled)
 
 ### Makefile $(or) Does Not Override ?= Defaults
 

@@ -29,7 +29,7 @@
 ## Optional
 
 - [Security Advisories](${BLOB}/docs/security-advisories.md): Known security issues and mitigations
-- [Agent Teams Orchestration](${BLOB}/docs/analysis/CC-agent-teams-orchestration.md): Claude Code agent teams analysis
+- [Agent Teams Orchestration](${BLOB}/docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md): Claude Code agent teams analysis
 - [Inference Providers](${BLOB}/docs/analysis/Inference-Providers.md): LLM provider comparison
 - [Landscape: Agent Frameworks](${BLOB}/docs/landscape/landscape-agent-frameworks-infrastructure.md): Agent framework survey
 - [Landscape: Evaluation Resources](${BLOB}/docs/landscape/landscape-evaluation-data-resources.md): Evaluation datasets and benchmarks

@@ -9,7 +9,7 @@ created: 2026-03-07
 
 ## Context
 
-The [AGENTS.md refactor plan](../agents-md-refactor-plan.md) proposes 3 minimal edits to integrate Skills/Ralph awareness into AGENTS.md. This research evaluates whether that integration — and the broader project configuration — would benefit from being packaged as a CC Plugin instead of remaining as repo-local files.
+The AGENTS.md refactor plan (completed, deleted) proposed 3 minimal edits to integrate Skills/Ralph awareness into AGENTS.md. This research evaluates whether that integration — and the broader project configuration — would benefit from being packaged as a CC Plugin instead of remaining as repo-local files.
 
 ## What CC Plugins Are
 
@@ -84,7 +84,7 @@ async for message in query(
 
 ## AGENTS.md Refactor: Plugin vs Direct Edit
 
-The [refactor plan](../agents-md-refactor-plan.md) proposes 3 edits totaling ~16 lines:
+The refactor plan (completed, deleted) proposed 3 edits totaling ~16 lines:
 
 1. Add "Claude Code Infrastructure" section referencing Skills/Ralph
 2. Update subagent section header to note Skills complement
@@ -167,7 +167,7 @@ Based on external research on plugin adoption patterns:
 
 ### Immediate (Tier 1)
 
-**Apply the 3 direct edits from [agents-md-refactor-plan.md](../agents-md-refactor-plan.md).** This is the minimal, KISS approach:
+**Apply the 3 direct edits from the refactor plan (completed).** This is the minimal, KISS approach:
 
 1. Add Claude Code Infrastructure section to AGENTS.md
 2. Update Agent Role Boundaries header with Skills note
@@ -198,7 +198,7 @@ This is YAGNI until a second project needs these skills.
 - [Plugin Structure skill][plugin-structure] — community plugin scaffolding guide
 - [Skill Development skill][skill-dev] — SKILL.md authoring best practices
 - [CC Memory docs][cc-mem] — CLAUDE.md and rules (repo-local patterns)
-- [AGENTS.md refactor plan][refactor-plan] — the 3 proposed edits
+- AGENTS.md refactor plan (completed, deleted)
 
 [sdk-plugins]: https://platform.claude.com/docs/en/agent-sdk/plugins
 [cc-plugins]: https://code.claude.com/docs/en/plugins
@@ -206,4 +206,3 @@ This is YAGNI until a second project needs these skills.
 [plugin-structure]: https://claude-plugins.dev/skills/@anthropics/claude-plugins-official/plugin-structure
 [skill-dev]: https://lobehub.com/skills/sjnims-plugin-dev-skill-development
 [cc-mem]: https://code.claude.com/docs/en/memory
-[refactor-plan]: ../agents-md-refactor-plan.md

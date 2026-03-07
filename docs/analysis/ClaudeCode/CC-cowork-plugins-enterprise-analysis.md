@@ -76,7 +76,7 @@ Claude coordinates tasks across Excel and PowerPoint — running analyses in one
 
 ### Plugin Architecture vs Project Skills
 
-Current Skills architecture documented in [CC-skills-Ralph-adoption-plan.md](CC-skills-Ralph-adoption-plan.md). Key differences: Plugins are cross-platform (Cowork + Agent SDK) with org marketplace distribution and admin provisioning; Skills are repo-local with auto-discovery. Plugins add structured form UI and OTel integration that Skills lack.
+Current Skills architecture documented in [CC-skills-adoption-analysis.md](CC-skills-adoption-analysis.md). Key differences: Plugins are cross-platform (Cowork + Agent SDK) with org marketplace distribution and admin provisioning; Skills are repo-local with auto-discovery. Plugins add structured form UI and OTel integration that Skills lack.
 
 ### Decision Rule
 

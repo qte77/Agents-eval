@@ -122,7 +122,7 @@ Hook fires when CC configuration changes — useful for security auditing. ([sou
 | Fast mode (Opus 4.6) | [CC-fast-mode-analysis.md](CC-fast-mode-analysis.md) |
 | Auto memory + CLAUDE.md hierarchy | [CC-memory-system-analysis.md](CC-memory-system-analysis.md) |
 | Cloud sessions (`claude --remote`) | [CC-cloud-sessions-analysis.md](CC-cloud-sessions-analysis.md) |
-| Skills (auto-discovery, SKILL.md) | [CC-skills-Ralph-adoption-plan.md](CC-skills-Ralph-adoption-plan.md) |
+| Skills (auto-discovery, SKILL.md) | [CC-skills-adoption-analysis.md](CC-skills-adoption-analysis.md) |
 | Plugins + Cowork | [CC-cowork-plugins-enterprise-analysis.md](CC-cowork-plugins-enterprise-analysis.md) |
 | Chrome extension | [CC-chrome-extension-analysis.md](CC-chrome-extension-analysis.md) |
 | Opus 4.6 + 1M context | Already in use |

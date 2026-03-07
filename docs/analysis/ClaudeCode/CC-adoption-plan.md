@@ -16,19 +16,20 @@ This plan synthesizes CC feature analysis documents into a prioritized adoption 
 
 <!-- markdownlint-disable MD013 -->
 
-| Item | Action | Effort | Source |
-| ---- | ------ | ------ | ------ |
-| **Remote Control for Ralph monitoring** | Run `claude remote-control --name "Ralph"` before interactive Ralph sessions. Monitor/steer from phone | 0 — built-in, no config | [CC-remote-control-analysis.md](CC-remote-control-analysis.md) |
-| **Path-scoped rules** | Add `paths:` frontmatter to `.claude/rules/` files to reduce context noise when working outside their scope | 15 min — edit 2 files | [CC-memory-system-analysis.md](CC-memory-system-analysis.md) |
-| **Auto memory / AGENT_LEARNINGS.md dedup** | Run `/memory` audit; reconcile stale auto memory entries against `AGENT_LEARNINGS.md` | 30 min — one-time review | [CC-memory-system-analysis.md](CC-memory-system-analysis.md) |
-| **llms.txt bookmark** | Add `platform.claude.com/llms.txt` and `code.claude.com/docs/llms.txt` as reference indexes for CC/API research | 0 — reference only | [CC-platform-documentation-index.md](CC-platform-documentation-index.md) |
-| **Fix `ralph_status` recipe** | Change jq query from `.passes == true` to `.status == "passed"` in Makefile | 5 min — 1 line fix | [CC-ralph-enhancement-research.md](CC-ralph-enhancement-research.md) |
-| **Fix AGENTS.md Ralph path** | Update `.claude/scripts/ralph/` → `ralph/scripts/` | 5 min — 1 edit | [CC-ralph-enhancement-research.md](CC-ralph-enhancement-research.md) |
-| **Apply AGENTS.md refactor plan** | 3 direct edits: add CC Infrastructure section, update role boundaries header, add post-task review | 15 min — 3 edits | [CC-plugin-packaging-research.md](CC-plugin-packaging-research.md), [agents-md-refactor-plan.md](../agents-md-refactor-plan.md) |
-| **Disable git instructions for Ralph** | Set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` in Ralph's env — headless mode doesn't need built-in commit/PR instructions | 5 min — 1 env var | [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md) |
-| **`Setup` hook for env validation** | Add `Setup` hook event to auto-run `make setup_dev` or validate environment on CC session start | 15 min — hook config | [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md) |
-| **Effort level tuning** | Set `CLAUDE_CODE_EFFORT_LEVEL=medium` for routine tasks; `high` for complex architecture work | 5 min — env var | [CC-model-provider-configuration.md](CC-model-provider-configuration.md) |
-| **Subagent model override** | Set `CLAUDE_CODE_SUBAGENT_MODEL` to route teammates/subagents to cheaper models | 5 min — env var | [CC-model-provider-configuration.md](CC-model-provider-configuration.md) |
+- [ ] **Remote Control for Ralph monitoring**: Run `claude remote-control --name "Ralph"` before interactive sessions. [CC-remote-control-analysis.md](CC-remote-control-analysis.md)
+- [ ] **Path-scoped rules**: Add `paths:` frontmatter to `.claude/rules/` files. [CC-memory-system-analysis.md](CC-memory-system-analysis.md)
+- [ ] **Auto memory / AGENT_LEARNINGS.md dedup**: Run `/memory` audit; reconcile stale entries. [CC-memory-system-analysis.md](CC-memory-system-analysis.md)
+- [ ] **llms.txt bookmark**: Add `platform.claude.com/llms.txt` and `code.claude.com/docs/llms.txt` as reference indexes. [CC-platform-documentation-index.md](CC-platform-documentation-index.md)
+- [ ] **Fix `ralph_status` recipe**: Change `.passes == true` to `.status == "passed"` in Makefile. [CC-ralph-enhancement-research.md](CC-ralph-enhancement-research.md)
+- [ ] **Disable git instructions for Ralph**: Set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` in Ralph's env. [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md)
+- [ ] **`Setup` hook for env validation**: Add `Setup` hook event to auto-run `make setup_dev` on session start. [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md)
+- [ ] **Effort level tuning**: Set `CLAUDE_CODE_EFFORT_LEVEL=medium` for routine tasks; `high` for complex work. [CC-model-provider-configuration.md](CC-model-provider-configuration.md)
+- [ ] **Subagent model override**: Set `CLAUDE_CODE_SUBAGENT_MODEL` to route subagents to cheaper models. [CC-model-provider-configuration.md](CC-model-provider-configuration.md)
+
+#### Tier 1 — Done
+
+- [x] **Apply AGENTS.md refactor plan**: 3 direct edits applied. Refactor plan deleted. [CC-plugin-packaging-research.md](CC-plugin-packaging-research.md)
+- [x] **Fix AGENTS.md Ralph path**: Updated `.claude/scripts/ralph/` → `ralph/scripts/` and state tracking paths. [CC-ralph-enhancement-research.md](CC-ralph-enhancement-research.md)
 
 <!-- markdownlint-enable MD013 -->
 
@@ -127,7 +128,7 @@ paths:
 | -------- | ----- | ------ |
 | [CC-fast-mode-analysis.md](CC-fast-mode-analysis.md) | Fast mode pricing, mechanics, fit | Tier 3 — monitor |
 | [CC-agent-teams-orchestration.md](CC-agent-teams-orchestration.md) | Agent Teams, OTel, observability | Partial adopt (reviews) |
-| [CC-skills-Ralph-adoption-plan.md](CC-skills-Ralph-adoption-plan.md) | Skills + Ralph loop implementation | Completed |
+| [CC-skills-adoption-analysis.md](CC-skills-adoption-analysis.md) | Skills adoption and format analysis | Completed |
 | [CC-remote-control-analysis.md](CC-remote-control-analysis.md) | Remote Control mechanics, fit | Tier 1 — adopt now |
 | [CC-cloud-sessions-analysis.md](CC-cloud-sessions-analysis.md) | Cloud sessions, setup scripts, network | Tier 2/3 — research spike |
 | [CC-memory-system-analysis.md](CC-memory-system-analysis.md) | CLAUDE.md, auto memory, rules | Tier 1 — optimize |
@@ -139,5 +140,7 @@ paths:
 | [CC-chrome-extension-analysis.md](CC-chrome-extension-analysis.md) | Chrome browser automation extension | Tier 3 — monitor |
 | [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md) | Changelog scan (v2.1.0–2.1.71) | Tier 1 + Tier 2 |
 | [CC-model-provider-configuration.md](CC-model-provider-configuration.md) | Model, endpoint, API key, provider config | Tier 1 (effort/subagent) + Tier 2 (OpenRouter) |
+| [CC-sandboxing-analysis.md](CC-sandboxing-analysis.md) | Sandboxing, security model, project config | Adopted (enabled) |
+| [CC-llms-txt-analysis.md](CC-llms-txt-analysis.md) | llms.txt spec, Anthropic implementations, project template | Adopted (workflows) |
 
 Ralph-specific bugs, enhancements, and deferred items also tracked in [ralph/TODO.md](../../../ralph/TODO.md).
