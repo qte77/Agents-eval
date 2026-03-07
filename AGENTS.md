@@ -24,7 +24,7 @@ agents.** For technical workflows and coding standards, see
 - `make ralph_init` - Initialize environment and state files
 - `make ralph ITERATIONS=N` - Run autonomous development loop
 - State tracking: `docs/ralph/prd.json` (tasks), `docs/ralph/progress.txt` (learnings)
-- See `docs/CC-skills-Ralph-adoption-plan.md` for complete documentation
+- See `docs/analysis/ClaudeCode/CC-skills-Ralph-adoption-plan.md` for complete documentation
 
 **Integration**: Skills enforce AGENTS.md compliance. Ralph executes stories from PRD.md
 using Skills.

@@ -2,84 +2,65 @@
 
 # Agents-eval
 
-A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates and evaluates scientific paper reviews through a three-tiered assessment approach: Tier 1 (Traditional Metrics), Tier 2 (LLM-as-a-Judge), and Tier 3 (Graph-Based Analysis).
+> Evaluate multi-agent AI systems objectively — Three-tiered framework for researchers and developers building autonomous agent teams
 
-> Ultimate Goal: Evaluate multi-agent AI systems objectively - Three-tiered framework for researchers and developers building autonomous agent teams
+A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates and evaluates scientific paper reviews through a three-tiered assessment approach: Tier 1 (Traditional Metrics), Tier 2 (LLM-as-a-Judge), and Tier 3 (Graph-Based Analysis).
 
 **I am a:** [**User/Researcher**](#userresearcher) | [**Human Developer**](#human-developer) | [**AI Agent**](#ai-agent)
 
 [![License](https://img.shields.io/badge/license-BSD3Clause-58f4c2.svg)](LICENSE.md)
 ![Version](https://img.shields.io/badge/version-5.0.0-58f4c2.svg)
 [![Deploy Docs](https://github.com/qte77/Agents-eval/actions/workflows/generate-deploy-mkdocs-ghpages.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/generate-deploy-mkdocs-ghpages.yaml)
-
 [![CodeQL](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/codeql.yaml)
 [![CodeFactor](https://www.codefactor.io/repository/github/qte77/Agents-eval/badge)](https://www.codefactor.io/repository/github/qte77/Agents-eval)
 [![ruff](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/ruff.yaml)
 [![pytest](https://github.com/qte77/Agents-eval/actions/workflows/pytest.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/pytest.yaml)
 [![Link Checker](https://github.com/qte77/Agents-eval/actions/workflows/links-fail-fast.yaml/badge.svg)](https://github.com/qte77/Agents-eval/actions/workflows/links-fail-fast.yaml)
-
 [![llms.txt](https://img.shields.io/badge/llms.txt-spec-800080.svg)](https://qte77.github.io/Agents-eval/llms.txt)
 [![Flat Repo (UitHub)](https://img.shields.io/badge/Flat_Repo-uithub-800080.svg)](https://uithub.com/qte77/Agents-eval)
 [![Flat Repo (GitToDoc)](https://img.shields.io/badge/Flat_Repo-GitToDoc-fe4a60.svg)](https://gittodoc.com/qte77/Agents-eval)
-
 [![vscode.dev](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=vscode.dev&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://vscode.dev/github/qte77/Agents-eval)
 [![Codespace Dev](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Codespace%20Dev&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://github.com/codespaces/new?repo=qte77/Agents-eval)
 [![Codespace Dev Ollama](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Codespace%20Dev%20Ollama&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://github.com/codespaces/new?repo=qte77/Agents-eval&devcontainer_path=.devcontainer/setup_dev_ollama/devcontainer.json)
 
+## Quick Start
+
+```bash
+make setup_dev && make app_quickstart    # downloads sample data, evaluates smallest paper
+make app_cli ARGS="--help"               # all CLI options
+```
+
+**Common commands:**
+
+```bash
+make app_cli ARGS="--paper-id=1105.1072"                                          # evaluate a specific paper
+make app_cli ARGS="--paper-id=1105.1072 --engine=cc"                              # Claude Code engine (requires claude CLI)
+make app_cli ARGS="--paper-id=1105.1072 --engine=cc --cc-teams"                   # CC multi-agent orchestration
+make app_sweep ARGS="--paper-ids 1105.1072 --repetitions 1 --all-compositions"    # benchmark all 8 agent compositions
+make app_batch_run ARGS="--paper-ids 1105.1072 --parallel 4"                      # parallel runs, resilient to errors
+make app_batch_eval                                                               # summarize all runs into output/summary.md
+```
+
+> All commands use the default provider (`github`). Set your API key in `.env` or pass `--chat-provider=<provider>`. See [.env.example](.env.example).
+
 ## User/Researcher
 
-- **Understanding the System:** [UserStory.md](docs/UserStory.md) - User workflows, use cases, and acceptance criteria
-- [**Documentation Site**](https://qte77.github.io/Agents-eval) - Complete reference
-- [**Codespace Dev**](https://github.com/codespaces/new?repo=qte77/Agents-eval) - Immediate access
-- **Quick Start:** `make setup_dev && make app_quickstart` (downloads sample data, evaluates smallest paper)
-- **Full Setup:** `make setup_dev` then `make app_cli ARGS="--help"`
-- **CC Engine:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc"` (requires `claude` CLI on PATH)
-- **CC Teams:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc --cc-teams"` (multi-agent orchestration)
-- **MAS Sweep:** `make app_sweep ARGS="--paper-ids 1105.1072 --repetitions 1 --all-compositions"` (benchmark all 8 agent compositions)
-- **Batch Run:** `make app_batch_run ARGS="--paper-ids 1105.1072 --parallel 4"` (run all compositions via subprocess, resilient to errors)
-- **Batch Eval:** `make app_batch_eval` (summarize all existing runs and sweeps into `_Agents-eval/output/summary.md`)
-
-> **Note:** All commands above use the default provider (`github`). Set your API key in `.env` or pass `--chat-provider=<provider>` to use a different one. See [.env.example](.env.example).
+- [**Documentation Site**](https://qte77.github.io/Agents-eval) — Complete reference
+- [**UserStory.md**](docs/UserStory.md) — User workflows, use cases, and acceptance criteria
+- [**Agent Tools & CLI Reference**](docs/howtos/peerread-agent-usage.md) — Tool signatures, CLI examples by category, troubleshooting
+- [**Codespace**](https://github.com/codespaces/new?repo=qte77/Agents-eval) — Immediate access in browser
 
 ## Human Developer
 
-- **Quick Start:** `make setup_dev && make app_quickstart` (downloads sample data, evaluates smallest paper)
-- **Full Setup:** `make setup_dev` then `make app_cli ARGS="--help"`
-- **CC Engine:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc"` (requires `claude` CLI on PATH)
-- **CC Teams:** `make app_cli ARGS="--paper-id=1105.1072 --engine=cc --cc-teams"` (multi-agent orchestration)
-- **MAS Sweep:** `make app_sweep ARGS="--paper-ids 1105.1072 --repetitions 1 --all-compositions"` (benchmark all 8 agent compositions)
-- **Batch Run:** `make app_batch_run ARGS="--paper-ids 1105.1072 --parallel 4"` (run all compositions via subprocess, resilient to errors)
-- **Batch Eval:** `make app_batch_eval` (summarize all existing runs and sweeps into `_Agents-eval/output/summary.md`)
-- **Core Resources:**
-  - [CONTRIBUTING.md](CONTRIBUTING.md) - Commands, workflows, coding patterns
-  - [docs/architecture.md](docs/architecture.md) - Technical design and decisions
-  - [docs/roadmap.md](docs/roadmap.md) - Development roadmap
-- **Development Flow:** Setup → Code → `make validate` → Commit
-- **Environment:** Configure API keys per [.env.example](.env.example)
+- [**CONTRIBUTING.md**](CONTRIBUTING.md) — Commands, workflows, coding patterns
+- [**architecture.md**](docs/architecture.md) — Technical design and decisions
+- [**roadmap.md**](docs/roadmap.md) — Development roadmap
+- **Development flow:** Setup → Code → `make validate` → Commit
 
 ## AI Agent
 
-- **READ FIRST:** [AGENTS.md](AGENTS.md) - Behavioral rules and compliance requirements
-- **Technical Patterns:** [CONTRIBUTING.md](CONTRIBUTING.md) - Implementation standards and commands
-
----
-
-<details>
-<summary><strong>
-  Expand for Project Details
-</strong></summary>
-
-## Status
-
-(DRAFT) (WIP) ----> Not fully implemented yet
-
-For version history see the [CHANGELOG](CHANGELOG.md).
-
-## Setup and Usage
-
-See [CONTRIBUTING.md](CONTRIBUTING.md#complete-command-reference) for all commands.
-
-Note: Chat configuration uses inference endpoints and models which are subject to change by the providers. See [free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) for alternatives. LLM-as-judge is also subject to the chat configuration.
+- **READ FIRST:** [AGENTS.md](AGENTS.md) — Behavioral rules and compliance requirements
+- **Technical Patterns:** [CONTRIBUTING.md](CONTRIBUTING.md) — Implementation standards and commands
 
 ## Project Outline
 
@@ -87,9 +68,10 @@ Note: Chat configuration uses inference endpoints and models which are subject t
 
 **Evaluation Approach**: Tier 1 (Traditional Metrics) + Tier 2 (LLM-as-a-Judge) + Tier 3 (Graph-Based Analysis) → Composite scoring. See [architecture.md](docs/architecture.md) for metric definitions.
 
-**Architecture**: [architecture.md](docs/architecture.md) | **Dataset Usage**: [PeerRead Agent Usage Guide](docs/howtos/peerread-agent-usage.md)
+For version history see the [CHANGELOG](CHANGELOG.md).
 
-## Diagrams
+<details>
+<summary><strong>Diagrams</strong></summary>
 
 <details>
   <summary>Show Customer Journey</summary>
@@ -109,18 +91,18 @@ Note: Chat configuration uses inference endpoints and models which are subject t
   <img src="assets/images/metrics-eval-sweep-dark.png#gh-dark-mode-only" alt="Eval Metrics Sweep" title="Eval Metrics Sweep" width="60%" />
 </details>
 
+</details>
+
 ## Examples
 
-See [src/examples/README.md](src/examples/README.md) for self-contained demonstrations of Sprint 5-6 features:
+See [src/examples/README.md](src/examples/README.md) for self-contained demonstrations:
 `basic_evaluation.py`, `judge_settings_customization.py`, `engine_comparison.py`.
 
 ## References
 
-- [AI Agent Evaluation Landscape](docs/landscape/landscape.md) - Frameworks, tools, datasets, benchmarks
-- [Tracing & Observation Methods](docs/landscape/trace_observe_methods.md) - Observability analysis
+- [AI Agent Evaluation Landscape](docs/landscape/landscape.md) — Frameworks, tools, datasets, benchmarks
+- [Tracing & Observation Methods](docs/landscape/trace_observe_methods.md) — Observability analysis
 - [List of papers inspected](docs/research/further_reading.md)
 - [Enhancement Recommendations](https://qte77.github.io/ai-agents-eval-enhancement-recommendations/)
 - [Papers Meta Review](https://qte77.github.io/ai-agents-eval-papers-meta-review/)
 - [Papers Comprehensive Analysis](https://qte77.github.io/ai-agents-eval-comprehensive-analysis/)
-
-</details>
