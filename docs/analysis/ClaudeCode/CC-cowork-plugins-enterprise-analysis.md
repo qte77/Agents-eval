@@ -9,26 +9,26 @@ created: 2026-03-07
 
 ## What Cowork & Plugins Are
 
-**Cowork** is Claude's enterprise collaboration platform — a central hub where teams customize Claude for organizational workflows. **Plugins** are portable file-system bundles that transform into specialized agents, deployable across Cowork and anything built on the Claude Agent SDK.
+**Cowork** is Claude's enterprise collaboration platform — a central hub where teams customize Claude for organizational workflows ([source][cowork-blog]). **Plugins** are portable file-system bundles that transform into specialized agents, deployable across Cowork and anything built on the Claude Agent SDK ([source][sdk-plugins]).
 
 ### Core Components
 
 #### Plugin Architecture
 
-- Plugins are "simple, portable file systems that you own"
-- Transform into specialized agents for distinct job functions
-- Cross-platform: work in Cowork and Claude Agent SDK applications
-- Slash commands launch structured forms for workflow execution
-- Private GitHub repos as plugin sources (beta)
-- Organization-specific marketplaces for plugin distribution
+- Plugins are "simple, portable file systems that you own" ([source][cowork-blog])
+- Transform into specialized agents for distinct job functions ([source][sdk-plugins])
+- Cross-platform: work in Cowork and Claude Agent SDK applications ([source][sdk-plugins])
+- Slash commands launch structured forms for workflow execution ([source][cowork-blog])
+- Private GitHub repos as plugin sources (beta) ([source][cowork-blog])
+- Organization-specific marketplaces for plugin distribution ([source][cowork-blog])
 
 #### Admin Customization Controls
 
-- Unified "Customize" menu: plugins, skills, connectors
-- Starter templates or custom-built configurations
-- Claude-guided questionnaires for tailor-made solutions
-- Per-user provisioning and auto-installation
-- OpenTelemetry support for usage tracking, cost monitoring, tool activity audits
+- Unified "Customize" menu: plugins, skills, connectors ([source][cowork-blog])
+- Starter templates or custom-built configurations ([source][cowork-blog])
+- Claude-guided questionnaires for tailor-made solutions ([source][cowork-blog])
+- Per-user provisioning and auto-installation ([source][cowork-blog])
+- OpenTelemetry support for usage tracking, cost monitoring, tool activity audits ([source][cowork-blog])
 
 #### Enterprise Connectors
 
@@ -47,10 +47,15 @@ Google Workspace (Calendar, Drive, Gmail), Docusign, Apollo, Clay, Outreach, Sim
 - **Wealth Management**: Portfolio analysis
 - **Brand Voice**: By Tribe AI
 
+#### Multi-App Orchestration
+
+Claude coordinates tasks across Excel and PowerPoint — running analyses in one app and converting results into presentations in the other, passing context between applications automatically. ([source][cowork-blog])
+
 ### Availability
 
 - UX updates: All Cowork users
 - Admin controls (branding, provisioning, connectors): Team and Enterprise
+- Excel/PowerPoint cross-app: Research preview, paid plans, Mac and Windows ([source][cowork-blog])
 
 ## Relevance to This Project
 
@@ -62,6 +67,7 @@ Google Workspace (Calendar, Drive, Gmail), Docusign, Apollo, Clay, Outreach, Sim
 | OTel support for usage tracking | Strong | Aligns with existing Phoenix/OTel strategy (see [CC-agent-teams-orchestration.md](CC-agent-teams-orchestration.md#tracing--observability)) |
 | Connector ecosystem | Weak | Project doesn't integrate with Google Workspace, Docusign, etc. |
 | Pre-built templates | Weak | Templates target business workflows, not research/evaluation |
+| Multi-app orchestration (Excel/PowerPoint) | None | No Excel/PowerPoint in evaluation workflows |
 | Organization marketplace | Moderate | Could distribute evaluation skills/plugins to research team |
 
 <!-- markdownlint-enable MD013 -->

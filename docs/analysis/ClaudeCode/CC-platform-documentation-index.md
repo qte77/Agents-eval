@@ -9,7 +9,7 @@ created: 2026-03-07
 
 ## What llms.txt Is
 
-A structured index file at `platform.claude.com/llms.txt` listing all Anthropic developer documentation URLs. Designed for LLM consumption — provides a machine-readable map of the documentation surface. Full content available at `platform.claude.com/llms-full.txt`.
+A structured index file at `platform.claude.com/llms.txt` listing all Anthropic developer documentation URLs ([source][llms-txt]). Designed for LLM consumption — provides a machine-readable map of the documentation surface. Full content available at `platform.claude.com/llms-full.txt` ([source][llms-full]).
 
 ### Documentation Surface Area
 
@@ -55,7 +55,7 @@ A structured index file at `platform.claude.com/llms.txt` listing all Anthropic 
 
 ### Multi-Language SDK Coverage
 
-API endpoints available in 10 languages: CLI, C#, Go, Java, Kotlin, PHP, Python, Ruby, Terraform, TypeScript.
+API endpoints available in 10 languages: CLI, C#, Go, Java, Kotlin, PHP, Python, Ruby, Terraform, TypeScript ([source][llms-txt]).
 
 ## Relevance to This Project
 

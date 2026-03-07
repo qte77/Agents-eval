@@ -9,15 +9,15 @@ created: 2026-03-07
 
 ## What Remote Control Is
 
-A feature that connects `claude.ai/code` or the Claude mobile app (iOS/Android) to a Claude Code session running locally. The local machine does all execution; the web/mobile interface is a window into that session. Not cloud execution — that's [Claude Code on the web](CC-cloud-sessions-analysis.md).
+A feature that connects `claude.ai/code` or the Claude mobile app (iOS/Android) to a Claude Code session running locally ([source][cc-rc]). The local machine does all execution; the web/mobile interface is a window into that session. Not cloud execution — that's [Claude Code on the web](CC-cloud-sessions-analysis.md).
 
 ### Key Mechanics
 
-- **Local execution**: Filesystem, MCP servers, tools, and project configuration stay on your machine
-- **Multi-surface sync**: Conversation stays in sync across terminal, browser, and phone — messages can be sent from any surface interchangeably
-- **Auto-reconnect**: If laptop sleeps or network drops, session reconnects automatically when machine comes back online
-- **Outbound-only**: No inbound ports opened; local session polls Anthropic API over HTTPS. All traffic over TLS
-- **One remote session per CC instance**: Each CC instance supports one remote connection
+- **Local execution**: Filesystem, MCP servers, tools, and project configuration stay on your machine ([source][cc-rc])
+- **Multi-surface sync**: Conversation stays in sync across terminal, browser, and phone — messages can be sent from any surface interchangeably ([source][cc-rc])
+- **Auto-reconnect**: If laptop sleeps or network drops, session reconnects automatically when machine comes back online ([source][cc-rc])
+- **Outbound-only**: No inbound ports opened; local session polls Anthropic API over HTTPS. All traffic over TLS ([source][cc-sec])
+- **One remote session per CC instance**: Each CC instance supports one remote connection ([source][cc-rc])
 
 ### Starting a Session
 
@@ -50,16 +50,16 @@ Enable for all sessions automatically:
 
 ### Requirements
 
-- **Plans**: Pro, Max, Team, Enterprise (Team/Enterprise: admin must enable CC)
-- **Auth**: Must be logged in via `/login`
-- **Workspace trust**: Must have accepted workspace trust dialog at least once
+- **Plans**: Pro, Max, Team, Enterprise (Team/Enterprise: admin must enable CC) ([source][cc-rc])
+- **Auth**: Must be logged in via `/login` ([source][cc-rc])
+- **Workspace trust**: Must have accepted workspace trust dialog at least once ([source][cc-rc])
 
 ### Limitations
 
-1. **One remote session at a time** per CC instance
-2. **Terminal must stay open** — closing terminal or stopping `claude` ends the session
-3. **~10 minute network timeout** — extended outage causes session exit
-4. **No inbound connections** — security model is outbound HTTPS polling only
+1. **One remote session at a time** per CC instance ([source][cc-rc])
+2. **Terminal must stay open** — closing terminal or stopping `claude` ends the session ([source][cc-rc])
+3. **~10 minute network timeout** — extended outage causes session exit ([source][cc-rc])
+4. **No inbound connections** — security model is outbound HTTPS polling only ([source][cc-sec])
 
 ### Remote Control vs Claude Code on the Web
 

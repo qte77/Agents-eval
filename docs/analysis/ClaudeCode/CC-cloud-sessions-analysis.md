@@ -9,17 +9,17 @@ created: 2026-03-07
 
 ## What Claude Code on the Web Is
 
-Run Claude Code tasks on Anthropic-managed cloud VMs via `claude.ai/code` or the Claude mobile app. Each session clones a GitHub repo into an isolated VM, runs a setup script, executes the task, and pushes results to a branch for PR creation. No local machine needed.
+Run Claude Code tasks on Anthropic-managed cloud VMs via `claude.ai/code` or the Claude mobile app ([source][cc-cloud]). Each session clones a GitHub repo into an isolated VM, runs a setup script, executes the task, and pushes results to a branch for PR creation. No local machine needed.
 
 ### Key Mechanics
 
-- **GitHub-only**: Requires GitHub-hosted repository with Claude GitHub app installed
-- **Isolated VMs**: Each session runs in its own Anthropic-managed VM
-- **Default image**: Pre-installed Python, Node.js, Ruby, PHP, Java, Go, Rust, C++, PostgreSQL 16, Redis 7.0
-- **Setup scripts**: Bash scripts run before Claude Code launches (install deps, configure tools)
-- **Network policy**: Limited by default (allowlisted domains), configurable to "No internet" or "Full"
-- **Diff view**: Review changes inline before creating PR, iterate with comments
-- **Session sharing**: Team visibility (Enterprise/Teams) or Public (Max/Pro)
+- **GitHub-only**: Requires GitHub-hosted repository with Claude GitHub app installed ([source][cc-cloud])
+- **Isolated VMs**: Each session runs in its own Anthropic-managed VM ([source][cc-cloud])
+- **Default image**: Pre-installed Python, Node.js, Ruby, PHP, Java, Go, Rust, C++, PostgreSQL 16, Redis 7.0 ([source][cc-cloud])
+- **Setup scripts**: Bash scripts run before Claude Code launches (install deps, configure tools) ([source][cc-cloud])
+- **Network policy**: Limited by default (allowlisted domains), configurable to "No internet" or "Full" ([source][cc-cloud])
+- **Diff view**: Review changes inline before creating PR, iterate with comments ([source][cc-cloud])
+- **Session sharing**: Team visibility (Enterprise/Teams) or Public (Max/Pro) ([source][cc-cloud])
 
 ### Starting Sessions
 
@@ -48,7 +48,7 @@ claude --remote "Refactor logger to structured output"
 
 <!-- markdownlint-enable MD013 -->
 
-**Teleport requirements**: Clean git state, correct repository (not fork), branch pushed to remote, same Claude.ai account.
+**Teleport requirements**: Clean git state, correct repository (not fork), branch pushed to remote, same Claude.ai account ([source][cc-cloud]).
 
 ### Environment Configuration
 
@@ -60,9 +60,9 @@ npm install
 pip install -r requirements.txt
 ```
 
-- **Setup scripts**: Run only on new sessions (not resume). Non-zero exit = session fails
-- **SessionStart hooks**: Run on every session start (local + cloud). Use `CLAUDE_CODE_REMOTE` env var to scope
-- **Environment variables**: Configured in UI as `.env` format key-value pairs
+- **Setup scripts**: Run only on new sessions (not resume). Non-zero exit = session fails ([source][cc-cloud])
+- **SessionStart hooks**: Run on every session start (local + cloud). Use `CLAUDE_CODE_REMOTE` env var to scope ([source][cc-hooks])
+- **Environment variables**: Configured in UI as `.env` format key-value pairs ([source][cc-cloud])
 
 ### Network Access Levels
 
@@ -74,13 +74,13 @@ pip install -r requirements.txt
 
 ### Security Model
 
-- **GitHub proxy**: Scoped credentials; push restricted to current working branch
-- **HTTP/HTTPS proxy**: All outbound traffic through security proxy (rate limiting, content filtering)
-- **Credential isolation**: Git credentials and signing keys never inside sandbox
+- **GitHub proxy**: Scoped credentials; push restricted to current working branch ([source][cc-cloud])
+- **HTTP/HTTPS proxy**: All outbound traffic through security proxy (rate limiting, content filtering) ([source][cc-cloud])
+- **Credential isolation**: Git credentials and signing keys never inside sandbox ([source][cc-cloud])
 
 ### Pricing
 
-Shares rate limits with all Claude/Claude Code usage. Parallel tasks consume proportionally more.
+Shares rate limits with all Claude/Claude Code usage. Parallel tasks consume proportionally more ([source][cc-cloud]).
 
 ## Relevance to This Project
 

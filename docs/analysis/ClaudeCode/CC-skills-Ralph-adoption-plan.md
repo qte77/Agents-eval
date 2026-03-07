@@ -7,8 +7,6 @@ updated: 2026-01-11
 version: 1.0.0
 ---
 
-# Claude Code Skills + Ralph Loop Adoption - Implementation Summary
-
 **Date**: 2026-01-11
 **Status**: ✅ COMPLETED
 **Branch**: feat-evals

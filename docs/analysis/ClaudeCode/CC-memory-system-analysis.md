@@ -9,12 +9,12 @@ created: 2026-03-07
 
 ## What the Memory System Is
 
-Two complementary mechanisms that carry knowledge across Claude Code sessions:
+Two complementary mechanisms that carry knowledge across Claude Code sessions ([source][cc-mem]):
 
 1. **CLAUDE.md files**: Human-written persistent instructions (project standards, workflows, architecture)
 2. **Auto memory**: Claude-written notes accumulated from corrections and discoveries
 
-Both load at session start. Neither is enforced configuration — they're context. Specificity and conciseness improve adherence.
+Both load at session start. Neither is enforced configuration — they're context. Specificity and conciseness improve adherence ([source][cc-mem]).
 
 ### CLAUDE.md vs Auto Memory
 
@@ -43,7 +43,7 @@ Both load at session start. Neither is enforced configuration — they're contex
 
 <!-- markdownlint-enable MD013 -->
 
-More specific locations take precedence. Files in parent directories load at launch; files in subdirectories load on demand when Claude reads files there.
+More specific locations take precedence. Files in parent directories load at launch; files in subdirectories load on demand when Claude reads files there ([source][cc-mem]).
 
 ### `.claude/rules/` System
 
@@ -69,7 +69,7 @@ paths:
 - All endpoints must include input validation
 ```
 
-Rules without `paths` frontmatter load unconditionally. Path-scoped rules load when Claude reads matching files.
+Rules without `paths` frontmatter load unconditionally. Path-scoped rules load when Claude reads matching files ([source][cc-mem]).
 
 ### Auto Memory Architecture
 
@@ -87,14 +87,14 @@ Rules without `paths` frontmatter load unconditionally. Path-scoped rules load w
 
 ### Key Behaviors
 
-- **Import syntax**: `@path/to/file` expands imports in CLAUDE.md (max 5 hops recursion)
-- **Size target**: Under 200 lines per CLAUDE.md for best adherence
-- **`/init`**: Auto-generates starting CLAUDE.md from codebase analysis
-- **`/memory`**: Lists all loaded instruction files; toggles auto memory; opens memory folder
-- **Compaction survival**: CLAUDE.md fully survives `/compact` (re-read from disk)
-- **`claudeMdExcludes`**: Skip irrelevant CLAUDE.md files in monorepos
-- **Symlinks**: `.claude/rules/` supports symlinks for cross-project shared rules
-- **Subagent memory**: Subagents can maintain their own auto memory
+- **Import syntax**: `@path/to/file` expands imports in CLAUDE.md (max 5 hops recursion) ([source][cc-mem])
+- **Size target**: Under 200 lines per CLAUDE.md for best adherence ([source][cc-mem])
+- **`/init`**: Auto-generates starting CLAUDE.md from codebase analysis ([source][cc-mem])
+- **`/memory`**: Lists all loaded instruction files; toggles auto memory; opens memory folder ([source][cc-mem])
+- **Compaction survival**: CLAUDE.md fully survives `/compact` (re-read from disk) ([source][cc-mem])
+- **`claudeMdExcludes`**: Skip irrelevant CLAUDE.md files in monorepos ([source][cc-mem])
+- **Symlinks**: `.claude/rules/` supports symlinks for cross-project shared rules ([source][cc-mem])
+- **Subagent memory**: Subagents can maintain their own auto memory ([source][cc-sub])
 
 ### Configuration
 
