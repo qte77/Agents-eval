@@ -191,6 +191,15 @@ updated: 2026-02-16
 - **Example**: `--argjson completed "$completed"` instead of `--argjson done "$completed"`
 - **References**: `ralph/scripts/ralph.sh` (`get_next_story`, `get_unblocked_stories`)
 
+### Pipe-into-While Loses Variable Assignments (Bash Subshell)
+
+- **Context**: Bash `while read` loops processing multi-line variables in Ralph shell scripts
+- **Problem**: `echo "$var" | while read -r line; do found=true; done` — pipe creates a subshell, so `found=true` never propagates to the parent. Duplicate detection loops or post-loop checks are needed as workarounds, adding fragile complexity.
+- **Solution**: Use here-string to keep the loop in the current shell: `while read -r line; do ...; done <<< "$var"`
+- **Example**: `while IFS= read -r filepath; do found=true; done <<< "$files"` instead of `echo "$files" | while ...`
+- **Anti-pattern**: Adding a second subshell loop to detect what the first loop already computed but couldn't propagate.
+- **References**: `ralph/scripts/lib/snapshot.sh` (test files section), ShellCheck SC2031
+
 ### Stale Test Fixtures Cause Cross-File Pollution
 
 - **Context**: Full `make test` suite with tests that error/fail due to stale fixtures (e.g., patching removed imports)
@@ -257,3 +266,23 @@ updated: 2026-02-16
 - **Solution**: Add `TITLE_PAGE="$(WRITEUP_DIR)/00_title_abstract.tex"` to the `pandoc_run` call in the writeup recipe.
 - **Anti-pattern**: Assuming pandoc will auto-discover files by naming convention. Each input must be explicitly passed.
 - **References**: `Makefile` (writeup recipe)
+
+### `gh pr edit` Fails with Projects Classic Deprecation
+
+- **Context**: Editing PR title or body via GitHub CLI
+- **Problem**: `gh pr edit` exits with GraphQL error about Projects (classic) deprecation — even for unrelated edits
+- **Solution**: Use GraphQL mutation directly:
+  ```bash
+  PR_ID=$(gh pr view NUM --json id --jq '.id')
+  gh api graphql -f query="mutation { updatePullRequest(input: {pullRequestId: \"$PR_ID\", title: \"...\", body: \"...\"}) { pullRequest { title } } }"
+  ```
+- **Anti-pattern**: Retrying `gh pr edit` — always fails until GitHub removes the deprecated Projects field from the PR schema
+- **References**: MEMORY.md
+
+### Claude Code Sandbox Blocks Git on `.claude/skills/`
+
+- **Context**: Any git operation (reset, stash, pull, checkout) touching `.claude/skills/` paths
+- **Problem**: `.claude/skills/` is write-denied in the Bash tool sandbox. Git operations that modify files there fail with "Read-only file system" — including `git reset --hard`, `git stash`, `git pull`
+- **Solution**: Use Edit/Write tools for file changes in `.claude/skills/`; run git from a non-sandboxed terminal when those paths are involved
+- **Anti-pattern**: `git reset --hard` or `git clean` to resolve conflicts involving skill files — always fails in sandbox
+- **References**: MEMORY.md, sandbox settings

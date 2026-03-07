@@ -63,6 +63,16 @@ git branch -d ralph/<branch>
 
 **Missing GPG signatures**: If push is rejected due to unsigned commits, re-sign from the earliest unsigned commit: `git rebase --exec 'git commit --amend --no-edit --gpg-sign' <commit-id>~1` then `git push --force-with-lease`. Rebase replays commits after the given base — `~1` targets the parent so `<commit-id>` itself is included. `--exec` runs the amend-sign after each replayed commit. `--force-with-lease` safely pushes the rewritten history.
 
+**PR merge via GitHub API** (when merging the Ralph branch PR rather than local squash): pass both `commit_title` AND `commit_message` — `commit_title` alone drops all branch commits from the squash body. Title must follow repo convention `PR <title> (#NUM)`:
+
+```bash
+gh api repos/OWNER/REPO/pulls/NUM/merge \
+  -X PUT \
+  -f merge_method=squash \
+  -f commit_title="PR <title> (#NUM)" \
+  -f commit_message="$(git log origin/main..HEAD --format='* %s')"
+```
+
 ## 5. Story Scope Must Include All Consumers of Changed Interfaces
 
 PRD `files` lists are authored manually and often miss pre-existing tests that assert on renamed symbols, changed output formats, or widget counts.
