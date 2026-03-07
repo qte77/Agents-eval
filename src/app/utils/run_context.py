@@ -89,7 +89,9 @@ class RunContext:
         dir_name = f"{ts}_{safe_engine}_{safe_paper}_{safe_exec_id}"
         category = "cc" if engine_type.startswith("cc") else "mas"
 
-        run_dir = (OUTPUT_BASE / "runs" / category / dir_name).resolve()  # CodeQL[py/path-injection]
+        run_dir = (
+            OUTPUT_BASE / "runs" / category / dir_name
+        ).resolve()  # CodeQL[py/path-injection]
         if not run_dir.is_relative_to(OUTPUT_BASE.resolve()):
             msg = f"Path traversal detected: {run_dir}"
             raise ValueError(msg)
