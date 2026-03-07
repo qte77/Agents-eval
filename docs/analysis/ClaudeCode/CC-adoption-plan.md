@@ -6,7 +6,7 @@ created: 2026-03-07
 
 ## Summary
 
-This plan synthesizes findings from 8 CC feature analysis documents into a prioritized adoption roadmap. Each item is grounded in a specific analysis doc, has a clear trigger condition, and maps to a concrete project workflow.
+This plan synthesizes CC feature analysis documents into a prioritized adoption roadmap. Each item is grounded in a specific analysis doc, has a clear trigger condition, and maps to a concrete project workflow.
 
 **Principle**: Adopt only what solves a real measured problem. Research is informational; adoption requires validation against PRD.md scope ([AGENTS.md](../../../AGENTS.md)).
 
@@ -22,6 +22,13 @@ This plan synthesizes findings from 8 CC feature analysis documents into a prior
 | **Path-scoped rules** | Add `paths:` frontmatter to `.claude/rules/` files to reduce context noise when working outside their scope | 15 min — edit 2 files | [CC-memory-system-analysis.md](CC-memory-system-analysis.md) |
 | **Auto memory / AGENT_LEARNINGS.md dedup** | Run `/memory` audit; reconcile stale auto memory entries against `AGENT_LEARNINGS.md` | 30 min — one-time review | [CC-memory-system-analysis.md](CC-memory-system-analysis.md) |
 | **llms.txt bookmark** | Add `platform.claude.com/llms.txt` and `code.claude.com/docs/llms.txt` as reference indexes for CC/API research | 0 — reference only | [CC-platform-documentation-index.md](CC-platform-documentation-index.md) |
+| **Fix `ralph_status` recipe** | Change jq query from `.passes == true` to `.status == "passed"` in Makefile | 5 min — 1 line fix | [CC-ralph-enhancement-research.md](CC-ralph-enhancement-research.md) |
+| **Fix AGENTS.md Ralph path** | Update `.claude/scripts/ralph/` → `ralph/scripts/` | 5 min — 1 edit | [CC-ralph-enhancement-research.md](CC-ralph-enhancement-research.md) |
+| **Apply AGENTS.md refactor plan** | 3 direct edits: add CC Infrastructure section, update role boundaries header, add post-task review | 15 min — 3 edits | [CC-plugin-packaging-research.md](CC-plugin-packaging-research.md), [agents-md-refactor-plan.md](../agents-md-refactor-plan.md) |
+| **Disable git instructions for Ralph** | Set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` in Ralph's env — headless mode doesn't need built-in commit/PR instructions | 5 min — 1 env var | [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md) |
+| **`Setup` hook for env validation** | Add `Setup` hook event to auto-run `make setup_dev` or validate environment on CC session start | 15 min — hook config | [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md) |
+| **Effort level tuning** | Set `CLAUDE_CODE_EFFORT_LEVEL=medium` for routine tasks; `high` for complex architecture work | 5 min — env var | [CC-model-provider-configuration.md](CC-model-provider-configuration.md) |
+| **Subagent model override** | Set `CLAUDE_CODE_SUBAGENT_MODEL` to route teammates/subagents to cheaper models | 5 min — env var | [CC-model-provider-configuration.md](CC-model-provider-configuration.md) |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -34,6 +41,10 @@ This plan synthesizes findings from 8 CC feature analysis documents into a prior
 | **Batch Processing API** | Evaluate `platform.claude.com/docs/en/build-with-claude/batch-processing` for tier 2 LLM judge calls. Run one eval batch, measure cost vs current approach | 2-4 hrs spike | Next eval run where cost is a concern | [CC-platform-documentation-index.md](CC-platform-documentation-index.md) |
 | **CC Analytics API** | Evaluate `platform.claude.com/docs/en/build-with-claude/claude-code-analytics-api` for programmatic cost tracking of CC baseline runs | 2-4 hrs spike | Manual cost tracking becomes tedious | [CC-platform-documentation-index.md](CC-platform-documentation-index.md) |
 | **Cloud Sessions for parallel baselines** | Test `claude --remote "prompt"` for running N baseline tasks in parallel on cloud VMs | 4 hrs spike | Local machine can't handle parallel CC runs | [CC-cloud-sessions-analysis.md](CC-cloud-sessions-analysis.md) |
+| **Structured outputs for `-p` mode** | Evaluate structured output schemas for Ralph's `claude -p` invocations — enforce story result schema (pass/fail/error + commit hashes) | 2 hrs spike | Ralph output parsing is brittle or needs schema validation | [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md) |
+| **`/loop` command for monitoring** | Test `/loop 5m make ralph_status` for periodic monitoring during interactive sessions | 1 hr spike | Next interactive Ralph session | [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md) |
+| **HTTP hooks for status notifications** | Evaluate HTTP hooks to push Ralph status events (story pass/fail) to Slack or dashboard | 2 hrs spike | Manual monitoring becomes tedious | [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md) |
+| **OpenRouter for failover + budget** | Route CC through OpenRouter for provider failover and team budget controls. Set `ANTHROPIC_BASE_URL=https://openrouter.ai/api` | 2 hrs spike | Anthropic API reliability issues or team cost management needed | [CC-model-provider-configuration.md](CC-model-provider-configuration.md) |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -49,6 +60,7 @@ This plan synthesizes findings from 8 CC feature analysis documents into a prior
 | **Cowork Plugins for eval distribution** | Enterprise deployment feature; no team consumers yet | Eval framework needs distribution to non-developer stakeholders | [CC-cowork-plugins-enterprise-analysis.md](CC-cowork-plugins-enterprise-analysis.md) |
 | **Agent Teams as core infra** | No session resumption; task status lag; no nested teams; experimental | Limitations resolved upstream; reliability proven over multiple sprints | [CC-agent-teams-orchestration.md](CC-agent-teams-orchestration.md) |
 | **Agent SDK as PydanticAI alternative** | Working PydanticAI MAS with Logfire/Phoenix observability already in place | PydanticAI becomes a bottleneck or Agent SDK offers unique capabilities | [CC-platform-documentation-index.md](CC-platform-documentation-index.md) |
+| **Chrome extension for browser automation** | Project is API/CLI-driven; no browser interaction surface | Evaluation workflows require web UI interaction | [CC-chrome-extension-analysis.md](CC-chrome-extension-analysis.md) |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -105,6 +117,9 @@ paths:
 | Agent Teams for reviews only, not core infra | Useful for parallel code reviews and competing hypotheses. Too unreliable (no resumption, task lag) for replacing Ralph loop or subagent architecture ([CC-agent-teams-orchestration.md](CC-agent-teams-orchestration.md)) | 2026-03-07 |
 | OTel supplementary, artifacts primary for CC eval | CC OTel exports metrics/logs only — no trace spans (upstream limitation). Artifact collection via `CCTraceAdapter` is primary for evaluation ([CC-agent-teams-orchestration.md](CC-agent-teams-orchestration.md)) | 2026-03-07 |
 | Batch Processing API as priority research | 50% cost reduction on async workloads directly applicable to tier 2 LLM judge calls ([CC-platform-documentation-index.md](CC-platform-documentation-index.md)) | 2026-03-07 |
+| Apply AGENTS.md refactor as direct edits, not plugin | Project-specific rules stay repo-local; plugin packaging is YAGNI until cross-project reuse demand exists ([CC-plugin-packaging-research.md](CC-plugin-packaging-research.md)) | 2026-03-07 |
+| Fix `ralph_status` + AGENTS.md path ref | Broken functionality — `ralph_status` uses legacy `.passes` field; AGENTS.md references wrong path ([CC-ralph-enhancement-research.md](CC-ralph-enhancement-research.md)) | 2026-03-07 |
+| Skip Chrome extension | Browser automation for web-based knowledge work; project is API/CLI-driven with no browser interaction ([CC-chrome-extension-analysis.md](CC-chrome-extension-analysis.md)) | 2026-03-07 |
 
 ## Source Documents
 
@@ -119,3 +134,10 @@ paths:
 | [CC-cowork-plugins-enterprise-analysis.md](CC-cowork-plugins-enterprise-analysis.md) | Cowork, plugins, enterprise | Tier 3 — monitor |
 | [CC-platform-documentation-index.md](CC-platform-documentation-index.md) | Platform docs surface area | Tier 1 (ref) + Tier 2 (batch/analytics) |
 | [CC-remote-access-landscape.md](CC-remote-access-landscape.md) | Omnara, CloudCLI, DIY alternatives | Tier 3 — monitor |
+| [CC-ralph-enhancement-research.md](CC-ralph-enhancement-research.md) | Ralph loop gaps, external patterns, enhancements | Tier 1 (bugs) + Tier 2 (robustness) |
+| [CC-plugin-packaging-research.md](CC-plugin-packaging-research.md) | Plugin packaging vs repo-local, AGENTS.md refactor | Tier 1 (direct edit) + Tier 3 (plugin) |
+| [CC-chrome-extension-analysis.md](CC-chrome-extension-analysis.md) | Chrome browser automation extension | Tier 3 — monitor |
+| [CC-changelog-feature-scan.md](CC-changelog-feature-scan.md) | Changelog scan (v2.1.0–2.1.71) | Tier 1 + Tier 2 |
+| [CC-model-provider-configuration.md](CC-model-provider-configuration.md) | Model, endpoint, API key, provider config | Tier 1 (effort/subagent) + Tier 2 (OpenRouter) |
+
+Ralph-specific bugs, enhancements, and deferred items also tracked in [ralph/TODO.md](../../../ralph/TODO.md).

@@ -93,7 +93,7 @@ Already analyzed in [CC-remote-control-analysis.md](CC-remote-control-analysis.m
 
 ### Actionable Next Steps
 
-1. **Try CC Remote Control** on next Ralph run — `claude remote-control --name "Ralph"` then monitor from phone. Zero cost to evaluate
+1. **Try CC Remote Control** — see [CC-remote-control-analysis.md](CC-remote-control-analysis.md) for setup and decision rationale
 2. **Measure**: Does the laptop actually sleep during runs? If not, CC RC is sufficient and no further evaluation needed
 3. **If sleep is a problem**: Evaluate Omnara's cloud sandbox failover on a non-sensitive test repo first
 

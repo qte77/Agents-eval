@@ -138,7 +138,7 @@ Active at `~/.claude/projects/-workspaces-Agents-eval/memory/`. Contains `MEMORY
 | Import chain | CLAUDE.md → AGENTS.md → CONTRIBUTING.md → AGENT_LEARNINGS.md | Deep chain; ensure total token cost is acceptable |
 | Path-scoped rules | 2 rules (context-management, core-principles), both unconditional | Could add path-scoped rules for `src/app/agents/` (agent patterns), `tests/` (testing conventions) |
 | Auto memory | Active, accumulating learnings | Cross-check with AGENT_LEARNINGS.md for duplicates — auto memory and manual learnings may diverge |
-| Ralph loop context | Each iteration starts fresh; reads CLAUDE.md + auto memory | Working as designed — fresh context per iteration is intentional |
+| Ralph loop context | Each iteration starts fresh; reads CLAUDE.md + auto memory | Working as designed — see [CC-ralph-enhancement-research.md](CC-ralph-enhancement-research.md#context-rot-prevention) for context rot analysis |
 | Cloud sessions | N/A | Auto memory is machine-local; cloud sessions rely on committed CLAUDE.md only (see [CC-cloud-sessions-analysis.md](CC-cloud-sessions-analysis.md)) |
 | Managed policy | Not used | Could use for org-wide CC standards if deploying across team |
 

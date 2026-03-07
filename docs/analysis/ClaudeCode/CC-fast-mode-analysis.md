@@ -9,7 +9,7 @@ created: 2026-02-17
 
 ## What Fast Mode Is
 
-A high-speed API configuration for Opus 4.6 — **same model, same quality, 2.5x faster output tokens**. Toggle with `/fast` in CLI or VS Code. Not a different model or reduced reasoning — purely an infrastructure-level latency optimization at higher per-token cost.
+A high-speed API configuration for Opus 4.6 — **same model, same quality, 2.5x faster output tokens** ([source][cc-fast]). Toggle with `/fast` in CLI or VS Code. Not a different model or reduced reasoning — purely an infrastructure-level latency optimization at higher per-token cost.
 
 ### Pricing
 
@@ -21,9 +21,11 @@ A high-speed API configuration for Opus 4.6 — **same model, same quality, 2.5x
 | Fast mode Opus 4.6 (>200K context) | $60 | $225 |
 | Standard Opus 4.6 | Lower | Lower |
 
+([source][cc-fast])
+
 <!-- markdownlint-enable MD013 -->
 
-Compatible with the 1M token extended context window.
+Compatible with the 1M token extended context window ([source][cc-fast]).
 
 ### Configuration
 
@@ -35,11 +37,11 @@ Or toggle per-session: `/fast` (persists across sessions). CLI flag: `--fast`.
 
 ### Key Mechanics
 
-- Enabling mid-conversation pays full uncached input price for entire context (enable at session start for cost efficiency)
-- Separate rate limits from standard Opus 4.6; auto-fallback to standard on limit hit
-- Extra usage only — not included in subscription rate limits
-- Not available on Bedrock, Vertex AI, or Azure Foundry
-- Teams/Enterprise: admin must explicitly enable
+- Enabling mid-conversation pays full uncached input price for entire context (enable at session start for cost efficiency) ([source][cc-fast])
+- Separate rate limits from standard Opus 4.6; auto-fallback to standard on limit hit ([source][cc-fast])
+- Extra usage only — not included in subscription rate limits ([source][cc-fast])
+- Not available on Bedrock, Vertex AI, or Azure Foundry ([source][cc-fast])
+- Teams/Enterprise: admin must explicitly enable ([source][cc-fast])
 
 ### Fast Mode vs Effort Level
 

@@ -34,7 +34,7 @@ Successfully migrated project scaffold to adopt:
 - Progressive disclosure architecture (metadata → instructions → resources)
 - Third-person descriptions with explicit triggers
 - References to @AGENTS.md, @CONTRIBUTING.md for compliance
-- Under 500 lines per SKILL.md (Anthropic best practice)
+- Under 500 lines per SKILL.md ([source](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview))
 
 ### 2. Ralph Loop Infrastructure
 

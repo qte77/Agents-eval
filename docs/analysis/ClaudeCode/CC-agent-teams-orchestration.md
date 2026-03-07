@@ -17,9 +17,9 @@ Coordinates multiple independent CC sessions with:
 - **Inter-agent communication** — direct teammate-to-teammate messaging
 - **Parallel execution** — each teammate has its own context window
 - **Task dependency management** with automatic unblocking
-- **Quality gates** via `TeammateIdle` and `TaskCompleted` hooks
-- **Delegate mode** — restricts lead to coordination only
-- **Plan approval** — teammates plan in read-only mode; lead approves/rejects autonomously
+- **Quality gates** via `TeammateIdle` and `TaskCompleted` hooks ([source][cc-teams-docs])
+- **Delegate mode** — restricts lead to coordination only ([source][cc-teams-docs])
+- **Plan approval** — teammates plan in read-only mode; lead approves/rejects autonomously ([source][cc-teams-docs])
 
 ### How It Works
 
@@ -37,7 +37,7 @@ Coordinates multiple independent CC sessions with:
 
 ### Delegate Mode
 
-Restricts lead to coordination-only (spawn, assign, synthesize). Blocks direct implementation. Toggle with **Shift+Tab** after starting a team.
+Restricts lead to coordination-only (spawn, assign, synthesize). Blocks direct implementation. Toggle with **Shift+Tab** after starting a team. ([source][cc-teams-docs])
 
 **Use when**: Lead keeps implementing instead of delegating; 3+ teammates. **Skip when**: Task is already pure coordination; small teams.
 
@@ -67,16 +67,16 @@ Restricts lead to coordination-only (spawn, assign, synthesize). Blocks direct i
 
 ## Key Limitations
 
-1. **No session resumption (in-process)** — `/resume` and `/rewind` do not restore in-process teammates; lead may message non-existent agents
+1. **No session resumption (in-process)** — `/resume` and `/rewind` do not restore in-process teammates; lead may message non-existent agents ([source][cc-teams-docs])
 2. **Task status can lag** — teammates sometimes don't mark tasks complete, blocking dependents
-3. **No nested teams** — teammates can't spawn their own teams or teammates
-4. **One team per session** — clean up current team before starting a new one
-5. **Lead is fixed** — session that creates the team is lead for its lifetime; no promotion or transfer
-6. **Permissions set at spawn** — all teammates inherit lead's mode; can change individually after spawn but not at spawn time
-7. **Shutdown can be slow** — teammates finish current request/tool call before exiting
-8. **Linear token cost** — each teammate is a separate Claude instance
-9. **Experimental, disabled by default**
-10. **Split panes require tmux or iTerm2** — not supported in VS Code terminal, Windows Terminal, or Ghostty
+3. **No nested teams** — teammates can't spawn their own teams or teammates ([source][cc-teams-docs])
+4. **One team per session** — clean up current team before starting a new one ([source][cc-teams-docs])
+5. **Lead is fixed** — session that creates the team is lead for its lifetime; no promotion or transfer ([source][cc-teams-docs])
+6. **Permissions set at spawn** — all teammates inherit lead's mode; can change individually after spawn but not at spawn time ([source][cc-teams-docs])
+7. **Shutdown can be slow** — teammates finish current request/tool call before exiting ([source][cc-teams-docs])
+8. **Linear token cost** — each teammate is a separate Claude instance ([source][cc-teams-docs])
+9. **Experimental, disabled by default** ([source][cc-teams-docs])
+10. **Split panes require tmux or iTerm2** — not supported in VS Code terminal, Windows Terminal, or Ghostty ([source][cc-teams-docs])
 
 ## When to Use Each Mode
 
@@ -329,7 +329,7 @@ Each task is tracked in its own JSON file:
 - **Execution**: ~26 seconds for 3 complete reviews (quality 23:57:29, coverage +6s, security +20s)
 - **Dependencies**: Tasks 1-3 ran in parallel; task 4 (aggregation) waited for all 3
 - **Output**: Full review content preserved in mailboxes (19k+ chars each)
-- **Report**: evaluation-pipeline-parallel-review-2026-02-11.md (removed — stale review document)
+- **Report**: evaluation-pipeline-parallel-review-2026-02-11.md (removed — stale review document; timing data from project test run, not external source)
 
 ### Phoenix/Logfire Correlation
 
