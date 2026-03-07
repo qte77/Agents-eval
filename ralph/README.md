@@ -1,5 +1,7 @@
 # Ralph Loop - Autonomous TDD Development with Claude Code
 
+> "Ralph makes the agent earn every commit — red, green, refactor, verify, repeat."
+
 Autonomous AI development loop that iteratively implements stories
 until all acceptance criteria pass.
 
@@ -15,6 +17,7 @@ iteratively improving until completion.
 ```text
 while stories remain:
   1. Read prd.json, pick next story (status: "pending"/"failed")
+  1b. Generate story context snapshot (AC, files, tests)
   2. Mark story "in_progress", implement (TDD: red → green → refactor)
   3. Run typecheck + tests
   4. If passing: mark "passed", commit, log learnings
@@ -28,6 +31,7 @@ while stories remain:
 - `prd.json` - Task status and acceptance criteria
 - `progress.txt` - Learnings and patterns
 - Git commits - Code changes
+- `codebase-map.md` - Source tree + function signatures (refreshed per wave)
 
 **Usage:**
 
@@ -279,6 +283,9 @@ ralph/
 ├── docs/
 │   ├── LEARNINGS.md           # Patterns and lessons
 │   ├── prd.json               # Story tracking (committed)
+│   ├── codebase-map.md        # Source tree + signatures (committed)
+│   ├── .codebase-map.sha      # Content hash (gitignored)
+│   ├── story-context.md       # Per-story context (gitignored)
 │   ├── progress.txt           # Execution log (committed)
 │   ├── TEMPLATE_USAGE.md      # Setup guide
 │   └── templates/             # Project templates
@@ -295,6 +302,7 @@ ralph/
     ├── setup_project.sh       # Interactive setup
     └── lib/
         ├── common.sh              # Shared utilities
+        ├── snapshot.sh            # Codebase snapshot generation
         ├── baseline.sh            # Baseline-aware test validation
         └── stop_ralph_processes.sh # Process cleanup
 ```
