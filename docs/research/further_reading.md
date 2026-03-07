@@ -11,7 +11,7 @@ features:
   - cross-references
   - relationship-explanations
   - clustering-by-themes
-papers_count: 262+
+papers_count: 263+
 coverage_period: 2020-10 to 2026-02
 created: 2025-08-24
 updated: 2026-02-15
@@ -143,7 +143,7 @@ This document provides a comprehensive, curated collection of research papers on
 **Memory Systems** `[MEM]`:
 
 - Surveys: 2512.13564 (memory in AI agents), 2512.23343 (AI meets brain), 2404.13501 (memory mechanisms)
-- Frameworks: 2601.03236 (MAGMA multi-graph), 2601.01885 (agentic memory), 2502.12110 (A-Mem), 2501.13956 (Zep temporal KG)
+- Frameworks: 2601.03236 (MAGMA multi-graph), 2601.01885 (agentic memory), 2602.20478 (Codified Context), 2502.12110 (A-Mem), 2501.13956 (Zep temporal KG)
 - Learning: 2512.18950 (MACLA hierarchical procedural), 2511.18423 (GAM deep research), 2509.25250 (long-running agents)
 - Applications: 2510.01003 (repository memory), 2508.11120 (marketing MAS), 2510.11290 (AI-Agent School dual memory)
 - Production platforms: Cognee (knowledge graph engine, $7.5M seed Feb 2026), Mem0 ($24M, graph memory), LangMem (LangGraph-native)
@@ -212,6 +212,9 @@ Based on current gaps and transformative potential, three areas warrant immediat
 - [[2512.04123] Measuring Agents in Production](https://arxiv.org/abs/2512.04123) `[EVAL]` `[COMP]` `cs.SE` `cs.AI`
   - Interview-based study (306 survey responses, 20 in-depth interviews across 26 domains) arguing agent evaluation must move beyond correctness metrics to assess reliability under varying autonomy levels
   - Cross-ref: 2512.12791 (assessment framework), 2601.00481 (MAESTRO), 2503.16416 (evaluation survey)
+- [[2602.20478] Codified Context: Infrastructure for AI Agents in a Complex Codebase](https://arxiv.org/abs/2602.20478) `[MEM]` `[ARCH]` `cs.SE` `cs.AI`
+  - Three-tier context architecture (hot-memory constitution + 19 specialist agents + 34-doc cold-memory knowledge base) validated across 283 sessions on 108K LOC C# distributed system; 24.2% knowledge-to-code ratio; MCP retrieval service for on-demand spec loading; context drift detector
+  - Cross-ref: 2601.19583 (architecture-aware metrics), 2602.10479 (agentic architecture)
 
 ## 2026-01
 

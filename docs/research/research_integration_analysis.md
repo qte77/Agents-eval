@@ -14,7 +14,7 @@ tags:
   - self-evolving-agents
   - runtime-governance
 author: AI Research Team
-papers_analyzed: 262+
+papers_analyzed: 263+
 coverage_period: 2022-10 to 2026-02
 related_documents:
   - further_reading.md
@@ -367,6 +367,7 @@ Production insights from Anthropic's two-agent harness pattern mapping directly 
 - `[2512.18950] MACLA`: Hierarchical procedural memory, 2,800× faster construction
 - `[2501.13956] Zep`: Temporal KG architecture outperforming MemGPT (DMR 94.8% vs 93.4%, LongMemEval +18.5%); establishes LongMemEval as the enterprise memory evaluation standard over DMR
 - `Behavioral Fingerprinting` (Agents4Science 2025): Diagnostic Prompt Suite analyzing 18 models revealing behavioral profiles beyond performance metrics; documents ISTJ/ESTJ personality clustering reflecting deliberate alignment choices
+- `[2602.20478] Codified Context Infrastructure`: First empirical validation of tiered context architecture for coding agents — hot-memory constitution (always loaded, ~660 lines), 19 specialist agents (domain-scoped), 34-doc knowledge base (on-demand via MCP); 283 sessions, 108K LOC. Validates AGENTS.md + Skills + docs/ pattern used by this project.
 
 **Production Memory Infrastructure** (30+ frameworks, up from 27+):
 
