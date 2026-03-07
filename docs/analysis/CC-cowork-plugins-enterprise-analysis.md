@@ -1,0 +1,100 @@
+---
+title: CC Cowork, Plugins & Enterprise Analysis
+source: https://claude.com/blog/cowork-plugins-across-enterprise
+purpose: Analysis of Claude's Cowork enterprise platform, plugin architecture, and connector ecosystem for potential relevance to Agents-eval MAS evaluation framework.
+created: 2026-03-07
+---
+
+**Status**: Generally available (Cowork); Plugin architecture in active rollout
+
+## What Cowork & Plugins Are
+
+**Cowork** is Claude's enterprise collaboration platform — a central hub where teams customize Claude for organizational workflows. **Plugins** are portable file-system bundles that transform into specialized agents, deployable across Cowork and anything built on the Claude Agent SDK.
+
+### Core Components
+
+#### Plugin Architecture
+
+- Plugins are "simple, portable file systems that you own"
+- Transform into specialized agents for distinct job functions
+- Cross-platform: work in Cowork and Claude Agent SDK applications
+- Slash commands launch structured forms for workflow execution
+- Private GitHub repos as plugin sources (beta)
+- Organization-specific marketplaces for plugin distribution
+
+#### Admin Customization Controls
+
+- Unified "Customize" menu: plugins, skills, connectors
+- Starter templates or custom-built configurations
+- Claude-guided questionnaires for tailor-made solutions
+- Per-user provisioning and auto-installation
+- OpenTelemetry support for usage tracking, cost monitoring, tool activity audits
+
+#### Enterprise Connectors
+
+Google Workspace (Calendar, Drive, Gmail), Docusign, Apollo, Clay, Outreach, Similarweb, MSCI, LegalZoom, FactSet, WordPress, Harvey.
+
+#### Pre-Built Plugin Templates
+
+- **Engineering**: Standup summaries, incident response
+- **HR**: Offer letters, onboarding, reviews
+- **Design**: Critique frameworks, accessibility audits
+- **Operations**: Process documentation, vendor evaluation
+- **Financial Analysis**: Market research, modeling
+- **Investment Banking**: Deal workflows
+- **Equity Research**: Transcript parsing
+- **Private Equity**: Diligence and scoring
+- **Wealth Management**: Portfolio analysis
+- **Brand Voice**: By Tribe AI
+
+### Availability
+
+- UX updates: All Cowork users
+- Admin controls (branding, provisioning, connectors): Team and Enterprise
+
+## Relevance to This Project
+
+<!-- markdownlint-disable MD013 -->
+
+| Aspect | Fit | Rationale |
+| ------ | --- | --------- |
+| Plugin architecture for evaluation agents | Moderate | Plugins as portable agent bundles could package our evaluation pipeline (Researcher/Analyst/Synthesizer) for distribution |
+| OTel support for usage tracking | Strong | Aligns with existing Phoenix/OTel strategy (see [CC-agent-teams-orchestration.md](CC-agent-teams-orchestration.md#tracing--observability)) |
+| Connector ecosystem | Weak | Project doesn't integrate with Google Workspace, Docusign, etc. |
+| Pre-built templates | Weak | Templates target business workflows, not research/evaluation |
+| Organization marketplace | Moderate | Could distribute evaluation skills/plugins to research team |
+
+<!-- markdownlint-enable MD013 -->
+
+### Plugin Architecture vs Project Skills
+
+Current Skills architecture documented in [CC-skills-Ralph-adoption-plan.md](CC-skills-Ralph-adoption-plan.md). Key differences: Plugins are cross-platform (Cowork + Agent SDK) with org marketplace distribution and admin provisioning; Skills are repo-local with auto-discovery. Plugins add structured form UI and OTel integration that Skills lack.
+
+### Decision Rule
+
+**Cowork/Plugins are enterprise deployment features. This project's CC usage is developer-local (Ralph loop, baselines, interactive dev). No adoption action needed until the project needs to distribute evaluation capabilities to a broader team.**
+
+### Potential Future Integration
+
+If the evaluation framework becomes a team-wide tool:
+
+1. **Package evaluation pipeline as a plugin** — portable bundle with Researcher/Analyst/Synthesizer agents
+2. **Use OTel support** for centralized cost/usage tracking across team members running evaluations
+3. **Create org marketplace** for evaluation skill distribution
+
+**Recommendation**: Do not integrate. Cowork/Plugins target enterprise deployment and team-wide AI customization. This project is a research evaluation framework used by individual developers. The existing Skills architecture (`.claude/skills/`) already provides the modular capability pattern needed. Revisit if:
+
+1. Evaluation framework needs distribution to non-developer stakeholders
+2. Plugin API stabilizes and supports programmatic creation
+
+## References
+
+- [Cowork & Plugins announcement][cowork-blog]
+- [CC Skills docs][cc-skills]
+- [Agent SDK Plugins docs][sdk-plugins]
+- [Agent SDK Skills docs][sdk-skills]
+
+[cowork-blog]: https://claude.com/blog/cowork-plugins-across-enterprise
+[cc-skills]: https://code.claude.com/docs/en/skills
+[sdk-plugins]: https://platform.claude.com/docs/en/agent-sdk/plugins
+[sdk-skills]: https://platform.claude.com/docs/en/agent-sdk/skills
