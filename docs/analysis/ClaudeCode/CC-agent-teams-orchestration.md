@@ -3,23 +3,29 @@ title: CC Agent Teams Orchestration
 source: https://code.claude.com/docs/en/agent-teams
 purpose: Analysis of Claude Code Agent Teams for parallel code review, cross-layer implementation, and adversarial debugging within Agents-eval.
 created: 2026-02-08
-updated: 2026-02-17
+updated: 2026-03-07
 test_run: 2026-02-11 (parallel code review with 3 teammates)
 ---
 
-**Status**: Experimental (disabled by default)
+**Status**: Research preview (disabled by default, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)
 
 ## What Agent Teams Offer
 
 Coordinates multiple independent CC sessions with:
 
 - **Lead/teammate hierarchy** with shared task list and mailbox messaging
-- **Inter-agent communication** — direct teammate-to-teammate messaging
+- **Inter-agent communication** — direct teammate-to-teammate messaging via tmux (v2.1.33)
 - **Parallel execution** — each teammate has its own context window
 - **Task dependency management** with automatic unblocking
-- **Quality gates** via `TeammateIdle` and `TaskCompleted` hooks ([source][cc-teams-docs])
+- **Quality gates** via `TeammateIdle` and `TaskCompleted` hook events (v2.1.33)
 - **Delegate mode** — restricts lead to coordination only ([source][cc-teams-docs])
 - **Plan approval** — teammates plan in read-only mode; lead approves/rejects autonomously ([source][cc-teams-docs])
+- **Agent memory** — teammates have user/project/local scoped memory (v2.1.33)
+- **Worktree isolation** — `isolation: worktree` gives each agent an isolated repo copy (v2.1.49–v2.1.50)
+- **Background agents** — `background: true` lets agents run while user works (v2.1.49, v2.0.60); Ctrl+F kills background agents (two-press confirmation, v2.1.49)
+- **Agent frontmatter hooks** — PreToolUse, PostToolUse, Stop hooks in agent definitions (v2.1.0)
+- **Agent spawning restrictions** — `Task(agent_type)` controls which agents can spawn (v2.1.33)
+- **`claude agents` CLI** — manage agents from the command line (v2.1.50)
 
 ### How It Works
 
@@ -40,6 +46,15 @@ Coordinates multiple independent CC sessions with:
 Restricts lead to coordination-only (spawn, assign, synthesize). Blocks direct implementation. Toggle with **Shift+Tab** after starting a team. ([source][cc-teams-docs])
 
 **Use when**: Lead keeps implementing instead of delegating; 3+ teammates. **Skip when**: Task is already pure coordination; small teams.
+
+### Agent Customization (v2.0.59+)
+
+- `--agent` CLI flag overrides agent configuration for a session
+- `agent` setting customizes main thread behavior
+- `--resume` reuses `--agent` value from previous session (v2.1.32)
+- Agent disabling via `Task(AgentName)` syntax (v2.1.0)
+- `skills` frontmatter auto-loads skills for subagents (v2.0.43)
+- Bedrock/Vertex/Foundry support for teammates (v2.1.45)
 
 ### Agent Teams vs Subagents (Task tool)
 
@@ -77,6 +92,7 @@ Restricts lead to coordination-only (spawn, assign, synthesize). Blocks direct i
 8. **Linear token cost** — each teammate is a separate Claude instance ([source][cc-teams-docs])
 9. **Experimental, disabled by default** ([source][cc-teams-docs])
 10. **Split panes require tmux or iTerm2** — not supported in VS Code terminal, Windows Terminal, or Ghostty ([source][cc-teams-docs])
+11. **Agent Teams crash fixes ongoing** — v2.1.34, v2.1.41 addressed model identifier and crash issues
 
 ## When to Use Each Mode
 

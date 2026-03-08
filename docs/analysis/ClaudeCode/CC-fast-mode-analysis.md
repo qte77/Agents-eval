@@ -3,6 +3,7 @@ title: CC Fast Mode Analysis
 source: https://code.claude.com/docs/en/fast-mode
 purpose: Analysis of Claude Code Fast Mode for potential adoption within Agents-eval workflows.
 created: 2026-02-17
+updated: 2026-03-07
 ---
 
 **Status**: Research preview (pricing and availability may change)
@@ -25,7 +26,19 @@ A high-speed API configuration for Opus 4.6 — **same model, same quality, 2.5x
 
 <!-- markdownlint-enable MD013 -->
 
-Compatible with the 1M token extended context window ([source][cc-fast]).
+Compatible with the 1M token extended context window ([source][cc-fast]). As of v2.1.50, Opus 4.6 in fast mode includes the full 1M context window.
+
+### Effort Level Interaction (v2.1.68+)
+
+Opus 4.6 defaults to **medium effort** for Max/Team subscribers (v2.1.68). The "ultrathink" keyword was reintroduced for forcing high effort. This interacts with fast mode:
+
+| Combination | Effect |
+| ----------- | ------ |
+| Fast mode + default (medium) effort | Balanced speed/quality, lower cost than high effort |
+| Fast mode + high effort ("ultrathink") | Maximum quality, highest cost and latency |
+| Fast mode + low effort | Maximum speed on simple tasks |
+
+After `/extra-usage`, `/fast` remains available (v2.1.37).
 
 ### Configuration
 

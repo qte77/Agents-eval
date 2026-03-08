@@ -40,6 +40,47 @@ Since initial adoption, the project has grown to 16 skills. Run
 - References to @AGENTS.md, @CONTRIBUTING.md for compliance
 - Under 500 lines per SKILL.md
 
+## Skills Evolution (v2.1.0–v2.1.69)
+
+The skills system has evolved significantly since initial adoption:
+
+### Hot-Reload and Lifecycle (v2.1.0+)
+
+- **Automatic hot-reload** from `~/.claude/skills` and `.claude/skills` (v2.1.0)
+- **`/reload-plugins`** command for manual hot-reload of skills (v2.1.69)
+- **Merged slash commands and skills** — unified system (v2.1.3)
+- **`/skills/` directory visible by default** (v2.1.0)
+- **Skill suggestion prioritization** in autocomplete (v2.1.0)
+- **Skill progress display** during execution (v2.1.0)
+- **Skills context visualization** — see what context skills inject (v2.1.0)
+- **Skill character budget scales with context** — 2% of context window (v2.1.32)
+
+### New Frontmatter Fields (v2.1.0+)
+
+| Field | Version | Description |
+| ----- | ------- | ----------- |
+| `context: fork` | v2.1.0 | Run skill in isolated subagent context |
+| `agent` | v2.1.0 | Subagent type when `context: fork` (e.g. `Explore`) |
+| `hooks` | v2.1.0 | Agent frontmatter hooks (PreToolUse, PostToolUse, Stop) |
+| `skills` | v2.0.43 | Auto-load skills for subagents |
+
+### Variable Substitutions
+
+| Variable | Version | Description |
+| -------- | ------- | ----------- |
+| `$ARGUMENTS`, `$0`, `$1` | v2.1.3 | Shorthand command arguments |
+| `${CLAUDE_SKILL_DIR}` | v2.1.69 | Path to the skill's directory |
+| `${CLAUDE_SESSION_ID}` | v2.1.13 | Current session identifier |
+| `` !`shell command` `` | v2.1.0 | Dynamic context injection |
+
+### Discovery and Loading Improvements
+
+- **Nested `.claude/skills` discovery** (v2.1.6)
+- **Skills in `--add-dir` auto-load** (v2.1.32)
+- **Duplicate skill detection** via filesystem inode checks (v2.1.3)
+- **Skill `allowed-tools` application fixes** (v2.0.76)
+- **`auto:N` MCP tool search threshold** via context % (v2.1.13)
+
 ## Skills Auto-Discovery
 
 Skills are auto-discovered by Claude Code. Trigger by:
@@ -92,11 +133,12 @@ CC extends the standard with additional fields documented at
 | `agent` | Subagent type when `context: fork` (e.g. `Explore`) |
 | `hooks` | Skill lifecycle hooks |
 
-CC-specific features not in the open standard:
+CC-specific features not in the open standard (see [Skills Evolution](#skills-evolution-v210v2169) for version details):
 
-- `$ARGUMENTS`, `$0`, `$1` string substitutions
-- `` !`shell command` `` dynamic context injection
-- `${CLAUDE_SKILL_DIR}`, `${CLAUDE_SESSION_ID}` variables
+- `$ARGUMENTS`, `$0`, `$1` string substitutions (v2.1.3)
+- `` !`shell command` `` dynamic context injection (v2.1.0)
+- `${CLAUDE_SKILL_DIR}` (v2.1.69), `${CLAUDE_SESSION_ID}` (v2.1.13) variables
+- `context: fork`, `agent`, `hooks`, `skills` frontmatter fields (v2.0.43–v2.1.0)
 
 ### VSCode Validation Warning (Known Bug)
 

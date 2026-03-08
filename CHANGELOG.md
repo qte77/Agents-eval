@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `.github/workflows/generate-sbom.yaml`: auto-generate SPDX 2.3 SBOM on push to main (`pyproject.toml`/`uv.lock` changes) and weekly; outputs `docs/SBOM/sbom.spdx.json` (machine-readable) and `docs/SBOM/sbom.md` (human-readable markdown table)
+
+### Fixed
+
+- `src/app/utils/run_context.py`: wrap 101-char `run_dir` line to satisfy ruff E501
+- `.github/workflows/codeql.yaml`: add `advanced-security/dismiss-alerts` step so `# CodeQL[py/path-injection]` inline comments actually suppress alerts via SARIF API; pin action to SHA; fix wrong input name (`sarif-upload-id` → `sarif-id`)
+
+### Added
+
 - `.github/templates/llms.txt.additions.tpl`: project-specific llms.txt additions (Best Practices, Optional links) separate from generic skeleton
 - `scripts/writeup/README.md`: usage guide and pandoc/LaTeX gotchas (moved from AGENT_LEARNINGS)
 - `AGENT_LEARNINGS.md`: patterns for `gh pr edit` GraphQL workaround, CC sandbox git restriction, PR squash merge API

@@ -127,6 +127,7 @@ Community-published Ralph loop as a CC Skill. Uses `.claude/ralph-loop.local.md`
 6. **BDD workflow support**: Add `RALPH_TEST_WORKFLOW` switch when a BDD project needs Ralph
 7. **Cross-layer validation commands**: Add `/check-backend` etc. when project becomes multi-layer
 8. **Rust/Python rewrite**: When bash brittleness measurably blocks development
+9. **`/loop` command as alternative** (v2.1.71): CC now has a built-in `/loop` command with cron scheduling for recurring prompts/commands on intervals. This overlaps with Ralph's core loop mechanic. Key differences: `/loop` is session-bound (no external state), lacks TDD enforcement, no story dependencies or PRD tracking. Could replace Ralph for simple repeating tasks but insufficient for structured multi-story workflows. Worth monitoring if `/loop` gains state persistence or hook integration.
 
 ## References
 

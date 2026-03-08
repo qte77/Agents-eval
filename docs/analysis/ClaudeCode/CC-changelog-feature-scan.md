@@ -9,7 +9,7 @@ created: 2026-03-07
 
 ## Scan Scope
 
-Cross-referenced CHANGELOG.md (v2.1.0–2.1.71, Jan–Mar 2026) against 12 existing analysis docs. Features below are **not yet covered** and potentially relevant to Agents-eval workflows.
+Cross-referenced CHANGELOG.md (v2.1.0–2.1.71, Jan–Mar 2026) against 18 analysis docs in this directory. Features below are **not yet covered** and potentially relevant to Agents-eval workflows.
 
 ## High Relevance (directly applicable)
 
@@ -41,9 +41,7 @@ New `includeGitInstructions` setting and `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS` 
 
 ### HTTP Hooks (v2.1.63)
 
-Custom integrations via HTTP webhook endpoints on hook events. ([source][changelog])
-
-**Relevance**: Could push Ralph status events (story started, passed, failed) to external dashboards or Slack. Supplements Remote Control monitoring with programmatic notifications.
+JSON POST/receive on hook events. See [CC-hooks-system-analysis.md](CC-hooks-system-analysis.md) for full hooks reference.
 
 ### Agent Worktree Isolation (`isolation: worktree`) (v2.1.50)
 
@@ -53,9 +51,7 @@ Spawn subagents in isolated git worktrees via `Agent(isolation: "worktree")`. Wo
 
 ### `Setup` Hook Event (v2.1.10)
 
-Hook fires on session start for repository maintenance tasks. ([source][changelog])
-
-**Relevance**: Auto-run `make setup_dev` or validate environment state on every CC session start. Ensures consistent state without manual setup steps.
+One-time repo maintenance on session start. See [CC-hooks-system-analysis.md](CC-hooks-system-analysis.md).
 
 ### Task Tool Metrics (v2.1.30)
 
@@ -65,9 +61,7 @@ Task completions now include metrics: tokens consumed, tool uses, and duration. 
 
 ### TeammateIdle + TaskCompleted Hook Events (v2.1.33)
 
-New hook events fire when teammates go idle or complete tasks. ([source][changelog])
-
-**Relevance**: Programmatic monitoring of Agent Teams execution. Could trigger external alerts or logging. Supplements Remote Control for teams-mode Ralph runs.
+Agent Teams lifecycle hooks. See [CC-hooks-system-analysis.md](CC-hooks-system-analysis.md).
 
 ### Memory Frontmatter for Agents (v2.1.33)
 
@@ -125,7 +119,8 @@ Hook fires when CC configuration changes — useful for security auditing. ([sou
 | Skills (auto-discovery, SKILL.md) | [CC-skills-adoption-analysis.md](CC-skills-adoption-analysis.md) |
 | Plugins + Cowork | [CC-cowork-plugins-enterprise-analysis.md](CC-cowork-plugins-enterprise-analysis.md) |
 | Chrome extension | [CC-chrome-extension-analysis.md](CC-chrome-extension-analysis.md) |
-| Opus 4.6 + 1M context | Already in use |
+| Hooks system (all events) | [CC-hooks-system-analysis.md](CC-hooks-system-analysis.md) |
+| Opus 4.6 + 1M context | [CC-extended-context-analysis.md](CC-extended-context-analysis.md) |
 | Task system with dependencies | Already in use |
 
 <!-- markdownlint-enable MD013 -->
