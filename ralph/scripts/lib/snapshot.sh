@@ -52,7 +52,7 @@ generate_codebase_map() {
         # Extract class and function definitions with file paths
         find src/ -type f -name '*.py' | sort | while IFS= read -r pyfile; do
             local sigs
-            sigs=$(python3 "$_EXTRACT_SIGS" "$pyfile" 2>/dev/null || true)
+            sigs=$(python3 "$_EXTRACT_SIGS" "$pyfile" 2>/dev/null | head -100 || true)
             if [ -n "$sigs" ]; then
                 echo "**$pyfile**:"
                 echo '```python'
