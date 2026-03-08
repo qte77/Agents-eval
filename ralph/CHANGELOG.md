@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Skill routing table**: `prompt.md` maps file patterns to skills (`testing-python`, `implementing-python`, `designing-backend`, `reviewing-code`)
 - **Remote Control monitoring tip**: Added to README.md Configuration section
 - **Worktree-namespaced `/tmp` paths**: `RALPH_TMP_DIR="/tmp/claude/ralph_${_WT_HASH}"` prevents concurrent worktree collisions; all scripts use `$RALPH_TMP_DIR` instead of hardcoded paths
+- **Per-story effort level**: Auto-computes `CLAUDE_CODE_EFFORT_LEVEL` from story files count + dependency complexity (≤3→low, ≤8→medium, >8→high); env var overrides
+- **Ad-hoc `INSTRUCTION` parameter**: `make ralph_run INSTRUCTION="focus on error handling"` injects user guidance into prompt at highest priority
+- **De-sloppify pass** (opt-in): `make ralph_run DESLOPIFY=true` runs `quick_validate` on story files after quality pass, auto-fixes with a focused `claude -p` cleanup prompt
 
 ### Added (prior)
 

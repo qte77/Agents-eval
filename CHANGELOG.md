@@ -29,7 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `ralph/scripts/ralph.sh`: per-story `CLAUDE_CODE_EFFORT_LEVEL` auto-computation, ad-hoc `INSTRUCTION` parameter, opt-in de-sloppify pass
 - `ralph/scripts/ralph.sh`: worktree-namespaced `/tmp` paths via `sha256sum`-based `RALPH_TMP_DIR`; all hardcoded `/tmp/claude/ralph_*` paths replaced
+- `Makefile`: `ralph_run` and `ralph_run_worktree` accept `INSTRUCTION` and `DESLOPIFY` parameters
 - `ralph/scripts/generate_prd_json.py`: `--check-overlaps` flag for file-overlap detection between stories
 - `ralph/docs/templates/prompt.md`: skill routing table replacing flat bullet list
 - `ralph/README.md`: Remote Control monitoring tip in Configuration section
