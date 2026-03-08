@@ -48,42 +48,22 @@ make ralph_status                             # Check progress
 - `MAX_ITERATIONS` - Loop limit (default: 25)
 - `REQUIRE_REFACTOR` - Enforce REFACTOR phase (default: false)
 - `TEAMS` - EXPERIMENTAL: Enable parallel story delegation via agent teams (default: false). Known failure modes documented below — cross-story interference causes false rejections.
+- `SNAPSHOT_SIG_LIMIT` - Max signature lines per file in codebase map (default: 100)
+
+**Monitoring** (interactive sessions):
+
+```bash
+claude remote-control --name "Ralph"
+```
+
+Run before an interactive session to monitor and steer Ralph from another device.
 
 ## Design Principles
 
-### TDD Enforcement (Red-Green-Refactor)
-
-1. **Red** - Write failing test (commit with `[RED]` marker)
-2. **Green** - Implement until tests pass (commit with `[GREEN]` marker)
-3. **Refactor** - Clean up (optional, commit with `[REFACTOR]` marker)
-
-### Effective Agent Harnesses
-
-Follows [Anthropic's production harness patterns](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents):
-
-1. **Incremental Boundaries** - Story-by-story execution; one feature per
-   session, commit before moving on
-2. **State Management** - prd.json (task status) + progress.txt (learnings) +
-   git history (code); each session reads prior context before acting
-3. **Checkpointing** - Git commits per story enable resumption from
-   known-good states
-4. **Error Recovery** - `git reset --hard` recovers failed stories without
-   manual intervention
-5. **Human-in-the-Loop** - Structured prompts: read progress → select story →
-   implement → test → commit
-
-### Compound Engineering
-
-Learnings compound over time: **Plan** → **Work** → **Assess** → **Compound**
-
-Source: [Compound Engineering](https://every.to/chain-of-thought/compound-engineering-how-every-codes-with-agents)
-
-### Context Engineering (ACE-FCA)
-
-Context window management for quality output.
-See `.claude/rules/context-management.md`.
-
-Source: [ACE-FCA](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/ace-fca.md)
+- **TDD Enforcement** — Red (`[RED]`) → Green (`[GREEN]`) → Refactor (`[REFACTOR]`) commit markers
+- **[Effective Harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)** — Incremental boundaries, state management, checkpointing, error recovery, human-in-the-loop
+- **[Compound Engineering](https://every.to/chain-of-thought/compound-engineering-how-every-codes-with-agents)** — Plan → Work → Assess → Compound
+- **[Context Engineering (ACE-FCA)](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/ace-fca.md)** — Context window management (see `.claude/rules/context-management.md`)
 
 ## Workflow
 
@@ -190,74 +170,7 @@ git branch -d ralph/<branch>
 
 **Conflict prevention**: Don't edit files in `prd.json` `files` arrays on the source branch while Ralph runs.
 
-**Conflict resolution**: Especially relevant for worktree branches that diverge from the source branch during long-running Ralph sessions. `-X ours`/`-X theirs` is relative to the checked-out branch (`ours` = branch you're on, `theirs` = branch being merged in):
-
-- On main, merging Ralph in: `-X theirs` keeps Ralph's version
-- On feat branch, merging main in: `-X ours` keeps feat's version
-
-**Protected main with conflicting PR** (when feat is the source of truth and main has diverged with conflicting or superseded changes — merge main into feat keeping feat's versions, clean up main-only files, then squash-merge the PR):
-
-1. Push any local unpushed commits to origin/\<branch\>
-2. `git merge -X ours --allow-unrelated-histories origin/main` — keep feat's version on all conflicts
-3. `git rm` the main-only files — per the docs below, `-X ours` won't auto-delete files added by the incoming branch
-4. Push the merge commit
-5. `gh pr merge <pr-number> --squash` — squash merge the PR
-
-```bash
-# Step 1: push local commits
-git push origin <branch>
-# Step 2: merge main into feat, resolve conflicts keeping ours
-git fetch origin
-git checkout <branch>
-git merge -X ours --allow-unrelated-histories origin/main
-# Step 3: remove main-only files (see "-X ours does NOT delete" below)
-git diff HEAD <pre-merge-sha> --name-only --diff-filter=A | xargs git rm
-git commit --amend --no-edit
-# Step 4: push the merge commit
-git push origin <branch>
-# Step 5: squash merge the PR
-gh pr merge <pr-number> --squash
-```
-
-If the feat branch itself is blocked, create a new one as fallback:
-
-```bash
-git checkout -b <branch>-v2 origin/<branch>
-git merge -X ours origin/main
-git push -u origin <branch>-v2
-gh pr close <old-number> -c "Superseded by new PR"
-gh pr create --title "feat: ..." --body "Supersedes #<old>."
-gh pr merge --squash
-```
-
-**`modify/delete` conflicts**: `-X ours` won't auto-resolve when ours deleted a file that theirs modified. Fix with `git rm <files>` then commit — ours (delete) wins. Untracked files blocking merge need `rm -rf` before `git merge`.
-
-**`-X ours` does NOT delete files added by theirs**: Files that exist only on the branch being merged in (e.g., `main` added files that `feat` never had) are not conflicts — git auto-merges them as additions. After `git merge -X ours origin/main`, diff against the pre-merge feat branch and `git rm` any files that shouldn't be there:
-
-```bash
-# After merge, find files main added that feat didn't have
-git diff HEAD <feat-branch-pre-merge-sha> --name-only --diff-filter=A
-# Delete them
-git diff HEAD <feat-branch-pre-merge-sha> --name-only --diff-filter=A | xargs git rm
-git commit --amend --no-edit
-```
-
-**Missing GPG signatures**: If a push is rejected because commits lack GPG signatures (e.g., GitHub branch protection requires signed commits), retroactively sign all unsigned commits and force-push:
-
-```bash
-# Re-sign all commits from <commit-id> onward (use the parent of the first unsigned commit)
-git rebase --exec 'git commit --amend --no-edit --gpg-sign' <commit-id>~1
-git push --force-with-lease
-```
-
-Replace `<commit-id>` with the actual hash of the earliest unsigned commit.
-
-How this works:
-
-- **`rebase`** replays commits one at a time onto a new base, rewriting history. Here the base doesn't change — we rebase onto the same parent — so the only effect is the `--exec` side-effect on each commit.
-- **`<commit-id>~1`** means "the parent of `<commit-id>`". Rebase operates on commits *after* the given base, so `~1` ensures `<commit-id>` itself is included in the replay range.
-- **`--exec '<cmd>'`** runs `<cmd>` after each commit is replayed. Here it amends each replayed commit to add a GPG signature without changing the message (`--no-edit`) or content.
-- **`--force-with-lease`** force-pushes the rewritten history but fails if the remote has new commits you haven't fetched — a safety check against overwriting others' work.
+For conflict resolution, `-X ours`/`-X theirs` strategies, GPG re-signing, and edge cases, see [LEARNINGS.md](docs/LEARNINGS.md) section 4.
 
 ## Security
 
@@ -281,9 +194,10 @@ ralph/
 ├── CHANGELOG.md               # Version history
 ├── README.md                  # This file
 ├── docs/
+│   ├── FAILURE_MODES.md       # Teams mode failure analysis
 │   ├── LEARNINGS.md           # Patterns and lessons
 │   ├── prd.json               # Story tracking (committed)
-│   ├── codebase-map.md        # Source tree + signatures (committed)
+│   ├── codebase-map.md        # Source tree + signatures (AST-based)
 │   ├── .codebase-map.sha      # Content hash (gitignored)
 │   ├── story-context.md       # Per-story context (gitignored)
 │   ├── progress.txt           # Execution log (committed)
@@ -304,208 +218,13 @@ ralph/
         ├── common.sh              # Shared utilities
         ├── snapshot.sh            # Codebase snapshot generation
         ├── baseline.sh            # Baseline-aware test validation
+        ├── extract_signatures.py  # AST-based Python signature extraction
         └── stop_ralph_processes.sh # Process cleanup
 ```
 
-## Known Failure Modes (Sprint 7 Research)
+## Known Failure Modes
 
-Root cause analysis from Sprint 7 log forensics (`logs/ralph/2026-02-17_19:32:09.log`,
-`logs/ralph/2026-02-18_00:00:14.log`). STORY-009/010/011 implemented correctly but
-Ralph rejected them repeatedly.
-
-### 1. TDD commit counter doesn't survive reset (Sisyphean loop)
-
-RED+GREEN commits made in iteration N pass TDD but fail complexity. Ralph runs
-`git reset --hard HEAD~N`, erasing them. In iteration N+1 the agent sees work already
-exists in reflog/history, makes only a REFACTOR commit. `check_tdd_commits` (line 404)
-searches `git log --grep="[RED]" --grep="STORY-ID" --all-match` but reset commits are
-gone from the log. Ralph rejects for missing RED+GREEN. Repeats until max retries.
-
-**Root cause in code**: `ralph.sh:571-577` resets commits on TDD failure, and
-`ralph.sh:553` resets on quality failure. Neither persists which TDD phases passed.
-The `RETRY_CONTEXT_FILE` (line 567-570) only works for quality retries after TDD
-already passed — not for TDD failures that require re-verification.
-
-**Solutions (pick one):**
-
-- **A. Persist verified phases to state file** (recommended): After `check_tdd_commits`
-  passes but quality fails, write `RED=<hash> GREEN=<hash>` to
-  `/tmp/claude/ralph_tdd_verified_{story_id}`. On retry, `check_tdd_commits` reads this
-  file and skips phase requirements already satisfied. Clear file on story completion.
-
-  ```bash
-  # In quality-failure handler (after line 553):
-  echo "RED=$red_commit GREEN=$green_commit" > "/tmp/claude/ralph_tdd_verified_${story_id}"
-
-  # In check_tdd_commits (before line 418):
-  local verified_file="/tmp/claude/ralph_tdd_verified_${story_id}"
-  if [ -f "$verified_file" ]; then
-      log_info "Prior TDD phases verified — accepting REFACTOR-only"
-      return 0
-  fi
-  ```
-
-- **B. Don't reset on quality failure** (simpler, less clean): Keep the commits when
-  only complexity/tests fail. Append retry context. Agent adds a REFACTOR commit on top.
-  Quality re-runs on the full stack. Avoids the reset-then-redo cycle entirely.
-
-- **C. Cherry-pick surviving commits**: After reset, if prior RED+GREEN are in reflog,
-  `git cherry-pick` them back before re-running quality. More fragile (merge conflicts).
-
-### 2. Teams mode cross-contamination
-
-When Ralph delegates multiple stories in one batch, the agent combines work across
-stories. `check_tdd_commits` (line 378-386) filters by `grep "$story_id"` but if the
-agent makes a single commit covering multiple stories, or uses a different story ID in
-the message, the filter finds nothing.
-
-**Root cause in code**: `ralph.sh:379` uses simple grep on commit messages. A commit
-message like `feat(STORY-009,STORY-010): implement features [GREEN]` matches both
-stories, while `feat: implement paper selection and settings [GREEN]` matches neither.
-
-**Solutions (pick one):**
-
-- **A. File-scoped commit attribution** (recommended): Instead of matching story ID in
-  commit messages, check which files each commit touches against the story's `files`
-  array from prd.json. A commit that modifies `src/gui/pages/settings.py` belongs to
-  STORY-010 regardless of its message.
-
-  ```bash
-  # Replace grep-based filtering (line 379-381):
-  story_files=$(jq -r ".stories[] | select(.id==\"$story_id\") | .files[]" "$PRD_FILE")
-  story_commits=""
-  for commit in $(git log --format="%h" -n $new_commits); do
-      changed=$(git diff-tree --no-commit-id --name-only -r "$commit")
-      if echo "$changed" | grep -qFf <(echo "$story_files"); then
-          story_commits="$story_commits $commit"
-      fi
-  done
-  ```
-
-- **B. Sequential execution with shared baseline**: Don't batch stories. Execute one at
-  a time. Slower but eliminates cross-contamination entirely. Use `TEAMS=false`.
-
-- **C. Require story-scoped commits in prompt**: Add to the agent prompt:
-  "Each commit must reference exactly one story ID. Never combine stories in one commit."
-  Fragile (depends on agent compliance) but zero harness changes.
-
-### 3. Complexity gate catches cross-story changes
-
-STORY-013's `--engine` flag raised `parse_args` complexity from 10 to 11, which failed
-STORY-009's quality gate. `run_quality_checks` (line 338) runs `make complexity` against
-the entire `src/` tree, not just story-scoped files.
-
-**Root cause in code**: `baseline.sh` compares test results before/after but the
-complexity check has no baseline — it's a global pass/fail on the whole codebase.
-
-**Solutions (pick one):**
-
-- **A. Complexity baseline with delta scoping** (recommended): Before story execution,
-  snapshot complexity results per function. After execution, only fail if functions in
-  the story's `files` list have increased complexity. Cross-story increases are
-  permitted (they'll be caught when that story is verified).
-
-  ```bash
-  # Capture complexity baseline:
-  make complexity 2>&1 | grep "FAILED" > "/tmp/claude/ralph_complexity_baseline_${story_id}"
-
-  # After execution, diff:
-  make complexity 2>&1 | grep "FAILED" > "/tmp/claude/ralph_complexity_after"
-  new_failures=$(comm -13 "$baseline" "$after" | grep -F "$story_files")
-  ```
-
-- **B. Per-file complexity check**: Run complexipy only on files changed by the current
-  story's commits: `complexipy $(git diff --name-only HEAD~N) --max-complexity 10`.
-  Requires complexipy to accept file arguments (it does via positional args).
-
-- **C. Complexity allowlist in prd.json**: Add an optional `complexity_exceptions` field
-  per story for known cross-story impacts. Heavy-handed but explicit.
-
-### 4. Stale snapshot tests from other stories
-
-STORY-010/013 changes created new test regressions (snapshot counts, new default args).
-`baseline.sh` captures failing tests BEFORE the batch, so new failures from other
-stories in the same batch appear as regressions introduced by the current story.
-
-**Root cause in code**: `capture_test_baseline` (baseline.sh) runs once per story
-start, but in teams mode all stories share the same codebase state. Story A's baseline
-doesn't account for story B's changes that were applied in the same batch.
-
-**Solutions (pick one):**
-
-- **A. Rolling baseline per story** (recommended): After each story's commits are
-  verified and kept, re-capture the baseline before verifying the next story. This way
-  story B's baseline includes story A's changes.
-
-  ```bash
-  # After successful story completion (after line 546 or 620):
-  capture_test_baseline "$BASELINE_FILE" "post-${story_id}"
-  ```
-
-- **B. Test-to-source mapping**: Map each failing test to the source files it imports.
-  Only flag a failure as a regression if it imports a file from the current story's
-  `files` list. Requires parsing Python imports (brittle) or using a naming convention
-  (`tests/gui/` ↔ `src/gui/`).
-
-- **C. Accept known cross-story failures**: In teams mode, after detecting new failures,
-  check if those failures exist in ANY story's test file list from the batch. If yes,
-  log a warning but don't block. Only block on truly orphaned regressions.
-
-### 5. File-conflict dependencies not tracked
-
-Ralph's `depends_on` tracks logical dependencies (STORY-006 needs STORY-005's
-`cc_engine.py` to exist) but not file-overlap conflicts. In sequential mode this is
-harmless — stories never run simultaneously. In teams mode, two unrelated stories editing
-the same file (e.g., STORY-006 and STORY-009 both editing `run_cli.py`) produce merge
-conflicts or silently overwrite each other's changes.
-
-**Root cause in code**: `get_unblocked_stories` (line 121) checks only `depends_on` — it
-has no file-overlap awareness. Two stories with `depends_on: []` and overlapping `files`
-arrays both appear unblocked and get delegated to different teammates.
-
-**Solutions (pick one):**
-
-- **A. File-conflict deps in prd.json** (recommended): Add file-overlap dependencies
-  during PRD generation or in the Story Breakdown. The `generate_prd_json.py` parser can
-  detect overlapping `files` arrays and auto-inject `depends_on` edges. These deps are
-  only needed for teams mode — sequential mode ignores them harmlessly.
-
-  Sprint 8 PRD demonstrates this pattern with `[file: run_cli.py]` annotations:
-  `STORY-009 (depends: STORY-008, STORY-006 [file: run_cli.py])`.
-
-- **B. Runtime file-lock check**: Before delegating a story, check if any in-progress
-  story shares files. Skip overlapping stories until the conflicting story completes.
-  Requires tracking which stories are currently being executed (new state in ralph.sh).
-
-### 6. Incomplete PRD file lists (Sprint 8 post-mortem)
-
-Three stories passed quality checks but left stale tests because the PRD `files`
-arrays missed secondary consumers of renamed interfaces. All three failures were
-from tests *outside* the story's scope.
-
-**Mitigations implemented:**
-
-- Impact scan prompt instruction: agent greps test tree for old symbol names before implementation
-- Wave checkpoint: full `make validate` runs at wave boundaries to catch cross-story breakage
-- Killed-process detection: exit 137/143 is a hard failure, not a silent pass
-- Scoped ruff/tests: teams mode only checks story files, preventing cross-story false positives
-- Pycache cleanup: removes stale `.pyc` files before test runs
-
-### Key Structural Issue
-
-The fundamental problem is **cross-story interference in teams mode**: quality gates for
-story X catch regressions introduced by stories Y and Z. The validation checks the
-entire test suite against a baseline that predates all stories in the batch.
-
-**Recommended combined approach**: Implement solutions 1A + 2A + 3B + 4A + 5A. This gives:
-
-- Phase persistence across resets (1A) — eliminates Sisyphean loops
-- File-scoped commit attribution (2A) — correct story ownership
-- Per-file complexity (3B) — scoped complexity checks
-- Rolling baseline (4A) — simplest baseline fix
-- File-conflict deps in prd.json (5A) — prevents parallel edits to same file
-
-All five are backward-compatible with single-story mode (`TEAMS=false`).
+See [FAILURE_MODES.md](docs/FAILURE_MODES.md) for Sprint 7 root cause analysis of teams mode cross-story interference (6 failure modes with recommended solutions).
 
 ## TODO / Future Work
 

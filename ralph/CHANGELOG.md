@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`--check-overlaps` flag**: `generate_prd_json.py --check-overlaps` warns when stories share files without mutual `depends_on`
+- **Skill routing table**: `prompt.md` maps file patterns to skills (`testing-python`, `implementing-python`, `designing-backend`, `reviewing-code`)
+- **Remote Control monitoring tip**: Added to README.md Configuration section
+- **Worktree-namespaced `/tmp` paths**: `RALPH_TMP_DIR="/tmp/claude/ralph_${_WT_HASH}"` prevents concurrent worktree collisions; all scripts use `$RALPH_TMP_DIR` instead of hardcoded paths
+- **Per-story effort level**: Auto-computes `CLAUDE_CODE_EFFORT_LEVEL` from story files count + dependency complexity (≤3→low, ≤8→medium, >8→high); env var overrides
+- **Ad-hoc `INSTRUCTION` parameter**: `make ralph_run INSTRUCTION="focus on error handling"` injects user guidance into prompt at highest priority
+- **De-sloppify pass** (opt-in): `make ralph_run DESLOPIFY=true` runs `quick_validate` on story files after quality pass, auto-fixes with a focused `claude -p` cleanup prompt
 - **Codebase Snapshot System**: Pre-analyzes `src/` file tree and function signatures into `ralph/docs/codebase-map.md`, injected into every story prompt — eliminates 5-15 agent discovery tool calls per story. Regenerated at run start and wave boundaries via content-hash diffing (`lib/snapshot.sh`: `generate_codebase_map`, `generate_story_context`)
 - `ralph/TODO.md`: consolidated enhancement TODOs from CC ralph enhancement research
 - **Story Status Enum**: Replaced binary `passes: bool` with `status: str` enum (`"pending"` | `"in_progress"` | `"passed"` | `"failed"`) across prd.json schema, shell scripts, and templates — enables observable story state and distinguishes not-started from running from failed
@@ -20,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **AST-based signature extraction**: `lib/snapshot.sh` now uses `lib/extract_signatures.py` (Python `ast` module) instead of grep for class/function signatures in codebase-map.md and story-context.md — captures return types, decorators, and full arg annotations; falls back to grep on syntax errors
 - `ralph.sh`: set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` for headless `claude -p` invocations — reduces token noise from built-in git instructions that conflict with Ralph's TDD commit workflow
 
 ### Removed

@@ -12,6 +12,8 @@
 CODEBASE_MAP_FILE="$RALPH_DOCS_DIR/codebase-map.md"
 CODEBASE_MAP_SHA="$RALPH_DOCS_DIR/.codebase-map.sha"
 STORY_CONTEXT_FILE="$RALPH_DOCS_DIR/story-context.md"
+_EXTRACT_SIGS="$(dirname "${BASH_SOURCE[0]}")/extract_signatures.py"
+SNAPSHOT_SIG_LIMIT="${SNAPSHOT_SIG_LIMIT:-100}"
 
 # Generate codebase map: src/ file tree + function/class signatures.
 # Content-hash src/ to skip regeneration when unchanged.
@@ -48,10 +50,10 @@ generate_codebase_map() {
         echo ""
         echo "### Signatures"
         echo ""
-        # Extract class and function definitions with file paths
+        # Global overview: all src/ signatures, capped per file
         find src/ -type f -name '*.py' | sort | while IFS= read -r pyfile; do
             local sigs
-            sigs=$(grep -nE '^(class |def |    def |async def )' "$pyfile" 2>/dev/null || true)
+            sigs=$(python3 "$_EXTRACT_SIGS" "$pyfile" 2>/dev/null | head -"$SNAPSHOT_SIG_LIMIT" || true)
             if [ -n "$sigs" ]; then
                 echo "**$pyfile**:"
                 echo '```python'
@@ -140,9 +142,10 @@ generate_story_context() {
                     cat "$filepath"
                     echo '```'
                 else
+                    # Story-scoped source file: full signatures (no cap — agent edits these)
                     echo "**$filepath** ($lines lines, signatures only):"
                     echo '```'
-                    grep -nE '^(class |def |    def |async def )' "$filepath" 2>/dev/null | sed 's/^/  /' || true
+                    python3 "$_EXTRACT_SIGS" "$filepath" 2>/dev/null | sed 's/^/  /' || true
                     echo '```'
                 fi
                 echo ""
@@ -170,9 +173,10 @@ generate_story_context() {
                     cat "$test_path"
                     echo '```'
                 else
+                    # Story-scoped test file: full signatures (no cap — agent edits these)
                     echo "**$test_path** ($tlines lines, signatures only):"
                     echo '```'
-                    grep -nE '^(class |def |    def )' "$test_path" 2>/dev/null | sed 's/^/  /' || true
+                    python3 "$_EXTRACT_SIGS" "$test_path" 2>/dev/null | sed 's/^/  /' || true
                     echo '```'
                 fi
                 echo ""

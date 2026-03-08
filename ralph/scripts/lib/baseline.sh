@@ -35,7 +35,7 @@ BASELINE_CACHE_MAX_AGE=${BASELINE_CACHE_MAX_AGE:-300}
 RALPH_AUTO_REFRESH_BASELINE=${RALPH_AUTO_REFRESH_BASELINE:-true}
 
 # Persistent per-story baseline storage (prevents absorption across restarts)
-BASELINE_STORE_DIR="${BASELINE_STORE_DIR:-/tmp/claude/ralph_baselines}"
+BASELINE_STORE_DIR="${BASELINE_STORE_DIR:-${RALPH_TMP_DIR:-/tmp/claude/ralph}/baselines}"
 
 # Find the commit before a story's first commit.
 # Used to scope lint checks and baseline captures to story-changed files.
@@ -253,12 +253,12 @@ compare_test_failures() {
 
     # Extract baseline failures (skip metadata lines starting with #)
     local baseline_failures
-    baseline_failures=$(mktemp /tmp/claude/ralph_baseline_failures.XXXXXX)
+    baseline_failures=$(mktemp "${RALPH_TMP_DIR:-/tmp/claude/ralph}/baseline_failures.XXXXXX")
     grep -v "^#" "$baseline_file" | sort > "$baseline_failures"
 
     # Extract current FAILED and ERROR lines into sorted temp file
     local current_failures
-    current_failures=$(mktemp /tmp/claude/ralph_current_failures.XXXXXX)
+    current_failures=$(mktemp "${RALPH_TMP_DIR:-/tmp/claude/ralph}/current_failures.XXXXXX")
     # Reason: grep returns 1 when no matches; || true prevents set -e abort
     { grep -E "^(FAILED |ERROR )" "$current_log" || true; } \
         | sed 's/^FAILED //' \
@@ -498,7 +498,7 @@ run_quality_checks_baseline() {
     local baseline_file="$1"
     local story_id="${2:-unknown}"
     local prd_json="${3:-}"
-    local current_log="/tmp/claude/ralph_current_tests.log"
+    local current_log="${RALPH_TMP_DIR:-/tmp/claude/ralph}/current_tests.log"
 
     log_info "Running quality checks (baseline-aware)..."
 

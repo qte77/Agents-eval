@@ -34,14 +34,16 @@ everything** if commits are missing or bundled.
 
 ## Available Skills
 
-Relevant skills for story implementation (others may also be available):
+Route to the appropriate skill based on story files:
 
-- `testing-python` — Test writing (TDD/BDD)
-- `implementing-python` — Code implementation
-- `designing-backend` — Architecture decisions
-- `reviewing-code` — Self-review before completion
+| File Pattern | Skill | Use When |
+|---|---|---|
+| `tests/**/*.py` | `testing-python` | Writing or updating tests (TDD/BDD) |
+| `src/**/*.py` | `implementing-python` | Implementing or modifying source code |
+| `docs/**`, `src/app/data_models/**` | `designing-backend` | Architecture decisions, data model design |
+| *(after implementation)* | `reviewing-code` | Self-review before completion |
 
-Use skills appropriately based on task requirements.
+Apply the most specific matching skill. Use multiple skills per story when needed.
 
 ## Your Task
 

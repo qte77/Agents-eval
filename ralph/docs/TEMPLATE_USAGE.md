@@ -103,6 +103,15 @@ REQUIRE_REFACTOR=true make ralph_run  # Require [REFACTOR] commit (default: fals
 
 # Teams mode (experimental)
 TEAMS=true make ralph_run             # Enable parallel story delegation
+
+# Ad-hoc steering instruction
+INSTRUCTION="focus on error handling" make ralph_run
+
+# Post-story cleanup pass
+DESLOPIFY=true make ralph_run
+
+# Signature lines per file in codebase map (default: 100)
+SNAPSHOT_SIG_LIMIT=200 make ralph_run
 ```
 
 ## Directory Structure
@@ -134,7 +143,9 @@ your-project/
 │       ├── watch.sh               # Live progress watcher
 │       └── lib/
 │           ├── common.sh              # Shared utilities
+│           ├── snapshot.sh            # Codebase snapshot generation
 │           ├── baseline.sh            # Baseline-aware test validation
+│           ├── extract_signatures.py  # AST-based Python signature extraction
 │           └── stop_ralph_processes.sh # Process cleanup
 ├── src/                        # Source code
 ├── tests/                      # Tests

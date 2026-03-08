@@ -1,4 +1,9 @@
-# Ralph Contributing
+---
+title: Ralph Contributing
+scope: Command reference and flags for Ralph autonomous development loop
+created: 2026-02-15
+updated: 2026-03-08
+---
 
 Command reference for the Ralph autonomous development loop.
 For project-level development workflows, see the root [CONTRIBUTING.md](../CONTRIBUTING.md).
@@ -11,7 +16,7 @@ For project-level development workflows, see the root [CONTRIBUTING.md](../CONTR
 | `make ralph_prd_md` | Generate PRD.md from UserStory.md | |
 | `make ralph_prd_json` | Generate prd.json from PRD.md | `DRY_RUN=1` parse-only |
 | `make ralph_init` | Initialize Ralph loop environment | `RALPH_PROJECT=name` |
-| `make ralph_run` | Run Ralph loop | `MODEL=`, `MAX_ITERATIONS=`, `RALPH_TIMEOUT=`, `TEAMS=` |
+| `make ralph_run` | Run Ralph loop | `MODEL=`, `MAX_ITERATIONS=`, `RALPH_TIMEOUT=`, `TEAMS=`, `INSTRUCTION=`, `DESLOPIFY=` |
 | `make ralph_worktree` | Create git worktree for a branch | `BRANCH=` (required) |
 | `make ralph_run_worktree` | Create worktree + run Ralph in it | `BRANCH=` (required), `MODEL=`, `MAX_ITERATIONS=`, `RALPH_TIMEOUT=`, `TEAMS=` |
 | `make ralph_stop` | Stop all running Ralph loops | |
@@ -28,6 +33,9 @@ For project-level development workflows, see the root [CONTRIBUTING.md](../CONTR
 | `MAX_ITERATIONS` | integer | `25` | Max loop iterations |
 | `RALPH_TIMEOUT` | seconds | (none) | Kill after N seconds |
 | `TEAMS` | `true`, `false` | `false` | CC Agent Teams mode (experimental) |
+| `INSTRUCTION` | string | (none) | Ad-hoc guidance injected into prompt |
+| `DESLOPIFY` | `true`, `false` | `false` | Post-story cleanup pass |
+| `SNAPSHOT_SIG_LIMIT` | integer | `100` | Max signature lines per file in codebase map |
 | `BRANCH` | branch name | (required) | Git branch for worktree recipes |
 | `DRY_RUN` | `1` | (none) | Parse-only for prd_json |
 

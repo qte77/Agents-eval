@@ -2,9 +2,9 @@
 title: Ralph Loop Learnings
 scope: Patterns discovered during Ralph autonomous development
 usage: Read before writing PRDs or running Ralph loop
+created: 2026-02-10
+updated: 2026-03-08
 ---
-
-<!-- markdownlint-disable MD024 MD025 -->
 
 ## 1. Story Completion Checklist
 

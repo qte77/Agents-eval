@@ -619,17 +619,18 @@ def compute_waves(stories: list[Story]) -> None:
         remaining = [s for s in remaining if s["id"] not in placed]
 
 
-def _parse_args(argv: list[str]) -> tuple[Path, bool]:
-    """Parse CLI arguments for PRD path and dry-run flag.
+def _parse_args(argv: list[str]) -> tuple[Path, bool, bool]:
+    """Parse CLI arguments for PRD path, dry-run flag, and check-overlaps flag.
 
     Args:
         argv: Command-line arguments (sys.argv).
 
     Returns:
-        Tuple of (prd_path, dry_run).
+        Tuple of (prd_path, dry_run, check_overlaps).
     """
     project_root = Path(__file__).parent.parent.parent
     dry_run = "--dry-run" in argv
+    check_overlaps = "--check-overlaps" in argv
     # Reason: Filter out flags before resolving positional PRD path arg
     positional = [a for a in argv[1:] if not a.startswith("--")]
     if positional:
@@ -640,7 +641,32 @@ def _parse_args(argv: list[str]) -> tuple[Path, bool]:
             sprint_prds = sorted((project_root / "docs").glob("PRD-Sprint*.md"), reverse=True)
             if sprint_prds:
                 prd_path = sprint_prds[0]
-    return prd_path, dry_run
+    return prd_path, dry_run, check_overlaps
+
+
+def check_file_overlaps(stories: list[Story]) -> int:
+    """Check for file overlaps between stories without mutual depends_on.
+
+    Args:
+        stories: List of story dicts with 'id', 'files', 'depends_on' fields.
+
+    Returns:
+        Number of overlap warnings found.
+    """
+    warnings = 0
+    for i, s1 in enumerate(stories):
+        for s2 in stories[i + 1:]:
+            shared = set(s1["files"]) & set(s2["files"])
+            if not shared:
+                continue
+            # Check for mutual dependency
+            s1_deps = set(s1.get("depends_on") or [])
+            s2_deps = set(s2.get("depends_on") or [])
+            if s2["id"] in s1_deps or s1["id"] in s2_deps:
+                continue
+            print(f"WARNING: OVERLAP: {s1['id']} and {s2['id']} share files {sorted(shared)}")
+            warnings += 1
+    return warnings
 
 
 def _print_dry_run_waves(stories: list[Story]) -> None:
@@ -744,14 +770,15 @@ def _print_wave_summary(all_stories: list[Story]) -> None:
 def main() -> int:
     """Parse PRD markdown and generate ralph/docs/prd.json.
 
-    Supports ``--dry-run`` flag for parse-only validation (no file write).
+    Supports ``--dry-run`` for parse-only validation and ``--check-overlaps``
+    to warn when stories share files without mutual ``depends_on``.
 
     Returns:
         Exit code (0 for success, 1 for failure).
     """
     import sys
 
-    prd_path, dry_run = _parse_args(sys.argv)
+    prd_path, dry_run, check_overlaps = _parse_args(sys.argv)
     project_root = Path(__file__).parent.parent.parent
     output_path = project_root / "ralph" / "docs" / "prd.json"
 
@@ -791,6 +818,13 @@ def main() -> int:
     print(f"Resolved {len(new_parsed_stories)} stories")
 
     compute_waves(new_parsed_stories)
+
+    if check_overlaps:
+        overlap_count = check_file_overlaps(new_parsed_stories)
+        if overlap_count:
+            print(f"\n{overlap_count} file overlap(s) found")
+        else:
+            print("No file overlaps found")
 
     if dry_run:
         _print_dry_run_waves(new_parsed_stories)
