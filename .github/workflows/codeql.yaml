@@ -28,10 +28,6 @@ jobs:
 
     - name: Autobuild
       uses: github/codeql-action/autobuild@v4
-    # if autobuild fails
-    #- run: |
-    #   make bootstrap
-    #   make release
 
     - name: Perform CodeQL Analysis
       id: analyze
@@ -40,7 +36,7 @@ jobs:
         output: results.sarif
 
     - name: Dismiss alerts with inline suppression comments
-      uses: advanced-security/dismiss-alerts@v1
+      uses: advanced-security/dismiss-alerts@efd44793f4ee18db9e6201c219fb96de57b11ed1 # v1
       with:
         sarif-id: ${{ steps.analyze.outputs.sarif-id }}
         sarif-file: results.sarif
