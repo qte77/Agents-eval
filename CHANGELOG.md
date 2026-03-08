@@ -39,7 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/analysis/CC-adoption-plan.md`: repoint all CC doc links to `claude-code-research` repo with correct subdirectory paths; fix `AGENTS.md` and `ralph/TODO.md` relative path depth
 - `src/app/utils/run_context.py`: wrap 101-char `run_dir` line to satisfy ruff E501
 - `.github/workflows/codeql.yaml`: upgrade `dismiss-alerts` v1 → v2.0.2 to fix EISDIR error on SARIF directory input
-- `docs/analysis/CC-adoption-plan.md`: repoint CC doc links to `claude-code-research` repo; fix relative path depth
 
 ### Removed
 
