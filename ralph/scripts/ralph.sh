@@ -105,6 +105,8 @@ mkdir -p "$RALPH_TMP_DIR"
 BASELINE_FILE="$RALPH_TMP_DIR/baseline_failures.txt"
 RETRY_CONTEXT_FILE="$RALPH_TMP_DIR/retry_context.txt"
 TDD_VERIFIED_DIR="$RALPH_TMP_DIR/tdd_verified"
+DOMAIN_RETRIES_FILE="$RALPH_TMP_DIR/domain_retries.json"
+DOMAIN_RETRY_THRESHOLD=${DOMAIN_RETRY_THRESHOLD:-3}
 
 # Set up logging
 LOG_DIR="$RALPH_LOG_DIR"
@@ -366,6 +368,140 @@ log_progress() {
     } >> "$PROGRESS_FILE"
 }
 
+# Map check name to human-readable symptom description.
+# Args: $1 - check name (from RETRY_CONTEXT_FILE or quality gate)
+_failure_symptom() {
+    local check="$1"
+    case "$check" in
+        type_check)             echo "Type annotation errors" ;;
+        complexity)             echo "Cognitive complexity exceeded" ;;
+        ruff|lint_src|lint_tests) echo "Lint violations" ;;
+        "test regressions")     echo "New test failures" ;;
+        TDD)                    echo "Missing RED or GREEN commit" ;;
+        "quality"*)             echo "Quality gate failure" ;;
+        *)                      echo "Check failed: $check" ;;
+    esac
+}
+
+# Map check name to human-readable cause description.
+# Args: $1 - check name
+_failure_cause() {
+    local check="$1"
+    case "$check" in
+        type_check)             echo "Missing or incorrect type hints" ;;
+        complexity)             echo "Function too complex" ;;
+        ruff|lint_src|lint_tests) echo "Code style non-compliance" ;;
+        "test regressions")     echo "Regression in existing tests" ;;
+        TDD)                    echo "TDD workflow not followed" ;;
+        "quality"*)             echo "Quality standards not met" ;;
+        *)                      echo "Unknown cause" ;;
+    esac
+}
+
+# Append a failure mode row to progress.txt's ## Failure Modes table.
+# Creates the table header on first call (idempotent).
+# Args: $1 - story_id, $2 - check name, $3 - iteration
+log_failure_mode() {
+    local story_id="$1" check="$2" iteration="$3"
+    local symptom cause
+    symptom=$(_failure_symptom "$check")
+    cause=$(_failure_cause "$check")
+
+    # Create table header if not present
+    if ! grep -q "^## Failure Modes" "$PROGRESS_FILE" 2>/dev/null; then
+        {
+            echo ""
+            echo "## Failure Modes"
+            echo ""
+            echo "| Story | Iteration | Check | Symptom | Cause | Status |"
+            echo "|-------|-----------|-------|---------|-------|--------|"
+        } >> "$PROGRESS_FILE"
+    fi
+
+    echo "| $story_id | $iteration | $check | $symptom | $cause | pending |" >> "$PROGRESS_FILE"
+}
+
+# On PASS, mark the last pending failure row for this story as resolved.
+# Uses tac+sed to find the last pending row and replace status.
+# Args: $1 - story_id
+resolve_failure_modes() {
+    local story_id="$1"
+    # Only act if there are pending rows for this story
+    grep -q "| $story_id .* | pending |" "$PROGRESS_FILE" 2>/dev/null || return 0
+
+    # Resolve all pending rows for this story
+    sed -i "s/| $story_id \(.*\) | pending |/| $story_id \1 | resolved |/g" "$PROGRESS_FILE"
+}
+
+# Extract last N failure rows for prompt injection.
+# Args: $1 - max rows (default 5)
+# Output: markdown block with failure history, or empty string
+get_failure_history() {
+    local max_rows="${1:-5}"
+    grep -q "^## Failure Modes" "$PROGRESS_FILE" 2>/dev/null || return 0
+
+    local rows
+    rows=$(grep "^| " "$PROGRESS_FILE" | grep -v "^| Story " | grep -v "^|---" | tail -"$max_rows")
+    [ -z "$rows" ] && return 0
+
+    echo "## Known Failure Patterns"
+    echo ""
+    echo "Recent failures from this run. Avoid repeating these mistakes:"
+    echo ""
+    echo "| Story | Iteration | Check | Symptom | Cause | Status |"
+    echo "|-------|-----------|-------|---------|-------|--------|"
+    echo "$rows"
+}
+
+# Map check domain to suggested skill name.
+# Args: $1 - check name/domain
+_domain_to_skill() {
+    local domain="$1"
+    case "$domain" in
+        ruff|lint_src|lint_tests)    echo "code-style-compliance" ;;
+        type_check)                  echo "type-annotation-patterns" ;;
+        complexity)                  echo "code-structure-simplification" ;;
+        "test regressions"|"pytest killed"*) echo "test-isolation" ;;
+        TDD)                         echo "tdd-workflow-discipline" ;;
+        *)                           echo "quality-$domain" ;;
+    esac
+}
+
+# Increment per-domain retry counter and suggest skill creation at threshold.
+# Args: $1 - domain/check name, $2 - story_id
+increment_domain_retry() {
+    local domain="$1" story_id="$2"
+    # Normalize "pytest killed (exit N)" to "pytest killed" for grouping
+    domain="${domain%% (*}"
+
+    # Initialize if missing
+    [ -f "$DOMAIN_RETRIES_FILE" ] || echo '{}' > "$DOMAIN_RETRIES_FILE"
+
+    local current_count
+    current_count=$(jq -r --arg check_name "$domain" '.[$check_name] // 0' "$DOMAIN_RETRIES_FILE")
+    local new_count=$((current_count + 1))
+
+    # Atomic write via temp file
+    local tmp_file
+    tmp_file=$(mktemp "$RALPH_TMP_DIR/domain_retries.XXXXXX")
+    jq --arg check_name "$domain" --argjson new_count "$new_count" \
+        '.[$check_name] = $new_count' "$DOMAIN_RETRIES_FILE" > "$tmp_file"
+    mv "$tmp_file" "$DOMAIN_RETRIES_FILE"
+
+    if [ "$new_count" -ge "$DOMAIN_RETRY_THRESHOLD" ]; then
+        local skill_name
+        skill_name=$(_domain_to_skill "$domain")
+        log_warn "Consider creating a skill '.claude/skills/$skill_name' — '$domain' has failed $new_count times across stories"
+        {
+            echo "## Recurring Quality Issue"
+            echo ""
+            echo "The \`$domain\` check has failed $new_count times (threshold: $DOMAIN_RETRY_THRESHOLD)."
+            echo "Consider creating a skill \`.claude/skills/$skill_name\` to codify the fix pattern."
+            echo "Story: $story_id"
+        } > "$RALPH_TMP_DIR/skill_suggestion.txt"
+    fi
+}
+
 # Log heartbeat with phase detection and agent activity while story executes
 # in background. Scans commits for phase and tails log file for recent output
 # (agent output streams to LOG_FILE via tee on line 76).
@@ -490,6 +626,26 @@ execute_story() {
             echo "Your prior [RED] and [GREEN] commits already exist. Fix the issue and commit with \`[REFACTOR]\` marker."
         } >> "$iteration_prompt"
         log_info "Retry context appended to prompt (failed check: $failed_check)"
+    fi
+
+    # Inject failure history from progress.txt (Feature 1: avoid repeating mistakes)
+    local failure_history
+    failure_history=$(get_failure_history 5)
+    if [ -n "$failure_history" ]; then
+        {
+            echo ""
+            echo "$failure_history"
+        } >> "$iteration_prompt"
+        log_info "Failure history injected into prompt"
+    fi
+
+    # Inject skill suggestion if threshold exceeded (Feature 3: agent creation heuristic)
+    if [ -f "$RALPH_TMP_DIR/skill_suggestion.txt" ]; then
+        {
+            echo ""
+            cat "$RALPH_TMP_DIR/skill_suggestion.txt"
+        } >> "$iteration_prompt"
+        log_info "Skill suggestion injected into prompt"
     fi
 
     # Teams mode: append current wave (independent unblocked stories) for delegation.
@@ -816,6 +972,9 @@ main() {
 
     validate_environment
 
+    # Warn if src/ changed since last snapshot before silent regeneration
+    check_context_drift
+
     # Pre-compute codebase context (content-hash skips if unchanged)
     generate_codebase_map
 
@@ -899,6 +1058,7 @@ main() {
                 # Mark as passed
                 update_story_status "$story_id" "passed"
                 log_progress "$iteration" "$story_id" "PASS" "Already complete, verified by quality checks"
+                resolve_failure_modes "$story_id"
                 log_info "Story $story_id marked as PASSED (pre-existing implementation)"
 
                 # Verify teammate stories in teams mode
@@ -912,6 +1072,8 @@ main() {
             else
                 log_error "Story reported as complete but quality checks failed"
                 log_progress "$iteration" "$story_id" "FAIL" "Quality checks failed despite reported completion"
+                log_failure_mode "$story_id" "quality (already-complete)" "$iteration"
+                increment_domain_retry "quality" "$story_id"
                 # Reason: write retry context so pre-flight yields and agent runs to fix the issue
                 [ ! -f "$RETRY_CONTEXT_FILE" ] && echo "quality (already-complete path)" > "$RETRY_CONTEXT_FILE"
                 retry_count=$((retry_count + 1))
@@ -970,6 +1132,8 @@ main() {
                 retry_count=$((retry_count + 1))
                 log_error "TDD verification failed (attempt $retry_count/$MAX_RETRIES)"
                 log_progress "$iteration" "$story_id" "RETRY" "TDD failed, retrying"
+                log_failure_mode "$story_id" "TDD" "$iteration"
+                increment_domain_retry "TDD" "$story_id"
 
                 if [ $retry_count -ge $MAX_RETRIES ]; then
                     log_error "Max retries reached for story $story_id"
@@ -998,8 +1162,9 @@ main() {
                 # Mark as passed
                 update_story_status "$story_id" "passed"
                 log_progress "$iteration" "$story_id" "PASS" "Completed successfully with TDD commits"
+                resolve_failure_modes "$story_id"
                 log_info "Story $story_id marked as PASSED"
-                rm -f "$RETRY_CONTEXT_FILE"
+                rm -f "$RETRY_CONTEXT_FILE" "$RALPH_TMP_DIR/skill_suggestion.txt"
                 clear_tdd_verified "$story_id"
 
                 # Verify teammate stories in teams mode
@@ -1015,6 +1180,11 @@ main() {
                 retry_count=$((retry_count + 1))
                 log_error "Quality check failed (attempt $retry_count/$MAX_RETRIES)"
                 log_progress "$iteration" "$story_id" "RETRY" "Quality checks failed, retrying"
+                # Extract failed check name from retry context for failure tracking
+                local failed_check_name="quality"
+                [ -f "$RETRY_CONTEXT_FILE" ] && failed_check_name=$(cat "$RETRY_CONTEXT_FILE")
+                log_failure_mode "$story_id" "$failed_check_name" "$iteration"
+                increment_domain_retry "$failed_check_name" "$story_id"
 
                 if [ $retry_count -ge $MAX_RETRIES ]; then
                     log_error "Max retries reached for story $story_id"
@@ -1028,6 +1198,7 @@ main() {
             # Execution failed
             log_error "Story execution failed"
             log_progress "$iteration" "$story_id" "FAIL" "Execution error"
+            log_failure_mode "$story_id" "execution" "$iteration"
         fi
 
         # Wave boundary detection (both solo and teams mode)

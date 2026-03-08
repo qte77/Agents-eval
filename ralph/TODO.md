@@ -15,9 +15,6 @@ None.
 
 - [ ] **Multi-instance worktree orchestration**: Run up to N independent Ralph instances in separate git worktrees simultaneously. Each worktree gets its own branch, prd.json, and progress.txt. See [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) for reference.
 - [ ] **Merge with ralph-loop template**: Evaluate and port features from [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) into this project, or merge both projects altogether.
-- [ ] **Symptom-cause-fix tables in progress.txt**: Structured failure mode tables instead of free-text learnings. Agents avoid repeating known mistakes. Source: [2602.20478] §3.3
-- [ ] **Context drift detector**: Session-start hook warning when src/ files changed without codebase-map.md update. Extends content-hash check. Source: [2602.20478] §5
-- [ ] **Agent creation heuristic**: Track retry counts per-domain; suggest new skill when a domain repeatedly fails. Source: [2602.20478] §3.2
 
 ## Future Work
 
@@ -71,6 +68,9 @@ None.
 - [x] **Trigger table in prompt.md**: File-pattern → skill routing table in `ralph/docs/templates/prompt.md`
 - [x] **AST-based signature extraction**: Replaced grep-based extraction in `lib/snapshot.sh` with `lib/extract_signatures.py` (Python `ast` module). Captures return types, decorators (`@tool`), and full arg annotations. Falls back to grep on syntax errors. Per-file limit configurable via `SNAPSHOT_SIG_LIMIT` (default: 100).
 - [x] **Codebase snapshot system**: `lib/snapshot.sh` generates `codebase-map.md` (file tree + AST-based signatures) and `story-context.md` (AC, file contents, tests). Content-hash diffing skips regeneration when `src/` unchanged.
+- [x] **Symptom-cause-fix tables in progress.txt**: Structured failure mode tables (`## Failure Modes` in `progress.txt`) with symptom/cause/status columns. Injected into agent prompts as `## Known Failure Patterns` so agents avoid repeating mistakes. Source: [2602.20478] §3.3
+- [x] **Context drift detector**: `check_context_drift()` in `snapshot.sh` warns when `src/` content hash differs from stored `.codebase-map.sha` before `generate_codebase_map` silently regenerates. Source: [2602.20478] §5
+- [x] **Agent creation heuristic**: Per-domain failure counters in `domain_retries.json` (ephemeral in `/tmp`). At threshold (`DOMAIN_RETRY_THRESHOLD`, default 3), logs warning and injects `## Recurring Quality Issue` into prompt suggesting skill creation. Source: [2602.20478] §3.2
 
 ## Decisions
 
