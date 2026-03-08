@@ -1059,6 +1059,7 @@ main() {
                 update_story_status "$story_id" "passed"
                 log_progress "$iteration" "$story_id" "PASS" "Already complete, verified by quality checks"
                 resolve_failure_modes "$story_id"
+                rm -f "$RALPH_TMP_DIR/skill_suggestion.txt"
                 log_info "Story $story_id marked as PASSED (pre-existing implementation)"
 
                 # Verify teammate stories in teams mode
