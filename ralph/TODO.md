@@ -12,7 +12,6 @@ None.
 
 <!-- markdownlint-disable MD013 -->
 
-- [ ] **AST-based signature extraction**: Replace `grep -nE '^(class |def |    def |async def )'` in `lib/snapshot.sh` with a Python `ast` helper script. AST captures return types, decorators (`@tool`), and full arg annotations that grep misses. Speed difference negligible (0.42s vs 0.36s for 103 files). Complexipy is a separate tool (quality gate, not mapping).
 - [ ] **Multi-instance worktree orchestration**: Run up to N independent Ralph instances in separate git worktrees simultaneously. Each worktree gets its own branch, prd.json, and progress.txt. See [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) for reference.
 - [ ] **Merge with ralph-loop template**: Evaluate and port features from [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) into this project, or merge both projects altogether.
 - [ ] **Symptom-cause-fix tables in progress.txt**: Structured failure mode tables instead of free-text learnings. Agents avoid repeating known mistakes. Source: [2602.20478] §3.3
@@ -85,7 +84,8 @@ None.
 - [x] **Consolidate split test directories**: `tests/test_gui/` does not exist — already resolved
 - [x] **Ad-hoc steering instructions**: `INSTRUCTION` parameter via CLI/Make (Branch 1)
 - [x] **Trigger table in prompt.md**: File-pattern → skill routing table in `ralph/docs/templates/prompt.md`
-- [x] **Codebase snapshot system**: `lib/snapshot.sh` generates `codebase-map.md` (file tree + grep-based signatures) and `story-context.md` (AC, file contents, tests). Content-hash diffing skips regeneration when `src/` unchanged. Grep-based — AST upgrade tracked as separate backlog item.
+- [x] **AST-based signature extraction**: Replaced grep-based signature extraction in `lib/snapshot.sh` with `lib/extract_signatures.py` (Python `ast` module). Captures return types, decorators (`@tool`), and full arg annotations. Falls back to grep on syntax errors.
+- [x] **Codebase snapshot system**: `lib/snapshot.sh` generates `codebase-map.md` (file tree + AST-based signatures) and `story-context.md` (AC, file contents, tests). Content-hash diffing skips regeneration when `src/` unchanged.
 
 <!-- markdownlint-enable MD013 -->
 

@@ -291,7 +291,7 @@ ralph/
 ├── docs/
 │   ├── LEARNINGS.md           # Patterns and lessons
 │   ├── prd.json               # Story tracking (committed)
-│   ├── codebase-map.md        # Source tree + signatures (grep-based; AST upgrade planned)
+│   ├── codebase-map.md        # Source tree + signatures (AST-based)
 │   ├── .codebase-map.sha      # Content hash (gitignored)
 │   ├── story-context.md       # Per-story context (gitignored)
 │   ├── progress.txt           # Execution log (committed)

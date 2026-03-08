@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **AST-based signature extraction**: `lib/snapshot.sh` now uses `lib/extract_signatures.py` (Python `ast` module) instead of grep for class/function signatures in codebase-map.md and story-context.md — captures return types, decorators, and full arg annotations; falls back to grep on syntax errors
 - `ralph.sh`: set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` for headless `claude -p` invocations — reduces token noise from built-in git instructions that conflict with Ralph's TDD commit workflow
 
 ### Removed
