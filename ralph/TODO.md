@@ -6,26 +6,15 @@ created: 2026-03-07
 
 ## Adopt Now (zero cost)
 
-<!-- markdownlint-disable MD013 -->
-
-- [ ] **Remote Control for Ralph monitoring**: Run `claude remote-control --name "Ralph"` before interactive sessions. Monitor/steer from phone. Source: [CC-remote-control-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/execution-infrastructure/CC-remote-control-analysis.md)
-
-<!-- markdownlint-enable MD013 -->
+None.
 
 ## Backlog
 
 <!-- markdownlint-disable MD013 -->
 
-- [ ] **Per-story `CLAUDE_CODE_EFFORT_LEVEL`**: Default `high` for all stories; optionally set per-story based on files count or `depends_on` complexity. See TODO in `ralph.sh` config section.
 - [ ] **Codebase snapshot system**: Pre-analyze `src/` file tree and signatures into `ralph/docs/codebase-map.md`; inject story-scoped context (AC, file contents, tests) into prompt. Regenerated per wave via content-hash diffing (`lib/snapshot.sh`). Inspired by [jcodemunch-mcp](https://github.com/jgravelle/jcodemunch-mcp) (AST-based symbol indexing) and `researching-codebase` skill (structured markdown output format)
-- [ ] **Namespace `/tmp` paths by worktree**: `BASELINE_FILE`, `RETRY_CONTEXT_FILE`, `TDD_VERIFIED_DIR` use fixed `/tmp/claude/ralph_*` paths — concurrent worktrees overwrite each other. Fix: `/tmp/claude/ralph_<worktree_hash>/`
-- [ ] **Add `--check-overlaps` to `generate_prd_json.py`**: Warn when stories share files without `depends_on`
-- [ ] **Add De-Sloppify pass**: Post-story cleanup iteration — run `make quick_validate` with a "fix all lint/type/complexity issues" prompt before marking story passed
-- [ ] **Consolidate split test directories**: `tests/gui/` vs `tests/test_gui/` directly caused 2 of 3 Sprint 8 failures. Story authors found and updated tests in one directory but missed the other. Merging into a single `tests/gui/` eliminates the ambiguity. Independent of Ralph — codebase hygiene.
-- [ ] **Ad-hoc steering instructions**: Accept a free-text `INSTRUCTION` parameter via CLI/Make to inject user guidance into the prompt without editing PRD or progress files. Usage: `make ralph_run INSTRUCTION="focus on error handling"`.
 - [ ] **Multi-instance worktree orchestration**: Run up to N independent Ralph instances in separate git worktrees simultaneously. Each worktree gets its own branch, prd.json, and progress.txt. See [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) for reference.
 - [ ] **Merge with ralph-loop template**: Evaluate and port features from [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) into this project, or merge both projects altogether.
-- [ ] **Trigger table in prompt.md**: Auto-route to skills based on file patterns changed (e.g., `src/app/agents/` → `designing-backend`). Source: [2602.20478] §3.1 Table 1
 - [ ] **Symptom-cause-fix tables in progress.txt**: Structured failure mode tables instead of free-text learnings. Agents avoid repeating known mistakes. Source: [2602.20478] §3.3
 - [ ] **Context drift detector**: Session-start hook warning when src/ files changed without codebase-map.md update. Extends content-hash check. Source: [2602.20478] §5
 - [ ] **Agent creation heuristic**: Track retry counts per-domain; suggest new skill when a domain repeatedly fails. Source: [2602.20478] §3.2
@@ -87,6 +76,14 @@ created: 2026-03-07
 - [x] **Fix AGENTS.md Ralph path**: Update `.claude/scripts/ralph/` to `ralph/scripts/` — fixed state tracking paths too (`ralph/docs/prd.json`, `ralph/docs/progress.txt`)
 - [x] **Fix `ralph_status` jq query**: Change `.passes == true` to `.status == "passed"` in Makefile
 - [x] **Disable git instructions for headless mode**: Set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` in Ralph's env
+- [x] **Remote Control for Ralph monitoring**: Documented in README.md Configuration section
+- [x] **Per-story `CLAUDE_CODE_EFFORT_LEVEL`**: Deferred from `settings.json` to Ralph per-story computation (Branch 1)
+- [x] **Namespace `/tmp` paths by worktree**: `RALPH_TMP_DIR="/tmp/claude/ralph_${_WT_HASH}"` via `sha256sum`
+- [x] **Add `--check-overlaps` to `generate_prd_json.py`**: `--check-overlaps` flag warns on file overlaps without mutual `depends_on`
+- [x] **Add De-Sloppify pass**: Opt-in post-story cleanup via `RALPH_DESLOPIFY=true` (Branch 1)
+- [x] **Consolidate split test directories**: `tests/test_gui/` does not exist — already resolved
+- [x] **Ad-hoc steering instructions**: `INSTRUCTION` parameter via CLI/Make (Branch 1)
+- [x] **Trigger table in prompt.md**: File-pattern → skill routing table in `ralph/docs/templates/prompt.md`
 
 <!-- markdownlint-enable MD013 -->
 

@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `ralph/scripts/ralph.sh`: worktree-namespaced `/tmp` paths via `sha256sum`-based `RALPH_TMP_DIR`; all hardcoded `/tmp/claude/ralph_*` paths replaced
+- `ralph/scripts/generate_prd_json.py`: `--check-overlaps` flag for file-overlap detection between stories
+- `ralph/docs/templates/prompt.md`: skill routing table replacing flat bullet list
+- `ralph/README.md`: Remote Control monitoring tip in Configuration section
+- `docs/analysis/CC-adoption-plan.md`: removed stale "Path-Scoped Rules Implementation" section; moved completed Tier 1 items to Done subsection
+- `ralph/TODO.md`: marked 9 completed items as done (Remote Control, effort level, /tmp namespace, check-overlaps, de-sloppify, test dir consolidation, steering instructions, trigger table)
 - `ralph/scripts/ralph.sh`: set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` for headless `claude -p` invocations
 - `.claude/rules/agent-patterns.md`: new path-scoped rule for agent implementation (triggered by `src/app/agents/`, `.claude/agents/`, `.claude/skills/`)
 - `.claude/rules/testing.md`: new path-scoped rule for test patterns (triggered by `tests/`)

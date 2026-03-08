@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`--check-overlaps` flag**: `generate_prd_json.py --check-overlaps` warns when stories share files without mutual `depends_on`
+- **Skill routing table**: `prompt.md` maps file patterns to skills (`testing-python`, `implementing-python`, `designing-backend`, `reviewing-code`)
+- **Remote Control monitoring tip**: Added to README.md Configuration section
+- **Worktree-namespaced `/tmp` paths**: `RALPH_TMP_DIR="/tmp/claude/ralph_${_WT_HASH}"` prevents concurrent worktree collisions; all scripts use `$RALPH_TMP_DIR` instead of hardcoded paths
+
+### Added (prior)
+
 - **Codebase Snapshot System**: Pre-analyzes `src/` file tree and function signatures into `ralph/docs/codebase-map.md`, injected into every story prompt — eliminates 5-15 agent discovery tool calls per story. Regenerated at run start and wave boundaries via content-hash diffing (`lib/snapshot.sh`: `generate_codebase_map`, `generate_story_context`)
 - `ralph/TODO.md`: consolidated enhancement TODOs from CC ralph enhancement research
 - **Story Status Enum**: Replaced binary `passes: bool` with `status: str` enum (`"pending"` | `"in_progress"` | `"passed"` | `"failed"`) across prd.json schema, shell scripts, and templates — enables observable story state and distinguishes not-started from running from failed
