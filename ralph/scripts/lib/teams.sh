@@ -27,7 +27,7 @@ get_unblocked_stories() {
 # Run full make validate at wave boundary (non-blocking).
 run_wave_checkpoint() {
     log_info "===== Wave Checkpoint: Full Validation ====="
-    if make --no-print-directory validate 2>&1 | tee /tmp/claude/ralph_wave_checkpoint.log; then
+    if make --no-print-directory validate 2>&1 | tee "$RALPH_TMP_DIR/wave_checkpoint.log"; then
         log_info "Wave checkpoint PASSED"
         return 0
     else
@@ -234,7 +234,7 @@ verify_teammate_stories() {
             sid_failed=true
         fi
 
-        local teammate_test_log="/tmp/claude/ralph_teammate_${sid}_tests.log"
+        local teammate_test_log="$RALPH_TMP_DIR/teammate_${sid}_tests.log"
         if ! run_tests_scoped "$sid" "$PRD_JSON" "$teammate_test_log"; then
             log_warn "Teammate story $sid: tests failed"
             sid_failed=true

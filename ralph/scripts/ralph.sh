@@ -94,13 +94,13 @@ PROMPT_FILE="$RALPH_PROMPT_FILE"
 MAX_RETRIES=3
 RALPH_TEAMS=${RALPH_TEAMS:-false}  # EXPERIMENTAL: cross-story interference causes false rejections (see ralph/README.md)
 RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
-# TODO: Add CLAUDE_CODE_EFFORT_LEVEL support. Default high for all stories;
-# optionally per-story based on files count or depends_on complexity.
-# TODO: these /tmp paths collide when multiple worktrees run concurrently.
-# Namespace by worktree (e.g., /tmp/claude/ralph_$(git rev-parse --show-toplevel | md5sum | cut -c1-8)/).
-BASELINE_FILE="/tmp/claude/ralph_baseline_failures.txt"
-RETRY_CONTEXT_FILE="/tmp/claude/ralph_retry_context.txt"
-TDD_VERIFIED_DIR="/tmp/claude/ralph_tdd_verified"
+_WT_HASH=$(git rev-parse --show-toplevel | sha256sum | cut -c1-8)
+RALPH_TMP_DIR="/tmp/claude/ralph_${_WT_HASH}"
+export RALPH_TMP_DIR
+mkdir -p "$RALPH_TMP_DIR"
+BASELINE_FILE="$RALPH_TMP_DIR/baseline_failures.txt"
+RETRY_CONTEXT_FILE="$RALPH_TMP_DIR/retry_context.txt"
+TDD_VERIFIED_DIR="$RALPH_TMP_DIR/tdd_verified"
 
 # Set up logging
 LOG_DIR="$RALPH_LOG_DIR"
@@ -534,7 +534,7 @@ execute_story() {
 # Prefers explicit sentinel file; falls back to scanning agent output.
 detect_already_complete() {
     local start_line="$1"
-    local sentinel="/tmp/claude/ralph_story_complete"
+    local sentinel="$RALPH_TMP_DIR/story_complete"
 
     if [ -f "$sentinel" ]; then
         rm -f "$sentinel"
@@ -559,12 +559,12 @@ run_quality_checks() {
         run_quality_checks_baseline "$BASELINE_FILE" "$story_id" "$PRD_JSON"
     else
         log_info "Running quality checks (make validate)..."
-        if make --no-print-directory validate 2>&1 | tee /tmp/claude/ralph_validate.log; then
+        if make --no-print-directory validate 2>&1 | tee "$RALPH_TMP_DIR/validate.log"; then
             log_info "Quality checks passed"
             return 0
         else
             log_error "Quality checks failed"
-            cat /tmp/claude/ralph_validate.log
+            cat "$RALPH_TMP_DIR/validate.log"
             return 1
         fi
     fi
@@ -807,7 +807,7 @@ main() {
         # Record commit count and untracked files before execution
         local commits_before=$(commit_count)
         local untracked_before
-        untracked_before=$(mktemp /tmp/claude/ralph_untracked.XXXXXX)
+        untracked_before=$(mktemp "$RALPH_TMP_DIR/untracked.XXXXXX")
         git ls-files --others --exclude-standard | sort > "$untracked_before"
 
         print_progress
@@ -892,7 +892,7 @@ main() {
                 fi
                 # Scoped clean: only remove files created during story execution
                 local untracked_after
-                untracked_after=$(mktemp /tmp/claude/ralph_untracked.XXXXXX)
+                untracked_after=$(mktemp "$RALPH_TMP_DIR/untracked.XXXXXX")
                 git ls-files --others --exclude-standard | sort > "$untracked_after"
                 local story_untracked
                 story_untracked=$(comm -13 "$untracked_before" "$untracked_after")
