@@ -25,6 +25,7 @@ created: 2026-03-07
 
 <!-- markdownlint-disable MD013 -->
 
+- [ ] **Per-story `CLAUDE_CODE_EFFORT_LEVEL`**: Default `high` for all stories; optionally set per-story based on files count or `depends_on` complexity. See TODO in `ralph.sh` config section.
 - [ ] **Codebase snapshot system**: Pre-analyze `src/` file tree and signatures into `ralph/docs/codebase-map.md`; inject story-scoped context (AC, file contents, tests) into prompt. Regenerated per wave via content-hash diffing (`lib/snapshot.sh`). Inspired by [jcodemunch-mcp](https://github.com/jgravelle/jcodemunch-mcp) (AST-based symbol indexing) and `researching-codebase` skill (structured markdown output format)
 - [ ] **Namespace `/tmp` paths by worktree**: `BASELINE_FILE`, `RETRY_CONTEXT_FILE`, `TDD_VERIFIED_DIR` use fixed `/tmp/claude/ralph_*` paths — concurrent worktrees overwrite each other. Fix: `/tmp/claude/ralph_<worktree_hash>/`
 - [ ] **Add `--check-overlaps` to `generate_prd_json.py`**: Warn when stories share files without `depends_on`

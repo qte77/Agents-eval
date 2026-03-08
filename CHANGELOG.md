@@ -29,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `.claude/settings.json`: add `CLAUDE_CODE_EFFORT_LEVEL=high` env var
 - `ralph/scripts/ralph.sh`: set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` for headless `claude -p` invocations
 - `.claude/rules/agent-patterns.md`: new path-scoped rule for agent implementation (triggered by `src/app/agents/`, `.claude/agents/`, `.claude/skills/`)
 - `.claude/rules/testing.md`: new path-scoped rule for test patterns (triggered by `tests/`)
