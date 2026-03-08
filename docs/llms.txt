@@ -1,6 +1,6 @@
 # Agents-eval
 
-> Agents-eval is a Multi-Agent System (MAS) evaluation framework using PydanticAI for generating and evaluating scientific paper reviews.
+> A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates and evaluates scientific paper reviews through a three-tiered assessment approach: traditional metrics, LLM-as-a-Judge, and graph-based complexity analysis.
 
 ## Getting Started
 
@@ -16,7 +16,6 @@
 ## Usage & Operations
 
 - [Troubleshooting](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/troubleshooting.md): Common issues and solutions
-
 ## Best Practices
 
 - [MAS Design Principles](https://github.com/qte77/Agents-eval/blob/main/docs/best-practices/mas-design-principles.md): Multi-agent system design guidance
