@@ -1,4 +1,12 @@
-# Known Failure Modes (Sprint 7 Research)
+---
+title: Ralph Known Failure Modes
+scope: Teams mode cross-story interference — Sprint 7/8 root cause analysis
+status: 6 modes documented, recommended solutions identified, not yet implemented
+created: 2026-02-18
+updated: 2026-03-08
+---
+
+<!-- markdownlint-disable MD013 -->
 
 Root cause analysis from Sprint 7 log forensics (`logs/ralph/2026-02-17_19:32:09.log`,
 `logs/ralph/2026-02-18_00:00:14.log`). STORY-009/010/011 implemented correctly but

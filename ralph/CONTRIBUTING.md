@@ -1,4 +1,9 @@
-# Ralph Contributing
+---
+title: Ralph Contributing
+scope: Command reference and flags for Ralph autonomous development loop
+created: 2026-02-15
+updated: 2026-03-08
+---
 
 Command reference for the Ralph autonomous development loop.
 For project-level development workflows, see the root [CONTRIBUTING.md](../CONTRIBUTING.md).
