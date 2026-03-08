@@ -510,11 +510,13 @@ ralph_init:  ## Initialize Ralph loop environment. Usage: make ralph_init [RALPH
 	echo "Initializing Ralph loop environment ..."
 	RALPH_PROJECT=$(RALPH_PROJECT) bash ralph/scripts/init.sh
 
-ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false EXPERIMENTAL)
+ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false, INSTRUCTION="...", DESLOPIFY=true|false)
 	echo "Starting Ralph loop ..."
 	$(if $(RALPH_TIMEOUT),timeout $(RALPH_TIMEOUT)) \
 		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) \
 		RALPH_TEAMS=$(TEAMS) \
+		RALPH_INSTRUCTION="$(INSTRUCTION)" \
+		RALPH_DESLOPIFY=$(DESLOPIFY) \
 		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \
 		bash ralph/scripts/ralph.sh \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph loop timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
@@ -523,7 +525,7 @@ ralph_worktree:  ## Create a git worktree for Ralph and cd into it (BRANCH=requi
 	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_worktree BRANCH=ralph/sprint-name))
 	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)"
 
-ralph_run_worktree:  ## Create worktree + run Ralph in it (BRANCH=required, MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false)
+ralph_run_worktree:  ## Create worktree + run Ralph in it (BRANCH=required, MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false, INSTRUCTION="...", DESLOPIFY=true|false)
 	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_run_worktree BRANCH=ralph/sprint-name))
 	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)" && \
 	cd "../$$(basename $(BRANCH))" && \
@@ -531,6 +533,8 @@ ralph_run_worktree:  ## Create worktree + run Ralph in it (BRANCH=required, MAX_
 		env -u VIRTUAL_ENV \
 		RALPH_MODEL=$(MODEL) MAX_ITERATIONS=$(MAX_ITERATIONS) \
 		RALPH_TEAMS=$(TEAMS) \
+		RALPH_INSTRUCTION="$(INSTRUCTION)" \
+		RALPH_DESLOPIFY=$(DESLOPIFY) \
 		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \
 		bash ralph/scripts/ralph.sh \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph worktree timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }

@@ -94,6 +94,9 @@ PROMPT_FILE="$RALPH_PROMPT_FILE"
 MAX_RETRIES=3
 RALPH_TEAMS=${RALPH_TEAMS:-false}  # EXPERIMENTAL: cross-story interference causes false rejections (see ralph/README.md)
 RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
+CLAUDE_CODE_EFFORT_LEVEL=${CLAUDE_CODE_EFFORT_LEVEL:-high}
+RALPH_INSTRUCTION=${RALPH_INSTRUCTION:-}
+RALPH_DESLOPIFY=${RALPH_DESLOPIFY:-false}
 _WT_HASH=$(git rev-parse --show-toplevel | sha256sum | cut -c1-8)
 RALPH_TMP_DIR="/tmp/claude/ralph_${_WT_HASH}"
 export RALPH_TMP_DIR
@@ -421,6 +424,23 @@ execute_story() {
 
     log_info "Executing story: $story_id - $title"
 
+    # Compute per-story effort level (env var overrides auto-computation)
+    local effort_level="$CLAUDE_CODE_EFFORT_LEVEL"
+    if [ "$effort_level" = "high" ]; then
+        local files_count depends_count complexity_score
+        files_count=$(jq -r --arg sid "$story_id" '.stories[] | select(.id==$sid) | .files | length' "$PRD_JSON")
+        depends_count=$(jq -r --arg sid "$story_id" '.stories[] | select(.id==$sid) | .depends_on | length' "$PRD_JSON")
+        complexity_score=$(( files_count + depends_count * 2 ))
+        if [ "$complexity_score" -le 3 ]; then
+            effort_level="low"
+        elif [ "$complexity_score" -le 8 ]; then
+            effort_level="medium"
+        fi
+        log_info "Effort level: $effort_level (files=$files_count, depends=$depends_count, score=$complexity_score)"
+    else
+        log_info "Effort level: $effort_level (override)"
+    fi
+
     # Create prompt for this iteration
     local iteration_prompt=$(mktemp)
     cat "$PROMPT_FILE" > "$iteration_prompt"
@@ -434,6 +454,16 @@ execute_story() {
         echo "Acceptance criteria, story files, and test context are pre-loaded below."
         echo "Only read additional files if the pre-loaded context is insufficient."
     } >> "$iteration_prompt"
+
+    # Inject ad-hoc user instruction (highest priority)
+    if [ -n "$RALPH_INSTRUCTION" ]; then
+        {
+            echo ""
+            echo "## User Instruction (highest priority)"
+            echo "$RALPH_INSTRUCTION"
+        } >> "$iteration_prompt"
+        log_info "User instruction injected: $RALPH_INSTRUCTION"
+    fi
 
     # Inject codebase snapshot
     if [ -f "$CODEBASE_MAP_FILE" ]; then
@@ -503,7 +533,7 @@ execute_story() {
     local monitor_pid=$!
 
     local claude_exit=0
-    if cat "$iteration_prompt" | CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1 claude -p --dangerously-skip-permissions --model "$RALPH_MODEL"; then
+    if cat "$iteration_prompt" | CLAUDE_CODE_EFFORT_LEVEL="$effort_level" CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1 claude -p --dangerously-skip-permissions --model "$RALPH_MODEL"; then
         claude_exit=0
     else
         claude_exit=$?
@@ -547,6 +577,36 @@ detect_already_complete() {
     # like "already fully committed" still match "already.*committed".
     tail -n +$((start_line + 1)) "$LOG_FILE" 2>/dev/null \
         | grep -qiE "already.*(complete|committed|implemented|done)|no further implementation.*required|stories.*(done|complete)|no new commits needed|all.*already.*done|work is.*done|changes already exist" || return 1
+}
+
+# Opt-in de-sloppify pass: run quick_validate on story files, pipe failures
+# into a focused claude -p cleanup prompt. Non-blocking (|| true).
+# Args:
+#   $1 - Story ID
+run_deslopify_pass() {
+    local story_id="$1"
+    if [ "$RALPH_DESLOPIFY" != "true" ]; then
+        return 0
+    fi
+    log_info "De-sloppify pass for $story_id..."
+    local story_files
+    story_files=$(jq -r --arg sid "$story_id" '.stories[] | select(.id==$sid) | .files[]' "$PRD_JSON")
+    if [ -z "$story_files" ]; then
+        return 0
+    fi
+    local issues
+    issues=$(make --no-print-directory quick_validate 2>&1 | grep -F "$story_files" || true)
+    if [ -z "$issues" ]; then
+        log_info "De-sloppify: no issues in story files"
+        return 0
+    fi
+    log_info "De-sloppify: fixing $(echo "$issues" | wc -l) issue(s)"
+    echo "Fix all lint, type, and complexity issues in these files. Commit with message 'refactor($story_id): de-sloppify [REFACTOR]'.
+
+Issues:
+$issues" | CLAUDE_CODE_EFFORT_LEVEL=low CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1 \
+        claude -p --dangerously-skip-permissions --model "$RALPH_MODEL" || true
+    log_info "De-sloppify pass complete"
 }
 
 # Run quality checks (dispatches to baseline-aware or original mode)
@@ -931,6 +991,9 @@ main() {
 
             # Run quality checks
             if run_quality_checks "$story_id"; then
+                # Opt-in de-sloppify pass (non-blocking)
+                run_deslopify_pass "$story_id"
+
                 # Mark as passed
                 update_story_status "$story_id" "passed"
                 log_progress "$iteration" "$story_id" "PASS" "Completed successfully with TDD commits"
