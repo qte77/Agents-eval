@@ -48,6 +48,7 @@ make ralph_status                             # Check progress
 - `MAX_ITERATIONS` - Loop limit (default: 25)
 - `REQUIRE_REFACTOR` - Enforce REFACTOR phase (default: false)
 - `TEAMS` - EXPERIMENTAL: Enable parallel story delegation via agent teams (default: false). Known failure modes documented below — cross-story interference causes false rejections.
+- `SNAPSHOT_SIG_LIMIT` - Max signature lines per file in codebase map (default: 100)
 
 **Monitoring** (interactive sessions):
 

@@ -84,7 +84,7 @@ None.
 - [x] **Consolidate split test directories**: `tests/test_gui/` does not exist — already resolved
 - [x] **Ad-hoc steering instructions**: `INSTRUCTION` parameter via CLI/Make (Branch 1)
 - [x] **Trigger table in prompt.md**: File-pattern → skill routing table in `ralph/docs/templates/prompt.md`
-- [x] **AST-based signature extraction**: Replaced grep-based signature extraction in `lib/snapshot.sh` with `lib/extract_signatures.py` (Python `ast` module). Captures return types, decorators (`@tool`), and full arg annotations. Falls back to grep on syntax errors.
+- [x] **AST-based signature extraction**: Replaced grep-based extraction in `lib/snapshot.sh` with `lib/extract_signatures.py` (Python `ast` module). Captures return types, decorators (`@tool`), and full arg annotations. Falls back to grep on syntax errors. Per-file limit configurable via `SNAPSHOT_SIG_LIMIT` (default: 100).
 - [x] **Codebase snapshot system**: `lib/snapshot.sh` generates `codebase-map.md` (file tree + AST-based signatures) and `story-context.md` (AC, file contents, tests). Content-hash diffing skips regeneration when `src/` unchanged.
 
 <!-- markdownlint-enable MD013 -->
