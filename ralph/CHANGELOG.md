@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Wave Field in prd.json**: `wave: int` (1-indexed BFS level) computed by `compute_waves()` in `generate_prd_json.py` — makes dependency execution plan visible in prd.json without runtime computation
 - **Sprint 9 Archive**: `ralph/docs/archive/sprint9/` with completed prd.json and progress.txt (all 9 stories passed)
 
+### Changed
+
+- `ralph.sh`: set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` for headless `claude -p` invocations — reduces token noise from built-in git instructions that conflict with Ralph's TDD commit workflow
+
 ### Removed
 
 - **Duplicate `verify_teammate_stories`**: Deleted stale copy in `ralph.sh` that shadowed `lib/teams.sh` authoritative version — stale copy ignored `$3` (DELEGATED_TEAMMATES), using `get_unblocked_stories` instead which could pick up Wave N+1 stories never delegated

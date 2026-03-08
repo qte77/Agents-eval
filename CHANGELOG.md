@@ -27,21 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `docs/analysis/ClaudeCode/`: 17 CC feature analyses moved to standalone repo [claude-code-research](https://github.com/qte77/claude-code-research)
 
-### Fixed
-
-- `docs/analysis/CC-adoption-plan.md`: repoint all CC doc links to `claude-code-research` repo with correct subdirectory paths; fix `AGENTS.md` and `ralph/TODO.md` relative path depth
-
 ### Changed
 
-- `.claude/settings.json`: add `CLAUDE_CODE_EFFORT_LEVEL=high` env var
 - `ralph/scripts/ralph.sh`: set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` for headless `claude -p` invocations
+- `.claude/rules/agent-patterns.md`: new path-scoped rule for agent implementation (triggered by `src/app/agents/`, `.claude/agents/`, `.claude/skills/`)
+- `.claude/rules/testing.md`: new path-scoped rule for test patterns (triggered by `tests/`)
 
 ### Fixed
 
 - `Makefile`: fix `ralph_status` recipe using legacy `.passes` field instead of `.status == "passed"`
+- `docs/analysis/CC-adoption-plan.md`: repoint all CC doc links to `claude-code-research` repo with correct subdirectory paths; fix `AGENTS.md` and `ralph/TODO.md` relative path depth
 - `src/app/utils/run_context.py`: wrap 101-char `run_dir` line to satisfy ruff E501
 - `.github/workflows/codeql.yaml`: upgrade `dismiss-alerts` v1 → v2.0.2 to fix EISDIR error on SARIF directory input
-- `docs/analysis/CC-adoption-plan.md`: repoint CC doc links to `claude-code-research` repo; fix relative path depth
 
 ### Removed
 

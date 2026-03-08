@@ -94,6 +94,8 @@ PROMPT_FILE="$RALPH_PROMPT_FILE"
 MAX_RETRIES=3
 RALPH_TEAMS=${RALPH_TEAMS:-false}  # EXPERIMENTAL: cross-story interference causes false rejections (see ralph/README.md)
 RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
+# TODO: Add CLAUDE_CODE_EFFORT_LEVEL support. Default high for all stories;
+# optionally per-story based on files count or depends_on complexity.
 # TODO: these /tmp paths collide when multiple worktrees run concurrently.
 # Namespace by worktree (e.g., /tmp/claude/ralph_$(git rev-parse --show-toplevel | md5sum | cut -c1-8)/).
 BASELINE_FILE="/tmp/claude/ralph_baseline_failures.txt"
@@ -501,7 +503,7 @@ execute_story() {
     local monitor_pid=$!
 
     local claude_exit=0
-    if cat "$iteration_prompt" | claude -p --dangerously-skip-permissions --model "$RALPH_MODEL"; then
+    if cat "$iteration_prompt" | CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1 claude -p --dangerously-skip-permissions --model "$RALPH_MODEL"; then
         claude_exit=0
     else
         claude_exit=$?

@@ -4,20 +4,11 @@ purpose: Consolidated backlog for Ralph loop — bugs, enhancements, and deferre
 created: 2026-03-07
 ---
 
-## Fix Now (bugs)
-
-<!-- markdownlint-disable MD013 -->
-
-- [x] **Fix `ralph_status` jq query**: Change `.passes == true` to `.status == "passed"` in Makefile — always shows 0 completed stories on current schema
-
-<!-- markdownlint-enable MD013 -->
-
 ## Adopt Now (zero cost)
 
 <!-- markdownlint-disable MD013 -->
 
 - [ ] **Remote Control for Ralph monitoring**: Run `claude remote-control --name "Ralph"` before interactive sessions. Monitor/steer from phone. Source: [CC-remote-control-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/execution-infrastructure/CC-remote-control-analysis.md)
-- [x] **Disable git instructions for headless mode**: Set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` in Ralph's env. See [CC-changelog-feature-scan.md](https://github.com/qte77/claude-code-research/blob/main/docs/CC-changelog-feature-scan.md)
 
 <!-- markdownlint-enable MD013 -->
 
@@ -25,6 +16,7 @@ created: 2026-03-07
 
 <!-- markdownlint-disable MD013 -->
 
+- [ ] **Per-story `CLAUDE_CODE_EFFORT_LEVEL`**: Default `high` for all stories; optionally set per-story based on files count or `depends_on` complexity. See TODO in `ralph.sh` config section.
 - [ ] **Codebase snapshot system**: Pre-analyze `src/` file tree and signatures into `ralph/docs/codebase-map.md`; inject story-scoped context (AC, file contents, tests) into prompt. Regenerated per wave via content-hash diffing (`lib/snapshot.sh`). Inspired by [jcodemunch-mcp](https://github.com/jgravelle/jcodemunch-mcp) (AST-based symbol indexing) and `researching-codebase` skill (structured markdown output format)
 - [ ] **Namespace `/tmp` paths by worktree**: `BASELINE_FILE`, `RETRY_CONTEXT_FILE`, `TDD_VERIFIED_DIR` use fixed `/tmp/claude/ralph_*` paths — concurrent worktrees overwrite each other. Fix: `/tmp/claude/ralph_<worktree_hash>/`
 - [ ] **Add `--check-overlaps` to `generate_prd_json.py`**: Warn when stories share files without `depends_on`
@@ -93,6 +85,8 @@ created: 2026-03-07
 - [x] **Scoped reset on red-green validation failure** — Untracked files are snapshot before story execution; on TDD failure, only story-created files are removed. Additionally, quality-failure retries skip TDD verification entirely (prior RED+GREEN already verified), and `check_tdd_commits` has a fallback that detects `refactor(` prefix when `[REFACTOR]` bracket marker is missing.
 - [x] **Deduplicate log level in CC monitor output** — `monitor_story_progress` strips leading `[INFO]`/`[WARN]`/`[ERROR]` prefix from CC agent output before wrapping with `log_cc*`, preventing `[INFO] ... [CC] [INFO]` duplication.
 - [x] **Fix AGENTS.md Ralph path**: Update `.claude/scripts/ralph/` to `ralph/scripts/` — fixed state tracking paths too (`ralph/docs/prd.json`, `ralph/docs/progress.txt`)
+- [x] **Fix `ralph_status` jq query**: Change `.passes == true` to `.status == "passed"` in Makefile
+- [x] **Disable git instructions for headless mode**: Set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` in Ralph's env
 
 <!-- markdownlint-enable MD013 -->
 

@@ -17,14 +17,14 @@ This plan synthesizes CC feature analysis documents into a prioritized adoption 
 <!-- markdownlint-disable MD013 -->
 
 - [ ] **Remote Control for Ralph monitoring**: Run `claude remote-control --name "Ralph"` before interactive sessions. [CC-remote-control-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/execution-infrastructure/CC-remote-control-analysis.md)
-- [ ] **Path-scoped rules**: Add `paths:` frontmatter to `.claude/rules/` files. [CC-memory-system-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/context-memory/CC-memory-system-analysis.md)
+- [x] **Path-scoped rules**: Add `paths:` frontmatter to `.claude/rules/` files. [CC-memory-system-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/context-memory/CC-memory-system-analysis.md)
 - [ ] **Auto memory / AGENT_LEARNINGS.md dedup**: Run `/memory` audit; reconcile stale entries. [CC-memory-system-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/context-memory/CC-memory-system-analysis.md)
 - [ ] **llms.txt bookmark**: Add `platform.claude.com/llms.txt` and `code.claude.com/docs/llms.txt` as reference indexes. [CC-llms-txt-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/context-memory/CC-llms-txt-analysis.md)
-- [ ] **Fix `ralph_status` recipe**: Change `.passes == true` to `.status == "passed"` in Makefile. [CC-ralph-enhancement-research.md](https://github.com/qte77/claude-code-research/blob/main/docs/agent-orchestration/CC-ralph-enhancement-research.md)
-- [ ] **Disable git instructions for Ralph**: Set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` in Ralph's env. [CC-changelog-feature-scan.md](https://github.com/qte77/claude-code-research/blob/main/docs/CC-changelog-feature-scan.md)
+- [x] **Fix `ralph_status` recipe**: Change `.passes == true` to `.status == "passed"` in Makefile. [CC-ralph-enhancement-research.md](https://github.com/qte77/claude-code-research/blob/main/docs/agent-orchestration/CC-ralph-enhancement-research.md)
+- [x] **Disable git instructions for Ralph**: Set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` in Ralph's env. [CC-changelog-feature-scan.md](https://github.com/qte77/claude-code-research/blob/main/docs/CC-changelog-feature-scan.md)
 - [ ] **`Setup` hook for env validation**: Add `Setup` hook event to auto-run `make setup_dev` on session start. [CC-changelog-feature-scan.md](https://github.com/qte77/claude-code-research/blob/main/docs/CC-changelog-feature-scan.md)
-- [ ] **Effort level tuning**: Set `CLAUDE_CODE_EFFORT_LEVEL=medium` for routine tasks; `high` for complex work. [CC-model-provider-configuration.md](https://github.com/qte77/claude-code-research/blob/main/docs/configuration/CC-model-provider-configuration.md)
-- [ ] **Subagent model override**: Set `CLAUDE_CODE_SUBAGENT_MODEL` to route subagents to cheaper models. [CC-model-provider-configuration.md](https://github.com/qte77/claude-code-research/blob/main/docs/configuration/CC-model-provider-configuration.md)
+- [x] **Effort level tuning**: Set `CLAUDE_CODE_EFFORT_LEVEL=high` in `.claude/settings.json`. [CC-model-provider-configuration.md](https://github.com/qte77/claude-code-research/blob/main/docs/configuration/CC-model-provider-configuration.md)
+- [x] **Subagent model override**: `CLAUDE_CODE_SUBAGENT_MODEL=opusplan` already set in `.claude/settings.json`. [CC-model-provider-configuration.md](https://github.com/qte77/claude-code-research/blob/main/docs/configuration/CC-model-provider-configuration.md)
 
 #### Tier 1 — Done
 
