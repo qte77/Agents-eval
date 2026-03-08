@@ -121,7 +121,7 @@ When routing through third-party gateways, additionally set ([source][cc-setting
 | -------- | ------- | ------- |
 | `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | Max output tokens | 32,000 (max 64,000) |
 | `CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS` | Token limit for file reads | Default |
-| `CLAUDE_CODE_DISABLE_1M_CONTEXT` | Disable 1M context window | `1` to disable |
+| `CLAUDE_CODE_DISABLE_1M_CONTEXT` | Disable 1M context window (see [extended context analysis](CC-extended-context-analysis.md)) | `1` to disable |
 
 ([source][cc-settings])
 
