@@ -24,8 +24,7 @@
 - [Cloud Sessions](${BLOB}/docs/analysis/ClaudeCode/CC-cloud-sessions-analysis.md): Claude Code cloud sessions (Code on the Web)
 - [Fast Mode](${BLOB}/docs/analysis/ClaudeCode/CC-fast-mode-analysis.md): Claude Code fast mode analysis
 - [Chrome Extension](${BLOB}/docs/analysis/ClaudeCode/CC-chrome-extension-analysis.md): Claude Code Chrome extension analysis
-- [llms.txt Analysis](${BLOB}/docs/analysis/ClaudeCode/CC-llms-txt-analysis.md): llms.txt specification and implementation analysis
-- [Platform Documentation Index](${BLOB}/docs/analysis/ClaudeCode/CC-platform-documentation-index.md): Claude platform documentation index
+- [llms.txt & Platform Docs](${BLOB}/docs/analysis/ClaudeCode/CC-llms-txt-analysis.md): llms.txt spec, Anthropic docs index, and project implementation
 - [Remote Access Landscape](${BLOB}/docs/analysis/ClaudeCode/CC-remote-access-landscape.md): Remote access landscape analysis
 - [Inference Providers](${BLOB}/docs/analysis/Inference-Providers.md): LLM provider comparison
 - [Landscape: Agent Frameworks](${BLOB}/docs/landscape/landscape-agent-frameworks-infrastructure.md): Agent framework survey
