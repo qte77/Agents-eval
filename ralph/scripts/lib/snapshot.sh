@@ -50,7 +50,7 @@ generate_codebase_map() {
         echo ""
         echo "### Signatures"
         echo ""
-        # Extract class and function definitions with file paths
+        # Global overview: all src/ signatures, capped per file
         find src/ -type f -name '*.py' | sort | while IFS= read -r pyfile; do
             local sigs
             sigs=$(python3 "$_EXTRACT_SIGS" "$pyfile" 2>/dev/null | head -"$SNAPSHOT_SIG_LIMIT" || true)
@@ -142,6 +142,7 @@ generate_story_context() {
                     cat "$filepath"
                     echo '```'
                 else
+                    # Story-scoped source file: full signatures (no cap — agent edits these)
                     echo "**$filepath** ($lines lines, signatures only):"
                     echo '```'
                     python3 "$_EXTRACT_SIGS" "$filepath" 2>/dev/null | sed 's/^/  /' || true
@@ -172,6 +173,7 @@ generate_story_context() {
                     cat "$test_path"
                     echo '```'
                 else
+                    # Story-scoped test file: full signatures (no cap — agent edits these)
                     echo "**$test_path** ($tlines lines, signatures only):"
                     echo '```'
                     python3 "$_EXTRACT_SIGS" "$test_path" 2>/dev/null | sed 's/^/  /' || true
