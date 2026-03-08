@@ -29,7 +29,7 @@ while stories remain:
 **Memory persists only through:**
 
 - `prd.json` - Task status and acceptance criteria
-- `progress.txt` - Learnings and patterns
+- `progress.txt` - Learnings, patterns, and failure mode tables
 - Git commits - Code changes
 - `codebase-map.md` - Source tree + function signatures (refreshed per wave)
 
@@ -49,6 +49,7 @@ make ralph_status                             # Check progress
 - `REQUIRE_REFACTOR` - Enforce REFACTOR phase (default: false)
 - `TEAMS` - EXPERIMENTAL: Enable parallel story delegation via agent teams (default: false). Known failure modes documented below — cross-story interference causes false rejections.
 - `SNAPSHOT_SIG_LIMIT` - Max signature lines per file in codebase map (default: 100)
+- `DOMAIN_RETRY_THRESHOLD` - Failures before suggesting skill creation (default: 3)
 
 **Monitoring** (interactive sessions):
 

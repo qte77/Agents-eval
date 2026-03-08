@@ -36,6 +36,7 @@ For project-level development workflows, see the root [CONTRIBUTING.md](../CONTR
 | `INSTRUCTION` | string | (none) | Ad-hoc guidance injected into prompt |
 | `DESLOPIFY` | `true`, `false` | `false` | Post-story cleanup pass |
 | `SNAPSHOT_SIG_LIMIT` | integer | `100` | Max signature lines per file in codebase map |
+| `DOMAIN_RETRY_THRESHOLD` | integer | `3` | Failures before suggesting skill creation |
 | `BRANCH` | branch name | (required) | Git branch for worktree recipes |
 | `DRY_RUN` | `1` | (none) | Parse-only for prd_json |
 
