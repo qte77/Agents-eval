@@ -8,9 +8,9 @@ created: 2026-03-07
 
 None.
 
-## Backlog
-
 <!-- markdownlint-disable MD013 -->
+
+## Backlog
 
 - [ ] **Multi-instance worktree orchestration**: Run up to N independent Ralph instances in separate git worktrees simultaneously. Each worktree gets its own branch, prd.json, and progress.txt. See [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) for reference.
 - [ ] **Merge with ralph-loop template**: Evaluate and port features from [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) into this project, or merge both projects altogether.
@@ -18,20 +18,12 @@ None.
 - [ ] **Context drift detector**: Session-start hook warning when src/ files changed without codebase-map.md update. Extends content-hash check. Source: [2602.20478] §5
 - [ ] **Agent creation heuristic**: Track retry counts per-domain; suggest new skill when a domain repeatedly fails. Source: [2602.20478] §3.2
 
-<!-- markdownlint-enable MD013 -->
-
 ## Future Work
-
-<!-- markdownlint-disable MD013 -->
 
 - [ ] **Agent Teams for parallel story execution**: Enable with `make ralph_run TEAMS=true` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`). Lead agent orchestrates teammates with skill-specific delegation. See [CC Agent Teams Orchestration](https://github.com/qte77/claude-code-research/blob/main/docs/agent-orchestration/CC-agent-teams-orchestration.md) for architecture and tracing. **Terminology**: a **wave** is the set of currently unblocked stories (all `depends_on` satisfied) — i.e., the frontier of the dependency graph. Stories within a wave run in parallel (one teammate each); the next wave starts after the current one completes.
   - [ ] **CC Agent Teams as alternative orchestrator**: Instead of Ralph's bash loop driving `claude -p` with bolted-on teams support, the CC main orchestrator agent directly spawns a team via `TeamCreate` + `Task` tool. Each story becomes a `TaskCreate` entry with `blockedBy` dependencies (both logical and file-conflict). Addresses Ralph failure modes structurally: isolated teammate contexts prevent cross-contamination (#2), `blockedBy` prevents stale snapshots (#4), no external reset eliminates Sisyphean loops (#1), lead-scoped validation prevents cross-story complexity failures (#3), and file-conflict deps in `blockedBy` prevent parallel edits to the same file (#5). Requires self-contained story descriptions in the PRD Story Breakdown (usable as `TaskCreate(description=...)`). See Sprint 8 PRD "Notes for CC Agent Teams" section for orchestration waves, file-conflict dependency table, and teammate prompt template.
 
-<!-- markdownlint-enable MD013 -->
-
 ## Monitor (revisit on trigger)
-
-<!-- markdownlint-disable MD013 -->
 
 | Item | Current Blocker | Trigger to Revisit |
 | ---- | --------------- | ------------------ |
@@ -41,8 +33,6 @@ None.
 | **BDD workflow support** | Only TDD `[RED]/[GREEN]/[REFACTOR]` accepted | A BDD project needs Ralph |
 | **Cross-layer validation commands** | Single-layer Python project | Project becomes multi-layer |
 | **CLI rewrite (Bun/Deno/Rust/Python)** | Bash works; jq/quoting fragility not yet a measured blocker. Bun/Deno are middle ground (scripting feel + types + native JSON). | jq quoting bugs (SC1010) or `/tmp` path collisions measurably block development |
-
-<!-- markdownlint-enable MD013 -->
 
 **CLI rewrite scope** (when triggered):
 
@@ -54,19 +44,13 @@ None.
 
 ## Deferred
 
-<!-- markdownlint-disable MD013 -->
-
 - [ ] **Intra-story teams**: Multiple agents on one story (e.g., test writer + implementer). Requires shared-file coordination, merge conflict handling, and split TDD ownership. Deferred until inter-story mode is validated.
 - [ ] **Git worktrees for teams isolation**: True filesystem isolation eliminates all cross-contamination (`__pycache__`, ruff/test cross-pollution). Each story in a wave gets its own `git worktree`. Merge at wave boundaries via `git merge --squash`. Deferred until scoped checks + wave checkpoints are validated.
 - [ ] **Automated impact-scope analysis**: Post-story function that diffs removed identifiers in `src/`, filters to renamed-only (removed but not re-added), and greps `tests/` for out-of-scope consumers. Currently handled by the agent via prompt instruction. Automate if a second incident occurs.
 - [ ] **Inline snapshot drift detection**: Run `uv run pytest --inline-snapshot=review` after clean test passes to surface stale snapshots. Deferred until `--inline-snapshot=review` output format is confirmed stable for non-interactive use.
 - [ ] **Cross-directory test warning**: Flag when a source module has tests in multiple directories (e.g., `tests/gui/` and `tests/test_gui/`). Consolidating test dirs (above) is the structural fix. Deferred as YAGNI.
 
-<!-- markdownlint-enable MD013 -->
-
 ## Done
-
-<!-- markdownlint-disable MD013 -->
 
 - [x] **Intermediate progress visibility** — Monitor now tails agent log output at 30s intervals with `[CC]` (magenta) prefix for agent activity and red for agent errors, alongside existing phase detection from git log.
   - [x] **CC monitor log nesting** — `monitor_story_progress` now tracks byte offset (`wc -c`) between 30s cycles and reads only new log content via `tail -c +$offset`, preventing `[CC] [INFO] [CC] [INFO] ...` nesting chains.
@@ -87,8 +71,6 @@ None.
 - [x] **AST-based signature extraction**: Replaced grep-based extraction in `lib/snapshot.sh` with `lib/extract_signatures.py` (Python `ast` module). Captures return types, decorators (`@tool`), and full arg annotations. Falls back to grep on syntax errors. Per-file limit configurable via `SNAPSHOT_SIG_LIMIT` (default: 100).
 - [x] **Codebase snapshot system**: `lib/snapshot.sh` generates `codebase-map.md` (file tree + AST-based signatures) and `story-context.md` (AC, file contents, tests). Content-hash diffing skips regeneration when `src/` unchanged.
 
-<!-- markdownlint-enable MD013 -->
-
 ## Decisions
 
 | Decision | Rationale | Date |
@@ -99,8 +81,6 @@ None.
 | AST over grep for codebase map signatures | AST captures return types, decorators, full arg annotations; grep misses them. Speed negligible (1.2x). Complexipy stays as quality gate only. | 2026-03-08 |
 
 ## Sources
-
-<!-- markdownlint-disable MD013 -->
 
 - [CC-ralph-enhancement-research.md](https://github.com/qte77/claude-code-research/blob/main/docs/agent-orchestration/CC-ralph-enhancement-research.md) — gaps, external patterns, tiered enhancements
 - [CC-fast-mode-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/configuration/CC-fast-mode-analysis.md) — fast mode cost analysis
