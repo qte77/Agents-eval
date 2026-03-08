@@ -8,7 +8,7 @@ created: 2026-03-07
 
 <!-- markdownlint-disable MD013 -->
 
-- [ ] **Fix `ralph_status` jq query**: Change `.passes == true` to `.status == "passed"` in Makefile — always shows 0 completed stories on current schema
+- [x] **Fix `ralph_status` jq query**: Change `.passes == true` to `.status == "passed"` in Makefile — always shows 0 completed stories on current schema
 
 <!-- markdownlint-enable MD013 -->
 
@@ -16,8 +16,8 @@ created: 2026-03-07
 
 <!-- markdownlint-disable MD013 -->
 
-- [ ] **Remote Control for Ralph monitoring**: Run `claude remote-control --name "Ralph"` before interactive sessions. Monitor/steer from phone. Source: [CC-remote-control-analysis.md](../docs/analysis/ClaudeCode/CC-remote-control-analysis.md)
-- [ ] **Disable git instructions for headless mode**: Set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` in Ralph's env. See [CC-changelog-feature-scan.md](../docs/analysis/ClaudeCode/CC-changelog-feature-scan.md)
+- [ ] **Remote Control for Ralph monitoring**: Run `claude remote-control --name "Ralph"` before interactive sessions. Monitor/steer from phone. Source: [CC-remote-control-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/execution-infrastructure/CC-remote-control-analysis.md)
+- [x] **Disable git instructions for headless mode**: Set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` in Ralph's env. See [CC-changelog-feature-scan.md](https://github.com/qte77/claude-code-research/blob/main/docs/CC-changelog-feature-scan.md)
 
 <!-- markdownlint-enable MD013 -->
 
@@ -44,7 +44,7 @@ created: 2026-03-07
 
 <!-- markdownlint-disable MD013 -->
 
-- [ ] **Agent Teams for parallel story execution**: Enable with `make ralph_run TEAMS=true` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`). Lead agent orchestrates teammates with skill-specific delegation. See [CC Agent Teams Orchestration](../docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md) for architecture and tracing. **Terminology**: a **wave** is the set of currently unblocked stories (all `depends_on` satisfied) — i.e., the frontier of the dependency graph. Stories within a wave run in parallel (one teammate each); the next wave starts after the current one completes.
+- [ ] **Agent Teams for parallel story execution**: Enable with `make ralph_run TEAMS=true` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`). Lead agent orchestrates teammates with skill-specific delegation. See [CC Agent Teams Orchestration](https://github.com/qte77/claude-code-research/blob/main/docs/agent-orchestration/CC-agent-teams-orchestration.md) for architecture and tracing. **Terminology**: a **wave** is the set of currently unblocked stories (all `depends_on` satisfied) — i.e., the frontier of the dependency graph. Stories within a wave run in parallel (one teammate each); the next wave starts after the current one completes.
   - [ ] **CC Agent Teams as alternative orchestrator**: Instead of Ralph's bash loop driving `claude -p` with bolted-on teams support, the CC main orchestrator agent directly spawns a team via `TeamCreate` + `Task` tool. Each story becomes a `TaskCreate` entry with `blockedBy` dependencies (both logical and file-conflict). Addresses Ralph failure modes structurally: isolated teammate contexts prevent cross-contamination (#2), `blockedBy` prevents stale snapshots (#4), no external reset eliminates Sisyphean loops (#1), lead-scoped validation prevents cross-story complexity failures (#3), and file-conflict deps in `blockedBy` prevent parallel edits to the same file (#5). Requires self-contained story descriptions in the PRD Story Breakdown (usable as `TaskCreate(description=...)`). See Sprint 8 PRD "Notes for CC Agent Teams" section for orchestration waves, file-conflict dependency table, and teammate prompt template.
 
 <!-- markdownlint-enable MD013 -->
@@ -100,21 +100,21 @@ created: 2026-03-07
 
 | Decision | Rationale | Date |
 | -------- | --------- | ---- |
-| Adopt CC Remote Control over Omnara/CloudCLI | Free, native, zero-setup; sufficient for monitoring. See [CC-remote-control-analysis.md](../docs/analysis/ClaudeCode/CC-remote-control-analysis.md) | 2026-03-07 |
-| Skip fast mode for autonomous runs | See Monitor table above; rationale in [CC-fast-mode-analysis.md](../docs/analysis/ClaudeCode/CC-fast-mode-analysis.md) | 2026-03-07 |
-| Fix `ralph_status` + AGENTS.md path ref | See Fix Now above; gap analysis in [CC-ralph-enhancement-research.md](../docs/analysis/ClaudeCode/CC-ralph-enhancement-research.md) | 2026-03-07 |
+| Adopt CC Remote Control over Omnara/CloudCLI | Free, native, zero-setup; sufficient for monitoring. See [CC-remote-control-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/execution-infrastructure/CC-remote-control-analysis.md) | 2026-03-07 |
+| Skip fast mode for autonomous runs | See Monitor table above; rationale in [CC-fast-mode-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/configuration/CC-fast-mode-analysis.md) | 2026-03-07 |
+| Fix `ralph_status` + AGENTS.md path ref | See Fix Now above; gap analysis in [CC-ralph-enhancement-research.md](https://github.com/qte77/claude-code-research/blob/main/docs/agent-orchestration/CC-ralph-enhancement-research.md) | 2026-03-07 |
 
 ## Sources
 
 <!-- markdownlint-disable MD013 -->
 
-- [CC-ralph-enhancement-research.md](../docs/analysis/ClaudeCode/CC-ralph-enhancement-research.md) — gaps, external patterns, tiered enhancements
-- [CC-fast-mode-analysis.md](../docs/analysis/ClaudeCode/CC-fast-mode-analysis.md) — fast mode cost analysis
-- [CC-remote-control-analysis.md](../docs/analysis/ClaudeCode/CC-remote-control-analysis.md) — remote monitoring mechanics
-- [CC-remote-access-landscape.md](../docs/analysis/ClaudeCode/CC-remote-access-landscape.md) — Omnara, CloudCLI alternatives
-- [CC-cloud-sessions-analysis.md](../docs/analysis/ClaudeCode/CC-cloud-sessions-analysis.md) — cloud VM execution
-- [CC-skills-adoption-analysis.md](../docs/analysis/ClaudeCode/CC-skills-adoption-analysis.md) — Skills adoption and format analysis (completed)
-- [CC-changelog-feature-scan.md](../docs/analysis/ClaudeCode/CC-changelog-feature-scan.md) — changelog scan (structured outputs, `/loop`, HTTP hooks, worktree isolation)
+- [CC-ralph-enhancement-research.md](https://github.com/qte77/claude-code-research/blob/main/docs/agent-orchestration/CC-ralph-enhancement-research.md) — gaps, external patterns, tiered enhancements
+- [CC-fast-mode-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/configuration/CC-fast-mode-analysis.md) — fast mode cost analysis
+- [CC-remote-control-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/execution-infrastructure/CC-remote-control-analysis.md) — remote monitoring mechanics
+- [CC-remote-access-landscape.md](https://github.com/qte77/claude-code-research/blob/main/docs/execution-infrastructure/CC-remote-access-landscape.md) — Omnara, CloudCLI alternatives
+- [CC-cloud-sessions-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/execution-infrastructure/CC-cloud-sessions-analysis.md) — cloud VM execution
+- [CC-skills-adoption-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/agent-orchestration/CC-skills-adoption-analysis.md) — Skills adoption and format analysis (completed)
+- [CC-changelog-feature-scan.md](https://github.com/qte77/claude-code-research/blob/main/docs/CC-changelog-feature-scan.md) — changelog scan (structured outputs, `/loop`, HTTP hooks, worktree isolation)
 - [Codified Context Infrastructure](https://arxiv.org/abs/2602.20478) — three-tier context architecture (constitution + specialist agents + cold-memory knowledge base), 283-session empirical study, 108K LOC C# project. Validates AGENTS.md + Skills + docs/ pattern.
 
 <!-- markdownlint-enable MD013 -->

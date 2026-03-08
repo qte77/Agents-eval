@@ -14,20 +14,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `.github/workflows/generate-sbom.yaml`: auto-generate SPDX 2.3 SBOM on push to main (`pyproject.toml`/`uv.lock` changes) and weekly; outputs `docs/SBOM/sbom.spdx.json` (machine-readable) and `docs/SBOM/sbom.md` (human-readable markdown table)
-
-### Fixed
-
-- `src/app/utils/run_context.py`: wrap 101-char `run_dir` line to satisfy ruff E501
-- `.github/workflows/codeql.yaml`: add `advanced-security/dismiss-alerts` step so `# CodeQL[py/path-injection]` inline comments actually suppress alerts via SARIF API; pin action to SHA; fix wrong input name (`sarif-upload-id` → `sarif-id`)
-
-### Added
-
+- `.github/ISSUE_TEMPLATE/bug_report.md`, `question.md`: GitHub issue templates for bug reports and questions
+- `.github/ISSUE_TEMPLATE/config.yaml`: disable blank issues, force template usage
 - `.github/templates/llms.txt.additions.tpl`: project-specific llms.txt additions (Best Practices, Optional links) separate from generic skeleton
 - `scripts/writeup/README.md`: usage guide and pandoc/LaTeX gotchas (moved from AGENT_LEARNINGS)
 - `AGENT_LEARNINGS.md`: patterns for `gh pr edit` GraphQL workaround, CC sandbox git restriction, PR squash merge API
 - `.claude/skills/enforcing-doc-hierarchy/`: skill for auditing doc hierarchy, detecting broken references and chain breaks
 - `docs/analysis/ClaudeCode/`: 13 CC feature analyses — Remote Control, Cloud Sessions, Memory System, Cowork & Plugins, Chrome Extension, Platform Docs, Plugin Packaging, Ralph Enhancement Research, Sandboxing, Skills Adoption, Changelog Feature Scan, Model/Provider Config, llms.txt
-- `docs/analysis/ClaudeCode/CC-adoption-plan.md`: consolidated CC adoption plan (supersedes `CC-skills-Ralph-adoption-plan.md`)
+- `docs/analysis/CC-adoption-plan.md`: consolidated CC adoption plan (supersedes `CC-skills-Ralph-adoption-plan.md`); moved out of `ClaudeCode/` subdirectory
+
+### Removed
+
+- `docs/analysis/ClaudeCode/`: 17 CC feature analyses moved to standalone repo [claude-code-research](https://github.com/qte77/claude-code-research)
+
+### Fixed
+
+- `docs/analysis/CC-adoption-plan.md`: repoint all CC doc links to `claude-code-research` repo with correct subdirectory paths; fix `AGENTS.md` and `ralph/TODO.md` relative path depth
+
+### Changed
+
+- `.claude/settings.json`: add `CLAUDE_CODE_EFFORT_LEVEL=high` env var
+- `ralph/scripts/ralph.sh`: set `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` for headless `claude -p` invocations
+
+### Fixed
+
+- `Makefile`: fix `ralph_status` recipe using legacy `.passes` field instead of `.status == "passed"`
+- `src/app/utils/run_context.py`: wrap 101-char `run_dir` line to satisfy ruff E501
+- `.github/workflows/codeql.yaml`: upgrade `dismiss-alerts` v1 → v2.0.2 to fix EISDIR error on SARIF directory input
+- `docs/analysis/CC-adoption-plan.md`: repoint CC doc links to `claude-code-research` repo; fix relative path depth
+
+### Removed
+
+- `docs/analysis/ClaudeCode/`: 17 CC feature analyses moved to standalone repo [claude-code-research](https://github.com/qte77/claude-code-research)
+- `docs/analysis/RDI-Agentbeats/`: moved `AgentBeats_basics.md` to `docs/analysis/`
+- `docs/analysis/CC-skills-Ralph-adoption-plan.md`: superseded by `ClaudeCode/CC-adoption-plan.md`
+- `docs/analysis/agents-md-refactor-plan.md`: consolidated into other docs
 
 ### Changed
 
@@ -41,11 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/howtos/peerread-agent-usage.md`: slimmed to unique content
 - `README.md`: restructured badge layout and navigation
 - `.github/workflows/pytest.yaml`: pin uv cache to `uv.lock` hash for precise invalidation
-
-### Removed
-
-- `docs/analysis/CC-skills-Ralph-adoption-plan.md`: superseded by `ClaudeCode/CC-adoption-plan.md`
-- `docs/analysis/agents-md-refactor-plan.md`: consolidated into other docs
 
 ## [5.0.0] - 2026-03-03
 
