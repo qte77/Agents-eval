@@ -15,6 +15,22 @@ STORY_CONTEXT_FILE="$RALPH_DOCS_DIR/story-context.md"
 _EXTRACT_SIGS="$(dirname "${BASH_SOURCE[0]}")/extract_signatures.py"
 SNAPSHOT_SIG_LIMIT="${SNAPSHOT_SIG_LIMIT:-100}"
 
+# Warn if src/ changed since last codebase-map.md generation.
+# Called before generate_codebase_map so the drift is visible in logs
+# before silent regeneration fixes it.
+check_context_drift() {
+    # Skip on first run or missing map file
+    [ -f "$CODEBASE_MAP_SHA" ] && [ -f "$CODEBASE_MAP_FILE" ] || return 0
+
+    local current_hash stored_hash
+    current_hash=$(find src/ -type f | sort | xargs cat 2>/dev/null | sha256sum | cut -d' ' -f1)
+    stored_hash=$(cat "$CODEBASE_MAP_SHA")
+
+    if [ "$current_hash" != "$stored_hash" ]; then
+        log_warn "Context drift detected: src/ changed since last codebase-map.md generation"
+    fi
+}
+
 # Generate codebase map: src/ file tree + function/class signatures.
 # Content-hash src/ to skip regeneration when unchanged.
 generate_codebase_map() {

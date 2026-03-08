@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Context Drift Detector**: `check_context_drift()` in `snapshot.sh` warns at session start when `src/` changed since last `codebase-map.md` generation — makes silent regeneration visible in logs
+- **Symptom-Cause-Fix Tables**: Structured `## Failure Modes` table in `progress.txt` tracks failures with symptom, cause, and resolution status. Injected into agent prompts as `## Known Failure Patterns` to prevent repeated mistakes
+- **Agent Creation Heuristic**: Per-domain retry counters (`domain_retries.json`) suggest skill creation when a check domain fails repeatedly (threshold: `DOMAIN_RETRY_THRESHOLD`, default 3). Injects `## Recurring Quality Issue` block into agent prompt
 - **`--check-overlaps` flag**: `generate_prd_json.py --check-overlaps` warns when stories share files without mutual `depends_on`
 - **Skill routing table**: `prompt.md` maps file patterns to skills (`testing-python`, `implementing-python`, `designing-backend`, `reviewing-code`)
 - **Remote Control monitoring tip**: Added to README.md Configuration section
