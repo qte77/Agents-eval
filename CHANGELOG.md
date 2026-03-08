@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.0] - 2026-03-08
+
 ### Added
 
 - `.github/workflows/generate-sbom.yaml`: auto-generate SPDX 2.3 SBOM on push to main (`pyproject.toml`/`uv.lock` changes) and weekly; outputs `docs/SBOM/sbom.spdx.json` (machine-readable) and `docs/SBOM/sbom.md` (human-readable markdown table)
