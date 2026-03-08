@@ -81,15 +81,15 @@
     "qte77-claude-code-utils": {
       "source": {
         "source": "github",
-        "repo": "qte77/claude-code-utils"
+        "repo": "qte77/claude-code-utils-plugin"
       }
     }
   },
+  "outputStyle": "default",
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "allowUnsandboxedCommands": false,
-    "enableWeakerNestedSandbox": false,
     "network": {
       "allowLocalBinding": true,
       "allowedHosts": ["api.github.com"]
@@ -101,9 +101,9 @@
           ".git"
         ]
       }
-    }
+    },
+    "enableWeakerNestedSandbox": false
   },
-  "outputStyle": "default",
   "spinnerTipsEnabled": true,
   "prefersReducedMotion": true
 }
