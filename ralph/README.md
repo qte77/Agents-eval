@@ -49,6 +49,14 @@ make ralph_status                             # Check progress
 - `REQUIRE_REFACTOR` - Enforce REFACTOR phase (default: false)
 - `TEAMS` - EXPERIMENTAL: Enable parallel story delegation via agent teams (default: false). Known failure modes documented below — cross-story interference causes false rejections.
 
+**Monitoring** (interactive sessions):
+
+```bash
+claude remote-control --name "Ralph"
+```
+
+Run before an interactive session to monitor and steer Ralph from another device.
+
 ## Design Principles
 
 ### TDD Enforcement (Red-Green-Refactor)
