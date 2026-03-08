@@ -501,7 +501,7 @@ execute_story() {
     local monitor_pid=$!
 
     local claude_exit=0
-    if cat "$iteration_prompt" | claude -p --dangerously-skip-permissions --model "$RALPH_MODEL"; then
+    if cat "$iteration_prompt" | CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1 claude -p --dangerously-skip-permissions --model "$RALPH_MODEL"; then
         claude_exit=0
     else
         claude_exit=$?

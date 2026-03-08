@@ -543,11 +543,11 @@ ralph_status:  ## Show Ralph loop progress and status
 	echo "================="
 	if [ -f ralph/docs/prd.json ]; then
 		total=$$(jq '.stories | length' ralph/docs/prd.json)
-		passing=$$(jq '[.stories[] | select(.passes == true)] | length' ralph/docs/prd.json)
+		passing=$$(jq '[.stories[] | select(.status == "passed")] | length' ralph/docs/prd.json)
 		echo "Stories: $$passing/$$total completed"
 		echo ""
 		echo "Incomplete stories:"
-		jq -r '.stories[] | select(.passes == false) | "  - [\(.id)] \(.title)"' ralph/docs/prd.json
+		jq -r '.stories[] | select(.status != "passed") | "  - [\(.id)] \(.title)"' ralph/docs/prd.json
 	else
 		echo "prd.json not found. Run 'make ralph_init' first."
 	fi
