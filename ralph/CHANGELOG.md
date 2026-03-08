@@ -19,9 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Per-story effort level**: Auto-computes `CLAUDE_CODE_EFFORT_LEVEL` from story files count + dependency complexity (≤3→low, ≤8→medium, >8→high); env var overrides
 - **Ad-hoc `INSTRUCTION` parameter**: `make ralph_run INSTRUCTION="focus on error handling"` injects user guidance into prompt at highest priority
 - **De-sloppify pass** (opt-in): `make ralph_run DESLOPIFY=true` runs `quick_validate` on story files after quality pass, auto-fixes with a focused `claude -p` cleanup prompt
-
-### Added (prior)
-
 - **Codebase Snapshot System**: Pre-analyzes `src/` file tree and function signatures into `ralph/docs/codebase-map.md`, injected into every story prompt — eliminates 5-15 agent discovery tool calls per story. Regenerated at run start and wave boundaries via content-hash diffing (`lib/snapshot.sh`: `generate_codebase_map`, `generate_story_context`)
 - `ralph/TODO.md`: consolidated enhancement TODOs from CC ralph enhancement research
 - **Story Status Enum**: Replaced binary `passes: bool` with `status: str` enum (`"pending"` | `"in_progress"` | `"passed"` | `"failed"`) across prd.json schema, shell scripts, and templates — enables observable story state and distinguishes not-started from running from failed

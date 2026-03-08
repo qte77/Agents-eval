@@ -94,9 +94,10 @@ PROMPT_FILE="$RALPH_PROMPT_FILE"
 MAX_RETRIES=3
 RALPH_TEAMS=${RALPH_TEAMS:-false}  # EXPERIMENTAL: cross-story interference causes false rejections (see ralph/README.md)
 RALPH_BASELINE_MODE=${RALPH_BASELINE_MODE:-true}
-CLAUDE_CODE_EFFORT_LEVEL=${CLAUDE_CODE_EFFORT_LEVEL:-high}
-RALPH_INSTRUCTION=${RALPH_INSTRUCTION:-}
-RALPH_DESLOPIFY=${RALPH_DESLOPIFY:-false}
+CLAUDE_CODE_EFFORT_LEVEL=${CLAUDE_CODE_EFFORT_LEVEL:-high}  # Auto-adjusted per story (low/medium/high)
+RALPH_INSTRUCTION=${RALPH_INSTRUCTION:-}  # Ad-hoc steering: make ralph_run INSTRUCTION="..."
+RALPH_DESLOPIFY=${RALPH_DESLOPIFY:-false}  # Opt-in cleanup pass: make ralph_run DESLOPIFY=true
+# Namespace /tmp by worktree to prevent concurrent collisions
 _WT_HASH=$(git rev-parse --show-toplevel | sha256sum | cut -c1-8)
 RALPH_TMP_DIR="/tmp/claude/ralph_${_WT_HASH}"
 export RALPH_TMP_DIR
