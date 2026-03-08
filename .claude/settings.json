@@ -6,7 +6,7 @@
     "CLAUDE_CODE_SUBAGENT_MODEL": "opusplan",
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
-    "CLAUDE_CODE_EFFORT_LEVEL": "high"
+    "CLAUDE_CODE_EFFORT_LEVEL": "medium"
   },
   "attribution": {
     "commit": "Co-Authored-By: Claude <noreply@anthropic.com>",
