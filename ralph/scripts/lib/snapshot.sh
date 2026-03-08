@@ -13,6 +13,7 @@ CODEBASE_MAP_FILE="$RALPH_DOCS_DIR/codebase-map.md"
 CODEBASE_MAP_SHA="$RALPH_DOCS_DIR/.codebase-map.sha"
 STORY_CONTEXT_FILE="$RALPH_DOCS_DIR/story-context.md"
 _EXTRACT_SIGS="$(dirname "${BASH_SOURCE[0]}")/extract_signatures.py"
+SNAPSHOT_SIG_LIMIT="${SNAPSHOT_SIG_LIMIT:-100}"
 
 # Generate codebase map: src/ file tree + function/class signatures.
 # Content-hash src/ to skip regeneration when unchanged.
@@ -52,7 +53,7 @@ generate_codebase_map() {
         # Extract class and function definitions with file paths
         find src/ -type f -name '*.py' | sort | while IFS= read -r pyfile; do
             local sigs
-            sigs=$(python3 "$_EXTRACT_SIGS" "$pyfile" 2>/dev/null | head -100 || true)
+            sigs=$(python3 "$_EXTRACT_SIGS" "$pyfile" 2>/dev/null | head -"$SNAPSHOT_SIG_LIMIT" || true)
             if [ -n "$sigs" ]; then
                 echo "**$pyfile**:"
                 echo '```python'
