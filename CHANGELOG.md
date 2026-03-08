@@ -31,11 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- `docs/analysis/ClaudeCode/CC-adoption-plan.md`: duplicate of `docs/analysis/CC-adoption-plan.md`
+- `docs/analysis/ClaudeCode/`: 17 CC feature analyses moved to standalone repo [claude-code-research](https://github.com/qte77/claude-code-research)
 
 ### Fixed
 
-- `docs/analysis/CC-adoption-plan.md`: fix 17 broken relative links to CC analysis docs (bare filenames → `ClaudeCode/` prefix); fix `AGENTS.md` and `ralph/TODO.md` path depth
+- `docs/analysis/CC-adoption-plan.md`: repoint all CC doc links to `claude-code-research` repo with correct subdirectory paths; fix `AGENTS.md` and `ralph/TODO.md` relative path depth
 
 ### Changed
 
