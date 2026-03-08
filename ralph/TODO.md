@@ -50,6 +50,7 @@ None.
 - **Biggest wins**: Native JSON (eliminates jq), typed story/prd interfaces, proper tmp dir management, async process spawning
 - **Maps cleanly**: jq queries → JSON.parse, string parsing → typed objects, background monitor → async/await + AbortController, `claude -p` piping → Bun.spawn/Deno.Command
 - **Needs investigation**: `exec > >(tee)` dual logging, signal/trap handling, `ralph-in-worktree.sh` git coupling, `watch.sh`
+- **Python signature extraction**: Replace `extract_signatures.py` (Python `ast`) with [`tree-sitter`](https://www.npmjs.com/package/tree-sitter) + [`tree-sitter-python`](https://www.npmjs.com/package/tree-sitter-python) (104K + 2.1K weekly downloads). WASM variant (`web-tree-sitter`) works in Bun/Deno without native compilation. Query language makes extraction a one-liner.
 - **Middle ground**: Bun/Deno keep scripting feel vs full Rust rewrite
 
 ## Deferred
@@ -109,5 +110,8 @@ None.
 - [CC-skills-adoption-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/agent-orchestration/CC-skills-adoption-analysis.md) — Skills adoption and format analysis (completed)
 - [CC-changelog-feature-scan.md](https://github.com/qte77/claude-code-research/blob/main/docs/CC-changelog-feature-scan.md) — changelog scan (structured outputs, `/loop`, HTTP hooks, worktree isolation)
 - [Codified Context Infrastructure](https://arxiv.org/abs/2602.20478) — three-tier context architecture (constitution + specialist agents + cold-memory knowledge base), 283-session empirical study, 108K LOC C# project. Validates AGENTS.md + Skills + docs/ pattern.
+- [tree-sitter](https://github.com/tree-sitter/tree-sitter) — incremental parser generator (C + WASM); [tree-sitter-python](https://www.npmjs.com/package/tree-sitter-python) grammar. npm alternative for Python signature extraction in Bun/Deno CLI rewrite.
+- [py-ast](https://github.com/kriss-u/py-ast) ([JSR](https://jsr.io/@kriss-u/py-ast)) — pure TypeScript Python parser. Lightweight alternative, low adoption.
+- [dt-python-parser](https://www.npmjs.com/package/dt-python-parser) — ANTLR4-based Python parser for JS/TS. Heavier bundle, big data oriented.
 
 <!-- markdownlint-enable MD013 -->
