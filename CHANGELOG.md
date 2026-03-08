@@ -27,7 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AGENT_LEARNINGS.md`: patterns for `gh pr edit` GraphQL workaround, CC sandbox git restriction, PR squash merge API
 - `.claude/skills/enforcing-doc-hierarchy/`: skill for auditing doc hierarchy, detecting broken references and chain breaks
 - `docs/analysis/ClaudeCode/`: 13 CC feature analyses — Remote Control, Cloud Sessions, Memory System, Cowork & Plugins, Chrome Extension, Platform Docs, Plugin Packaging, Ralph Enhancement Research, Sandboxing, Skills Adoption, Changelog Feature Scan, Model/Provider Config, llms.txt
-- `docs/analysis/ClaudeCode/CC-adoption-plan.md`: consolidated CC adoption plan (supersedes `CC-skills-Ralph-adoption-plan.md`)
+- `docs/analysis/CC-adoption-plan.md`: consolidated CC adoption plan (supersedes `CC-skills-Ralph-adoption-plan.md`); moved out of `ClaudeCode/` subdirectory
+
+### Removed
+
+- `docs/analysis/ClaudeCode/CC-adoption-plan.md`: duplicate of `docs/analysis/CC-adoption-plan.md`
+
+### Fixed
+
+- `docs/analysis/CC-adoption-plan.md`: fix 17 broken relative links to CC analysis docs (bare filenames → `ClaudeCode/` prefix); fix `AGENTS.md` and `ralph/TODO.md` path depth
 
 ### Changed
 
