@@ -17,6 +17,7 @@ exclude_path = [
   ".venv",                  # virtual environment (vendor packages, not our code)
   ".github/workflows",      # workflow files contain template variables (e.g. ${{ }})
   ".claude.bak",            # archived skill configs (not maintained)
+  ".ralph-template",        # submodule with template placeholders (not our content)
   "docs/PRD.md",            # transient symlink to active sprint PRD (created on demand)
 ]
 
