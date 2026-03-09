@@ -43,7 +43,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          submodules: recursive
 
       - name: Set git cfg and create branch
         id: create_branch

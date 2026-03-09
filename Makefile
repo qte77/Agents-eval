@@ -504,11 +504,11 @@ ralph_prd_md:  ## [Optional] Generate PRD.md from UserStory.md
 	claude -p "/generating-prd-md-from-userstory-md"
 
 ralph_prd_json:  ## [Optional] Generate PRD.json from PRD.md (DRY_RUN=1 for parse-only)
-	$(if $(DRY_RUN),python ralph/scripts/generate_prd_json.py --dry-run,echo "Generating PRD.json from PRD.md ..." && claude -p "/generating-prd-json-from-prd-md")
+	$(if $(DRY_RUN),python .ralph-template/ralph/scripts/generate_prd_json.py --dry-run,echo "Generating PRD.json from PRD.md ..." && claude -p "/generating-prd-json-from-prd-md")
 
 ralph_init:  ## Initialize Ralph loop environment. Usage: make ralph_init [RALPH_PROJECT=name]
 	echo "Initializing Ralph loop environment ..."
-	RALPH_PROJECT=$(RALPH_PROJECT) bash ralph/scripts/init.sh
+	RALPH_PROJECT=$(RALPH_PROJECT) bash .ralph-template/ralph/scripts/init.sh
 
 ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false, INSTRUCTION="...", DESLOPIFY=true|false)
 	echo "Starting Ralph loop ..."
@@ -518,16 +518,16 @@ ralph_run:  ## Run Ralph loop (MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_
 		RALPH_INSTRUCTION="$(INSTRUCTION)" \
 		RALPH_DESLOPIFY=$(DESLOPIFY) \
 		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \
-		bash ralph/scripts/ralph.sh \
+		bash .ralph-template/ralph/scripts/ralph.sh \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph loop timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
 
 ralph_worktree:  ## Create a git worktree for Ralph and cd into it (BRANCH=required)
 	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_worktree BRANCH=ralph/sprint-name))
-	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)"
+	bash .ralph-template/ralph/scripts/ralph-in-worktree.sh "$(BRANCH)"
 
 ralph_run_worktree:  ## Create worktree + run Ralph in it (BRANCH=required, MAX_ITERATIONS=N, MODEL=sonnet|opus|haiku, RALPH_TIMEOUT=seconds, TEAMS=true|false, INSTRUCTION="...", DESLOPIFY=true|false)
 	$(if $(BRANCH),,$(error BRANCH is required. Usage: make ralph_run_worktree BRANCH=ralph/sprint-name))
-	bash ralph/scripts/ralph-in-worktree.sh "$(BRANCH)" && \
+	bash .ralph-template/ralph/scripts/ralph-in-worktree.sh "$(BRANCH)" && \
 	cd "../$$(basename $(BRANCH))" && \
 	$(if $(RALPH_TIMEOUT),timeout $(RALPH_TIMEOUT)) \
 		env -u VIRTUAL_ENV \
@@ -536,11 +536,11 @@ ralph_run_worktree:  ## Create worktree + run Ralph in it (BRANCH=required, MAX_
 		RALPH_INSTRUCTION="$(INSTRUCTION)" \
 		RALPH_DESLOPIFY=$(DESLOPIFY) \
 		$(if $(filter true,$(TEAMS)),CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1) \
-		bash ralph/scripts/ralph.sh \
+		bash .ralph-template/ralph/scripts/ralph.sh \
 		|| { EXIT_CODE=$$?; [ $$EXIT_CODE -eq 124 ] && echo "Ralph worktree timed out after $(RALPH_TIMEOUT)s"; exit $$EXIT_CODE; }
 
 ralph_stop:  ## Stop all running Ralph loops (keeps state and data)
-	bash ralph/scripts/lib/stop_ralph_processes.sh
+	bash .ralph-template/ralph/scripts/lib/stop_ralph_processes.sh
 
 ralph_status:  ## Show Ralph loop progress and status
 	echo "Ralph Loop Status"
@@ -557,10 +557,10 @@ ralph_status:  ## Show Ralph loop progress and status
 	fi
 
 ralph_watch:  ## Live-watch Ralph loop output with process tree
-	bash ralph/scripts/watch.sh watch
+	bash .ralph-template/ralph/scripts/watch.sh watch
 
 ralph_get_log:  ## Show latest Ralph log (or specific: make ralph_get_log LOG=path/to/file.log)
-	bash ralph/scripts/watch.sh log $(LOG)
+	bash .ralph-template/ralph/scripts/watch.sh log $(LOG)
 
 ralph_clean:  ## Reset Ralph state (WARNING: removes prd.json and progress.txt)
 	echo "WARNING: This will reset Ralph loop state!"

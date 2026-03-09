@@ -14,7 +14,6 @@ None.
 ## Backlog
 
 - [ ] **Align Makefiles between Agents-eval and template**: Sync Ralph-related Make recipes between this project's `Makefile` and the template repo's `Makefile`. Divergences accumulate as features are added independently. Use `.ralph-template/` submodule for diffing: `diff <(grep -A2 'ralph' Makefile) <(grep -A2 'ralph' .ralph-template/Makefile)`.
-- [ ] **Fix dangling symlinks in template repo**: `AGENT_LEARNINGS.md` → `ralph/docs/LEARNINGS.md` and `AGENT_REQUESTS.md` → `ralph/docs/REQUESTS.md` are dangling — files were moved to `ralph/LEARNINGS.md` and `ralph/REQUESTS.md`. Either delete the symlinks or update targets. Blocks lychee link checker GHA.
 - [ ] **Multi-instance worktree orchestration**: Run up to N independent Ralph instances in separate git worktrees simultaneously. Each worktree gets its own branch, prd.json, and progress.txt. See [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) for reference.
 - [ ] **Merge with ralph-loop template**: Evaluate and port features from [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) into this project, or merge both projects altogether.
 
