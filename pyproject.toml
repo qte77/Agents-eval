@@ -112,6 +112,7 @@ sort = "desc"
 target-version = "py313"
 src = ["src", "tests"]
 line-length = 100
+extend-exclude = [".ralph-template"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
