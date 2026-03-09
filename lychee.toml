@@ -9,7 +9,8 @@
 # 415 = Unsupported Media Type (ecanarys.com, secondtalent.com — bot-blocking)
 # 500 = Internal Server Error (neurips.cc — intermittent)
 # 202 = Accepted (opendatascience.com, marktechpost.com — async processing)
-accept = [200, 202, 204, 301, 400, 401, 403, 415, 429, 500]
+# 406 = Not Acceptable (arxiv.org — bot-blocking)
+accept = [200, 202, 204, 301, 400, 401, 403, 406, 415, 429, 500]
 
 # Exclude paths from scanning
 exclude_path = [
