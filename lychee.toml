@@ -23,26 +23,27 @@ exclude_path = [
 
 # Exclude URLs that are expected to fail in CI
 exclude = [
-  # SSRF test examples in security docs
-  "^https?://169\\.254\\.",
-  # Local dev servers referenced in sprint docs
-  "^https?://localhost",
-  # Domains with persistent network/DNS failures
+  # --- Non-routable / local ---
+  "^https?://169\\.254\\.",   # SSRF test examples in security docs
+  "^https?://localhost",      # local dev servers referenced in sprint docs
+
+  # --- Not yet deployed ---
+  "^https?://qte77\\.github\\.io",  # GitHub Pages (not published yet)
+
+  # --- Paywalled / bot-rejected ---
+  "^https://link\\.springer\\.com/article/10\\.1007/s10458-013-9235-1",
+
+  # --- Bot-blocked in CI (valid pages, revisit periodically) ---
+  # TODO: revisit these periodically — remove when sites stop blocking CI
   "^https?://docs\\.agentstack\\.dev",
   "^https?://docs\\.archon\\.ai",
   "^https?://docs\\.fetch\\.ai",
   "^https?://docs\\.graphiti\\.ai",
-  "^https?://coral-protocol\\.dev",
   "^https?://docs\\.browse\\.ai",
-  # Paywalled academic articles (valid DOI, bot-rejected)
-  "^https://link\\.springer\\.com/article/10\\.1007/s10458-013-9235-1",
-  # Allen AI domains (persistent timeouts in CI)
+  "^https?://coral-protocol\\.dev",
   "^https?://allenai\\.org",
   "^https?://.*\\.allen\\.ai",
-  # GitHub Pages deployment (not available until docs site is published)
-  "^https?://qte77\\.github\\.io",
-  # OpenTelemetry (valid pages, blocked by CI network/firewall)
   "^https?://opentelemetry\\.io",
-  # APM Digest (persistent timeouts in CI)
   "^https?://www\\.apmdigest\\.com",
+  "^https?://strandsagents\\.com",
 ]
