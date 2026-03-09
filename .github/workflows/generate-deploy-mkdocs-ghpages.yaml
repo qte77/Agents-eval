@@ -35,6 +35,7 @@ jobs:
             github.ref_name
           }}
         fetch-depth: 0
+        submodules: recursive
 
     - uses: actions/configure-pages@v5.0.0
 

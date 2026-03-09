@@ -69,6 +69,7 @@ jobs:
         with:
           ref: "${{ inputs.branch_to_summarize }}"
           fetch-depth: 0
+          submodules: recursive
 
       - name: Add changed files since last push
         id: add_changed_files
