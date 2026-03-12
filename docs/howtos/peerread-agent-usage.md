@@ -5,6 +5,7 @@ created: 2025-08-02
 updated: 2026-03-07
 category: usage-guide
 version: 3.1.0
+validated_links: 2026-03-12
 ---
 
 For quick start, module architecture, and review storage details, see [README.md](../../README.md) and [architecture.md](../architecture.md).

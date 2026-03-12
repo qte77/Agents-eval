@@ -21,6 +21,7 @@ related_documents:
 created: 2025-09-02
 updated: 2026-03-01
 version: 3.2.0
+validated_links: 2026-03-12
 ---
 
 ## Executive Summary

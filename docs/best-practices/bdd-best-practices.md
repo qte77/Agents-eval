@@ -3,6 +3,7 @@ title: BDD Best Practices
 version: 2.0
 based-on: Industry research 2025-2026
 see-also: testing-strategy.md, tdd-best-practices.md
+validated_links: 2026-03-12
 ---
 
 **Purpose**: How to do BDD - Given-When-Then scenarios

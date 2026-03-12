@@ -5,6 +5,7 @@ created: 2025-08-31
 updated: 2026-03-02
 category: architecture
 version: 3.9.0
+validated_links: 2026-03-12
 ---
 <!-- markdownlint-disable MD024 no-duplicate-heading -->
 

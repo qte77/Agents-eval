@@ -5,6 +5,7 @@ date: 2025-09-01
 updated: 2026-02-17
 category: documentation
 version: 2.0.0
+validated_links: 2026-03-12
 ---
 
 This directory contains PlantUML source files for the project's architecture diagrams. PNGs are rendered into `assets/images/` (light and dark themes). Source files live here; generated PNGs do not.

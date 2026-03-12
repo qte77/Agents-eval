@@ -5,6 +5,7 @@ created: 2026-02-09
 category: best-practices
 version: 2.0.0
 see-also: mas-design-principles.md
+validated_links: 2026-03-12
 ---
 
 Based on [OWASP MAESTRO

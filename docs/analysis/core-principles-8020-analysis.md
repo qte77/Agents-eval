@@ -10,6 +10,7 @@ principles:
   - Minimal code, maximum value (80% deletion target)
 adherence_score: 18%
 target_score: 80%
+validated_links: 2026-03-12
 ---
 
 **Current State**: 18% principle adherence (82% bloat)

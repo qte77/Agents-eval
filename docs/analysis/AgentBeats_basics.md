@@ -3,6 +3,7 @@ title: AgentBeats Competition Participation Guide
 description: Strategic analysis and participation roadmap for AgentX-AgentBeats competition covering outstanding tracks (Research Agent, Multi-Agent, AAA), unique differentiators, and implementation priorities for Agents-eval project
 created: 2026-01-11
 updated: 2026-01-11
+validated_links: 2026-03-12
 ---
 
 ## Overview

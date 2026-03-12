@@ -2,6 +2,7 @@
 title: CC Feature Adoption Plan
 purpose: Consolidated adoption plan synthesizing all CC feature research into prioritized, actionable items for the Agents-eval project.
 created: 2026-03-07
+validated_links: 2026-03-12
 ---
 
 ## Summary

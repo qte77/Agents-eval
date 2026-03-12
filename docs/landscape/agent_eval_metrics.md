@@ -9,6 +9,7 @@ tags:
 created: 2025-10-05
 updated: 2026-03-01
 version: 1.2.0
+validated_links: 2026-03-12
 ---
 <!-- markdownlint-disable MD024 no-duplicate-heading -->
 
@@ -184,7 +185,7 @@ definitions, use cases, and primary research references for each metric.
 - **Calculation**: `productive_steps / total_steps`
 - **Strengths**: Measures workflow optimization effectiveness
 - **Limitations**: Requires classification of step types
-- **Reference**: [Multi-agent coordination in distributed systems](https://link.springer.com/article/10.1007/s10458-013-9235-1)
+- **Reference**: Multi-agent coordination in distributed systems
 - **Landscape Reference**: [Arize Phoenix - Path Metrics](landscape-agent-frameworks-infrastructure.md#llm-application-observability)
 
 #### Centrality Measures
@@ -217,7 +218,7 @@ definitions, use cases, and primary research references for each metric.
 - **Calculation**: `1 - std_dev(agent_tasks) / mean(agent_tasks)`
 - **Strengths**: Quantifies load balancing effectiveness
 - **Limitations**: Doesn't account for task complexity differences
-- **Reference**: [Multi-agent coordination in distributed systems](https://link.springer.com/article/10.1007/s10458-013-9235-1) (coordination metrics)
+- **Reference**: Multi-agent coordination in distributed systems (coordination metrics)
 - **Landscape Reference**: [Agent Frameworks](landscape-agent-frameworks-infrastructure.md#1-agent-frameworks)
 
 ### Production Framework Metrics

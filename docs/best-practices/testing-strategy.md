@@ -4,6 +4,7 @@ version: 6.0.0
 applies-to: Agents and humans
 purpose: High-level testing strategy aligned with KISS/DRY/YAGNI
 see-also: tdd-best-practices.md, bdd-best-practices.md
+validated_links: 2026-03-12
 ---
 
 **Purpose**: What to test, when to use each tool, test organization,
