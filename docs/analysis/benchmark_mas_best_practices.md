@@ -4,6 +4,7 @@ source: AI Agent Development MOOC
 purpose: Best practices for MAS design, evaluation, and production deployment covering production systems, training, benchmarking, coordination, and security.
 created: 2026-01-13
 updated: 2026-01-13
+validated_links: 2026-03-12
 ---
 
 ## Key Takeaways

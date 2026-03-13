@@ -2,6 +2,7 @@
 title: Inference Provider Analysis
 purpose: Free-tier model recommendations for each provider in PROVIDER_REGISTRY
 created: 2026-02-21
+validated_links: 2026-03-12
 ---
 
 ## Provider Free-Tier Summary

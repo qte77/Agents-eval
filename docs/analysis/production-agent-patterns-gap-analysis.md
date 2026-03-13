@@ -4,6 +4,7 @@ description: Gap analysis of PydanticAI and Anthropic production patterns agains
 created: 2026-02-09
 category: analysis
 version: 1.0.0
+validated_links: 2026-03-12
 ---
 
 Gap analysis of three production agentic system sources against

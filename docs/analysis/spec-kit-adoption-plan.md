@@ -5,6 +5,7 @@ category: analysis
 created: 2026-01-12
 updated: 2026-02-18
 version: 1.0.0
+validated_links: 2026-03-12
 ---
 
 # Spec-Kit Adoption Plan for Agents-eval

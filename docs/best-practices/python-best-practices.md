@@ -4,6 +4,7 @@ version: 2.0
 applies-to: Agents and humans
 purpose: Security-first Python coding standards with type safety and testing patterns
 see-also: testing-strategy.md, tdd-best-practices.md
+validated_links: 2026-03-12
 ---
 
 ## Security (Non-Negotiable)

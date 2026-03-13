@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `.ralph-template/`: git submodule tracking [ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template) as SOT for ralph scripts
+- `AGENTS.md`: Template SOT section documenting submodule sync procedure
+
+### Changed
+
+- `Makefile`: ralph script paths → `.ralph-template/ralph/scripts/` (submodule SOT)
+- `lychee.toml`: grouped URL excludes by category (non-routable, not deployed, paywalled, bot-blocked), added TODO to revisit
+- `pyproject.toml`: `extend-exclude = [".ralph-template"]` for ruff
+- CI workflows: `submodules: recursive` only on `links-fail-fast.yaml` (others don't need submodule)
+
+### Removed
+
+- `ralph/` → `.ralph.back/` (local backup, replaced by submodule SOT)
+
 ## [5.1.0] - 2026-03-08
 
 ### Added

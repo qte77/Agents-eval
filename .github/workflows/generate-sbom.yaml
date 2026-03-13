@@ -1,12 +1,17 @@
+# https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/exporting-a-software-bill-of-materials-for-your-repository
+#
+# Outputs committed to docs/SBOM/:
+#   | File                      | Source                  | Contents                        |
+#   | ------------------------- | ----------------------- | ------------------------------- |
+#   | github-depgraph.spdx.json | GitHub dependency graph | Packages GitHub detects in repo |
+#   | syft-scan.spdx.json       | Syft directory scan     | Packages detected on filesystem |
+#   | sbom.md                   | Generated               | Human-readable combined report  |
+
 name: Generate SBOM
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'pyproject.toml'
-      - 'uv.lock'
-      - '!docs/SBOM/**'
   schedule:
     - cron: "0 0 * * 0"
   workflow_dispatch:
@@ -14,44 +19,114 @@ on:
 permissions:
   contents: write
 
+env:
+  SBOM_DIR: "docs/SBOM"
+
 jobs:
   generate-sbom:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Generate SBOM from dependency graph
+      # Derive project name and Python version from pyproject.toml
+      - name: Read project config
+        run: |
+          echo "PROJECT_NAME=$(grep '^name\s*=' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')" >> "$GITHUB_ENV"
+          echo "PYTHON_VERSION=$(grep 'requires-python' pyproject.toml | sed 's/[^0-9.]//g; s/\.$//')" >> "$GITHUB_ENV"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install "${PYTHON_VERSION}"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Create SBOM output directory
+        run: mkdir -p "${SBOM_DIR}"
+
+      # Export whatever GitHub's dependency graph detects (dependabot, lockfiles)
+      # continue-on-error: dependency graph may be disabled on the repo
+      - name: Export GitHub dependency graph SBOM
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          mkdir -p docs/SBOM
-          gh api repos/${REPO}/dependency-graph/sbom \
-            --jq '.sbom' > docs/SBOM/sbom.spdx.json
+          gh api "repos/${REPO}/dependency-graph/sbom" \
+            --jq '.sbom' > "${SBOM_DIR}/github-depgraph.spdx.json"
 
+      # Syft scans the repo filesystem for additional package manifests
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Generate Syft SPDX SBOM
+        run: |
+          syft dir:. -o spdx-json="${SBOM_DIR}/syft-scan.spdx.json"
+
+      # Combine toolchain versions + both SPDX sources into one markdown report
       - name: Generate human-readable markdown
         run: |
+          render_spdx_table() {
+            local file="$1" label="$2"
+            echo ""
+            echo "## ${label}"
+            echo ""
+            if [ ! -s "${file}" ]; then
+              echo "*File not generated.*"
+              return
+            fi
+            echo "**Format:** $(jq -r '.spdxVersion // "N/A"' "${file}")"
+            PKGCOUNT=$(jq '[.packages[] | select(.SPDXID != "SPDXRef-DOCUMENT")] | length' "${file}")
+            echo "**Packages:** ${PKGCOUNT}"
+            echo ""
+            if [ "${PKGCOUNT}" -gt 0 ]; then
+              echo "| Package | Version | License |"
+              echo "|---------|---------|---------| "
+              jq -r '
+                [.packages[] | select(.SPDXID != "SPDXRef-DOCUMENT")]
+                | sort_by(.name)[]
+                | "| " + .name + " | " + (.versionInfo // "—") + " | " + (.licenseConcluded // "—") + " |"
+              ' "${file}"
+            else
+              echo "*No packages detected. SBOM will populate as dependencies are added.*"
+            fi
+          }
+
           {
             echo "# Software Bill of Materials"
             echo ""
-            echo "**Generated:** $(jq -r '.creationInfo.created' docs/SBOM/sbom.spdx.json)"
-            echo "**Format:** $(jq -r '.spdxVersion' docs/SBOM/sbom.spdx.json)"
-            echo "**Packages:** $(jq '[.packages[] | select(.SPDXID != "SPDXRef-DOCUMENT")] | length' docs/SBOM/sbom.spdx.json)"
+            echo "**Generated:** $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "**Project:** ${PROJECT_NAME}"
             echo ""
-            echo "| Package | Version | License |"
-            echo "|---------|---------|---------|"
-            jq -r '
-              [.packages[] | select(.SPDXID != "SPDXRef-DOCUMENT")]
-              | sort_by(.name)[]
-              | "| " + .name + " | " + (.versionInfo // "—") + " | " + (.licenseConcluded // "—") + " |"
-            ' docs/SBOM/sbom.spdx.json
-          } > docs/SBOM/sbom.md
+            echo "## Toolchain"
+            echo ""
+            echo "| Tool | Version |"
+            echo "|------|---------|"
+            echo "| python | $(python3 --version 2>/dev/null | head -1 || echo 'not installed') |"
+            echo "| uv | $(uv --version 2>/dev/null | head -1 || echo 'not installed') |"
+            # Discover CLI tools installed by uv into the venv bin directory
+            for bin in $(find .venv/bin -maxdepth 1 -type f -executable ! -name 'python*' ! -name 'activate*' 2>/dev/null | sort); do
+              tool=$(basename "${bin}")
+              ver=$(uv run "${tool}" --version 2>/dev/null | head -1) || continue
+              echo "| ${tool} | ${ver} |"
+            done
 
+            render_spdx_table "${SBOM_DIR}/github-depgraph.spdx.json" "GitHub Dependency Graph (SPDX)"
+            render_spdx_table "${SBOM_DIR}/syft-scan.spdx.json" "Syft Repository Scan (SPDX)"
+          } > "${SBOM_DIR}/sbom.md"
+
+      # No-op if SBOM unchanged (e.g. weekly cron with no dep updates)
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add docs/SBOM/sbom.spdx.json docs/SBOM/sbom.md
+          git add "${SBOM_DIR}/"
           git diff --cached --quiet && echo "No changes to SBOM" && exit 0
           git commit -m "docs: update SBOM"
           git push

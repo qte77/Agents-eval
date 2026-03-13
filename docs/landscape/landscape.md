@@ -5,6 +5,7 @@ created: 2025-08-23
 updated: 2026-03-01
 category: landscape
 version: 1.3.1
+validated_links: 2026-03-12
 ---
 
 This document serves as an overview and navigation guide for the comprehensive AI agent evaluation ecosystem documentation. The landscape has been split into focused documents for better navigation and maintainability.

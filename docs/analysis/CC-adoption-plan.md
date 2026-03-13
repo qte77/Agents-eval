@@ -2,6 +2,7 @@
 title: CC Feature Adoption Plan
 purpose: Consolidated adoption plan synthesizing all CC feature research into prioritized, actionable items for the Agents-eval project.
 created: 2026-03-07
+validated_links: 2026-03-12
 ---
 
 ## Summary
@@ -100,4 +101,4 @@ This plan synthesizes CC feature analysis documents into a prioritized adoption 
 | [CC-sandboxing-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/execution-infrastructure/CC-sandboxing-analysis.md) | Sandboxing, security model, project config | Adopted (enabled) |
 | [CC-llms-txt-analysis.md](https://github.com/qte77/claude-code-research/blob/main/docs/context-memory/CC-llms-txt-analysis.md) | llms.txt spec, Anthropic implementations, project template | Adopted (workflows) |
 
-Ralph-specific bugs, enhancements, and deferred items also tracked in [ralph/TODO.md](../../ralph/TODO.md).
+Ralph-specific bugs, enhancements, and deferred items also tracked in [ralph/TODO.md](../../.ralph-template/ralph/TODO.md).

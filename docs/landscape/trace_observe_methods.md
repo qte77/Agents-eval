@@ -13,6 +13,7 @@ tags:
 created: 2025-08-24
 updated: 2026-02-15
 version: 1.2.0
+validated_links: 2026-03-12
 ---
 
 ## Executive Summary
@@ -298,7 +299,7 @@ This pattern leverages the OpenTelemetry standard for vendor-neutral observabili
 **Primary Sources**:
 
 - [LangWatch GitHub Repository](https://github.com/langwatch/langwatch)
-- [LangWatch API Documentation](https://docs.langwatch.ai/api-reference/traces/get-trace-details)
+- [LangWatch API Documentation](https://langwatch.ai/docs/api-reference)
 
 #### Uptrace
 

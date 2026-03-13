@@ -5,6 +5,7 @@ created: 2025-08-02
 updated: 2026-03-03
 category: maintenance
 version: 1.1.0
+validated_links: 2026-03-12
 ---
 
 This document outlines a strategy to ensure the agent governance files remain synchronized with the state of the codebase, preventing them from becoming outdated. Accurate governance files are critical for safe, effective AI agent operation.

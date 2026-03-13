@@ -5,6 +5,7 @@ category: roadmap
 created: 2025-09-04
 updated: 2026-03-02
 version: 4.6.0
+validated_links: 2026-03-12
 ---
 
 Sprint timeline for Agents-eval. See [architecture.md](architecture.md) for technical decisions (ADRs).

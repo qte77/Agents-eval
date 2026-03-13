@@ -24,7 +24,15 @@ agents.** For technical workflows and coding standards, see
 - `make ralph_init` - Initialize environment and state files
 - `make ralph ITERATIONS=N` - Run autonomous development loop
 - State tracking: `ralph/docs/prd.json` (tasks), `ralph/docs/progress.txt` (learnings)
-- See [ralph/README.md](ralph/README.md) for complete documentation
+- See [ralph/README.md](.ralph-template/ralph/README.md) for complete documentation
+
+**Template SOT** (`.ralph-template/`): Git submodule tracking
+[ralph-loop-cc-tdd-wt-vibe-kanban-template](https://github.com/qte77/ralph-loop-cc-tdd-wt-vibe-kanban-template)
+
+- Template repo is **source of truth** for `ralph/` scripts and generic `.claude/` items
+- Local `ralph/` and `.claude/` are preserved (project-specific content)
+- Sync procedure: `git submodule update --remote .ralph-template && diff -r .ralph-template/ralph/scripts ralph/scripts`
+- Updates flow: template → submodule update → manual sync of changed scripts into local `ralph/`
 
 **Integration**: Skills enforce AGENTS.md compliance. Ralph executes stories from PRD.md
 using Skills.

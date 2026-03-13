@@ -8,6 +8,7 @@ purpose: >-
   standards (ISO 42001/23894) with unified cross-framework mapping.
 created: 2026-03-01
 updated: 2026-03-01
+validated_links: 2026-03-12
 ---
 
 Analysis of four frameworks applicable to the Agents-eval multi-agent evaluation
