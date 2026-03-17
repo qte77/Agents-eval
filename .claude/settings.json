@@ -98,7 +98,8 @@
       "write": {
         "allowOnly": [
           "/tmp/claude-1000",
-          ".git"
+          ".git",
+          "/workspaces/qte77"
         ]
       }
     },
