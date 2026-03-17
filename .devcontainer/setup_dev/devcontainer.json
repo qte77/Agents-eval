@@ -56,5 +56,5 @@
     "HF_HOME": "/workspaces/.cache/huggingface"
   },
   "onCreateCommand": "make setup_uv && make setup_bert_model",
-  "postCreateCommand": "make setup_sandbox && make setup_dev"
+  "postCreateCommand": "make setup_sandbox && make setup_dev ${OLLAMA:+OLLAMA=1}"
 }
