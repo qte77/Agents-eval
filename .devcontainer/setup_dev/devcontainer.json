@@ -33,6 +33,9 @@
         "wakatime.vscode-wakatime"
       ],
       "settings": {
+        "dotfiles.repository": "qte77/dotfiles",
+        "dotfiles.installCommand": "install.sh",
+        "dotfiles.targetPath": "~/dotfiles",
         "editor.lineNumbers": "on",
         "editor.wordWrap": "on",
         "explorer.confirmDelete": true,
@@ -60,5 +63,5 @@
     "HF_HOME": "/workspaces/.cache/huggingface"
   },
   "onCreateCommand": "make setup_uv && make setup_bert_model",
-  "postCreateCommand": "make setup_sandbox && make setup_dev && mkdir -p ~/.config/Code/User && cat > ~/.config/Code/User/keybindings.json << 'KEYBINDINGS'\n[\n  {\n    \"key\": \"ctrl+space space\",\n    \"command\": \"workbench.action.toggleMaximizedPanel\"\n  }\n]\nKEYBINDINGS"
+  "postCreateCommand": "make setup_sandbox && make setup_dev"
 }
