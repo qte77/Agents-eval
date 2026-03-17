@@ -92,16 +92,10 @@
     "allowUnsandboxedCommands": false,
     "network": {
       "allowLocalBinding": true,
-      "allowedHosts": ["api.github.com"]
+      "allowedHosts": ["api.github.com", "raw.githubusercontent.com"]
     },
     "filesystem": {
-      "write": {
-        "allowOnly": [
-          "/tmp/claude-1000",
-          ".git",
-          "/workspaces/qte77"
-        ]
-      }
+      "allowWrite": ["/workspaces"]
     },
     "enableWeakerNestedSandbox": false
   },
