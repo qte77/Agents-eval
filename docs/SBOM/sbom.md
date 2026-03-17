@@ -5,7 +5,7 @@
 **Packages:** 295
 
 | Package | Version | License |
-|---------|---------|---------|
+| --------- | --------- | --------- |
 | abnf | 2.2.0 | MIT |
 | actions/checkout | 4.0.0 | — |
 | actions/checkout | 4.*.* | — |
