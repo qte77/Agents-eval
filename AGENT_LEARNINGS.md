@@ -278,3 +278,23 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
 - **Problem**: `.claude/skills/` is write-denied in the Bash tool sandbox. Git operations that modify files there fail with "Read-only file system" — including `git reset --hard`, `git stash`, `git pull`
 - **Solution**: Use Edit/Write tools for file changes in `.claude/skills/`; run git from a non-sandboxed terminal when those paths are involved
 - **Anti-pattern**: `git reset --hard` or `git clean` to resolve conflicts involving skill files — always fails in sandbox
+
+### Cross-Repo Sandbox Write Access
+
+- **Context**: Claude Code sessions needing to write to sibling repos (e.g., `/workspaces/qte77/dotfiles` from an `/workspaces/Agents-eval` session)
+- **Problem**: Bash sandbox `write.allowOnly` defaults to CWD. Write/Edit tools work cross-repo, but `git add`, `git commit`, and other Bash commands fail with "Read-only file system" for paths outside CWD.
+- **Solution**: Add the parent workspace path to `sandbox.filesystem.write.allowOnly` in `.claude/settings.json`:
+
+```json
+"sandbox": {
+  "filesystem": {
+    "write": {
+      "allowOnly": ["/tmp/claude-1000", ".git", "/workspaces/qte77"]
+    }
+  }
+}
+```
+
+- **Alternative**: Use `sandbox.filesystem.allowWrite` (additive array, merges across scopes) instead of modifying `allowOnly`. Or set in `~/.claude/settings.json` (user-level) to apply globally.
+- **Key insight**: Write/Edit tools bypass the Bash sandbox — they have their own permission model. Only Bash tool commands are sandboxed. So file reads/writes work cross-repo even without sandbox changes, but git operations don't.
+- **References**: `CC-sandboxing-analysis.md` (path prefix conventions, array merging), `.claude/settings.json`
