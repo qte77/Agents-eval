@@ -33,15 +33,11 @@
         "wakatime.vscode-wakatime"
       ],
       "settings": {
-        "editor.lineNumbers": "on",
-        "editor.wordWrap": "on",
-        "explorer.confirmDelete": true,
-        "files.autoSave": "onFocusChange",
-        "git.autofetch": true,
-        "git.enableSmartCommit": true,
+        "dotfiles.repository": "qte77/dotfiles",
+        "dotfiles.installCommand": "install.sh",
+        "dotfiles.targetPath": "~/dotfiles",
         "makefile.configureOnOpen": false,
         "python.defaultInterpreterPath": "./.venv/bin/python",
-        "redhat.telemetry.enabled": false,
         "terminal.integrated.env.linux": {
           "LOAD_DOTENV": "true"
         },
