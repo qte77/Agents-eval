@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- `docs/analysis/ClaudeCode/`: 17 CC feature analyses moved to standalone repo [claude-code-research](https://github.com/qte77/claude-code-research)
+- `docs/analysis/ClaudeCode/`: 17 CC feature analyses moved to standalone repo [coding-agents-research](https://github.com/qte77/coding-agents-research)
 
 ### Changed
 
@@ -62,13 +62,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `Makefile`: fix `ralph_status` recipe using legacy `.passes` field instead of `.status == "passed"`
-- `docs/analysis/CC-adoption-plan.md`: repoint all CC doc links to `claude-code-research` repo with correct subdirectory paths; fix `AGENTS.md` and `ralph/TODO.md` relative path depth
+- `docs/analysis/CC-adoption-plan.md`: repoint all CC doc links to `coding-agents-research` repo with correct subdirectory paths; fix `AGENTS.md` and `ralph/TODO.md` relative path depth
 - `src/app/utils/run_context.py`: wrap 101-char `run_dir` line to satisfy ruff E501
 - `.github/workflows/codeql.yaml`: upgrade `dismiss-alerts` v1 → v2.0.2 to fix EISDIR error on SARIF directory input
 
 ### Removed
 
-- `docs/analysis/ClaudeCode/`: 17 CC feature analyses moved to standalone repo [claude-code-research](https://github.com/qte77/claude-code-research)
+- `docs/analysis/ClaudeCode/`: 17 CC feature analyses moved to standalone repo [coding-agents-research](https://github.com/qte77/coding-agents-research)
 - `docs/analysis/RDI-Agentbeats/`: moved `AgentBeats_basics.md` to `docs/analysis/`
 - `docs/analysis/CC-skills-Ralph-adoption-plan.md`: superseded by `ClaudeCode/CC-adoption-plan.md`
 - `docs/analysis/agents-md-refactor-plan.md`: consolidated into other docs
