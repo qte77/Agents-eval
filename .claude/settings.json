@@ -29,6 +29,7 @@
       "Bash(tree:*)",
       "Edit(docs/)",
       "Edit(tests/)",
+      "Bash(source:*)",
       "Edit(src/**)",
       "mcp__ide__getDiagnostics",
       "Read(.claude/skills/)",
@@ -43,7 +44,6 @@
       "Bash(git:push:*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
-      "Bash(source:*)",
       "Bash(touch:*)",
       "Bash(curl:*)",
       "Bash(wget:*)",
@@ -92,15 +92,7 @@
     "allowUnsandboxedCommands": false,
     "network": {
       "allowLocalBinding": true,
-      "allowedHosts": ["api.github.com"]
-    },
-    "filesystem": {
-      "write": {
-        "allowOnly": [
-          "/tmp/claude-1000",
-          ".git"
-        ]
-      }
+      "allowedHosts": ["api.github.com", "raw.githubusercontent.com"]
     },
     "enableWeakerNestedSandbox": false
   },
