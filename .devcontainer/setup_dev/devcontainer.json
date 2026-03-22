@@ -33,15 +33,11 @@
         "wakatime.vscode-wakatime"
       ],
       "settings": {
-        "editor.lineNumbers": "on",
-        "editor.wordWrap": "on",
-        "explorer.confirmDelete": true,
-        "files.autoSave": "onFocusChange",
-        "git.autofetch": true,
-        "git.enableSmartCommit": true,
+        "dotfiles.repository": "qte77/dotfiles",
+        "dotfiles.installCommand": "install.sh",
+        "dotfiles.targetPath": "~/dotfiles",
         "makefile.configureOnOpen": false,
         "python.defaultInterpreterPath": "./.venv/bin/python",
-        "redhat.telemetry.enabled": false,
         "terminal.integrated.env.linux": {
           "LOAD_DOTENV": "true"
         },
@@ -60,8 +56,5 @@
     "HF_HOME": "/workspaces/.cache/huggingface"
   },
   "onCreateCommand": "make setup_uv && make setup_bert_model",
-  "postCreateCommand": "make setup_sandbox && make setup_dev",
-  "postAttachCommand": {
-    "keybindings": "mkdir -p ~/.config/Code/User && cat > ~/.config/Code/User/keybindings.json << 'KEYBINDINGS'\n[\n  {\n    \"key\": \"ctrl+space space\",\n    \"command\": \"workbench.action.toggleMaximizedPanel\"\n  }\n]\nKEYBINDINGS"
-  }
+  "postCreateCommand": "make setup_sandbox && make setup_dev ${OLLAMA:+OLLAMA=1}"
 }
