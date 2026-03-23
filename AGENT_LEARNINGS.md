@@ -298,3 +298,27 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
 - **Alternative**: Use `sandbox.filesystem.allowWrite` (additive array, merges across scopes) instead of modifying `allowOnly`. Or set in `~/.claude/settings.json` (user-level) to apply globally.
 - **Key insight**: Write/Edit tools bypass the Bash sandbox — they have their own permission model. Only Bash tool commands are sandboxed. So file reads/writes work cross-repo even without sandbox changes, but git operations don't.
 - **References**: `CC-sandboxing-analysis.md` (path prefix conventions, array merging), `.claude/settings.json`
+
+### uv `exclude-newer` Silently Blocks Dependency Resolution
+
+- **Context**: Upgrading a dependency with `uv lock --upgrade-package <pkg>` when `pyproject.toml` has `[tool.uv] exclude-newer`
+- **Problem**: Package exists on PyPI but uv resolves to an older version. Verbose logs show `Selecting: pkg==old [compatible]` with no error. Root cause: the package was uploaded after the `exclude-newer` cutoff date, so uv treats it as non-existent.
+- **Solution**: Check `exclude-newer` date first when upgrades fail silently. Update it before debugging cache, index, or version constraints.
+- **Anti-pattern**: Debugging with `--no-cache`, `--refresh-package`, or alternate `UV_CACHE_DIR` when the real blocker is the date cutoff.
+- **References**: `pyproject.toml` (`[tool.uv]` section)
+
+### GitHub API Enum Values Use Spaces Not Underscores
+
+- **Context**: Calling GitHub REST API with enum parameters (e.g., `dismissed_reason` for code scanning alerts)
+- **Problem**: `-f dismissed_reason=false_positive` returns HTTP 422. The API expects `"false positive"` (space-separated), not `false_positive` (underscore).
+- **Solution**: Quote enum values with spaces: `-f "dismissed_reason=false positive"`. Always check the API error message — it lists valid enum members.
+- **Anti-pattern**: Assuming snake_case for enum values because the field name is snake_case.
+- **References**: [GitHub Code Scanning API](https://docs.github.com/rest/code-scanning/code-scanning#update-a-code-scanning-alert)
+
+### Plugin/Package Version Must Be Synced Across Manifest Files
+
+- **Context**: Multi-manifest package systems (CC plugins with `plugin.json` + `marketplace.json`, npm with `package.json` + `package-lock.json`, etc.)
+- **Problem**: Bumping the version in one manifest but not the other causes CI validation failures. The version check compares across files.
+- **Solution**: When bumping versions, grep for the old version string across all manifest files and update all occurrences. For CC plugins: `plugin.json` AND `marketplace.json`.
+- **Anti-pattern**: Only bumping the "primary" manifest and assuming CI will pass.
+- **References**: `.claude-plugin/marketplace.json`, `plugins/*/. claude-plugin/plugin.json`
