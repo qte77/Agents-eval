@@ -1,6 +1,6 @@
 {
   "env": {
-    "ANTHROPIC_MODEL": "opus",
+    "ANTHROPIC_MODEL": "opus[1m]",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1",
     "CLAUDE_CODE_SUBAGENT_MODEL": "opusplan",
@@ -75,7 +75,8 @@
     "context7@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": true
+    "security-guidance@claude-plugins-official": true,
+    "cc-meta@qte77-claude-code-utils": true
   },
   "extraKnownMarketplaces": {
     "qte77-claude-code-utils": {
@@ -91,8 +92,7 @@
     "autoAllowBashIfSandboxed": true,
     "allowUnsandboxedCommands": false,
     "network": {
-      "allowLocalBinding": true,
-      "allowedHosts": ["api.github.com", "raw.githubusercontent.com"]
+      "allowLocalBinding": true
     },
     "enableWeakerNestedSandbox": false
   },
