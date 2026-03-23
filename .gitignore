@@ -69,6 +69,7 @@ docs/write-up/*
 output/
 test_data/
 wandb/
+bigpicture.md
 
 # npm
 node_modules/
