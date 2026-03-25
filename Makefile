@@ -173,10 +173,10 @@ setup_lychee:  ## Install lychee link checker (Rust binary, requires sudo)
 	curl -sL https://github.com/lycheeverse/lychee/releases/latest/download/lychee-x86_64-unknown-linux-gnu.tar.gz | sudo tar xz -C /usr/local/bin lychee
 	echo "lychee version: $$(lychee --version)"
 
-setup_rtk:  ## Install RTK CLI for token-optimized LLM output
+setup_rtk:  ## Install RTK CLI for token-optimized LLM output (run outside CC session)
 	@if command -v rtk > /dev/null 2>&1; then echo "rtk already installed: $$(rtk --version)"; \
 	else curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh; fi
-	rtk init -g
+	RTK_TELEMETRY_DISABLED=1 rtk init -g
 
 # Ollama BINDIR in /usr/local/bin /usr/bin /bin
 setup_ollama:  ## Download Ollama, script does start local Ollama server

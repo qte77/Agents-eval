@@ -49,10 +49,11 @@ make app_batch_eval                                                             
 This repo includes [RTK](https://github.com/rtk-ai/rtk) config for 60-90% LLM token savings during agentic coding sessions.
 
 ```bash
-make setup_rtk    # install RTK binary
-rtk init -g       # activate CC PreToolUse hook (run outside CC session)
+make setup_rtk    # install RTK binary + activate CC PreToolUse hook (run outside CC session)
 rtk gain --graph  # view token savings
 ```
+
+Opt-out of telemetry: `export RTK_TELEMETRY_DISABLED=1`
 
 ## User/Researcher
 
