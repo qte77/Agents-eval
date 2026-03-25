@@ -25,7 +25,7 @@ UserStory.md (user workflows, acceptance criteria)
     -> docs/architecture.md (technical design)
       -> Sprint implementation docs (current state)
         -> docs/howtos/ (operations)
-          ^ docs/landscape/, docs/analysis/ (INFORMATIONAL ONLY)
+          ^ docs/archive/landscape/, docs/archive/analysis/ (INFORMATIONAL ONLY — moved to ai-agents-research)
 ```
 
 ### 2. Claude Code Infrastructure

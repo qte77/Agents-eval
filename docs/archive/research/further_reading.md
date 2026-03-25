@@ -1187,5 +1187,5 @@ Industry blog posts and engineering articles providing implementation insights a
   - AI risk management guidance; provides principles and processes for managing risk specific to AI systems
   - Complements ISO 42001 (management system) with focused risk assessment and treatment methodology
   - Cross-ref: ISO 42001 (above), NIST AI RMF (above)
-- See [docs/analysis/ai-security-governance-frameworks.md](../analysis/ai-security-governance-frameworks.md)
+- See [docs/archive/analysis/ai-security-governance-frameworks.md](../archive/analysis/ai-security-governance-frameworks.md)
   for detailed comparative analysis of all four frameworks applied to Agents-eval
