@@ -590,7 +590,7 @@ See [security-advisories.md](security-advisories.md) for all known advisories an
 
 - Security tests: `tests/security/` (SSRF, prompt injection, sensitive data filtering)
 - MAESTRO review findings: `docs/reviews/sprint5-code-review.md`
-- Design principles: [best-practices/mas-security.md](best-practices/mas-security.md)
+- Design principles: [best-practices/mas-security.md](archive/best-practices/mas-security.md)
 
 ## Implementation Status
 
@@ -754,10 +754,10 @@ The three-tiered evaluation framework is fully operational with plugin architect
 
 ### Plugin Architecture (Sprint 3 - Delivered)
 
-**Design Principles**: See [best-practices/mas-design-principles.md](best-practices/mas-design-principles.md) for 12-Factor Agents, Anthropic Harnesses, and PydanticAI integration patterns.
+**Design Principles**: See [best-practices/mas-design-principles.md](archive/best-practices/mas-design-principles.md) for 12-Factor Agents, Anthropic Harnesses, and PydanticAI integration patterns.
 
-**Security Framework**: See [best-practices/mas-security.md](best-practices/mas-security.md) for OWASP MAESTRO 7-layer security model.
-See [analysis/ai-security-governance-frameworks.md](analysis/ai-security-governance-frameworks.md) for cross-framework analysis (MAESTRO, MITRE ATLAS, NIST AI RMF, ISO 42001/23894).
+**Security Framework**: See [best-practices/mas-security.md](archive/best-practices/mas-security.md) for OWASP MAESTRO 7-layer security model.
+See [analysis/ai-security-governance-frameworks.md](archive/analysis/ai-security-governance-frameworks.md) for cross-framework analysis (MAESTRO, MITRE ATLAS, NIST AI RMF, ISO 42001/23894).
 
 #### EvaluatorPlugin Interface
 

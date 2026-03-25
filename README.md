@@ -101,8 +101,8 @@ See [src/examples/README.md](src/examples/README.md) for self-contained demonstr
 
 ## References
 
-- [AI Agent Evaluation Landscape](docs/landscape/landscape.md) — Frameworks, tools, datasets, benchmarks
-- [Tracing & Observation Methods](docs/landscape/trace_observe_methods.md) — Observability analysis
+- [AI Agent Evaluation Landscape](docs/archive/landscape/landscape.md) — Frameworks, tools, datasets, benchmarks
+- [Tracing & Observation Methods](docs/archive/landscape/trace_observe_methods.md) — Observability analysis
 - [List of papers inspected](docs/research/further_reading.md)
 - [Enhancement Recommendations](https://qte77.github.io/ai-agents-eval-enhancement-recommendations/)
 - [Papers Meta Review](https://qte77.github.io/ai-agents-eval-papers-meta-review/)

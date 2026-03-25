@@ -99,7 +99,7 @@ This project pins `scikit-learn>=1.8.0` in `pyproject.toml`, which includes the 
 
 ## Related Frameworks
 
-See [docs/analysis/ai-security-governance-frameworks.md](analysis/ai-security-governance-frameworks.md)
+See [docs/archive/analysis/ai-security-governance-frameworks.md](archive/analysis/ai-security-governance-frameworks.md)
 for a detailed comparative analysis of all four frameworks and their applicability
 to Agents-eval.
 
