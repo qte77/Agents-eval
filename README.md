@@ -44,6 +44,16 @@ make app_batch_eval                                                             
 
 > All commands use the default provider (`github`). Set your API key in `.env` or pass `--chat-provider=<provider>`. See [.env.example](.env.example).
 
+## Token Optimization (Experimental)
+
+This repo includes [RTK](https://github.com/rtk-ai/rtk) config for 60-90% LLM token savings during agentic coding sessions.
+
+```bash
+make setup_rtk    # install RTK binary
+rtk init -g       # activate CC PreToolUse hook (run outside CC session)
+rtk gain --graph  # view token savings
+```
+
 ## User/Researcher
 
 - [**Documentation Site**](https://qte77.github.io/Agents-eval) — Complete reference
