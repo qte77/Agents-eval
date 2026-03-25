@@ -9,37 +9,31 @@ metadata:
   allowed-tools: Bash, Read, Glob, Grep
 ---
 
-# Commit staged with Generated Message
+# Commit Staged with Generated Message
 
 ## Step 1: Analyze Staged Changes
 
-Run these commands using the Bash tool to gather context:
+Run using the Bash tool:
 
-- `git diff --staged --name-only` - List staged files
-- `git diff --staged --stat` - Diff stats summary
-- `git log --oneline -5` - Recent commit style
-- `git diff --staged` - Review detailed staged changes
+- `git diff --staged --name-only` — list staged files
+- `git diff --staged --stat` — diff stats summary
+- `git log --oneline -5` — recent commit style
 
-**Size guard**: if `--stat` shows >10 files or >500 lines changed, skip
-full diff and rely on `--stat` + `--name-only` to generate the message.
-
-**Diff stats rule**: only use the `--stat` totals summary line in the commit
-message (e.g. `6 files changed, 186 insertions(+), 1 deletion(-)`).
-Never include per-file `+`/`-` counts.
+**Size guard**: If `--stat` shows >10 files or >500 lines changed, skip full
+diff and rely on `--stat` + `--name-only`. Otherwise also run `git diff --staged`
+for detailed review.
 
 ## Step 2: Generate Commit Message
 
-Use the Read tool to check `.gitmessage` for commit message format and syntax.
+Read `.gitmessage` for format (conventional commits: `type[(scope)][!]: description`).
 
-**The commit message body MUST include (concisely — no padding, no redundancy):**
+**Body guidelines (keep concise — no padding):**
 
 1. **What changed**: bullet points per logical group
-2. **Symbols added/removed** (when applicable): functions, classes, tests
-3. **Diff stats summary as last line**: totals only
-   (e.g. `6 files changed, 186 insertions(+), 1 deletion(-)`)
-   — no per-file breakdown
+2. For large changes, include diff stats summary as last line
 
-Keep the message laser-focused. Do not repeat the subject line in the body.
+Keep the message laser-focused. Don't repeat the subject line in the body.
+Small changes (1-2 files, <50 lines) need only a subject line, no body.
 
 ## Step 3: Pause for Approval
 
@@ -53,5 +47,5 @@ Keep the message laser-focused. Do not repeat the subject line in the body.
 
 Once approved:
 
-- `git commit --gpg-sign -m "[message]"` - Commit staged changes with approved message (GPG signature mandatory)
-- `git status` - Verify success
+- `git commit --gpg-sign -m "[message]"` — GPG signature mandatory
+- `git status` — verify success

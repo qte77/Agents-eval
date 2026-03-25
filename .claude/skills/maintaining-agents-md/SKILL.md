@@ -43,8 +43,8 @@ Scan governance files for staleness and inconsistencies.
    Verify each path still exists.
 2. **Stale commands**: Parse `CONTRIBUTING.md` command reference table. Verify
    each `make` recipe exists in `Makefile`.
-3. **Missing learnings**: Check `ralph/docs/LEARNINGS.md` and recent git log for
-   patterns not yet in `AGENT_LEARNINGS.md`.
+3. **Missing learnings**: Check recent git log for patterns not yet in
+   `AGENT_LEARNINGS.md`. If `ralph/docs/LEARNINGS.md` exists, check it too.
 4. **Resolved requests**: Check `AGENT_REQUESTS.md` entries — flag any whose
    referenced files/issues no longer exist.
 5. **Role boundary drift**: Verify AGENTS.md role definitions match current
@@ -62,16 +62,8 @@ Fix staleness found by audit. For each finding:
 
 ### `promote`
 
-Evaluate `AGENT_LEARNINGS.md` entries for promotion.
-
-**Promotion criteria** (from `.claude/rules/compound-learning.md`):
-
-| Occurrences | Action |
-|---|---|
-| 1st | Fix inline, move on |
-| 2nd | Add to AGENT_LEARNINGS.md |
-| 3rd | Promote to `.claude/rules/` |
-| Recurring workflow | Extract to `.claude/skills/` |
+Evaluate `AGENT_LEARNINGS.md` entries for promotion per the criteria in
+`.claude/rules/compound-learning.md` (3rd occurrence → rule, recurring → skill).
 
 **Procedure:**
 
@@ -94,15 +86,6 @@ conflicts:
 2. **CONTRIBUTING.md** — technical standards second
 3. **AGENT_LEARNINGS.md** — patterns third (high-value, low-risk)
 4. **AGENT_REQUESTS.md** — escalations last (time-sensitive, not structural)
-
-## PR Checklist Integration
-
-Every PR should verify (per `.github/pull_request_template.md`):
-
-- [ ] `AGENTS.md` updated if new patterns, role boundaries, or rules changed
-- [ ] `AGENT_LEARNINGS.md` updated if a new pattern or solution was discovered
-- [ ] `AGENT_REQUESTS.md` — resolved requests removed; new blockers added
-- [ ] `CONTRIBUTING.md` updated if commands, paths, or standards changed
 
 ## References
 

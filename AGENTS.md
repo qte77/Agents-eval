@@ -13,6 +13,7 @@ agents.** For technical workflows and coding standards, see
 
 ## Claude Code Infrastructure
 
+**Rules** (`.claude/rules/`): Session-loaded constraints (always active)
 **Skills** (`.claude/skills/`): Modular capabilities with progressive disclosure
 
 - `core-principles` - MANDATORY for all tasks (KISS, DRY, YAGNI, verification)
