@@ -22,7 +22,7 @@ updated: 2026-03-07
 - **Problem**: Generic errors lacked context; no bottleneck detection
 - **Solution**: Tier-specific error messages + bottleneck warnings when >40% of total time
 - **Example**: `if tier_time > total_time * 0.4: logger.warning(f"Bottleneck: {tier}")`
-- **References**: `src/app/evals/evaluation_pipeline.py`
+- **References**: `src/app/judge/evaluation_runner.py`
 
 ### PlantUML Theming
 

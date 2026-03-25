@@ -44,6 +44,17 @@ make app_batch_eval                                                             
 
 > All commands use the default provider (`github`). Set your API key in `.env` or pass `--chat-provider=<provider>`. See [.env.example](.env.example).
 
+## Token Optimization (Experimental)
+
+This repo includes [RTK](https://github.com/rtk-ai/rtk) config for 60-90% LLM token savings during agentic coding sessions.
+
+```bash
+make setup_rtk    # install RTK binary + activate CC PreToolUse hook (run outside CC session)
+rtk gain --graph  # view token savings
+```
+
+Opt-out of telemetry: `export RTK_TELEMETRY_DISABLED=1`
+
 ## User/Researcher
 
 - [**Documentation Site**](https://qte77.github.io/Agents-eval) — Complete reference
@@ -103,7 +114,7 @@ See [src/examples/README.md](src/examples/README.md) for self-contained demonstr
 
 - [AI Agent Evaluation Landscape](docs/archive/landscape/landscape.md) — Frameworks, tools, datasets, benchmarks
 - [Tracing & Observation Methods](docs/archive/landscape/trace_observe_methods.md) — Observability analysis
-- [List of papers inspected](docs/research/further_reading.md)
+- [List of papers inspected](docs/archive/research/further_reading.md)
 - [Enhancement Recommendations](https://qte77.github.io/ai-agents-eval-enhancement-recommendations/)
 - [Papers Meta Review](https://qte77.github.io/ai-agents-eval-papers-meta-review/)
 - [Papers Comprehensive Analysis](https://qte77.github.io/ai-agents-eval-comprehensive-analysis/)
