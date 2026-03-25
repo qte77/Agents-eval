@@ -259,7 +259,7 @@ Each document type has specific authority and serves as the single source of tru
 
 #### Research & Reference (What's Possible)
 
-- **Landscape Documents** (`docs/landscape/`) - **INFORMATIONAL ONLY** for technology research, feasibility analysis, and available options
+- **Landscape Documents** (`docs/archive/landscape/`, moved to [ai-agents-research](https://github.com/qte77/ai-agents-research)) - **INFORMATIONAL ONLY** for technology research, feasibility analysis, and available options
 - **Assessment Documents** (`docs/sprints/assessment/`) - **INFORMATIONAL ONLY** for capability gap analysis and technical evaluations
 
 ### Reference Flow & Decision Rules

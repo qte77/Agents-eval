@@ -10,8 +10,8 @@
 - [Security Advisories](${BLOB}/docs/security-advisories.md): Known security issues and mitigations
 - [Agent Instructions](${BLOB}/AGENTS.md): AI agent behavioral rules and compliance requirements
 - [PeerRead Agent Usage](${BLOB}/docs/howtos/peerread-agent-usage.md): Operational guide for the evaluation pipeline
-- [CC Adoption Plan](${BLOB}/docs/analysis/CC-adoption-plan.md): Claude Code feature adoption roadmap
-- [Inference Providers](${BLOB}/docs/analysis/Inference-Providers.md): LLM provider comparison
-- [Landscape: Agent Frameworks](${BLOB}/docs/landscape/landscape-agent-frameworks-infrastructure.md): Agent framework survey
-- [Landscape: Evaluation Resources](${BLOB}/docs/landscape/landscape-evaluation-data-resources.md): Evaluation datasets and benchmarks
-- [Landscape: Research Agents](${BLOB}/docs/landscape/landscape-research-agents.md): Research agent landscape
+- [CC Adoption Plan](https://github.com/qte77/ai-agents-research/blob/main/docs/analysis/CC-adoption-plan.md): Claude Code feature adoption roadmap
+- [Inference Providers](https://github.com/qte77/ai-agents-research/blob/main/docs/analysis/Inference-Providers.md): LLM provider comparison
+- [Landscape: Agent Frameworks](https://github.com/qte77/ai-agents-research/blob/main/docs/landscape/landscape-agent-frameworks-infrastructure.md): Agent framework survey
+- [Landscape: Evaluation Resources](https://github.com/qte77/ai-agents-research/blob/main/docs/landscape/landscape-evaluation-data-resources.md): Evaluation datasets and benchmarks
+- [Landscape: Research Agents](https://github.com/qte77/ai-agents-research/blob/main/docs/landscape/landscape-research-agents.md): Research agent landscape

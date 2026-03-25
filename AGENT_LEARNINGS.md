@@ -22,7 +22,7 @@ updated: 2026-03-07
 - **Problem**: Generic errors lacked context; no bottleneck detection
 - **Solution**: Tier-specific error messages + bottleneck warnings when >40% of total time
 - **Example**: `if tier_time > total_time * 0.4: logger.warning(f"Bottleneck: {tier}")`
-- **References**: `src/app/evals/evaluation_pipeline.py`
+- **References**: `src/app/judge/evaluation_runner.py`
 
 ### PlantUML Theming
 
@@ -60,7 +60,7 @@ updated: 2026-03-07
   ```
 
 - **Key Finding**: Parallel reduces latency but token cost scales linearly (N teammates = N instances)
-- **References**: `docs/reviews/evaluation-pipeline-parallel-review-2026-02-11.md`, `docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md`
+- **References**: `docs/reviews/evaluation-pipeline-parallel-review-2026-02-11.md`, `ai-agents-research/docs/cc-native/agents-skills/CC-agent-teams-orchestration.md`
 
 ### OpenAI-Compatible Provider Strict Tool Definitions
 
@@ -107,7 +107,7 @@ updated: 2026-03-07
 - **Context**: Running CC from Python for MAS vs CC baseline comparison
 - **Problem**: Sprint 3 `cc_otel` used wrong abstraction — CC tracing is infrastructure (env vars), not application code
 - **Solution**: `claude -p "prompt" --output-format json` via `subprocess.run()`. Check with `shutil.which("claude")`. Collect artifacts from `~/.claude/teams/` + `~/.claude/tasks/`, parse via `CCTraceAdapter`.
-- **References**: `docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md`, Sprint 6 Feature 7
+- **References**: `ai-agents-research/docs/cc-native/agents-skills/CC-agent-teams-orchestration.md`, Sprint 6 Feature 7
 
 ### Review-to-PRD Traceability
 
@@ -165,7 +165,7 @@ updated: 2026-03-07
 - **Solution**: For trace-level execution analysis (required for evaluation), use artifact collection (`CCTraceAdapter` parses `raw_stream.jsonl`). OTel is supplementary for cost/token dashboards only.
 - **Key distinction**: metrics/logs → OTel → Phoenix dashboards; trace spans → artifact collection → `CCTraceAdapter` → `GraphTraceData`
 - **Upstream issues**: [anthropics/claude-code#9584](https://github.com/anthropics/claude-code/issues/9584), [#2090](https://github.com/anthropics/claude-code/issues/2090)
-- **References**: `docs/analysis/ClaudeCode/CC-agent-teams-orchestration.md`, `.claude/settings.json` (OTel vars currently disabled)
+- **References**: `ai-agents-research/docs/cc-native/agents-skills/CC-agent-teams-orchestration.md`, `.claude/settings.json` (OTel vars currently disabled)
 
 ### Makefile $(or) Does Not Override ?= Defaults
 
@@ -314,6 +314,59 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
 - **Solution**: Quote enum values with spaces: `-f "dismissed_reason=false positive"`. Always check the API error message — it lists valid enum members.
 - **Anti-pattern**: Assuming snake_case for enum values because the field name is snake_case.
 - **References**: [GitHub Code Scanning API](https://docs.github.com/rest/code-scanning/code-scanning#update-a-code-scanning-alert)
+
+### CodeQL `actions` Language for Bash/GHA Repos
+
+- **Context**: CodeQL workflow in a repo with only bash scripts and GitHub Actions YAML (no JS/TS/Python)
+- **Problem**: `languages: javascript-typescript` causes `CodeQL detected code written in GitHub Actions, but not any written in JavaScript/TypeScript` error. Build succeeds but analyze fails.
+- **Solution**: Use `languages: actions`. Remove the `autobuild` step (not needed for actions analysis).
+- **Example**: `github/codeql-action/init@v4` with `languages: actions` → `github/codeql-action/analyze@v4`
+- **References**: `gha-github-mirror-action/.github/workflows/codeql.yaml`
+
+### PAT Scrubbing in Shell Scripts (Defense in Depth)
+
+- **Context**: Shell scripts that handle PATs and run `git push` with authenticated URLs
+- **Problem**: `::add-mask::` only works inside GitHub Actions. Outside GHA (local, other CI), PATs leak in git error messages, command output, and bash error traces.
+- **Solution**: Wrap script body in `_main()` function, pipe all output through `sed "s|$PAT|***|g"`. Use `PIPESTATUS[0]` to preserve exit code.
+- **Example**:
+  ```bash
+  _main() { ... }
+  _sed_expr=""
+  [ -n "${PAT:-}" ] && _sed_expr="s|${PAT}|***|g;"
+  _main 2>&1 | sed "$_sed_expr"
+  exit "${PIPESTATUS[0]}"
+  ```
+- **Anti-pattern**: Relying solely on `::add-mask::` — it's a GHA-specific command, not a universal solution.
+- **References**: `gha-github-mirror-action/scripts/mirror.sh`
+
+### BATS Tests Need Git Identity in CI
+
+- **Context**: BATS tests that create temporary git repos and run `git commit`
+- **Problem**: CI runners (GitHub Actions `ubuntu-latest`) lack `user.name`/`user.email` git config. `git commit` fails with "Please tell me who you are".
+- **Solution**: Add `git config --global user.name "test"` and `git config --global user.email "test@test"` in BATS `setup()`.
+- **Also**: Use `$BATS_TEST_NUMBER` (not `$$`) for unique temp dir names — `$$` is the bats process PID, same across all tests in a run.
+- **References**: `gha-github-mirror-action/tests/unit/test_mirror.bats`
+
+### Dependabot Rebase Fails with GPG Signing Mismatch
+
+- **Context**: Rebasing dependabot PRs onto updated main when GPG signing is required
+- **Problem**: `git rebase origin/main` fails with "gpg failed to sign the data: Author is invalid" because the dependabot commit author doesn't match the GPG signing identity.
+- **Solution**: Close the dependabot PR. Create a fresh branch from main, apply the same change manually (usually a single version bump in a workflow file), create new PR.
+- **Anti-pattern**: Trying `--no-gpg-sign` or `git -c commit.gpgsign=false rebase` — won't merge if branch protection requires signed commits.
+- **References**: `gha-github-mirror-action` PR #3 (closed) → PR #4 (replacement)
+
+### First Release Bootstrap for bump-my-version Repos
+
+- **Context**: New repo with `pyproject.toml` version already set to target (e.g., `0.1.0`), need to create initial release
+- **Problem**: `bump-my-version` always increments — running `patch` on `0.1.0` gives `0.1.1`, not `0.1.0`. No "tag current version" mode.
+- **Solution**: Create first release manually via GitHub API: tag + release + floating major tag. Then `bump-my-version` handles all subsequent releases.
+- **Example**:
+  ```bash
+  gh api repos/OWNER/REPO/git/refs -f ref=refs/tags/v0.1.0 -f sha=$SHA
+  gh release create v0.1.0 --generate-notes
+  gh api repos/OWNER/REPO/git/refs -f ref=refs/tags/v0 -f sha=$SHA
+  ```
+- **References**: `gha-github-mirror-action` v0.1.0 release
 
 ### Plugin/Package Version Must Be Synced Across Manifest Files
 
