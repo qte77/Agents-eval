@@ -37,7 +37,7 @@ Documentation = "https://qte77.github.io/Agents-eval/"
 
 [dependency-groups]
 gui = [
-    "streamlit>=1.54.0",
+    "streamlit>=1.56.0",
     "pyvis>=0.3.2",
 ]
 wandb = [
