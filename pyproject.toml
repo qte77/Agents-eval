@@ -16,7 +16,7 @@ dependencies = [
     "markitdown[pdf]>=0.1.5",
     "pydantic>=2.12.5",
     # "pydantic-ai>=0.0.36",
-    "pydantic-ai-slim[duckduckgo,openai,tavily]>=1.62.0",
+    "pydantic-ai-slim[duckduckgo,openai,tavily]>=1.80.0",
     "pydantic-settings>=2.13.1",
     # Modern ROUGE, BLEU, text metrics (2024+ maintained)
     # "torchmetrics[text]>=1.4.0",
