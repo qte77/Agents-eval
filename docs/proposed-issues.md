@@ -27,6 +27,7 @@ Extracting the graph engine as a skill in [cc-plugins](https://github.com/qte77/
 3. Adapter interface: accept both Agents-eval trace format and raw CC JSONL
 
 Key files:
+
 - [src/app/judge/graph_analysis.py](https://github.com/qte77/Agents-eval/blob/main/src/app/judge/graph_analysis.py)
 - [src/app/judge/trace_processors.py](https://github.com/qte77/Agents-eval/blob/main/src/app/judge/trace_processors.py)
 - [src/app/judge/composite_scorer.py](https://github.com/qte77/Agents-eval/blob/main/src/app/judge/composite_scorer.py)
@@ -57,6 +58,7 @@ This gap is mirrored externally: [disler/claude-code-hooks-multi-agent-observabi
 4. Feed into [ai-agents-research/docs/learnings/](https://github.com/qte77/ai-agents-research/tree/main/docs/learnings) for compound learning
 
 Key dependencies:
+
 - [src/app/judge/trace_processors.py](https://github.com/qte77/Agents-eval/blob/main/src/app/judge/trace_processors.py) — `TraceCollector.load_trace()`
 - [src/app/judge/graph_analysis.py](https://github.com/qte77/Agents-eval/blob/main/src/app/judge/graph_analysis.py) — `GraphAnalysisEngine.evaluate_graph_metrics()`
 
@@ -75,6 +77,7 @@ Enable Agents-eval to evaluate Claude Code sessions directly from CC's native JS
 [cc_engine.py](https://github.com/qte77/Agents-eval/blob/main/src/app/engines/cc_engine.py) parses CC output during live execution but has no offline parser for existing session files.
 
 A JSONL parser would let us:
+
 - Evaluate any past CC session post-hoc
 - Feed [polyforge-orchestrator](https://github.com/qte77/polyforge-orchestrator) parallel results into graph analysis
 - Support the proposed [cc-meta observability skill](https://github.com/qte77/claude-code-plugins)
@@ -92,5 +95,6 @@ A JSONL parser would let us:
 3. CLI: `agents-eval --from-session ~/.claude/projects/<path>/<uuid>.jsonl`
 
 Key references:
+
 - [src/app/engines/cc_engine.py](https://github.com/qte77/Agents-eval/blob/main/src/app/engines/cc_engine.py)
 - [CC entry types](https://github.com/qte77/claude-code-plugins/blob/main/plugins/cc-meta/skills/synthesizing-cc-bigpicture/references/cc-entry-types.md)

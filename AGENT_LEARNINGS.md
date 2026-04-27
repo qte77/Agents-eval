@@ -251,6 +251,7 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
 - **Context**: Merging a PR via GitHub API (e.g. Ralph branch or any feature branch)
 - **Problem**: `commit_title` alone drops all branch commit messages from the squash body. Title must follow repo convention `PR <title> (#NUM)` to match history.
 - **Solution**:
+
   ```bash
   gh api repos/OWNER/REPO/pulls/NUM/merge \
     -X PUT \
@@ -258,6 +259,7 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
     -f commit_title="PR <title> (#NUM)" \
     -f commit_message="$(git log origin/main..HEAD --format='* %s')"
   ```
+
 - **Anti-pattern**: Passing only `commit_title` — squash body will be empty, losing branch commit history
 - **References**: `ralph/docs/LEARNINGS.md` (section 4)
 
@@ -266,10 +268,12 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
 - **Context**: Editing PR title or body via GitHub CLI
 - **Problem**: `gh pr edit` exits with GraphQL error about Projects (classic) deprecation — even for unrelated edits
 - **Solution**: Use GraphQL mutation directly:
+
   ```bash
   PR_ID=$(gh pr view NUM --json id --jq '.id')
   gh api graphql -f query="mutation { updatePullRequest(input: {pullRequestId: \"$PR_ID\", title: \"...\", body: \"...\"}) { pullRequest { title } } }"
   ```
+
 - **Anti-pattern**: Retrying `gh pr edit` — always fails until GitHub removes the deprecated Projects field from the PR schema
 
 ### Claude Code Sandbox Blocks Git on `.claude/skills/`
@@ -329,6 +333,7 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
 - **Problem**: `::add-mask::` only works inside GitHub Actions. Outside GHA (local, other CI), PATs leak in git error messages, command output, and bash error traces.
 - **Solution**: Wrap script body in `_main()` function, pipe all output through `sed "s|$PAT|***|g"`. Use `PIPESTATUS[0]` to preserve exit code.
 - **Example**:
+
   ```bash
   _main() { ... }
   _sed_expr=""
@@ -336,6 +341,7 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
   _main 2>&1 | sed "$_sed_expr"
   exit "${PIPESTATUS[0]}"
   ```
+
 - **Anti-pattern**: Relying solely on `::add-mask::` — it's a GHA-specific command, not a universal solution.
 - **References**: `gha-github-mirror-action/scripts/mirror.sh`
 
@@ -361,11 +367,13 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
 - **Problem**: `bump-my-version` always increments — running `patch` on `0.1.0` gives `0.1.1`, not `0.1.0`. No "tag current version" mode.
 - **Solution**: Create first release manually via GitHub API: tag + release + floating major tag. Then `bump-my-version` handles all subsequent releases.
 - **Example**:
+
   ```bash
   gh api repos/OWNER/REPO/git/refs -f ref=refs/tags/v0.1.0 -f sha=$SHA
   gh release create v0.1.0 --generate-notes
   gh api repos/OWNER/REPO/git/refs -f ref=refs/tags/v0 -f sha=$SHA
   ```
+
 - **References**: `gha-github-mirror-action` v0.1.0 release
 
 ### Plugin/Package Version Must Be Synced Across Manifest Files
