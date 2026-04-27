@@ -111,7 +111,7 @@ The implementation resides in `src/app/judge/composite_scorer.py`.
 
 The composite score calculation follows the formula:
 
-```
+```text
 Agent Score = Weighted sum of six core metrics
 ```
 
@@ -137,7 +137,7 @@ if single_agent_mode and tier2_skipped:
     available_metrics = [m for m in all_metrics
                          if m not in excluded_metrics]
     weight_per_metric = 1.0 / len(available_metrics)
-```
+```python
 
 *Code excerpt from `src/app/judge/composite_scorer.py`*
 
@@ -193,7 +193,7 @@ class PluginRegistry:
     def register(self, plugin: EvaluatorPlugin) -> None: ...
     def get_plugins_by_tier(self, tier: int) -> list[EvaluatorPlugin]: ...
     def execute_all(self, context: BaseModel) -> list[BaseModel]: ...
-```
+```python
 
 *Code excerpt from `src/app/judge/`*
 

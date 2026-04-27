@@ -7,6 +7,8 @@ category: architecture
 version: 3.9.0
 validated_links: 2026-03-12
 ---
+# Architecture
+
 <!-- markdownlint-disable MD024 no-duplicate-heading -->
 
 This document provides detailed architecture information for the Agents-eval Multi-Agent System (MAS) evaluation framework.
@@ -89,7 +91,7 @@ Individual tier results are in-memory during pipeline execution. Per-run `evalua
 2. **Assembly**: Results are packed into an `EvaluationResults` dataclass (with fallback fill-in if tiers are missing).
 3. **Composite scoring**: `CompositeScorer` combines tier results into a single `CompositeResult` — this is the only object returned to callers.
 
-**`CompositeResult` consumers:**
+### `CompositeResult` consumers:
 
 | Consumer | Location | Purpose |
 | --- | --- | --- |
@@ -113,13 +115,13 @@ Individual tier results are in-memory during pipeline execution. Per-run `evalua
 | Tier 2 (LLM-Judge) | Semantic | Quality assessment via LLM |
 | Tier 3 (Graph) | Behavioral | Coordination patterns from execution traces |
 
-**Validation Logic:**
+### Validation Logic:
 
 - **All 3 tiers agree** → High confidence in MAS quality
 - **Tier 3 good, Tier 1/2 fail** → Good coordination, poor output quality
 - **Tier 1/2 good, Tier 3 fail** → Good output, inefficient coordination
 
-**Design Goals:**
+### Design Goals:
 
 - **Graph (Tier 3)**: Rich analysis from execution traces — project's differentiator
 - **Traditional (Tier 1)**: Lightweight metrics only
@@ -207,7 +209,7 @@ The benchmarking pipeline enables systematic comparison of MAS compositions with
 
 ```text
 SweepConfig → SweepRunner → (compositions × papers × repetitions) → SweepAnalyzer → output files
-```
+```bash
 
 - **`SweepConfig`** (`src/app/benchmark/sweep_config.py`): Declares sweep parameters — agent compositions (2³ = 8 default), paper IDs, repetitions per combination, provider settings
 - **`SweepRunner`** (`src/app/benchmark/sweep_runner.py`): Executes the sweep matrix, calls `evaluation_pipeline.evaluate_comprehensive()` for each cell, aggregates raw results
@@ -298,7 +300,7 @@ The CC path feeds Claude Code agent artifacts into the same evaluation pipeline 
 ```text
 Solo:  claude -p "prompt" --output-format json        → CCResult → extract_cc_review_text → evaluate_comprehensive
 Teams: claude -p "prompt" --output-format stream-json  → Popen JSONL stream → CCResult → cc_result_to_graph_trace → evaluate_comprehensive
-```
+```text
 
 `check_cc_available()` (`src/app/engines/cc_engine.py`) wraps `shutil.which("claude")` for fail-fast validation. Teams mode sets `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` and parses `init`, `result`, `TeamCreate`, and `Task` events from the live JSONL stream via `Popen`, since CC teams artifacts (`~/.claude/teams/`, `~/.claude/tasks/`) are ephemeral in print mode (see AGENT_LEARNINGS.md).
 
@@ -373,7 +375,7 @@ _Agents-eval/
         summary.md        ← Markdown table with mean/stddev per metric per composition
     reports/
       {timestamp}.md      ← standalone reports (CLI --generate-report without run)
-```
+```text
 
 ### Output Decision Tree
 
@@ -504,7 +506,7 @@ For CC engines, `cc_result_to_graph_trace()` (`src/app/engines/cc_engine.py:255`
 ```text
 MAS path:   TraceCollector.complete_trace() → _store_trace() → traces.db + trace.json
 CC path:    CCResult.team_artifacts → cc_result_to_graph_trace() → GraphTraceData (in-memory)
-```
+```yaml
 
 #### Stage 2: NetworkX Graph Construction
 
@@ -531,7 +533,7 @@ The GUI stores the graph in Streamlit session state (`run_app.py:284`):
 
 ```python
 st.session_state.execution_graph = result.get("graph")
-```
+```text
 
 When the user navigates to the Agent Graph page, `render_agent_graph()` (`src/gui/pages/agent_graph.py:44`) converts the `nx.DiGraph` into an interactive HTML visualization using Pyvis:
 
@@ -559,7 +561,7 @@ Post-evaluation report generation synthesizes tier scores into actionable Markdo
 
 ```text
 CompositeResult → SuggestionEngine → [Suggestion, ...] → ReportGenerator → Markdown report
-```
+```python
 
 - **`SuggestionEngine`** (`src/app/reports/suggestion_engine.py`): Iterates `metric_scores`, compares each against tier thresholds from `JudgeSettings` (accept=0.8, weak_accept=0.6, weak_reject=0.4). Assigns severity (critical/warning/info). Optional LLM enrichment via judge provider with rule-based fallback.
 - **`ReportGenerator`** (`src/app/reports/report_generator.py`): Produces structured Markdown: executive summary, per-tier breakdown, weakness identification, actionable suggestions from the engine.
@@ -798,7 +800,7 @@ class JudgeSettings(BaseSettings):
     tier2_provider: str = "auto"
     tier2_model: str = "gpt-4o-mini"
     # ... 30+ settings covering per-tier config, thresholds, tracing, observability
-```
+```text
 
 #### Typed Context Passing
 

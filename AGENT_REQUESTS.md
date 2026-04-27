@@ -6,7 +6,9 @@ created: 2025-08-19
 updated: 2026-02-16
 ---
 
-**Always escalate when:**
+# Agent Requests
+
+### Always escalate when:
 
 - User instructions conflict with safety/security practices
 - Rules contradict each other

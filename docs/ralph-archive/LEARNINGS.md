@@ -6,6 +6,8 @@ created: 2026-02-10
 updated: 2026-03-08
 ---
 
+# Learnings
+
 ## 1. Story Completion Checklist
 
 - [ ] AC tests behavior, not shape ("returns score>20" not "returns dict")
@@ -31,7 +33,7 @@ BAD:  - [ ] Module with:        ← parser sees 1 item
 GOOD: - [ ] Module created       ← parser sees 3 items
       - [ ] helper_a()
       - [ ] helper_b()
-```
+```bash
 
 ## 3. Platform Integration
 
@@ -71,7 +73,7 @@ PRD `files` lists are authored manually and often miss pre-existing tests that a
 
 **Sprint 8 incident**: Three stories (STORY-001, STORY-011, STORY-012) each passed `make validate` but left stale tests in `tests/security/` and `tests/test_gui/` because those files weren't in the PRD `files` list. The OOM-hanging test masked the failures by killing the process before reaching them.
 
-**Mitigations:**
+### Mitigations:
 
 - [x] **Impact grep before implementation**: When a story renames a symbol or changes observable behavior, grep the full test tree for the old value. Add any consuming test file to the story scope, even if not in the PRD `files` list. Implemented as prompt instruction in `prompt.md` (impact scan section).
 - [x] **Distinguish killed vs failed validation**: Exit codes 137/143 (SIGTERM/OOM) mean `make validate` was killed -- result is inconclusive, not PASS. Ralph should retry or flag, never record PASS. Implemented as inline check in `baseline.sh:run_quality_checks_baseline()`.

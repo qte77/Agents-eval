@@ -1,6 +1,8 @@
+# README
+
 <!-- markdownlint-disable MD033 -->
 
-# Agents-eval
+## Agents-eval
 
 > Evaluate multi-agent AI systems objectively — Three-tiered framework for researchers and developers building autonomous agent teams
 
@@ -29,9 +31,9 @@ A Multi-Agent System (MAS) evaluation framework using PydanticAI that generates 
 ```bash
 make setup_dev && make app_quickstart    # downloads sample data, evaluates smallest paper
 make app_cli ARGS="--help"               # all CLI options
-```
+```bash
 
-**Common commands:**
+### Common commands:
 
 ```bash
 make app_cli ARGS="--paper-id=1105.1072"                                          # evaluate a specific paper
@@ -51,7 +53,7 @@ This repo includes [RTK](https://github.com/rtk-ai/rtk) config for 60-90% LLM to
 ```bash
 make setup_rtk    # install RTK binary + activate CC PreToolUse hook (run outside CC session)
 rtk gain --graph  # view token savings
-```
+```bash
 
 Opt-out of telemetry: `export RTK_TELEMETRY_DISABLED=1`
 

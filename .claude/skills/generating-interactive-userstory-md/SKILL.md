@@ -45,4 +45,4 @@ See `ralph/docs/templates/userstory.md.template` for structure and placeholders.
 
 ```bash
 make ralph_userstory
-```
+```text

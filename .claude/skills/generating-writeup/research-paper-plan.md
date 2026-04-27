@@ -33,7 +33,7 @@ Fill in `{{PLACEHOLDERS}}` with project-specific content before execution.
 
 ## File Structure
 
-```
+```text
 docs/write-up/{{TOPIC}}/
 ├── 00_frontmatter.md           # YAML frontmatter (title, bibliography, CSL)
 ├── 01_introduction.md          # Problem, motivation, scope, timeline, usage
