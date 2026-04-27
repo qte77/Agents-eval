@@ -51,7 +51,7 @@ echo $GITHUB_API_KEY
 # For other providers (Cerebras, Groq, etc.)
 echo $CEREBRAS_API_KEY
 echo $GROQ_API_KEY
-```python
+```
 
 #### 2. Configure Fallback Provider
 
@@ -93,7 +93,7 @@ if selected is None:
 else:
     provider, model = selected
     print(f"Using provider: {provider}/{model}")
-```text
+```
 
 ### Expected Behavior
 
@@ -134,7 +134,7 @@ Enable debug logging to see provider selection details:
 ```python
 import logging
 logging.getLogger("app.judge.llm_evaluation_managers").setLevel(logging.DEBUG)
-```text
+```
 
 You'll see logs like:
 

@@ -6,19 +6,17 @@ created: 2025-08-23
 updated: 2026-02-16
 ---
 
-# Contributing
-
 **This document contains technical development workflows, coding standards, and implementation guidelines shared by both human developers and AI coding agents.** For AI agent behavioral rules and compliance requirements, see [AGENTS.md](AGENTS.md). For project overview and navigation, see [README.md](README.md).
 
 ## Instant Commands
 
-### Development Workflow:
+**Development Workflow:**
 
 - `make setup_dev` → Setup development environment  
 - `make quick_validate` → Fast validation during development (lint + type checking + complexity + duplication)
 - `make validate` → Complete pre-commit validation (lint + type check + test)
 
-### Testing:
+**Testing:**
 
 - `make test` → Run all tests with pytest
 - `uv run pytest <path>` → Run specific test file/function
@@ -61,7 +59,7 @@ updated: 2026-02-16
 
 ## Code Patterns Quick Reference
 
-### Essential Patterns:
+**Essential Patterns:**
 
 - **Imports**: Use absolute imports (`from app.module import Class`)
 - **Models**: Use Pydantic models in `src/app/data_models/` for all data validation  
@@ -69,7 +67,7 @@ updated: 2026-02-16
 - **Comments**: Add `# Reason:` for complex logic explaining the *why*
 - **Dependencies**: Verify in `pyproject.toml` before using
 
-### Testing Patterns:
+**Testing Patterns:**
 
 - **Mock externals**: Use `@patch` for HTTP requests, file systems, APIs
 - **BDD approach**: Write tests first, implement code iteratively  
@@ -140,7 +138,7 @@ Tests requiring network access or long runtimes are excluded from `make test` by
 - `uv run pytest -m network` — real external calls (HuggingFace model download, API validation)
 - `uv run pytest -m benchmark` — performance benchmarks
 
-### Testing Guidelines:
+**Testing Guidelines:**
 
 - **Mock for**: Unit tests, CI/CD pipelines, deterministic behavior
 - **Real test for**: Initial implementation validation, external API changes
@@ -175,7 +173,7 @@ Tests requiring network access or long runtimes are excluded from `make test` by
             str: A description of the return value.
         """
         return "example"
-    ```bash
+    ```
 
 - Provide an example usage in regards to the whole project. How would your code be integrated, what entrypoints to use
 - Update `AGENTS.md` file when introducing new patterns or concepts.
@@ -184,7 +182,7 @@ Tests requiring network access or long runtimes are excluded from `make test` by
 
 ### Code Pattern Examples
 
-### Follow these guidelines:
+**Follow these guidelines:**
 
 - ✅ Pydantic model usage vs ❌ direct dictionaries
 - ✅ Absolute imports vs ❌ relative imports  
@@ -193,13 +191,13 @@ Tests requiring network access or long runtimes are excluded from `make test` by
 - ✅ Concise, focused implementations vs ❌ verbose, feature-heavy code
 - ✅ Minimal dependencies vs ❌ heavy library usage
 
-### Always analyze existing codebase patterns before implementing anything new.
+**Always analyze existing codebase patterns before implementing anything new.**
 
 ### CHANGELOG.md Requirements
 
-### All contributors must update CHANGELOG.md for non-trivial changes.
+**All contributors must update CHANGELOG.md for non-trivial changes.**
 
-### What requires a CHANGELOG entry:
+**What requires a CHANGELOG entry:**
 
 - ✅ New features or functionality
 - ✅ Breaking changes or API modifications  
@@ -208,7 +206,7 @@ Tests requiring network access or long runtimes are excluded from `make test` by
 - ✅ Dependency updates that affect functionality
 - ✅ Configuration changes
 
-### What doesn't require a CHANGELOG entry:
+**What doesn't require a CHANGELOG entry:**
 
 - ❌ Typo fixes in comments
 - ❌ Code formatting changes
@@ -316,9 +314,9 @@ This hierarchy prevents the confusion between "what could be built" (landscape r
 
 ### Agent Integration Guidelines
 
-### For comprehensive AI agent instructions, see [AGENTS.md](AGENTS.md).
+**For comprehensive AI agent instructions, see [AGENTS.md](AGENTS.md).**
 
-### Key integration points:
+**Key integration points:**
 
 - Agent behavioral rules and compliance → [AGENTS.md](AGENTS.md)
 - Technical implementation standards → This document
@@ -351,8 +349,8 @@ mcp__context7__get-library-docs --context7CompatibleLibraryID "/pydantic/pydanti
 
 ### Requests to Humans
 
-### For agent escalation and human collaboration, see [AGENT_REQUESTS.md](AGENT_REQUESTS.md).
+**For agent escalation and human collaboration, see [AGENT_REQUESTS.md](AGENT_REQUESTS.md).**
 
 ### Agent Learning
 
-### For accumulated agent knowledge and patterns, see [AGENT_LEARNINGS.md](AGENT_LEARNINGS.md).
+**For accumulated agent knowledge and patterns, see [AGENT_LEARNINGS.md](AGENT_LEARNINGS.md).**

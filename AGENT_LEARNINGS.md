@@ -6,8 +6,6 @@ created: 2025-08-19
 updated: 2026-03-07
 ---
 
-# Agent Learnings
-
 ## Template
 
 - **Context**: When/where this applies
@@ -59,7 +57,7 @@ updated: 2026-03-07
   TaskCreate(subject="Quality review", ...)    # Task 2
   TaskCreate(subject="Coverage review", ...)   # Task 3
   TaskCreate(subject="Aggregate", blockedBy=["1","2","3"])  # Task 4
-  ```bash
+  ```
 
 - **Key Finding**: Parallel reduces latency but token cost scales linearly (N teammates = N instances)
 - **References**: `docs/reviews/evaluation-pipeline-parallel-review-2026-02-11.md`, `ai-agents-research/docs/cc-native/agents-skills/CC-agent-teams-orchestration.md`
@@ -274,7 +272,7 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
   ```bash
   PR_ID=$(gh pr view NUM --json id --jq '.id')
   gh api graphql -f query="mutation { updatePullRequest(input: {pullRequestId: \"$PR_ID\", title: \"...\", body: \"...\"}) { pullRequest { title } } }"
-  ```bash
+  ```
 
 - **Anti-pattern**: Retrying `gh pr edit` — always fails until GitHub removes the deprecated Projects field from the PR schema
 
@@ -374,7 +372,7 @@ See `ralph/docs/LEARNINGS.md` section 4 (authoritative).
   gh api repos/OWNER/REPO/git/refs -f ref=refs/tags/v0.1.0 -f sha=$SHA
   gh release create v0.1.0 --generate-notes
   gh api repos/OWNER/REPO/git/refs -f ref=refs/tags/v0 -f sha=$SHA
-  ```bash
+  ```
 
 - **References**: `gha-github-mirror-action` v0.1.0 release
 

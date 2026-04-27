@@ -8,11 +8,9 @@ version: 1.1.0
 validated_links: 2026-03-12
 ---
 
-# Maintaining Agents MD
-
 This document outlines a strategy to ensure the agent governance files remain synchronized with the state of the codebase, preventing them from becoming outdated. Accurate governance files are critical for safe, effective AI agent operation.
 
-### Agent governance files:
+**Agent governance files:**
 
 | File | Purpose | Authority |
 |------|---------|-----------|
@@ -39,7 +37,7 @@ Integrate documentation updates into the core development workflow, making them 
 - [ ] `AGENT_REQUESTS.md` — resolved requests removed; new blockers added if any
 - [ ] `CONTRIBUTING.md` updated if commands, paths, or coding standards changed
 - [ ] Docstrings added/updated for all new/modified functions and classes
-```bash
+```
 
 The template also enforces `make validate` passes and security checks. See `.github/pull_request_template.md` for the full template.
 
@@ -78,7 +76,7 @@ The Ralph loop (`ralph/scripts/ralph.sh`) is the primary autonomous task executi
 ```bash
 make ralph_init        # Initialize state for a new sprint
 make ralph ITERATIONS=N  # Run autonomous loop
-```yaml
+```
 
 Post-sprint: ensure `AGENT_LEARNINGS.md` reflects any new patterns discovered during Ralph execution. The Ralph-specific learnings log in `ralph/docs/LEARNINGS.md` is a source for promoting patterns to the project-level `AGENT_LEARNINGS.md`.
 

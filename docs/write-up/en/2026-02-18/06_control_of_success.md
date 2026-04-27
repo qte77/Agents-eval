@@ -79,7 +79,7 @@ Dependencies are managed via `uv` with pinned versions. CVE-2024-5206 (scikit-le
 
 Based on the actual trace data collected from `logs/traces/` (30 JSONL traces, 14 Manager-only runs, 12 multi-agent runs) [@mas-findings], the current implementation status can be assessed as follows:
 
-### Implemented and functional:
+**Implemented and functional:**
 
 - Three-tier evaluation pipeline with plugin architecture and composite scorer
 - PydanticAI MAS with four agent roles and flexible composition configuration
@@ -89,7 +89,7 @@ Based on the actual trace data collected from `logs/traces/` (30 JSONL traces, 1
 - CCTraceAdapter for CC Solo mode parsing
 - Streamlit GUI with background execution, debug log, evaluation, and graph views
 
-### Not completed or blocked:
+**Not completed or blocked:**
 
 - Complete MAS vs. CC comparison with composite scores (CC Teams artifacts ephemeral; API key for Tier 2 LLM-as-Judge not set in test environment)
 - Composition sweep with statistically significant results (empty `results/sweeps/` directories; blocked by the now-fixed `AgentRunResult.data` bug)
