@@ -557,7 +557,7 @@ Invalid pydantic data model format: 1 validation error for ResearchSummary
 - **P3 (code health)**: STORY-003 (isinstance replacements), STORY-004 (conftest consolidation), STORY-005 (dispatch refactor), STORY-009 (config model consolidation)
 - **P4 (developer experience)**: STORY-012 (examples modernization -- onboarding, no file conflicts)
 
-### Story Breakdown (12 stories total):
+### Story Breakdown (12 stories total)
 
 - **Feature 1** → STORY-001: End-of-run artifact path summary (depends: STORY-006)
   New `ArtifactRegistry` singleton. Register paths in 7 components. Print summary in CLI and sweep. TDD: `testing-python` for registry behavior (register, summary, reset, empty state), then `implementing-python`. Files: `src/app/utils/artifact_registry.py` (new), `src/app/utils/log.py`, `src/app/judge/trace_processors.py`, `src/app/data_utils/review_persistence.py`, `src/app/tools/peerread_tools.py`, `src/app/reports/report_generator.py`, `src/app/benchmark/sweep_runner.py`, `src/run_cli.py`, `tests/utils/test_artifact_registry.py` (new).

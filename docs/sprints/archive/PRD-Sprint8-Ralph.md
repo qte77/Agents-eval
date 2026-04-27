@@ -74,6 +74,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 **Root cause**: The LLM needs full paper content but only has a raw-PDF-by-path tool with no way to supply a valid path. The parsed JSON data (primary content source) is not accessible via any tool.
 
 **Acceptance Criteria**:
+
 - [ ] `read_paper_pdf_tool` removed from agent tool registration (no longer LLM-callable)
 - [ ] New tool `get_paper_content(paper_id: str) -> str` registered on the same agent (researcher or manager)
 - [ ] `get_paper_content` internally calls `_load_paper_content_with_fallback()` fallback chain: parsed JSON → raw PDF → abstract
@@ -85,6 +86,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] `make validate` passes
 
 **Technical Requirements**:
+
 - Remove `@agent.tool` decorator from `read_paper_pdf_tool` in `add_peerread_tools_to_agent()`
 - Add new `@agent.tool get_paper_content(ctx, paper_id)` that instantiates `PeerReadLoader`, calls `_load_paper_content_with_fallback(ctx, loader, paper_id, abstract)` where `abstract` is obtained from `loader.get_paper_by_id(paper_id).abstract`
 - Add URL guard in `read_paper_pdf()`: if `pdf_path` starts with `http`, return error string instead of raising
@@ -92,6 +94,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - Update tool trace logging (`trace_collector.log_tool_call`) for the new tool name
 
 **Files**:
+
 - `src/app/tools/peerread_tools.py` (edit — replace `read_paper_pdf_tool` with `get_paper_content`, add URL guard)
 - `tests/tools/test_peerread_tools.py` (edit — update tool registration tests, add `get_paper_content` test)
 
@@ -110,6 +113,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 **Note**: Line 70 (`ollama` provider) legitimately uses `"not-required"` as a literal — Ollama doesn't need auth. This should remain hardcoded.
 
 **Acceptance Criteria**:
+
 - [ ] `create_llm_model()` passes `api_key` directly to `OpenAIProvider` for all providers except `ollama` (5 sites: lines 78, 87, 98, 119, 128)
 - [ ] Ollama provider retains `api_key="not-required"` (no auth needed)
 - [ ] When `api_key=None`, OpenAI SDK falls back to `OPENAI_API_KEY` env var (verified by test)
@@ -123,6 +127,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] `make validate` passes
 
 **Technical Requirements**:
+
 - Replace `api_key=api_key or "not-required"` with `api_key=api_key` at 5 call sites in `create_llm_model()`
 - Add `chat_model: str | None = None` parameter to `LLMJudgeEngine.__init__`; when `resolved_provider != settings.tier2_provider` and `chat_model` is provided, set `self.model = chat_model`
 - Update `EvaluationPipeline.__init__` to accept and forward `chat_model`
@@ -132,6 +137,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - Existing auto-mode tests to verify still pass (all seed same-provider keys): `test_tier2_provider_auto_inherits_from_chat_provider` (line 427), `test_auto_mode_inherits_chat_provider_correctly` (line 746), `test_auto_mode_inherits_chat_provider` (line 684, Hypothesis)
 
 **Files**:
+
 - `src/app/llms/models.py` (edit — 5 lines, sentinel removal)
 - `src/app/judge/llm_evaluation_managers.py` (edit — add `chat_model` parameter, inherit model in auto-mode)
 - `src/app/judge/evaluation_pipeline.py` (edit — forward `chat_model` to `LLMJudgeEngine`)
@@ -147,6 +153,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 **Critical constraint**: CC teams artifacts (`~/.claude/teams/`, `~/.claude/tasks/`) are ephemeral in `claude -p` print mode — cleaned up after exit (see AGENT_LEARNINGS.md). The Python implementation uses `--output-format stream-json` with `Popen` to parse team events from the live stream, eliminating filesystem artifact collection.
 
 **Current state:**
+
 - `run_cli.py:108-126` — inline `subprocess.run()`, solo only
 - `sweep_runner.py:143-185` — duplicate `subprocess.run()`, solo only, stub baseline loop
 - `run_app.py:481-532` — engine selector UI, `engine` param silently dropped
@@ -156,6 +163,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 ##### 3.1 Core CC Engine Module
 
 **Acceptance Criteria**:
+
 - [ ] New module `src/app/engines/cc_engine.py` created
 - [ ] `check_cc_available() -> bool` — `shutil.which("claude")` (replaces 3 inline checks)
 - [ ] `run_cc_solo(query: str, timeout: int = 600) -> CCResult` — solo subprocess with `--output-format json`
@@ -167,6 +175,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] `make validate` passes
 
 **Files**:
+
 - `src/app/engines/__init__.py` (new)
 - `src/app/engines/cc_engine.py` (new — consolidated CC logic, solo + teams)
 - `tests/engines/test_cc_engine.py` (new — TDD RED: subprocess mock tests)
@@ -174,6 +183,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 ##### 3.2 CLI/Sweep/GUI Integration
 
 **Acceptance Criteria**:
+
 - [ ] `--cc-teams` boolean flag added to CLI (`run_cli.py`), sweep (`run_sweep.py`), and GUI (`run_app.py`)
 - [ ] `--engine=cc` without `--cc-teams`: calls `run_cc_solo()` (current behavior, consolidated)
 - [ ] `--engine=cc --cc-teams`: calls `run_cc_teams()` with teams env var and stream-json parsing
@@ -187,6 +197,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] `make validate` passes
 
 **Files**:
+
 - `src/run_cli.py` (edit — add `--cc-teams` flag, delegate to `cc_engine`)
 - `src/run_sweep.py` (edit — add `--cc-teams` flag)
 - `src/app/benchmark/sweep_runner.py` (edit — delegate to `cc_engine`, wire adapter)
@@ -198,6 +209,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 ##### 3.3 GUI Polish (same files as 3.2)
 
 **Acceptance Criteria**:
+
 - [ ] Add ARIA live region (`role="status"`) for execution state transitions, `role="alert"` for errors *(WCAG 4.1.3)* (`run_app.py:343-361`)
 - [ ] Fix dead "Downloads page" reference — replace with CLI instructions (`make setup_dataset_sample`) (`run_app.py:381`)
 - [ ] Add `help=` to engine selector explaining MAS vs Claude Code (`run_app.py:481`)
@@ -211,11 +223,13 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 - [ ] Replace `st.text()` metric displays with `st.dataframe()` or tabular-nums HTML for decimal alignment (`evaluation.py`)
 
 **Files**:
+
 - `src/gui/pages/run_app.py` (edit — ARIA, help text, navigation guidance)
 - `src/gui/pages/evaluation.py` (edit — metric labels, baseline expander, delta indicators, dataframe alt)
 - `src/gui/components/sidebar.py` (edit — execution-in-progress indicator)
 
 **Technical Requirements**:
+
 - **Solo path**: `subprocess.run(["claude", "-p", query, "--output-format", "json"], ...)` — blocking, parse JSON stdout (same as current, consolidated)
 - **Teams path**: `subprocess.Popen(["claude", "-p", query, "--output-format", "stream-json", "--verbose"], env={..., "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"})` — stream stdout line-by-line, parse JSONL events:
   - `type=system, subtype=init` → `session_id`, `model`
@@ -234,21 +248,25 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 **Description**: `graph_analysis.py:export_trace_to_networkx()` uses `type` as node attribute, while `agent_graph.py:render_agent_graph()` expects `node_type`. Direct callers of `export_trace_to_networkx()` get wrong visual node types. Sprint 7 avoided this by routing through `build_interaction_graph()`, but the latent mismatch should be fixed.
 
 **Acceptance Criteria**:
+
 - [ ] Unified node attribute name across graph export and rendering
 - [ ] All callers of `export_trace_to_networkx()` produce correct visual node types
 - [ ] TDD: RED tests first verifying attribute name consistency between `export_trace_to_networkx()` output and `render_agent_graph()` expectations. GREEN: fix attribute name. REFACTOR: remove any adapter shims. Use `testing-python` skill.
 - [ ] `make validate` passes
 
 *GUI polish (implement alongside graph fix — same files):*
+
 - [ ] Add `role="region" aria-label="Agent Interaction Graph"` wrapper around Pyvis iframe + text-based node/edge summary in expander *(WCAG 1.1.1, 4.1.2)* (`agent_graph.py:140`)
 - [ ] Add graph interaction hints and color legend caption (`agent_graph.py:140`)
 
 **Technical Requirements**:
+
 - Canonical attribute name: `type` (already used by `graph_analysis.py:export_trace_to_networkx()` at 4 call sites and internally by `_build_tool_graph`/`analyze_tool_usage_patterns`)
 - Fix consumer side: `agent_graph.py:render_agent_graph()` reads `node_data.get("node_type")` at lines 101 and 150 — change to `node_data.get("type")` (2 edits)
 - No changes to `graph_analysis.py` — it already uses the canonical name
 
 **Files**:
+
 - `src/gui/pages/agent_graph.py` (edit — change `"node_type"` → `"type"` at lines 101, 150; a11y wrapper, interaction hints)
 - `tests/judge/test_graph_analysis.py` (edit — TDD RED: attribute consistency tests verifying `export_trace_to_networkx()` nodes have `"type"` attribute)
 
@@ -259,6 +277,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 **Description**: `run_manager()` raises `NotImplementedError` when `pydantic_ai_stream=True` because PydanticAI's `run_stream()` only supports `output_type=str`, not structured `BaseModel` outputs. Check if upstream PydanticAI has resolved this limitation; if so, enable streaming. If not, remove the dead code path and the `pydantic_ai_stream` parameter.
 
 **Acceptance Criteria**:
+
 - [ ] Check PydanticAI `run_stream()` structured output support status (upstream)
 - [ ] If supported: enable streaming for structured output in `run_manager()`, remove `NotImplementedError`
 - [ ] If not supported: delete dead code block (`agent_system.py:525-536`), remove `pydantic_ai_stream` parameter from `run_manager()` signature and all callers
@@ -269,6 +288,7 @@ Sprint 7 delivered: documentation alignment, example modernization, test suite r
 If not supported upstream: remove the parameter from all 8 call sites across `agent_system.py`, `orchestration.py`, and `app.py`, plus the module docstring at `agent_system.py:18`.
 
 **Files**:
+
 - `src/app/agents/agent_system.py` (edit — remove parameter + dead code block)
 - `src/app/agents/orchestration.py` (edit — remove parameter + guard)
 - `src/app/app.py` (edit — remove parameter from `run_pipeline()` and `run_query()`)
@@ -283,6 +303,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 ##### 6.1 CLI Report Generation
 
 **Acceptance Criteria**:
+
 - [ ] `run_cli.py` accepts `--generate-report` flag (requires evaluation to have run, incompatible with `--skip-eval`)
 - [ ] Report includes: executive summary, per-tier score breakdown, identified weaknesses, actionable suggestions
 - [ ] Suggestions are grounded in evaluation data (reference specific metric scores and thresholds)
@@ -290,6 +311,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 - [ ] `make validate` passes
 
 **Technical Requirements**:
+
 - New module `src/app/reports/report_generator.py` with `generate_report(result: CompositeResult, settings: JudgeSettings) -> str` returning Markdown
 - Report structure: (1) Executive summary (composite score, recommendation, timestamp), (2) Per-tier breakdown (`tier1_score`, `tier2_score`, `tier3_score` with `weights_used`), (3) Weakness identification (metrics in `metric_scores` below threshold), (4) Actionable suggestions (from suggestion engine, Feature 6.3)
 - Threshold bands from `JudgeSettings`: accept ≥ 0.8, weak_accept 0.6–0.8, weak_reject 0.4–0.6, reject < 0.4
@@ -297,6 +319,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 - `--generate-report` flag in `run_cli.py`: requires evaluation to have run, incompatible with `--skip-eval`; calls `generate_report()` after `CompositeResult` is returned
 
 **Files**:
+
 - `src/run_cli.py` (edit — add `--generate-report` flag)
 - `src/app/reports/__init__.py` (new)
 - `src/app/reports/report_generator.py` (new — report generation from `CompositeResult`)
@@ -305,18 +328,21 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 ##### 6.2 GUI Report Generation
 
 **Acceptance Criteria**:
+
 - [ ] "Generate Report" button on App page, enabled after evaluation completes
 - [ ] Report displayed inline (Markdown rendered via `st.markdown`) with download option
 - [ ] Same report content as CLI (shared generation logic)
 - [ ] `make validate` passes
 
 **Files**:
+
 - `src/gui/pages/run_app.py` (edit — add report button and display)
 - `src/app/reports/report_generator.py` (shared with 6.1 — same generation logic)
 
 ##### 6.3 Report Content and Suggestion Engine
 
 **Acceptance Criteria**:
+
 - [ ] Suggestions are specific and actionable (not generic "improve quality")
 - [ ] Each suggestion references the metric/tier that triggered it
 - [ ] Severity levels: critical (score < threshold), warning (below average), info (improvement opportunity)
@@ -324,6 +350,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 - [ ] Rule-based fallback when LLM is unavailable or `--no-llm-suggestions` is set
 
 **Technical Requirements**:
+
 - New module `src/app/reports/suggestion_engine.py` with `generate_suggestions(result: CompositeResult, settings: JudgeSettings) -> list[Suggestion]`
 - `Suggestion` Pydantic model: `severity` (critical/warning/info), `metric_name`, `tier`, `score`, `threshold`, `message`
 - Rule-based engine: iterate `metric_scores` dict, compare each against tier thresholds from `JudgeSettings` (accept=0.8, weak_accept=0.6, weak_reject=0.4). Severity: critical if score < weak_reject, warning if < weak_accept, info if < accept
@@ -332,6 +359,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 - `--no-llm-suggestions` flag added to `run_cli.py`
 
 **Files**:
+
 - `src/app/reports/suggestion_engine.py` (new — rule-based + optional LLM suggestion generation)
 - `src/app/data_models/report_models.py` (new — `Suggestion` Pydantic model)
 - `tests/reports/test_suggestion_engine.py` (new — TDD RED: severity classification, metric-specific templates, LLM fallback)
@@ -343,20 +371,24 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 **Description**: The "Judge Settings - Tier 2 LLM Judge" section in `src/gui/pages/settings.py:169-211` uses `text_input` for provider and model fields (lines 172, 178, 184, 192). Users must type provider names and model IDs from memory, with no validation or discovery. In contrast, "Agent Configuration" (line 30-42) already uses `selectbox` populated from `PROVIDER_REGISTRY` — the same pattern should be reused for judge settings.
 
 **Current state** (`_render_tier2_llm_judge()` in `settings.py:169`):
+
 - `tier2_provider` — `text_input`, free-text (line 172)
 - `tier2_model` — `text_input`, free-text (line 178)
 - `tier2_fallback_provider` — `text_input`, free-text (line 184)
 - `tier2_fallback_model` — `text_input`, free-text (line 192)
 
 **Reference pattern** (`_render_agent_configuration()` in `settings.py:26`):
+
 - `chat_provider` — `selectbox` populated from `PROVIDER_REGISTRY.keys()` (line 37)
 
 **Data sources for dropdown population**:
+
 - Providers: `PROVIDER_REGISTRY` (`src/app/data_models/app_models.py:142`) — already used by Agent Configuration
 - Models: `config_chat.json` providers → `model_name` per provider (loaded via `ChatConfig`), plus `"auto"` option for `tier2_provider`
 - `fallback_strategy`: `JudgeSettings.fallback_strategy` (`settings.py:91`) is a string field (`"tier1_only"`) but not exposed in GUI — could be added as a dropdown with known strategies
 
 **Acceptance Criteria**:
+
 - [ ] `tier2_provider` field uses `selectbox` populated from `PROVIDER_REGISTRY.keys()` + `"auto"` option
 - [ ] `tier2_model` field uses `selectbox` populated from `config_chat.json` model names for the selected provider (dynamic, updates when provider changes)
 - [ ] `tier2_fallback_provider` field uses `selectbox` populated from `PROVIDER_REGISTRY.keys()` (no `"auto"`)
@@ -367,14 +399,17 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 - [ ] `make validate` passes
 
 *GUI polish (implement alongside dropdown work — same file):*
+
 - [ ] Default all Judge Settings expanders to `expanded=False` + add "Advanced Settings" section header (`settings.py:90,131,171,215`)
 
 **Technical Requirements**:
+
 - Reuse the same `PROVIDER_REGISTRY` + `selectbox` pattern from `_render_agent_configuration()`
 - For model dropdowns: load `ChatConfig` from `config_chat.json`, extract `model_name` for the selected provider key
 - Model selectbox must react to provider selection (Streamlit reruns on widget change, so the model list updates naturally)
 
 **Files**:
+
 - `src/gui/pages/settings.py` (edit — `_render_tier2_llm_judge()`, replace 4 `text_input` with `selectbox`, progressive disclosure expanders)
 - `tests/gui/test_settings.py` (edit — TDD RED: verify selectbox options match registry)
 
@@ -387,6 +422,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 ##### 8.1 Standalone Accessibility and Usability Fixes
 
 **Acceptance Criteria**:
+
 - [ ] Remove CSS radio button circle hiding hack — restores native selection indicator *(Critical, Level A — WCAG 1.3.3, 1.4.1)* (`styling.py:14-16`)
 - [ ] Fix sidebar radio: replace `" "` label with `"Navigation"` + `label_visibility="collapsed"` *(Level AA — WCAG 1.3.1, 2.4.6)* (`sidebar.py:16`)
 - [ ] Add text-prefix badges (`[WARN]`, `[ERR]`, etc.) to log levels — not color-only *(Level AA — WCAG 1.4.1)* (`log_capture.py:117-134`)
@@ -400,6 +436,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 - [ ] Move `subheader(OUTPUT_SUBHEADER)` after the `button(RUN_APP_BUTTON)` call — "Output" header currently appears above the Run button (`run_app.py:519-521`)
 
 **Files**:
+
 - `src/gui/config/styling.py` (edit — remove CSS radio hack)
 - `src/gui/config/text.py` (edit — update `HOME_INFO`, query placeholder)
 - `src/gui/pages/home.py` (edit — onboarding order)
@@ -413,6 +450,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 ##### 8.2 App Page UX + Evaluation Page UX (moved from Feature 3 — independent GUI concerns)
 
 **Acceptance Criteria**:
+
 - [ ] `run_app.py`: when `engine == "cc"`, MAS-specific controls are hidden (not just disabled) — sub-agent checkboxes, provider selectbox, token limit, configuration summary (`_display_configuration`). Currently `mas_disabled` (line 496) shows an info banner but all controls remain visible.
 - [ ] `run_app.py`: custom query `text_input` visible in both "Free-form query" and "Select a paper" modes. Currently free-form mode (line 514) renders only the query input, while paper mode renders paper selectbox + custom query inside `_render_paper_selection_input()` (line 395-398). Refactor so the query input is rendered once after the mode-specific controls, visible in both modes — paper mode just adds the paper selectbox above it.
 - [ ] `output.py`: rename `type` parameter to `output_type` in `render_output()` signature — currently shadows Python built-in `type` (`output.py:6`). Update all callers. When reworking `render_output()` to format `CompositeResult` as a summary card (audit item #23), fix the parameter name.
@@ -420,6 +458,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 - [ ] Evaluation Results page "Baseline Comparison Configuration" (`evaluation.py:249-259`): add path validation and directory picker for CC Solo/Teams directory inputs. Currently only free-text `st.text_input` (lines 250, 255) with no existence check. Fix: (1) validate entered paths exist on disk (`Path.is_dir()`), show `st.error` if not, (2) auto-populate from known CC artifact locations (e.g., `logs/Agent_evals/traces/`) if they exist, (3) optionally add a directory picker widget alongside `text_input` for browsing.
 
 **Technical Requirements**:
+
 - CC hidden controls: wrap MAS-specific block (`run_app.py:484-515` — sub-agent checkboxes, provider selectbox, token limit slider, `_display_configuration()`) in `if engine != "cc":` guard instead of current `disabled=True` approach
 - Custom query refactor: extract `text_input` from both the free-form branch (line 514) and `_render_paper_selection_input()` (line 395-398) into a single render call placed after mode-specific controls
 - `output.py:6` rename: `type` → `output_type` in `render_output()` signature; grep for `render_output(` to find all callers in `run_app.py`
@@ -428,6 +467,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 - Baseline path validation: `Path(path).is_dir()` check on `st.text_input` values (lines 250, 255), `st.error("Directory not found")` when invalid; auto-populate default from `Path("logs/Agent_evals/traces/")` if it exists
 
 **Files**:
+
 - `src/gui/pages/run_app.py` (edit — CC MAS hidden, custom query refactor, store `execution_id`)
 - `src/gui/pages/evaluation.py` (edit — display run ID, baseline path validation)
 - `src/gui/components/output.py` (edit — rename `type` → `output_type` parameter)
@@ -436,11 +476,13 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 ##### 8.4 Environment-Aware Service URL Resolution + Testing (moved from Feature 7 — infrastructure concern)
 
 **Acceptance Criteria**:
+
 - [ ] Sidebar "Trace Viewer" link (`src/gui/components/sidebar.py:20-25`) resolves to the correct environment URL, not hardcoded `localhost:6006`. A generalized `resolve_service_url(port: int) -> str` function detects the environment and constructs the correct URL. Detection chain (first match wins): (1) `PHOENIX_ENDPOINT` env var override — explicit user config, (2) GitHub Codespaces — `CODESPACE_NAME` + `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` → `https://{name}-{port}.{domain}/`, (3) Gitpod — `GITPOD_WORKSPACE_URL` → replace scheme with port prefix, (4) fallback — `http://localhost:{port}`. Current state: `PHOENIX_DEFAULT_ENDPOINT` (`src/gui/config/config.py:5`) reads from `JudgeSettings().phoenix_endpoint` which defaults to `http://localhost:6006`.
 - [ ] TDD: RED tests first for `resolve_service_url()` (Codespaces env, Gitpod env, explicit override, fallback). RED tests for run ID threading (session state stores `execution_id`, evaluation page renders it). GREEN: implement. Use `testing-python` skill.
 - [ ] `make validate` passes
 
 **Files**:
+
 - `src/gui/config/config.py` (edit — add `resolve_service_url()`, use for `PHOENIX_DEFAULT_ENDPOINT`)
 - `tests/gui/test_config.py` (new — TDD RED: `resolve_service_url` tests)
 
@@ -459,6 +501,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 ## Out of Scope
 
 **Deferred to Sprint 9 (TBD acceptance criteria, low urgency):**
+
 - Centralized Tool Registry with Module Allowlist (MAESTRO L7.2) — architectural, needs design
 - Plugin Tier Validation at Registration (MAESTRO L7.1) — architectural, needs design
 - Error Message Sanitization (MAESTRO) — TBD acceptance criteria
@@ -475,6 +518,7 @@ If not supported upstream: remove the parameter from all 8 call sites across `ag
 - ~~CC engine SDK migration~~ — **Removed.** Keeping `subprocess.run([claude, "-p"])` per ADR-008.
 
 **Already completed (Sprint 8 pre-work, commits a5ac5c9→9e14931→9329fc3):**
+
 - Legacy config key removal (`paper_numbers`, `provider`) from `run_sweep.py`
 - Judge API key forwarding: `_resolve_provider_key` → `select_available_provider` → `create_judge_agent`
 - `"not-required"` sentinel removed from `create_simple_model()` — `None` lets SDK use env vars

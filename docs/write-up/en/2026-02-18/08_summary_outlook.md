@@ -59,12 +59,14 @@ This work has the following limitations:
 The planned further development addresses both identified blockers and strategic extensions of the framework.
 
 **Short-term (Sprint 8)**:
+
 - **Report Generation** (Feature 1): After completing an evaluation, a structured Markdown report with Tier 1/2/3 breakdown, identified weaknesses, and actionable improvement suggestions is generated. Available via the `--generate-report` flag in the CLI and as a button in the GUI.
 - **Graph Attribute Alignment** (Feature 2): Alignment of Tier 3 graph metrics to attributes actually available in `GraphTraceData`, to avoid computation errors from missing fields.
 - **MAESTRO Hardening** (Feature 3): Implementation of remaining findings from the Sprint 5 security review for the layers Model, Agent Logic, Integration, Monitoring, Execution, Environment, and Orchestration.
 - **PydanticAI Streaming** (Feature 4): Investigation of the `NotImplementedError` exception for structured outputs in streaming mode (known AGENT_REQUESTS item).
 
 **Medium-term**:
+
 - **Bug Fix `AgentRunResult.data`**: Unblocks all end-to-end evaluation runs and enables computation of composite scores on real traces.
 - **Sweep Results**: After bug fix, restart the composition sweep across all 8 configurations and multiple papers with statistically robust repetition counts ($\geq$5 runs).
 - **Increase CC Sample Size**: At least 5 runs per CC mode (Solo/Teams) across multiple papers for statistically significant comparisons.
@@ -72,6 +74,7 @@ The planned further development addresses both identified blockers and strategic
 - **Per-Sub-Agent Token Logging**: Extension of the trace format with token counts at the sub-agent level for complete cost comparisons.
 
 **Long-term**:
+
 - **Framework Extension**: Integration of additional agent frameworks (LangChain, AutoGen, CrewAI) through standardized adapters to enable cross-framework comparisons.
 - **Extended Metrics**: Implementation of candidate metrics identified in the architecture (`fix_rate`, `evaluator_consensus`, `delegation_depth`, `coordination_topology`, `path_convergence`, `rubric_alignment`) by priority.
 - **Optional Container Deployment** (ADR-007): Docker images and Compose configurations for parallel judge execution and production isolation.
