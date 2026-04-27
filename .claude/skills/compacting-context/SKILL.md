@@ -45,7 +45,7 @@ Per `references/context-management.md`:
 
 ## Findings
 <!-- key discoveries, distilled outputs from logs/JSON/tests -->
-```
+```text
 
 ## Quality Check
 

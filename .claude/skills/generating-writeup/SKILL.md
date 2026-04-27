@@ -51,7 +51,7 @@ make pandoc_run \
   INPUT_FILES="$$(printf '%s\036' $$dir/*.md)" \
   OUTPUT_FILE="$$dir/output.pdf" \
   BIBLIOGRAPHY="$$dir/references.bib"
-```
+```bash
 
 With custom citation style:
 

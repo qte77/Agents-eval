@@ -14,7 +14,7 @@ Known CVE advisories affecting dependencies and their applicability to this proj
 
 ## CVE-2026-25580: PydanticAI SSRF Vulnerability (CRITICAL)
 
-**Status**: **MITIGATED**
+### Status**: **MITIGATED
 
 **Severity**: CRITICAL
 **Published**: 2026-02-09
@@ -49,7 +49,7 @@ Note: LLM provider APIs (OpenAI, Anthropic, Cerebras, etc.) are called through P
 
 ## CVE-2026-25640: PydanticAI Stored XSS via Path Traversal (HIGH)
 
-**Status**: **NOT APPLICABLE**
+### Status**: **NOT APPLICABLE
 
 **Severity**: HIGH
 **Published**: 2026-02-06
@@ -77,7 +77,7 @@ Path Traversal vulnerability in PydanticAI web UI allows attackers to serve arbi
 
 ## CVE-2024-5206: scikit-learn Sensitive Data Leakage (MEDIUM)
 
-**Status**: **MITIGATED**
+### Status**: **MITIGATED
 
 **Severity**: MEDIUM (CVSS 5.3)
 **Published**: 2024-06-06

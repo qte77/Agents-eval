@@ -76,11 +76,11 @@ The complete hierarchy is described in [AGENTS.md](../../../../AGENTS.md). The f
 \caption{Documentation hierarchy}
 \end{figure}
 
-**Authority Chain (Reference Flow):**
+### Authority Chain (Reference Flow):
 
 ```text
 PRD.md (Requirements) $\rightarrow$ architecture.md (Technical Design)
   $\rightarrow$ Sprint Documents (Implementation) $\rightarrow$ Usage Guides (Operations)
         ↑
 Landscape Documents (inform strategic decisions, do not create requirements)
-```
+```text

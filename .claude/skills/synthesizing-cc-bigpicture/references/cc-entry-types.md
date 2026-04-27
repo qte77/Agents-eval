@@ -30,7 +30,7 @@ Each line in a session `.jsonl` file is a JSON object with a `type` field:
   "project": "/workspaces/my-project",
   "sessionId": "uuid"
 }
-```
+```text
 
 Use for session discovery (unique `sessionId` values), timeline reconstruction,
 and prompt topic analysis. Preferred over globbing `.jsonl` files when
@@ -72,7 +72,7 @@ Use for trajectory signal (active vs. stale days, trend detection).
   "blocks": ["4", "5"],
   "blockedBy": ["1"]
 }
-```
+```text
 
 The `blocks`/`blockedBy` arrays create a dependency graph within a task list.
 Task directories also contain `.lock` and `.highwatermark` state files (skip these).

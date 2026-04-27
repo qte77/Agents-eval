@@ -7,6 +7,8 @@ see-also: tdd-best-practices.md, bdd-best-practices.md
 validated_links: 2026-03-12
 ---
 
+# Testing Strategy
+
 **Purpose**: What to test, when to use each tool, test organization,
 running commands.
 
@@ -136,7 +138,7 @@ def test_result_with_timestamp():
         "score": 0.85,
         "timestamp": IsDatetime(),  # Not managed by snapshot
     })
-```
+```bash
 
 **Commands**:
 
@@ -241,7 +243,7 @@ def test_order_repository_saves_order(tmp_path):
     repo = OrderRepository(db)
     order = repo.save(Order(total=100))
     assert repo.get(order.id).total == 100
-```
+```text
 
 ### Priority Test Areas
 
@@ -278,7 +280,7 @@ tests/
 │   ├── features/*.feature
 │   └── step_defs/
 └── conftest.py           # Shared fixtures
-```
+```bash
 
 ## Running Tests
 

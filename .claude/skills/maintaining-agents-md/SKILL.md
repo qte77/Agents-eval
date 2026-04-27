@@ -37,7 +37,7 @@ references, missing updates, and promotion candidates.
 
 Scan governance files for staleness and inconsistencies.
 
-**Checks:**
+### Checks:
 
 1. **Stale paths**: Grep governance files for `src/`, `docs/`, `tests/` paths.
    Verify each path still exists.
@@ -65,7 +65,7 @@ Fix staleness found by audit. For each finding:
 Evaluate `AGENT_LEARNINGS.md` entries for promotion per the criteria in
 `.claude/rules/compound-learning.md` (3rd occurrence → rule, recurring → skill).
 
-**Procedure:**
+### Procedure:
 
 1. Read `AGENT_LEARNINGS.md` entries
 2. Grep codebase for each pattern's problem statement
