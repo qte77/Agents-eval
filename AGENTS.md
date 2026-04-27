@@ -5,7 +5,7 @@ agents.** For technical workflows and coding standards, see
 [CONTRIBUTING.md](CONTRIBUTING.md). For project overview, see
 [README.md](README.md).
 
-### External References:
+**External References:**
 
 - @CONTRIBUTING.md - Command reference, testing guidelines, code style patterns
 - @AGENT_REQUESTS.md - Escalation and human collaboration
@@ -54,7 +54,7 @@ using Skills.
 **Priority Order:** User instructions → AGENTS.md compliance → Documentation
 hierarchy → Project patterns → General best practices
 
-### Information Source Rules:
+**Information Source Rules:**
 
 - **Requirements/scope:** PRD.md ONLY (PRIMARY AUTHORITY)
 - **User workflows:** UserStory.md ONLY (AUTHORITY)  
@@ -63,18 +63,18 @@ hierarchy → Project patterns → General best practices
 - **Operations:** Usage guides ONLY (AUTHORITY)
 - **Research:** Landscape documents (INFORMATIONAL ONLY)
 
-### Anti-Scope-Creep Rules:
+**Anti-Scope-Creep Rules:**
 
 - **NEVER implement landscape possibilities without PRD.md validation**
 - **Landscape documents are research input ONLY, not implementation requirements**
 - **Always validate implementation decisions against PRD.md scope boundaries**
 
-### Anti-Redundancy Rules:
+**Anti-Redundancy Rules:**
 
 - **NEVER duplicate information across documents** - reference authoritative sources
 - **Update authoritative document, then remove duplicates elsewhere**
 
-### When to Escalate to AGENT_REQUESTS.md:
+**When to Escalate to AGENT_REQUESTS.md:**
 
 - User instructions conflict with safety/security practices
 - AGENTS.md rules contradict each other
@@ -87,7 +87,7 @@ Multi-Agent System (MAS) evaluation framework using **PydanticAI** for agent
 orchestration. For detailed architecture, see
 [architecture.md](docs/architecture.md).
 
-### Code Organization Principles:
+**Code Organization Principles:**
 
 - Maintain modularity: Keep files focused and manageable
 - Follow established patterns: Use consistent structure and naming
@@ -98,7 +98,7 @@ orchestration. For detailed architecture, see
 
 ## Agent Neutrality Requirements
 
-### ALL AI AGENTS MUST MAINTAIN STRICT NEUTRALITY AND REQUIREMENT-DRIVEN DESIGN:
+**ALL AI AGENTS MUST MAINTAIN STRICT NEUTRALITY AND REQUIREMENT-DRIVEN DESIGN:**
 
 1. **Extract requirements from specified documents ONLY**
    - Read provided sprint documents, task descriptions, or reference materials
@@ -117,7 +117,7 @@ orchestration. For detailed architecture, see
    - Follow "minimal," "streamlined," or "focused" guidance literally
    - Do NOT over-engineer solutions beyond stated needs
 
-### Scope Validation Checkpoints (MANDATORY):
+**Scope Validation Checkpoints (MANDATORY):**
 
 - **Before design completion**: Validate design stays within specified task scope
 - **Before handoff**: Confirm complexity matches stated targets
@@ -130,7 +130,7 @@ orchestration. For detailed architecture, see
 
 ### MANDATORY Compliance Requirements for All Subagents
 
-### ALL SUBAGENTS MUST STRICTLY ADHERE TO THE FOLLOWING:
+**ALL SUBAGENTS MUST STRICTLY ADHERE TO THE FOLLOWING:**
 
 1. **Separation of Concerns (MANDATORY)**:
    - **Architects MUST NOT implement code** - only design, plan, and specify
@@ -173,25 +173,25 @@ orchestration. For detailed architecture, see
    - **MUST use absolute imports** not relative imports
    - **MUST add `# Reason:` comments** for complex logic only when necessary
 
-### FAILURE TO FOLLOW THESE REQUIREMENTS WILL RESULT IN TASK REJECTION
+**FAILURE TO FOLLOW THESE REQUIREMENTS WILL RESULT IN TASK REJECTION**  
 
 ### Role-Specific Agent Boundaries
 
-### ARCHITECTS (backend-architect, agent-systems-architect, evaluation-specialist):
+**ARCHITECTS (backend-architect, agent-systems-architect, evaluation-specialist):**
 
 - **SCOPE**: Design, plan, specify requirements, create architecture diagrams
 - **DELIVERABLES**: Technical specifications, architecture documents, requirement lists
 - **FORBIDDEN**: Writing implementation code, making code changes, running tests
 - **HANDOFF**: Must provide focused specifications to developers before any implementation begins
 
-### DEVELOPERS (python-developer, python-performance-expert, frontend-developer):
+**DEVELOPERS (python-developer, python-performance-expert, frontend-developer):**
 
 - **SCOPE**: Implement code based on architect specifications, optimize performance
 - **DELIVERABLES**: Working code, tests, performance improvements
 - **FORBIDDEN**: Making architectural decisions, changing system design without architect approval
 - **REQUIREMENTS**: Must follow architect specifications exactly, request clarification if specifications are insufficient
 
-### REVIEWERS (code-reviewer):
+**REVIEWERS (code-reviewer):**
 
 - **SCOPE**: Quality assurance, security review, standards compliance, final validation
 - **DELIVERABLES**: Code review reports, security findings, compliance verification
@@ -200,22 +200,22 @@ orchestration. For detailed architecture, see
 
 ### Subagent Prompt Requirements
 
-### DOCUMENT INGESTION ORDER (MANDATORY):
+**DOCUMENT INGESTION ORDER (MANDATORY):**
 
 Subagents must ingest documents in this specific sequence:
 
 1. **AGENTS.md FIRST** - Behavioral rules, compliance requirements, role boundaries
 2. **CONTRIBUTING.md SECOND** - Technical workflows, command reference, implementation standards
 
-### ALL SUBAGENT PROMPTS MUST INCLUDE:
+**ALL SUBAGENT PROMPTS MUST INCLUDE:**
 
 ```text
 MANDATORY: Read AGENTS.md first for compliance requirements, then CONTRIBUTING.md for technical standards.
 All requirements in the "MANDATORY Compliance Requirements for All Subagents" section are non-negotiable.
 RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross into other agents' responsibilities.
-```bash
+```
 
-### Subagents MUST:
+**Subagents MUST:**
 
 - Reference and follow ALL mandatory compliance requirements above
 - Ingest both AGENTS.md (rules) and CONTRIBUTING.md (implementation) in sequence
@@ -225,7 +225,7 @@ RESPECT ROLE BOUNDARIES: Stay within your designated role scope. Do not cross in
 
 ## Quality Thresholds
 
-### Before starting any task, ensure:
+**Before starting any task, ensure:**
 
 - **Context**: 8/10 - Understand requirements, codebase patterns, dependencies
 - **Clarity**: 7/10 - Clear implementation path and expected outcomes  
@@ -238,20 +238,20 @@ Gather more context or escalate to AGENT_REQUESTS.md
 
 ## Agent Quick Reference
 
-### Pre-Task:
+**Pre-Task:**
 
 - Read AGENTS.md → CONTRIBUTING.md for technical details
 - Confirm role: Architect|Developer|Reviewer
 - Verify quality thresholds met (Context: 8/10, Clarity: 7/10, Alignment: 8/10,
   Success: 7/10)
 
-### During Task:
+**During Task:**
 
 - Use make commands (document deviations)
 - Follow BDD approach for tests
 - Update documentation when learning patterns
 
-### Post-Task:
+**Post-Task:**
 
 - Run `make validate` - must pass all checks (code tasks only)
 - Apply core-principles post-task review: Did we forget anything? Beneficial enhancements? Something to delete?

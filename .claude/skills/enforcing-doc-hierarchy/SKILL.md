@@ -21,7 +21,7 @@ approval.
 Discover from the project's `CONTRIBUTING.md` "Documentation Hierarchy" section
 (or equivalent). Typical chain:
 
-```text
+```
 UserStory / PRD (requirements, scope — PRIMARY AUTHORITY)
   → architecture.md (technical design)
     → Sprint / implementation docs (current state)
@@ -31,7 +31,7 @@ UserStory / PRD (requirements, scope — PRIMARY AUTHORITY)
 
 ### 2. Claude Code Infrastructure
 
-```text
+```
 CLAUDE.md (entry point)
   → AGENTS.md (behavioral rules, compliance, decision framework)
     → CONTRIBUTING.md (technical workflows, commands, coding standards)

@@ -17,7 +17,7 @@ Hybrid approach: Python script parses, AI validates and corrects.
 
 ```bash
 python ralph/scripts/generate_prd_json.py --dry-run
-```bash
+```
 
 Check output for: declared vs parsed story count mismatch, missing stories, empty acceptance/files. If issues found, fix PRD markdown or note for manual correction in step 3.
 
@@ -80,7 +80,7 @@ See `ralph/docs/templates/prd.json.template` for structure and fields.
 
 ```bash
 make ralph_prd_json
-```bash
+```
 
 ## Next Steps
 

@@ -8,8 +8,6 @@ version: 2.0.0
 validated_links: 2026-03-12
 ---
 
-# README
-
 This directory contains PlantUML source files for the project's architecture diagrams. PNGs are rendered into `assets/images/` (light and dark themes). Source files live here; generated PNGs do not.
 
 ## Diagrams
@@ -36,7 +34,7 @@ This directory contains PlantUML source files for the project's architecture dia
 
 ```shell
 make setup_plantuml
-```bash
+```
 
 ### Generate PNGs
 
@@ -53,7 +51,7 @@ for f in docs/arch_vis/*.plantuml; do
   make plantuml_render INPUT_FILE="$f" STYLE="light" OUTPUT_PATH="assets/images"
   make plantuml_render INPUT_FILE="$f" STYLE="dark" OUTPUT_PATH="assets/images"
 done
-```bash
+```
 
 ### Interactive Mode
 
@@ -71,7 +69,7 @@ Replace:
 
 ```plantuml
 !include styles/github-$STYLE.puml
-```text
+```
 
 With (light):
 
@@ -83,6 +81,6 @@ Or (dark):
 
 ```plantuml
 !include https://raw.githubusercontent.com/qte77/Agents-eval/main/docs/arch_vis/styles/github-dark.puml
-```text
+```
 
 Then paste the modified source into the web editor.

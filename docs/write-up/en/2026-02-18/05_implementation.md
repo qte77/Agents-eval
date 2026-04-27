@@ -21,7 +21,7 @@ async def main(
     skip_eval: bool = False,
     ...
 ) -> dict[str, Any] | None:
-```python
+```
 
 *Code excerpt from `src/app/app.py:196`*
 
@@ -51,7 +51,7 @@ All data boundaries are secured by Pydantic models in `src/app/data_models/`. Th
 
 ```python
 impact: str = Field(default="UNKNOWN", validation_alias="IMPACT")
-```python
+```
 
 *Code excerpt from `src/app/data_models/peerread_models.py`*
 
@@ -94,7 +94,7 @@ async def delegate_research(
     )
     result = await research_agent.run(query, usage=ctx.usage)
     ...
-```yaml
+```
 
 *Code excerpt from `src/app/agents/agent_system.py:121`*
 
@@ -157,7 +157,7 @@ class EvaluatorPlugin(ABC):
 
     @abstractmethod
     def get_context_for_next_tier(self, result: BaseModel) -> BaseModel: ...
-```python
+```
 
 *Code excerpt from `src/app/judge/plugins/base.py`*
 
@@ -198,7 +198,7 @@ Example invocation:
 ```bash
 make app_cli ARGS="--paper-number=1105.1072 --chat-provider=github \
     --include-researcher --include-analyst --include-synthesiser"
-```text
+```
 
 ### Streamlit GUI
 

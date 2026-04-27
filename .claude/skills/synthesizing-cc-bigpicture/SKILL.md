@@ -24,7 +24,7 @@ into a coherent narrative of what you're working on, why, and where you're heade
 | 2 | `time-range` | no | all time | E.g. `7d`, `30d`, `this-week`. |
 | 3 | `output-path` | no | auto | Where to write output. |
 
-### Default output path:
+**Default output path:**
 - `project-name` set: `<decoded-project-path>/docs/bigpicture.md`
 - `all` or omitted: `~/.claude/bigpicture.md`
 - Explicit `output-path`: overrides both.
@@ -32,9 +32,9 @@ into a coherent narrative of what you're working on, why, and where you're heade
 **Project matching**: Matched against decoded `~/.claude/projects/<encoded-path>/`
 directories (`-` → `/` in encoding). Substring match on any path segment.
 
-### Examples:
+**Examples:**
 
-```text
+```
 /synthesizing-cc-bigpicture                          # All → ~/.claude/bigpicture.md
 /synthesizing-cc-bigpicture Agents-eval              # Single → project docs/
 /synthesizing-cc-bigpicture Agents-eval 7d           # Single, last 7 days
@@ -74,7 +74,7 @@ Track per work stream to surface where you are and what shift is needed.
 
 ## CC Data Sources
 
-```text
+```
 ~/.claude/
 ├── history.jsonl                    # Global prompt log (display, timestamp, project, sessionId)
 ├── stats-cache.json                 # Daily aggregates (messageCount, sessionCount, toolCallCount)
@@ -161,7 +161,7 @@ respect the filter. Apply these rules once, consistently:
 ## TODOs & DONEs
 ## Blockers & Stale Items
 ## Mode Transitions Needed
-```text
+```
 
 ## Common Pitfalls
 
