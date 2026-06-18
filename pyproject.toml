@@ -41,7 +41,7 @@ gui = [
     "pyvis>=0.3.2",
 ]
 wandb = [
-    "weave>=0.52.28",
+    "weave>=0.52.36",
 ]
 dev = [
     "complexipy>=5.2.0",
